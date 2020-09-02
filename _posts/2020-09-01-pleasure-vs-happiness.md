@@ -5,7 +5,6 @@ categories:
 tags:
   - pleasure
   - happiness
-  -
 ---
 
 The former is about taking, whereas the latter is all about giving. One is short-lived and the other is long-lived. 

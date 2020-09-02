@@ -1,5 +1,10 @@
 ---
 title: Learning vs Education
+categories:
+  - thoughts
+tags:
+  - education
+  - learning
 ---
 
 Education is the industrial process of making people compliant. Command and control is the backbone of it. 
