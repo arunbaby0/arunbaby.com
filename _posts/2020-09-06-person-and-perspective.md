@@ -1,5 +1,5 @@
 ---
-title: Evaluated Experience
+title: Person and perspective
 categories:
 - thoughts
 tags:
