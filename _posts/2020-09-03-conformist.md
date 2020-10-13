@@ -7,9 +7,9 @@ tags:
   - learning
 ---
 
-If everything you believe is something that you are supposed to believe, what is the odds that it is really a coincidence?
+If everything you believe is something that you are supposed to believe, what are the odds that it is really a coincidence?
 
-How many of your opinions are you reluctant to express inform of your friends/colleagues? Why so?
+How many of your opinions are you reluctant to express in front of your friends/colleagues? Why so?
 
 If the answer to the above question is 'None', step back and give it a thought. Odds are you are thinking in a way that you are told.
 
