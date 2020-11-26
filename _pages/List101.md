@@ -1,0 +1,50 @@
+---
+title: "List of 101 to do"
+excerpt: ""
+sitemap: false
+permalink: /list101/
+---
+
+List of things I am planning to do.
+
+Please let me know if you have any recommendation. 
+
+* [ ] Be kind always.
+* [ ] Get a black belt in any martial art.
+* [ ] Read 1001 books.
+* [ ] Visit 101 countries(only 4 now).
+* [ ] Learn French.
+* [ ] Swim a mile.
+* [ ] Live to atleast 153. :P
+* [ ] Start a company.
+* [ ] Perform a full-split.
+* [ ] Do a full planche push up.
+* [ ] Do a back flip.
+* [ ] Learn Hatha yoga.
+* [x] Get a Master's degree.
+* [ ] Get a PhD degree.
+* [x] [Publish in a top-tier conference]( {{ site.baseurl }}{% link _pages/publications.md %} )
+* [x] [Publish in a journal]({{ site.baseurl }}{% link _publications/2020-10-01-Significance-of-spectral-cues-in-automatic-speech-segmentation-for-Indian-language-speech-synthesizers.md %})
+* [ ] Get a patent.
+* [ ] Start a non-for-profit.
+* [ ] Visit mars. [@elon](https://twitter.com/elonmusk) I am counting on you. Reach me out if you need any help.
+* [ ] Write a non-fiction book.
+* [ ] Make 1 million dollars (or equivalent).
+* [ ] Donate 1 million dollars.
+* [ ] Give a TED/TEDx talk.
+* [ ] Ride a Lambo.
+* [ ] Visit Himalayas.
+* [ ] Go for a vacation with entire family abroad.
+* [ ] Live in a 3 different countries for > 90 days atleast.
+* [ ] Live in Japan for an year.
+* [ ] Scuba.
+* [ ] Sky diving.
+* [ ] Meet [Tim Ferriss](https://en.wikipedia.org/wiki/Tim_Ferriss)
+* [ ] Meet [Dave Asprey](https://en.wikipedia.org/wiki/Dave_Asprey)
+* [ ] Learn to play a musical instrument.
+* [ ] Be in a movie.
+* [ ] Be in a submarine.
+* [ ] Experience Zero gravity.
+* [ ] Eat sushi in Japan.
+* [ ] Climb Great wall, China.
+* [ ] Burning Man, the US.
