@@ -52,7 +52,7 @@ If you are not a close person to me, follow the below guidelines:
 
 "Let's hang out this Saturday" - is not a plan.
 
-If there is an online meet, please send me a calendar invite as I forget things easily.
+If there is an online meet, please send me a calendar invite with detailed agenda, as I forget things easily.
 
 ## Conclusion
 I just want to be systematic and reduce the overhead as much as possible. I am flexible with schedule changes, but pre-planning get rid of unnecessary delays.

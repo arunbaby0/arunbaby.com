@@ -24,4 +24,6 @@ I am an avid reader(will start posting book reviews soon :P). Also, I try to fol
 
 I do listen to podcasts. The list of people I follow can be found [here]({{ site.baseurl }}{% link  _pages/podcasts-I-listen-to.md %} ).
 
+There is a list of 101 things that I would like to accomplish in this life. You can find this ever growing list [here]({{ site.baseurl }}{% link  _pages/List101.md %} ).
+
 I’m always open to interesting conversations and collaboration. Feel free to reach out to me. [Click here to see the contact details.]({{ site.baseurl }}{% link  _pages/contact.md %})

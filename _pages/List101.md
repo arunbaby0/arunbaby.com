@@ -10,35 +10,41 @@ List of things I am planning to do.
 Please let me know if you have any recommendation. 
 
 * [ ] Be kind always.
-* [ ] Get a black belt in any martial art.
+* [ ] Get a black belt in a martial art.
 * [ ] Read 1001 books.
 * [ ] Visit 101 countries(only 4 now).
 * [ ] Learn French.
 * [ ] Swim a mile.
+* [ ] Run a full marathon.
 * [ ] Live to atleast 153. :P
 * [ ] Start a company.
+* [ ] Start a podcast.
 * [ ] Perform a full-split.
 * [ ] Do a full planche push up.
-* [ ] Do a back flip.
+* [ ] Do a backflip.
 * [ ] Learn Hatha yoga.
 * [x] Get a Master's degree.
 * [ ] Get a PhD degree.
 * [x] [Publish in a top-tier conference]( {{ site.baseurl }}{% link _pages/publications.md %} )
 * [x] [Publish in a journal]({{ site.baseurl }}{% link _publications/2020-10-01-Significance-of-spectral-cues-in-automatic-speech-segmentation-for-Indian-language-speech-synthesizers.md %})
 * [ ] Get a patent.
-* [ ] Start a non-for-profit.
-* [ ] Visit mars. [@elon](https://twitter.com/elonmusk) I am counting on you. Reach me out if you need any help.
+* [ ] Start a not-for-profit.
+* [ ] Plant 101 trees.
+* [ ] Spend one complete week in a Jungle.
+* [ ] Visit mars. [@elonmusk](https://twitter.com/elonmusk) I am counting on you. Reach me out if you need any help.
 * [ ] Write a non-fiction book.
 * [ ] Make 1 million dollars (or equivalent).
 * [ ] Donate 1 million dollars.
 * [ ] Give a TED/TEDx talk.
-* [ ] Ride a Lambo.
+* [ ] Ride a Lambo once(no buying).
 * [ ] Visit Himalayas.
 * [ ] Go for a vacation with entire family abroad.
 * [ ] Live in a 3 different countries for > 90 days atleast.
-* [ ] Live in Japan for an year.
+* [ ] Live in Japan for a year.
 * [ ] Scuba.
 * [ ] Sky diving.
+* [ ] Alaska, Alaska.
+* [ ] Base camp, Everest.
 * [ ] Meet [Tim Ferriss](https://en.wikipedia.org/wiki/Tim_Ferriss)
 * [ ] Meet [Dave Asprey](https://en.wikipedia.org/wiki/Dave_Asprey)
 * [ ] Learn to play a musical instrument.
