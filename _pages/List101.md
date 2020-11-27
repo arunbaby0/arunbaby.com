@@ -9,7 +9,7 @@ List of things I am planning to do.
 
 Please let me know if you have any recommendation. 
 
-* [ ] Be kind always.
+* [x] Be kind always.
 * [ ] Get a black belt in a martial art.
 * [ ] Read 1001 books.
 * [ ] Visit 101 countries(only 4 now).
@@ -22,6 +22,8 @@ Please let me know if you have any recommendation.
 * [ ] Perform a full-split.
 * [ ] Do a full planche push up.
 * [ ] Do a backflip.
+* [ ] Teach self-defence to kids.
+* [ ] A BJJ session with a champion.
 * [ ] Learn Hatha yoga.
 * [x] Get a Master's degree.
 * [ ] Get a PhD degree.
