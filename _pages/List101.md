@@ -24,6 +24,7 @@ Please let me know if you have any recommendation.
 * [ ] Do a backflip.
 * [ ] Teach self-defence to kids.
 * [ ] A BJJ session with a champion.
+* [ ] Break a baseball bat with shin kick.
 * [ ] Learn Hatha yoga.
 * [x] Get a Master's degree.
 * [ ] Get a PhD degree.
