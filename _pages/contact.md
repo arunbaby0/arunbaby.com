@@ -20,7 +20,7 @@ If we’ve never met before, the best way to reach me is via email. I check my i
 * If there is a request that can be easily found online, do detailed research before emailing me.
 * I procrastinate! If I haven’t responded after a week, feel free to follow up.
 
-My email id is <em>arunbaby0 </em> [@] our one and only Gmail. :P
+My email id is <em>**arunbaby0** </em> [@] our one and only Gmail. :P
 
 ### Social media
 I don't prefer social media for communication as I don’t spend a lot of time on it. 

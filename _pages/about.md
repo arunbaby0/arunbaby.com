@@ -16,7 +16,8 @@ I am currently with [Zapr Media Labs](https://www.zapr.in/) as a Research Scient
 I had worked at [CISCO](https://www.cisco.com/), [Speech and Music Tech lab(IIT Madras)](https://www.iitm.ac.in/donlab/tts/), [Qbotics Labs](https://qboticslabs.com/) and [HCL technologies](https://www.hcltech.com/).
 
 
-I have a Masters degree in Computer science and Engineering from [Indian Institute of Technology, Madras](https://www.iitm.ac.in/). 
+I have a Masters degree in Computer science and Engineering from [Indian Institute of Technology, Madras](https://www.iitm.ac.in/). I was working on devising [A Unified approach to speech synthesis in Indian Languages]({{ site.baseurl }}{% link  _publications/2019-02-01-A-Unified-Approach-to-Speech-Synthesis-in-Indian-Languages.md %}), supervised by [Prof. Hema A. Murthy](https://www.cse.iitm.ac.in/~hema/).
+
 
 I am active in sports(Volleyball, Squash, Badminton, Table tennis...), and had trained in martial arts ([Hapkido](http://www.ae.iitm.ac.in/~murgi/hapkido/), MMA, Muay Thai..).
 

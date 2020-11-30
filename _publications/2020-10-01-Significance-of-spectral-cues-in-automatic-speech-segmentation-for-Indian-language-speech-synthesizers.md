@@ -42,4 +42,4 @@ keywords = "Speech segmentation, Signal processing cues, Short-term energy, Sub-
 
 ## Code:
 
-[Segmentation codes](https://www.iitm.ac.in/donlab/tts/hybridSeg.php)
+[Segmentation code](https://www.iitm.ac.in/donlab/tts/hybridSeg.php)

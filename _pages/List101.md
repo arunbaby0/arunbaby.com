@@ -17,6 +17,7 @@ Please let me know if you have any recommendation.
 * [ ] Swim a mile.
 * [ ] Run a full marathon.
 * [ ] Live to atleast 153. :P
+* [ ] Upload my brain to cloud and enter Inorganic world after 153.
 * [ ] Start a company.
 * [ ] Start a podcast.
 * [ ] Perform a full-split.
