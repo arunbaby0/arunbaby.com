@@ -1,5 +1,5 @@
 ---
-title: A Hybrid APPROACH TO NEURAL NETWORKS BASED SPEECH SEGMENTATION
+title: A Hybrid approach to neural networks based speech segmentation
 categories:
 - publications
 tags:
