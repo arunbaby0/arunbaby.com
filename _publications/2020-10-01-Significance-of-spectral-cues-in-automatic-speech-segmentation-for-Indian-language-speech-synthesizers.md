@@ -5,7 +5,7 @@ categories:
 tags:
 - publications
 ---
-\[Journal\] [**Speech Communication**](https://www.sciencedirect.com/science/article/abs/pii/S0167639320302375): Volume 123, October 2020, Pages 10-25;
+\[Journal\] [**Speech Communication**](https://www.sciencedirect.com/science/article/abs/pii/S0167639320302375): Volume 123, October 2020, Pages 10-25
 
 ## Authors: 
 **Arun Baby**, Jeena J.Prakash, Aswin Shanmugam Subramanian, Hema A.Murthy
@@ -36,7 +36,7 @@ keywords = "Speech segmentation, Signal processing cues, Short-term energy, Sub-
 ```
 
 ## Links:
-[Speech communication](https://www.sciencedirect.com/science/article/abs/pii/S0167639320302375)
+[Proceedings](https://www.sciencedirect.com/science/article/abs/pii/S0167639320302375)
 
 [IndicTTS](https://www.iitm.ac.in/donlab/tts/publications.php)
 
