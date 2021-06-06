@@ -24,6 +24,8 @@ If we’ve never met before, the best way to reach me is via email. I check my i
 My email id is <em>**arunbaby0** </em> [@] our one and only Gmail. :P
 
 ### Social media
+Social media is a great platform which I don't use often.
+
 I don't prefer social media for communication as I don’t spend a lot of time on it. 
 
 Twitter: I’m not active on Twitter.
@@ -36,13 +38,13 @@ LinkedIn: I read LinkedIn messages but I prefer emails.
 
 Follow me on social media but reach me via email.
 
-### Texting, Watsapp and calling
+### Texting, WhatsApp and calling
 
 I use these for people who are close to me. So expect delays.
 
-Watsapp: You can message me in WhatsApp. My response time is generally between 1 second and 7 days. 
+WhatsApp: You can message me in WhatsApp. My response time is generally between 0.1 second and 7 days. 
 
-My phone is always on silent so I will certainly miss unscheduled calls.
+My phone is always on silent so I will certainly miss unscheduled calls especially if you are not on my contacts list.
 
 ### Scheduling
 I have a full-time job and when not working I do side projects.

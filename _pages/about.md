@@ -11,7 +11,7 @@ I started writing here just to improve my writing skills. There may be many mist
 
 The blog posts that you see here are just random dumping of my thoughts. The ideas you read here may not be original; Mostly borrowed from others shamelessly. Feel free to copy anything from here and keep the idea as your own.
 
-I am currently with [Zapr Media Labs](https://www.zapr.in/) as a Research Scientist(AI and ML), developing an end-to-end solution for [Conversational AI](https://www.google.com/search?q=define%3A+conversational+AI).
+I am currently with [Zapr Media Labs](https://www.zapr.in/) as a Speech Research Scientist(AI and ML), teaching computers to converse naturally with humans (aka end-to-end solutions for [Conversational AI](https://www.google.com/search?q=define%3A+conversational+AI)).
 
 I had worked at [CISCO](https://www.cisco.com/), [Speech and Music Tech lab(IIT Madras)](https://www.iitm.ac.in/donlab/tts/), [Qbotics Labs](https://qboticslabs.com/) and [HCL technologies](https://www.hcltech.com/).
 
