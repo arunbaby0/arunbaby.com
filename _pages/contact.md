@@ -21,6 +21,7 @@ If we’ve never met before, the best way to reach me is via email. I check my i
 * Don’t talk like a press release. Talk like a person. A person is reading this, so why are you talking like that?
 * I procrastinate! If I haven’t responded after a week, feel free to follow up.
 
+#### Email ID
 My email id is <em>**arunbaby0** </em> [@] our one and only Gmail. :P
 
 ### Social media

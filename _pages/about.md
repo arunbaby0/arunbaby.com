@@ -29,4 +29,6 @@ There is a list of 101 things that I would like to accomplish in this life. You 
 
 I’m always open to interesting conversations and collaboration. Feel free to reach out to me. [Click here to see the contact details.]({{ site.baseurl }}{% link  _pages/contact.md %})
 
+If you want to hire me, [Click on this link]({{ site.baseurl }}{% link  _pages/hireme.md %}).
+
 Find my CV [here](/assets/docs/Arun_2021.pdf).
