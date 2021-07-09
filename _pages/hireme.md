@@ -42,7 +42,7 @@ A sample project template can be found [here](/assets/docs/ProjectTemplate.docx)
 Please email to <em>**arun** </em> [@]  qboticslabs [dot] com. Please mention [Consult] in the email title.
 
 # Collaboration:
-If you are interested in collaborating for content creation/would like to discuss some ideas email me. I would appreciate it if you could give me all the details possible in the email itself.
+If you are interested in collaborating for content creation/would like to discuss some ideas, feel free to email me. I would appreciate it if you could give me all the details possible in the email itself.
 
 Please mention [Collab] in the email title. [Click here to see the contact details.]({{ site.baseurl }}{% link  _pages/contact.md %}#email-id)
 
