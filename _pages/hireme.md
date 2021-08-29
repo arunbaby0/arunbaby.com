@@ -21,7 +21,9 @@ If you are interested in hiring me for full-time positions(40 hrs work-week), se
 4. Hiring Manager details(if possible)
 
 
-Please mention [Hire] in the email title. [Click here to see the contact details.]({{ site.baseurl }}{% link  _pages/contact.md %}#email-id)
+<!-- Please mention [Hire] in the email title. [Click here to see the contact details.]({{ site.baseurl }}{% link  _pages/contact.md %}#email-id) -->
+
+Please email to <em>**hireme** </em> [at(@)]  arunbaby [dot(.)] com. Please mention [Hire] in the email title.
 
 
 # Part Time:
@@ -39,12 +41,14 @@ I do work on side projects from time to time. I spend an average of 20 hrs per w
 
 A sample project template can be found [here](/assets/docs/ProjectTemplate.docx).
 
-Please email to <em>**arun** </em> [@]  qboticslabs [dot] com. Please mention [Consult] in the email title.
+Please email to <em>**arun** </em> [@]  qboticslabs [dot] com. Please mention [Project] in the email title.
 
 # Collaboration:
 If you are interested in collaborating for content creation/would like to discuss some ideas, feel free to email me. I would appreciate it if you could give me all the details possible in the email itself.
 
-Please mention [Collab] in the email title. [Click here to see the contact details.]({{ site.baseurl }}{% link  _pages/contact.md %}#email-id)
+<!-- Please mention [Collab] in the email title. [Click here to see the contact details.]({{ site.baseurl }}{% link  _pages/contact.md %}#email-id) -->
+
+Please email to <em>**hireme** </em> [at(@)]  arunbaby [dot(.)] com. Please mention [Collab] in the email title.
 
 
 # Project Guidance/assistance:
@@ -57,4 +61,4 @@ If you are a project associate/college student you can contact me for any guidan
 2. Most of the problems will have a solution somewhere on the internet.
 3. I prefer a single email with all the queries to many back-and-forth emails.
 
-I’m always open to interesting conversations and collaboration. Feel free to reach out to me. [Click here to see the contact details.]({{ site.baseurl }}{% link  _pages/contact.md %})
+I’m always open to interesting conversations and collaboration. Please email to <em>**hireme** </em> [at(@)]  arunbaby [dot(.)] com. Please mention [Assist] in the email title.

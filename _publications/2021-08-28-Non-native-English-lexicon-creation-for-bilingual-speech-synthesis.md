@@ -20,18 +20,21 @@ tags:
 ## Cite:
 
 ```
-@misc{baby2021nonnative,
-      title={Non-native English lexicon creation for bilingual speech synthesis}, 
-      author={Arun Baby and Pranav Jawale and Saranya Vinnaitherthan and Sumukh Badam and Nagaraj Adiga and Sharath Adavanne},
-      year={2021},
-      eprint={2106.10870},
-      archivePrefix={arXiv},
-      primaryClass={eess.AS}
+@inproceedings{baby21_ssw,
+  author={Arun Baby and Pranav Jawale and Saranya Vinnaitherthan and Sumukh Badam and Nagaraj Adiga and Sharath Adavane},
+  title={Non-native English lexicon creation for bilingual speech synthesis},
+  year=2021,
+  booktitle={Proc. 11th ISCA Speech Synthesis Workshop (SSW 11)},
+  pages={154--159},
+  doi={10.21437/SSW.2021-27}
 }
 ```
 
 ## Links:
+[SSW](https://www.isca-speech.org/archive/ssw_2021/baby21_ssw.html)
+
 [arXiv](https://arxiv.org/abs/2106.10870)
+
 
 ## Code:
 NA
