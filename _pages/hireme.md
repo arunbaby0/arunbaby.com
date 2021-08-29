@@ -23,7 +23,7 @@ If you are interested in hiring me for full-time positions(40 hrs work-week), se
 
 <!-- Please mention [Hire] in the email title. [Click here to see the contact details.]({{ site.baseurl }}{% link  _pages/contact.md %}#email-id) -->
 
-Please email to <em>**hireme** </em> [at(@)]  arunbaby [dot(.)] com. Please mention [Hire] in the email title.
+Please email to <em>**hire** </em> [at(@)]  arunbaby [dot(.)] com. Please mention [Hire] in the email title.
 
 
 # Part Time:
@@ -48,7 +48,7 @@ If you are interested in collaborating for content creation/would like to discus
 
 <!-- Please mention [Collab] in the email title. [Click here to see the contact details.]({{ site.baseurl }}{% link  _pages/contact.md %}#email-id) -->
 
-Please email to <em>**hireme** </em> [at(@)]  arunbaby [dot(.)] com. Please mention [Collab] in the email title.
+Please email to <em>**hire** </em> [at(@)]  arunbaby [dot(.)] com. Please mention [Collab] in the email title.
 
 
 # Project Guidance/assistance:
@@ -61,4 +61,4 @@ If you are a project associate/college student you can contact me for any guidan
 2. Most of the problems will have a solution somewhere on the internet.
 3. I prefer a single email with all the queries to many back-and-forth emails.
 
-I’m always open to interesting conversations and collaboration. Please email to <em>**hireme** </em> [at(@)]  arunbaby [dot(.)] com. Please mention [Assist] in the email title.
+I’m always open to interesting conversations and collaboration. Please email to <em>**hire** </em> [at(@)]  arunbaby [dot(.)] com. Please mention [Assist] in the email title.
