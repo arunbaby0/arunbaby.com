@@ -12,7 +12,7 @@ Please let me know if you have any recommendation.
 * [x] Be kind always.
 * [ ] Get a black belt in a martial art.
 * [ ] Read 1001 books.
-* [ ] Visit 101 countries(only 4 now).
+* [ ] Visit 101 countries(only 6 now).
 * [ ] Learn French.
 * [ ] Swim a mile.
 * [ ] Run a full marathon.
