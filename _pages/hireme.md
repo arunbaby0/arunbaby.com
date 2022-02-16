@@ -20,6 +20,8 @@ If you are interested in hiring me for full-time positions(40 hrs work-week), se
 3. A demo video/talk of the product
 4. Hiring Manager details(if possible)
 
+I am open to relocation as long as the company is sponsoring the visa. 
+
 
 <!-- Please mention [Hire] in the email title. [Click here to see the contact details.]({{ site.baseurl }}{% link  _pages/contact.md %}#email-id) -->
 
