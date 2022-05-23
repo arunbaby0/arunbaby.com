@@ -7,7 +7,7 @@ permalink: /hireme/
 
 > "The right solution is expensive. The wrong one costs a fortune." - Shane
 
-Find not so outdated version of my CV [here](/assets/docs/Arun_2021.pdf).
+Find not so outdated version of my CV [here](/assets/docs/Arun_2022.pdf).
 
 # Full Time:
 

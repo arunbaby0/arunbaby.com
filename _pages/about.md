@@ -31,4 +31,4 @@ I’m always open to interesting conversations and collaboration. Feel free to r
 
 If you want to hire me, [Click on this link]({{ site.baseurl }}{% link  _pages/hireme.md %}).
 
-Find my CV [here](/assets/docs/Arun_2021.pdf).
+Find my CV [here](/assets/docs/Arun_2022.pdf).
