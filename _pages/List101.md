@@ -12,7 +12,7 @@ Please let me know if you have any recommendation.
 * [x] Be kind always.
 * [ ] Get a black belt in a martial art.
 * [ ] Read 1001 books.
-* [ ] Visit 101 countries(only 6 now).
+* [ ] Visit 101 countries(6 now).
 * [ ] Learn French.
 * [ ] Swim a mile.
 * [ ] Run a full marathon.
@@ -31,9 +31,9 @@ Please let me know if you have any recommendation.
 * [ ] Get a PhD degree.
 * [x] [Publish in a top-tier conference]( {{ site.baseurl }}{% link _pages/publications.md %} )
 * [x] [Publish in a journal]({{ site.baseurl }}{% link _publications/2020-10-01-Significance-of-spectral-cues-in-automatic-speech-segmentation-for-Indian-language-speech-synthesizers.md %})
-* [ ] Get a patent.
+* [x] Get a patent.
 * [ ] Start a not-for-profit.
-* [ ] Plant 101 trees.
+* [x] Plant 101 trees.
 * [ ] Spend one complete week in a Jungle.
 * [ ] Visit mars. [@elonmusk](https://twitter.com/elonmusk) I am counting on you. Reach me out if you need any help.
 * [ ] Write a non-fiction book.

@@ -11,9 +11,9 @@ I started writing here just to improve my writing skills. There may be many mist
 
 The blog posts that you see here are just random dumping of my thoughts. The ideas you read here may not be original; Mostly borrowed from others shamelessly. Feel free to copy anything from here and keep the idea as your own.
 
-I am currently with [Zapr Media Labs](https://www.zapr.in/) as a Speech Research Scientist(AI and ML), teaching computers to converse naturally with humans (aka end-to-end solutions for [Conversational AI](https://www.google.com/search?q=define%3A+conversational+AI)).
+I am currently with [Samsung Research](https://research.samsung.com/sri-b) (acquihired from [Zapr Media Labs](https://www.zapr.in/)) as a Speech Researcher (Staff Engineer, AI and ML), teaching computers to converse naturally with humans (aka end-to-end solutions for [Conversational AI](https://www.google.com/search?q=define%3A+conversational+AI)).
 
-I had worked at [CISCO](https://www.cisco.com/), [Speech and Music Tech lab(IIT Madras)](https://www.iitm.ac.in/donlab/tts/), [Qbotics Labs](https://qboticslabs.com/) and [HCL technologies](https://www.hcltech.com/).
+I had worked at [Zapr Media Labs](https://www.zapr.in/), [CISCO](https://www.cisco.com/), [Speech and Music Tech lab(IIT Madras)](https://www.iitm.ac.in/donlab/tts/), [Qbotics Labs](https://qboticslabs.com/) and [HCL technologies](https://www.hcltech.com/).
 
 
 I have a Masters degree in Computer science and Engineering from [Indian Institute of Technology, Madras](https://www.iitm.ac.in/). I was working on devising [A Unified approach to speech synthesis in Indian Languages]({{ site.baseurl }}{% link  _publications/2019-02-01-A-Unified-Approach-to-Speech-Synthesis-in-Indian-Languages.md %}), supervised by [Prof. Hema A. Murthy](https://www.cse.iitm.ac.in/~hema/).
