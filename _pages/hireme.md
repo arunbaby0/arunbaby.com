@@ -5,9 +5,9 @@ sitemap: false
 permalink: /hireme/
 ---
 
-> "The right solution is expensive. The wrong one costs a fortune." - Shane
+<!-- > "The right solution is expensive. The wrong one costs a fortune." - Shane -->
 
-Find not so outdated version of my CV [here](/assets/docs/Arun_2022.pdf).
+Please find a not so outdated version of my CV [here](/assets/docs/Arun_2023.pdf).
 
 # Full Time:
 
@@ -20,7 +20,7 @@ If you are interested in hiring me for full-time positions(40 hrs work-week), se
 3. A demo video/talk of the product
 4. Hiring Manager details(if possible)
 
-I am open to relocation as long as the company is sponsoring the visa. 
+I am open to relocation as long as the company is sponsoring the visa. (An H1B sponsership would be highly appreciated.) 
 
 
 <!-- Please mention [Hire] in the email title. [Click here to see the contact details.]({{ site.baseurl }}{% link  _pages/contact.md %}#email-id) -->
