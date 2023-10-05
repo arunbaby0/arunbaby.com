@@ -77,18 +77,6 @@ var store = [{
         "url": "https://www.arunbaby.com/thoughts/most-difficult-three-words/",
         "teaser": null
       },{
-        "title": "Respect",
-        "excerpt":"Respect is a way of treating or thinking about something or someone.   The most common seeking of approval is via respect.   respect can be in any level. time/money/power.   respecting others time will take some effort. but would be great in long term   Do you respect yourself? Do we respect our time.   We all know that time and attention are the scarse resources.   wherever you are be there. that will ensure that you are respecting other person.  ","categories": ["thoughts"],
-        "tags": ["respect"],
-        "url": "https://www.arunbaby.com/thoughts/respect/",
-        "teaser": null
-      },{
-        "title": "Respect",
-        "excerpt":"Respect is a way of treating or thinking about something or someone.   The most common seeking of approval is via respect.   respect can be in any level. time/money/power.   respecting others time will take some effort. but would be great in long term   Do you respect yourself? Do we respect our time.   We all know that time and attention are the scarse resources.   wherever you are be there. that will ensure that you are respecting other person.  ","categories": ["thoughts"],
-        "tags": ["respect"],
-        "url": "https://www.arunbaby.com/thoughts/hitting-like-button/",
-        "teaser": null
-      },{
         "title": "Blizzard Challenge 2015 Submission by DONLab, IIT Madras",
         "excerpt":"[Challenge] Blizzard Challenge 2015   Authors:  Anusha Prakash, Arun Baby, Aswin Shanmugam S, Jeena J Prakash, Nishanthi N L, Raghava Krishnan K, Rupak Vignesh Swaminathan, Hema A Murthy   Abstract:  As part of Blizzard Challenge 2015, text-to-speech synthesisers have been developed for Indian languages. This paper presents the work done by the DONLab team, IIT Madras for the Challenge. With the provided speech data for six Indian languages, Hidden Markov Model based speech synthesis systems and STRAIGHT voices have been built. Various modules involved in system building have been described. While some modules are language-specific, systems have been built mostly languageindependently. Of interest, is the novel hybrid segmentation algorithm to obtain accurate labels at the phone level. Monolingual and multilingual synthesised speech output for the given test sentences have been submitted. In the results of evaluation, “D” is the identifying letter of our systems. Modifications to the training process, post-submission of the synthetic sentences, have also been briefly described.   Cite:  @misc{blizzard2015iitm,   title={Blizzard Challenge 2015 Submission by DONLab, IIT Madras},   author={Anusha Prakash, Arun Baby, Aswin Shanmugam S, Jeena J Prakash, Nishanthi N L, Raghava Krishnan K, Rupak Vignesh Swaminathan and Hema A Murthy},   year={2015},   url={http://www.festvox.org/blizzard/bc2015/DONLab_IITM_bc2015.pdf} }   Links:  PDF   Code:  NA  ","categories": ["publications"],
         "tags": ["publications"],
