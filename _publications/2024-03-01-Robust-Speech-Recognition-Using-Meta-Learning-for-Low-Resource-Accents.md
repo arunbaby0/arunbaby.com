@@ -6,7 +6,7 @@ tags:
 - publications
 ---
 
-\[NCC 2024\] February 2024
+\[Conference\] National Conference on Communications (NCC 2024), February 2024
 
 ## Authors: 
 Dhanya Eledath, **Arun Baby**, Shatrughan Singh

@@ -19,7 +19,7 @@ I had worked at [Zapr Media Labs](https://www.zapr.in/), [CISCO](https://www.cis
 I have a Masters degree in Computer science and Engineering from [Indian Institute of Technology, Madras](https://www.iitm.ac.in/). I was working on devising [A Unified approach to speech synthesis in Indian Languages]({{ site.baseurl }}{% link  _publications/2019-02-01-A-Unified-Approach-to-Speech-Synthesis-in-Indian-Languages.md %}), supervised by [Prof. Hema A. Murthy](https://www.cse.iitm.ac.in/~hema/).
 
 
-I am active in sports(Volleyball, Squash, Badminton, Table tennis...), and had trained in martial arts ([Hapkido](http://www.ae.iitm.ac.in/~murgi/hapkido/), MMA, Muay Thai..).
+I am active in sports(Volleyball, Squash, Badminton, Table tennis...), and had trained in martial arts (Taekwondo, [Hapkido](http://www.ae.iitm.ac.in/~murgi/hapkido/), MMA, Muay Thai..).
 
 I am an avid reader(will start posting book reviews soon :P). Also, I try to follow minimalism as much as possible.
 

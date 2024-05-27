@@ -6,7 +6,7 @@ tags:
 - publications
 ---
 
-\[ICASSP\] April 2024
+\[Conference\] International Conference on Acoustics, Speech, and Signal Processing ( ICASSP), April 2024
 
 ## Authors: 
 **Arun Baby**, George Joseph, Shatrughan Singh
