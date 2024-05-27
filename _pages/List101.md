@@ -10,9 +10,9 @@ List of things I am planning to do.
 Please let me know if you have any recommendation. 
 
 * [x] Be kind always.
-* [ ] Get a black belt in a martial art.
+* [x] Get a black belt in a martial art.
 * [ ] Read 1001 books.
-* [ ] Visit 101 countries(6 now).
+* [ ] Visit 101 countries(12 as of now).
 * [ ] Learn French.
 * [ ] Swim a mile.
 * [ ] Run a full marathon.
@@ -35,7 +35,7 @@ Please let me know if you have any recommendation.
 * [ ] Start a not-for-profit.
 * [x] Plant 101 trees.
 * [ ] Spend one complete week in a Jungle.
-* [ ] Visit mars. [@elonmusk](https://twitter.com/elonmusk) I am counting on you. Reach me out if you need any help.
+* [ ] Visit mars. [@elonmusk](https://x.com/elonmusk) I am counting on you. Reach me out if you need any help.
 * [ ] Write a non-fiction book.
 * [ ] Make 1 million dollars (or equivalent).
 * [ ] Donate 1 million dollars.
