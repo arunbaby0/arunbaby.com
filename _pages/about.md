@@ -15,9 +15,7 @@ I am currently with [Samsung Research](https://research.samsung.com/sri-b) (acqu
 
 I had worked at [Zapr Media Labs](https://www.zapr.in/), [CISCO](https://www.cisco.com/), [Speech and Music Tech lab(IIT Madras)](https://www.iitm.ac.in/donlab/tts/), [Qbotics Labs](https://qboticslabs.com/) and [HCL technologies](https://www.hcltech.com/).
 
-
-I have a Masters degree in Computer science and Engineering from [Indian Institute of Technology, Madras](https://www.iitm.ac.in/). I was working on devising [A Unified approach to speech synthesis in Indian Languages]({{ site.baseurl }}{% link  _publications/2019-02-01-A-Unified-Approach-to-Speech-Synthesis-in-Indian-Languages.md %}), supervised by [Prof. Hema A. Murthy](https://www.cse.iitm.ac.in/~hema/).
-
+I have a Masters degree in Computer science and Engineering from [Indian Institute of Technology, Madras](https://www.iitm.ac.in/). I was working on devising a unified approach to speech synthesis in Indian Languages, supervised by [Prof. Hema A. Murthy](https://www.cse.iitm.ac.in/~hema/).
 
 I am active in sports(Volleyball, Squash, Badminton, Table tennis...), and had trained in martial arts (Taekwondo, [Hapkido](http://www.ae.iitm.ac.in/~murgi/hapkido/), MMA, Muay Thai..).
 
@@ -27,7 +25,7 @@ I do listen to podcasts. The list of people I follow can be found [here]({{ site
 
 There is a list of 101 things that I would like to accomplish in this life. You can find this ever growing list [here]({{ site.baseurl }}{% link  _pages/List101.md %} ).
 
-I’m always open to interesting conversations and collaboration. Feel free to reach out to me. [Click here to see the contact details.]({{ site.baseurl }}{% link  _pages/contact.md %})
+I'm always open to interesting conversations and collaboration. Feel free to reach out to me. [Click here to see the contact details.]({{ site.baseurl }}{% link  _pages/contact.md %})
 
 If you want to hire me, [Click on this link]({{ site.baseurl }}{% link  _pages/hireme.md %}).
 

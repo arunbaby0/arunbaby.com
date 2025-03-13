@@ -30,7 +30,6 @@ Please let me know if you have any recommendation.
 * [x] Get a Master's degree.
 * [ ] Get a PhD degree.
 * [x] [Publish in a top-tier conference]( {{ site.baseurl }}{% link _pages/publications.md %} )
-* [x] [Publish in a journal]({{ site.baseurl }}{% link _publications/2020-10-01-Significance-of-spectral-cues-in-automatic-speech-segmentation-for-Indian-language-speech-synthesizers.md %})
 * [x] Get a patent.
 * [ ] Start a not-for-profit.
 * [x] Plant 101 trees.
