@@ -1,63 +1,86 @@
 ---
-title: "Contact me"
+title: "Get In Touch"
 excerpt: ""
 sitemap: false
 permalink: /contact/
 ---
 
+I'm always interested in meaningful conversations about AI, research, interesting projects, or just good ideas. Here's how to best reach me.
 
-To avoid unnecessary headaches, I try to make clear how I communicate.
+---
 
-## General preferences
-* I’m blunt and prefer straightforward communication.
-* I do not prefer small talks.
+## Email (Preferred)
 
-### Email
-If we’ve never met before, the best way to reach me is via email. I check my inbox frequently and try to respond to every email.
+If we haven't connected before, email is the best way to reach me. I check regularly and respond to every thoughtful message.
 
-#### Tips
-* Short is sweet.
-* If there is a request that can be easily found online, do detailed research before emailing me.
-* Don’t talk like a press release. Talk like a person. A person is reading this, so why are you talking like that?
-* I procrastinate! If I haven’t responded after a week, feel free to follow up.
+**Email:** <em>**arunbaby0**</em> [@] Gmail
 
-#### Email ID
-My email id is <em>**arunbaby0** </em> [@] our one and only Gmail. :P
+### A Few Tips for Better Conversations
 
-### Social media
-Social media is a great platform which I don't use often.
+- **Be direct**: Skip the formalities—get to the point. I appreciate clear, concise communication.
+- **Do your homework**: If your question has an answer on Google or Stack Overflow, try that first. Come to me when you've hit a real wall.
+- **Write like a human**: Don’t talk like a press release. Talk like a person. A person is reading this, so why are you talking like that?
+- **Follow up if needed**: I try to respond within a week, but sometimes things slip through. If I haven't replied, nudge me—I won't mind.
 
-I don't prefer social media for communication as I don’t spend a lot of time on it. 
+---
 
-Twitter: I’m not active on Twitter.
+## Social Media
 
-Facebook: Quit at the beginning of 2019.
+I'm on most platforms but don't spend much time there. Email will always get you a faster response.
 
-Instagram: All I have is an account there. 
+- **LinkedIn**: I check messages occasionally, but email is better
+- **Twitter/X**: Not very active
+- **Instagram**: Mostly dormant
+- **GitHub**: For code, issues, and pull requests
 
-LinkedIn: I read LinkedIn messages but I prefer emails.
+Feel free to follow or connect, but for actual conversations, email works best.
 
-Follow me on social media but reach me via email.
+---
 
-### Texting, WhatsApp and calling
+## Phone & Messaging
 
-I use these for people who are close to me. So expect delays.
+**WhatsApp**: You can reach me here, but response time varies wildly (anywhere from instant to... eventually). Best for quick questions or ongoing conversations.
 
-WhatsApp: You can message me in WhatsApp. My response time is generally between 0.1 second and 7 days. 
+**Calls**: My phone lives on silent mode. If we haven't scheduled a call, there's a good chance I'll miss it. For anything time-sensitive, schedule it in advance or send a message first.
 
-My phone is always on silent so I will certainly miss unscheduled calls especially if you are not on my contacts list.
+---
 
-### Scheduling
-I have a full-time job and when not working I do side projects.
+## Scheduling Meetings
 
-If you are not a close person to me, follow the below guidelines:
+I run a startup and work on side projects, so time is precious. Here's what makes scheduling easier:
 
-"Let's meet at XYZ beach near parking station at 0630 IST" - is a plan. 
+**Good:** "Let's meet at Starbucks on Main Street, Tuesday at 3 PM"  
+**Not helpful:** "Let's catch up sometime next week"
 
-"Let's hang out this Saturday" - is not a plan.
+For video calls, please send a calendar invite with:
+- Clear agenda or topics to discuss
+- Expected duration
+- Meeting link
 
-If there is an online meet, please send me a calendar invite with detailed agenda, as I forget things easily.
+I'm flexible with schedule changes—just prefer having a concrete plan to start with.
 
-## Conclusion
-I just want to be systematic and reduce the overhead as much as possible. I am flexible with schedule changes, but pre-planning get rid of unnecessary delays.
+---
+
+## My Communication Style
+
+A few things to know so we don't have awkward misunderstandings:
+
+- **Direct, not rude**: I value honesty and efficiency over pleasantries. If I'm blunt, it's not personal—just how I communicate.
+- **Substance over small talk**: Let's dive into the interesting stuff quickly.
+- **Async-first**: I prefer written communication (email, docs) with scheduled calls when needed. This lets both of us think clearly.
+- **Response time**: Usually within 48 hours for emails. Faster for urgent, well-defined matters.
+
+---
+
+## What I'm Always Open To
+
+- Interesting technical problems in AI/ML/speech
+- Research collaborations or discussions
+- Project opportunities (see [Work With Me](/work-with-me/))
+- Thoughtful questions from students and early-career engineers
+- Random interesting conversations that don't fit any category
+
+---
+
+The best way to start? Just send an email. Tell me what's on your mind, what you're working on, or what you want to discuss. I'm pretty easy to reach—just make it clear, direct, and human.
 
