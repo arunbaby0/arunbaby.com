@@ -33,6 +33,6 @@ I'm always interested in conversations about AI, speech tech, building intellige
 
 - **Want to work together?** [See how we might collaborate →]({{ site.baseurl }}{% link _pages/work-with-me.md %})
 - **Have questions or ideas?** [Get in touch →]({{ site.baseurl }}{% link  _pages/contact.md %})
-- **Looking for my background?** [Download my CV →](/assets/docs/Arun_2025.pdf)
+- **Looking for my background?** Download my CV: [One-page version](/assets/docs/Arun_2025_1page.pdf) • [Detailed version](/assets/docs/Arun_2025.pdf)
 
 The best conversations start with a simple email. Don't hesitate to reach out.

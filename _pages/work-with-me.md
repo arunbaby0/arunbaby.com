@@ -7,7 +7,7 @@ permalink: /work-with-me/
 
 I help teams build and ship intelligent conversational systems—from research prototypes to production-grade AI products. My expertise spans **Conversational AI**, **Speech Technologies**, and **Machine Learning**, with a focus on making complex ML systems actually work in the real world.
 
-**[View my CV](/assets/docs/Arun_2025.pdf)** for my background and experience.
+**My CV:** [One-page version](/assets/docs/Arun_2025_1page.pdf) (quick overview) • [Detailed version](/assets/docs/Arun_2025.pdf) (full background)
 
 ---
 
@@ -32,7 +32,7 @@ I'm open to full-time opportunities in conversational AI, speech, and ML enginee
 
 For remote positions, I offer a flexible trial structure (especially valuable for US/European companies):
 
-- **1-3 month part-time engagement** (20-30 hours/week)
+- **1-3 month part-time engagement** (10-30 hours/week)
 - Work together on real projects before committing
 - Validate technical fit, communication, and work style
 - Convert to full-time when we're both confident it's the right fit
@@ -41,7 +41,7 @@ This de-risks international hires and ensures we're aligned before making long-t
 
 ### Direct Full-Time
 
-If you need someone to start immediately or prefer a traditional hire, I'm open to that too. For on-site roles, I'm willing to relocate with visa sponsorship (H1-B sponsorship is ideal for US positions).
+If you need someone to start immediately or prefer a traditional hire, I'm open to that too. For on-site roles, I'm willing to relocate.
 
 ### Let's Talk
 
