@@ -827,16 +827,594 @@ print(f"\nBatch is {savings:.1f}% cheaper!")
 
 ---
 
+## Advanced Patterns
+
+### Multi-Tier Caching
+
+Layer multiple caches for optimal performance.
+
+```python
+class MultiTierInferenceSystem:
+    """
+    Multi-tier caching: Memory → Redis → Compute
+    
+    Optimizes for different latency/cost profiles
+    """
+    
+    def __init__(self, model, redis_client):
+        self.model = model
+        self.redis = redis_client
+        
+        # In-memory cache (fastest)
+        self.memory_cache = {}
+        self.memory_cache_size = 10000
+        
+        # Statistics
+        self.stats = {
+            'memory_hits': 0,
+            'redis_hits': 0,
+            'compute': 0,
+            'total_requests': 0
+        }
+    
+    def predict(self, entity_id: str) -> float:
+        """
+        Predict with multi-tier caching
+        
+        Tier 1: In-memory cache (~1ms)
+        Tier 2: Redis cache (~5ms)
+        Tier 3: Compute prediction (~50ms)
+        """
+        self.stats['total_requests'] += 1
+        
+        # Tier 1: Memory cache
+        if entity_id in self.memory_cache:
+            self.stats['memory_hits'] += 1
+            return self.memory_cache[entity_id]
+        
+        # Tier 2: Redis cache
+        redis_key = f"pred:{entity_id}"
+        cached = self.redis.get(redis_key)
+        
+        if cached is not None:
+            self.stats['redis_hits'] += 1
+            prediction = float(cached)
+            
+            # Promote to memory cache
+            self._add_to_memory_cache(entity_id, prediction)
+            
+            return prediction
+        
+        # Tier 3: Compute
+        self.stats['compute'] += 1
+        prediction = self._compute_prediction(entity_id)
+        
+        # Write to both caches
+        self.redis.setex(redis_key, 3600, str(prediction))  # 1 hour TTL
+        self._add_to_memory_cache(entity_id, prediction)
+        
+        return prediction
+    
+    def _add_to_memory_cache(self, entity_id: str, prediction: float):
+        """Add to memory cache with LRU eviction"""
+        if len(self.memory_cache) >= self.memory_cache_size:
+            # Simple eviction: remove first item
+            # In production, use LRU cache
+            self.memory_cache.pop(next(iter(self.memory_cache)))
+        
+        self.memory_cache[entity_id] = prediction
+    
+    def _compute_prediction(self, entity_id: str) -> float:
+        """Compute prediction from model"""
+        # Fetch features
+        features = self._get_features(entity_id)
+        
+        # Predict
+        prediction = self.model.predict([features])[0]
+        
+        return float(prediction)
+    
+    def _get_features(self, entity_id: str):
+        """Fetch features for entity"""
+        # Placeholder
+        return [0.1, 0.2, 0.3, 0.4, 0.5]
+    
+    def get_cache_stats(self) -> dict:
+        """Get cache performance statistics"""
+        total = self.stats['total_requests']
+        
+        if total == 0:
+            return self.stats
+        
+        return {
+            **self.stats,
+            'memory_hit_rate': self.stats['memory_hits'] / total * 100,
+            'redis_hit_rate': self.stats['redis_hits'] / total * 100,
+            'compute_rate': self.stats['compute'] / total * 100,
+            'overall_cache_hit_rate': 
+                (self.stats['memory_hits'] + self.stats['redis_hits']) / total * 100
+        }
+
+# Usage
+system = MultiTierInferenceSystem(model, redis_client)
+
+# Make predictions
+for entity_id in ['user_1', 'user_2', 'user_1', 'user_3', 'user_1']:
+    prediction = system.predict(entity_id)
+    print(f"{entity_id}: {prediction:.4f}")
+
+stats = system.get_cache_stats()
+print(f"\nCache hit rate: {stats['overall_cache_hit_rate']:.1f}%")
+print(f"Memory: {stats['memory_hit_rate']:.1f}%, Redis: {stats['redis_hit_rate']:.1f}%, Compute: {stats['compute_rate']:.1f}%")
+```
+
+### Prediction Warming
+
+Precompute predictions for likely requests.
+
+```python
+class PredictionWarmer:
+    """
+    Warm cache with predictions for likely-to-be-requested entities
+    
+    Use case: Preload predictions for active users
+    """
+    
+    def __init__(self, model, cache):
+        self.model = model
+        self.cache = cache
+    
+    def warm_predictions(
+        self,
+        entity_ids: List[str],
+        batch_size: int = 100
+    ):
+        """
+        Warm cache for list of entities
+        
+        Args:
+            entity_ids: Entities to warm
+            batch_size: Batch size for efficient computation
+        """
+        num_warmed = 0
+        
+        for i in range(0, len(entity_ids), batch_size):
+            batch_ids = entity_ids[i:i+batch_size]
+            
+            # Batch feature fetching
+            features = self._batch_get_features(batch_ids)
+            
+            # Batch prediction
+            predictions = self.model.predict(features)
+            
+            # Write to cache
+            for entity_id, prediction in zip(batch_ids, predictions):
+                self.cache.set(f"pred:{entity_id}", float(prediction), ex=3600)
+                num_warmed += 1
+        
+        return num_warmed
+    
+    def _batch_get_features(self, entity_ids: List[str]):
+        """Fetch features for multiple entities"""
+        # In production: Batch query to feature store
+        return [[0.1] * 5 for _ in entity_ids]
+    
+    def warm_by_activity(
+        self,
+        lookback_hours: int = 24,
+        top_k: int = 10000
+    ):
+        """
+        Warm cache for most active entities
+        
+        Args:
+            lookback_hours: Look back this many hours for activity
+            top_k: Warm top K most active entities
+        """
+        # Query activity logs
+        active_entities = self._get_active_entities(lookback_hours, top_k)
+        
+        # Warm predictions
+        num_warmed = self.warm_predictions(active_entities)
+        
+        return {
+            'num_warmed': num_warmed,
+            'lookback_hours': lookback_hours,
+            'timestamp': time.time()
+        }
+    
+    def _get_active_entities(self, lookback_hours: int, top_k: int) -> List[str]:
+        """Get most active entities from activity logs"""
+        # Placeholder: Query activity database
+        return [f'user_{i}' for i in range(top_k)]
+
+# Usage: Warm cache every hour for active users
+warmer = PredictionWarmer(model, redis_client)
+
+# Warm cache for top 10K active users
+result = warmer.warm_by_activity(lookback_hours=1, top_k=10000)
+print(f"Warmed {result['num_warmed']} predictions")
+```
+
+### Conditional Batch Updates
+
+Update batch predictions conditionally based on staleness/changes.
+
+```python
+class ConditionalBatchUpdater:
+    """
+    Update batch predictions only when necessary
+    
+    Strategies:
+    - Update only if features changed significantly
+    - Update only if prediction is stale
+    - Update only for active entities
+    """
+    
+    def __init__(self, model, cache, feature_store):
+        self.model = model
+        self.cache = cache
+        self.feature_store = feature_store
+    
+    def update_if_changed(
+        self,
+        entity_ids: List[str],
+        change_threshold: float = 0.1
+    ) -> dict:
+        """
+        Update predictions only if features changed significantly
+        
+        Args:
+            entity_ids: Entities to check
+            change_threshold: Update if features changed by this much
+        
+        Returns:
+            Statistics on updates
+        """
+        num_checked = 0
+        num_updated = 0
+        
+        for entity_id in entity_ids:
+            num_checked += 1
+            
+            # Get current features
+            current_features = self.feature_store.get(f"features:{entity_id}")
+            
+            # Get cached features (when prediction was made)
+            cached_features = self.feature_store.get(f"cached_features:{entity_id}")
+            
+            # Check if features changed significantly
+            if self._features_changed(cached_features, current_features, change_threshold):
+                # Recompute prediction
+                prediction = self.model.predict([current_features])[0]
+                
+                # Update cache
+                self.cache.set(f"pred:{entity_id}", float(prediction), ex=3600)
+                self.feature_store.set(f"cached_features:{entity_id}", current_features)
+                
+                num_updated += 1
+        
+        return {
+            'num_checked': num_checked,
+            'num_updated': num_updated,
+            'update_rate': num_updated / num_checked * 100 if num_checked > 0 else 0
+        }
+    
+    def _features_changed(
+        self,
+        old_features,
+        new_features,
+        threshold: float
+    ) -> bool:
+        """Check if features changed significantly"""
+        if old_features is None or new_features is None:
+            return True
+        
+        # Compute L2 distance
+        diff = np.linalg.norm(np.array(new_features) - np.array(old_features))
+        
+        return diff > threshold
+```
+
+### Graceful Degradation
+
+Handle failures gracefully with fallback strategies.
+
+```python
+class GracefulDegradationSystem:
+    """
+    Inference system with graceful degradation
+    
+    Fallback chain:
+    1. Try real-time prediction
+    2. Fallback to batch prediction (if available)
+    3. Fallback to default/fallback prediction
+    """
+    
+    def __init__(
+        self,
+        realtime_service,
+        batch_cache,
+        default_prediction: float = 0.5
+    ):
+        self.realtime = realtime_service
+        self.batch_cache = batch_cache
+        self.default_prediction = default_prediction
+        
+        # Monitoring
+        self.degradation_stats = {
+            'realtime': 0,
+            'batch_fallback': 0,
+            'default_fallback': 0
+        }
+    
+    def predict_with_fallback(
+        self,
+        entity_id: str,
+        max_latency_ms: int = 100
+    ) -> dict:
+        """
+        Predict with fallback strategies
+        
+        Args:
+            entity_id: Entity to predict for
+            max_latency_ms: Maximum acceptable latency
+        
+        Returns:
+            {
+                'prediction': float,
+                'source': str,
+                'latency_ms': float
+            }
+        """
+        start = time.perf_counter()
+        
+        # Try real-time prediction
+        try:
+            prediction = self.realtime.predict(entity_id)
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            
+            if elapsed_ms <= max_latency_ms:
+                self.degradation_stats['realtime'] += 1
+                return {
+                    'prediction': prediction,
+                    'source': 'realtime',
+                    'latency_ms': elapsed_ms
+                }
+        except Exception as e:
+            print(f"Real-time prediction failed: {e}")
+        
+        # Fallback 1: Batch cache
+        try:
+            batch_pred = self.batch_cache.get(f"pred:{entity_id}")
+            
+            if batch_pred is not None:
+                elapsed_ms = (time.perf_counter() - start) * 1000
+                self.degradation_stats['batch_fallback'] += 1
+                
+                return {
+                    'prediction': float(batch_pred),
+                    'source': 'batch_fallback',
+                    'latency_ms': elapsed_ms,
+                    'warning': 'Using stale batch prediction'
+                }
+        except Exception as e:
+            print(f"Batch fallback failed: {e}")
+        
+        # Fallback 2: Default prediction
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        self.degradation_stats['default_fallback'] += 1
+        
+        return {
+            'prediction': self.default_prediction,
+            'source': 'default_fallback',
+            'latency_ms': elapsed_ms,
+            'warning': 'Using default prediction - service degraded'
+        }
+    
+    def get_health_status(self) -> dict:
+        """Get system health metrics"""
+        total = sum(self.degradation_stats.values())
+        
+        if total == 0:
+            return {'status': 'no_traffic'}
+        
+        realtime_rate = self.degradation_stats['realtime'] / total * 100
+        
+        if realtime_rate > 95:
+            status = 'healthy'
+        elif realtime_rate > 80:
+            status = 'degraded'
+        else:
+            status = 'critical'
+        
+        return {
+            'status': status,
+            'realtime_rate': realtime_rate,
+            'batch_fallback_rate': self.degradation_stats['batch_fallback'] / total * 100,
+            'default_fallback_rate': self.degradation_stats['default_fallback'] / total * 100,
+            'total_requests': total
+        }
+```
+
+---
+
+## Real-World Case Studies
+
+### Netflix: Hybrid Recommendations
+
+**Challenge:** Personalized recommendations for 200M+ users
+
+**Solution:**
+- **Batch:** Precompute top-N recommendations for all users daily
+- **Real-time:** Rerank based on current session context
+- **Result:** < 100ms latency with personalized results
+
+**Architecture:**
+```
+Daily Batch Job (Spark)
+  ↓
+Precompute Top 1000 movies per user
+  ↓
+Store in Cassandra
+  ↓
+Real-time API fetches top 1000 + reranks based on:
+  - Current time of day
+  - Device type
+  - Recent viewing history
+  ↓
+Return Top 20 to UI
+```
+
+### Uber: Real-Time ETA Prediction
+
+**Challenge:** Predict arrival time for millions of rides
+
+**Solution:**
+- **Real-time only:** ETA must reflect current traffic
+- **Strategy:** Fast model (< 50ms inference)
+- **Features:** Current location, traffic data, historical patterns
+
+**Why not batch:**
+- Traffic changes rapidly
+- Each ride is unique
+- Requires current GPS coordinates
+
+### LinkedIn: People You May Know
+
+**Challenge:** Suggest connections for 800M+ users
+
+**Solution:**
+- **Batch:** Graph algorithms compute connection candidates (weekly)
+- **Real-time:** Scoring based on user activity
+- **Result:** Balance compute cost with personalization
+
+**Hybrid Strategy:**
+```
+Weekly Batch:
+  - Graph traversal (2nd, 3rd degree connections)
+  - Identify ~1000 candidates per user
+  - Store in candidate DB
+
+Real-time (on page load):
+  - Fetch candidates from DB
+  - Score based on:
+    * Recent profile views
+    * Shared groups/companies
+    * Mutual connections
+  - Return top 10
+```
+
+---
+
+## Monitoring & Observability
+
+### Key Metrics to Track
+
+```python
+class InferenceMetrics:
+    """
+    Track comprehensive inference metrics
+    """
+    
+    def __init__(self):
+        self.metrics = {
+            'latency_p50': [],
+            'latency_p95': [],
+            'latency_p99': [],
+            'cache_hit_rate': [],
+            'error_rate': [],
+            'throughput': [],
+            'cost_per_prediction': []
+        }
+    
+    def record_prediction(
+        self,
+        latency_ms: float,
+        cache_hit: bool,
+        error: bool,
+        cost: float
+    ):
+        """Record single prediction metrics"""
+        pass  # Implementation details
+    
+    def get_dashboard_metrics(self) -> dict:
+        """
+        Get metrics for monitoring dashboard
+        
+        Returns:
+            Key metrics for alerting
+        """
+        return {
+            'latency_p50_ms': np.median(self.metrics['latency_p50']),
+            'latency_p99_ms': np.percentile(self.metrics['latency_p99'], 99),
+            'cache_hit_rate': np.mean(self.metrics['cache_hit_rate']) * 100,
+            'error_rate': np.mean(self.metrics['error_rate']) * 100,
+            'qps': np.mean(self.metrics['throughput']),
+            'cost_per_1k_predictions': np.mean(self.metrics['cost_per_prediction']) * 1000
+        }
+```
+
+### SLA Definition
+
+```python
+class InferenceSLA:
+    """
+    Define and monitor SLA for inference service
+    """
+    
+    def __init__(self):
+        self.sla_targets = {
+            'p99_latency_ms': 100,
+            'availability': 99.9,
+            'error_rate': 0.1  # 0.1%
+        }
+    
+    def check_sla_compliance(self, metrics: dict) -> dict:
+        """
+        Check if current metrics meet SLA
+        
+        Returns:
+            SLA compliance report
+        """
+        compliance = {}
+        
+        for metric, target in self.sla_targets.items():
+            actual = metrics.get(metric, 0)
+            
+            if metric == 'error_rate':
+                # Lower is better
+                meets_sla = actual <= target
+            else:
+                # Check if within range (e.g., latency or availability)
+                meets_sla = actual <= target if 'latency' in metric else actual >= target
+            
+            compliance[metric] = {
+                'target': target,
+                'actual': actual,
+                'meets_sla': meets_sla,
+                'margin': target - actual if 'latency' in metric or 'error' in metric else actual - target
+            }
+        
+        return compliance
+```
+
+---
+
 ## Key Takeaways
 
 ✅ **Batch inference** precomputes predictions, cheaper, higher latency  
 ✅ **Real-time inference** computes on-demand, expensive, lower latency  
 ✅ **Hybrid approach** combines both for optimal cost/performance  
+✅ **Multi-tier caching** (memory → Redis → compute) optimizes latency  
+✅ **Prediction warming** preloads cache for likely requests  
+✅ **Conditional updates** reduce unnecessary recomputation  
+✅ **Graceful degradation** ensures reliability via fallback strategies  
 ✅ **Latency vs cost** is the fundamental trade-off  
 ✅ **Feature freshness** often determines the choice  
 ✅ **Most systems** use hybrid: batch for bulk, real-time for edge cases  
 ✅ **Cache hit rate** critical metric for hybrid systems  
-✅ **Graceful degradation** via fallbacks ensures reliability  
+✅ **SLA monitoring** ensures service quality  
 
 ---
 

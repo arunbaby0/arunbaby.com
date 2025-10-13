@@ -656,6 +656,434 @@ print(f"Expected throughput gain: {result['total_gain']:.2f}")
 
 ---
 
+## Advanced Applications in ML Systems
+
+### Time-Series Analysis
+
+Kadane's algorithm for finding anomalies in time-series data.
+
+```python
+class TimeSeriesAnomalyDetector:
+    """
+    Detect anomalous periods in time-series
+    
+    Uses modified Kadane's to find sustained deviations
+    """
+    
+    def __init__(self, baseline_mean=0.0):
+        self.baseline = baseline_mean
+    
+    def detect_anomalous_period(
+        self,
+        values: List[float],
+        threshold: float = 2.0
+    ) -> Dict:
+        """
+        Find period with maximum cumulative deviation from baseline
+        
+        Args:
+            values: Time-series values
+            threshold: Deviation threshold to report
+        
+        Returns:
+            {
+                'max_deviation': float,
+                'start_idx': int,
+                'end_idx': int,
+                'is_anomalous': bool
+            }
+        """
+        # Convert to deviations from baseline
+        deviations = [v - self.baseline for v in values]
+        
+        # Apply Kadane's
+        current_sum = deviations[0]
+        max_sum = deviations[0]
+        start = 0
+        end = 0
+        temp_start = 0
+        
+        for i in range(1, len(deviations)):
+            if deviations[i] > current_sum + deviations[i]:
+                current_sum = deviations[i]
+                temp_start = i
+            else:
+                current_sum += deviations[i]
+            
+            if current_sum > max_sum:
+                max_sum = current_sum
+                start = temp_start
+                end = i
+        
+        return {
+            'max_deviation': max_sum,
+            'start_idx': start,
+            'end_idx': end,
+            'duration': end - start + 1,
+            'is_anomalous': max_sum > threshold,
+            'values_in_period': values[start:end+1]
+        }
+
+# Usage: Detect CPU spike periods
+cpu_usage = [45, 50, 48, 75, 80, 85, 90, 78, 52, 48, 50]
+detector = TimeSeriesAnomalyDetector(baseline_mean=50)
+
+result = detector.detect_anomalous_period(cpu_usage, threshold=100)
+if result['is_anomalous']:
+    print(f"Anomaly detected: indices {result['start_idx']}-{result['end_idx']}")
+    print(f"Max deviation: {result['max_deviation']:.1f}")
+    print(f"Duration: {result['duration']} time steps")
+```
+
+### Feature Importance over Time
+
+Track feature contribution windows in ML models.
+
+```python
+class FeatureContributionTracker:
+    """
+    Track windows where features contribute most to predictions
+    
+    Use Kadane's pattern to find impactful periods
+    """
+    
+    def __init__(self):
+        self.feature_impacts = {}
+    
+    def track_feature_impact(
+        self,
+        feature_name: str,
+        daily_impacts: List[float]
+    ) -> Dict:
+        """
+        Find period where feature had maximum cumulative impact
+        
+        Args:
+            feature_name: Name of feature
+            daily_impacts: Daily SHAP values or feature importance
+        
+        Returns:
+            Analysis of most impactful period
+        """
+        if not daily_impacts:
+            return None
+        
+        # Kadane's algorithm
+        current_sum = daily_impacts[0]
+        max_sum = daily_impacts[0]
+        start = 0
+        end = 0
+        temp_start = 0
+        
+        for i in range(1, len(daily_impacts)):
+            if daily_impacts[i] > current_sum + daily_impacts[i]:
+                current_sum = daily_impacts[i]
+                temp_start = i
+            else:
+                current_sum += daily_impacts[i]
+            
+            if current_sum > max_sum:
+                max_sum = current_sum
+                start = temp_start
+                end = i
+        
+        # Also track minimum impact period (negative contribution)
+        current_min = daily_impacts[0]
+        min_sum = daily_impacts[0]
+        min_start = 0
+        min_end = 0
+        temp_min_start = 0
+        
+        for i in range(1, len(daily_impacts)):
+            if daily_impacts[i] < current_min + daily_impacts[i]:
+                current_min = daily_impacts[i]
+                temp_min_start = i
+            else:
+                current_min += daily_impacts[i]
+            
+            if current_min < min_sum:
+                min_sum = current_min
+                min_start = temp_min_start
+                min_end = i
+        
+        return {
+            'feature_name': feature_name,
+            'max_positive_impact': {
+                'cumulative': max_sum,
+                'start_day': start,
+                'end_day': end,
+                'duration': end - start + 1,
+                'avg_daily': max_sum / (end - start + 1)
+            },
+            'max_negative_impact': {
+                'cumulative': min_sum,
+                'start_day': min_start,
+                'end_day': min_end,
+                'duration': min_end - min_start + 1,
+                'avg_daily': min_sum / (min_end - min_start + 1)
+            }
+        }
+
+# Usage
+tracker = FeatureContributionTracker()
+
+# SHAP values for a feature over 30 days
+shap_values = [0.1, 0.2, 0.15, -0.05, 0.3, 0.25, 0.2, -0.1, -0.15, 0.05,
+               0.1, 0.12, 0.18, 0.22, 0.19, -0.08, 0.1, 0.15, 0.2, 0.25,
+               0.3, 0.28, -0.12, -0.2, 0.05, 0.1, 0.15, 0.12, 0.08, 0.1]
+
+analysis = tracker.track_feature_impact('user_engagement_score', shap_values)
+
+print(f"Feature: {analysis['feature_name']}")
+print(f"Most impactful period: days {analysis['max_positive_impact']['start_day']}"
+      f" to {analysis['max_positive_impact']['end_day']}")
+print(f"Cumulative impact: {analysis['max_positive_impact']['cumulative']:.3f}")
+```
+
+### Sliding Window with Constraints
+
+Maximum subarray with length constraints.
+
+```python
+def maxSubArrayWithConstraints(
+    nums: List[int],
+    min_length: int = 1,
+    max_length: int = None
+) -> tuple[int, int, int]:
+    """
+    Find maximum subarray with length constraints
+    
+    Args:
+        nums: Input array
+        min_length: Minimum subarray length
+        max_length: Maximum subarray length (None = no limit)
+    
+    Returns:
+        (max_sum, start_idx, end_idx)
+    """
+    n = len(nums)
+    if n < min_length:
+        return (float('-inf'), -1, -1)
+    
+    max_sum = float('-inf')
+    best_start = 0
+    best_end = 0
+    
+    # For each starting position
+    for start in range(n):
+        current_sum = 0
+        
+        # Try different ending positions
+        for end in range(start, n):
+            current_sum += nums[end]
+            length = end - start + 1
+            
+            # Check constraints
+            if max_length and length > max_length:
+                break
+            
+            if length >= min_length and current_sum > max_sum:
+                max_sum = current_sum
+                best_start = start
+                best_end = end
+    
+    return (max_sum, best_start, best_end)
+
+# Usage: Find best 3-5 day trading window
+prices_changes = [5, -2, 8, -3, 4, -1, 7, -2, 3]
+max_profit, start, end = maxSubArrayWithConstraints(
+    prices_changes,
+    min_length=3,
+    max_length=5
+)
+
+print(f"Best window: days {start} to {end}")
+print(f"Total gain: {max_profit}")
+print(f"Window length: {end - start + 1} days")
+```
+
+### Divide and Conquer Solution
+
+O(n log n) approach for understanding recursion.
+
+```python
+def maxSubArrayDivideConquer(nums: List[int]) -> int:
+    """
+    Divide and conquer approach
+    
+    Time: O(n log n)
+    Space: O(log n) for recursion stack
+    
+    Educational value: Shows different algorithmic paradigm
+    """
+    
+    def maxCrossingSum(nums, left, mid, right):
+        """
+        Find max sum crossing the midpoint
+        """
+        # Left side of mid
+        left_sum = float('-inf')
+        current_sum = 0
+        for i in range(mid, left - 1, -1):
+            current_sum += nums[i]
+            left_sum = max(left_sum, current_sum)
+        
+        # Right side of mid
+        right_sum = float('-inf')
+        current_sum = 0
+        for i in range(mid + 1, right + 1):
+            current_sum += nums[i]
+            right_sum = max(right_sum, current_sum)
+        
+        return left_sum + right_sum
+    
+    def maxSubArrayRecursive(nums, left, right):
+        """
+        Recursive divide and conquer
+        """
+        # Base case
+        if left == right:
+            return nums[left]
+        
+        # Divide
+        mid = (left + right) // 2
+        
+        # Conquer: three cases
+        # 1. Max subarray in left half
+        left_max = maxSubArrayRecursive(nums, left, mid)
+        
+        # 2. Max subarray in right half
+        right_max = maxSubArrayRecursive(nums, mid + 1, right)
+        
+        # 3. Max subarray crossing midpoint
+        cross_max = maxCrossingSum(nums, left, mid, right)
+        
+        # Return maximum of three
+        return max(left_max, right_max, cross_max)
+    
+    return maxSubArrayRecursive(nums, 0, len(nums) - 1)
+
+# Example
+nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4]
+print(f"Max subarray sum: {maxSubArrayDivideConquer(nums)}")  # 6
+```
+
+---
+
+## Interview Tips & Common Patterns
+
+### Recognizing Kadane's Pattern
+
+**When to use Kadane's:**
+- "Maximum/minimum subarray sum"
+- "Best consecutive period"
+- "Optimal window with contiguous elements"
+- "Track running optimum with reset option"
+
+**Key characteristics:**
+- Contiguous subsequence required
+- Looking for optimum (max/min)
+- Can "start fresh" at any point
+- Single pass possible
+
+### Follow-up Questions to Expect
+
+**Q1: What if array can be empty?**
+```python
+def maxSubArrayEmptyAllowed(nums: List[int]) -> int:
+    """
+    Allow empty subarray (return 0 if all negative)
+    """
+    if not nums:
+        return 0
+    
+    max_sum = 0  # Empty subarray
+    current_sum = 0
+    
+    for num in nums:
+        current_sum = max(0, current_sum + num)
+        max_sum = max(max_sum, current_sum)
+    
+    return max_sum
+```
+
+**Q2: Return all maximum subarrays (in case of ties)?**
+```python
+def findAllMaxSubarrays(nums: List[int]) -> List[tuple[int, int]]:
+    """
+    Find all subarrays with maximum sum
+    """
+    # First, find max sum
+    max_sum = maxSubArray(nums)
+    
+    # Find all subarrays with this sum
+    result = []
+    n = len(nums)
+    
+    for i in range(n):
+        current_sum = 0
+        for j in range(i, n):
+            current_sum += nums[j]
+            if current_sum == max_sum:
+                result.append((i, j))
+    
+    return result
+
+# Example
+nums = [1, 2, -3, 4]
+print(findAllMaxSubarrays(nums))  # [(0, 1), (3, 3)] - both sum to 4
+```
+
+**Q3: 2D version (maximum sum rectangle)?**
+```python
+def maxSumRectangle(matrix: List[List[int]]) -> int:
+    """
+    Find maximum sum rectangle in 2D matrix
+    
+    Strategy: Fix left and right columns, apply Kadane's on rows
+    
+    Time: O(n² * m) where matrix is n x m
+    """
+    if not matrix or not matrix[0]:
+        return 0
+    
+    rows = len(matrix)
+    cols = len(matrix[0])
+    max_sum = float('-inf')
+    
+    # Try all pairs of columns
+    for left in range(cols):
+        # Temp array to store row sums
+        temp = [0] * rows
+        
+        for right in range(left, cols):
+            # Add current column to temp
+            for row in range(rows):
+                temp[row] += matrix[row][right]
+            
+            # Apply Kadane's on temp (1D problem)
+            current_sum = temp[0]
+            current_max = temp[0]
+            
+            for i in range(1, rows):
+                current_sum = max(temp[i], current_sum + temp[i])
+                current_max = max(current_max, current_sum)
+            
+            max_sum = max(max_sum, current_max)
+    
+    return max_sum
+
+# Example
+matrix = [
+    [1, 2, -1, -4],
+    [-8, -3, 4, 2],
+    [3, 8, 10, -8]
+]
+print(maxSumRectangle(matrix))  # 19 (rectangle from (0,1) to (2,2))
+```
+
+---
+
 ## Production Considerations
 
 ### Handling Real-World Data
@@ -690,6 +1118,49 @@ class RobustMaxSubArray:
             max_sum = max(max_sum, current_sum)
         
         return round(max_sum, 6)  # Round for float precision
+    
+    def max_subarray_with_metadata(self, nums: List[float]) -> Dict:
+        """
+        Return comprehensive analysis
+        """
+        if not nums:
+            return {
+                'max_sum': 0,
+                'start': -1,
+                'end': -1,
+                'length': 0,
+                'percentage_of_total': 0
+            }
+        
+        current_sum = nums[0]
+        max_sum = nums[0]
+        start = 0
+        end = 0
+        temp_start = 0
+        
+        for i in range(1, len(nums)):
+            if nums[i] > current_sum + nums[i]:
+                current_sum = nums[i]
+                temp_start = i
+            else:
+                current_sum += nums[i]
+            
+            if current_sum > max_sum:
+                max_sum = current_sum
+                start = temp_start
+                end = i
+        
+        total_sum = sum(nums)
+        
+        return {
+            'max_sum': max_sum,
+            'start': start,
+            'end': end,
+            'length': end - start + 1,
+            'percentage_of_array': (end - start + 1) / len(nums) * 100,
+            'percentage_of_total': (max_sum / total_sum * 100) if total_sum != 0 else 0,
+            'subarray': nums[start:end+1]
+        }
 ```
 
 ### Performance Monitoring
@@ -715,10 +1186,96 @@ class PerformanceTracker:
             throughput = size / (end - start) / 1_000_000  # M elements/sec
             
             print(f"n={size:>7}: {elapsed_ms:>8.3f}ms, {throughput:>6.2f} M/s")
+    
+    def compare_approaches(self, nums):
+        """Compare different approaches"""
+        approaches = {
+            "Kadane's O(n)": maxSubArray,
+            "Brute Force O(n²)": maxSubArrayBruteForce,
+            "Divide & Conquer O(n log n)": maxSubArrayDivideConquer,
+        }
+        
+        print(f"Array size: {len(nums)}")
+        print("-" * 50)
+        
+        for name, func in approaches.items():
+            start = time.perf_counter()
+            result = func(nums)
+            end = time.perf_counter()
+            
+            elapsed_ms = (end - start) * 1000
+            print(f"{name:30} {elapsed_ms:>8.3f}ms  Result: {result}")
 
 # Run benchmark
 tracker = PerformanceTracker()
 tracker.benchmark([100, 1_000, 10_000, 100_000, 1_000_000])
+
+# Compare on smaller array
+small_array = [(-1) ** i * (i % 10) for i in range(1000)]
+tracker.compare_approaches(small_array)
+```
+
+### Monitoring in Production
+
+```python
+class MaxSubarrayMonitor:
+    """
+    Monitor Kadane's algorithm in production
+    
+    Track performance, edge cases, and anomalies
+    """
+    
+    def __init__(self):
+        self.execution_count = 0
+        self.total_time = 0
+        self.edge_case_count = 0
+        self.all_negative_count = 0
+        self.all_positive_count = 0
+    
+    def monitored_max_subarray(self, nums: List[int]) -> Dict:
+        """
+        Wrap max_subarray with monitoring
+        """
+        self.execution_count += 1
+        
+        start = time.perf_counter()
+        
+        # Edge case detection
+        if not nums:
+            self.edge_case_count += 1
+            return {'result': 0, 'edge_case': 'empty_array'}
+        
+        if all(x < 0 for x in nums):
+            self.all_negative_count += 1
+        
+        if all(x > 0 for x in nums):
+            self.all_positive_count += 1
+        
+        # Execute algorithm
+        result = maxSubArray(nums)
+        
+        end = time.perf_counter()
+        self.total_time += (end - start)
+        
+        return {
+            'result': result,
+            'execution_time_ms': (end - start) * 1000,
+            'array_size': len(nums)
+        }
+    
+    def get_metrics(self) -> Dict:
+        """Get performance metrics"""
+        if self.execution_count == 0:
+            return {}
+        
+        return {
+            'total_executions': self.execution_count,
+            'avg_time_ms': (self.total_time / self.execution_count) * 1000,
+            'edge_cases': self.edge_case_count,
+            'all_negative_arrays': self.all_negative_count,
+            'all_positive_arrays': self.all_positive_count,
+            'edge_case_rate': self.edge_case_count / self.execution_count * 100
+        }
 ```
 
 ---
