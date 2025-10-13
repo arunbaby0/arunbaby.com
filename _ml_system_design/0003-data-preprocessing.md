@@ -219,6 +219,13 @@ class SchemaValidator:
         
         return errors
     
+    def validate_record(self, record: Dict[str, Any]) -> Dict[str, List[str]]:
+        """
+        Validate a single record (dict) against schema
+        """
+        df = pd.DataFrame([record])
+        return self.validate(df)
+    
     def _validate_field(self, series: pd.Series, schema: FieldSchema) -> List[str]:
         """Validate a single field"""
         errors = []
@@ -238,6 +245,15 @@ class SchemaValidator:
         elif schema.dtype == DataType.STRING:
             if not pd.api.types.is_string_dtype(series.dropna()):
                 errors.append("Expected string type")
+        elif schema.dtype == DataType.BOOLEAN:
+            if not pd.api.types.is_bool_dtype(series.dropna()):
+                errors.append("Expected boolean type")
+        elif schema.dtype == DataType.TIMESTAMP:
+            if not pd.api.types.is_datetime64_any_dtype(series.dropna()):
+                try:
+                    pd.to_datetime(series.dropna())
+                except Exception:
+                    errors.append("Expected timestamp/datetime type")
         
         # Check value ranges
         if schema.min_value is not None:
@@ -325,7 +341,8 @@ class StatisticalValidator:
             expected_mean = baseline['mean']
             expected_std = baseline['std']
             
-            z_score = abs(current_mean - expected_mean) / expected_std
+            denom = expected_std if expected_std > 1e-9 else 1e-9
+            z_score = abs(current_mean - expected_mean) / denom
             
             if z_score > threshold_sigma:
                 warnings.append(
@@ -715,8 +732,10 @@ class ValidateSchemaFn(beam.DoFn):
     """Beam DoFn for schema validation"""
     
     def process(self, element):
-        validator = SchemaValidator(get_schema())
-        errors = validator.validate_single(element)
+        # Lazily initialize schema validator (avoid re-creating per element)
+        if not hasattr(self, 'validator'):
+            self.validator = SchemaValidator(get_schema())
+        errors = self.validator.validate_record(element)
         
         if errors:
             # Log to dead letter queue

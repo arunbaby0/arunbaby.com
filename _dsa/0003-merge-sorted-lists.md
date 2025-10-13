@@ -816,9 +816,9 @@ class FeatureStoreMerger:
           
         Output: Combined feature vector per user
         """
-        merged = []
-        i, j = 0, 0
-        
+    merged = []
+    i, j = 0, 0
+    
         while i < len(store_a_features) and j < len(store_b_features):
             feat_a = store_a_features[i]
             feat_b = store_b_features[j]
@@ -838,8 +838,8 @@ class FeatureStoreMerger:
                     'user_id': feat_a.user_id,
                     **feat_a.features
                 })
-                i += 1
-            else:
+            i += 1
+        else:
                 # User only in store B
                 merged.append({
                     'user_id': feat_b.user_id,
@@ -847,16 +847,24 @@ class FeatureStoreMerger:
                 })
                 j += 1
         
-        # Append remaining
+        # Append remaining (preserve unified schema)
         while i < len(store_a_features):
-            merged.append(store_a_features[i])
+            feat_a = store_a_features[i]
+            merged.append({
+                'user_id': feat_a.user_id,
+                **feat_a.features
+            })
             i += 1
         
         while j < len(store_b_features):
-            merged.append(store_b_features[j])
+            feat_b = store_b_features[j]
+            merged.append({
+                'user_id': feat_b.user_id,
+                **feat_b.features
+            })
             j += 1
-        
-        return merged
+    
+    return merged
 ```
 
 ### 3. Model Ensemble Prediction Merging
@@ -894,9 +902,9 @@ class EnsemblePredictionMerger:
         
         Assumes: Both lists sorted by confidence (descending)
         """
-        merged = []
-        i, j = 0, 0
-        
+    merged = []
+    i, j = 0, 0
+    
         while len(merged) < k and (i < len(model1_preds) or j < len(model2_preds)):
             if i >= len(model1_preds):
                 merged.append(model2_preds[j])
@@ -906,13 +914,13 @@ class EnsemblePredictionMerger:
                 i += 1
             else:
                 # Both have predictions - pick higher confidence
-                if model1_preds[i].confidence >= model2_preds[j].confidence:
-                    merged.append(model1_preds[i])
-                    i += 1
-                else:
-                    merged.append(model2_preds[j])
-                    j += 1
-        
+        if model1_preds[i].confidence >= model2_preds[j].confidence:
+            merged.append(model1_preds[i])
+            i += 1
+        else:
+            merged.append(model2_preds[j])
+            j += 1
+    
         return merged[:k]
     
     def merge_with_vote(
@@ -1248,7 +1256,7 @@ class TestMergeTwoLists(unittest.TestCase):
         """Standard case: interleaved values"""
         l1 = list_to_linkedlist([1, 2, 4])
         l2 = list_to_linkedlist([1, 3, 4])
-        merged = mergeTwoLists(l1, l2)
+    merged = mergeTwoLists(l1, l2)
         self.assertEqual(linkedlist_to_list(merged), [1, 1, 2, 3, 4, 4])
     
     def test_both_empty(self):
@@ -1526,7 +1534,7 @@ def mergeWithoutDummy(l1, l2):
 ✅ **Dummy node** eliminates special-case handling and simplifies code  
 ✅ **In-place merge** achieves O(1) space by rewiring pointers  
 ✅ **Pattern extends** to merging K lists, data streams, and distributed systems  
-✅ **Foundation of merge sort** and external sorting algorithms  
+✅ **Foundation of merge sort** and external sorting algorithms
 ✅ **Critical for ML pipelines** merging sorted shards, features, predictions
 
 ---
