@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-10-13T22:42:39+05:30">
+  <meta property="article:published_time" content="2025-10-13T23:03:17+05:30">
 
 
 
@@ -313,7 +313,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Batch vs Real-Time Inference">
     <meta itemprop="description" content="How to choose between batch and real-time inference, the architectural decision that shapes your entire ML serving infrastructure.">
-    <meta itemprop="datePublished" content="2025-10-13T22:42:39+05:30">
+    <meta itemprop="datePublished" content="2025-10-13T23:03:17+05:30">
     
 
     <div class="page__inner-wrap">
@@ -337,7 +337,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          13 minute read
+          23 minute read
         
       </span>
     
@@ -352,7 +352,7 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#introduction">Introduction</a></li><li><a href="#problem-definition">Problem Definition</a><ul><li><a href="#functional-requirements">Functional Requirements</a></li><li><a href="#non-functional-requirements">Non-Functional Requirements</a></li></ul></li><li><a href="#batch-inference">Batch Inference</a><ul><li><a href="#architecture">Architecture</a></li><li><a href="#implementation">Implementation</a></li><li><a href="#spark-based-batch-inference">Spark-based Batch Inference</a></li></ul></li><li><a href="#real-time-inference">Real-Time Inference</a><ul><li><a href="#architecture-1">Architecture</a></li><li><a href="#implementation-1">Implementation</a></li><li><a href="#tensorflow-serving">TensorFlow Serving</a></li></ul></li><li><a href="#hybrid-approach">Hybrid Approach</a><ul><li><a href="#architecture-2">Architecture</a></li><li><a href="#implementation-2">Implementation</a></li></ul></li><li><a href="#decision-framework">Decision Framework</a><ul><li><a href="#use-batch-inference-when">Use Batch Inference When:</a></li><li><a href="#use-real-time-inference-when">Use Real-Time Inference When:</a></li><li><a href="#use-hybrid-when">Use Hybrid When:</a></li></ul></li><li><a href="#cost-comparison">Cost Comparison</a></li><li><a href="#key-takeaways">Key Takeaways</a></li></ul>
+              <ul class="toc__menu"><li><a href="#introduction">Introduction</a></li><li><a href="#problem-definition">Problem Definition</a><ul><li><a href="#functional-requirements">Functional Requirements</a></li><li><a href="#non-functional-requirements">Non-Functional Requirements</a></li></ul></li><li><a href="#batch-inference">Batch Inference</a><ul><li><a href="#architecture">Architecture</a></li><li><a href="#implementation">Implementation</a></li><li><a href="#spark-based-batch-inference">Spark-based Batch Inference</a></li></ul></li><li><a href="#real-time-inference">Real-Time Inference</a><ul><li><a href="#architecture-1">Architecture</a></li><li><a href="#implementation-1">Implementation</a></li><li><a href="#tensorflow-serving">TensorFlow Serving</a></li></ul></li><li><a href="#hybrid-approach">Hybrid Approach</a><ul><li><a href="#architecture-2">Architecture</a></li><li><a href="#implementation-2">Implementation</a></li></ul></li><li><a href="#decision-framework">Decision Framework</a><ul><li><a href="#use-batch-inference-when">Use Batch Inference When:</a></li><li><a href="#use-real-time-inference-when">Use Real-Time Inference When:</a></li><li><a href="#use-hybrid-when">Use Hybrid When:</a></li></ul></li><li><a href="#cost-comparison">Cost Comparison</a></li><li><a href="#advanced-patterns">Advanced Patterns</a><ul><li><a href="#multi-tier-caching">Multi-Tier Caching</a></li><li><a href="#prediction-warming">Prediction Warming</a></li><li><a href="#conditional-batch-updates">Conditional Batch Updates</a></li><li><a href="#graceful-degradation">Graceful Degradation</a></li></ul></li><li><a href="#real-world-case-studies">Real-World Case Studies</a><ul><li><a href="#netflix-hybrid-recommendations">Netflix: Hybrid Recommendations</a></li><li><a href="#uber-real-time-eta-prediction">Uber: Real-Time ETA Prediction</a></li><li><a href="#linkedin-people-you-may-know">LinkedIn: People You May Know</a></li></ul></li><li><a href="#monitoring--observability">Monitoring &amp; Observability</a><ul><li><a href="#key-metrics-to-track">Key Metrics to Track</a></li><li><a href="#sla-definition">SLA Definition</a></li></ul></li><li><a href="#key-takeaways">Key Takeaways</a></li></ul>
             </nav>
           </aside>
         
@@ -1188,16 +1188,594 @@ Flow:
 
 <hr />
 
+<h2 id="advanced-patterns">Advanced Patterns</h2>
+
+<h3 id="multi-tier-caching">Multi-Tier Caching</h3>
+
+<p>Layer multiple caches for optimal performance.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">MultiTierInferenceSystem</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Multi-tier caching: Memory → Redis → Compute
+    
+    Optimizes for different latency/cost profiles
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">redis_client</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">redis</span> <span class="o">=</span> <span class="n">redis_client</span>
+        
+        <span class="c1"># In-memory cache (fastest)
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">memory_cache</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">memory_cache_size</span> <span class="o">=</span> <span class="mi">10000</span>
+        
+        <span class="c1"># Statistics
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">stats</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">memory_hits</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">redis_hits</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">compute</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">total_requests</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Predict with multi-tier caching
+        
+        Tier 1: In-memory cache (~1ms)
+        Tier 2: Redis cache (~5ms)
+        Tier 3: Compute prediction (~50ms)
+        </span><span class="sh">"""</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">total_requests</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="c1"># Tier 1: Memory cache
+</span>        <span class="k">if</span> <span class="n">entity_id</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">memory_cache</span><span class="p">:</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">memory_hits</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">memory_cache</span><span class="p">[</span><span class="n">entity_id</span><span class="p">]</span>
+        
+        <span class="c1"># Tier 2: Redis cache
+</span>        <span class="n">redis_key</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">pred:</span><span class="si">{</span><span class="n">entity_id</span><span class="si">}</span><span class="sh">"</span>
+        <span class="n">cached</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">redis</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">redis_key</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">cached</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">redis_hits</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">prediction</span> <span class="o">=</span> <span class="nf">float</span><span class="p">(</span><span class="n">cached</span><span class="p">)</span>
+            
+            <span class="c1"># Promote to memory cache
+</span>            <span class="n">self</span><span class="p">.</span><span class="nf">_add_to_memory_cache</span><span class="p">(</span><span class="n">entity_id</span><span class="p">,</span> <span class="n">prediction</span><span class="p">)</span>
+            
+            <span class="k">return</span> <span class="n">prediction</span>
+        
+        <span class="c1"># Tier 3: Compute
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">compute</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">prediction</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_compute_prediction</span><span class="p">(</span><span class="n">entity_id</span><span class="p">)</span>
+        
+        <span class="c1"># Write to both caches
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">redis</span><span class="p">.</span><span class="nf">setex</span><span class="p">(</span><span class="n">redis_key</span><span class="p">,</span> <span class="mi">3600</span><span class="p">,</span> <span class="nf">str</span><span class="p">(</span><span class="n">prediction</span><span class="p">))</span>  <span class="c1"># 1 hour TTL
+</span>        <span class="n">self</span><span class="p">.</span><span class="nf">_add_to_memory_cache</span><span class="p">(</span><span class="n">entity_id</span><span class="p">,</span> <span class="n">prediction</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">prediction</span>
+    
+    <span class="k">def</span> <span class="nf">_add_to_memory_cache</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prediction</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Add to memory cache with LRU eviction</span><span class="sh">"""</span>
+        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">memory_cache</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">memory_cache_size</span><span class="p">:</span>
+            <span class="c1"># Simple eviction: remove first item
+</span>            <span class="c1"># In production, use LRU cache
+</span>            <span class="n">self</span><span class="p">.</span><span class="n">memory_cache</span><span class="p">.</span><span class="nf">pop</span><span class="p">(</span><span class="nf">next</span><span class="p">(</span><span class="nf">iter</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">memory_cache</span><span class="p">)))</span>
+        
+        <span class="n">self</span><span class="p">.</span><span class="n">memory_cache</span><span class="p">[</span><span class="n">entity_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">prediction</span>
+    
+    <span class="k">def</span> <span class="nf">_compute_prediction</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">Compute prediction from model</span><span class="sh">"""</span>
+        <span class="c1"># Fetch features
+</span>        <span class="n">features</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_get_features</span><span class="p">(</span><span class="n">entity_id</span><span class="p">)</span>
+        
+        <span class="c1"># Predict
+</span>        <span class="n">prediction</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">([</span><span class="n">features</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="nf">float</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">_get_features</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Fetch features for entity</span><span class="sh">"""</span>
+        <span class="c1"># Placeholder
+</span>        <span class="k">return</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">get_cache_stats</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">Get cache performance statistics</span><span class="sh">"""</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">total_requests</span><span class="sh">'</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="n">total</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="o">**</span><span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">memory_hit_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">memory_hits</span><span class="sh">'</span><span class="p">]</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">redis_hit_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">redis_hits</span><span class="sh">'</span><span class="p">]</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">compute_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">compute</span><span class="sh">'</span><span class="p">]</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">overall_cache_hit_rate</span><span class="sh">'</span><span class="p">:</span> 
+                <span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">memory_hits</span><span class="sh">'</span><span class="p">]</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">redis_hits</span><span class="sh">'</span><span class="p">])</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="mi">100</span>
+        <span class="p">}</span>
+
+<span class="c1"># Usage
+</span><span class="n">system</span> <span class="o">=</span> <span class="nc">MultiTierInferenceSystem</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">redis_client</span><span class="p">)</span>
+
+<span class="c1"># Make predictions
+</span><span class="k">for</span> <span class="n">entity_id</span> <span class="ow">in</span> <span class="p">[</span><span class="sh">'</span><span class="s">user_1</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">user_2</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">user_1</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">user_3</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">user_1</span><span class="sh">'</span><span class="p">]:</span>
+    <span class="n">prediction</span> <span class="o">=</span> <span class="n">system</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">entity_id</span><span class="p">)</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">entity_id</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">prediction</span><span class="si">:</span><span class="p">.</span><span class="mi">4</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="n">stats</span> <span class="o">=</span> <span class="n">system</span><span class="p">.</span><span class="nf">get_cache_stats</span><span class="p">()</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">Cache hit rate: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">overall_cache_hit_rate</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">%</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Memory: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">memory_hit_rate</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">%, Redis: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">redis_hit_rate</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">%, Compute: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">compute_rate</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">%</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="prediction-warming">Prediction Warming</h3>
+
+<p>Precompute predictions for likely requests.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">PredictionWarmer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Warm cache with predictions for likely-to-be-requested entities
+    
+    Use case: Preload predictions for active users
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">cache</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">cache</span> <span class="o">=</span> <span class="n">cache</span>
+    
+    <span class="k">def</span> <span class="nf">warm_predictions</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">entity_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Warm cache for list of entities
+        
+        Args:
+            entity_ids: Entities to warm
+            batch_size: Batch size for efficient computation
+        </span><span class="sh">"""</span>
+        <span class="n">num_warmed</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">entity_ids</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+            <span class="n">batch_ids</span> <span class="o">=</span> <span class="n">entity_ids</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">batch_size</span><span class="p">]</span>
+            
+            <span class="c1"># Batch feature fetching
+</span>            <span class="n">features</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_batch_get_features</span><span class="p">(</span><span class="n">batch_ids</span><span class="p">)</span>
+            
+            <span class="c1"># Batch prediction
+</span>            <span class="n">predictions</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+            
+            <span class="c1"># Write to cache
+</span>            <span class="k">for</span> <span class="n">entity_id</span><span class="p">,</span> <span class="n">prediction</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">batch_ids</span><span class="p">,</span> <span class="n">predictions</span><span class="p">):</span>
+                <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">pred:</span><span class="si">{</span><span class="n">entity_id</span><span class="si">}</span><span class="sh">"</span><span class="p">,</span> <span class="nf">float</span><span class="p">(</span><span class="n">prediction</span><span class="p">),</span> <span class="n">ex</span><span class="o">=</span><span class="mi">3600</span><span class="p">)</span>
+                <span class="n">num_warmed</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="k">return</span> <span class="n">num_warmed</span>
+    
+    <span class="k">def</span> <span class="nf">_batch_get_features</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">entity_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+        <span class="sh">"""</span><span class="s">Fetch features for multiple entities</span><span class="sh">"""</span>
+        <span class="c1"># In production: Batch query to feature store
+</span>        <span class="k">return</span> <span class="p">[[</span><span class="mf">0.1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">5</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">entity_ids</span><span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">warm_by_activity</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">lookback_hours</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span><span class="p">,</span>
+        <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10000</span>
+    <span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Warm cache for most active entities
+        
+        Args:
+            lookback_hours: Look back this many hours for activity
+            top_k: Warm top K most active entities
+        </span><span class="sh">"""</span>
+        <span class="c1"># Query activity logs
+</span>        <span class="n">active_entities</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_get_active_entities</span><span class="p">(</span><span class="n">lookback_hours</span><span class="p">,</span> <span class="n">top_k</span><span class="p">)</span>
+        
+        <span class="c1"># Warm predictions
+</span>        <span class="n">num_warmed</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">warm_predictions</span><span class="p">(</span><span class="n">active_entities</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">num_warmed</span><span class="sh">'</span><span class="p">:</span> <span class="n">num_warmed</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">lookback_hours</span><span class="sh">'</span><span class="p">:</span> <span class="n">lookback_hours</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">timestamp</span><span class="sh">'</span><span class="p">:</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">_get_active_entities</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">lookback_hours</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sh">"""</span><span class="s">Get most active entities from activity logs</span><span class="sh">"""</span>
+        <span class="c1"># Placeholder: Query activity database
+</span>        <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="sh">'</span><span class="s">user_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="sh">'</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">top_k</span><span class="p">)]</span>
+
+<span class="c1"># Usage: Warm cache every hour for active users
+</span><span class="n">warmer</span> <span class="o">=</span> <span class="nc">PredictionWarmer</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">redis_client</span><span class="p">)</span>
+
+<span class="c1"># Warm cache for top 10K active users
+</span><span class="n">result</span> <span class="o">=</span> <span class="n">warmer</span><span class="p">.</span><span class="nf">warm_by_activity</span><span class="p">(</span><span class="n">lookback_hours</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Warmed </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">num_warmed</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s"> predictions</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="conditional-batch-updates">Conditional Batch Updates</h3>
+
+<p>Update batch predictions conditionally based on staleness/changes.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ConditionalBatchUpdater</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Update batch predictions only when necessary
+    
+    Strategies:
+    - Update only if features changed significantly
+    - Update only if prediction is stale
+    - Update only for active entities
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">cache</span><span class="p">,</span> <span class="n">feature_store</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">cache</span> <span class="o">=</span> <span class="n">cache</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">feature_store</span> <span class="o">=</span> <span class="n">feature_store</span>
+    
+    <span class="k">def</span> <span class="nf">update_if_changed</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">entity_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">change_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Update predictions only if features changed significantly
+        
+        Args:
+            entity_ids: Entities to check
+            change_threshold: Update if features changed by this much
+        
+        Returns:
+            Statistics on updates
+        </span><span class="sh">"""</span>
+        <span class="n">num_checked</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">num_updated</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="k">for</span> <span class="n">entity_id</span> <span class="ow">in</span> <span class="n">entity_ids</span><span class="p">:</span>
+            <span class="n">num_checked</span> <span class="o">+=</span> <span class="mi">1</span>
+            
+            <span class="c1"># Get current features
+</span>            <span class="n">current_features</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">feature_store</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">features:</span><span class="si">{</span><span class="n">entity_id</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+            
+            <span class="c1"># Get cached features (when prediction was made)
+</span>            <span class="n">cached_features</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">feature_store</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">cached_features:</span><span class="si">{</span><span class="n">entity_id</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+            
+            <span class="c1"># Check if features changed significantly
+</span>            <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="nf">_features_changed</span><span class="p">(</span><span class="n">cached_features</span><span class="p">,</span> <span class="n">current_features</span><span class="p">,</span> <span class="n">change_threshold</span><span class="p">):</span>
+                <span class="c1"># Recompute prediction
+</span>                <span class="n">prediction</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">([</span><span class="n">current_features</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+                
+                <span class="c1"># Update cache
+</span>                <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">pred:</span><span class="si">{</span><span class="n">entity_id</span><span class="si">}</span><span class="sh">"</span><span class="p">,</span> <span class="nf">float</span><span class="p">(</span><span class="n">prediction</span><span class="p">),</span> <span class="n">ex</span><span class="o">=</span><span class="mi">3600</span><span class="p">)</span>
+                <span class="n">self</span><span class="p">.</span><span class="n">feature_store</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">cached_features:</span><span class="si">{</span><span class="n">entity_id</span><span class="si">}</span><span class="sh">"</span><span class="p">,</span> <span class="n">current_features</span><span class="p">)</span>
+                
+                <span class="n">num_updated</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">num_checked</span><span class="sh">'</span><span class="p">:</span> <span class="n">num_checked</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">num_updated</span><span class="sh">'</span><span class="p">:</span> <span class="n">num_updated</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">update_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">num_updated</span> <span class="o">/</span> <span class="n">num_checked</span> <span class="o">*</span> <span class="mi">100</span> <span class="k">if</span> <span class="n">num_checked</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">_features_changed</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">old_features</span><span class="p">,</span>
+        <span class="n">new_features</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">Check if features changed significantly</span><span class="sh">"""</span>
+        <span class="k">if</span> <span class="n">old_features</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">new_features</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        
+        <span class="c1"># Compute L2 distance
+</span>        <span class="n">diff</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">new_features</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">old_features</span><span class="p">))</span>
+        
+        <span class="k">return</span> <span class="n">diff</span> <span class="o">&gt;</span> <span class="n">threshold</span>
+</code></pre></div></div>
+
+<h3 id="graceful-degradation">Graceful Degradation</h3>
+
+<p>Handle failures gracefully with fallback strategies.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">GracefulDegradationSystem</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Inference system with graceful degradation
+    
+    Fallback chain:
+    1. Try real-time prediction
+    2. Fallback to batch prediction (if available)
+    3. Fallback to default/fallback prediction
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">realtime_service</span><span class="p">,</span>
+        <span class="n">batch_cache</span><span class="p">,</span>
+        <span class="n">default_prediction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span>
+    <span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">realtime</span> <span class="o">=</span> <span class="n">realtime_service</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">batch_cache</span> <span class="o">=</span> <span class="n">batch_cache</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">default_prediction</span> <span class="o">=</span> <span class="n">default_prediction</span>
+        
+        <span class="c1"># Monitoring
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">degradation_stats</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">realtime</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">batch_fallback</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">default_fallback</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">predict_with_fallback</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">entity_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">max_latency_ms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Predict with fallback strategies
+        
+        Args:
+            entity_id: Entity to predict for
+            max_latency_ms: Maximum acceptable latency
+        
+        Returns:
+            {
+                </span><span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="s">: float,
+                </span><span class="sh">'</span><span class="s">source</span><span class="sh">'</span><span class="s">: str,
+                </span><span class="sh">'</span><span class="s">latency_ms</span><span class="sh">'</span><span class="s">: float
+            }
+        </span><span class="sh">"""</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">perf_counter</span><span class="p">()</span>
+        
+        <span class="c1"># Try real-time prediction
+</span>        <span class="k">try</span><span class="p">:</span>
+            <span class="n">prediction</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">realtime</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">entity_id</span><span class="p">)</span>
+            <span class="n">elapsed_ms</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="p">.</span><span class="nf">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+            
+            <span class="k">if</span> <span class="n">elapsed_ms</span> <span class="o">&lt;=</span> <span class="n">max_latency_ms</span><span class="p">:</span>
+                <span class="n">self</span><span class="p">.</span><span class="n">degradation_stats</span><span class="p">[</span><span class="sh">'</span><span class="s">realtime</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">return</span> <span class="p">{</span>
+                    <span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="p">:</span> <span class="n">prediction</span><span class="p">,</span>
+                    <span class="sh">'</span><span class="s">source</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">realtime</span><span class="sh">'</span><span class="p">,</span>
+                    <span class="sh">'</span><span class="s">latency_ms</span><span class="sh">'</span><span class="p">:</span> <span class="n">elapsed_ms</span>
+                <span class="p">}</span>
+        <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Real-time prediction failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="c1"># Fallback 1: Batch cache
+</span>        <span class="k">try</span><span class="p">:</span>
+            <span class="n">batch_pred</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">batch_cache</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">pred:</span><span class="si">{</span><span class="n">entity_id</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">batch_pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">elapsed_ms</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="p">.</span><span class="nf">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+                <span class="n">self</span><span class="p">.</span><span class="n">degradation_stats</span><span class="p">[</span><span class="sh">'</span><span class="s">batch_fallback</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                
+                <span class="k">return</span> <span class="p">{</span>
+                    <span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="p">:</span> <span class="nf">float</span><span class="p">(</span><span class="n">batch_pred</span><span class="p">),</span>
+                    <span class="sh">'</span><span class="s">source</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">batch_fallback</span><span class="sh">'</span><span class="p">,</span>
+                    <span class="sh">'</span><span class="s">latency_ms</span><span class="sh">'</span><span class="p">:</span> <span class="n">elapsed_ms</span><span class="p">,</span>
+                    <span class="sh">'</span><span class="s">warning</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">Using stale batch prediction</span><span class="sh">'</span>
+                <span class="p">}</span>
+        <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Batch fallback failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="c1"># Fallback 2: Default prediction
+</span>        <span class="n">elapsed_ms</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="p">.</span><span class="nf">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">degradation_stats</span><span class="p">[</span><span class="sh">'</span><span class="s">default_fallback</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">default_prediction</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">source</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">default_fallback</span><span class="sh">'</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">latency_ms</span><span class="sh">'</span><span class="p">:</span> <span class="n">elapsed_ms</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">warning</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">Using default prediction - service degraded</span><span class="sh">'</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">get_health_status</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">Get system health metrics</span><span class="sh">"""</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">degradation_stats</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
+        
+        <span class="k">if</span> <span class="n">total</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="sh">'</span><span class="s">status</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">no_traffic</span><span class="sh">'</span><span class="p">}</span>
+        
+        <span class="n">realtime_rate</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">degradation_stats</span><span class="p">[</span><span class="sh">'</span><span class="s">realtime</span><span class="sh">'</span><span class="p">]</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="mi">100</span>
+        
+        <span class="k">if</span> <span class="n">realtime_rate</span> <span class="o">&gt;</span> <span class="mi">95</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="sh">'</span><span class="s">healthy</span><span class="sh">'</span>
+        <span class="k">elif</span> <span class="n">realtime_rate</span> <span class="o">&gt;</span> <span class="mi">80</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="sh">'</span><span class="s">degraded</span><span class="sh">'</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="sh">'</span><span class="s">critical</span><span class="sh">'</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">status</span><span class="sh">'</span><span class="p">:</span> <span class="n">status</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">realtime_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">realtime_rate</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">batch_fallback_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">degradation_stats</span><span class="p">[</span><span class="sh">'</span><span class="s">batch_fallback</span><span class="sh">'</span><span class="p">]</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">default_fallback_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">degradation_stats</span><span class="p">[</span><span class="sh">'</span><span class="s">default_fallback</span><span class="sh">'</span><span class="p">]</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">total_requests</span><span class="sh">'</span><span class="p">:</span> <span class="n">total</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="real-world-case-studies">Real-World Case Studies</h2>
+
+<h3 id="netflix-hybrid-recommendations">Netflix: Hybrid Recommendations</h3>
+
+<p><strong>Challenge:</strong> Personalized recommendations for 200M+ users</p>
+
+<p><strong>Solution:</strong></p>
+<ul>
+  <li><strong>Batch:</strong> Precompute top-N recommendations for all users daily</li>
+  <li><strong>Real-time:</strong> Rerank based on current session context</li>
+  <li><strong>Result:</strong> &lt; 100ms latency with personalized results</li>
+</ul>
+
+<p><strong>Architecture:</strong></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Daily Batch Job (Spark)
+  ↓
+Precompute Top 1000 movies per user
+  ↓
+Store in Cassandra
+  ↓
+Real-time API fetches top 1000 + reranks based on:
+  - Current time of day
+  - Device type
+  - Recent viewing history
+  ↓
+Return Top 20 to UI
+</code></pre></div></div>
+
+<h3 id="uber-real-time-eta-prediction">Uber: Real-Time ETA Prediction</h3>
+
+<p><strong>Challenge:</strong> Predict arrival time for millions of rides</p>
+
+<p><strong>Solution:</strong></p>
+<ul>
+  <li><strong>Real-time only:</strong> ETA must reflect current traffic</li>
+  <li><strong>Strategy:</strong> Fast model (&lt; 50ms inference)</li>
+  <li><strong>Features:</strong> Current location, traffic data, historical patterns</li>
+</ul>
+
+<p><strong>Why not batch:</strong></p>
+<ul>
+  <li>Traffic changes rapidly</li>
+  <li>Each ride is unique</li>
+  <li>Requires current GPS coordinates</li>
+</ul>
+
+<h3 id="linkedin-people-you-may-know">LinkedIn: People You May Know</h3>
+
+<p><strong>Challenge:</strong> Suggest connections for 800M+ users</p>
+
+<p><strong>Solution:</strong></p>
+<ul>
+  <li><strong>Batch:</strong> Graph algorithms compute connection candidates (weekly)</li>
+  <li><strong>Real-time:</strong> Scoring based on user activity</li>
+  <li><strong>Result:</strong> Balance compute cost with personalization</li>
+</ul>
+
+<p><strong>Hybrid Strategy:</strong></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Weekly Batch:
+  - Graph traversal (2nd, 3rd degree connections)
+  - Identify ~1000 candidates per user
+  - Store in candidate DB
+
+Real-time (on page load):
+  - Fetch candidates from DB
+  - Score based on:
+    * Recent profile views
+    * Shared groups/companies
+    * Mutual connections
+  - Return top 10
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="monitoring--observability">Monitoring &amp; Observability</h2>
+
+<h3 id="key-metrics-to-track">Key Metrics to Track</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">InferenceMetrics</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Track comprehensive inference metrics
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">latency_p50</span><span class="sh">'</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="sh">'</span><span class="s">latency_p95</span><span class="sh">'</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="sh">'</span><span class="s">latency_p99</span><span class="sh">'</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="sh">'</span><span class="s">cache_hit_rate</span><span class="sh">'</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="sh">'</span><span class="s">error_rate</span><span class="sh">'</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="sh">'</span><span class="s">throughput</span><span class="sh">'</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="sh">'</span><span class="s">cost_per_prediction</span><span class="sh">'</span><span class="p">:</span> <span class="p">[]</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">record_prediction</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">latency_ms</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">cache_hit</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">error</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">cost</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Record single prediction metrics</span><span class="sh">"""</span>
+        <span class="k">pass</span>  <span class="c1"># Implementation details
+</span>    
+    <span class="k">def</span> <span class="nf">get_dashboard_metrics</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Get metrics for monitoring dashboard
+        
+        Returns:
+            Key metrics for alerting
+        </span><span class="sh">"""</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">latency_p50_ms</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">median</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">latency_p50</span><span class="sh">'</span><span class="p">]),</span>
+            <span class="sh">'</span><span class="s">latency_p99_ms</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">percentile</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">latency_p99</span><span class="sh">'</span><span class="p">],</span> <span class="mi">99</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">cache_hit_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">cache_hit_rate</span><span class="sh">'</span><span class="p">])</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">error_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">error_rate</span><span class="sh">'</span><span class="p">])</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">qps</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">throughput</span><span class="sh">'</span><span class="p">]),</span>
+            <span class="sh">'</span><span class="s">cost_per_1k_predictions</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">cost_per_prediction</span><span class="sh">'</span><span class="p">])</span> <span class="o">*</span> <span class="mi">1000</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="sla-definition">SLA Definition</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">InferenceSLA</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Define and monitor SLA for inference service
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">sla_targets</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">p99_latency_ms</span><span class="sh">'</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">availability</span><span class="sh">'</span><span class="p">:</span> <span class="mf">99.9</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">error_rate</span><span class="sh">'</span><span class="p">:</span> <span class="mf">0.1</span>  <span class="c1"># 0.1%
+</span>        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">check_sla_compliance</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Check if current metrics meet SLA
+        
+        Returns:
+            SLA compliance report
+        </span><span class="sh">"""</span>
+        <span class="n">compliance</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="k">for</span> <span class="n">metric</span><span class="p">,</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">sla_targets</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
+            <span class="n">actual</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">metric</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="sh">'</span><span class="s">error_rate</span><span class="sh">'</span><span class="p">:</span>
+                <span class="c1"># Lower is better
+</span>                <span class="n">meets_sla</span> <span class="o">=</span> <span class="n">actual</span> <span class="o">&lt;=</span> <span class="n">target</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Check if within range (e.g., latency or availability)
+</span>                <span class="n">meets_sla</span> <span class="o">=</span> <span class="n">actual</span> <span class="o">&lt;=</span> <span class="n">target</span> <span class="k">if</span> <span class="sh">'</span><span class="s">latency</span><span class="sh">'</span> <span class="ow">in</span> <span class="n">metric</span> <span class="k">else</span> <span class="n">actual</span> <span class="o">&gt;=</span> <span class="n">target</span>
+            
+            <span class="n">compliance</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="sh">'</span><span class="s">target</span><span class="sh">'</span><span class="p">:</span> <span class="n">target</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">actual</span><span class="sh">'</span><span class="p">:</span> <span class="n">actual</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">meets_sla</span><span class="sh">'</span><span class="p">:</span> <span class="n">meets_sla</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">margin</span><span class="sh">'</span><span class="p">:</span> <span class="n">target</span> <span class="o">-</span> <span class="n">actual</span> <span class="k">if</span> <span class="sh">'</span><span class="s">latency</span><span class="sh">'</span> <span class="ow">in</span> <span class="n">metric</span> <span class="ow">or</span> <span class="sh">'</span><span class="s">error</span><span class="sh">'</span> <span class="ow">in</span> <span class="n">metric</span> <span class="k">else</span> <span class="n">actual</span> <span class="o">-</span> <span class="n">target</span>
+            <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="n">compliance</span>
+</code></pre></div></div>
+
+<hr />
+
 <h2 id="key-takeaways">Key Takeaways</h2>
 
 <p>✅ <strong>Batch inference</strong> precomputes predictions, cheaper, higher latency<br />
 ✅ <strong>Real-time inference</strong> computes on-demand, expensive, lower latency<br />
 ✅ <strong>Hybrid approach</strong> combines both for optimal cost/performance<br />
+✅ <strong>Multi-tier caching</strong> (memory → Redis → compute) optimizes latency<br />
+✅ <strong>Prediction warming</strong> preloads cache for likely requests<br />
+✅ <strong>Conditional updates</strong> reduce unnecessary recomputation<br />
+✅ <strong>Graceful degradation</strong> ensures reliability via fallback strategies<br />
 ✅ <strong>Latency vs cost</strong> is the fundamental trade-off<br />
 ✅ <strong>Feature freshness</strong> often determines the choice<br />
 ✅ <strong>Most systems</strong> use hybrid: batch for bulk, real-time for edge cases<br />
 ✅ <strong>Cache hit rate</strong> critical metric for hybrid systems<br />
-✅ <strong>Graceful degradation</strong> via fallbacks ensures reliability</p>
+✅ <strong>SLA monitoring</strong> ensures service quality</p>
 
 <hr />
 
@@ -1254,7 +1832,7 @@ Flow:
 
         
 
-  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time class="dt-published" datetime="2025-10-13T22:42:39+05:30">October 13, 2025</time></p>
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time class="dt-published" datetime="2025-10-13T23:03:17+05:30">October 13, 2025</time></p>
 
       </footer>
 

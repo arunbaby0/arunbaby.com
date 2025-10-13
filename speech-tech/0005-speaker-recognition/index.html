@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-10-13T22:42:39+05:30">
+  <meta property="article:published_time" content="2025-10-13T23:03:17+05:30">
 
 
 
@@ -313,7 +313,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Speaker Recognition &amp; Verification">
     <meta itemprop="description" content="How voice assistants recognize who’s speaking, the biometric authentication powering “Hey Alexa” and personalized experiences.">
-    <meta itemprop="datePublished" content="2025-10-13T22:42:39+05:30">
+    <meta itemprop="datePublished" content="2025-10-13T23:03:17+05:30">
     
 
     <div class="page__inner-wrap">
@@ -337,7 +337,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          12 minute read
+          21 minute read
         
       </span>
     
@@ -352,7 +352,7 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#introduction">Introduction</a></li><li><a href="#problem-definition">Problem Definition</a><ul><li><a href="#functional-requirements">Functional Requirements</a></li><li><a href="#non-functional-requirements">Non-Functional Requirements</a></li></ul></li><li><a href="#speaker-embeddings">Speaker Embeddings</a><ul><li><a href="#x-vectors">X-Vectors</a></li><li><a href="#training-speaker-embeddings">Training Speaker Embeddings</a></li></ul></li><li><a href="#speaker-verification">Speaker Verification</a><ul><li><a href="#cosine-similarity">Cosine Similarity</a></li><li><a href="#threshold-selection">Threshold Selection</a></li></ul></li><li><a href="#speaker-identification">Speaker Identification</a><ul><li><a href="#database-of-speakers">Database of Speakers</a></li></ul></li><li><a href="#production-deployment">Production Deployment</a><ul><li><a href="#real-time-verification-api">Real-Time Verification API</a></li></ul></li><li><a href="#anti-spoofing">Anti-Spoofing</a></li><li><a href="#real-world-applications">Real-World Applications</a><ul><li><a href="#voice-assistant-personalization">Voice Assistant Personalization</a></li></ul></li><li><a href="#key-takeaways">Key Takeaways</a></li></ul>
+              <ul class="toc__menu"><li><a href="#introduction">Introduction</a></li><li><a href="#problem-definition">Problem Definition</a><ul><li><a href="#functional-requirements">Functional Requirements</a></li><li><a href="#non-functional-requirements">Non-Functional Requirements</a></li></ul></li><li><a href="#speaker-embeddings">Speaker Embeddings</a><ul><li><a href="#x-vectors">X-Vectors</a></li><li><a href="#training-speaker-embeddings">Training Speaker Embeddings</a></li></ul></li><li><a href="#speaker-verification">Speaker Verification</a><ul><li><a href="#cosine-similarity">Cosine Similarity</a></li><li><a href="#threshold-selection">Threshold Selection</a></li></ul></li><li><a href="#speaker-identification">Speaker Identification</a><ul><li><a href="#database-of-speakers">Database of Speakers</a></li></ul></li><li><a href="#production-deployment">Production Deployment</a><ul><li><a href="#real-time-verification-api">Real-Time Verification API</a></li></ul></li><li><a href="#anti-spoofing">Anti-Spoofing</a></li><li><a href="#real-world-applications">Real-World Applications</a><ul><li><a href="#voice-assistant-personalization">Voice Assistant Personalization</a></li></ul></li><li><a href="#advanced-topics">Advanced Topics</a><ul><li><a href="#speaker-diarization">Speaker Diarization</a></li><li><a href="#domain-adaptation">Domain Adaptation</a></li><li><a href="#multi-modal-biometrics">Multi-Modal Biometrics</a></li></ul></li><li><a href="#optimization-for-production">Optimization for Production</a><ul><li><a href="#model-compression">Model Compression</a></li><li><a href="#streaming-enrollment">Streaming Enrollment</a></li></ul></li><li><a href="#evaluation-metrics">Evaluation Metrics</a><ul><li><a href="#performance-metrics">Performance Metrics</a></li></ul></li><li><a href="#security-considerations">Security Considerations</a><ul><li><a href="#attack-vectors">Attack Vectors</a></li><li><a href="#mitigation-strategies">Mitigation Strategies</a></li></ul></li><li><a href="#key-takeaways">Key Takeaways</a></li></ul>
             </nav>
           </aside>
         
@@ -1150,6 +1150,631 @@
 
 <hr />
 
+<h2 id="advanced-topics">Advanced Topics</h2>
+
+<h3 id="speaker-diarization">Speaker Diarization</h3>
+
+<p>Segment audio by speaker (“who spoke when”).</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SpeakerDiarizer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Speaker diarization: Segment audio by speaker
+    
+    Process:
+    1. VAD: Detect speech segments
+    2. Extract embeddings for each segment
+    3. Cluster embeddings → speakers
+    4. Assign segments to speakers
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">embedding_extractor</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">extractor</span> <span class="o">=</span> <span class="n">embedding_extractor</span>
+    
+    <span class="k">def</span> <span class="nf">diarize</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">window_sec</span><span class="o">=</span><span class="mf">2.0</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Perform speaker diarization
+        
+        Args:
+            audio: Audio waveform
+            sr: Sample rate
+            window_sec: Window size for embedding extraction
+        
+        Returns:
+            List of (start_time, end_time, speaker_id)
+        </span><span class="sh">"""</span>
+        <span class="c1"># Step 1: Segment audio into windows
+</span>        <span class="n">window_samples</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">window_sec</span> <span class="o">*</span> <span class="n">sr</span><span class="p">)</span>
+        <span class="n">segments</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span> <span class="o">-</span> <span class="n">window_samples</span><span class="p">,</span> <span class="n">window_samples</span> <span class="o">//</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">window_samples</span>
+            <span class="n">segment_audio</span> <span class="o">=</span> <span class="n">audio</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+            
+            <span class="c1"># Extract embedding
+</span>            <span class="n">embedding</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">extractor</span><span class="p">.</span><span class="nf">extract_embedding</span><span class="p">(</span><span class="n">segment_audio</span><span class="p">)</span>
+            
+            <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span>
+                <span class="sh">'</span><span class="s">start_time</span><span class="sh">'</span><span class="p">:</span> <span class="n">start</span> <span class="o">/</span> <span class="n">sr</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">end_time</span><span class="sh">'</span><span class="p">:</span> <span class="n">end</span> <span class="o">/</span> <span class="n">sr</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">embedding</span><span class="sh">'</span><span class="p">:</span> <span class="n">embedding</span>
+            <span class="p">})</span>
+        
+        <span class="c1"># Step 2: Cluster embeddings
+</span>        <span class="n">embeddings_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="n">s</span><span class="p">[</span><span class="sh">'</span><span class="s">embedding</span><span class="sh">'</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">])</span>
+        <span class="n">speaker_labels</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_cluster_embeddings</span><span class="p">(</span><span class="n">embeddings_matrix</span><span class="p">)</span>
+        
+        <span class="c1"># Step 3: Assign labels to segments
+</span>        <span class="k">for</span> <span class="n">segment</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">segments</span><span class="p">,</span> <span class="n">speaker_labels</span><span class="p">):</span>
+            <span class="n">segment</span><span class="p">[</span><span class="sh">'</span><span class="s">speaker_id</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">'</span><span class="s">speaker_</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="sh">'</span>
+        
+        <span class="c1"># Step 4: Merge consecutive segments from same speaker
+</span>        <span class="n">merged</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_merge_segments</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">merged</span>
+    
+    <span class="k">def</span> <span class="nf">_cluster_embeddings</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">,</span> <span class="n">num_speakers</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Cluster embeddings using spectral clustering
+        
+        Args:
+            embeddings: (N, embedding_dim) matrix
+            num_speakers: Number of speakers (auto-detect if None)
+        
+        Returns:
+            Speaker labels for each segment
+        </span><span class="sh">"""</span>
+        <span class="kn">from</span> <span class="n">sklearn.cluster</span> <span class="kn">import</span> <span class="n">SpectralClustering</span>
+        
+        <span class="k">if</span> <span class="n">num_speakers</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c1"># Auto-detect number of speakers (simplified)
+</span>            <span class="n">num_speakers</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_estimate_num_speakers</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
+        
+        <span class="c1"># Cluster
+</span>        <span class="n">clustering</span> <span class="o">=</span> <span class="nc">SpectralClustering</span><span class="p">(</span>
+            <span class="n">n_clusters</span><span class="o">=</span><span class="n">num_speakers</span><span class="p">,</span>
+            <span class="n">affinity</span><span class="o">=</span><span class="sh">'</span><span class="s">cosine</span><span class="sh">'</span>
+        <span class="p">)</span>
+        
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">clustering</span><span class="p">.</span><span class="nf">fit_predict</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">labels</span>
+    
+    <span class="k">def</span> <span class="nf">_estimate_num_speakers</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Estimate number of speakers (simplified heuristic)</span><span class="sh">"""</span>
+        <span class="c1"># Use silhouette score to find optimal clusters
+</span>        <span class="kn">from</span> <span class="n">sklearn.metrics</span> <span class="kn">import</span> <span class="n">silhouette_score</span>
+        
+        <span class="n">best_score</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">best_k</span> <span class="o">=</span> <span class="mi">2</span>
+        
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nf">min</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span> <span class="o">//</span> <span class="mi">5</span><span class="p">)):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">from</span> <span class="n">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
+                <span class="n">kmeans</span> <span class="o">=</span> <span class="nc">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+                <span class="n">labels</span> <span class="o">=</span> <span class="n">kmeans</span><span class="p">.</span><span class="nf">fit_predict</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
+                <span class="n">score</span> <span class="o">=</span> <span class="nf">silhouette_score</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+                
+                <span class="k">if</span> <span class="n">score</span> <span class="o">&gt;</span> <span class="n">best_score</span><span class="p">:</span>
+                    <span class="n">best_score</span> <span class="o">=</span> <span class="n">score</span>
+                    <span class="n">best_k</span> <span class="o">=</span> <span class="n">k</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">break</span>
+        
+        <span class="k">return</span> <span class="n">best_k</span>
+    
+    <span class="k">def</span> <span class="nf">_merge_segments</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">segments</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Merge consecutive segments from same speaker</span><span class="sh">"""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">segments</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        
+        <span class="n">merged</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">start_time</span><span class="sh">'</span><span class="p">:</span> <span class="n">segments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="sh">'</span><span class="s">start_time</span><span class="sh">'</span><span class="p">],</span>
+            <span class="sh">'</span><span class="s">end_time</span><span class="sh">'</span><span class="p">:</span> <span class="n">segments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="sh">'</span><span class="s">end_time</span><span class="sh">'</span><span class="p">],</span>
+            <span class="sh">'</span><span class="s">speaker_id</span><span class="sh">'</span><span class="p">:</span> <span class="n">segments</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="sh">'</span><span class="s">speaker_id</span><span class="sh">'</span><span class="p">]</span>
+        <span class="p">}</span>
+        
+        <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="k">if</span> <span class="n">segment</span><span class="p">[</span><span class="sh">'</span><span class="s">speaker_id</span><span class="sh">'</span><span class="p">]</span> <span class="o">==</span> <span class="n">current</span><span class="p">[</span><span class="sh">'</span><span class="s">speaker_id</span><span class="sh">'</span><span class="p">]:</span>
+                <span class="c1"># Same speaker, extend segment
+</span>                <span class="n">current</span><span class="p">[</span><span class="sh">'</span><span class="s">end_time</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">segment</span><span class="p">[</span><span class="sh">'</span><span class="s">end_time</span><span class="sh">'</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Different speaker, save current and start new
+</span>                <span class="n">merged</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+                <span class="n">current</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="sh">'</span><span class="s">start_time</span><span class="sh">'</span><span class="p">:</span> <span class="n">segment</span><span class="p">[</span><span class="sh">'</span><span class="s">start_time</span><span class="sh">'</span><span class="p">],</span>
+                    <span class="sh">'</span><span class="s">end_time</span><span class="sh">'</span><span class="p">:</span> <span class="n">segment</span><span class="p">[</span><span class="sh">'</span><span class="s">end_time</span><span class="sh">'</span><span class="p">],</span>
+                    <span class="sh">'</span><span class="s">speaker_id</span><span class="sh">'</span><span class="p">:</span> <span class="n">segment</span><span class="p">[</span><span class="sh">'</span><span class="s">speaker_id</span><span class="sh">'</span><span class="p">]</span>
+                <span class="p">}</span>
+        
+        <span class="c1"># Add last segment
+</span>        <span class="n">merged</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">merged</span>
+
+<span class="c1"># Usage
+</span><span class="n">diarizer</span> <span class="o">=</span> <span class="nc">SpeakerDiarizer</span><span class="p">(</span><span class="n">embedding_extractor</span><span class="o">=</span><span class="n">trainer</span><span class="p">)</span>
+
+<span class="n">audio</span><span class="p">,</span> <span class="n">sr</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sh">'</span><span class="s">meeting_audio.wav</span><span class="sh">'</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">)</span>
+<span class="n">diarization</span> <span class="o">=</span> <span class="n">diarizer</span><span class="p">.</span><span class="nf">diarize</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="n">sr</span><span class="p">,</span> <span class="n">window_sec</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Speaker diarization results:</span><span class="sh">"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">diarization</span><span class="p">:</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  </span><span class="si">{</span><span class="n">segment</span><span class="p">[</span><span class="sh">'</span><span class="s">start_time</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">s - </span><span class="si">{</span><span class="n">segment</span><span class="p">[</span><span class="sh">'</span><span class="s">end_time</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">s: </span><span class="si">{</span><span class="n">segment</span><span class="p">[</span><span class="sh">'</span><span class="s">speaker_id</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="domain-adaptation">Domain Adaptation</h3>
+
+<p>Adapt speaker recognition to new domains/conditions.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">DomainAdaptation</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Adapt speaker embeddings across domains
+    
+    Use case: Train on clean speech, deploy on noisy environment
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">base_model</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">base_model</span> <span class="o">=</span> <span class="n">base_model</span>
+    
+    <span class="k">def</span> <span class="nf">extract_domain_adapted_embedding</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">audio</span><span class="p">,</span>
+        <span class="n">target_domain</span><span class="o">=</span><span class="sh">'</span><span class="s">noisy</span><span class="sh">'</span>
+    <span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Extract embedding with domain adaptation
+        
+        Techniques:
+        1. Multi-condition training
+        2. Domain adversarial training
+        3. Feature normalization
+        </span><span class="sh">"""</span>
+        <span class="c1"># Extract base embedding
+</span>        <span class="n">features</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_audio_to_features</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+        <span class="n">base_embedding</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">base_model</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+        
+        <span class="c1"># Apply domain-specific adaptation
+</span>        <span class="k">if</span> <span class="n">target_domain</span> <span class="o">==</span> <span class="sh">'</span><span class="s">noisy</span><span class="sh">'</span><span class="p">:</span>
+            <span class="c1"># Normalize to reduce noise impact
+</span>            <span class="n">adapted</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_normalize_embedding</span><span class="p">(</span><span class="n">base_embedding</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">target_domain</span> <span class="o">==</span> <span class="sh">'</span><span class="s">telephone</span><span class="sh">'</span><span class="p">:</span>
+            <span class="c1"># Adapt for telephony bandwidth
+</span>            <span class="n">adapted</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_bandwidth_adaptation</span><span class="p">(</span><span class="n">base_embedding</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">adapted</span> <span class="o">=</span> <span class="n">base_embedding</span>
+        
+        <span class="k">return</span> <span class="n">adapted</span>
+    
+    <span class="k">def</span> <span class="nf">_normalize_embedding</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">embedding</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Length normalization</span><span class="sh">"""</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">embedding</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">embedding</span> <span class="o">/</span> <span class="n">norm</span>
+    
+    <span class="k">def</span> <span class="nf">_bandwidth_adaptation</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">embedding</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Adapt for limited bandwidth</span><span class="sh">"""</span>
+        <span class="c1"># Apply transformation learned for telephony
+</span>        <span class="c1"># In production: learned linear transformation
+</span>        <span class="k">return</span> <span class="n">embedding</span>
+</code></pre></div></div>
+
+<h3 id="multi-modal-biometrics">Multi-Modal Biometrics</h3>
+
+<p>Combine speaker recognition with face recognition.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">MultiModalBiometrics</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Fuse speaker + face recognition for stronger authentication
+    
+    Fusion strategies:
+    1. Score-level fusion
+    2. Feature-level fusion
+    3. Decision-level fusion
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">speaker_verifier</span><span class="p">,</span> <span class="n">face_verifier</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">speaker</span> <span class="o">=</span> <span class="n">speaker_verifier</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">face</span> <span class="o">=</span> <span class="n">face_verifier</span>
+    
+    <span class="k">def</span> <span class="nf">verify_multimodal</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">audio</span><span class="p">,</span>
+        <span class="n">face_image</span><span class="p">,</span>
+        <span class="n">claimed_identity</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">fusion_method</span><span class="o">=</span><span class="sh">'</span><span class="s">score</span><span class="sh">'</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Verify using both voice and face
+        
+        Args:
+            audio: Audio sample
+            face_image: Face image
+            claimed_identity: Claimed identity
+            fusion_method: </span><span class="sh">'</span><span class="s">score</span><span class="sh">'</span><span class="s">, </span><span class="sh">'</span><span class="s">feature</span><span class="sh">'</span><span class="s">, or </span><span class="sh">'</span><span class="s">decision</span><span class="sh">'</span><span class="s">
+        
+        Returns:
+            Verification result
+        </span><span class="sh">"""</span>
+        <span class="c1"># Get individual scores
+</span>        <span class="n">speaker_result</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">speaker</span><span class="p">.</span><span class="nf">verify</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">claimed_identity</span><span class="p">)</span>
+        <span class="n">face_result</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">face</span><span class="p">.</span><span class="nf">verify</span><span class="p">(</span><span class="n">face_image</span><span class="p">,</span> <span class="n">claimed_identity</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">fusion_method</span> <span class="o">==</span> <span class="sh">'</span><span class="s">score</span><span class="sh">'</span><span class="p">:</span>
+            <span class="c1"># Score-level fusion: weighted combination
+</span>            <span class="n">combined_score</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="mf">0.6</span> <span class="o">*</span> <span class="n">speaker_result</span><span class="p">[</span><span class="sh">'</span><span class="s">similarity</span><span class="sh">'</span><span class="p">]</span> <span class="o">+</span>
+                <span class="mf">0.4</span> <span class="o">*</span> <span class="n">face_result</span><span class="p">[</span><span class="sh">'</span><span class="s">similarity</span><span class="sh">'</span><span class="p">]</span>
+            <span class="p">)</span>
+            
+            <span class="n">is_verified</span> <span class="o">=</span> <span class="n">combined_score</span> <span class="o">&gt;</span> <span class="mf">0.7</span>
+            
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="sh">'</span><span class="s">verified</span><span class="sh">'</span><span class="p">:</span> <span class="n">is_verified</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">combined_score</span><span class="sh">'</span><span class="p">:</span> <span class="n">combined_score</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">speaker_score</span><span class="sh">'</span><span class="p">:</span> <span class="n">speaker_result</span><span class="p">[</span><span class="sh">'</span><span class="s">similarity</span><span class="sh">'</span><span class="p">],</span>
+                <span class="sh">'</span><span class="s">face_score</span><span class="sh">'</span><span class="p">:</span> <span class="n">face_result</span><span class="p">[</span><span class="sh">'</span><span class="s">similarity</span><span class="sh">'</span><span class="p">],</span>
+                <span class="sh">'</span><span class="s">method</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">score_fusion</span><span class="sh">'</span>
+            <span class="p">}</span>
+        
+        <span class="k">elif</span> <span class="n">fusion_method</span> <span class="o">==</span> <span class="sh">'</span><span class="s">decision</span><span class="sh">'</span><span class="p">:</span>
+            <span class="c1"># Decision-level fusion: both must pass
+</span>            <span class="n">is_verified</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">speaker_result</span><span class="p">[</span><span class="sh">'</span><span class="s">is_same_speaker</span><span class="sh">'</span><span class="p">]</span> <span class="ow">and</span>
+                <span class="n">face_result</span><span class="p">[</span><span class="sh">'</span><span class="s">is_same_person</span><span class="sh">'</span><span class="p">]</span>
+            <span class="p">)</span>
+            
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="sh">'</span><span class="s">verified</span><span class="sh">'</span><span class="p">:</span> <span class="n">is_verified</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">speaker_verified</span><span class="sh">'</span><span class="p">:</span> <span class="n">speaker_result</span><span class="p">[</span><span class="sh">'</span><span class="s">is_same_speaker</span><span class="sh">'</span><span class="p">],</span>
+                <span class="sh">'</span><span class="s">face_verified</span><span class="sh">'</span><span class="p">:</span> <span class="n">face_result</span><span class="p">[</span><span class="sh">'</span><span class="s">is_same_person</span><span class="sh">'</span><span class="p">],</span>
+                <span class="sh">'</span><span class="s">method</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">decision_fusion</span><span class="sh">'</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="optimization-for-production">Optimization for Production</h2>
+
+<h3 id="model-compression">Model Compression</h3>
+
+<p>Reduce model size for edge deployment.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">CompressedXVector</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Compressed x-vector for mobile/edge devices
+    
+    Techniques:
+    1. Quantization (INT8)
+    2. Pruning
+    3. Knowledge distillation
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">base_model</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">base_model</span> <span class="o">=</span> <span class="n">base_model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">compressed_model</span> <span class="o">=</span> <span class="bp">None</span>
+    
+    <span class="k">def</span> <span class="nf">quantize_model</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Quantize model to INT8
+        
+        Reduces size by 4x with minimal accuracy loss
+        </span><span class="sh">"""</span>
+        <span class="kn">import</span> <span class="n">torch.quantization</span>
+        
+        <span class="c1"># Prepare for quantization
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">base_model</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">base_model</span><span class="p">.</span><span class="n">qconfig</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">quantization</span><span class="p">.</span><span class="nf">get_default_qconfig</span><span class="p">(</span><span class="sh">'</span><span class="s">fbgemm</span><span class="sh">'</span><span class="p">)</span>
+        
+        <span class="c1"># Fuse layers (Conv+BN+ReLU)
+</span>        <span class="n">torch</span><span class="p">.</span><span class="n">quantization</span><span class="p">.</span><span class="nf">fuse_modules</span><span class="p">(</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">base_model</span><span class="p">,</span>
+            <span class="p">[[</span><span class="sh">'</span><span class="s">conv1</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">bn1</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">relu1</span><span class="sh">'</span><span class="p">]],</span>
+            <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Prepare
+</span>        <span class="n">torch</span><span class="p">.</span><span class="n">quantization</span><span class="p">.</span><span class="nf">prepare</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">base_model</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        
+        <span class="c1"># Calibrate with sample data
+</span>        <span class="c1"># In production: use representative dataset
+</span>        <span class="n">sample_input</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
+            <span class="n">self</span><span class="p">.</span><span class="nf">base_model</span><span class="p">(</span><span class="n">sample_input</span><span class="p">)</span>
+        
+        <span class="c1"># Convert to quantized model
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">compressed_model</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">quantization</span><span class="p">.</span><span class="nf">convert</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">base_model</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">compressed_model</span>
+    
+    <span class="k">def</span> <span class="nf">export_to_onnx</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="sh">'</span><span class="s">speaker_model.onnx</span><span class="sh">'</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Export to ONNX for cross-platform deployment
+        </span><span class="sh">"""</span>
+        <span class="n">dummy_input</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+        
+        <span class="n">torch</span><span class="p">.</span><span class="n">onnx</span><span class="p">.</span><span class="nf">export</span><span class="p">(</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">compressed_model</span> <span class="ow">or</span> <span class="n">self</span><span class="p">.</span><span class="n">base_model</span><span class="p">,</span>
+            <span class="n">dummy_input</span><span class="p">,</span>
+            <span class="n">output_path</span><span class="p">,</span>
+            <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="sh">'</span><span class="s">mel_spectrogram</span><span class="sh">'</span><span class="p">],</span>
+            <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="sh">'</span><span class="s">embedding</span><span class="sh">'</span><span class="p">],</span>
+            <span class="n">dynamic_axes</span><span class="o">=</span><span class="p">{</span>
+                <span class="sh">'</span><span class="s">mel_spectrogram</span><span class="sh">'</span><span class="p">:</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="sh">'</span><span class="s">time</span><span class="sh">'</span><span class="p">},</span>  <span class="c1"># Variable length
+</span>            <span class="p">}</span>
+        <span class="p">)</span>
+        
+        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Model exported to </span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="streaming-enrollment">Streaming Enrollment</h3>
+
+<p>Enroll speakers incrementally from streaming audio.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">StreamingEnrollment</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Incrementally build speaker profile from multiple utterances
+    
+    Use case: </span><span class="sh">"</span><span class="s">Say </span><span class="sh">'</span><span class="s">Hey Siri</span><span class="sh">'</span><span class="s"> five times to enroll</span><span class="sh">"</span><span class="s">
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">embedding_extractor</span><span class="p">,</span> <span class="n">required_utterances</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">extractor</span> <span class="o">=</span> <span class="n">embedding_extractor</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">required_utterances</span> <span class="o">=</span> <span class="n">required_utterances</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">enrollment_sessions</span> <span class="o">=</span> <span class="p">{}</span>
+    
+    <span class="k">def</span> <span class="nf">start_enrollment</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">speaker_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Start new enrollment session</span><span class="sh">"""</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">enrollment_sessions</span><span class="p">[</span><span class="n">speaker_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">embeddings</span><span class="sh">'</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="sh">'</span><span class="s">started_at</span><span class="sh">'</span><span class="p">:</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">add_utterance</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">speaker_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Add enrollment utterance
+        
+        Returns:
+            {
+                </span><span class="sh">'</span><span class="s">progress</span><span class="sh">'</span><span class="s">: int,  # Number of utterances collected
+                </span><span class="sh">'</span><span class="s">required</span><span class="sh">'</span><span class="s">: int,
+                </span><span class="sh">'</span><span class="s">complete</span><span class="sh">'</span><span class="s">: bool
+            }
+        </span><span class="sh">"""</span>
+        <span class="k">if</span> <span class="n">speaker_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">enrollment_sessions</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">No enrollment session for </span><span class="si">{</span><span class="n">speaker_id</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="c1"># Extract embedding
+</span>        <span class="n">embedding</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">extractor</span><span class="p">.</span><span class="nf">extract_embedding</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+        
+        <span class="c1"># Add to session
+</span>        <span class="n">session</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">enrollment_sessions</span><span class="p">[</span><span class="n">speaker_id</span><span class="p">]</span>
+        <span class="n">session</span><span class="p">[</span><span class="sh">'</span><span class="s">embeddings</span><span class="sh">'</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">embedding</span><span class="p">)</span>
+        
+        <span class="n">progress</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">session</span><span class="p">[</span><span class="sh">'</span><span class="s">embeddings</span><span class="sh">'</span><span class="p">])</span>
+        <span class="n">complete</span> <span class="o">=</span> <span class="n">progress</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">required_utterances</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">progress</span><span class="sh">'</span><span class="p">:</span> <span class="n">progress</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">required</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">required_utterances</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">complete</span><span class="sh">'</span><span class="p">:</span> <span class="n">complete</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">speaker_id</span><span class="sh">'</span><span class="p">:</span> <span class="n">speaker_id</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">finalize_enrollment</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">speaker_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Compute final speaker embedding
+        
+        Strategy: Average embeddings from all utterances
+        </span><span class="sh">"""</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">enrollment_sessions</span><span class="p">[</span><span class="n">speaker_id</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">session</span><span class="p">[</span><span class="sh">'</span><span class="s">embeddings</span><span class="sh">'</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">required_utterances</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Insufficient utterances: </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">session</span><span class="p">[</span><span class="sh">'</span><span class="s">embeddings</span><span class="sh">'</span><span class="p">])</span><span class="si">}</span><span class="s">/</span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">required_utterances</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="c1"># Average embeddings
+</span>        <span class="n">embeddings_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">session</span><span class="p">[</span><span class="sh">'</span><span class="s">embeddings</span><span class="sh">'</span><span class="p">])</span>
+        <span class="n">final_embedding</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">embeddings_matrix</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        
+        <span class="c1"># Normalize
+</span>        <span class="n">final_embedding</span> <span class="o">=</span> <span class="n">final_embedding</span> <span class="o">/</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">final_embedding</span><span class="p">)</span>
+        
+        <span class="c1"># Clean up session
+</span>        <span class="k">del</span> <span class="n">self</span><span class="p">.</span><span class="n">enrollment_sessions</span><span class="p">[</span><span class="n">speaker_id</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="n">final_embedding</span>
+
+<span class="c1"># Usage
+</span><span class="n">enrollment</span> <span class="o">=</span> <span class="nc">StreamingEnrollment</span><span class="p">(</span><span class="n">embedding_extractor</span><span class="o">=</span><span class="n">trainer</span><span class="p">,</span> <span class="n">required_utterances</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="c1"># Start enrollment
+</span><span class="n">enrollment</span><span class="p">.</span><span class="nf">start_enrollment</span><span class="p">(</span><span class="sh">'</span><span class="s">alice</span><span class="sh">'</span><span class="p">)</span>
+
+<span class="c1"># Collect utterances
+</span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+    <span class="n">audio</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sa">f</span><span class="sh">'</span><span class="s">alice_utterance_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s">.wav</span><span class="sh">'</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">enrollment</span><span class="p">.</span><span class="nf">add_utterance</span><span class="p">(</span><span class="sh">'</span><span class="s">alice</span><span class="sh">'</span><span class="p">,</span> <span class="n">audio</span><span class="p">)</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Progress: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">progress</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">/</span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">required</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="c1"># Finalize
+</span><span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">complete</span><span class="sh">'</span><span class="p">]:</span>
+    <span class="n">final_embedding</span> <span class="o">=</span> <span class="n">enrollment</span><span class="p">.</span><span class="nf">finalize_enrollment</span><span class="p">(</span><span class="sh">'</span><span class="s">alice</span><span class="sh">'</span><span class="p">)</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Enrollment complete! Embedding shape: </span><span class="si">{</span><span class="n">final_embedding</span><span class="p">.</span><span class="n">shape</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="evaluation-metrics">Evaluation Metrics</h2>
+
+<h3 id="performance-metrics">Performance Metrics</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SpeakerRecognitionEvaluator</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Comprehensive evaluation for speaker recognition
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+    
+    <span class="k">def</span> <span class="nf">compute_eer_and_det</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">genuine_scores</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">impostor_scores</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Compute EER and DET curve
+        
+        Args:
+            genuine_scores: Similarity scores for same-speaker pairs
+            impostor_scores: Similarity scores for different-speaker pairs
+        
+        Returns:
+            Evaluation metrics and DET curve data
+        </span><span class="sh">"""</span>
+        <span class="n">thresholds</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+        
+        <span class="n">fars</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">frrs</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">threshold</span> <span class="ow">in</span> <span class="n">thresholds</span><span class="p">:</span>
+            <span class="c1"># False Accept Rate
+</span>            <span class="n">far</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">impostor_scores</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">)</span>
+            
+            <span class="c1"># False Reject Rate
+</span>            <span class="n">frr</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">genuine_scores</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">)</span>
+            
+            <span class="n">fars</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">far</span><span class="p">)</span>
+            <span class="n">frrs</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">frr</span><span class="p">)</span>
+        
+        <span class="n">fars</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">fars</span><span class="p">)</span>
+        <span class="n">frrs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">frrs</span><span class="p">)</span>
+        
+        <span class="c1"># Equal Error Rate
+</span>        <span class="n">eer_idx</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">argmin</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">abs</span><span class="p">(</span><span class="n">fars</span> <span class="o">-</span> <span class="n">frrs</span><span class="p">))</span>
+        <span class="n">eer</span> <span class="o">=</span> <span class="p">(</span><span class="n">fars</span><span class="p">[</span><span class="n">eer_idx</span><span class="p">]</span> <span class="o">+</span> <span class="n">frrs</span><span class="p">[</span><span class="n">eer_idx</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">eer_threshold</span> <span class="o">=</span> <span class="n">thresholds</span><span class="p">[</span><span class="n">eer_idx</span><span class="p">]</span>
+        
+        <span class="c1"># Detection Cost Function (DCF)
+</span>        <span class="c1"># Weighted combination of FAR and FRR
+</span>        <span class="n">c_miss</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="n">c_fa</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="n">p_target</span> <span class="o">=</span> <span class="mf">0.01</span>  <span class="c1"># Prior probability of target speaker
+</span>        
+        <span class="n">dcf</span> <span class="o">=</span> <span class="n">c_miss</span> <span class="o">*</span> <span class="n">frrs</span> <span class="o">*</span> <span class="n">p_target</span> <span class="o">+</span> <span class="n">c_fa</span> <span class="o">*</span> <span class="n">fars</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">p_target</span><span class="p">)</span>
+        <span class="n">min_dcf</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">min</span><span class="p">(</span><span class="n">dcf</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">eer</span><span class="sh">'</span><span class="p">:</span> <span class="n">eer</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">eer_threshold</span><span class="sh">'</span><span class="p">:</span> <span class="n">eer_threshold</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">min_dcf</span><span class="sh">'</span><span class="p">:</span> <span class="n">min_dcf</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">det_curve</span><span class="sh">'</span><span class="p">:</span> <span class="p">{</span>
+                <span class="sh">'</span><span class="s">fars</span><span class="sh">'</span><span class="p">:</span> <span class="n">fars</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">frrs</span><span class="sh">'</span><span class="p">:</span> <span class="n">frrs</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">thresholds</span><span class="sh">'</span><span class="p">:</span> <span class="n">thresholds</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">plot_det_curve</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">fars</span><span class="p">,</span> <span class="n">frrs</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Plot Detection Error Tradeoff (DET) curve
+        </span><span class="sh">"""</span>
+        <span class="kn">import</span> <span class="n">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+        
+        <span class="n">plt</span><span class="p">.</span><span class="nf">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+        <span class="n">plt</span><span class="p">.</span><span class="nf">plot</span><span class="p">(</span><span class="n">fars</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="n">frrs</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
+        <span class="n">plt</span><span class="p">.</span><span class="nf">xlabel</span><span class="p">(</span><span class="sh">'</span><span class="s">False Acceptance Rate (%)</span><span class="sh">'</span><span class="p">)</span>
+        <span class="n">plt</span><span class="p">.</span><span class="nf">ylabel</span><span class="p">(</span><span class="sh">'</span><span class="s">False Rejection Rate (%)</span><span class="sh">'</span><span class="p">)</span>
+        <span class="n">plt</span><span class="p">.</span><span class="nf">title</span><span class="p">(</span><span class="sh">'</span><span class="s">DET Curve</span><span class="sh">'</span><span class="p">)</span>
+        <span class="n">plt</span><span class="p">.</span><span class="nf">grid</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">plt</span><span class="p">.</span><span class="nf">xscale</span><span class="p">(</span><span class="sh">'</span><span class="s">log</span><span class="sh">'</span><span class="p">)</span>
+        <span class="n">plt</span><span class="p">.</span><span class="nf">yscale</span><span class="p">(</span><span class="sh">'</span><span class="s">log</span><span class="sh">'</span><span class="p">)</span>
+        <span class="n">plt</span><span class="p">.</span><span class="nf">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="security-considerations">Security Considerations</h2>
+
+<h3 id="attack-vectors">Attack Vectors</h3>
+
+<ol>
+  <li><strong>Replay Attack:</strong> Recording and replaying legitimate user’s voice</li>
+  <li><strong>Synthesis Attack:</strong> TTS or voice cloning</li>
+  <li><strong>Impersonation:</strong> Human mimicking target speaker</li>
+  <li><strong>Adversarial Audio:</strong> Crafted audio to fool model</li>
+</ol>
+
+<h3 id="mitigation-strategies">Mitigation Strategies</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SecurityEnhancedVerifier</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Speaker verification with security enhancements
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">verifier</span><span class="p">,</span> <span class="n">anti_spoofing_detector</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">verifier</span> <span class="o">=</span> <span class="n">verifier</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">anti_spoofing</span> <span class="o">=</span> <span class="n">anti_spoofing_detector</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">challenge_phrases</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sh">"</span><span class="s">My voice is my password</span><span class="sh">"</span><span class="p">,</span>
+            <span class="sh">"</span><span class="s">Today is a beautiful day</span><span class="sh">"</span><span class="p">,</span>
+            <span class="sh">"</span><span class="s">Open sesame</span><span class="sh">"</span>
+        <span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">verify_with_liveness</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">audio</span><span class="p">,</span>
+        <span class="n">claimed_identity</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">expected_phrase</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Verify with liveness detection
+        
+        Steps:
+        1. Anti-spoofing check
+        2. Speaker verification
+        3. Optional: Speech content verification
+        </span><span class="sh">"""</span>
+        <span class="c1"># Step 1: Anti-spoofing
+</span>        <span class="n">spoofing_result</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">anti_spoofing</span><span class="p">.</span><span class="nf">detect_spoofing</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">spoofing_result</span><span class="p">[</span><span class="sh">'</span><span class="s">is_genuine</span><span class="sh">'</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="sh">'</span><span class="s">verified</span><span class="sh">'</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">reason</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">spoofing_detected</span><span class="sh">'</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">spoofing_confidence</span><span class="sh">'</span><span class="p">:</span> <span class="n">spoofing_result</span><span class="p">[</span><span class="sh">'</span><span class="s">confidence</span><span class="sh">'</span><span class="p">]</span>
+            <span class="p">}</span>
+        
+        <span class="c1"># Step 2: Speaker verification
+</span>        <span class="n">verification_result</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">verifier</span><span class="p">.</span><span class="nf">verify</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">claimed_identity</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">verification_result</span><span class="p">[</span><span class="sh">'</span><span class="s">is_same_speaker</span><span class="sh">'</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="sh">'</span><span class="s">verified</span><span class="sh">'</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">reason</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">speaker_mismatch</span><span class="sh">'</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">similarity</span><span class="sh">'</span><span class="p">:</span> <span class="n">verification_result</span><span class="p">[</span><span class="sh">'</span><span class="s">similarity</span><span class="sh">'</span><span class="p">]</span>
+            <span class="p">}</span>
+        
+        <span class="c1"># Step 3: Optional phrase verification
+</span>        <span class="k">if</span> <span class="n">expected_phrase</span><span class="p">:</span>
+            <span class="c1"># Use ASR to verify phrase
+</span>            <span class="c1"># transcription = asr_model.transcribe(audio)
+</span>            <span class="c1"># phrase_match = transcription.lower() == expected_phrase.lower()
+</span>            <span class="n">phrase_match</span> <span class="o">=</span> <span class="bp">True</span>  <span class="c1"># Placeholder
+</span>            
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">phrase_match</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">{</span>
+                    <span class="sh">'</span><span class="s">verified</span><span class="sh">'</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+                    <span class="sh">'</span><span class="s">reason</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">phrase_mismatch</span><span class="sh">'</span>
+                <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">verified</span><span class="sh">'</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">similarity</span><span class="sh">'</span><span class="p">:</span> <span class="n">verification_result</span><span class="p">[</span><span class="sh">'</span><span class="s">similarity</span><span class="sh">'</span><span class="p">],</span>
+            <span class="sh">'</span><span class="s">spoofing_confidence</span><span class="sh">'</span><span class="p">:</span> <span class="n">spoofing_result</span><span class="p">[</span><span class="sh">'</span><span class="s">confidence</span><span class="sh">'</span><span class="p">]</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<hr />
+
 <h2 id="key-takeaways">Key Takeaways</h2>
 
 <p>✅ <strong>Speaker embeddings</strong> (x-vectors) map audio → fixed vector<br />
@@ -1157,9 +1782,14 @@
 ✅ <strong>Cosine similarity</strong> for comparing embeddings<br />
 ✅ <strong>EER</strong> (Equal Error Rate) balances FAR and FRR<br />
 ✅ <strong>FAISS</strong> enables fast similarity search for millions of speakers<br />
+✅ <strong>Speaker diarization</strong> segments audio by speaker<br />
+✅ <strong>Domain adaptation</strong> critical for robustness across conditions<br />
+✅ <strong>Multi-modal biometrics</strong> combine voice + face for stronger security<br />
+✅ <strong>Model compression</strong> enables edge deployment<br />
 ✅ <strong>Anti-spoofing</strong> critical for security applications<br />
+✅ <strong>Streaming enrollment</strong> builds profiles incrementally<br />
 ✅ <strong>Production systems</strong> need enrollment, verification, and identification APIs<br />
-✅ <strong>Real-world uses:</strong> Voice assistants, call centers, security</p>
+✅ <strong>Real-world uses:</strong> Voice assistants, call centers, security, forensics</p>
 
 <hr />
 
@@ -1214,7 +1844,7 @@
 
         
 
-  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time class="dt-published" datetime="2025-10-13T22:42:39+05:30">October 13, 2025</time></p>
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time class="dt-published" datetime="2025-10-13T23:03:17+05:30">October 13, 2025</time></p>
 
       </footer>
 
