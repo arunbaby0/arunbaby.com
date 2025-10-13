@@ -18,7 +18,7 @@ related_dsa_day: 5
 related_speech_day: 5
 ---
 
-**How voice assistants recognize who's speaking—the biometric authentication powering "Hey Alexa" and personalized experiences.**
+**How voice assistants recognize who's speaking, the biometric authentication powering "Hey Alexa" and personalized experiences.**
 
 ## Introduction
 

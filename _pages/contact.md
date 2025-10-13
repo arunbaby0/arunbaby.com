@@ -17,10 +17,10 @@ If we haven't connected before, email is the best way to reach me. I check regul
 
 ### A Few Tips for Better Conversations
 
-- **Be direct**: Skip the formalities—get to the point. I appreciate clear, concise communication.
+- **Be direct**: Skip the formalities, get to the point. I appreciate clear, concise communication.
 - **Do your homework**: If your question has an answer on Google or Stack Overflow, try that first. Come to me when you've hit a real wall.
 - **Write like a human**: Don’t talk like a press release. Talk like a person. A person is reading this, so why are you talking like that?
-- **Follow up if needed**: I try to respond within a week, but sometimes things slip through. If I haven't replied, nudge me—I won't mind.
+- **Follow up if needed**: I try to respond within a week, but sometimes things slip through. If I haven't replied, nudge me, I won't mind.
 
 ---
 
@@ -57,7 +57,7 @@ For video calls, please send a calendar invite with:
 - Expected duration
 - Meeting link
 
-I'm flexible with schedule changes—just prefer having a concrete plan to start with.
+I'm flexible with schedule changes, just prefer having a concrete plan to start with.
 
 ---
 
@@ -65,7 +65,7 @@ I'm flexible with schedule changes—just prefer having a concrete plan to start
 
 A few things to know so we don't have awkward misunderstandings:
 
-- **Direct, not rude**: I value honesty and efficiency over pleasantries. If I'm blunt, it's not personal—just how I communicate.
+- **Direct, not rude**: I value honesty and efficiency over pleasantries. If I'm blunt, it's not personal, just how I communicate.
 - **Substance over small talk**: Let's dive into the interesting stuff quickly.
 - **Async-first**: I prefer written communication (email, docs) with scheduled calls when needed. This lets both of us think clearly.
 - **Response time**: Usually within 48 hours for emails. Faster for urgent, well-defined matters.
@@ -82,5 +82,5 @@ A few things to know so we don't have awkward misunderstandings:
 
 ---
 
-The best way to start? Just send an email. Tell me what's on your mind, what you're working on, or what you want to discuss. I'm pretty easy to reach—just make it clear, direct, and human.
+The best way to start? Just send an email. Tell me what's on your mind, what you're working on, or what you want to discuss. I'm pretty easy to reach, just make it clear, direct, and human.
 

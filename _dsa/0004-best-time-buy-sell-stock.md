@@ -57,7 +57,7 @@ For each price, we ask:
 - "If I sold today, what's the best profit I could make?"
 - This requires knowing the minimum price before today
 
-**Pattern:** This is a **streaming maximum** problem—we process data once, left to right, maintaining running statistics.
+**Pattern:** This is a **streaming maximum** problem, we process data once, left to right, maintaining running statistics.
 
 ---
 
@@ -975,7 +975,7 @@ def maxProfitMoney(prices: List[Decimal]) -> Decimal:
 **Q: What if prices can be negative?**
 ```python
 # Interpretation: Stock can have negative price (debt?)
-# Answer: Algorithm still works—track minimum price, compute differences
+# Answer: Algorithm still works, track minimum price, compute differences
 
 # If negative prices mean "undefined":
 def maxProfitWithValidation(prices: List[int]) -> int:

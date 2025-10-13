@@ -5,7 +5,7 @@ sitemap: false
 permalink: /list101/
 ---
 
-An ever-evolving bucket list of things I want to do, experience, and accomplish while still running on wetware. Some are serious, some are ambitious, and some are just fun. Progress is slow but steady—turns out life doesn't have a sprint button.
+An ever-evolving bucket list of things I want to do, experience, and accomplish while still running on wetware. Some are serious, some are ambitious, and some are just fun. Progress is slow but steady, turns out life doesn't have a sprint button.
 
 Got suggestions? Think I'm missing something crucial? Send them my way.
 

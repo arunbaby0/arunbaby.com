@@ -20,7 +20,7 @@ related_speech_day: 3
 
 ## Introduction
 
-Data preprocessing is the **most time-consuming yet critical** part of ML systems. Industry surveys show data scientists spend **60-80% of their time** on data preparation—cleaning, transforming, and validating data before training.
+Data preprocessing is the **most time-consuming yet critical** part of ML systems. Industry surveys show data scientists spend **60-80% of their time** on data preparation, cleaning, transforming, and validating data before training.
 
 **Why it matters:**
 - **Garbage in, garbage out:** Poor data quality → poor models

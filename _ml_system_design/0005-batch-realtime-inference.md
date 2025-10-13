@@ -18,7 +18,7 @@ related_dsa_day: 5
 related_speech_day: 5
 ---
 
-**How to choose between batch and real-time inference—the architectural decision that shapes your entire ML serving infrastructure.**
+**How to choose between batch and real-time inference, the architectural decision that shapes your entire ML serving infrastructure.**
 
 ## Introduction
 
@@ -829,8 +829,8 @@ print(f"\nBatch is {savings:.1f}% cheaper!")
 
 ## Key Takeaways
 
-✅ **Batch inference** precomputes predictions—cheaper, higher latency  
-✅ **Real-time inference** computes on-demand—expensive, lower latency  
+✅ **Batch inference** precomputes predictions, cheaper, higher latency  
+✅ **Real-time inference** computes on-demand, expensive, lower latency  
 ✅ **Hybrid approach** combines both for optimal cost/performance  
 ✅ **Latency vs cost** is the fundamental trade-off  
 ✅ **Feature freshness** often determines the choice  

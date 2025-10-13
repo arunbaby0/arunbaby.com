@@ -5,7 +5,7 @@ sitemap: false
 permalink: /about/
 ---
 
-I'm currently CTO at a stealth startup (since 2024), where I'm building the next generation of agentic conversational AI systems—agents that don't just respond, but reason, plan, and take action.
+I'm currently CTO at a stealth startup (since 2024), where I'm building the next generation of agentic conversational AI systems, agents that don't just respond, but reason, plan, and take action.
 
 My work sits at the intersection of research and engineering: taking cutting-edge ML research and shipping it as production systems that people actually use. I've spent the last decade making computers better at understanding and generating human speech, and now I'm focused on making them genuinely helpful conversational partners.
 
@@ -17,15 +17,15 @@ I hold a Master's in Computer Science and Engineering from [IIT Madras](https://
 
 ## Beyond Work
 
-I'm on a journey to question assumptions and shed unnecessary labels—constantly learning, unlearning, and trying to see things as they are.
+I'm on a journey to question assumptions and shed unnecessary labels, constantly learning, unlearning, and trying to see things as they are.
 
-**Writing**: I write here to clarify my thinking and share what I'm learning. The ideas aren't always original—I borrow liberally from people smarter than me. If something here resonates with you, take it and make it your own.
+**Writing**: I write here to clarify my thinking and share what I'm learning. The ideas aren't always original, I borrow liberally from people smarter than me. If something here resonates with you, take it and make it your own.
 
-**Physical pursuits**: I stay active through volleyball, squash, badminton, and table tennis. I've also trained in martial arts—Taekwondo, [Hapkido](http://www.ae.iitm.ac.in/~murgi/hapkido/), MMA, and Muay Thai. There's something valuable about disciplines that demand both mental and physical presence.
+**Physical pursuits**: I stay active through volleyball, squash, badminton, and table tennis. I've also trained in martial arts, Taekwondo, [Hapkido](http://www.ae.iitm.ac.in/~murgi/hapkido/), MMA, and Muay Thai. There's something valuable about disciplines that demand both mental and physical presence.
 
-**Learning**: I'm an avid reader and podcast listener. You can find [my podcast list here]({{ site.baseurl }}{% link  _pages/podcasts-I-listen-to.md %}). I also maintain a [list of 101 things]({{ site.baseurl }}{% link  _pages/List101.md %}) I want to accomplish in this life—a ever-evolving reminder to stay curious.
+**Learning**: I'm an avid reader and podcast listener. You can find [my podcast list here]({{ site.baseurl }}{% link  _pages/podcasts-I-listen-to.md %}). I also maintain a [list of 101 things]({{ site.baseurl }}{% link  _pages/List101.md %}) I want to accomplish in this life, a ever-evolving reminder to stay curious.
 
-**Philosophy**: I lean toward minimalism—owning less, focusing on what matters. I prefer thoughtful conversations over debates. Think of me as a mental sparring partner rather than an opponent; the goal is for both of us to learn.
+**Philosophy**: I lean toward minimalism, owning less, focusing on what matters. I prefer thoughtful conversations over debates. Think of me as a mental sparring partner rather than an opponent; the goal is for both of us to learn.
 
 ## Let's Connect
 

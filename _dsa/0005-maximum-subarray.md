@@ -18,7 +18,7 @@ related_ml_day: 5
 related_speech_day: 5
 ---
 
-**Master the pattern behind online algorithms, streaming analytics, and dynamic programming—a single elegant idea powering countless production systems.**
+**Master the pattern behind online algorithms, streaming analytics, and dynamic programming, a single elegant idea powering countless production systems.**
 
 ## Problem
 
@@ -59,7 +59,7 @@ Explanation: The subarray [5,4,-1,7,8] has the largest sum 23.
 1. **Extend** the current subarray by including this element
 2. **Start fresh** from this element
 
-**Why this works:** If the sum up to the previous element is negative, it can only hurt the sum—better to start fresh.
+**Why this works:** If the sum up to the previous element is negative, it can only hurt the sum, better to start fresh.
 
 This is **Kadane's Algorithm**: a classic example of greedy + dynamic programming.
 
@@ -99,7 +99,7 @@ print(maxSubArrayBruteForce([-2,1,-3,4,-1,2,1,-5,4]))  # 6
 **Time Complexity:** O(n²)  
 **Space Complexity:** O(1)
 
-**Why it's bad:** For n = 100,000, this requires 10 billion operations—too slow for production.
+**Why it's bad:** For n = 100,000, this requires 10 billion operations, too slow for production.
 
 ---
 
@@ -726,12 +726,12 @@ tracker.benchmark([100, 1_000, 10_000, 100_000, 1_000_000])
 ## Key Takeaways
 
 ✅ **Kadane's algorithm** is a perfect example of greedy + DP  
-✅ **Single pass O(n)** with O(1) space—optimal for streaming data  
+✅ **Single pass O(n)** with O(1) space, optimal for streaming data  
 ✅ **Local optimality** → global optimality when problem has optimal substructure  
 ✅ **Pattern extends** to circular arrays, max product, and many ML applications  
 ✅ **Production systems** use this pattern for online metrics, A/B tests, and batch optimization  
 ✅ **Connection to DP** helps understand state transitions and decision making  
-✅ **Similar to stock problem** (Day 4)—both track running optimum in single pass  
+✅ **Similar to stock problem** (Day 4), both track running optimum in single pass  
 
 ---
 

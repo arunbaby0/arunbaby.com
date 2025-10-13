@@ -17,7 +17,7 @@ related_dsa_day: 4
 related_speech_day: 4
 ---
 
-**How voice assistants and video conferencing apps detect when you're speaking vs silence—the critical first step in every speech pipeline.**
+**How voice assistants and video conferencing apps detect when you're speaking vs silence, the critical first step in every speech pipeline.**
 
 ## Introduction
 
@@ -1431,7 +1431,7 @@ class DataAugmentationForVAD:
 ## Key Takeaways
 
 ✅ **Energy + ZCR** provides simple baseline VAD  
-✅ **WebRTC VAD** is production-standard—fast, robust, widely deployed  
+✅ **WebRTC VAD** is production-standard, fast, robust, widely deployed  
 ✅ **ML-based VAD** achieves best accuracy in noisy conditions  
 ✅ **Two-pass VAD** balances speed and accuracy for production  
 ✅ **Streaming processing** enables real-time applications  

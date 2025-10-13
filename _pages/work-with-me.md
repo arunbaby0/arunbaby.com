@@ -5,7 +5,7 @@ sitemap: false
 permalink: /work-with-me/
 ---
 
-I help teams build and ship intelligent conversational systems—from research prototypes to production-grade AI products. My expertise spans **Conversational AI**, **Speech Technologies**, and **Machine Learning**, with a focus on making complex ML systems actually work in the real world.
+I help teams build and ship intelligent conversational systems, from research prototypes to production-grade AI products. My expertise spans **Conversational AI**, **Speech Technologies**, and **Machine Learning**, with a focus on making complex ML systems actually work in the real world.
 
 **My CV:** [One-page version](/assets/docs/Arun_2025_1page.pdf) (quick overview) • [Detailed version](/assets/docs/Arun_2025.pdf) (full background)
 
@@ -26,7 +26,7 @@ Whether you're exploring a new research direction or need to ship a production s
 
 ## Full-Time Roles
 
-I'm open to full-time opportunities in conversational AI, speech, and ML engineering—particularly roles that combine research thinking with product delivery.
+I'm open to full-time opportunities in conversational AI, speech, and ML engineering, particularly roles that combine research thinking with product delivery.
 
 ### Start With a Trial Period
 
@@ -60,7 +60,7 @@ I respond to all inquiries within 48 hours.
 
 ## Project-Based Work
 
-I work with companies on focused ML/AI projects—typically 2-6 month engagements at 20-30 hours/week.
+I work with companies on focused ML/AI projects, typically 2-6 month engagements at 20-30 hours/week.
 
 ### Types of Projects
 
@@ -104,7 +104,7 @@ Tell me about what you're trying to build:
 - Timeline and budget expectations
 - Technical constraints or requirements
 
-Don't worry about having everything figured out—we can scope it together.
+Don't worry about having everything figured out, we can scope it together.
 
 ---
 
@@ -130,7 +130,7 @@ Share what you're working on and how you think we might collaborate. I'm always 
 If you're a student or early-career engineer working on ML/AI problems, I'm happy to help where I can.
 
 **A few guidelines:**
-- Do your research first—most issues have solutions online
+- Do your research first, most issues have solutions online
 - Send one detailed email with context rather than multiple short ones  
 - Show what you've tried so far
 
@@ -144,7 +144,7 @@ If you're a student or early-career engineer working on ML/AI problems, I'm happ
 A few things that might be helpful to know:
 
 - **Communication**: I'm responsive and prefer async communication (email, docs) with regular sync check-ins
-- **Timezone**: Flexible—I've worked with teams across US, Europe, and Asia
+- **Timezone**: Flexible, I've worked with teams across US, Europe, and Asia
 - **Work style**: I focus on pragmatic solutions, clear documentation, and knowledge sharing
 - **Philosophy**: Ship working prototypes fast, iterate based on real data, avoid over-engineering
 

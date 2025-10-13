@@ -41,7 +41,7 @@ Output: 1 → 1 → 2 → 3 → 4 → 4
 
 When you have two sorted lists, you can build the merged result by repeatedly choosing the smaller of the two current heads. This is the foundation of **merge sort** and appears everywhere in systems that combine sorted streams.
 
-**Key insight:** Since both lists are already sorted, we never need to look ahead—we always know the next element is one of the two current heads.
+**Key insight:** Since both lists are already sorted, we never need to look ahead, we always know the next element is one of the two current heads.
 
 ---
 
@@ -1116,7 +1116,7 @@ class ExternalMergeSorter:
             fh.close()
 ```
 
-**Key Insight:** The merge pattern scales from simple linked lists to **distributed data systems processing terabytes**. The algorithm stays the same—only the data structures change.
+**Key Insight:** The merge pattern scales from simple linked lists to **distributed data systems processing terabytes**. The algorithm stays the same, only the data structures change.
 
 ---
 

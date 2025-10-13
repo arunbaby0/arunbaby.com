@@ -1577,7 +1577,7 @@ Guardrail Metrics (protect)
 ## Key Takeaways
 
 ✅ **Randomization** via consistent hashing ensures unbiased assignment  
-✅ **Statistical rigor** prevents false positives—require p < 0.05 and sufficient power  
+✅ **Statistical rigor** prevents false positives, require p < 0.05 and sufficient power  
 ✅ **Sample size** calculation upfront prevents underpowered experiments  
 ✅ **Guardrail metrics** protect against shipping harmful changes  
 ✅ **Real-time monitoring** enables early stopping for clear wins/losses  
