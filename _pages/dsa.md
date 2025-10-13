@@ -29,10 +29,11 @@ Each problem includes:
 **Linked Lists:**
 - [Merge Two Sorted Lists](/dsa/0003-merge-sorted-lists/)
 
-**Trees & Graphs:**
-- Coming soon...
-
 **Dynamic Programming:**
+- [Best Time to Buy/Sell Stock](/dsa/0004-best-time-buy-sell-stock/)
+- [Maximum Subarray](/dsa/0005-maximum-subarray/)
+
+**Trees & Graphs:**
 - Coming soon...
 
 **Sorting & Searching:**

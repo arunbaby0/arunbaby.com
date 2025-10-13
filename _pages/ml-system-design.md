@@ -30,6 +30,12 @@ Each design includes:
 **Data Infrastructure:**
 - [Data Preprocessing Pipeline](/ml-system-design/0003-data-preprocessing/)
 
+**Experimentation & Metrics:**
+- [A/B Testing Systems](/ml-system-design/0004-ab-testing-systems/)
+
+**Model Serving:**
+- [Batch vs Real-Time Inference](/ml-system-design/0005-batch-realtime-inference/)
+
 **Search & Ranking:**
 - Coming soon...
 

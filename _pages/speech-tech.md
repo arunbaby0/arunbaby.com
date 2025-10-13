@@ -29,20 +29,15 @@ Each post includes:
 
 **Audio Processing:**
 - [Audio Feature Extraction](/speech-tech/0003-audio-feature-extraction/)
+- [Voice Activity Detection](/speech-tech/0004-voice-activity-detection/)
 
 **Text-to-Speech (TTS):**
 - Coming soon...
 
 **Speaker Technology:**
-- Coming soon...
-
-**Voice Activity Detection:**
-- Coming soon...
+- [Speaker Recognition & Verification](/speech-tech/0005-speaker-recognition/)
 
 **Conversational AI:**
-- Coming soon...
-
-**Audio Processing:**
 - Coming soon...
 
 **Model Optimization:**
