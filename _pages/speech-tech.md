@@ -27,6 +27,9 @@ Each post includes:
 **Speech Classification:**
 - [Speech Command Classification](/speech-tech/0002-speech-classification/)
 
+**Audio Processing:**
+- [Audio Feature Extraction](/speech-tech/0003-audio-feature-extraction/)
+
 **Text-to-Speech (TTS):**
 - Coming soon...
 

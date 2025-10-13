@@ -17,14 +17,14 @@ A structured 60-day learning journey through three interconnected domains of com
 
 ## Progress Tracker
 
-**Posts Completed:** 4 / 60 (6.7%)
+**Posts Completed:** 9 / 180 (5.0%)
 
 **Last Updated:** {{ site.time | date: '%B %d, %Y' }}
 
 ### Week 1: Foundations & Real-Time Systems (Posts 1-7)
 - [x] **#1:** [Two Sum](/dsa/0001-two-sum/) + [Recommendation System](/ml-system-design/0001-recommendation-system/) + [Streaming ASR](/speech-tech/0001-streaming-asr/)
 - [x] **#2:** [Valid Parentheses](/dsa/0002-valid-parentheses/) + [Classification Pipeline](/ml-system-design/0002-classification-pipeline/) + [Speech Classification](/speech-tech/0002-speech-classification/)
-- [x] **#3:** [Merge Sorted Lists](/dsa/0003-merge-sorted-lists/) + Data Preprocessing Pipeline + Audio Feature Extraction
+- [x] **#3:** [Merge Sorted Lists](/dsa/0003-merge-sorted-lists/) + [Data Preprocessing Pipeline](/ml-system-design/0003-data-preprocessing/) + [Audio Feature Extraction](/speech-tech/0003-audio-feature-extraction/)
 - [ ] **#4:** Best Time to Buy/Sell Stock + A/B Testing Systems + Voice Activity Detection
 - [ ] **#5:** Maximum Subarray + Batch vs Real-time Inference + Speaker Recognition
 - [ ] **#6:** Climbing Stairs + Model Evaluation Metrics + Text-to-Speech Basics

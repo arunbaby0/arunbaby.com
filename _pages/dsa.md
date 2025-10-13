@@ -28,7 +28,6 @@ Each problem includes:
 
 **Linked Lists:**
 - [Merge Two Sorted Lists](/dsa/0003-merge-sorted-lists/)
-- More coming soon...
 
 **Trees & Graphs:**
 - Coming soon...

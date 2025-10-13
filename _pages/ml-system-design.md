@@ -27,6 +27,9 @@ Each design includes:
 **Classification Systems:**
 - [Classification Pipeline Design](/ml-system-design/0002-classification-pipeline/)
 
+**Data Infrastructure:**
+- [Data Preprocessing Pipeline](/ml-system-design/0003-data-preprocessing/)
+
 **Search & Ranking:**
 - Coming soon...
 
