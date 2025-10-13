@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-10-13T17:21:09+05:30">
+  <meta property="article:published_time" content="2025-10-13T17:31:39+05:30">
 
 
 
@@ -313,7 +313,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Data Preprocessing Pipeline Design">
     <meta itemprop="description" content="How to build production-grade pipelines that clean, transform, and validate billions of data points before training.">
-    <meta itemprop="datePublished" content="2025-10-13T17:21:09+05:30">
+    <meta itemprop="datePublished" content="2025-10-13T17:31:39+05:30">
     
 
     <div class="page__inner-wrap">
@@ -585,6 +585,13 @@
         
         <span class="k">return</span> <span class="n">errors</span>
     
+    <span class="k">def</span> <span class="nf">validate_record</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+        <span class="sh">"""</span><span class="s">
+        Validate a single record (dict) against schema
+        </span><span class="sh">"""</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="nc">DataFrame</span><span class="p">([</span><span class="n">record</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">validate</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    
     <span class="k">def</span> <span class="nf">_validate_field</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="p">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">schema</span><span class="p">:</span> <span class="n">FieldSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="sh">"""</span><span class="s">Validate a single field</span><span class="sh">"""</span>
         <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
@@ -604,6 +611,15 @@
         <span class="k">elif</span> <span class="n">schema</span><span class="p">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">DataType</span><span class="p">.</span><span class="n">STRING</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">pd</span><span class="p">.</span><span class="n">api</span><span class="p">.</span><span class="n">types</span><span class="p">.</span><span class="nf">is_string_dtype</span><span class="p">(</span><span class="n">series</span><span class="p">.</span><span class="nf">dropna</span><span class="p">()):</span>
                 <span class="n">errors</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sh">"</span><span class="s">Expected string type</span><span class="sh">"</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">schema</span><span class="p">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">DataType</span><span class="p">.</span><span class="n">BOOLEAN</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">pd</span><span class="p">.</span><span class="n">api</span><span class="p">.</span><span class="n">types</span><span class="p">.</span><span class="nf">is_bool_dtype</span><span class="p">(</span><span class="n">series</span><span class="p">.</span><span class="nf">dropna</span><span class="p">()):</span>
+                <span class="n">errors</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sh">"</span><span class="s">Expected boolean type</span><span class="sh">"</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">schema</span><span class="p">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">DataType</span><span class="p">.</span><span class="n">TIMESTAMP</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">pd</span><span class="p">.</span><span class="n">api</span><span class="p">.</span><span class="n">types</span><span class="p">.</span><span class="nf">is_datetime64_any_dtype</span><span class="p">(</span><span class="n">series</span><span class="p">.</span><span class="nf">dropna</span><span class="p">()):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">pd</span><span class="p">.</span><span class="nf">to_datetime</span><span class="p">(</span><span class="n">series</span><span class="p">.</span><span class="nf">dropna</span><span class="p">())</span>
+                <span class="k">except</span> <span class="nb">Exception</span><span class="p">:</span>
+                    <span class="n">errors</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sh">"</span><span class="s">Expected timestamp/datetime type</span><span class="sh">"</span><span class="p">)</span>
         
         <span class="c1"># Check value ranges
 </span>        <span class="k">if</span> <span class="n">schema</span><span class="p">.</span><span class="n">min_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
@@ -690,7 +706,8 @@
             <span class="n">expected_mean</span> <span class="o">=</span> <span class="n">baseline</span><span class="p">[</span><span class="sh">'</span><span class="s">mean</span><span class="sh">'</span><span class="p">]</span>
             <span class="n">expected_std</span> <span class="o">=</span> <span class="n">baseline</span><span class="p">[</span><span class="sh">'</span><span class="s">std</span><span class="sh">'</span><span class="p">]</span>
             
-            <span class="n">z_score</span> <span class="o">=</span> <span class="nf">abs</span><span class="p">(</span><span class="n">current_mean</span> <span class="o">-</span> <span class="n">expected_mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">expected_std</span>
+            <span class="n">denom</span> <span class="o">=</span> <span class="n">expected_std</span> <span class="k">if</span> <span class="n">expected_std</span> <span class="o">&gt;</span> <span class="mf">1e-9</span> <span class="k">else</span> <span class="mf">1e-9</span>
+            <span class="n">z_score</span> <span class="o">=</span> <span class="nf">abs</span><span class="p">(</span><span class="n">current_mean</span> <span class="o">-</span> <span class="n">expected_mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">denom</span>
             
             <span class="k">if</span> <span class="n">z_score</span> <span class="o">&gt;</span> <span class="n">threshold_sigma</span><span class="p">:</span>
                 <span class="n">warnings</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span>
@@ -1073,8 +1090,10 @@
     <span class="sh">"""</span><span class="s">Beam DoFn for schema validation</span><span class="sh">"""</span>
     
     <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
-        <span class="n">validator</span> <span class="o">=</span> <span class="nc">SchemaValidator</span><span class="p">(</span><span class="nf">get_schema</span><span class="p">())</span>
-        <span class="n">errors</span> <span class="o">=</span> <span class="n">validator</span><span class="p">.</span><span class="nf">validate_single</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+        <span class="c1"># Lazily initialize schema validator (avoid re-creating per element)
+</span>        <span class="k">if</span> <span class="ow">not</span> <span class="nf">hasattr</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="sh">'</span><span class="s">validator</span><span class="sh">'</span><span class="p">):</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">validator</span> <span class="o">=</span> <span class="nc">SchemaValidator</span><span class="p">(</span><span class="nf">get_schema</span><span class="p">())</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">validator</span><span class="p">.</span><span class="nf">validate_record</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
         
         <span class="k">if</span> <span class="n">errors</span><span class="p">:</span>
             <span class="c1"># Log to dead letter queue
@@ -2224,7 +2243,7 @@ Model Training &amp; Serving
 
         
 
-  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time class="dt-published" datetime="2025-10-13T17:21:09+05:30">October 13, 2025</time></p>
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time class="dt-published" datetime="2025-10-13T17:31:39+05:30">October 13, 2025</time></p>
 
       </footer>
 
