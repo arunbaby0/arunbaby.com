@@ -17,7 +17,7 @@ related_dsa_day: 1
 related_ml_day: 1
 ---
 
-**Why batch ASR won't work for voice assistants, and how streaming models transcribe speech as you speak—in under 200ms.**
+**Why batch ASR won't work for voice assistants, and how streaming models transcribe speech as you speak in under 200ms.**
 
 ## Introduction
 
@@ -30,7 +30,7 @@ Every time you say "Hey Google" or ask Alexa a question, you're interacting with
 - Run on both **cloud and edge devices**
 - Adapt to different **accents and speaking styles**
 
-This is fundamentally different from batch models like OpenAI's Whisper, which achieve amazing accuracy but require the entire utterance before processing. For interactive voice assistants, this delay is unacceptable—users expect immediate feedback.
+This is fundamentally different from batch models like OpenAI's Whisper, which achieve amazing accuracy but require the entire utterance before processing. For interactive voice assistants, this delay is unacceptable users expect immediate feedback.
 
 **What you'll learn:**
 - Why streaming requires different model architectures
@@ -1268,7 +1268,7 @@ if __name__ == '__main__':
 
 ## Conclusion
 
-Streaming ASR is a fascinating blend of signal processing, deep learning, and systems engineering. The key challenges—low latency, high throughput, and maintaining accuracy without future context—require careful architectural choices and aggressive optimization.
+Streaming ASR is a fascinating blend of signal processing, deep learning, and systems engineering. The key challenges low latency, high throughput, and maintaining accuracy without future context require careful architectural choices and aggressive optimization.
 
 As voice interfaces become ubiquitous, streaming ASR systems will continue to evolve. Future directions include:
 - **Multi-modal models** (audio + video for better accuracy)
@@ -1276,7 +1276,7 @@ As voice interfaces become ubiquitous, streaming ASR systems will continue to ev
 - **Emotion recognition** (detect sentiment, stress, sarcasm)
 - **On-device models** (< 10MB, < 50ms, works offline)
 
-The fundamentals covered here—RNN-T, streaming architectures, optimization techniques—will remain relevant as the field advances.
+The fundamentals covered here RNN-T, streaming architectures, optimization techniques will remain relevant as the field advances.
 
 Now go build a voice assistant that feels truly conversational! 🎤🚀
 

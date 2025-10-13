@@ -17,11 +17,11 @@ related_ml_day: 1
 related_speech_day: 1
 ---
 
-**The hash table trick that makes O(n²) become O(n)—and why this pattern appears everywhere from feature stores to embedding lookups.**
+**The hash table trick that makes O(n²) become O(n) and why this pattern appears everywhere from feature stores to embedding lookups.**
 
 ## Introduction
 
-Two Sum is often the first problem engineers encounter when starting their algorithm journey, but don't let its "Easy" label fool you. This problem introduces one of the most powerful patterns in computer science: **trading space for time using hash tables**. This pattern isn't just academic—it powers real production systems handling millions of requests per second, from recommendation engines to real-time analytics.
+Two Sum is often the first problem engineers encounter when starting their algorithm journey, but don't let its "Easy" label fool you. This problem introduces one of the most powerful patterns in computer science: **trading space for time using hash tables**. This pattern isn't just academic it powers real production systems handling millions of requests per second, from recommendation engines to real-time analytics.
 
 In this comprehensive guide, we'll explore:
 - Why the naive O(n²) solution fails at scale
@@ -1245,7 +1245,7 @@ This hash table pattern appears in:
 
 Two Sum may seem simple, but it introduces one of the most important patterns in computer science: **using hash tables to trade space for time**. This pattern powers countless production systems, from recommendation engines serving millions of users to real-time analytics processing billions of events.
 
-The next time you reach for a nested loop, ask yourself: "Could a hash table make this O(n) instead of O(n²)?" Often, the answer is yes—and the performance difference can be transformational.
+The next time you reach for a nested loop, ask yourself: "Could a hash table make this O(n) instead of O(n²)?" Often, the answer is yes and the performance difference can be transformational.
 
 Remember: **Algorithms aren't just for interviews. They're the foundation of scalable, efficient production systems.**
 

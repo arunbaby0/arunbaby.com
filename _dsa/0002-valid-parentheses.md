@@ -21,7 +21,7 @@ related_speech_day: 2
 
 ## Introduction
 
-The Valid Parentheses problem introduces one of the most fundamental data structures in computer science: the **stack**. While the problem itself seems simple—matching brackets in a string—the underlying pattern is ubiquitous in software engineering:
+The Valid Parentheses problem introduces one of the most fundamental data structures in computer science: the **stack**. While the problem itself seems simple matching brackets in a string the underlying pattern is ubiquitous in software engineering:
 
 - **Compilers** use stacks to parse expressions and ensure syntactic correctness
 - **Web browsers** use stacks to manage the back button (page history)
@@ -1303,7 +1303,7 @@ Beyond the specific problem, understanding stacks prepares you for:
 - **Memory management** (call stack, activation records)
 - **Undo/redo systems** (editors, version control)
 
-The patterns you've learned here—using stacks for matching, validation, and tracking nested structures—will appear repeatedly in system design, algorithm implementation, and production code.
+The patterns you've learned here using stacks for matching, validation, and tracking nested structures will appear repeatedly in system design, algorithm implementation, and production code.
 
 Master the stack, and you've mastered a fundamental building block of computer science! 🚀
 

@@ -102,7 +102,7 @@ def mergeTwoListsRecursive(l1: ListNode, l2: ListNode) -> ListNode:
 
 **Complexity:** O(n+m) time, O(n+m) space (call stack)
 
-**Cleaner but uses stack space—not ideal for very long lists.**
+**Cleaner but uses stack space not ideal for very long lists.**
 
 ---
 

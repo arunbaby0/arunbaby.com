@@ -28,7 +28,7 @@ Every day, you interact with recommendation systems dozens of times: YouTube sug
 - Handle new users and new content gracefully
 - Scale horizontally to serve billions of requests per day
 
-The naive approach—computing scores for all items for each user—is mathematically impossible at scale. If we have 100M users and 10M items, that's 1 quadrillion (10^15) combinations to score. Even at 1 billion computations per second, this would take **11+ days per request**.
+The naive approach computing scores for all items for each user is mathematically impossible at scale. If we have 100M users and 10M items, that's 1 quadrillion (10^15) combinations to score. Even at 1 billion computations per second, this would take **11+ days per request**.
 
 This post focuses on the **candidate generation** (or retrieval) stage: how we efficiently narrow millions of items down to hundreds of candidates that might interest a user. This is the first and most critical stage of any recommendation system, as it determines the maximum possible quality of recommendations while constraining latency and cost.
 
@@ -1447,13 +1447,13 @@ candidates = retrieve_with_mix(user_id, weights=config)
 
 ## Conclusion
 
-Recommendation systems are one of the most impactful applications of machine learning, directly affecting user experience for billions of people daily. The candidate generation stage is where the magic begins—efficiently narrowing millions of possibilities to a manageable set of high-quality candidates.
+Recommendation systems are one of the most impactful applications of machine learning, directly affecting user experience for billions of people daily. The candidate generation stage is where the magic begins efficiently narrowing millions of possibilities to a manageable set of high-quality candidates.
 
 The key insights:
 1. **Embeddings** capture semantic similarity in continuous space
 2. **ANN search** makes similarity search practical at scale
 3. **Diversity** in retrieval strategies prevents filter bubbles
-4. **Caching** is not optional—it's essential for latency
+4. **Caching** is not optional it's essential for latency
 5. **Cold start** requires thoughtful product and engineering solutions
 
 As you build recommendation systems, remember: the best system balances multiple objectives (relevance, diversity, freshness, serendipity) while maintaining the strict latency and cost constraints of production environments.
