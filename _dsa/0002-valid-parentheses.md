@@ -183,7 +183,7 @@ def isValid(s: str) -> bool:
 Input: "([{}])"
 
 Iteration 1:
-  - Replace "{}": "([]))"
+  - Replace "{}": "([])"
   - Length changed, continue
 
 Iteration 2:

@@ -595,12 +595,12 @@ class CalibratedClassifier:
     Example: If model predicts 70% spam, ~70% should actually be spam
     """
     def __init__(self, base_model):
-# Wrap model with calibration
+        # Wrap model with calibration
         self.calibrated_model = CalibratedClassifierCV(
             base_model,
-    method='sigmoid',  # or 'isotonic'
-    cv=5
-)
+            method='sigmoid',  # or 'isotonic'
+            cv=5
+        )
     
     def fit(self, X, y):
         """Train with calibration"""

@@ -357,7 +357,7 @@ print(simple_hash(33, table_size))  # 3  ← Collision!
 ```
 
 **Real hash functions are more sophisticated:**
-- Python uses SipHash for integers
+- Python uses SipHash for strings/bytes; integers hash to their value (with a special-case for -1)
 - Involves bit manipulation and prime numbers
 - Designed to minimize collisions
 - Must be deterministic (same input → same output)
@@ -385,7 +385,7 @@ If slot is occupied, try next slot:
 - Double hashing: use second hash function
 ```
 
-**Python's approach:** Uses open addressing with random probing.
+**Python's approach:** Uses open addressing with a deterministic perturbation-based probing sequence.
 
 ### Why Hash Tables are O(1)
 
@@ -404,8 +404,8 @@ If slot is occupied, try next slot:
 load_factor = num_elements / table_size
 
 Example:
-- 75 elements in table of size 100 → load factor = 0.75
-- When load factor > 0.75, Python doubles table size
+- ~66 elements in table of size 100 → load factor ≈ 0.66
+- When load factor exceeds roughly 2/3, CPython grows the table (with overallocation)
 - This keeps lookup times close to O(1)
 ```
 
@@ -629,14 +629,13 @@ nums = [1000000000, -1000000000, 1], target = 1
 
 **In other languages (C++, Java):**
 ```cpp
-// Be careful of integer overflow!
-int complement = target - nums[i];  // Could overflow
+// Be careful with overflow when computing complement via subtraction
+long long complement = static_cast<long long>(target) - static_cast<long long>(nums[i]);
 
-// Solution: Use long or check for overflow
-if (target > 0 && nums[i] > INT_MAX - target) {
-    // Overflow would occur
-    continue;
-}
+// Safer approach: use 64-bit math throughout to avoid overflow
+// If you must check for addition overflow explicitly:
+if (nums[i] > 0 && target > INT_MAX - nums[i]) { /* handle overflow */ }
+if (nums[i] < 0 && target < INT_MIN - nums[i]) { /* handle underflow */ }
 ```
 
 ### Common Mistake 1: Overwriting Indices
@@ -885,6 +884,8 @@ features = store.get_features(user_id=12345)  # O(1)!
 **Problem:** Given a token ID, retrieve its embedding vector.
 
 ```python
+import numpy as np
+
 class EmbeddingTable:
     def __init__(self, vocab_size: int, embedding_dim: int):
         # Hash table: token_id → embedding vector
@@ -1206,7 +1207,7 @@ if __name__ == '__main__':
 - Input is already sorted
 - Space is constrained
 - Need sorted output
-- Input is small (n < 1000)
+- Input is small (n < 100)
 
 ### Production Lessons
 

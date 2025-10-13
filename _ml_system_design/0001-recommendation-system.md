@@ -1043,7 +1043,15 @@ def on_user_engagement(user_id, item_id, action):
     Called when user clicks/likes/shares item
     """
     # Invalidate candidate cache (stale now)
-    redis.delete(f"candidates:{user_id}:*")
+    # Redis DEL does not support globs; use SCAN + DEL for safety
+    cursor = 0
+    pattern = f"candidates:{user_id}:*"
+    while True:
+        cursor, keys = redis.scan(cursor=cursor, match=pattern, count=1000)
+        if keys:
+            redis.delete(*keys)
+        if cursor == 0:
+            break
     
     # Don't invalidate embedding cache (more stable)
     # Will naturally expire after 1 hour

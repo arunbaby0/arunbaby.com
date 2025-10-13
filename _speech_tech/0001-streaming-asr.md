@@ -658,11 +658,15 @@ class StreamingAttention(nn.Module):
         # Apply attention with limited context
         batch_size, seq_len, dim = x.shape
         
-        # Create attention mask: can attend to left context + right context
-        mask = self.create_streaming_mask(seq_len, self.right_context)
+        # Create attention mask for causal attention with limited right context
+        # PyTorch expects attn_mask shape (target_len, source_len)
+        mask = self.create_streaming_mask(seq_len, self.right_context).to(x.device)
         
         # Attention
-        x_att, _ = self.attention(x, x, x, attn_mask=mask)
+        # nn.MultiheadAttention expects (time, batch, dim)
+        x_tbf = x.transpose(0, 1)
+        x_att_tbf, _ = self.attention(x_tbf, x_tbf, x_tbf, attn_mask=mask)
+        x_att = x_att_tbf.transpose(0, 1)
         
         # Cache for next chunk
         new_cache = x[:, -self.left_context:, :]
@@ -679,10 +683,13 @@ class StreamingAttention(nn.Module):
         - All past positions
         - Up to right_context future positions
         """
+        # Start with upper-triangular ones (disallow future)
         mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1)
-        mask[:, :right_context] = 0  # Allow right context
-        mask = mask.bool()
-        return mask
+        # Allow limited lookahead: zero-out first right_context super-diagonals
+        if right_context > 0:
+            mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1+right_context)
+        # Convert to bool mask where True = disallow
+        return mask.bool()
 ```
 
 ---

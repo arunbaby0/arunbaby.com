@@ -79,7 +79,7 @@ Step 6: l1 empty, attach l2 (6)
 Result: 1 → 2 → 3 → 4 → 5 → 6
 ```
 
-**Complexity:** O(n+m) time, O(1) space (in-place)
+**Complexity:** O(n+m) time, O(1) extra space (relinks nodes; does not allocate new nodes)
 
 ---
 
@@ -168,11 +168,12 @@ def mergeKLists(lists: List[ListNode]) -> ListNode:
 import heapq
 
 def mergeKListsPQ(lists: List[ListNode]) -> ListNode:
-    heap = []
+    heap = []  # (value, unique_id, node)
     
     # Add first node from each list
     for i, node in enumerate(lists):
         if node:
+            # Use a unique counter to avoid comparing ListNode on ties
             heapq.heappush(heap, (node.val, i, node))
     
     dummy = ListNode(0)
