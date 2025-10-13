@@ -1193,41 +1193,539 @@ class OnlineMetricsTracker:
 
 ---
 
+## Multi-Language Support
+
+### Approach 1: Separate Models per Language
+
+**Pros:**
+- Best accuracy per language
+- Language-specific optimizations
+- Easier to add new languages
+
+**Cons:**
+- Multiple models to maintain
+- Higher storage footprint
+- Language detection needed first
+
+```python
+class MultilingualClassifier:
+    """
+    Separate model per language
+    """
+    def __init__(self):
+        self.models = {
+            'en': load_model('command_en.pth'),
+            'es': load_model('command_es.pth'),
+            'fr': load_model('command_fr.pth'),
+            'de': load_model('command_de.pth'),
+            'ja': load_model('command_ja.pth')
+        }
+        self.language_detector = load_model('lang_detect.pth')
+    
+    def predict(self, audio):
+        # Detect language first
+        language = self.language_detector.predict(audio)
+        
+        # Use language-specific model
+        model = self.models[language]
+        prediction = model.predict(audio)
+        
+        return prediction, language
+```
+
+**Storage requirement:** 5 languages × 2MB = 10MB
+
+### Approach 2: Multilingual Shared Model
+
+**Training strategy:**
+
+```python
+def train_multilingual_model():
+    """
+    Single model trained on all languages
+    
+    Add language ID as auxiliary input
+    """
+    model = MultilingualCommandCNN(
+        num_classes=30,
+        num_languages=5
+    )
+    
+    # Training data from all languages
+    for audio, command_label, lang_id in train_loader:
+        features = extract_features(audio)
+        
+        # Forward pass with language embedding
+        command_pred = model(features, lang_id)
+        
+        # Loss
+        loss = criterion(command_pred, command_label)
+        
+        loss.backward()
+        optimizer.step()
+    
+    return model
+```
+
+**Model architecture:**
+
+```python
+class MultilingualCommandCNN(nn.Module):
+    """
+    Shared model with language embeddings
+    """
+    def __init__(self, num_classes=30, num_languages=5, embedding_dim=16):
+        super().__init__()
+        
+        # Language embedding
+        self.lang_embedding = nn.Embedding(num_languages, embedding_dim)
+        
+        # Shared CNN backbone
+        self.cnn = CommandCNN(num_classes=128)  # Feature extractor
+        
+        # Language-conditioned classifier
+        self.classifier = nn.Linear(128 + embedding_dim, num_classes)
+    
+    def forward(self, audio_features, language_id):
+        # CNN features
+        cnn_features = self.cnn(audio_features)  # (batch, 128)
+        
+        # Language embedding
+        lang_emb = self.lang_embedding(language_id)  # (batch, 16)
+        
+        # Concatenate
+        combined = torch.cat([cnn_features, lang_emb], dim=1)  # (batch, 144)
+        
+        # Classify
+        logits = self.classifier(combined)  # (batch, num_classes)
+        
+        return logits
+```
+
+**Pros:**
+- Single model (2-3MB)
+- Shared representations across languages
+- Transfer learning for low-resource languages
+
+**Cons:**
+- Slightly lower accuracy per language
+- All languages must use same command set
+
+---
+
+## Failure Cases & Mitigation
+
+### Common Failure Modes
+
+#### 1. **Background Speech/TV**
+
+**Problem:** Model activates on TV dialogue or background conversation
+
+**Mitigation:**
+
+```python
+def detect_background_speech(audio, sr=16000):
+    """
+    Detect if audio is from TV/background vs direct user speech
+    
+    Features:
+    - Energy envelope variation (TV more consistent)
+    - Reverb characteristics (TV more reverberant)
+    - Spectral rolloff (TV often compressed)
+    """
+    # Energy variation
+    frame_energy = librosa.feature.rms(y=audio)[0]
+    energy_std = np.std(frame_energy)
+    
+    # TV has lower energy variation
+    if energy_std < 0.01:
+        return True  # Likely background
+    
+    # Spectral centroid (TV often band-limited)
+    spectral_centroid = librosa.feature.spectral_centroid(y=audio, sr=sr)[0]
+    avg_centroid = np.mean(spectral_centroid)
+    
+    if avg_centroid < 1000:  # Hz
+        return True  # Likely background
+    
+    return False
+```
+
+**Additional strategy:** Use speaker verification to check if it's the registered user
+
+#### 2. **Accented Speech**
+
+**Problem:** Model trained on standard accent performs poorly on regional accents
+
+**Mitigation:**
+
+```python
+# Data collection strategy
+accent_distribution = {
+    'general_american': 0.3,
+    'british': 0.15,
+    'australian': 0.1,
+    'indian': 0.15,
+    'southern_us': 0.1,
+    'canadian': 0.1,
+    'other': 0.1
+}
+
+# Ensure balanced training data
+for accent, proportion in accent_distribution.items():
+    required_samples = total_samples * proportion
+    collect_samples(accent, required_samples)
+
+# Use accent-aware data augmentation
+def accent_aware_augmentation(audio, accent_type):
+    """Apply accent-specific augmentations"""
+    if accent_type == 'indian':
+        # Indian English: Stronger pitch variation
+        audio = pitch_shift(audio, n_steps=random.randint(-3, 3))
+    elif accent_type == 'southern_us':
+        # Southern US: Slower speech
+        audio = time_stretch(audio, rate=random.uniform(0.85, 1.0))
+    
+    return audio
+```
+
+#### 3. **Noisy Environments**
+
+**Problem:** Model degrades in cafes, cars, streets
+
+**Mitigation:**
+
+```python
+def enhance_audio_for_inference(audio, sr=16000):
+    """
+    Lightweight denoising for inference
+    
+    Must be < 5ms to maintain latency budget
+    """
+    # Spectral gating (simple but effective)
+    stft = librosa.stft(audio)
+    magnitude = np.abs(stft)
+    
+    # Estimate noise floor (first 100ms)
+    noise_frames = magnitude[:, :10]
+    noise_threshold = np.mean(noise_frames, axis=1, keepdims=True) * 1.5
+    
+    # Gate
+    mask = magnitude > noise_threshold
+    stft_denoised = stft * mask
+    
+    # Inverse STFT
+    audio_denoised = librosa.istft(stft_denoised)
+    
+    return audio_denoised
+```
+
+**Better approach:** Train with noisy data
+
+```python
+# Use diverse noise types during training
+noise_types = [
+    'cafe_ambiance',
+    'car_interior',
+    'street_traffic',
+    'office_chatter',
+    'home_appliances',
+    'rain',
+    'wind'
+]
+
+for audio, label in train_loader:
+    # Add random noise
+    noise_type = random.choice(noise_types)
+    noisy_audio = add_noise(audio, noise_type, snr_db=random.uniform(5, 20))
+```
+
+#### 4. **Similar Sounding Commands**
+
+**Problem:** "lights on" vs "lights off", "volume up" vs "volume down"
+
+**Mitigation:**
+
+```python
+# Use contrastive learning during training
+def contrastive_loss(anchor, positive, negative, margin=1.0):
+    """
+    Pull together similar commands, push apart confusable ones
+    """
+    pos_distance = torch.norm(anchor - positive, dim=1)
+    neg_distance = torch.norm(anchor - negative, dim=1)
+    
+    loss = torch.relu(pos_distance - neg_distance + margin)
+    
+    return loss.mean()
+
+# Identify confusable pairs
+confusable_pairs = [
+    ('lights_on', 'lights_off'),
+    ('volume_up', 'volume_down'),
+    ('next', 'previous'),
+    ('play', 'pause')
+]
+
+# During training
+for audio, label in train_loader:
+    features = model.extract_features(audio)
+    
+    # For confusable commands, add contrastive loss
+    if label in confusable_commands:
+        opposite_label = get_opposite_command(label)
+        opposite_audio = sample_from_class(opposite_label)
+        opposite_features = model.extract_features(opposite_audio)
+        
+        total_loss = classification_loss + 0.2 * contrastive_loss(
+            features, 
+            features,  # Anchor to itself
+            opposite_features
+        )
+```
+
+---
+
+## Production Deployment Architecture
+
+### Edge Deployment (Smart Speaker)
+
+```
+┌─────────────────────────────────────────┐
+│         Smart Speaker Device            │
+├─────────────────────────────────────────┤
+│                                         │
+│  Microphone Array                       │
+│       ↓                                 │
+│  Beamforming (5ms)                      │
+│       ↓                                 │
+│  Wake Word Detection (10ms)             │
+│       ↓                                 │
+│  [If wake word detected]                │
+│       ↓                                 │
+│  Audio Buffer (1 second)                │
+│       ↓                                 │
+│  Feature Extraction (5ms)               │
+│       ↓                                 │
+│  Command CNN Inference (15ms)           │
+│       ↓                                 │
+│  ┌──────────────┐                       │
+│  │ Confidence   │                       │
+│  │   > 0.85?    │                       │
+│  └──────┬───────┘                       │
+│         │                               │
+│    Yes  │  No                           │
+│         ↓                               │
+│  Execute Command    Send to Cloud ASR   │
+│                                         │
+└─────────────────────────────────────────┘
+
+Total latency (on-device): < 40ms
+Power consumption: < 100mW during inference
+```
+
+### Hybrid Edge-Cloud Architecture
+
+```python
+class HybridCommandClassifier:
+    """
+    Intelligent routing between edge and cloud
+    """
+    def __init__(self):
+        self.edge_model = load_edge_model()  # Small CNN
+        self.cloud_client = CloudASRClient()
+        
+        # Common commands handled on-device
+        self.edge_commands = {
+            'lights_on', 'lights_off', 
+            'volume_up', 'volume_down',
+            'play', 'pause', 'stop',
+            'next', 'previous'
+        }
+    
+    async def classify(self, audio):
+        # Try edge first
+        edge_pred, edge_conf = self.edge_model.predict(audio)
+        
+        # High confidence + known command → use edge
+        if edge_conf > 0.85 and edge_pred in self.edge_commands:
+            return {
+                'command': edge_pred,
+                'confidence': edge_conf,
+                'source': 'edge',
+                'latency_ms': 35
+            }
+        
+        # Otherwise → cloud ASR
+        cloud_result = await self.cloud_client.recognize(audio)
+        
+        return {
+            'command': cloud_result['text'],
+            'confidence': cloud_result['confidence'],
+            'source': 'cloud',
+            'latency_ms': 250
+        }
+```
+
+**Benefits:**
+- ✅ 90% of commands handled on-device (< 50ms)
+- ✅ 10% fall back to cloud for complex queries
+- ✅ Privacy for common commands
+- ✅ Graceful degradation if network unavailable
+
+---
+
+## A/B Testing & Gradual Rollout
+
+### Experiment Framework
+
+```python
+class ModelExperiment:
+    """
+    A/B test new model versions
+    """
+    def __init__(self, control_model, treatment_model, treatment_percentage=10):
+        self.control = control_model
+        self.treatment = treatment_model
+        self.treatment_pct = treatment_percentage
+    
+    def predict(self, audio, user_id):
+        # Deterministic assignment based on user_id
+        bucket = hash(user_id) % 100
+        
+        if bucket < self.treatment_pct:
+            # Treatment group
+            pred, conf = self.treatment.predict(audio)
+            variant = 'treatment'
+        else:
+            # Control group
+            pred, conf = self.control.predict(audio)
+            variant = 'control'
+        
+        # Log for analysis
+        self.log_prediction(user_id, variant, pred, conf)
+        
+        return pred, conf
+    
+    def log_prediction(self, user_id, variant, prediction, confidence):
+        """Log to analytics system"""
+        event = {
+            'user_id': user_id,
+            'timestamp': time.time(),
+            'variant': variant,
+            'prediction': prediction,
+            'confidence': confidence
+        }
+        
+        analytics_logger.log(event)
+```
+
+### Metrics to Track
+
+```python
+def compute_experiment_metrics(control_group, treatment_group):
+    """
+    Compare model versions
+    """
+    metrics = {}
+    
+    # Accuracy (if ground truth available)
+    if has_ground_truth:
+        metrics['accuracy_control'] = compute_accuracy(control_group)
+        metrics['accuracy_treatment'] = compute_accuracy(treatment_group)
+    
+    # Confidence distribution
+    metrics['avg_confidence_control'] = np.mean([x['confidence'] for x in control_group])
+    metrics['avg_confidence_treatment'] = np.mean([x['confidence'] for x in treatment_group])
+    
+    # Latency
+    metrics['p95_latency_control'] = np.percentile([x['latency'] for x in control_group], 95)
+    metrics['p95_latency_treatment'] = np.percentile([x['latency'] for x in treatment_group], 95)
+    
+    # User engagement (proxy for accuracy)
+    metrics['retry_rate_control'] = compute_retry_rate(control_group)
+    metrics['retry_rate_treatment'] = compute_retry_rate(treatment_group)
+    
+    # Statistical significance
+    from scipy.stats import ttest_ind
+    
+    control_success = [x['success'] for x in control_group]
+    treatment_success = [x['success'] for x in treatment_group]
+    
+    t_stat, p_value = ttest_ind(control_success, treatment_success)
+    metrics['p_value'] = p_value
+    metrics['is_significant'] = p_value < 0.05
+    
+    return metrics
+```
+
+---
+
 ## Real-World Examples
 
 ### Google Assistant
 
 **"Hey Google" Wake Word:**
 - Always-on detection using tiny model (< 1MB)
-- Runs on low-power co-processor
-- < 10ms latency
+- Runs on low-power co-processor (DSP)
+- < 10ms latency, ~0.5mW power
 - ~ 99.5% accuracy on target phrase
+- Personalized over time with on-device learning
 
 **Command Classification:**
-- Separate model for common commands
+- Separate model for common commands (~30 commands)
 - Fallback to full ASR for complex queries
-- On-device for privacy
+- On-device for privacy (no audio sent to cloud)
+- Multi-language support (40+ languages)
+
+**Architecture:**
+```
+Microphone → Beamformer → Wake Word → Command CNN → Execute
+                                              ↓
+                                         (if low conf)
+                                              ↓
+                                         Cloud ASR
+```
 
 ### Amazon Alexa
 
 **"Alexa" Wake Word:**
-- Multiple-stage detection
-- Stage 1: Simple energy detector (< 1ms)
-- Stage 2: Keyword spotter (< 10ms)
-- Stage 3: Full verification (< 50ms)
+- Multi-stage cascade:
+  - Stage 1: Energy detector (< 1ms, filters silence)
+  - Stage 2: Keyword spotter (< 10ms, CNN)
+  - Stage 3: Full verification (< 50ms, larger model)
+- Reduces false positives by 10x
+- Power-efficient (only stage 3 uses main CPU)
 
 **Custom Skills:**
-- Slot-filling approach
+- Slot-filling approach for structured commands
 - Template: "play {song} by {artist}"
 - Combined classification + entity extraction
+- ~100K custom skills available
+
+**Deployment:**
+- Edge: Wake word + simple commands
+- Cloud: Everything else (200ms latency acceptable)
 
 ### Apple Siri
 
 **"Hey Siri" Detection:**
-- Neural network on Neural Engine (iOS)
-- Personalized to user's voice over time
+- Neural network on Neural Engine (dedicated ML chip)
+- Personalized to user's voice during setup
+- Continuously adapts to voice changes
 - < 50ms latency
-- Works offline
+- Works offline (completely on-device)
+- Power: < 1mW in always-listening mode
+
+**Privacy Design:**
+- Audio never sent to cloud without explicit activation
+- Voice profile stored locally (encrypted)
+- Random identifier (not tied to Apple ID)
+
+**Technical Details:**
+- Uses LSTM for temporal modeling
+- Trained on millions of "Hey Siri" variations
+- Negative examples: TV shows, movies, other voices
 
 ---
 
