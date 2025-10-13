@@ -1,0 +1,1379 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.26.2 by Michael Rose
+  Copyright 2013-2024 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+
+<html lang="en-US" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Batch vs Real-Time Inference - Arun Baby</title>
+<meta name="description" content="How to choose between batch and real-time inference—the architectural decision that shapes your entire ML serving infrastructure.">
+
+
+  <meta name="author" content="Arun Baby">
+  
+  <meta property="article:author" content="Arun Baby">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Arun Baby">
+<meta property="og:title" content="Batch vs Real-Time Inference">
+<meta property="og:url" content="https://www.arunbaby.com/ml-system-design/0005-batch-realtime-inference/">
+
+
+  <meta property="og:description" content="How to choose between batch and real-time inference—the architectural decision that shapes your entire ML serving infrastructure.">
+
+
+
+  <meta property="og:image" content="https://www.arunbaby.com/assets/images/profile-photo.png">
+
+
+
+  <meta name="twitter:site" content="@arunbaby0">
+  <meta name="twitter:title" content="Batch vs Real-Time Inference">
+  <meta name="twitter:description" content="How to choose between batch and real-time inference—the architectural decision that shapes your entire ML serving infrastructure.">
+  <meta name="twitter:url" content="https://www.arunbaby.com/ml-system-design/0005-batch-realtime-inference/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+      <meta name="twitter:image" content="https://www.arunbaby.com/assets/images/profile-photo.png">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2025-10-13T22:10:44+05:30">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://www.arunbaby.com/ml-system-design/0005-batch-realtime-inference/">
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Arun Baby Feed">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+  
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@latest/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@latest/css/all.min.css"></noscript>
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single" dir="ltr">
+    <nav class="skip-links">
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+           
+          <span class="site-subtitle">Arun Baby</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a
+                href="/about/"
+                
+                
+              >About</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/dsa/"
+                
+                
+              >DSA</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/ml-system-design/"
+                
+                
+              >ML Systems</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/speech-tech/"
+                
+                
+              >Speech Tech</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/publications/"
+                
+                
+              >Publications</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/statuses/"
+                
+                
+              >Statuses</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/contact/"
+                
+                
+              >Contact</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <i class="fas fa-search"></i>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person" class="h-card">
+
+  
+    <div class="author__avatar">
+      <a href="https://www.arunbaby.com/">
+        <img src="/assets/images/profile-photo.png" alt="Arun Baby" itemprop="image" class="u-photo">
+      </a>
+    </div>
+  
+
+  <div class="author__content">
+    <h3 class="author__name p-name" itemprop="name">
+      <a class="u-url" rel="me" href="https://www.arunbaby.com/" itemprop="url">Arun Baby</a>
+    </h3>
+    
+      <div class="author__bio p-note" itemprop="description">
+        <p>Becoming <strong>Unlabelable</strong></p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name" class="p-locality">India</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="https://twitter.com/arunbaby0" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/arunbaby0" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+            <li><a href="https://www.linkedin.com/in/arunbaby0/" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span class="label">LinkedIn</span></a></li>
+          
+        
+          
+            <li><a href="https://scholar.google.co.in/citations?user=6fSYWhkAAAAJ" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fas fa-fw fa-graduation-cap" aria-hidden="true"></i><span class="label">Google Scholar</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer me">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Batch vs Real-Time Inference">
+    <meta itemprop="description" content="How to choose between batch and real-time inference—the architectural decision that shapes your entire ML serving infrastructure.">
+    <meta itemprop="datePublished" content="2025-10-13T22:10:44+05:30">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">
+            <a href="https://www.arunbaby.com/ml-system-design/0005-batch-realtime-inference/" itemprop="url">Batch vs Real-Time Inference
+</a>
+          </h1>
+          
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
+              <ul class="toc__menu"><li><a href="#introduction">Introduction</a></li><li><a href="#problem-definition">Problem Definition</a><ul><li><a href="#functional-requirements">Functional Requirements</a></li><li><a href="#non-functional-requirements">Non-Functional Requirements</a></li></ul></li><li><a href="#batch-inference">Batch Inference</a><ul><li><a href="#architecture">Architecture</a></li><li><a href="#implementation">Implementation</a></li><li><a href="#spark-based-batch-inference">Spark-based Batch Inference</a></li></ul></li><li><a href="#real-time-inference">Real-Time Inference</a><ul><li><a href="#architecture-1">Architecture</a></li><li><a href="#implementation-1">Implementation</a></li><li><a href="#tensorflow-serving">TensorFlow Serving</a></li></ul></li><li><a href="#hybrid-approach">Hybrid Approach</a><ul><li><a href="#architecture-2">Architecture</a></li><li><a href="#implementation-2">Implementation</a></li></ul></li><li><a href="#decision-framework">Decision Framework</a><ul><li><a href="#use-batch-inference-when">Use Batch Inference When:</a></li><li><a href="#use-real-time-inference-when">Use Real-Time Inference When:</a></li><li><a href="#use-hybrid-when">Use Hybrid When:</a></li></ul></li><li><a href="#cost-comparison">Cost Comparison</a></li><li><a href="#key-takeaways">Key Takeaways</a></li></ul>
+            </nav>
+          </aside>
+        
+        <p><strong>How to choose between batch and real-time inference—the architectural decision that shapes your entire ML serving infrastructure.</strong></p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>After training a model, you need to <strong>serve predictions</strong>. Two fundamental approaches:</p>
+
+<ol>
+  <li><strong>Batch Inference:</strong> Precompute predictions for all users/items periodically</li>
+  <li><strong>Real-Time Inference:</strong> Compute predictions on-demand when requested</li>
+</ol>
+
+<p><strong>Why this matters:</strong></p>
+<ul>
+  <li><strong>Different latency requirements</strong> → Different architectures</li>
+  <li><strong>Cost implications</strong> → Batch can be 10-100x cheaper</li>
+  <li><strong>System complexity</strong> → Real-time requires more infrastructure</li>
+  <li><strong>Feature freshness</strong> → Real-time uses latest data</li>
+</ul>
+
+<p><strong>What you’ll learn:</strong></p>
+<ul>
+  <li>When to use batch vs real-time</li>
+  <li>Architecture for each approach</li>
+  <li>Hybrid systems combining both</li>
+  <li>Trade-offs and decision framework</li>
+  <li>Production implementation patterns</li>
+</ul>
+
+<hr />
+
+<h2 id="problem-definition">Problem Definition</h2>
+
+<p>Design an ML inference system that serves predictions efficiently.</p>
+
+<h3 id="functional-requirements">Functional Requirements</h3>
+
+<ol>
+  <li><strong>Prediction Serving</strong>
+    <ul>
+      <li>Batch: Generate predictions for all entities periodically</li>
+      <li>Real-time: Serve predictions on-demand with low latency</li>
+      <li>Hybrid: Combine both approaches</li>
+    </ul>
+  </li>
+  <li><strong>Data Freshness</strong>
+    <ul>
+      <li>Access to latest features</li>
+      <li>Handle feature staleness</li>
+      <li>Feature computation strategy</li>
+    </ul>
+  </li>
+  <li><strong>Scalability</strong>
+    <ul>
+      <li>Handle millions of predictions</li>
+      <li>Scale horizontally</li>
+      <li>Handle traffic spikes</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="non-functional-requirements">Non-Functional Requirements</h3>
+
+<ol>
+  <li><strong>Latency</strong>
+    <ul>
+      <li>Batch: Minutes to hours acceptable</li>
+      <li>Real-time: &lt; 100ms for most applications</li>
+    </ul>
+  </li>
+  <li><strong>Throughput</strong>
+    <ul>
+      <li>Batch: Process millions of predictions in one run</li>
+      <li>Real-time: 1000s of requests/second</li>
+    </ul>
+  </li>
+  <li><strong>Cost</strong>
+    <ul>
+      <li>Optimize compute resources</li>
+      <li>Minimize infrastructure costs</li>
+    </ul>
+  </li>
+  <li><strong>Reliability</strong>
+    <ul>
+      <li>99.9%+ uptime for real-time</li>
+      <li>Graceful degradation</li>
+      <li>Fallback mechanisms</li>
+    </ul>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="batch-inference">Batch Inference</h2>
+
+<p>Precompute predictions periodically (daily, hourly, etc.).</p>
+
+<h3 id="architecture">Architecture</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────┐
+│              Batch Inference Pipeline                    │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌──────────────┐      ┌──────────────┐                │
+│  │  Data Lake   │      │  Feature     │                │
+│  │  (HDFS/S3)   │─────▶│  Engineering │                │
+│  └──────────────┘      └──────────────┘                │
+│                               │                          │
+│                               ▼                          │
+│                        ┌──────────────┐                 │
+│                        │  Batch Job   │                 │
+│                        │  (Spark/Ray) │                 │
+│                        │  - Load model│                 │
+│                        │  - Predict   │                 │
+│                        └──────────────┘                 │
+│                               │                          │
+│                               ▼                          │
+│                        ┌──────────────┐                 │
+│                        │  Write to    │                 │
+│                        │  Cache/DB    │                 │
+│                        │  (Redis/DDB) │                 │
+│                        └──────────────┘                 │
+│                               │                          │
+│  ┌──────────────┐            │                          │
+│  │  Application │◀───────────┘                          │
+│  │  Server      │  Lookup predictions                   │
+│  └──────────────┘                                        │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+
+Flow:
+1. Extract features from data warehouse
+2. Run batch prediction job
+3. Store predictions in fast lookup store
+4. Application does simple lookup
+</code></pre></div></div>
+
+<h3 id="implementation">Implementation</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span>
+<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="n">redis</span>
+<span class="kn">import</span> <span class="n">json</span>
+<span class="kn">import</span> <span class="n">time</span>
+
+<span class="k">class</span> <span class="nc">BatchInferenceSystem</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Batch inference system
+    
+    Precomputes predictions for all users/items
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">redis_client</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">redis</span> <span class="o">=</span> <span class="n">redis_client</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="mi">1000</span>
+    
+    <span class="k">def</span> <span class="nf">run_batch_prediction</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">entity_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">features_df</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Run batch prediction for all entities
+        
+        Args:
+            entity_ids: List of user/item IDs
+            features_df: DataFrame with features for all entities
+        
+        Returns:
+            Number of predictions generated
+        </span><span class="sh">"""</span>
+        <span class="n">num_predictions</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="c1"># Process in batches for memory efficiency
+</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">entity_ids</span><span class="p">),</span> <span class="n">self</span><span class="p">.</span><span class="n">batch_size</span><span class="p">):</span>
+            <span class="n">batch_ids</span> <span class="o">=</span> <span class="n">entity_ids</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">self</span><span class="p">.</span><span class="n">batch_size</span><span class="p">]</span>
+            <span class="n">batch_features</span> <span class="o">=</span> <span class="n">features_df</span><span class="p">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">self</span><span class="p">.</span><span class="n">batch_size</span><span class="p">]</span>
+            
+            <span class="c1"># Predict
+</span>            <span class="n">predictions</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">batch_features</span><span class="p">.</span><span class="n">values</span><span class="p">)</span>
+            
+            <span class="c1"># Store in Redis
+</span>            <span class="n">self</span><span class="p">.</span><span class="nf">_store_predictions</span><span class="p">(</span><span class="n">batch_ids</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span>
+            
+            <span class="n">num_predictions</span> <span class="o">+=</span> <span class="nf">len</span><span class="p">(</span><span class="n">batch_ids</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">num_predictions</span> <span class="o">%</span> <span class="mi">10000</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Processed </span><span class="si">{</span><span class="n">num_predictions</span><span class="si">}</span><span class="s"> predictions...</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">num_predictions</span>
+    
+    <span class="k">def</span> <span class="nf">_store_predictions</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">entity_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">predictions</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Store predictions in Redis with TTL</span><span class="sh">"""</span>
+        <span class="n">pipeline</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">redis</span><span class="p">.</span><span class="nf">pipeline</span><span class="p">()</span>
+        
+        <span class="n">ttl_seconds</span> <span class="o">=</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span>  <span class="c1"># 24 hours
+</span>        
+        <span class="k">for</span> <span class="n">entity_id</span><span class="p">,</span> <span class="n">prediction</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">entity_ids</span><span class="p">,</span> <span class="n">predictions</span><span class="p">):</span>
+            <span class="c1"># Store as JSON
+</span>            <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">pred:</span><span class="si">{</span><span class="n">entity_id</span><span class="si">}</span><span class="sh">"</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">({</span>
+                <span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="p">:</span> <span class="nf">float</span><span class="p">(</span><span class="n">prediction</span><span class="p">),</span>
+                <span class="sh">'</span><span class="s">timestamp</span><span class="sh">'</span><span class="p">:</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
+            <span class="p">})</span>
+            
+            <span class="n">pipeline</span><span class="p">.</span><span class="nf">setex</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ttl_seconds</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        
+        <span class="n">pipeline</span><span class="p">.</span><span class="nf">execute</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">get_prediction</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Lookup precomputed prediction
+        
+        Fast O(1) lookup
+        </span><span class="sh">"""</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">pred:</span><span class="si">{</span><span class="n">entity_id</span><span class="si">}</span><span class="sh">"</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">redis</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c1"># Prediction not found or expired
+</span>            <span class="k">return</span> <span class="bp">None</span>
+        
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="p">.</span><span class="nf">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="p">]</span>
+
+<span class="c1"># Usage
+</span><span class="kn">import</span> <span class="n">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+<span class="kn">import</span> <span class="n">time</span>
+
+<span class="c1"># Initialize
+</span><span class="n">redis_client</span> <span class="o">=</span> <span class="n">redis</span><span class="p">.</span><span class="nc">Redis</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="sh">'</span><span class="s">localhost</span><span class="sh">'</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="nf">load_trained_model</span><span class="p">()</span>  <span class="c1"># Your trained model
+</span>
+<span class="n">batch_system</span> <span class="o">=</span> <span class="nc">BatchInferenceSystem</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">redis_client</span><span class="p">)</span>
+
+<span class="c1"># Run batch prediction (e.g., daily cron job)
+</span><span class="n">user_ids</span> <span class="o">=</span> <span class="nf">fetch_all_user_ids</span><span class="p">()</span>  <span class="c1"># Get all users
+</span><span class="n">features_df</span> <span class="o">=</span> <span class="nf">fetch_user_features</span><span class="p">(</span><span class="n">user_ids</span><span class="p">)</span>  <span class="c1"># Get features
+</span>
+<span class="n">num_preds</span> <span class="o">=</span> <span class="n">batch_system</span><span class="p">.</span><span class="nf">run_batch_prediction</span><span class="p">(</span><span class="n">user_ids</span><span class="p">,</span> <span class="n">features_df</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Generated </span><span class="si">{</span><span class="n">num_preds</span><span class="si">}</span><span class="s"> predictions</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="c1"># Later, application looks up prediction
+</span><span class="n">prediction</span> <span class="o">=</span> <span class="n">batch_system</span><span class="p">.</span><span class="nf">get_prediction</span><span class="p">(</span><span class="sh">"</span><span class="s">user_12345</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Prediction: </span><span class="si">{</span><span class="n">prediction</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="spark-based-batch-inference">Spark-based Batch Inference</h3>
+
+<p>For large-scale batch processing:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">pyspark.sql</span> <span class="kn">import</span> <span class="n">SparkSession</span>
+<span class="kn">from</span> <span class="n">pyspark.sql.functions</span> <span class="kn">import</span> <span class="n">pandas_udf</span><span class="p">,</span> <span class="n">PandasUDFType</span>
+<span class="kn">import</span> <span class="n">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+
+<span class="k">class</span> <span class="nc">SparkBatchInference</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Distributed batch inference using PySpark
+    
+    Scales to billions of predictions
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="p">.</span><span class="n">builder</span> \
+            <span class="p">.</span><span class="nf">appName</span><span class="p">(</span><span class="sh">"</span><span class="s">BatchInference</span><span class="sh">"</span><span class="p">)</span> \
+            <span class="p">.</span><span class="nf">getOrCreate</span><span class="p">()</span>
+        
+        <span class="n">self</span><span class="p">.</span><span class="n">model_path</span> <span class="o">=</span> <span class="n">model_path</span>
+    
+    <span class="k">def</span> <span class="nf">predict_spark</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features_df_spark</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Distribute prediction across cluster
+        
+        Args:
+            features_df_spark: Spark DataFrame with features
+        
+        Returns:
+            Spark DataFrame with predictions
+        </span><span class="sh">"""</span>
+        <span class="n">model_path</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model_path</span>
+        
+        <span class="c1"># Define pandas UDF for prediction
+</span>        <span class="nd">@pandas_udf</span><span class="p">(</span><span class="sh">"</span><span class="s">double</span><span class="sh">"</span><span class="p">,</span> <span class="n">PandasUDFType</span><span class="p">.</span><span class="n">SCALAR</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">predict_udf</span><span class="p">(</span><span class="o">*</span><span class="n">features</span><span class="p">):</span>
+            <span class="c1"># Load model once per executor
+</span>            <span class="kn">import</span> <span class="n">joblib</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">joblib</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
+            
+            <span class="c1"># Create feature matrix
+</span>            <span class="n">X</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="nc">DataFrame</span><span class="p">({</span>
+                <span class="sa">f</span><span class="sh">'</span><span class="s">feature_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="sh">'</span><span class="p">:</span> <span class="n">features</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">features</span><span class="p">))</span>
+            <span class="p">})</span>
+            
+            <span class="c1"># Predict
+</span>            <span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">X</span><span class="p">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="p">.</span><span class="nc">Series</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+        
+        <span class="c1"># Apply UDF
+</span>        <span class="n">feature_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">features_df_spark</span><span class="p">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">col</span><span class="p">.</span><span class="nf">startswith</span><span class="p">(</span><span class="sh">'</span><span class="s">feature_</span><span class="sh">'</span><span class="p">)]</span>
+        
+        <span class="n">result_df</span> <span class="o">=</span> <span class="n">features_df_spark</span><span class="p">.</span><span class="nf">withColumn</span><span class="p">(</span>
+            <span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="p">,</span>
+            <span class="nf">predict_udf</span><span class="p">(</span><span class="o">*</span><span class="n">feature_cols</span><span class="p">)</span>
+        <span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">result_df</span>
+    
+    <span class="k">def</span> <span class="nf">run_batch_job</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Full batch inference pipeline
+        
+        Args:
+            input_path: S3/HDFS path to input data
+            output_path: S3/HDFS path to save predictions
+        </span><span class="sh">"""</span>
+        <span class="c1"># Read input
+</span>        <span class="n">df</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">spark</span><span class="p">.</span><span class="n">read</span><span class="p">.</span><span class="nf">parquet</span><span class="p">(</span><span class="n">input_path</span><span class="p">)</span>
+        
+        <span class="c1"># Predict
+</span>        <span class="n">predictions_df</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">predict_spark</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        
+        <span class="c1"># Write output
+</span>        <span class="n">predictions_df</span><span class="p">.</span><span class="n">write</span><span class="p">.</span><span class="nf">parquet</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="sh">'</span><span class="s">overwrite</span><span class="sh">'</span><span class="p">)</span>
+        
+        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Batch prediction complete. Output: </span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="c1"># Usage
+</span><span class="n">spark_batch</span> <span class="o">=</span> <span class="nc">SparkBatchInference</span><span class="p">(</span><span class="n">model_path</span><span class="o">=</span><span class="sh">'</span><span class="s">s3://models/my_model.pkl</span><span class="sh">'</span><span class="p">)</span>
+
+<span class="n">spark_batch</span><span class="p">.</span><span class="nf">run_batch_job</span><span class="p">(</span>
+    <span class="n">input_path</span><span class="o">=</span><span class="sh">'</span><span class="s">s3://data/user_features/</span><span class="sh">'</span><span class="p">,</span>
+    <span class="n">output_path</span><span class="o">=</span><span class="sh">'</span><span class="s">s3://predictions/daily/2025-01-15/</span><span class="sh">'</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="real-time-inference">Real-Time Inference</h2>
+
+<p>Compute predictions on-demand when requested.</p>
+
+<h3 id="architecture-1">Architecture</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────┐
+│            Real-Time Inference System                    │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌──────────────┐                                       │
+│  │  Load        │◀─── Model Registry                    │
+│  │  Balancer    │                                        │
+│  └──────┬───────┘                                        │
+│         │                                                │
+│    ┌────▼─────────────────────────────┐                 │
+│    │   Model Serving Instances        │                 │
+│    │   ┌─────────┐  ┌─────────┐      │                 │
+│    │   │ Model 1 │  │ Model 2 │ ...  │                 │
+│    │   │ (GPU)   │  │ (GPU)   │      │                 │
+│    │   └─────────┘  └─────────┘      │                 │
+│    └────┬─────────────────────────────┘                 │
+│         │                                                │
+│    ┌────▼──────────┐     ┌──────────────┐              │
+│    │ Feature       │────▶│  Feature     │              │
+│    │ Service       │     │  Store       │              │
+│    │ - Online      │     │  (Redis)     │              │
+│    │   features    │     └──────────────┘              │
+│    └───────────────┘                                    │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+
+Flow:
+1. Request arrives with user/item ID
+2. Fetch features from feature store
+3. Compute additional online features
+4. Model predicts
+5. Return prediction
+</code></pre></div></div>
+
+<h3 id="implementation-1">Implementation</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span>
+<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Dict</span>
+<span class="kn">import</span> <span class="n">torch</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="nc">FastAPI</span><span class="p">()</span>
+
+<span class="k">class</span> <span class="nc">RealTimeInferenceService</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Real-time inference service
+    
+    Serves predictions with low latency
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">feature_store</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">feature_store</span> <span class="o">=</span> <span class="n">feature_store</span>
+        
+        <span class="c1"># Warm up model
+</span>        <span class="n">self</span><span class="p">.</span><span class="nf">_warmup</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">_warmup</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Warm up model with dummy prediction</span><span class="sh">"""</span>
+        <span class="n">dummy_features</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">input_dim</span><span class="p">)</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">dummy_features</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">get_features</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Fetch features for entity
+        
+        Combines precomputed + real-time features
+        </span><span class="sh">"""</span>
+        <span class="c1"># Fetch precomputed features from Redis
+</span>        <span class="n">precomputed_raw</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">feature_store</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">features:</span><span class="si">{</span><span class="n">entity_id</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+        <span class="n">precomputed</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">precomputed_raw</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">precomputed</span> <span class="o">=</span> <span class="n">json</span><span class="p">.</span><span class="nf">loads</span><span class="p">(</span><span class="n">precomputed_raw</span><span class="p">)</span>
+            <span class="k">except</span> <span class="nb">Exception</span><span class="p">:</span>
+                <span class="n">precomputed</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="k">if</span> <span class="n">precomputed</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c1"># Fallback: compute features on-the-fly
+</span>            <span class="n">precomputed</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_compute_features_fallback</span><span class="p">(</span><span class="n">entity_id</span><span class="p">)</span>
+        
+        <span class="c1"># Add real-time features
+</span>        <span class="n">realtime_features</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_compute_realtime_features</span><span class="p">(</span><span class="n">entity_id</span><span class="p">)</span>
+        
+        <span class="c1"># Combine
+</span>        <span class="n">features</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">precomputed</span><span class="p">,</span> <span class="o">**</span><span class="n">realtime_features</span><span class="p">}</span>
+        
+        <span class="k">return</span> <span class="n">features</span>
+    
+    <span class="k">def</span> <span class="nf">_compute_realtime_features</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Compute features that must be fresh
+        
+        E.g., time of day, user</span><span class="sh">'</span><span class="s">s current session, etc.
+        </span><span class="sh">"""</span>
+        <span class="kn">import</span> <span class="n">datetime</span>
+        
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">.</span><span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">hour_of_day</span><span class="sh">'</span><span class="p">:</span> <span class="n">now</span><span class="p">.</span><span class="n">hour</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">day_of_week</span><span class="sh">'</span><span class="p">:</span> <span class="n">now</span><span class="p">.</span><span class="nf">weekday</span><span class="p">(),</span>
+            <span class="sh">'</span><span class="s">is_weekend</span><span class="sh">'</span><span class="p">:</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">now</span><span class="p">.</span><span class="nf">weekday</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">5</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">_compute_features_fallback</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">Fallback feature computation</span><span class="sh">"""</span>
+        <span class="c1"># Query database, compute on-the-fly
+</span>        <span class="c1"># This is slower but ensures we can always serve
+</span>        <span class="k">return</span> <span class="p">{}</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Real-time prediction
+        
+        Returns:
+            Prediction score
+        </span><span class="sh">"""</span>
+        <span class="c1"># Get features
+</span>        <span class="n">features</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">get_features</span><span class="p">(</span><span class="n">entity_id</span><span class="p">)</span>
+        
+        <span class="c1"># Convert to numpy array (assuming fixed feature order)
+</span>        <span class="n">feature_vector</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span>
+            <span class="n">features</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="sa">f</span><span class="sh">'</span><span class="s">feature_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="sh">'</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">input_dim</span><span class="p">)</span>
+        <span class="p">]).</span><span class="nf">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        
+        <span class="c1"># Predict
+</span>        <span class="n">prediction</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">feature_vector</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="nf">float</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span>
+
+<span class="c1"># FastAPI endpoints
+</span><span class="n">realtime_service</span> <span class="o">=</span> <span class="nc">RealTimeInferenceService</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">redis_client</span><span class="p">)</span>
+
+<span class="nd">@app.get</span><span class="p">(</span><span class="sh">"</span><span class="s">/predict/{entity_id}</span><span class="sh">"</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">predict_endpoint</span><span class="p">(</span><span class="n">entity_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Real-time prediction endpoint
+    
+    GET /predict/user_12345
+    </span><span class="sh">"""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">prediction</span> <span class="o">=</span> <span class="n">realtime_service</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">entity_id</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">entity_id</span><span class="sh">'</span><span class="p">:</span> <span class="n">entity_id</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="p">:</span> <span class="n">prediction</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">timestamp</span><span class="sh">'</span><span class="p">:</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
+        <span class="p">}</span>
+    
+    <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="n">fastapi</span> <span class="kn">import</span> <span class="n">HTTPException</span>
+        <span class="k">raise</span> <span class="nc">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="p">{</span><span class="sh">'</span><span class="s">error</span><span class="sh">'</span><span class="p">:</span> <span class="nf">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="sh">'</span><span class="s">entity_id</span><span class="sh">'</span><span class="p">:</span> <span class="n">entity_id</span><span class="p">})</span>
+
+<span class="c1"># Run with: uvicorn app:app --host 0.0.0.0 --port 8000
+</span></code></pre></div></div>
+
+<h3 id="tensorflow-serving">TensorFlow Serving</h3>
+
+<p>Production-grade model serving:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">requests</span>
+<span class="kn">import</span> <span class="n">json</span>
+
+<span class="k">class</span> <span class="nc">TensorFlowServingClient</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Client for TensorFlow Serving
+    
+    High-performance model serving
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">server_url</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">model_version</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">server_url</span> <span class="o">=</span> <span class="n">server_url</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model_name</span> <span class="o">=</span> <span class="n">model_name</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model_version</span> <span class="o">=</span> <span class="n">model_version</span> <span class="ow">or</span> <span class="sh">'</span><span class="s">latest</span><span class="sh">'</span>
+        
+        <span class="c1"># Endpoint
+</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">model_version</span> <span class="o">==</span> <span class="sh">'</span><span class="s">latest</span><span class="sh">'</span><span class="p">:</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">endpoint</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">server_url</span><span class="si">}</span><span class="s">/v1/models/</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s">:predict</span><span class="sh">"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">endpoint</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">server_url</span><span class="si">}</span><span class="s">/v1/models/</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s">/versions/</span><span class="si">{</span><span class="n">model_version</span><span class="si">}</span><span class="s">:predict</span><span class="sh">"</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">instances</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sh">"""</span><span class="s">
+        Send prediction request to TF Serving
+        
+        Args:
+            instances: List of feature vectors
+        
+        Returns:
+            List of predictions
+        </span><span class="sh">"""</span>
+        <span class="c1"># Prepare request
+</span>        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">"</span><span class="s">signature_name</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">serving_default</span><span class="sh">"</span><span class="p">,</span>
+            <span class="sh">"</span><span class="s">instances</span><span class="sh">"</span><span class="p">:</span> <span class="n">instances</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># Send request
+</span>        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="p">.</span><span class="nf">post</span><span class="p">(</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">endpoint</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">),</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="sh">'</span><span class="s">Content-Type</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">application/json</span><span class="sh">'</span><span class="p">}</span>
+        <span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">response</span><span class="p">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="nc">Exception</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Prediction failed: </span><span class="si">{</span><span class="n">response</span><span class="p">.</span><span class="n">text</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="c1"># Parse response
+</span>        <span class="n">result</span> <span class="o">=</span> <span class="n">response</span><span class="p">.</span><span class="nf">json</span><span class="p">()</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">predictions</span><span class="sh">'</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="n">predictions</span>
+
+<span class="c1"># Usage
+</span><span class="n">tf_client</span> <span class="o">=</span> <span class="nc">TensorFlowServingClient</span><span class="p">(</span>
+    <span class="n">server_url</span><span class="o">=</span><span class="sh">'</span><span class="s">http://localhost:8501</span><span class="sh">'</span><span class="p">,</span>
+    <span class="n">model_name</span><span class="o">=</span><span class="sh">'</span><span class="s">recommendation_model</span><span class="sh">'</span><span class="p">,</span>
+    <span class="n">model_version</span><span class="o">=</span><span class="sh">'</span><span class="s">3</span><span class="sh">'</span>
+<span class="p">)</span>
+
+<span class="c1"># Predict
+</span><span class="n">features</span> <span class="o">=</span> <span class="p">[[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">]]</span>
+<span class="n">predictions</span> <span class="o">=</span> <span class="n">tf_client</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Prediction: </span><span class="si">{</span><span class="n">predictions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="hybrid-approach">Hybrid Approach</h2>
+
+<p>Combine batch and real-time for optimal performance.</p>
+
+<h3 id="architecture-2">Architecture</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌────────────────────────────────────────────────────────┐
+│              Hybrid Inference System                    │
+├────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌────────────────┐         ┌────────────────┐        │
+│  │ Batch Pipeline │         │ Real-Time API  │        │
+│  │ (Daily)        │         │                │        │
+│  └───────┬────────┘         └───────┬────────┘        │
+│          │                          │                  │
+│          ▼                          ▼                  │
+│  ┌──────────────────────────────────────────┐         │
+│  │        Prediction Cache (Redis)          │         │
+│  │  ┌────────────┐      ┌────────────┐     │         │
+│  │  │ Batch      │      │ Real-time  │     │         │
+│  │  │ Predictions│      │ Predictions│     │         │
+│  │  │ (TTL: 24h) │      │ (TTL: 1h)  │     │         │
+│  │  └────────────┘      └────────────┘     │         │
+│  └──────────────────────────────────────────┘         │
+│                     ▲                                  │
+│                     │                                  │
+│              ┌──────┴────────┐                         │
+│              │  Application  │                         │
+│              │  1. Check cache│                        │
+│              │  2. Fallback to│                        │
+│              │     real-time  │                        │
+│              └───────────────┘                         │
+│                                                         │
+└────────────────────────────────────────────────────────┘
+</code></pre></div></div>
+
+<h3 id="implementation-2">Implementation</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">HybridInferenceSystem</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Hybrid system: batch + real-time
+    
+    - Fast path: Use batch predictions if available
+    - Slow path: Compute real-time if needed
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">batch_system</span><span class="p">,</span> <span class="n">realtime_system</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">batch</span> <span class="o">=</span> <span class="n">batch_system</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">realtime</span> <span class="o">=</span> <span class="n">realtime_system</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">cache_hit_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">cache_miss_counter</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_staleness_hours</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Get prediction with automatic fallback
+        
+        Args:
+            entity_id: Entity to predict for
+            max_staleness_hours: Maximum age of batch prediction
+        
+        Returns:
+            {
+                </span><span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="s">: float,
+                </span><span class="sh">'</span><span class="s">source</span><span class="sh">'</span><span class="s">: </span><span class="sh">'</span><span class="s">batch</span><span class="sh">'</span><span class="s"> | </span><span class="sh">'</span><span class="s">realtime</span><span class="sh">'</span><span class="s">,
+                </span><span class="sh">'</span><span class="s">timestamp</span><span class="sh">'</span><span class="s">: float
+            }
+        </span><span class="sh">"""</span>
+        <span class="c1"># Try batch prediction first
+</span>        <span class="n">batch_pred_value</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">batch</span><span class="p">.</span><span class="nf">get_prediction</span><span class="p">(</span><span class="n">entity_id</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">batch_pred_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c1"># If batch system returns only a float, treat as fresh within TTL of Redis
+</span>            <span class="n">self</span><span class="p">.</span><span class="n">cache_hit_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="p">:</span> <span class="n">batch_pred_value</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">source</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">batch</span><span class="sh">'</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">timestamp</span><span class="sh">'</span><span class="p">:</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">(),</span>
+                <span class="sh">'</span><span class="s">cache_hit</span><span class="sh">'</span><span class="p">:</span> <span class="bp">True</span>
+            <span class="p">}</span>
+        
+        <span class="c1"># Fallback to real-time
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">cache_miss_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="n">realtime_pred</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">realtime</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">entity_id</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="p">:</span> <span class="n">realtime_pred</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">source</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">realtime</span><span class="sh">'</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">timestamp</span><span class="sh">'</span><span class="p">:</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">(),</span>
+            <span class="sh">'</span><span class="s">cache_hit</span><span class="sh">'</span><span class="p">:</span> <span class="bp">False</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">get_cache_hit_rate</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">Calculate cache hit rate</span><span class="sh">"""</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">cache_hit_counter</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">cache_miss_counter</span>
+        <span class="k">if</span> <span class="n">total</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">cache_hit_counter</span> <span class="o">/</span> <span class="n">total</span>
+
+<span class="c1"># Usage
+</span><span class="n">hybrid</span> <span class="o">=</span> <span class="nc">HybridInferenceSystem</span><span class="p">(</span><span class="n">batch_system</span><span class="p">,</span> <span class="n">realtime_service</span><span class="p">)</span>
+
+<span class="c1"># Predict for user
+</span><span class="n">result</span> <span class="o">=</span> <span class="n">hybrid</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="sh">'</span><span class="s">user_12345</span><span class="sh">'</span><span class="p">,</span> <span class="n">max_staleness_hours</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Prediction: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Source: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">source</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Cache hit rate: </span><span class="si">{</span><span class="n">hybrid</span><span class="p">.</span><span class="nf">get_cache_hit_rate</span><span class="p">()</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="decision-framework">Decision Framework</h2>
+
+<p>When to use which approach:</p>
+
+<h3 id="use-batch-inference-when">Use Batch Inference When:</h3>
+
+<p>✅ <strong>Latency is not critical</strong> (recommendations, email campaigns)<br />
+✅ <strong>Predictions needed for all entities</strong> (e.g., all users)<br />
+✅ <strong>Features are expensive to compute</strong><br />
+✅ <strong>Model is large/slow</strong><br />
+✅ <strong>Cost optimization is priority</strong><br />
+✅ <strong>Predictions don’t change frequently</strong></p>
+
+<p><strong>Examples:</strong></p>
+<ul>
+  <li>Daily email recommendations</li>
+  <li>Product catalog rankings</li>
+  <li>Weekly personalized content</li>
+  <li>Batch fraud scoring</li>
+</ul>
+
+<h3 id="use-real-time-inference-when">Use Real-Time Inference When:</h3>
+
+<p>✅ <strong>Low latency required</strong> (&lt; 100ms)<br />
+✅ <strong>Fresh features critical</strong> (current context)<br />
+✅ <strong>Predictions for small subset</strong> (active users)<br />
+✅ <strong>Immediate user feedback</strong> (search, ads)<br />
+✅ <strong>High-value decisions</strong> (fraud detection)</p>
+
+<p><strong>Examples:</strong></p>
+<ul>
+  <li>Search ranking</li>
+  <li>Ad serving</li>
+  <li>Real-time fraud detection</li>
+  <li>Live recommendation widgets</li>
+</ul>
+
+<h3 id="use-hybrid-when">Use Hybrid When:</h3>
+
+<p>✅ <strong>Mix of latency requirements</strong><br />
+✅ <strong>Want cost + performance</strong><br />
+✅ <strong>Can tolerate some staleness</strong><br />
+✅ <strong>Variable traffic patterns</strong><br />
+✅ <strong>Graceful degradation needed</strong></p>
+
+<p><strong>Examples:</strong></p>
+<ul>
+  <li>Homepage recommendations (batch) + search (real-time)</li>
+  <li>Social feed (batch) + stories (real-time)</li>
+  <li>Product pages (batch) + checkout (real-time)</li>
+</ul>
+
+<hr />
+
+<h2 id="cost-comparison">Cost Comparison</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">CostAnalyzer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Estimate costs for batch vs real-time
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">estimate_batch_cost</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">num_entities</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">predictions_per_day</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">cost_per_compute_hour</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3.0</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">Estimate daily batch inference cost</span><span class="sh">"""</span>
+        
+        <span class="c1"># Assume 10K predictions/second throughput
+</span>        <span class="n">throughput</span> <span class="o">=</span> <span class="mi">10_000</span>
+        
+        <span class="c1"># Total predictions
+</span>        <span class="n">total_preds</span> <span class="o">=</span> <span class="n">num_entities</span> <span class="o">*</span> <span class="n">predictions_per_day</span>
+        
+        <span class="c1"># Compute time needed
+</span>        <span class="n">compute_seconds</span> <span class="o">=</span> <span class="n">total_preds</span> <span class="o">/</span> <span class="n">throughput</span>
+        <span class="n">compute_hours</span> <span class="o">=</span> <span class="n">compute_seconds</span> <span class="o">/</span> <span class="mi">3600</span>
+        
+        <span class="c1"># Cost
+</span>        <span class="n">compute_cost</span> <span class="o">=</span> <span class="n">compute_hours</span> <span class="o">*</span> <span class="n">cost_per_compute_hour</span>
+        
+        <span class="c1"># Storage cost (Redis/DDB)
+</span>        <span class="n">storage_gb</span> <span class="o">=</span> <span class="n">total_preds</span> <span class="o">*</span> <span class="mi">100</span> <span class="o">/</span> <span class="mf">1e9</span>  <span class="c1"># 100 bytes per prediction
+</span>        <span class="n">storage_cost</span> <span class="o">=</span> <span class="n">storage_gb</span> <span class="o">*</span> <span class="mf">0.25</span>  <span class="c1"># $0.25/GB/month
+</span>        
+        <span class="n">total_cost</span> <span class="o">=</span> <span class="n">compute_cost</span> <span class="o">+</span> <span class="n">storage_cost</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">compute_hours</span><span class="sh">'</span><span class="p">:</span> <span class="n">compute_hours</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">compute_cost</span><span class="sh">'</span><span class="p">:</span> <span class="n">compute_cost</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">storage_cost</span><span class="sh">'</span><span class="p">:</span> <span class="n">storage_cost</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">total_daily_cost</span><span class="sh">'</span><span class="p">:</span> <span class="n">total_cost</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">cost_per_prediction</span><span class="sh">'</span><span class="p">:</span> <span class="n">total_cost</span> <span class="o">/</span> <span class="n">total_preds</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">estimate_realtime_cost</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">requests_per_second</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">cost_per_instance_hour</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
+        <span class="n">requests_per_instance</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">Estimate real-time serving cost</span><span class="sh">"""</span>
+        
+        <span class="c1"># Number of instances needed
+</span>        <span class="n">num_instances</span> <span class="o">=</span> <span class="n">requests_per_second</span> <span class="o">/</span> <span class="n">requests_per_instance</span>
+        <span class="n">num_instances</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">ceil</span><span class="p">(</span><span class="n">num_instances</span> <span class="o">*</span> <span class="mf">1.5</span><span class="p">))</span>  <span class="c1"># 50% headroom
+</span>        
+        <span class="c1"># Daily cost
+</span>        <span class="n">daily_hours</span> <span class="o">=</span> <span class="mi">24</span>
+        <span class="n">daily_cost</span> <span class="o">=</span> <span class="n">num_instances</span> <span class="o">*</span> <span class="n">cost_per_instance_hour</span> <span class="o">*</span> <span class="n">daily_hours</span>
+        
+        <span class="c1"># Predictions per day
+</span>        <span class="n">daily_requests</span> <span class="o">=</span> <span class="n">requests_per_second</span> <span class="o">*</span> <span class="mi">86400</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">num_instances</span><span class="sh">'</span><span class="p">:</span> <span class="n">num_instances</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">daily_cost</span><span class="sh">'</span><span class="p">:</span> <span class="n">daily_cost</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">cost_per_prediction</span><span class="sh">'</span><span class="p">:</span> <span class="n">daily_cost</span> <span class="o">/</span> <span class="n">daily_requests</span>
+        <span class="p">}</span>
+
+<span class="c1"># Compare costs
+</span><span class="n">analyzer</span> <span class="o">=</span> <span class="nc">CostAnalyzer</span><span class="p">()</span>
+
+<span class="c1"># Batch: 1M users, predict once/day
+</span><span class="n">batch_cost</span> <span class="o">=</span> <span class="n">analyzer</span><span class="p">.</span><span class="nf">estimate_batch_cost</span><span class="p">(</span>
+    <span class="n">num_entities</span><span class="o">=</span><span class="mi">1_000_000</span><span class="p">,</span>
+    <span class="n">predictions_per_day</span><span class="o">=</span><span class="mi">1</span>
+<span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Batch Inference:</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  Daily cost: $</span><span class="si">{</span><span class="n">batch_cost</span><span class="p">[</span><span class="sh">'</span><span class="s">total_daily_cost</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  Cost per prediction: $</span><span class="si">{</span><span class="n">batch_cost</span><span class="p">[</span><span class="sh">'</span><span class="s">cost_per_prediction</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">6</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="c1"># Real-time: 100 QPS average
+</span><span class="n">realtime_cost</span> <span class="o">=</span> <span class="n">analyzer</span><span class="p">.</span><span class="nf">estimate_realtime_cost</span><span class="p">(</span>
+    <span class="n">requests_per_second</span><span class="o">=</span><span class="mi">100</span>
+<span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="se">\n</span><span class="s">Real-Time Inference:</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  Daily cost: $</span><span class="si">{</span><span class="n">realtime_cost</span><span class="p">[</span><span class="sh">'</span><span class="s">daily_cost</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  Cost per prediction: $</span><span class="si">{</span><span class="n">realtime_cost</span><span class="p">[</span><span class="sh">'</span><span class="s">cost_per_prediction</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">6</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="c1"># Compare
+</span><span class="n">savings</span> <span class="o">=</span> <span class="p">(</span><span class="n">realtime_cost</span><span class="p">[</span><span class="sh">'</span><span class="s">daily_cost</span><span class="sh">'</span><span class="p">]</span> <span class="o">-</span> <span class="n">batch_cost</span><span class="p">[</span><span class="sh">'</span><span class="s">total_daily_cost</span><span class="sh">'</span><span class="p">])</span> <span class="o">/</span> <span class="n">realtime_cost</span><span class="p">[</span><span class="sh">'</span><span class="s">daily_cost</span><span class="sh">'</span><span class="p">]</span> <span class="o">*</span> <span class="mi">100</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">Batch is </span><span class="si">{</span><span class="n">savings</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">% cheaper!</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="key-takeaways">Key Takeaways</h2>
+
+<p>✅ <strong>Batch inference</strong> precomputes predictions—cheaper, higher latency<br />
+✅ <strong>Real-time inference</strong> computes on-demand—expensive, lower latency<br />
+✅ <strong>Hybrid approach</strong> combines both for optimal cost/performance<br />
+✅ <strong>Latency vs cost</strong> is the fundamental trade-off<br />
+✅ <strong>Feature freshness</strong> often determines the choice<br />
+✅ <strong>Most systems</strong> use hybrid: batch for bulk, real-time for edge cases<br />
+✅ <strong>Cache hit rate</strong> critical metric for hybrid systems<br />
+✅ <strong>Graceful degradation</strong> via fallbacks ensures reliability</p>
+
+<hr />
+
+<p><strong>Originally published at:</strong> <a href="https://www.arunbaby.com/ml-system-design/0005-batch-realtime-inference/">arunbaby.com/ml-system-design/0005-batch-realtime-inference</a></p>
+
+<p><em>If you found this helpful, consider sharing it with others who might benefit.</em></p>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#architecture" class="page__taxonomy-item p-category" rel="tag">architecture</a><span class="sep">, </span>
+    
+      <a href="/tags/#batch-processing" class="page__taxonomy-item p-category" rel="tag">batch-processing</a><span class="sep">, </span>
+    
+      <a href="/tags/#inference" class="page__taxonomy-item p-category" rel="tag">inference</a><span class="sep">, </span>
+    
+      <a href="/tags/#model-serving" class="page__taxonomy-item p-category" rel="tag">model-serving</a><span class="sep">, </span>
+    
+      <a href="/tags/#real-time" class="page__taxonomy-item p-category" rel="tag">real-time</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#ml-system-design" class="page__taxonomy-item p-category" rel="tag">ml-system-design</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time class="dt-published" datetime="2025-10-13T22:10:44+05:30">October 13, 2025</time></p>
+
+      </footer>
+
+      <section class="page__share">
+  <h4 class="page__share-title">Share on</h4>
+
+  <a href="https://twitter.com/intent/tweet?via=arunbaby0&text=Batch+vs+Real-Time+Inference%20https%3A%2F%2Fwww.arunbaby.com%2Fml-system-design%2F0005-batch-realtime-inference%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.arunbaby.com%2Fml-system-design%2F0005-batch-realtime-inference%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https://www.arunbaby.com/ml-system-design/0005-batch-realtime-inference/" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/ml-system-design/0004-ab-testing-systems/" class="pagination--pager" title="A/B Testing Systems for ML">Previous</a>
+    
+    
+      <a href="#" class="pagination--pager disabled">Next</a>
+    
+  </nav>
+
+
+    </div>
+
+    
+  </article>
+
+  
+  
+</div>
+
+      
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';" role="search">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/arunbaby0" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+          <li><a href="https://github.com/arunbaby0" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+          <li><a href="https://www.linkedin.com/in/arunbaby0/" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i> LinkedIn</a></li>
+        
+      
+        
+          <li><a href="https://scholar.google.co.in/citations?user=6fSYWhkAAAAJ" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-graduation-cap" aria-hidden="true"></i> Google Scholar</a></li>
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 1990 - 2143 <a href="https://www.arunbaby.com">Arun Baby</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0JRJPEC9SS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-0JRJPEC9SS', { 'anonymize_ip': false});
+</script>
+
+
+
+
+
+
+
+
+  </body>
+</html>

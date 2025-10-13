@@ -1,0 +1,2142 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.26.2 by Michael Rose
+  Copyright 2013-2024 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+
+<html lang="en-US" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>A/B Testing Systems for ML - Arun Baby</title>
+<meta name="description" content="How to design experimentation platforms that enable rapid iteration while maintaining statistical rigor at scale.">
+
+
+  <meta name="author" content="Arun Baby">
+  
+  <meta property="article:author" content="Arun Baby">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Arun Baby">
+<meta property="og:title" content="A/B Testing Systems for ML">
+<meta property="og:url" content="https://www.arunbaby.com/ml-system-design/0004-ab-testing-systems/">
+
+
+  <meta property="og:description" content="How to design experimentation platforms that enable rapid iteration while maintaining statistical rigor at scale.">
+
+
+
+  <meta property="og:image" content="https://www.arunbaby.com/assets/images/profile-photo.png">
+
+
+
+  <meta name="twitter:site" content="@arunbaby0">
+  <meta name="twitter:title" content="A/B Testing Systems for ML">
+  <meta name="twitter:description" content="How to design experimentation platforms that enable rapid iteration while maintaining statistical rigor at scale.">
+  <meta name="twitter:url" content="https://www.arunbaby.com/ml-system-design/0004-ab-testing-systems/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+      <meta name="twitter:image" content="https://www.arunbaby.com/assets/images/profile-photo.png">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2025-10-13T22:10:44+05:30">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://www.arunbaby.com/ml-system-design/0004-ab-testing-systems/">
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Arun Baby Feed">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+  
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@latest/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@latest/css/all.min.css"></noscript>
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single" dir="ltr">
+    <nav class="skip-links">
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+           
+          <span class="site-subtitle">Arun Baby</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a
+                href="/about/"
+                
+                
+              >About</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/dsa/"
+                
+                
+              >DSA</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/ml-system-design/"
+                
+                
+              >ML Systems</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/speech-tech/"
+                
+                
+              >Speech Tech</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/publications/"
+                
+                
+              >Publications</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/statuses/"
+                
+                
+              >Statuses</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/contact/"
+                
+                
+              >Contact</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <i class="fas fa-search"></i>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person" class="h-card">
+
+  
+    <div class="author__avatar">
+      <a href="https://www.arunbaby.com/">
+        <img src="/assets/images/profile-photo.png" alt="Arun Baby" itemprop="image" class="u-photo">
+      </a>
+    </div>
+  
+
+  <div class="author__content">
+    <h3 class="author__name p-name" itemprop="name">
+      <a class="u-url" rel="me" href="https://www.arunbaby.com/" itemprop="url">Arun Baby</a>
+    </h3>
+    
+      <div class="author__bio p-note" itemprop="description">
+        <p>Becoming <strong>Unlabelable</strong></p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name" class="p-locality">India</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="https://twitter.com/arunbaby0" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/arunbaby0" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+            <li><a href="https://www.linkedin.com/in/arunbaby0/" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span class="label">LinkedIn</span></a></li>
+          
+        
+          
+            <li><a href="https://scholar.google.co.in/citations?user=6fSYWhkAAAAJ" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fas fa-fw fa-graduation-cap" aria-hidden="true"></i><span class="label">Google Scholar</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer me">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="A/B Testing Systems for ML">
+    <meta itemprop="description" content="How to design experimentation platforms that enable rapid iteration while maintaining statistical rigor at scale.">
+    <meta itemprop="datePublished" content="2025-10-13T22:10:44+05:30">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">
+            <a href="https://www.arunbaby.com/ml-system-design/0004-ab-testing-systems/" itemprop="url">A/B Testing Systems for ML
+</a>
+          </h1>
+          
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          28 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
+              <ul class="toc__menu"><li><a href="#introduction">Introduction</a></li><li><a href="#problem-definition">Problem Definition</a><ul><li><a href="#functional-requirements">Functional Requirements</a></li><li><a href="#non-functional-requirements">Non-Functional Requirements</a></li></ul></li><li><a href="#high-level-architecture">High-Level Architecture</a></li><li><a href="#component-1-experiment-assignment">Component 1: Experiment Assignment</a><ul><li><a href="#deterministic-assignment-via-hashing">Deterministic Assignment via Hashing</a></li><li><a href="#why-hashing-works">Why Hashing Works</a></li><li><a href="#handling-traffic-allocation">Handling Traffic Allocation</a></li></ul></li><li><a href="#component-2-metrics-tracking">Component 2: Metrics Tracking</a><ul><li><a href="#event-logging">Event Logging</a></li><li><a href="#metrics-aggregation">Metrics Aggregation</a></li></ul></li><li><a href="#component-3-statistical-analysis">Component 3: Statistical Analysis</a><ul><li><a href="#t-test-for-continuous-metrics">T-Test for Continuous Metrics</a></li><li><a href="#chi-square-test-for-binary-metrics">Chi-Square Test for Binary Metrics</a></li></ul></li><li><a href="#sample-size-calculation--power-analysis">Sample Size Calculation &amp; Power Analysis</a><ul><li><a href="#power-analysis">Power Analysis</a></li></ul></li><li><a href="#guardrail-metrics">Guardrail Metrics</a><ul><li><a href="#implementing-guardrails">Implementing Guardrails</a></li></ul></li><li><a href="#real-world-examples">Real-World Examples</a><ul><li><a href="#netflix-experimentation-at-scale">Netflix: Experimentation at Scale</a></li><li><a href="#google-large-scale-testing">Google: Large-scale Testing</a></li></ul></li><li><a href="#advanced-topics">Advanced Topics</a><ul><li><a href="#sequential-testing--early-stopping">Sequential Testing &amp; Early Stopping</a></li><li><a href="#multi-armed-bandits">Multi-Armed Bandits</a></li><li><a href="#variance-reduction-cuped">Variance Reduction: CUPED</a></li><li><a href="#stratified-sampling">Stratified Sampling</a></li></ul></li><li><a href="#multiple-testing-correction">Multiple Testing Correction</a><ul><li><a href="#bonferroni-correction">Bonferroni Correction</a></li><li><a href="#false-discovery-rate-fdr---benjamini-hochberg">False Discovery Rate (FDR) - Benjamini-Hochberg</a></li></ul></li><li><a href="#layered-experiments">Layered Experiments</a></li><li><a href="#airbnbs-experiment-framework">Airbnb’s Experiment Framework</a></li><li><a href="#key-takeaways">Key Takeaways</a></li></ul>
+            </nav>
+          </aside>
+        
+        <p><strong>How to design experimentation platforms that enable rapid iteration while maintaining statistical rigor at scale.</strong></p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>A/B testing is the <strong>backbone of data-driven decision making</strong> in ML systems. Every major tech company runs thousands of experiments simultaneously to:</p>
+
+<ul>
+  <li>Test new model versions</li>
+  <li>Validate product changes</li>
+  <li>Optimize user experience</li>
+  <li>Measure feature impact</li>
+</ul>
+
+<p><strong>Why it matters:</strong></p>
+<ul>
+  <li><strong>Validate improvements:</strong> Ensure new models actually perform better</li>
+  <li><strong>Reduce risk:</strong> Test changes on small cohorts before full rollout</li>
+  <li><strong>Quantify impact:</strong> Measure precise effect size, not just gut feeling</li>
+  <li><strong>Enable velocity:</strong> Run multiple experiments in parallel</li>
+</ul>
+
+<p><strong>What you’ll learn:</strong></p>
+<ul>
+  <li>A/B testing architecture for ML systems</li>
+  <li>Statistical foundations (hypothesis testing, power analysis)</li>
+  <li>Experiment assignment and randomization</li>
+  <li>Metrics tracking and analysis</li>
+  <li>Guardrail metrics and quality assurance</li>
+  <li>Real-world examples from tech giants</li>
+</ul>
+
+<hr />
+
+<h2 id="problem-definition">Problem Definition</h2>
+
+<p>Design an A/B testing platform for ML systems.</p>
+
+<h3 id="functional-requirements">Functional Requirements</h3>
+
+<ol>
+  <li><strong>Experiment Setup</strong>
+    <ul>
+      <li>Create experiments with control/treatment variants</li>
+      <li>Define success metrics and guardrails</li>
+      <li>Set experiment parameters (duration, traffic allocation)</li>
+      <li>Support multi-variant testing (A/B/C/D)</li>
+    </ul>
+  </li>
+  <li><strong>User Assignment</strong>
+    <ul>
+      <li>Randomly assign users to variants</li>
+      <li>Ensure consistency (same user always sees same variant)</li>
+      <li>Support layered experiments</li>
+      <li>Handle new vs returning users</li>
+    </ul>
+  </li>
+  <li><strong>Metrics Tracking</strong>
+    <ul>
+      <li>Log user actions and outcomes</li>
+      <li>Compute experiment metrics in real-time</li>
+      <li>Track both primary and secondary metrics</li>
+      <li>Monitor guardrail metrics</li>
+    </ul>
+  </li>
+  <li><strong>Statistical Analysis</strong>
+    <ul>
+      <li>Calculate statistical significance</li>
+      <li>Compute confidence intervals</li>
+      <li>Detect early wins/losses</li>
+      <li>Generate experiment reports</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="non-functional-requirements">Non-Functional Requirements</h3>
+
+<ol>
+  <li><strong>Scale</strong>
+    <ul>
+      <li>Handle 10M+ users</li>
+      <li>Support 100+ concurrent experiments</li>
+      <li>Process billions of events/day</li>
+    </ul>
+  </li>
+  <li><strong>Latency</strong>
+    <ul>
+      <li>Assignment: &lt; 10ms</li>
+      <li>Metrics updates: Near real-time (&lt; 1 minute lag)</li>
+    </ul>
+  </li>
+  <li><strong>Reliability</strong>
+    <ul>
+      <li>99.9% uptime</li>
+      <li>No data loss</li>
+      <li>Audit trail for all experiments</li>
+    </ul>
+  </li>
+  <li><strong>Statistical Rigor</strong>
+    <ul>
+      <li>Type I error (false positive) &lt; 5%</li>
+      <li>Sufficient statistical power (80%+)</li>
+      <li>Multiple testing corrections</li>
+    </ul>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="high-level-architecture">High-Level Architecture</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────┐
+│                   Experimentation Platform                   │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │          Experiment Configuration Service             │  │
+│  │  - Create experiments                                 │  │
+│  │  - Define metrics                                     │  │
+│  │  - Set parameters                                     │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                          ↓                                   │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │          Assignment Service                           │  │
+│  │  - Hash user_id → variant                            │  │
+│  │  - Consistent assignment                              │  │
+│  │  - Cache assignments                                  │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                          ↓                                   │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │          Event Logging Service                        │  │
+│  │  - Log user actions                                   │  │
+│  │  - Track outcomes                                     │  │
+│  │  - Stream to analytics                                │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                          ↓                                   │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │          Metrics Aggregation Service                  │  │
+│  │  - Compute experiment metrics                         │  │
+│  │  - Real-time dashboards                               │  │
+│  │  - Statistical tests                                  │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                          ↓                                   │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │          Analysis &amp; Reporting Service                 │  │
+│  │  - Statistical significance                           │  │
+│  │  - Confidence intervals                               │  │
+│  │  - Decision recommendations                           │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+
+Data Flow:
+User Request → Assignment → Show Variant → Log Events → Aggregate Metrics → Analyze
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="component-1-experiment-assignment">Component 1: Experiment Assignment</h2>
+
+<p>Assign users to experiment variants consistently and randomly.</p>
+
+<h3 id="deterministic-assignment-via-hashing">Deterministic Assignment via Hashing</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">hashlib</span>
+<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span>
+
+<span class="k">class</span> <span class="nc">ExperimentAssigner</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Assign users to experiment variants
+    
+    Requirements:
+    - Deterministic: Same user_id → same variant
+    - Random: Uniform distribution across variants
+    - Independent: Different experiments use different hash seeds
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">experiments</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># experiment_id → config
+</span>    
+    <span class="k">def</span> <span class="nf">create_experiment</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">experiment_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">variants</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">traffic_allocation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Create new experiment
+        
+        Args:
+            experiment_id: Unique experiment identifier
+            variants: List of variant names (e.g., [</span><span class="sh">'</span><span class="s">control</span><span class="sh">'</span><span class="s">, </span><span class="sh">'</span><span class="s">treatment</span><span class="sh">'</span><span class="s">])
+            traffic_allocation: Fraction of users to include (0.0 to 1.0)
+        </span><span class="sh">"""</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">experiments</span><span class="p">[</span><span class="n">experiment_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">variants</span><span class="sh">'</span><span class="p">:</span> <span class="n">variants</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">traffic_allocation</span><span class="sh">'</span><span class="p">:</span> <span class="n">traffic_allocation</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">num_variants</span><span class="sh">'</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">variants</span><span class="p">)</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">assign_variant</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">experiment_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Assign user to variant
+        
+        Uses consistent hashing for deterministic assignment
+        
+        Returns:
+            Variant name or None if user not in experiment
+        </span><span class="sh">"""</span>
+        <span class="k">if</span> <span class="n">experiment_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">experiments</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Experiment </span><span class="si">{</span><span class="n">experiment_id</span><span class="si">}</span><span class="s"> not found</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="n">config</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">experiments</span><span class="p">[</span><span class="n">experiment_id</span><span class="p">]</span>
+        
+        <span class="c1"># Hash user_id + experiment_id
+</span>        <span class="n">hash_input</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s">:</span><span class="si">{</span><span class="n">experiment_id</span><span class="si">}</span><span class="sh">"</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="sh">'</span><span class="s">utf-8</span><span class="sh">'</span><span class="p">)</span>
+        <span class="n">hash_value</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">hashlib</span><span class="p">.</span><span class="nf">md5</span><span class="p">(</span><span class="n">hash_input</span><span class="p">).</span><span class="nf">hexdigest</span><span class="p">(),</span> <span class="mi">16</span><span class="p">)</span>
+        
+        <span class="c1"># Map to [0, 1]
+</span>        <span class="n">normalized</span> <span class="o">=</span> <span class="p">(</span><span class="n">hash_value</span> <span class="o">%</span> <span class="mi">10000</span><span class="p">)</span> <span class="o">/</span> <span class="mf">10000.0</span>
+        
+        <span class="c1"># Check if user is in experiment (traffic allocation)
+</span>        <span class="k">if</span> <span class="n">normalized</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="p">[</span><span class="sh">'</span><span class="s">traffic_allocation</span><span class="sh">'</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="bp">None</span>  <span class="c1"># User not in experiment
+</span>        
+        <span class="c1"># Assign to variant
+</span>        <span class="c1"># Re-normalize to [0, 1] within allocated traffic
+</span>        <span class="n">variant_hash</span> <span class="o">=</span> <span class="n">normalized</span> <span class="o">/</span> <span class="n">config</span><span class="p">[</span><span class="sh">'</span><span class="s">traffic_allocation</span><span class="sh">'</span><span class="p">]</span>
+        <span class="n">variant_idx</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">variant_hash</span> <span class="o">*</span> <span class="n">config</span><span class="p">[</span><span class="sh">'</span><span class="s">num_variants</span><span class="sh">'</span><span class="p">])</span>
+        
+        <span class="k">return</span> <span class="n">config</span><span class="p">[</span><span class="sh">'</span><span class="s">variants</span><span class="sh">'</span><span class="p">][</span><span class="n">variant_idx</span><span class="p">]</span>
+
+<span class="c1"># Usage
+</span><span class="n">assigner</span> <span class="o">=</span> <span class="nc">ExperimentAssigner</span><span class="p">()</span>
+
+<span class="c1"># Create experiment: 50% control, 50% treatment, 100% of users
+</span><span class="n">assigner</span><span class="p">.</span><span class="nf">create_experiment</span><span class="p">(</span>
+    <span class="n">experiment_id</span><span class="o">=</span><span class="sh">'</span><span class="s">model_v2_test</span><span class="sh">'</span><span class="p">,</span>
+    <span class="n">variants</span><span class="o">=</span><span class="p">[</span><span class="sh">'</span><span class="s">control</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">treatment</span><span class="sh">'</span><span class="p">],</span>
+    <span class="n">traffic_allocation</span><span class="o">=</span><span class="mf">1.0</span>
+<span class="p">)</span>
+
+<span class="c1"># Assign users
+</span><span class="n">user_1_variant</span> <span class="o">=</span> <span class="n">assigner</span><span class="p">.</span><span class="nf">assign_variant</span><span class="p">(</span><span class="sh">'</span><span class="s">user_123</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">model_v2_test</span><span class="sh">'</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">User 123 assigned to: </span><span class="si">{</span><span class="n">user_1_variant</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="c1"># Same user always gets same variant
+</span><span class="k">assert</span> <span class="n">assigner</span><span class="p">.</span><span class="nf">assign_variant</span><span class="p">(</span><span class="sh">'</span><span class="s">user_123</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">model_v2_test</span><span class="sh">'</span><span class="p">)</span> <span class="o">==</span> <span class="n">user_1_variant</span>
+</code></pre></div></div>
+
+<h3 id="why-hashing-works">Why Hashing Works</h3>
+
+<p><strong>Properties of MD5/SHA hashing:</strong></p>
+<ol>
+  <li><strong>Deterministic:</strong> Same input → same output</li>
+  <li><strong>Uniform:</strong> Output uniformly distributed</li>
+  <li><strong>Independent:</strong> Different inputs → uncorrelated outputs</li>
+</ol>
+
+<p><strong>Key insight:</strong> Hash(user_id + experiment_id) acts as a random number generator with a fixed seed per user-experiment pair.</p>
+
+<h3 id="handling-traffic-allocation">Handling Traffic Allocation</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">assign_with_traffic_split</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">experiment_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Assign with partial traffic allocation
+    
+    Example: 10% of users in experiment
+    - Hash to [0, 1]
+    - If &lt; 0.10 → assign to variant
+    - Else → not in experiment
+    </span><span class="sh">"""</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">experiments</span><span class="p">[</span><span class="n">experiment_id</span><span class="p">]</span>
+    
+    <span class="c1"># Hash
+</span>    <span class="n">hash_input</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s">:</span><span class="si">{</span><span class="n">experiment_id</span><span class="si">}</span><span class="sh">"</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="sh">'</span><span class="s">utf-8</span><span class="sh">'</span><span class="p">)</span>
+    <span class="n">hash_value</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">hashlib</span><span class="p">.</span><span class="nf">md5</span><span class="p">(</span><span class="n">hash_input</span><span class="p">).</span><span class="nf">hexdigest</span><span class="p">(),</span> <span class="mi">16</span><span class="p">)</span>
+    <span class="n">normalized</span> <span class="o">=</span> <span class="p">(</span><span class="n">hash_value</span> <span class="o">%</span> <span class="mi">10000</span><span class="p">)</span> <span class="o">/</span> <span class="mf">10000.0</span>
+    
+    <span class="c1"># Traffic allocation check
+</span>    <span class="k">if</span> <span class="n">normalized</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="p">[</span><span class="sh">'</span><span class="s">traffic_allocation</span><span class="sh">'</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    
+    <span class="c1"># Within traffic, assign to variant
+</span>    <span class="c1"># Scale normalized to [0, traffic_allocation] → [0, 1]
+</span>    <span class="n">variant_hash</span> <span class="o">=</span> <span class="n">normalized</span> <span class="o">/</span> <span class="n">config</span><span class="p">[</span><span class="sh">'</span><span class="s">traffic_allocation</span><span class="sh">'</span><span class="p">]</span>
+    <span class="n">variant_idx</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">variant_hash</span> <span class="o">*</span> <span class="n">config</span><span class="p">[</span><span class="sh">'</span><span class="s">num_variants</span><span class="sh">'</span><span class="p">])</span>
+    
+    <span class="k">return</span> <span class="n">config</span><span class="p">[</span><span class="sh">'</span><span class="s">variants</span><span class="sh">'</span><span class="p">][</span><span class="n">variant_idx</span><span class="p">]</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="component-2-metrics-tracking">Component 2: Metrics Tracking</h2>
+
+<p>Track user actions and compute experiment metrics.</p>
+
+<h3 id="event-logging">Event Logging</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="n">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">import</span> <span class="n">json</span>
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">ExperimentEvent</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">Single experiment event</span><span class="sh">"""</span>
+    <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">experiment_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">variant</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">event_type</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># e.g., 'impression', 'click', 'purchase'
+</span>    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="bp">None</span>
+    
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">user_id</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">user_id</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">experiment_id</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">experiment_id</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">variant</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">variant</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">event_type</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">event_type</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">timestamp</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">timestamp</span><span class="p">.</span><span class="nf">isoformat</span><span class="p">(),</span>
+            <span class="sh">'</span><span class="s">metadata</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">EventLogger</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Log experiment events
+    
+    In production: Stream to Kafka/Kinesis → Data warehouse
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="sh">'</span><span class="s">experiment_events.jsonl</span><span class="sh">'</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">output_file</span> <span class="o">=</span> <span class="n">output_file</span>
+    
+    <span class="k">def</span> <span class="nf">log_event</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">ExperimentEvent</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Log single event
+        
+        In production: Send to message queue
+        </span><span class="sh">"""</span>
+        <span class="k">with</span> <span class="nf">open</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">output_file</span><span class="p">,</span> <span class="sh">'</span><span class="s">a</span><span class="sh">'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="p">.</span><span class="nf">write</span><span class="p">(</span><span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">(</span><span class="n">event</span><span class="p">.</span><span class="nf">to_dict</span><span class="p">())</span> <span class="o">+</span> <span class="sh">'</span><span class="se">\n</span><span class="sh">'</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">log_assignment</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">experiment_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">variant</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Log when user is assigned to variant</span><span class="sh">"""</span>
+        <span class="n">event</span> <span class="o">=</span> <span class="nc">ExperimentEvent</span><span class="p">(</span>
+            <span class="n">user_id</span><span class="o">=</span><span class="n">user_id</span><span class="p">,</span>
+            <span class="n">experiment_id</span><span class="o">=</span><span class="n">experiment_id</span><span class="p">,</span>
+            <span class="n">variant</span><span class="o">=</span><span class="n">variant</span><span class="p">,</span>
+            <span class="n">event_type</span><span class="o">=</span><span class="sh">'</span><span class="s">assignment</span><span class="sh">'</span><span class="p">,</span>
+            <span class="n">timestamp</span><span class="o">=</span><span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="nf">log_event</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">log_metric_event</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">experiment_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">variant</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">metric_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">metric_value</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Log metric event (e.g., click, purchase)</span><span class="sh">"""</span>
+        <span class="n">event</span> <span class="o">=</span> <span class="nc">ExperimentEvent</span><span class="p">(</span>
+            <span class="n">user_id</span><span class="o">=</span><span class="n">user_id</span><span class="p">,</span>
+            <span class="n">experiment_id</span><span class="o">=</span><span class="n">experiment_id</span><span class="p">,</span>
+            <span class="n">variant</span><span class="o">=</span><span class="n">variant</span><span class="p">,</span>
+            <span class="n">event_type</span><span class="o">=</span><span class="n">metric_name</span><span class="p">,</span>
+            <span class="n">timestamp</span><span class="o">=</span><span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">(),</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="sh">'</span><span class="s">value</span><span class="sh">'</span><span class="p">:</span> <span class="n">metric_value</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="nf">log_event</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+
+<span class="c1"># Usage
+</span><span class="n">logger</span> <span class="o">=</span> <span class="nc">EventLogger</span><span class="p">()</span>
+
+<span class="c1"># Log assignment
+</span><span class="n">logger</span><span class="p">.</span><span class="nf">log_assignment</span><span class="p">(</span><span class="sh">'</span><span class="s">user_123</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">model_v2_test</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">treatment</span><span class="sh">'</span><span class="p">)</span>
+
+<span class="c1"># Log click
+</span><span class="n">logger</span><span class="p">.</span><span class="nf">log_metric_event</span><span class="p">(</span><span class="sh">'</span><span class="s">user_123</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">model_v2_test</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">treatment</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">click</span><span class="sh">'</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+<span class="c1"># Log purchase
+</span><span class="n">logger</span><span class="p">.</span><span class="nf">log_metric_event</span><span class="p">(</span><span class="sh">'</span><span class="s">user_123</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">model_v2_test</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">treatment</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">purchase</span><span class="sh">'</span><span class="p">,</span> <span class="mf">49.99</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="metrics-aggregation">Metrics Aggregation</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">import</span> <span class="n">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+
+<span class="k">class</span> <span class="nc">MetricsAggregator</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Aggregate experiment metrics from events
+    
+    Computes per-variant statistics
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">variant_stats</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">))</span>
+    
+    <span class="k">def</span> <span class="nf">add_event</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">variant</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">metric_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Add metric value for variant</span><span class="sh">"""</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">variant_stats</span><span class="p">[</span><span class="n">variant</span><span class="p">][</span><span class="n">metric_name</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">compute_metrics</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">experiment_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="p">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Compute aggregated metrics per variant
+        
+        Returns DataFrame with columns:
+        - variant
+        - metric
+        - count
+        - mean
+        - std
+        - sum
+        </span><span class="sh">"""</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">variant</span><span class="p">,</span> <span class="n">metrics</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">variant_stats</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">metric_name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
+                <span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+                
+                <span class="n">results</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span>
+                    <span class="sh">'</span><span class="s">variant</span><span class="sh">'</span><span class="p">:</span> <span class="n">variant</span><span class="p">,</span>
+                    <span class="sh">'</span><span class="s">metric</span><span class="sh">'</span><span class="p">:</span> <span class="n">metric_name</span><span class="p">,</span>
+                    <span class="sh">'</span><span class="s">count</span><span class="sh">'</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">values</span><span class="p">),</span>
+                    <span class="sh">'</span><span class="s">mean</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">values</span><span class="p">),</span>
+                    <span class="sh">'</span><span class="s">std</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">std</span><span class="p">(</span><span class="n">values</span><span class="p">),</span>
+                    <span class="sh">'</span><span class="s">sum</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">values</span><span class="p">),</span>
+                    <span class="sh">'</span><span class="s">min</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">min</span><span class="p">(</span><span class="n">values</span><span class="p">),</span>
+                    <span class="sh">'</span><span class="s">max</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+                <span class="p">})</span>
+        
+        <span class="k">return</span> <span class="n">pd</span><span class="p">.</span><span class="nc">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+
+<span class="c1"># Usage
+</span><span class="n">aggregator</span> <span class="o">=</span> <span class="nc">MetricsAggregator</span><span class="p">()</span>
+
+<span class="c1"># Simulate events
+</span><span class="n">aggregator</span><span class="p">.</span><span class="nf">add_event</span><span class="p">(</span><span class="sh">'</span><span class="s">control</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">ctr</span><span class="sh">'</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+<span class="n">aggregator</span><span class="p">.</span><span class="nf">add_event</span><span class="p">(</span><span class="sh">'</span><span class="s">control</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">ctr</span><span class="sh">'</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">)</span>
+<span class="n">aggregator</span><span class="p">.</span><span class="nf">add_event</span><span class="p">(</span><span class="sh">'</span><span class="s">treatment</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">ctr</span><span class="sh">'</span><span class="p">,</span> <span class="mf">0.06</span><span class="p">)</span>
+<span class="n">aggregator</span><span class="p">.</span><span class="nf">add_event</span><span class="p">(</span><span class="sh">'</span><span class="s">treatment</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">ctr</span><span class="sh">'</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">)</span>
+
+<span class="n">metrics_df</span> <span class="o">=</span> <span class="n">aggregator</span><span class="p">.</span><span class="nf">compute_metrics</span><span class="p">(</span><span class="sh">'</span><span class="s">model_v2_test</span><span class="sh">'</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">metrics_df</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="component-3-statistical-analysis">Component 3: Statistical Analysis</h2>
+
+<p>Determine if observed differences are statistically significant.</p>
+
+<h3 id="t-test-for-continuous-metrics">T-Test for Continuous Metrics</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">scipy</span> <span class="kn">import</span> <span class="n">stats</span>
+<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+
+<span class="k">class</span> <span class="nc">StatisticalAnalyzer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Perform statistical tests on experiment data
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">t_test</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">control_values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">treatment_values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Two-sample t-test
+        
+        H0: mean(treatment) = mean(control)
+        H1: mean(treatment) ≠ mean(control)
+        
+        Args:
+            control_values: Metric values from control group
+            treatment_values: Metric values from treatment group
+            alpha: Significance level (default 0.05)
+        
+        Returns:
+            Dictionary with test results
+        </span><span class="sh">"""</span>
+        <span class="n">control</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">control_values</span><span class="p">)</span>
+        <span class="n">treatment</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">treatment_values</span><span class="p">)</span>
+        
+        <span class="c1"># Perform t-test
+</span>        <span class="n">t_statistic</span><span class="p">,</span> <span class="n">p_value</span> <span class="o">=</span> <span class="n">stats</span><span class="p">.</span><span class="nf">ttest_ind</span><span class="p">(</span><span class="n">treatment</span><span class="p">,</span> <span class="n">control</span><span class="p">)</span>
+        
+        <span class="c1"># Compute effect size (Cohen's d)
+</span>        <span class="n">pooled_std</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sqrt</span><span class="p">(</span>
+            <span class="p">((</span><span class="nf">len</span><span class="p">(</span><span class="n">control</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nf">var</span><span class="p">(</span><span class="n">control</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span>
+             <span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">treatment</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nf">var</span><span class="p">(</span><span class="n">treatment</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span> <span class="o">/</span>
+            <span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">control</span><span class="p">)</span> <span class="o">+</span> <span class="nf">len</span><span class="p">(</span><span class="n">treatment</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="p">)</span>
+        
+        <span class="n">cohens_d</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">treatment</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">control</span><span class="p">))</span> <span class="o">/</span> <span class="n">pooled_std</span> <span class="k">if</span> <span class="n">pooled_std</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        
+        <span class="c1"># Confidence interval for difference
+</span>        <span class="n">se</span> <span class="o">=</span> <span class="n">pooled_std</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nf">sqrt</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="nf">len</span><span class="p">(</span><span class="n">control</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="nf">len</span><span class="p">(</span><span class="n">treatment</span><span class="p">))</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">control</span><span class="p">)</span> <span class="o">+</span> <span class="nf">len</span><span class="p">(</span><span class="n">treatment</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span>
+        <span class="n">t_critical</span> <span class="o">=</span> <span class="n">stats</span><span class="p">.</span><span class="n">t</span><span class="p">.</span><span class="nf">ppf</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">df</span><span class="p">)</span>
+        
+        <span class="n">mean_diff</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">treatment</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">control</span><span class="p">)</span>
+        <span class="n">ci_lower</span> <span class="o">=</span> <span class="n">mean_diff</span> <span class="o">-</span> <span class="n">t_critical</span> <span class="o">*</span> <span class="n">se</span>
+        <span class="n">ci_upper</span> <span class="o">=</span> <span class="n">mean_diff</span> <span class="o">+</span> <span class="n">t_critical</span> <span class="o">*</span> <span class="n">se</span>
+        
+        <span class="c1"># Relative lift
+</span>        <span class="n">relative_lift</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">treatment</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">control</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span> <span class="k">if</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">control</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">control_mean</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">control</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">treatment_mean</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">treatment</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">absolute_diff</span><span class="sh">'</span><span class="p">:</span> <span class="n">mean_diff</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">relative_lift_pct</span><span class="sh">'</span><span class="p">:</span> <span class="n">relative_lift</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">t_statistic</span><span class="sh">'</span><span class="p">:</span> <span class="n">t_statistic</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">p_value</span><span class="sh">'</span><span class="p">:</span> <span class="n">p_value</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">is_significant</span><span class="sh">'</span><span class="p">:</span> <span class="n">p_value</span> <span class="o">&lt;</span> <span class="n">alpha</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">confidence_interval</span><span class="sh">'</span><span class="p">:</span> <span class="p">(</span><span class="n">ci_lower</span><span class="p">,</span> <span class="n">ci_upper</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">cohens_d</span><span class="sh">'</span><span class="p">:</span> <span class="n">cohens_d</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">sample_size_control</span><span class="sh">'</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">control</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">sample_size_treatment</span><span class="sh">'</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">treatment</span><span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">chi_square_test</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">control_successes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">control_total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">treatment_successes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">treatment_total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Chi-square test for proportions (e.g., CTR, conversion rate)
+        </span><span class="sh">"""</span>
+        <span class="c1"># Construct contingency table
+</span>        <span class="n">contingency</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span>
+            <span class="p">[</span><span class="n">treatment_successes</span><span class="p">,</span> <span class="n">treatment_total</span> <span class="o">-</span> <span class="n">treatment_successes</span><span class="p">],</span>
+            <span class="p">[</span><span class="n">control_successes</span><span class="p">,</span> <span class="n">control_total</span> <span class="o">-</span> <span class="n">control_successes</span><span class="p">]</span>
+        <span class="p">])</span>
+        
+        <span class="c1"># Chi-square test
+</span>        <span class="n">chi2</span><span class="p">,</span> <span class="n">p_value</span><span class="p">,</span> <span class="n">dof</span><span class="p">,</span> <span class="n">expected</span> <span class="o">=</span> <span class="n">stats</span><span class="p">.</span><span class="nf">chi2_contingency</span><span class="p">(</span><span class="n">contingency</span><span class="p">)</span>
+        
+        <span class="c1"># Rates
+</span>        <span class="n">control_rate</span> <span class="o">=</span> <span class="n">control_successes</span> <span class="o">/</span> <span class="n">control_total</span> <span class="k">if</span> <span class="n">control_total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">treatment_rate</span> <span class="o">=</span> <span class="n">treatment_successes</span> <span class="o">/</span> <span class="n">treatment_total</span> <span class="k">if</span> <span class="n">treatment_total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        
+        <span class="c1"># Relative lift
+</span>        <span class="n">relative_lift</span> <span class="o">=</span> <span class="p">(</span><span class="n">treatment_rate</span> <span class="o">/</span> <span class="n">control_rate</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span> <span class="k">if</span> <span class="n">control_rate</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        
+        <span class="c1"># CI for difference in proportions (Wald)
+</span>        <span class="n">p1</span> <span class="o">=</span> <span class="n">treatment_rate</span>
+        <span class="n">p2</span> <span class="o">=</span> <span class="n">control_rate</span>
+        <span class="n">se</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sqrt</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">p1</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">p1</span><span class="p">)</span> <span class="o">/</span> <span class="nf">max</span><span class="p">(</span><span class="n">treatment_total</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span>
+            <span class="p">(</span><span class="n">p2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">p2</span><span class="p">)</span> <span class="o">/</span> <span class="nf">max</span><span class="p">(</span><span class="n">control_total</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="n">z_critical</span> <span class="o">=</span> <span class="n">stats</span><span class="p">.</span><span class="n">norm</span><span class="p">.</span><span class="nf">ppf</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">p1</span> <span class="o">-</span> <span class="n">p2</span>
+        <span class="n">ci_lower</span> <span class="o">=</span> <span class="n">diff</span> <span class="o">-</span> <span class="n">z_critical</span> <span class="o">*</span> <span class="n">se</span>
+        <span class="n">ci_upper</span> <span class="o">=</span> <span class="n">diff</span> <span class="o">+</span> <span class="n">z_critical</span> <span class="o">*</span> <span class="n">se</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">control_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">control_rate</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">treatment_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">treatment_rate</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">absolute_diff</span><span class="sh">'</span><span class="p">:</span> <span class="n">diff</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">relative_lift_pct</span><span class="sh">'</span><span class="p">:</span> <span class="n">relative_lift</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">chi2_statistic</span><span class="sh">'</span><span class="p">:</span> <span class="n">chi2</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">p_value</span><span class="sh">'</span><span class="p">:</span> <span class="n">p_value</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">is_significant</span><span class="sh">'</span><span class="p">:</span> <span class="n">p_value</span> <span class="o">&lt;</span> <span class="n">alpha</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">confidence_interval</span><span class="sh">'</span><span class="p">:</span> <span class="p">(</span><span class="n">ci_lower</span><span class="p">,</span> <span class="n">ci_upper</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">sample_size_control</span><span class="sh">'</span><span class="p">:</span> <span class="n">control_total</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">sample_size_treatment</span><span class="sh">'</span><span class="p">:</span> <span class="n">treatment_total</span>
+        <span class="p">}</span>
+
+<span class="c1"># Usage
+</span><span class="n">analyzer</span> <span class="o">=</span> <span class="nc">StatisticalAnalyzer</span><span class="p">()</span>
+
+<span class="c1"># Simulate metric data (e.g., session duration in seconds)
+</span><span class="n">control_sessions</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">normal</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>  <span class="c1"># mean=120s, std=30s
+</span><span class="n">treatment_sessions</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">normal</span><span class="p">(</span><span class="mi">125</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>  <span class="c1"># mean=125s (5s improvement)
+</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">analyzer</span><span class="p">.</span><span class="nf">t_test</span><span class="p">(</span><span class="n">control_sessions</span><span class="p">,</span> <span class="n">treatment_sessions</span><span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Control mean: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">control_mean</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Treatment mean: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">treatment_mean</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Relative lift: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">relative_lift_pct</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">%</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">P-value: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">p_value</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">4</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Significant: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">is_significant</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">95% CI: [</span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">confidence_interval</span><span class="sh">'</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">, </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">confidence_interval</span><span class="sh">'</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">]</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="chi-square-test-for-binary-metrics">Chi-Square Test for Binary Metrics</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">chi_square_test</span><span class="p">(</span>
+    <span class="n">self</span><span class="p">,</span>
+    <span class="n">control_successes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">control_total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">treatment_successes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">treatment_total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Chi-square test for proportions (e.g., CTR, conversion rate)
+    
+    H0: p(treatment) = p(control)
+    H1: p(treatment) ≠ p(control)
+    </span><span class="sh">"""</span>
+    <span class="c1"># Construct contingency table
+</span>    <span class="n">contingency</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span>
+        <span class="p">[</span><span class="n">treatment_successes</span><span class="p">,</span> <span class="n">treatment_total</span> <span class="o">-</span> <span class="n">treatment_successes</span><span class="p">],</span>
+        <span class="p">[</span><span class="n">control_successes</span><span class="p">,</span> <span class="n">control_total</span> <span class="o">-</span> <span class="n">control_successes</span><span class="p">]</span>
+    <span class="p">])</span>
+    
+    <span class="c1"># Chi-square test
+</span>    <span class="n">chi2</span><span class="p">,</span> <span class="n">p_value</span><span class="p">,</span> <span class="n">dof</span><span class="p">,</span> <span class="n">expected</span> <span class="o">=</span> <span class="n">stats</span><span class="p">.</span><span class="nf">chi2_contingency</span><span class="p">(</span><span class="n">contingency</span><span class="p">)</span>
+    
+    <span class="c1"># Compute rates
+</span>    <span class="n">control_rate</span> <span class="o">=</span> <span class="n">control_successes</span> <span class="o">/</span> <span class="n">control_total</span> <span class="k">if</span> <span class="n">control_total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="n">treatment_rate</span> <span class="o">=</span> <span class="n">treatment_successes</span> <span class="o">/</span> <span class="n">treatment_total</span> <span class="k">if</span> <span class="n">treatment_total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    
+    <span class="c1"># Relative lift
+</span>    <span class="n">relative_lift</span> <span class="o">=</span> <span class="p">(</span><span class="n">treatment_rate</span> <span class="o">/</span> <span class="n">control_rate</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span> <span class="k">if</span> <span class="n">control_rate</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    
+    <span class="c1"># Confidence interval for difference in proportions
+</span>    <span class="n">p1</span> <span class="o">=</span> <span class="n">treatment_rate</span>
+    <span class="n">p2</span> <span class="o">=</span> <span class="n">control_rate</span>
+    
+    <span class="n">se</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sqrt</span><span class="p">(</span><span class="n">p1</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">p1</span><span class="p">)</span><span class="o">/</span><span class="n">treatment_total</span> <span class="o">+</span> <span class="n">p2</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">p2</span><span class="p">)</span><span class="o">/</span><span class="n">control_total</span><span class="p">)</span>
+    <span class="n">z_critical</span> <span class="o">=</span> <span class="n">stats</span><span class="p">.</span><span class="n">norm</span><span class="p">.</span><span class="nf">ppf</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+    
+    <span class="n">diff</span> <span class="o">=</span> <span class="n">p1</span> <span class="o">-</span> <span class="n">p2</span>
+    <span class="n">ci_lower</span> <span class="o">=</span> <span class="n">diff</span> <span class="o">-</span> <span class="n">z_critical</span> <span class="o">*</span> <span class="n">se</span>
+    <span class="n">ci_upper</span> <span class="o">=</span> <span class="n">diff</span> <span class="o">+</span> <span class="n">z_critical</span> <span class="o">*</span> <span class="n">se</span>
+    
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="sh">'</span><span class="s">control_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">control_rate</span><span class="p">,</span>
+        <span class="sh">'</span><span class="s">treatment_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">treatment_rate</span><span class="p">,</span>
+        <span class="sh">'</span><span class="s">absolute_diff</span><span class="sh">'</span><span class="p">:</span> <span class="n">diff</span><span class="p">,</span>
+        <span class="sh">'</span><span class="s">relative_lift_pct</span><span class="sh">'</span><span class="p">:</span> <span class="n">relative_lift</span><span class="p">,</span>
+        <span class="sh">'</span><span class="s">chi2_statistic</span><span class="sh">'</span><span class="p">:</span> <span class="n">chi2</span><span class="p">,</span>
+        <span class="sh">'</span><span class="s">p_value</span><span class="sh">'</span><span class="p">:</span> <span class="n">p_value</span><span class="p">,</span>
+        <span class="sh">'</span><span class="s">is_significant</span><span class="sh">'</span><span class="p">:</span> <span class="n">p_value</span> <span class="o">&lt;</span> <span class="n">alpha</span><span class="p">,</span>
+        <span class="sh">'</span><span class="s">confidence_interval</span><span class="sh">'</span><span class="p">:</span> <span class="p">(</span><span class="n">ci_lower</span><span class="p">,</span> <span class="n">ci_upper</span><span class="p">),</span>
+        <span class="sh">'</span><span class="s">sample_size_control</span><span class="sh">'</span><span class="p">:</span> <span class="n">control_total</span><span class="p">,</span>
+        <span class="sh">'</span><span class="s">sample_size_treatment</span><span class="sh">'</span><span class="p">:</span> <span class="n">treatment_total</span>
+    <span class="p">}</span>
+
+<span class="c1"># Add to StatisticalAnalyzer class
+</span>
+<span class="c1"># Usage
+# Example: Click-through rate test
+</span><span class="n">control_clicks</span> <span class="o">=</span> <span class="mi">450</span>
+<span class="n">control_impressions</span> <span class="o">=</span> <span class="mi">10000</span>
+<span class="n">treatment_clicks</span> <span class="o">=</span> <span class="mi">520</span>
+<span class="n">treatment_impressions</span> <span class="o">=</span> <span class="mi">10000</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">analyzer</span><span class="p">.</span><span class="nf">chi_square_test</span><span class="p">(</span>
+    <span class="n">control_clicks</span><span class="p">,</span> <span class="n">control_impressions</span><span class="p">,</span>
+    <span class="n">treatment_clicks</span><span class="p">,</span> <span class="n">treatment_impressions</span>
+<span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Control CTR: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">control_rate</span><span class="sh">'</span><span class="p">]</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">%</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Treatment CTR: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">treatment_rate</span><span class="sh">'</span><span class="p">]</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">%</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Relative lift: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">relative_lift_pct</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">%</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">P-value: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">p_value</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">4</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Significant: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">is_significant</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="sample-size-calculation--power-analysis">Sample Size Calculation &amp; Power Analysis</h2>
+
+<p>Determine required sample size before running experiment.</p>
+
+<h3 id="power-analysis">Power Analysis</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">scipy.stats</span> <span class="kn">import</span> <span class="n">norm</span>
+
+<span class="k">class</span> <span class="nc">PowerAnalysis</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Calculate required sample size for experiments
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">sample_size_for_proportions</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">baseline_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">mde</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>  <span class="c1"># Minimum Detectable Effect
+</span>        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">power</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.80</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Calculate sample size needed to detect effect on proportion
+        
+        Args:
+            baseline_rate: Current conversion rate (e.g., 0.05 for 5%)
+            mde: Minimum relative effect to detect (e.g., 0.10 for 10% improvement)
+            alpha: Significance level (Type I error rate)
+            power: Statistical power (1 - Type II error rate)
+        
+        Returns:
+            Required sample size per variant
+        </span><span class="sh">"""</span>
+        <span class="c1"># Target rate after improvement
+</span>        <span class="n">target_rate</span> <span class="o">=</span> <span class="n">baseline_rate</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">mde</span><span class="p">)</span>
+        
+        <span class="c1"># Z-scores
+</span>        <span class="n">z_alpha</span> <span class="o">=</span> <span class="n">norm</span><span class="p">.</span><span class="nf">ppf</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># Two-tailed
+</span>        <span class="n">z_beta</span> <span class="o">=</span> <span class="n">norm</span><span class="p">.</span><span class="nf">ppf</span><span class="p">(</span><span class="n">power</span><span class="p">)</span>
+        
+        <span class="c1"># Pooled proportion under H0
+</span>        <span class="n">p_avg</span> <span class="o">=</span> <span class="p">(</span><span class="n">baseline_rate</span> <span class="o">+</span> <span class="n">target_rate</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        
+        <span class="c1"># Sample size formula
+</span>        <span class="n">numerator</span> <span class="o">=</span> <span class="p">(</span><span class="n">z_alpha</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nf">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">p_avg</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">p_avg</span><span class="p">))</span> <span class="o">+</span>
+                    <span class="n">z_beta</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nf">sqrt</span><span class="p">(</span><span class="n">baseline_rate</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">baseline_rate</span><span class="p">)</span> <span class="o">+</span>
+                                    <span class="n">target_rate</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">target_rate</span><span class="p">)))</span> <span class="o">**</span> <span class="mi">2</span>
+        
+        <span class="n">denominator</span> <span class="o">=</span> <span class="p">(</span><span class="n">target_rate</span> <span class="o">-</span> <span class="n">baseline_rate</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        
+        <span class="n">n</span> <span class="o">=</span> <span class="n">numerator</span> <span class="o">/</span> <span class="n">denominator</span>
+        
+        <span class="k">return</span> <span class="nf">int</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">ceil</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+    
+    <span class="k">def</span> <span class="nf">sample_size_for_means</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">baseline_mean</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">baseline_std</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">mde</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">power</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.80</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Calculate sample size for continuous metric
+        
+        Args:
+            baseline_mean: Current mean value
+            baseline_std: Standard deviation
+            mde: Minimum relative effect (e.g., 0.05 for 5% improvement)
+            alpha: Significance level
+            power: Statistical power
+        
+        Returns:
+            Required sample size per variant
+        </span><span class="sh">"""</span>
+        <span class="n">target_mean</span> <span class="o">=</span> <span class="n">baseline_mean</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">mde</span><span class="p">)</span>
+        <span class="n">effect_size</span> <span class="o">=</span> <span class="nf">abs</span><span class="p">(</span><span class="n">target_mean</span> <span class="o">-</span> <span class="n">baseline_mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">baseline_std</span>
+        
+        <span class="n">z_alpha</span> <span class="o">=</span> <span class="n">norm</span><span class="p">.</span><span class="nf">ppf</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">z_beta</span> <span class="o">=</span> <span class="n">norm</span><span class="p">.</span><span class="nf">ppf</span><span class="p">(</span><span class="n">power</span><span class="p">)</span>
+        
+        <span class="n">n</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">((</span><span class="n">z_alpha</span> <span class="o">+</span> <span class="n">z_beta</span><span class="p">)</span> <span class="o">/</span> <span class="n">effect_size</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        
+        <span class="k">return</span> <span class="nf">int</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">ceil</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+    
+    <span class="k">def</span> <span class="nf">experiment_duration</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">required_sample_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">daily_users</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">traffic_allocation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Calculate experiment duration in days
+        
+        Args:
+            required_sample_size: Sample size per variant
+            daily_users: Daily active users
+            traffic_allocation: Fraction of users in experiment
+        
+        Returns:
+            Duration in days
+        </span><span class="sh">"""</span>
+        <span class="n">users_per_day</span> <span class="o">=</span> <span class="n">daily_users</span> <span class="o">*</span> <span class="n">traffic_allocation</span>
+        <span class="n">days</span> <span class="o">=</span> <span class="n">required_sample_size</span> <span class="o">/</span> <span class="n">users_per_day</span>
+        
+        <span class="k">return</span> <span class="nf">int</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">ceil</span><span class="p">(</span><span class="n">days</span><span class="p">))</span>
+
+<span class="c1"># Usage
+</span><span class="n">power</span> <span class="o">=</span> <span class="nc">PowerAnalysis</span><span class="p">()</span>
+
+<span class="c1"># Example: CTR improvement test
+</span><span class="n">current_ctr</span> <span class="o">=</span> <span class="mf">0.05</span>  <span class="c1"># 5% baseline
+</span><span class="n">mde</span> <span class="o">=</span> <span class="mf">0.10</span>  <span class="c1"># Want to detect 10% relative improvement (5% → 5.5%)
+</span>
+<span class="n">sample_size</span> <span class="o">=</span> <span class="n">power</span><span class="p">.</span><span class="nf">sample_size_for_proportions</span><span class="p">(</span>
+    <span class="n">baseline_rate</span><span class="o">=</span><span class="n">current_ctr</span><span class="p">,</span>
+    <span class="n">mde</span><span class="o">=</span><span class="n">mde</span><span class="p">,</span>
+    <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+    <span class="n">power</span><span class="o">=</span><span class="mf">0.80</span>
+<span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Required sample size per variant: </span><span class="si">{</span><span class="n">sample_size</span><span class="si">:</span><span class="p">,</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="c1"># If we have 100K daily users and allocate 50% to experiment
+</span><span class="n">duration</span> <span class="o">=</span> <span class="n">power</span><span class="p">.</span><span class="nf">experiment_duration</span><span class="p">(</span>
+    <span class="n">required_sample_size</span><span class="o">=</span><span class="n">sample_size</span><span class="p">,</span>
+    <span class="n">daily_users</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span>
+    <span class="n">traffic_allocation</span><span class="o">=</span><span class="mf">0.5</span>
+<span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Experiment duration: </span><span class="si">{</span><span class="n">duration</span><span class="si">}</span><span class="s"> days</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="guardrail-metrics">Guardrail Metrics</h2>
+
+<p>Ensure experiments don’t harm key business metrics.</p>
+
+<h3 id="implementing-guardrails">Implementing Guardrails</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">GuardrailChecker</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Monitor guardrail metrics during experiments
+    
+    Guardrails: Metrics that must not degrade
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">guardrails</span> <span class="o">=</span> <span class="p">{}</span>
+    
+    <span class="k">def</span> <span class="nf">define_guardrail</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">metric_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">threshold_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>  <span class="c1"># 'relative' or 'absolute'
+</span>        <span class="n">threshold_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">direction</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># 'decrease' or 'increase'
+</span>    <span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Define a guardrail metric
+        
+        Example:
+          - Revenue must not decrease by more than 2%
+          - Error rate must not increase by more than 0.5 percentage points
+        </span><span class="sh">"""</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">guardrails</span><span class="p">[</span><span class="n">metric_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">threshold_type</span><span class="sh">'</span><span class="p">:</span> <span class="n">threshold_type</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">threshold_value</span><span class="sh">'</span><span class="p">:</span> <span class="n">threshold_value</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">direction</span><span class="sh">'</span><span class="p">:</span> <span class="n">direction</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">check_guardrails</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">control_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">treatment_metrics</span><span class="p">:</span> <span class="nb">dict</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Check if treatment violates guardrails
+        
+        Returns:
+            Dictionary of guardrail violations
+        </span><span class="sh">"""</span>
+        <span class="n">violations</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="k">for</span> <span class="n">metric_name</span><span class="p">,</span> <span class="n">guardrail</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">guardrails</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
+            <span class="n">control_value</span> <span class="o">=</span> <span class="n">control_metrics</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">metric_name</span><span class="p">)</span>
+            <span class="n">treatment_value</span> <span class="o">=</span> <span class="n">treatment_metrics</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">metric_name</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">control_value</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">treatment_value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            
+            <span class="c1"># Calculate change
+</span>            <span class="k">if</span> <span class="n">guardrail</span><span class="p">[</span><span class="sh">'</span><span class="s">threshold_type</span><span class="sh">'</span><span class="p">]</span> <span class="o">==</span> <span class="sh">'</span><span class="s">relative</span><span class="sh">'</span><span class="p">:</span>
+                <span class="n">change</span> <span class="o">=</span> <span class="p">(</span><span class="n">treatment_value</span> <span class="o">/</span> <span class="n">control_value</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># absolute
+</span>                <span class="n">change</span> <span class="o">=</span> <span class="n">treatment_value</span> <span class="o">-</span> <span class="n">control_value</span>
+            
+            <span class="c1"># Check violation
+</span>            <span class="n">violated</span> <span class="o">=</span> <span class="bp">False</span>
+            
+            <span class="k">if</span> <span class="n">guardrail</span><span class="p">[</span><span class="sh">'</span><span class="s">direction</span><span class="sh">'</span><span class="p">]</span> <span class="o">==</span> <span class="sh">'</span><span class="s">decrease</span><span class="sh">'</span><span class="p">:</span>
+                <span class="c1"># Metric should not decrease beyond threshold
+</span>                <span class="k">if</span> <span class="n">change</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">guardrail</span><span class="p">[</span><span class="sh">'</span><span class="s">threshold_value</span><span class="sh">'</span><span class="p">]:</span>
+                    <span class="n">violated</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># increase
+</span>                <span class="c1"># Metric should not increase beyond threshold
+</span>                <span class="k">if</span> <span class="n">change</span> <span class="o">&gt;</span> <span class="n">guardrail</span><span class="p">[</span><span class="sh">'</span><span class="s">threshold_value</span><span class="sh">'</span><span class="p">]:</span>
+                    <span class="n">violated</span> <span class="o">=</span> <span class="bp">True</span>
+            
+            <span class="k">if</span> <span class="n">violated</span><span class="p">:</span>
+                <span class="n">violations</span><span class="p">[</span><span class="n">metric_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="sh">'</span><span class="s">control</span><span class="sh">'</span><span class="p">:</span> <span class="n">control_value</span><span class="p">,</span>
+                    <span class="sh">'</span><span class="s">treatment</span><span class="sh">'</span><span class="p">:</span> <span class="n">treatment_value</span><span class="p">,</span>
+                    <span class="sh">'</span><span class="s">change</span><span class="sh">'</span><span class="p">:</span> <span class="n">change</span><span class="p">,</span>
+                    <span class="sh">'</span><span class="s">threshold</span><span class="sh">'</span><span class="p">:</span> <span class="n">guardrail</span><span class="p">[</span><span class="sh">'</span><span class="s">threshold_value</span><span class="sh">'</span><span class="p">],</span>
+                    <span class="sh">'</span><span class="s">type</span><span class="sh">'</span><span class="p">:</span> <span class="n">guardrail</span><span class="p">[</span><span class="sh">'</span><span class="s">threshold_type</span><span class="sh">'</span><span class="p">]</span>
+                <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="n">violations</span>
+
+<span class="c1"># Usage
+</span><span class="n">guardrails</span> <span class="o">=</span> <span class="nc">GuardrailChecker</span><span class="p">()</span>
+
+<span class="c1"># Define guardrails
+</span><span class="n">guardrails</span><span class="p">.</span><span class="nf">define_guardrail</span><span class="p">(</span>
+    <span class="n">metric_name</span><span class="o">=</span><span class="sh">'</span><span class="s">revenue_per_user</span><span class="sh">'</span><span class="p">,</span>
+    <span class="n">threshold_type</span><span class="o">=</span><span class="sh">'</span><span class="s">relative</span><span class="sh">'</span><span class="p">,</span>
+    <span class="n">threshold_value</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>  <span class="c1"># Cannot decrease by more than 2%
+</span>    <span class="n">direction</span><span class="o">=</span><span class="sh">'</span><span class="s">decrease</span><span class="sh">'</span>
+<span class="p">)</span>
+
+<span class="n">guardrails</span><span class="p">.</span><span class="nf">define_guardrail</span><span class="p">(</span>
+    <span class="n">metric_name</span><span class="o">=</span><span class="sh">'</span><span class="s">error_rate</span><span class="sh">'</span><span class="p">,</span>
+    <span class="n">threshold_type</span><span class="o">=</span><span class="sh">'</span><span class="s">absolute</span><span class="sh">'</span><span class="p">,</span>
+    <span class="n">threshold_value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>  <span class="c1"># Cannot increase by more than 0.5 percentage points
+</span>    <span class="n">direction</span><span class="o">=</span><span class="sh">'</span><span class="s">increase</span><span class="sh">'</span>
+<span class="p">)</span>
+
+<span class="c1"># Check guardrails
+</span><span class="n">control_metrics</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="sh">'</span><span class="s">revenue_per_user</span><span class="sh">'</span><span class="p">:</span> <span class="mf">10.0</span><span class="p">,</span>
+    <span class="sh">'</span><span class="s">error_rate</span><span class="sh">'</span><span class="p">:</span> <span class="mf">1.0</span>
+<span class="p">}</span>
+
+<span class="n">treatment_metrics</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="sh">'</span><span class="s">revenue_per_user</span><span class="sh">'</span><span class="p">:</span> <span class="mf">9.5</span><span class="p">,</span>  <span class="c1"># 5% decrease - violates guardrail!
+</span>    <span class="sh">'</span><span class="s">error_rate</span><span class="sh">'</span><span class="p">:</span> <span class="mf">1.2</span>  <span class="c1"># 0.2pp increase - OK
+</span><span class="p">}</span>
+
+<span class="n">violations</span> <span class="o">=</span> <span class="n">guardrails</span><span class="p">.</span><span class="nf">check_guardrails</span><span class="p">(</span><span class="n">control_metrics</span><span class="p">,</span> <span class="n">treatment_metrics</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">violations</span><span class="p">:</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">⚠️ Guardrail violations detected:</span><span class="sh">"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">metric</span><span class="p">,</span> <span class="n">details</span> <span class="ow">in</span> <span class="n">violations</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  </span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">details</span><span class="p">[</span><span class="sh">'</span><span class="s">change</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">% change (threshold: </span><span class="si">{</span><span class="n">details</span><span class="p">[</span><span class="sh">'</span><span class="s">threshold</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">%)</span><span class="sh">"</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">✅ All guardrails passed</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="real-world-examples">Real-World Examples</h2>
+
+<h3 id="netflix-experimentation-at-scale">Netflix: Experimentation at Scale</h3>
+
+<p><strong>Scale:</strong></p>
+<ul>
+  <li>1000+ experiments running concurrently</li>
+  <li>200M+ users worldwide</li>
+  <li>Multiple metrics per experiment</li>
+</ul>
+
+<p><strong>Key innovations:</strong></p>
+<ul>
+  <li><strong>Quasi-experimentation:</strong> Use observational data when randomization not possible</li>
+  <li><strong>Interleaving:</strong> Test ranking algorithms by mixing results</li>
+  <li><strong>Heterogeneous treatment effects:</strong> Analyze impact per user segment</li>
+</ul>
+
+<p><strong>Example metric:</strong></p>
+<ul>
+  <li><strong>Stream starts per member:</strong> How many shows/movies a user starts watching</li>
+  <li><strong>Effective catalog size:</strong> Number of unique titles watched (diversity metric)</li>
+</ul>
+
+<h3 id="google-large-scale-testing">Google: Large-scale Testing</h3>
+
+<p><strong>Scale:</strong></p>
+<ul>
+  <li>10,000+ experiments per year</li>
+  <li>1B+ users</li>
+  <li>Experiments across Search, Ads, YouTube, etc.</li>
+</ul>
+
+<p><strong>Methodology:</strong></p>
+<ul>
+  <li><strong>Layered experiments:</strong> Run multiple experiments on same users (orthogonal layers)</li>
+  <li><strong>Ramping:</strong> Gradually increase traffic allocation</li>
+  <li><strong>Long-running holdouts:</strong> Keep small % in old version to measure long-term effects</li>
+</ul>
+
+<p><strong>Example:</strong>
+Testing new ranking algorithm in Google Search:</p>
+<ul>
+  <li><strong>Primary metric:</strong> Click-through rate on top results</li>
+  <li><strong>Guardrails:</strong> Ad revenue, latency, user satisfaction</li>
+  <li><strong>Duration:</strong> 2-4 weeks</li>
+  <li><strong>Traffic:</strong> Start at 1%, ramp to 50%</li>
+</ul>
+
+<hr />
+
+<h2 id="advanced-topics">Advanced Topics</h2>
+
+<h3 id="sequential-testing--early-stopping">Sequential Testing &amp; Early Stopping</h3>
+
+<p>Stop experiments early when results are conclusive.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">math</span>
+<span class="kn">from</span> <span class="n">scipy.stats</span> <span class="kn">import</span> <span class="n">norm</span>
+
+<span class="k">class</span> <span class="nc">SequentialTesting</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Sequential probability ratio test (SPRT)
+    
+    Allows stopping experiment early while controlling error rates
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">beta</span><span class="o">=</span><span class="mf">0.20</span><span class="p">,</span>
+        <span class="n">mde</span><span class="o">=</span><span class="mf">0.05</span>  <span class="c1"># Minimum detectable effect
+</span>    <span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>  <span class="c1"># Type I error rate
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">beta</span>  <span class="c1"># Type II error rate (1 - power)
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">mde</span> <span class="o">=</span> <span class="n">mde</span>
+        
+        <span class="c1"># Calculate log-likelihood ratio bounds
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">upper_bound</span> <span class="o">=</span> <span class="n">math</span><span class="p">.</span><span class="nf">log</span><span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">beta</span><span class="p">)</span> <span class="o">/</span> <span class="n">alpha</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">lower_bound</span> <span class="o">=</span> <span class="n">math</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="n">beta</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">))</span>
+    
+    <span class="k">def</span> <span class="nf">should_stop</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">control_successes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">control_total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">treatment_successes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">treatment_total</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Check if experiment can be stopped
+        
+        Returns:
+            {
+                </span><span class="sh">'</span><span class="s">decision</span><span class="sh">'</span><span class="s">: </span><span class="sh">'</span><span class="s">continue</span><span class="sh">'</span><span class="s"> | </span><span class="sh">'</span><span class="s">stop_treatment_wins</span><span class="sh">'</span><span class="s"> | </span><span class="sh">'</span><span class="s">stop_control_wins</span><span class="sh">'</span><span class="s">,
+                </span><span class="sh">'</span><span class="s">log_likelihood_ratio</span><span class="sh">'</span><span class="s">: float
+            }
+        </span><span class="sh">"""</span>
+        <span class="c1"># Compute rates
+</span>        <span class="n">p_control</span> <span class="o">=</span> <span class="n">control_successes</span> <span class="o">/</span> <span class="n">control_total</span> <span class="k">if</span> <span class="n">control_total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">p_treatment</span> <span class="o">=</span> <span class="n">treatment_successes</span> <span class="o">/</span> <span class="n">treatment_total</span> <span class="k">if</span> <span class="n">treatment_total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        
+        <span class="c1"># Avoid edge cases
+</span>        <span class="n">p_control</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="nf">min</span><span class="p">(</span><span class="n">p_control</span><span class="p">,</span> <span class="mf">0.9999</span><span class="p">),</span> <span class="mf">0.0001</span><span class="p">)</span>
+        <span class="n">p_treatment</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="nf">min</span><span class="p">(</span><span class="n">p_treatment</span><span class="p">,</span> <span class="mf">0.9999</span><span class="p">),</span> <span class="mf">0.0001</span><span class="p">)</span>
+        
+        <span class="c1"># Log-likelihood ratio
+</span>        <span class="c1"># H1: treatment is better by mde
+</span>        <span class="c1"># H0: treatment = control
+</span>        
+        <span class="n">p_h1</span> <span class="o">=</span> <span class="n">p_control</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">mde</span><span class="p">)</span>
+        
+        <span class="n">llr</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="c1"># Contribution from treatment group
+</span>        <span class="n">llr</span> <span class="o">+=</span> <span class="n">treatment_successes</span> <span class="o">*</span> <span class="n">math</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="n">p_h1</span> <span class="o">/</span> <span class="n">p_control</span><span class="p">)</span>
+        <span class="n">llr</span> <span class="o">+=</span> <span class="p">(</span><span class="n">treatment_total</span> <span class="o">-</span> <span class="n">treatment_successes</span><span class="p">)</span> <span class="o">*</span> <span class="n">math</span><span class="p">.</span><span class="nf">log</span><span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">p_h1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">p_control</span><span class="p">))</span>
+        
+        <span class="c1"># Decision
+</span>        <span class="k">if</span> <span class="n">llr</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">upper_bound</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="sh">'</span><span class="s">decision</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">stop_treatment_wins</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">log_likelihood_ratio</span><span class="sh">'</span><span class="p">:</span> <span class="n">llr</span><span class="p">}</span>
+        <span class="k">elif</span> <span class="n">llr</span> <span class="o">&lt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">lower_bound</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="sh">'</span><span class="s">decision</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">stop_control_wins</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">log_likelihood_ratio</span><span class="sh">'</span><span class="p">:</span> <span class="n">llr</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="sh">'</span><span class="s">decision</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">continue</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">log_likelihood_ratio</span><span class="sh">'</span><span class="p">:</span> <span class="n">llr</span><span class="p">}</span>
+
+<span class="c1"># Usage
+</span><span class="n">sequential</span> <span class="o">=</span> <span class="nc">SequentialTesting</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.20</span><span class="p">,</span> <span class="n">mde</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+
+<span class="c1"># Check daily
+</span><span class="k">for</span> <span class="n">day</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">15</span><span class="p">):</span>
+    <span class="n">control_clicks</span> <span class="o">=</span> <span class="n">day</span> <span class="o">*</span> <span class="mi">450</span>
+    <span class="n">control_impressions</span> <span class="o">=</span> <span class="n">day</span> <span class="o">*</span> <span class="mi">10000</span>
+    <span class="n">treatment_clicks</span> <span class="o">=</span> <span class="n">day</span> <span class="o">*</span> <span class="mi">500</span>
+    <span class="n">treatment_impressions</span> <span class="o">=</span> <span class="n">day</span> <span class="o">*</span> <span class="mi">10000</span>
+    
+    <span class="n">result</span> <span class="o">=</span> <span class="n">sequential</span><span class="p">.</span><span class="nf">should_stop</span><span class="p">(</span>
+        <span class="n">control_clicks</span><span class="p">,</span> <span class="n">control_impressions</span><span class="p">,</span>
+        <span class="n">treatment_clicks</span><span class="p">,</span> <span class="n">treatment_impressions</span>
+    <span class="p">)</span>
+    
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Day </span><span class="si">{</span><span class="n">day</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">decision</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">decision</span><span class="sh">'</span><span class="p">]</span> <span class="o">!=</span> <span class="sh">'</span><span class="s">continue</span><span class="sh">'</span><span class="p">:</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">🎉 Experiment can stop on day </span><span class="si">{</span><span class="n">day</span><span class="si">}</span><span class="s">!</span><span class="sh">"</span><span class="p">)</span>
+        <span class="k">break</span>
+</code></pre></div></div>
+
+<h3 id="multi-armed-bandits">Multi-Armed Bandits</h3>
+
+<p>Allocate traffic dynamically to better-performing variants.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+
+<span class="k">class</span> <span class="nc">ThompsonSampling</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Thompson Sampling for multi-armed bandit
+    
+    Dynamically allocate traffic to maximize reward
+    while exploring alternatives
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">num_variants</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">num_variants</span> <span class="o">=</span> <span class="n">num_variants</span>
+        
+        <span class="c1"># Beta distribution parameters for each variant
+</span>        <span class="c1"># Beta(alpha, beta) represents posterior belief
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">ones</span><span class="p">(</span><span class="n">num_variants</span><span class="p">)</span>  <span class="c1"># Success count + 1
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">ones</span><span class="p">(</span><span class="n">num_variants</span><span class="p">)</span>  <span class="c1"># Failure count + 1
+</span>    
+    <span class="k">def</span> <span class="nf">select_variant</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Select variant to show to next user
+        
+        Sample from each variant</span><span class="sh">'</span><span class="s">s posterior and pick the best
+        </span><span class="sh">"""</span>
+        <span class="c1"># Sample from each variant's posterior distribution
+</span>        <span class="n">sampled_values</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">beta</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">alpha</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">self</span><span class="p">.</span><span class="n">beta</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">num_variants</span><span class="p">)</span>
+        <span class="p">]</span>
+        
+        <span class="c1"># Select variant with highest sample
+</span>        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">sampled_values</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">variant</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">reward</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Update beliefs after observing reward
+        
+        Args:
+            variant: Which variant was shown
+            reward: 0 or 1 (failure or success)
+        </span><span class="sh">"""</span>
+        <span class="k">if</span> <span class="n">reward</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">alpha</span><span class="p">[</span><span class="n">variant</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">beta</span><span class="p">[</span><span class="n">variant</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+    
+    <span class="k">def</span> <span class="nf">get_statistics</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Get current statistics for each variant</span><span class="sh">"""</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">num_variants</span><span class="p">):</span>
+            <span class="c1"># Mean of Beta(alpha, beta) = alpha / (alpha + beta)
+</span>            <span class="n">mean</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">alpha</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">alpha</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">beta</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            
+            <span class="c1"># 95% credible interval
+</span>            <span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">beta</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">alpha</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">self</span><span class="p">.</span><span class="n">beta</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
+            <span class="n">ci_lower</span><span class="p">,</span> <span class="n">ci_upper</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">percentile</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="p">[</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">97.5</span><span class="p">])</span>
+            
+            <span class="n">stats</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span>
+                <span class="sh">'</span><span class="s">variant</span><span class="sh">'</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">estimated_mean</span><span class="sh">'</span><span class="p">:</span> <span class="n">mean</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">total_samples</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">alpha</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">beta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">successes</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">alpha</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">credible_interval</span><span class="sh">'</span><span class="p">:</span> <span class="p">(</span><span class="n">ci_lower</span><span class="p">,</span> <span class="n">ci_upper</span><span class="p">)</span>
+            <span class="p">})</span>
+        
+        <span class="k">return</span> <span class="n">stats</span>
+
+<span class="c1"># Usage
+</span><span class="n">bandit</span> <span class="o">=</span> <span class="nc">ThompsonSampling</span><span class="p">(</span><span class="n">num_variants</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="c1"># Simulate 10,000 users
+</span><span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">10000</span><span class="p">):</span>
+    <span class="c1"># Select variant to show
+</span>    <span class="n">variant</span> <span class="o">=</span> <span class="n">bandit</span><span class="p">.</span><span class="nf">select_variant</span><span class="p">()</span>
+    
+    <span class="c1"># Simulate user interaction (variant 2 is best: 6% CTR)
+</span>    <span class="n">true_ctrs</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.04</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.06</span><span class="p">]</span>
+    <span class="n">clicked</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">true_ctrs</span><span class="p">[</span><span class="n">variant</span><span class="p">]</span>
+    
+    <span class="c1"># Update beliefs
+</span>    <span class="n">bandit</span><span class="p">.</span><span class="nf">update</span><span class="p">(</span><span class="n">variant</span><span class="p">,</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="n">clicked</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">)</span>
+
+<span class="c1"># Check statistics
+</span><span class="n">stats</span> <span class="o">=</span> <span class="n">bandit</span><span class="p">.</span><span class="nf">get_statistics</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">:</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Variant </span><span class="si">{</span><span class="n">s</span><span class="p">[</span><span class="sh">'</span><span class="s">variant</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">: </span><span class="sh">"</span>
+          <span class="sa">f</span><span class="sh">"</span><span class="s">Estimated CTR = </span><span class="si">{</span><span class="n">s</span><span class="p">[</span><span class="sh">'</span><span class="s">estimated_mean</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">3</span><span class="n">f</span><span class="si">}</span><span class="s">, </span><span class="sh">"</span>
+          <span class="sa">f</span><span class="sh">"</span><span class="s">Samples = </span><span class="si">{</span><span class="n">s</span><span class="p">[</span><span class="sh">'</span><span class="s">total_samples</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">, </span><span class="sh">"</span>
+          <span class="sa">f</span><span class="sh">"</span><span class="s">95% CI = [</span><span class="si">{</span><span class="n">s</span><span class="p">[</span><span class="sh">'</span><span class="s">credible_interval</span><span class="sh">'</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">3</span><span class="n">f</span><span class="si">}</span><span class="s">, </span><span class="si">{</span><span class="n">s</span><span class="p">[</span><span class="sh">'</span><span class="s">credible_interval</span><span class="sh">'</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">3</span><span class="n">f</span><span class="si">}</span><span class="s">]</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="variance-reduction-cuped">Variance Reduction: CUPED</h3>
+
+<p>Reduce variance by using pre-experiment covariates.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">CUPED</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Controlled-experiment Using Pre-Experiment Data
+    
+    Reduces variance by adjusting for pre-experiment metrics
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+    
+    <span class="k">def</span> <span class="nf">adjust_metric</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>  <span class="c1"># Post-experiment metric
+</span>        <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>  <span class="c1"># Pre-experiment metric (covariate)
+</span>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Adjust post-experiment metric using pre-experiment data
+        
+        Adjusted metric: y_adj = y - theta * (x - E[x])
+        
+        Where theta is chosen to minimize variance of y_adj
+        </span><span class="sh">"""</span>
+        <span class="c1"># Compute optimal theta
+</span>        <span class="c1"># theta = Cov(y, x) / Var(x)
+</span>        <span class="n">mean_x</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">mean_y</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        
+        <span class="n">cov_yx</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">((</span><span class="n">y</span> <span class="o">-</span> <span class="n">mean_y</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">mean_x</span><span class="p">))</span>
+        <span class="n">var_x</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">var</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">var_x</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">y</span>  <span class="c1"># No adjustment possible
+</span>        
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">cov_yx</span> <span class="o">/</span> <span class="n">var_x</span>
+        
+        <span class="c1"># Adjust y
+</span>        <span class="n">y_adjusted</span> <span class="o">=</span> <span class="n">y</span> <span class="o">-</span> <span class="n">theta</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">mean_x</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">y_adjusted</span>
+    
+    <span class="k">def</span> <span class="nf">compare_variants_with_cuped</span><span class="p">(</span>
+        <span class="n">self</span><span class="p">,</span>
+        <span class="n">control_post</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">control_pre</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">treatment_post</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">treatment_pre</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Compare variants using CUPED
+        
+        Returns improvement in statistical power
+        </span><span class="sh">"""</span>
+        <span class="c1"># Original comparison (without CUPED)
+</span>        <span class="kn">from</span> <span class="n">scipy</span> <span class="kn">import</span> <span class="n">stats</span>
+        
+        <span class="n">original_t</span><span class="p">,</span> <span class="n">original_p</span> <span class="o">=</span> <span class="n">stats</span><span class="p">.</span><span class="nf">ttest_ind</span><span class="p">(</span><span class="n">treatment_post</span><span class="p">,</span> <span class="n">control_post</span><span class="p">)</span>
+        <span class="n">original_var</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">var</span><span class="p">(</span><span class="n">treatment_post</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nf">var</span><span class="p">(</span><span class="n">control_post</span><span class="p">)</span>
+        
+        <span class="c1"># Adjust metrics
+</span>        <span class="n">all_pre</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">concatenate</span><span class="p">([</span><span class="n">control_pre</span><span class="p">,</span> <span class="n">treatment_pre</span><span class="p">])</span>
+        <span class="n">all_post</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">concatenate</span><span class="p">([</span><span class="n">control_post</span><span class="p">,</span> <span class="n">treatment_post</span><span class="p">])</span>
+        
+        <span class="n">adjusted_post</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">adjust_metric</span><span class="p">(</span><span class="n">all_post</span><span class="p">,</span> <span class="n">all_pre</span><span class="p">)</span>
+        
+        <span class="c1"># Split back
+</span>        <span class="n">n_control</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">control_post</span><span class="p">)</span>
+        <span class="n">control_post_adj</span> <span class="o">=</span> <span class="n">adjusted_post</span><span class="p">[:</span><span class="n">n_control</span><span class="p">]</span>
+        <span class="n">treatment_post_adj</span> <span class="o">=</span> <span class="n">adjusted_post</span><span class="p">[</span><span class="n">n_control</span><span class="p">:]</span>
+        
+        <span class="c1"># Adjusted comparison
+</span>        <span class="n">adjusted_t</span><span class="p">,</span> <span class="n">adjusted_p</span> <span class="o">=</span> <span class="n">stats</span><span class="p">.</span><span class="nf">ttest_ind</span><span class="p">(</span><span class="n">treatment_post_adj</span><span class="p">,</span> <span class="n">control_post_adj</span><span class="p">)</span>
+        <span class="n">adjusted_var</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">var</span><span class="p">(</span><span class="n">treatment_post_adj</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nf">var</span><span class="p">(</span><span class="n">control_post_adj</span><span class="p">)</span>
+        
+        <span class="c1"># Variance reduction
+</span>        <span class="n">variance_reduction</span> <span class="o">=</span> <span class="p">(</span><span class="n">original_var</span> <span class="o">-</span> <span class="n">adjusted_var</span><span class="p">)</span> <span class="o">/</span> <span class="n">original_var</span> <span class="o">*</span> <span class="mi">100</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">original_p_value</span><span class="sh">'</span><span class="p">:</span> <span class="n">original_p</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">adjusted_p_value</span><span class="sh">'</span><span class="p">:</span> <span class="n">adjusted_p</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">variance_reduction_pct</span><span class="sh">'</span><span class="p">:</span> <span class="n">variance_reduction</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">power_improvement</span><span class="sh">'</span><span class="p">:</span> <span class="p">(</span><span class="n">original_var</span> <span class="o">/</span> <span class="n">adjusted_var</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+        <span class="p">}</span>
+
+<span class="c1"># Example: Using pre-experiment purchase history to reduce variance
+</span><span class="n">control_pre</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">normal</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>  <span class="c1"># Past purchases
+</span><span class="n">control_post</span> <span class="o">=</span> <span class="n">control_pre</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">normal</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>  <span class="c1"># Correlated
+</span>
+<span class="n">treatment_pre</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">normal</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+<span class="n">treatment_post</span> <span class="o">=</span> <span class="n">treatment_pre</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">normal</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>  <span class="c1"># Slightly better
+</span>
+<span class="n">cuped</span> <span class="o">=</span> <span class="nc">CUPED</span><span class="p">()</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">cuped</span><span class="p">.</span><span class="nf">compare_variants_with_cuped</span><span class="p">(</span>
+    <span class="n">control_post</span><span class="p">,</span> <span class="n">control_pre</span><span class="p">,</span>
+    <span class="n">treatment_post</span><span class="p">,</span> <span class="n">treatment_pre</span>
+<span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Original p-value: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">original_p_value</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">4</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Adjusted p-value: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">adjusted_p_value</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">4</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Variance reduction: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">variance_reduction_pct</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">%</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Power improvement: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">power_improvement</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">x</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="stratified-sampling">Stratified Sampling</h3>
+
+<p>Ensure balance across important user segments.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">StratifiedAssignment</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Assign users to experiments with stratification
+    
+    Ensures balanced assignment within strata (e.g., country, platform)
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">num_variants</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">num_variants</span> <span class="o">=</span> <span class="n">num_variants</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">strata_counters</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># stratum → variant counts
+</span>    
+    <span class="k">def</span> <span class="nf">assign_variant</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">stratum</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Assign user to variant, ensuring balance within stratum
+        
+        Args:
+            user_id: User identifier
+            stratum: Stratum key (e.g., </span><span class="sh">"</span><span class="s">US_iOS</span><span class="sh">"</span><span class="s">, </span><span class="sh">"</span><span class="s">UK_Android</span><span class="sh">"</span><span class="s">)
+        
+        Returns:
+            Variant index
+        </span><span class="sh">"""</span>
+        <span class="c1"># Initialize stratum if new
+</span>        <span class="k">if</span> <span class="n">stratum</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">strata_counters</span><span class="p">:</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">strata_counters</span><span class="p">[</span><span class="n">stratum</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">num_variants</span>
+        
+        <span class="c1"># Hash-based assignment (deterministic)
+</span>        <span class="kn">import</span> <span class="n">hashlib</span>
+        <span class="n">hash_input</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s">:</span><span class="si">{</span><span class="n">stratum</span><span class="si">}</span><span class="sh">"</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="sh">'</span><span class="s">utf-8</span><span class="sh">'</span><span class="p">)</span>
+        <span class="n">hash_value</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">hashlib</span><span class="p">.</span><span class="nf">md5</span><span class="p">(</span><span class="n">hash_input</span><span class="p">).</span><span class="nf">hexdigest</span><span class="p">(),</span> <span class="mi">16</span><span class="p">)</span>
+        <span class="n">variant</span> <span class="o">=</span> <span class="n">hash_value</span> <span class="o">%</span> <span class="n">self</span><span class="p">.</span><span class="n">num_variants</span>
+        
+        <span class="c1"># Update counter
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">strata_counters</span><span class="p">[</span><span class="n">stratum</span><span class="p">][</span><span class="n">variant</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="k">return</span> <span class="n">variant</span>
+    
+    <span class="k">def</span> <span class="nf">get_balance_report</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">Check balance within each stratum</span><span class="sh">"""</span>
+        <span class="n">report</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="k">for</span> <span class="n">stratum</span><span class="p">,</span> <span class="n">counts</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">strata_counters</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
+            <span class="n">total</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+            <span class="n">proportions</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="o">/</span> <span class="n">total</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">]</span>
+            
+            <span class="c1"># Check if balanced (each variant should have ~1/num_variants)
+</span>            <span class="n">expected</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">num_variants</span>
+            <span class="n">max_deviation</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="nf">abs</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="n">expected</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">proportions</span><span class="p">)</span>
+            
+            <span class="n">report</span><span class="p">[</span><span class="n">stratum</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="sh">'</span><span class="s">counts</span><span class="sh">'</span><span class="p">:</span> <span class="n">counts</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">proportions</span><span class="sh">'</span><span class="p">:</span> <span class="n">proportions</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">max_deviation</span><span class="sh">'</span><span class="p">:</span> <span class="n">max_deviation</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">balanced</span><span class="sh">'</span><span class="p">:</span> <span class="n">max_deviation</span> <span class="o">&lt;</span> <span class="mf">0.05</span>  <span class="c1"># Within 5% of expected
+</span>            <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="n">report</span>
+
+<span class="c1"># Usage
+</span><span class="n">stratified</span> <span class="o">=</span> <span class="nc">StratifiedAssignment</span><span class="p">(</span><span class="n">num_variants</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Simulate user assignments
+</span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">10000</span><span class="p">):</span>
+    <span class="n">user_id</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">user_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="sh">"</span>
+    
+    <span class="c1"># Assign stratum based on user
+</span>    <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">stratum</span> <span class="o">=</span> <span class="sh">"</span><span class="s">US_iOS</span><span class="sh">"</span>
+    <span class="k">elif</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">stratum</span> <span class="o">=</span> <span class="sh">"</span><span class="s">US_Android</span><span class="sh">"</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">stratum</span> <span class="o">=</span> <span class="sh">"</span><span class="s">UK_iOS</span><span class="sh">"</span>
+    
+    <span class="n">variant</span> <span class="o">=</span> <span class="n">stratified</span><span class="p">.</span><span class="nf">assign_variant</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">stratum</span><span class="p">)</span>
+
+<span class="c1"># Check balance
+</span><span class="n">balance</span> <span class="o">=</span> <span class="n">stratified</span><span class="p">.</span><span class="nf">get_balance_report</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">stratum</span><span class="p">,</span> <span class="n">stats</span> <span class="ow">in</span> <span class="n">balance</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">stratum</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">counts</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">, balanced=</span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">balanced</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="multiple-testing-correction">Multiple Testing Correction</h2>
+
+<p>When running many experiments, control family-wise error rate.</p>
+
+<h3 id="bonferroni-correction">Bonferroni Correction</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">bonferroni_correction</span><span class="p">(</span><span class="n">p_values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
+    <span class="sh">"""</span><span class="s">
+    Bonferroni correction for multiple comparisons
+    
+    Adjusted alpha = alpha / num_tests
+    
+    Args:
+        p_values: List of p-values from multiple tests
+        alpha: Family-wise error rate
+    
+    Returns:
+        List of booleans (True = significant after correction)
+    </span><span class="sh">"""</span>
+    <span class="n">num_tests</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span>
+    <span class="n">adjusted_alpha</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">/</span> <span class="n">num_tests</span>
+    
+    <span class="k">return</span> <span class="p">[</span><span class="n">p</span> <span class="o">&lt;</span> <span class="n">adjusted_alpha</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">p_values</span><span class="p">]</span>
+
+<span class="c1"># Example: Testing 10 variants
+</span><span class="n">p_values</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.04</span><span class="p">,</span> <span class="mf">0.06</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">,</span> <span class="mf">0.08</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.09</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.10</span><span class="p">]</span>
+
+<span class="n">significant_uncorrected</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="o">&lt;</span> <span class="mf">0.05</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">p_values</span><span class="p">]</span>
+<span class="n">significant_corrected</span> <span class="o">=</span> <span class="nf">bonferroni_correction</span><span class="p">(</span><span class="n">p_values</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Significant (uncorrected): </span><span class="si">{</span><span class="nf">sum</span><span class="p">(</span><span class="n">significant_uncorrected</span><span class="p">)</span><span class="si">}</span><span class="s"> / </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Significant (Bonferroni): </span><span class="si">{</span><span class="nf">sum</span><span class="p">(</span><span class="n">significant_corrected</span><span class="p">)</span><span class="si">}</span><span class="s"> / </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="false-discovery-rate-fdr---benjamini-hochberg">False Discovery Rate (FDR) - Benjamini-Hochberg</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">benjamini_hochberg</span><span class="p">(</span><span class="n">p_values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
+    <span class="sh">"""</span><span class="s">
+    Benjamini-Hochberg procedure for FDR control
+    
+    Less conservative than Bonferroni
+    
+    Args:
+        p_values: List of p-values
+        alpha: Desired FDR level
+    
+    Returns:
+        List of booleans (True = significant)
+    </span><span class="sh">"""</span>
+    <span class="n">num_tests</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span>
+    
+    <span class="c1"># Sort p-values with original indices
+</span>    <span class="n">indexed_p_values</span> <span class="o">=</span> <span class="p">[(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">p_values</span><span class="p">)]</span>
+    <span class="n">indexed_p_values</span><span class="p">.</span><span class="nf">sort</span><span class="p">()</span>
+    
+    <span class="c1"># Find largest k such that p[k] &lt;= (k+1)/m * alpha
+</span>    <span class="n">significant_indices</span> <span class="o">=</span> <span class="nf">set</span><span class="p">()</span>
+    
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">num_tests</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">p_value</span><span class="p">,</span> <span class="n">original_idx</span> <span class="o">=</span> <span class="n">indexed_p_values</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_tests</span> <span class="o">*</span> <span class="n">alpha</span>
+        
+        <span class="k">if</span> <span class="n">p_value</span> <span class="o">&lt;=</span> <span class="n">threshold</span><span class="p">:</span>
+            <span class="c1"># Mark this and all smaller p-values as significant
+</span>            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">significant_indices</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">indexed_p_values</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">break</span>
+    
+    <span class="c1"># Create result list
+</span>    <span class="k">return</span> <span class="p">[</span><span class="n">i</span> <span class="ow">in</span> <span class="n">significant_indices</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">num_tests</span><span class="p">)]</span>
+
+<span class="c1"># Compare to Bonferroni
+</span><span class="n">fdr_significant</span> <span class="o">=</span> <span class="nf">benjamini_hochberg</span><span class="p">(</span><span class="n">p_values</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Significant (FDR): </span><span class="si">{</span><span class="nf">sum</span><span class="p">(</span><span class="n">fdr_significant</span><span class="p">)</span><span class="si">}</span><span class="s"> / </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="layered-experiments">Layered Experiments</h2>
+
+<p>Run multiple experiments simultaneously on orthogonal layers.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ExperimentLayer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Single experiment layer
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">layer_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">layer_id</span> <span class="o">=</span> <span class="n">layer_id</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">experiments</span> <span class="o">=</span> <span class="n">experiments</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">num_experiments</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">assign_experiment</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">Assign user to one experiment in this layer</span><span class="sh">"""</span>
+        <span class="kn">import</span> <span class="n">hashlib</span>
+        
+        <span class="n">hash_input</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s">:</span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">layer_id</span><span class="si">}</span><span class="sh">"</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="sh">'</span><span class="s">utf-8</span><span class="sh">'</span><span class="p">)</span>
+        <span class="n">hash_value</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">hashlib</span><span class="p">.</span><span class="nf">md5</span><span class="p">(</span><span class="n">hash_input</span><span class="p">).</span><span class="nf">hexdigest</span><span class="p">(),</span> <span class="mi">16</span><span class="p">)</span>
+        
+        <span class="n">experiment_idx</span> <span class="o">=</span> <span class="n">hash_value</span> <span class="o">%</span> <span class="n">self</span><span class="p">.</span><span class="n">num_experiments</span>
+        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">experiments</span><span class="p">[</span><span class="n">experiment_idx</span><span class="p">]</span>
+
+<span class="k">class</span> <span class="nc">LayeredExperimentPlatform</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Platform supporting layered experiments
+    
+    Layers should be independent (orthogonal)
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">layers</span> <span class="o">=</span> <span class="p">{}</span>
+    
+    <span class="k">def</span> <span class="nf">add_layer</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">layer_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+        <span class="sh">"""</span><span class="s">Add experiment layer</span><span class="sh">"""</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">layers</span><span class="p">[</span><span class="n">layer_id</span><span class="p">]</span> <span class="o">=</span> <span class="nc">ExperimentLayer</span><span class="p">(</span><span class="n">layer_id</span><span class="p">,</span> <span class="n">experiments</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">assign_user</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Assign user to experiments across all layers
+        
+        Returns:
+            Dict mapping layer_id → experiment_id
+        </span><span class="sh">"""</span>
+        <span class="n">assignments</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="k">for</span> <span class="n">layer_id</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
+            <span class="n">experiment</span> <span class="o">=</span> <span class="n">layer</span><span class="p">.</span><span class="nf">assign_experiment</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+            <span class="n">assignments</span><span class="p">[</span><span class="n">layer_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">experiment</span>
+        
+        <span class="k">return</span> <span class="n">assignments</span>
+
+<span class="c1"># Usage
+</span><span class="n">platform</span> <span class="o">=</span> <span class="nc">LayeredExperimentPlatform</span><span class="p">()</span>
+
+<span class="c1"># Layer 1: Ranking algorithm tests
+</span><span class="n">platform</span><span class="p">.</span><span class="nf">add_layer</span><span class="p">(</span>
+    <span class="sh">'</span><span class="s">ranking</span><span class="sh">'</span><span class="p">,</span>
+    <span class="p">[</span><span class="sh">'</span><span class="s">ranking_baseline</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">ranking_ml_v1</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">ranking_ml_v2</span><span class="sh">'</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># Layer 2: UI tests (independent of ranking)
+</span><span class="n">platform</span><span class="p">.</span><span class="nf">add_layer</span><span class="p">(</span>
+    <span class="sh">'</span><span class="s">ui</span><span class="sh">'</span><span class="p">,</span>
+    <span class="p">[</span><span class="sh">'</span><span class="s">ui_old</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">ui_new_blue</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">ui_new_green</span><span class="sh">'</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># Layer 3: Recommendation tests
+</span><span class="n">platform</span><span class="p">.</span><span class="nf">add_layer</span><span class="p">(</span>
+    <span class="sh">'</span><span class="s">recommendations</span><span class="sh">'</span><span class="p">,</span>
+    <span class="p">[</span><span class="sh">'</span><span class="s">recs_baseline</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">recs_personalized</span><span class="sh">'</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># Assign user to experiments
+</span><span class="n">user_experiments</span> <span class="o">=</span> <span class="n">platform</span><span class="p">.</span><span class="nf">assign_user</span><span class="p">(</span><span class="sh">'</span><span class="s">user_12345</span><span class="sh">'</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">User assigned to:</span><span class="sh">"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">layer</span><span class="p">,</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">user_experiments</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  </span><span class="si">{</span><span class="n">layer</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">experiment</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="c1"># User gets combination like:
+# ranking: ranking_ml_v2
+# ui: ui_new_blue
+# recommendations: recs_personalized
+</span></code></pre></div></div>
+
+<hr />
+
+<h2 id="airbnbs-experiment-framework">Airbnb’s Experiment Framework</h2>
+
+<p>Real-world example of production experimentation.</p>
+
+<p><strong>Key Components:</strong></p>
+
+<ol>
+  <li><strong>ERF (Experiment Reporting Framework)</strong>
+    <ul>
+      <li>Centralized metric definitions</li>
+      <li>Automated metric computation</li>
+      <li>Standardized reporting</li>
+    </ul>
+  </li>
+  <li><strong>CUPED for Variance Reduction</strong>
+    <ul>
+      <li>Uses pre-experiment booking history</li>
+      <li>50%+ variance reduction on key metrics</li>
+      <li>Dramatically reduces required sample size</li>
+    </ul>
+  </li>
+  <li><strong>Quasi-experiments</strong>
+    <ul>
+      <li>When randomization not possible (e.g., pricing tests)</li>
+      <li>Difference-in-differences analysis</li>
+      <li>Synthetic control methods</li>
+    </ul>
+  </li>
+  <li><strong>Interference Handling</strong>
+    <ul>
+      <li>Network effects (one user’s treatment affects others)</li>
+      <li>Cluster randomization (randomize at city/market level)</li>
+      <li>Ego-cluster randomization</li>
+    </ul>
+  </li>
+</ol>
+
+<p><strong>Metrics Hierarchy:</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Primary Metrics (move-the-needle)
+├── Bookings
+├── Revenue
+└── Guest Satisfaction
+
+Secondary Metrics (understand mechanism)
+├── Search engagement
+├── Listing views
+└── Message rate
+
+Guardrail Metrics (protect)
+├── Host satisfaction
+├── Cancellation rate
+└── Customer support tickets
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="key-takeaways">Key Takeaways</h2>
+
+<p>✅ <strong>Randomization</strong> via consistent hashing ensures unbiased assignment<br />
+✅ <strong>Statistical rigor</strong> prevents false positives—require p &lt; 0.05 and sufficient power<br />
+✅ <strong>Sample size</strong> calculation upfront prevents underpowered experiments<br />
+✅ <strong>Guardrail metrics</strong> protect against shipping harmful changes<br />
+✅ <strong>Real-time monitoring</strong> enables early stopping for clear wins/losses<br />
+✅ <strong>Sequential testing</strong> allows stopping early while controlling error rates<br />
+✅ <strong>Multi-armed bandits</strong> dynamically optimize traffic allocation<br />
+✅ <strong>CUPED</strong> reduces variance using pre-experiment data → smaller samples needed<br />
+✅ <strong>Stratified sampling</strong> ensures balance across key user segments<br />
+✅ <strong>Multiple testing corrections</strong> control error rates when running many experiments<br />
+✅ <strong>Layered experiments</strong> increase experimentation velocity without conflicts<br />
+✅ <strong>Long-term holdouts</strong> measure sustained impact vs novelty effects</p>
+
+<hr />
+
+<p><strong>Originally published at:</strong> <a href="https://www.arunbaby.com/ml-system-design/0004-ab-testing-systems/">arunbaby.com/ml-system-design/0004-ab-testing-systems</a></p>
+
+<p><em>If you found this helpful, consider sharing it with others who might benefit.</em></p>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#ab-testing" class="page__taxonomy-item p-category" rel="tag">ab-testing</a><span class="sep">, </span>
+    
+      <a href="/tags/#experimentation" class="page__taxonomy-item p-category" rel="tag">experimentation</a><span class="sep">, </span>
+    
+      <a href="/tags/#metrics" class="page__taxonomy-item p-category" rel="tag">metrics</a><span class="sep">, </span>
+    
+      <a href="/tags/#statistical-testing" class="page__taxonomy-item p-category" rel="tag">statistical-testing</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#ml-system-design" class="page__taxonomy-item p-category" rel="tag">ml-system-design</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time class="dt-published" datetime="2025-10-13T22:10:44+05:30">October 13, 2025</time></p>
+
+      </footer>
+
+      <section class="page__share">
+  <h4 class="page__share-title">Share on</h4>
+
+  <a href="https://twitter.com/intent/tweet?via=arunbaby0&text=A%2FB+Testing+Systems+for+ML%20https%3A%2F%2Fwww.arunbaby.com%2Fml-system-design%2F0004-ab-testing-systems%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.arunbaby.com%2Fml-system-design%2F0004-ab-testing-systems%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https://www.arunbaby.com/ml-system-design/0004-ab-testing-systems/" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/ml-system-design/0003-data-preprocessing/" class="pagination--pager" title="Data Preprocessing Pipeline Design">Previous</a>
+    
+    
+      <a href="/ml-system-design/0005-batch-realtime-inference/" class="pagination--pager" title="Batch vs Real-Time Inference">Next</a>
+    
+  </nav>
+
+
+    </div>
+
+    
+  </article>
+
+  
+  
+</div>
+
+      
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';" role="search">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/arunbaby0" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+          <li><a href="https://github.com/arunbaby0" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+          <li><a href="https://www.linkedin.com/in/arunbaby0/" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i> LinkedIn</a></li>
+        
+      
+        
+          <li><a href="https://scholar.google.co.in/citations?user=6fSYWhkAAAAJ" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-graduation-cap" aria-hidden="true"></i> Google Scholar</a></li>
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 1990 - 2143 <a href="https://www.arunbaby.com">Arun Baby</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0JRJPEC9SS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-0JRJPEC9SS', { 'anonymize_ip': false});
+</script>
+
+
+
+
+
+
+
+
+  </body>
+</html>
