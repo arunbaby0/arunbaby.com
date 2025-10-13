@@ -1,0 +1,1838 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.26.2 by Michael Rose
+  Copyright 2013-2024 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+
+<html lang="en-US" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Streaming ASR Architecture - Arun Baby</title>
+<meta name="description" content="Why batch ASR won’t work for voice assistants, and how streaming models transcribe speech as you speak—in under 200ms.">
+
+
+  <meta name="author" content="Arun Baby">
+  
+  <meta property="article:author" content="Arun Baby">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Arun Baby">
+<meta property="og:title" content="Streaming ASR Architecture">
+<meta property="og:url" content="https://www.arunbaby.com/speech-tech/0001-streaming-asr/">
+
+
+  <meta property="og:description" content="Why batch ASR won’t work for voice assistants, and how streaming models transcribe speech as you speak—in under 200ms.">
+
+
+
+  <meta property="og:image" content="https://www.arunbaby.com/assets/images/profile-photo.png">
+
+
+
+  <meta name="twitter:site" content="@arunbaby0">
+  <meta name="twitter:title" content="Streaming ASR Architecture">
+  <meta name="twitter:description" content="Why batch ASR won’t work for voice assistants, and how streaming models transcribe speech as you speak—in under 200ms.">
+  <meta name="twitter:url" content="https://www.arunbaby.com/speech-tech/0001-streaming-asr/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+      <meta name="twitter:image" content="https://www.arunbaby.com/assets/images/profile-photo.png">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2025-10-13T14:55:52+05:30">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://www.arunbaby.com/speech-tech/0001-streaming-asr/">
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Arun Baby Feed">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+  
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@latest/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@latest/css/all.min.css"></noscript>
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single" dir="ltr">
+    <nav class="skip-links">
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+           
+          <span class="site-subtitle">Arun Baby</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a
+                href="/about/"
+                
+                
+              >About</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/dsa/"
+                
+                
+              >DSA</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/ml-system-design/"
+                
+                
+              >ML Systems</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/speech-tech/"
+                
+                
+              >Speech Tech</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/publications/"
+                
+                
+              >Publications</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/statuses/"
+                
+                
+              >Statuses</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/contact/"
+                
+                
+              >Contact</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <i class="fas fa-search"></i>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person" class="h-card">
+
+  
+    <div class="author__avatar">
+      <a href="https://www.arunbaby.com/">
+        <img src="/assets/images/profile-photo.png" alt="Arun Baby" itemprop="image" class="u-photo">
+      </a>
+    </div>
+  
+
+  <div class="author__content">
+    <h3 class="author__name p-name" itemprop="name">
+      <a class="u-url" rel="me" href="https://www.arunbaby.com/" itemprop="url">Arun Baby</a>
+    </h3>
+    
+      <div class="author__bio p-note" itemprop="description">
+        <p>Becoming <strong>Unlabelable</strong></p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name" class="p-locality">India</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="https://twitter.com/arunbaby0" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/arunbaby0" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+            <li><a href="https://www.linkedin.com/in/arunbaby0/" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span class="label">LinkedIn</span></a></li>
+          
+        
+          
+            <li><a href="https://scholar.google.co.in/citations?user=6fSYWhkAAAAJ" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fas fa-fw fa-graduation-cap" aria-hidden="true"></i><span class="label">Google Scholar</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer me">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Streaming ASR Architecture">
+    <meta itemprop="description" content="Why batch ASR won’t work for voice assistants, and how streaming models transcribe speech as you speak—in under 200ms.">
+    <meta itemprop="datePublished" content="2025-10-13T14:55:52+05:30">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">
+            <a href="https://www.arunbaby.com/speech-tech/0001-streaming-asr/" itemprop="url">Streaming ASR Architecture
+</a>
+          </h1>
+          
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
+              <ul class="toc__menu"><li><a href="#introduction">Introduction</a></li><li><a href="#problem-definition">Problem Definition</a><ul><li><a href="#functional-requirements">Functional Requirements</a></li><li><a href="#non-functional-requirements">Non-Functional Requirements</a></li><li><a href="#out-of-scope">Out of Scope</a></li></ul></li><li><a href="#streaming-vs-batch-asr-key-differences">Streaming vs Batch ASR: Key Differences</a><ul><li><a href="#batch-asr-eg-whisper">Batch ASR (e.g., Whisper)</a></li><li><a href="#streaming-asr">Streaming ASR</a></li></ul></li><li><a href="#architecture-overview">Architecture Overview</a></li><li><a href="#component-1-voice-activity-detection-vad">Component 1: Voice Activity Detection (VAD)</a><ul><li><a href="#why-vad-is-critical">Why VAD is Critical</a></li><li><a href="#vad-approaches">VAD Approaches</a></li><li><a href="#production-vad-pipeline">Production VAD Pipeline</a></li></ul></li><li><a href="#component-2-feature-extraction">Component 2: Feature Extraction</a><ul><li><a href="#log-mel-filterbank-features">Log Mel Filterbank Features</a></li><li><a href="#normalization">Normalization</a></li><li><a href="#specaugment-training-only">SpecAugment (Training Only)</a></li></ul></li><li><a href="#component-3-streaming-acoustic-models">Component 3: Streaming Acoustic Models</a><ul><li><a href="#rnn-transducer-rnn-t">RNN-Transducer (RNN-T)</a></li><li><a href="#conformer-encoder">Conformer Encoder</a></li><li><a href="#streaming-constraints">Streaming Constraints</a></li></ul></li><li><a href="#component-4-decoding-and-beam-search">Component 4: Decoding and Beam Search</a><ul><li><a href="#greedy-decoding-fast-suboptimal">Greedy Decoding (Fast, Suboptimal)</a></li><li><a href="#beam-search-better-accuracy">Beam Search (Better Accuracy)</a></li><li><a href="#language-model-fusion">Language Model Fusion</a></li></ul></li><li><a href="#latency-optimization">Latency Optimization</a><ul><li><a href="#target-breakdown">Target Breakdown</a></li><li><a href="#technique-1-model-quantization">Technique 1: Model Quantization</a></li><li><a href="#technique-2-knowledge-distillation">Technique 2: Knowledge Distillation</a></li><li><a href="#technique-3-pruning">Technique 3: Pruning</a></li><li><a href="#technique-4-caching">Technique 4: Caching</a></li></ul></li><li><a href="#scaling-to-millions-of-users">Scaling to Millions of Users</a><ul><li><a href="#throughput-analysis">Throughput Analysis</a></li><li><a href="#strategy-1-batching">Strategy 1: Batching</a></li><li><a href="#strategy-2-regional-deployment">Strategy 2: Regional Deployment</a></li><li><a href="#strategy-3-hybrid-cloud-edge">Strategy 3: Hybrid Cloud-Edge</a></li></ul></li><li><a href="#production-example-putting-it-all-together">Production Example: Putting It All Together</a></li><li><a href="#key-takeaways">Key Takeaways</a></li><li><a href="#further-reading">Further Reading</a></li><li><a href="#conclusion">Conclusion</a></li></ul>
+            </nav>
+          </aside>
+        
+        <p><strong>Why batch ASR won’t work for voice assistants, and how streaming models transcribe speech as you speak—in under 200ms.</strong></p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Every time you say “Hey Google” or ask Alexa a question, you’re interacting with a streaming Automatic Speech Recognition (ASR) system. Unlike traditional batch ASR systems that wait for you to finish speaking before transcribing, streaming ASR must:</p>
+
+<ul>
+  <li>Emit words <strong>as you speak</strong> (not after)</li>
+  <li>Maintain <strong>&lt; 200ms latency</strong> for first token</li>
+  <li>Handle <strong>millions of concurrent audio streams</strong></li>
+  <li>Work reliably in <strong>noisy environments</strong></li>
+  <li>Run on both <strong>cloud and edge devices</strong></li>
+  <li>Adapt to different <strong>accents and speaking styles</strong></li>
+</ul>
+
+<p>This is fundamentally different from batch models like OpenAI’s Whisper, which achieve amazing accuracy but require the entire utterance before processing. For interactive voice assistants, this delay is unacceptable—users expect immediate feedback.</p>
+
+<p><strong>What you’ll learn:</strong></p>
+<ul>
+  <li>Why streaming requires different model architectures</li>
+  <li>RNN-Transducer (RNN-T) and CTC for streaming</li>
+  <li>How to maintain state across audio chunks</li>
+  <li>Latency optimization techniques (quantization, pruning, caching)</li>
+  <li>Scaling to millions of concurrent streams</li>
+  <li>Cold start and speaker adaptation</li>
+  <li>Real production systems (Google, Amazon, Apple)</li>
+</ul>
+
+<hr />
+
+<h2 id="problem-definition">Problem Definition</h2>
+
+<p>Design a production streaming ASR system that transcribes speech in real-time for a voice assistant platform.</p>
+
+<h3 id="functional-requirements">Functional Requirements</h3>
+
+<ol>
+  <li><strong>Streaming Transcription</strong>
+    <ul>
+      <li>Output tokens incrementally as user speaks</li>
+      <li>No need to wait for end of utterance</li>
+      <li>Partial results updated continuously</li>
+    </ul>
+  </li>
+  <li><strong>Low Latency</strong>
+    <ul>
+      <li><strong>First token latency:</strong> &lt; 200ms (time from start of speech to first word)</li>
+      <li><strong>Per-token latency:</strong> &lt; 100ms (time between subsequent words)</li>
+      <li><strong>End-of-utterance latency:</strong> &lt; 500ms (finalized transcript)</li>
+    </ul>
+  </li>
+  <li><strong>No Future Context</strong>
+    <ul>
+      <li>Cannot “look ahead” into future audio (non-causal)</li>
+      <li>Limited right context window (e.g., 320ms)</li>
+      <li>Must work with incomplete information</li>
+    </ul>
+  </li>
+  <li><strong>State Management</strong>
+    <ul>
+      <li>Maintain conversational context across chunks</li>
+      <li>Remember acoustic and linguistic state</li>
+      <li>Handle variable-length inputs</li>
+    </ul>
+  </li>
+  <li><strong>Multi-Language Support</strong>
+    <ul>
+      <li>20+ languages</li>
+      <li>Automatic language detection</li>
+      <li>Code-switching (mixing languages)</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="non-functional-requirements">Non-Functional Requirements</h3>
+
+<ol>
+  <li><strong>Accuracy</strong>
+    <ul>
+      <li><strong>Clean speech:</strong> WER &lt; 5% (Word Error Rate)</li>
+      <li><strong>Noisy speech:</strong> WER &lt; 15%</li>
+      <li><strong>Accented speech:</strong> WER &lt; 10%</li>
+      <li><strong>Far-field:</strong> WER &lt; 20%</li>
+    </ul>
+  </li>
+  <li><strong>Throughput</strong>
+    <ul>
+      <li>10M concurrent audio streams globally</li>
+      <li>10k QPS per regional cluster</li>
+      <li>Auto-scaling based on load</li>
+    </ul>
+  </li>
+  <li><strong>Availability</strong>
+    <ul>
+      <li>99.99% uptime (&lt; 1 hour downtime/year)</li>
+      <li>Graceful degradation on failures</li>
+      <li>Multi-region failover</li>
+    </ul>
+  </li>
+  <li><strong>Cost Efficiency</strong>
+    <ul>
+      <li>&lt; $0.01 per minute of audio (cloud)</li>
+      <li>&lt; 100ms inference time on edge devices</li>
+      <li>GPU/CPU optimization</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="out-of-scope">Out of Scope</h3>
+
+<ul>
+  <li>Audio storage and archival</li>
+  <li>Speaker diarization (who is speaking)</li>
+  <li>Speech translation</li>
+  <li>Emotion/sentiment detection</li>
+  <li>Voice biometric authentication</li>
+</ul>
+
+<hr />
+
+<h2 id="streaming-vs-batch-asr-key-differences">Streaming vs Batch ASR: Key Differences</h2>
+
+<h3 id="batch-asr-eg-whisper">Batch ASR (e.g., Whisper)</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">batch_asr</span><span class="p">(</span><span class="n">audio</span><span class="p">):</span>
+    <span class="c1"># Wait for complete audio
+</span>    <span class="n">complete_audio</span> <span class="o">=</span> <span class="nf">wait_for_end_of_speech</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+    
+    <span class="c1"># Process entire sequence at once
+</span>    <span class="c1"># Can use bidirectional models, look at future context
+</span>    <span class="n">features</span> <span class="o">=</span> <span class="nf">extract_features</span><span class="p">(</span><span class="n">complete_audio</span><span class="p">)</span>
+    <span class="n">transcript</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>  <span class="c1"># Has access to all frames
+</span>    
+    <span class="k">return</span> <span class="n">transcript</span>
+
+<span class="c1"># Latency: duration + processing time
+# For 10-second audio: 10 seconds + 2 seconds = 12 seconds
+</span></code></pre></div></div>
+
+<p><strong>Pros:</strong></p>
+<ul>
+  <li>Can use future context → better accuracy</li>
+  <li>Simpler architecture (no state management)</li>
+  <li>Can use attention over full sequence</li>
+</ul>
+
+<p><strong>Cons:</strong></p>
+<ul>
+  <li>High latency (must wait for end)</li>
+  <li>Poor user experience for voice assistants</li>
+  <li>Cannot provide real-time feedback</li>
+</ul>
+
+<h3 id="streaming-asr">Streaming ASR</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">streaming_asr</span><span class="p">(</span><span class="n">audio_stream</span><span class="p">):</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="nf">initialize_state</span><span class="p">()</span>
+    
+    <span class="k">for</span> <span class="n">audio_chunk</span> <span class="ow">in</span> <span class="n">audio_stream</span><span class="p">:</span>  <span class="c1"># Process 100ms chunks
+</span>        <span class="c1"># Can only look at past + limited future
+</span>        <span class="n">features</span> <span class="o">=</span> <span class="nf">extract_features</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
+        <span class="n">tokens</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>  <span class="c1"># Causal processing
+</span>        
+        <span class="k">if</span> <span class="n">tokens</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">tokens</span>  <span class="c1"># Emit immediately
+</span>    
+    <span class="c1"># Finalize
+</span>    <span class="n">final_tokens</span> <span class="o">=</span> <span class="nf">finalize</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">final_tokens</span>
+
+<span class="c1"># Latency: ~200ms for first token, ~100ms per subsequent token
+# For 10-second audio: 200ms + (tokens * 100ms) ≈ 2-3 seconds total
+</span></code></pre></div></div>
+
+<p><strong>Pros:</strong></p>
+<ul>
+  <li>Low latency (immediate feedback)</li>
+  <li>Better user experience</li>
+  <li>Can interrupt/correct in real-time</li>
+</ul>
+
+<p><strong>Cons:</strong></p>
+<ul>
+  <li>More complex (state management)</li>
+  <li>Slightly lower accuracy (no full future context)</li>
+  <li>Harder to train</li>
+</ul>
+
+<hr />
+
+<h2 id="architecture-overview">Architecture Overview</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Audio Input (100ms chunks @ 16kHz)
+    ↓
+Voice Activity Detection (VAD)
+    ├─ Speech detected → Continue
+    └─ Silence detected → Skip processing
+    ↓
+Feature Extraction
+    ├─ Mel Filterbank (80 dims)
+    ├─ Normalization
+    └─ Delta features (optional)
+    ↓
+Streaming Acoustic Model
+    ├─ Encoder (Conformer/RNN)
+    ├─ Prediction Network
+    └─ Joint Network
+    ↓
+Decoder (Beam Search)
+    ├─ Language Model Fusion
+    ├─ Beam Management
+    └─ Token Emission
+    ↓
+Post-Processing
+    ├─ Punctuation
+    ├─ Capitalization
+    └─ Inverse Text Normalization
+    ↓
+Transcription Output
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="component-1-voice-activity-detection-vad">Component 1: Voice Activity Detection (VAD)</h2>
+
+<h3 id="why-vad-is-critical">Why VAD is Critical</h3>
+
+<p><strong>Problem:</strong> Processing silence wastes 50-70% of compute.</p>
+
+<p><strong>Solution:</strong> Filter out non-speech audio before expensive ASR processing.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Without VAD
+</span><span class="n">total_audio</span> <span class="o">=</span> <span class="mi">10</span> <span class="n">seconds</span>
+<span class="n">speech</span> <span class="o">=</span> <span class="mi">3</span> <span class="nf">seconds </span><span class="p">(</span><span class="mi">30</span><span class="o">%</span><span class="p">)</span>
+<span class="n">silence</span> <span class="o">=</span> <span class="mi">7</span> <span class="nf">seconds </span><span class="p">(</span><span class="mi">70</span><span class="o">%</span> <span class="n">wasted</span> <span class="n">compute</span><span class="p">)</span>
+
+<span class="c1"># With VAD
+</span><span class="n">processed_audio</span> <span class="o">=</span> <span class="mi">3</span> <span class="nf">seconds </span><span class="p">(</span><span class="n">save</span> <span class="mi">70</span><span class="o">%</span> <span class="n">compute</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="vad-approaches">VAD Approaches</h3>
+
+<p><strong>Option 1: Energy-Based (Simple)</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">energy_vad</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Classify based on audio energy
+    </span><span class="sh">"""</span>
+    <span class="n">energy</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">audio_chunk</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">energy</span> <span class="o">&gt;</span> <span class="n">threshold</span>
+</code></pre></div></div>
+
+<p><strong>Pros:</strong> Fast (&lt; 1ms), no model needed<br />
+<strong>Cons:</strong> Fails in noisy environments, no semantic understanding</p>
+
+<p><strong>Option 2: ML-Based (Robust)</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SileroVAD</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Using Silero VAD (open-source, production-ready)
+    Model size: 1MB, Latency: ~2ms
+    </span><span class="sh">"""</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">utils</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">hub</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span>
+            <span class="n">repo_or_dir</span><span class="o">=</span><span class="sh">'</span><span class="s">snakers4/silero-vad</span><span class="sh">'</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="sh">'</span><span class="s">silero_vad</span><span class="sh">'</span>
+        <span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">get_speech_timestamps</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">utils</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">is_speech</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="o">=</span><span class="mi">16000</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Args:
+            audio: torch.Tensor, shape (samples,)
+            sampling_rate: int
+        
+        Returns:
+            bool: True if speech detected
+        </span><span class="sh">"""</span>
+        <span class="n">speech_timestamps</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">get_speech_timestamps</span><span class="p">(</span>
+            <span class="n">audio</span><span class="p">,</span> 
+            <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">sampling_rate</span><span class="o">=</span><span class="n">sampling_rate</span><span class="p">,</span>
+            <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span>
+        <span class="p">)</span>
+        
+        <span class="k">return</span> <span class="nf">len</span><span class="p">(</span><span class="n">speech_timestamps</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+<span class="c1"># Usage
+</span><span class="n">vad</span> <span class="o">=</span> <span class="nc">SileroVAD</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">audio_chunk</span> <span class="ow">in</span> <span class="n">audio_stream</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">vad</span><span class="p">.</span><span class="nf">is_speech</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">):</span>
+        <span class="c1"># Process with ASR
+</span>        <span class="nf">process_asr</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Skip, save compute
+</span>        <span class="k">continue</span>
+</code></pre></div></div>
+
+<p><strong>Pros:</strong> Robust to noise, semantic understanding<br />
+<strong>Cons:</strong> Adds 2ms latency, requires model</p>
+
+<h3 id="production-vad-pipeline">Production VAD Pipeline</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ProductionVAD</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="nc">SileroVAD</span><span class="p">()</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">speech_buffer</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">silence_frames</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">max_silence_frames</span> <span class="o">=</span> <span class="mi">30</span>  <span class="c1"># 300ms of silence
+</span>    
+    <span class="k">def</span> <span class="nf">process_chunk</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_chunk</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Buffer management with hysteresis
+        </span><span class="sh">"""</span>
+        <span class="n">is_speech</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">is_speech</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">is_speech</span><span class="p">:</span>
+            <span class="c1"># Reset silence counter
+</span>            <span class="n">self</span><span class="p">.</span><span class="n">silence_frames</span> <span class="o">=</span> <span class="mi">0</span>
+            
+            <span class="c1"># Add to buffer
+</span>            <span class="n">self</span><span class="p">.</span><span class="n">speech_buffer</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
+            
+            <span class="k">return</span> <span class="sh">'</span><span class="s">speech</span><span class="sh">'</span><span class="p">,</span> <span class="n">audio_chunk</span>
+        
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Increment silence counter
+</span>            <span class="n">self</span><span class="p">.</span><span class="n">silence_frames</span> <span class="o">+=</span> <span class="mi">1</span>
+            
+            <span class="c1"># Keep buffering for a bit (hysteresis)
+</span>            <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">silence_frames</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">max_silence_frames</span><span class="p">:</span>
+                <span class="n">self</span><span class="p">.</span><span class="n">speech_buffer</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
+                <span class="k">return</span> <span class="sh">'</span><span class="s">speech</span><span class="sh">'</span><span class="p">,</span> <span class="n">audio_chunk</span>
+            
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># End of utterance
+</span>                <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">speech_buffer</span><span class="p">:</span>
+                    <span class="n">complete_utterance</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">concatenate</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">speech_buffer</span><span class="p">)</span>
+                    <span class="n">self</span><span class="p">.</span><span class="n">speech_buffer</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">return</span> <span class="sh">'</span><span class="s">end_of_utterance</span><span class="sh">'</span><span class="p">,</span> <span class="n">complete_utterance</span>
+                
+                <span class="k">return</span> <span class="sh">'</span><span class="s">silence</span><span class="sh">'</span><span class="p">,</span> <span class="bp">None</span>
+</code></pre></div></div>
+
+<p><strong>Key design decisions:</strong></p>
+<ul>
+  <li><strong>Hysteresis:</strong> Continue processing for 300ms after silence to avoid cutting off speech</li>
+  <li><strong>Buffering:</strong> Accumulate audio for end-of-utterance finalization</li>
+  <li><strong>State management:</strong> Track silence duration to detect utterance boundaries</li>
+</ul>
+
+<hr />
+
+<h2 id="component-2-feature-extraction">Component 2: Feature Extraction</h2>
+
+<h3 id="log-mel-filterbank-features">Log Mel Filterbank Features</h3>
+
+<p><strong>Why Mel scale?</strong> Human perception of pitch is logarithmic, not linear.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">extract_mel_features</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">n_mels</span><span class="o">=</span><span class="mi">80</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Extract 80-dimensional log mel filterbank features
+    
+    Args:
+        audio: np.array, shape (samples,)
+        sr: sampling rate (Hz)
+        n_mels: number of mel bands
+    
+    Returns:
+        features: np.array, shape (time, n_mels)
+    </span><span class="sh">"""</span>
+    <span class="c1"># Frame audio: 25ms window, 10ms stride
+</span>    <span class="n">frame_length</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="mf">0.025</span> <span class="o">*</span> <span class="n">sr</span><span class="p">)</span>  <span class="c1"># 400 samples
+</span>    <span class="n">hop_length</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="mf">0.010</span> <span class="o">*</span> <span class="n">sr</span><span class="p">)</span>     <span class="c1"># 160 samples
+</span>    
+    <span class="c1"># Short-Time Fourier Transform
+</span>    <span class="n">stft</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">stft</span><span class="p">(</span>
+        <span class="n">audio</span><span class="p">,</span>
+        <span class="n">n_fft</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+        <span class="n">hop_length</span><span class="o">=</span><span class="n">hop_length</span><span class="p">,</span>
+        <span class="n">win_length</span><span class="o">=</span><span class="n">frame_length</span><span class="p">,</span>
+        <span class="n">window</span><span class="o">=</span><span class="sh">'</span><span class="s">hann</span><span class="sh">'</span>
+    <span class="p">)</span>
+    
+    <span class="c1"># Magnitude spectrum
+</span>    <span class="n">magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">abs</span><span class="p">(</span><span class="n">stft</span><span class="p">)</span>
+    
+    <span class="c1"># Mel filterbank
+</span>    <span class="n">mel_basis</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="n">filters</span><span class="p">.</span><span class="nf">mel</span><span class="p">(</span>
+        <span class="n">sr</span><span class="o">=</span><span class="n">sr</span><span class="p">,</span>
+        <span class="n">n_fft</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+        <span class="n">n_mels</span><span class="o">=</span><span class="n">n_mels</span><span class="p">,</span>
+        <span class="n">fmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">fmax</span><span class="o">=</span><span class="n">sr</span><span class="o">/</span><span class="mi">2</span>
+    <span class="p">)</span>
+    
+    <span class="c1"># Apply mel filters
+</span>    <span class="n">mel_spec</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">dot</span><span class="p">(</span><span class="n">mel_basis</span><span class="p">,</span> <span class="n">magnitude</span><span class="p">)</span>
+    
+    <span class="c1"># Log compression (humans perceive loudness logarithmically)
+</span>    <span class="n">log_mel</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="n">mel_spec</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">)</span>
+    
+    <span class="c1"># Transpose to (time, frequency)
+</span>    <span class="k">return</span> <span class="n">log_mel</span><span class="p">.</span><span class="n">T</span>
+</code></pre></div></div>
+
+<p><strong>Output:</strong> 100 frames per second (one every 10ms), each with 80 dimensions</p>
+
+<h3 id="normalization">Normalization</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">normalize_features</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Normalize to zero mean, unit variance
+    
+    Can use global statistics or per-utterance
+    </span><span class="sh">"""</span>
+    <span class="k">if</span> <span class="n">mean</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">std</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">std</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    
+    <span class="n">normalized</span> <span class="o">=</span> <span class="p">(</span><span class="n">features</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">std</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">normalized</span>
+</code></pre></div></div>
+
+<p><strong>Global vs Per-Utterance:</strong></p>
+<ul>
+  <li><strong>Global normalization:</strong> Use statistics from training data (faster, more stable)</li>
+  <li><strong>Per-utterance normalization:</strong> Adapt to current speaker/environment (better for diverse conditions)</li>
+</ul>
+
+<h3 id="specaugment-training-only">SpecAugment (Training Only)</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">spec_augment</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">time_mask_max</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">freq_mask_max</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Data augmentation for training
+    Randomly mask time and frequency bands
+    </span><span class="sh">"""</span>
+    <span class="c1"># Time masking
+</span>    <span class="n">t_mask_len</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">time_mask_max</span><span class="p">)</span>
+    <span class="n">t_mask_start</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">features</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">t_mask_len</span><span class="p">)</span>
+    <span class="n">features</span><span class="p">[</span><span class="n">t_mask_start</span><span class="p">:</span><span class="n">t_mask_start</span><span class="o">+</span><span class="n">t_mask_len</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="c1"># Frequency masking
+</span>    <span class="n">f_mask_len</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">freq_mask_max</span><span class="p">)</span>
+    <span class="n">f_mask_start</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">features</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">f_mask_len</span><span class="p">)</span>
+    <span class="n">features</span><span class="p">[:,</span> <span class="n">f_mask_start</span><span class="p">:</span><span class="n">f_mask_start</span><span class="o">+</span><span class="n">f_mask_len</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="k">return</span> <span class="n">features</span>
+</code></pre></div></div>
+
+<p><strong>Impact:</strong> Improves robustness by 10-20% relative WER reduction</p>
+
+<hr />
+
+<h2 id="component-3-streaming-acoustic-models">Component 3: Streaming Acoustic Models</h2>
+
+<h3 id="rnn-transducer-rnn-t">RNN-Transducer (RNN-T)</h3>
+
+<p><strong>Why RNN-T for streaming?</strong></p>
+<ol>
+  <li><strong>Naturally causal:</strong> Doesn’t need future frames</li>
+  <li><strong>Emits tokens dynamically:</strong> Can output 0, 1, or multiple tokens per frame</li>
+  <li><strong>No external alignment:</strong> Learns alignment jointly with transcription</li>
+</ol>
+
+<p><strong>Architecture:</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>     Encoder (processes audio)
+           ↓
+     h_enc[t] (acoustic embedding)
+           ↓
+     Prediction Network (processes previous tokens)
+           ↓
+     h_pred[u] (linguistic embedding)
+           ↓
+     Joint Network (combines both)
+           ↓
+     Softmax over vocabulary + blank
+</code></pre></div></div>
+
+<p><strong>Implementation:</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
+<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+
+<span class="k">class</span> <span class="nc">StreamingRNNT</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">vocab_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">enc_dim</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">pred_dim</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">joint_dim</span><span class="o">=</span><span class="mi">512</span><span class="p">):</span>
+        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
+        
+        <span class="c1"># Encoder: audio features → acoustic representation
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="nc">ConformerEncoder</span><span class="p">(</span>
+            <span class="n">input_dim</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+            <span class="n">output_dim</span><span class="o">=</span><span class="n">enc_dim</span><span class="p">,</span>
+            <span class="n">num_layers</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span>
+            <span class="n">num_heads</span><span class="o">=</span><span class="mi">8</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Prediction network: previous tokens → linguistic representation
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">prediction_net</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTM</span><span class="p">(</span>
+            <span class="n">input_size</span><span class="o">=</span><span class="n">vocab_size</span><span class="p">,</span>
+            <span class="n">hidden_size</span><span class="o">=</span><span class="n">pred_dim</span><span class="p">,</span>
+            <span class="n">num_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Joint network: combine acoustic + linguistic
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">joint_net</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">enc_dim</span> <span class="o">+</span> <span class="n">pred_dim</span><span class="p">,</span> <span class="n">joint_dim</span><span class="p">),</span>
+            <span class="n">nn</span><span class="p">.</span><span class="nc">Tanh</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">joint_dim</span><span class="p">,</span> <span class="n">vocab_size</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># +1 for blank token
+</span>        <span class="p">)</span>
+        
+        <span class="n">self</span><span class="p">.</span><span class="n">blank_idx</span> <span class="o">=</span> <span class="n">vocab_size</span>
+    
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_features</span><span class="p">,</span> <span class="n">prev_tokens</span><span class="p">,</span> <span class="n">encoder_state</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">predictor_state</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Args:
+            audio_features: (batch, time, 80)
+            prev_tokens: (batch, seq_len)
+            encoder_state: hidden state from previous chunk
+            predictor_state: (h, c) from previous tokens
+        
+        Returns:
+            logits: (batch, time, seq_len, vocab_size+1)
+            new_encoder_state: updated encoder state
+            new_predictor_state: updated predictor state
+        </span><span class="sh">"""</span>
+        <span class="c1"># Encode audio
+</span>        <span class="n">h_enc</span><span class="p">,</span> <span class="n">new_encoder_state</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span><span class="n">audio_features</span><span class="p">,</span> <span class="n">encoder_state</span><span class="p">)</span>
+        <span class="c1"># h_enc: (batch, time, enc_dim)
+</span>        
+        <span class="c1"># Encode previous tokens
+</span>        <span class="c1"># Convert tokens to one-hot
+</span>        <span class="n">prev_tokens_onehot</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">one_hot</span><span class="p">(</span><span class="n">prev_tokens</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">prediction_net</span><span class="p">.</span><span class="n">input_size</span><span class="p">)</span>
+        <span class="n">h_pred</span><span class="p">,</span> <span class="n">new_predictor_state</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">prediction_net</span><span class="p">(</span>
+            <span class="n">prev_tokens_onehot</span><span class="p">.</span><span class="nf">float</span><span class="p">(),</span>
+            <span class="n">predictor_state</span>
+        <span class="p">)</span>
+        <span class="c1"># h_pred: (batch, seq_len, pred_dim)
+</span>        
+        <span class="c1"># Joint network: combine all pairs of (time, token_history)
+</span>        <span class="c1"># Expand dimensions for broadcasting
+</span>        <span class="n">h_enc_exp</span> <span class="o">=</span> <span class="n">h_enc</span><span class="p">.</span><span class="nf">unsqueeze</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># (batch, time, 1, enc_dim)
+</span>        <span class="n">h_pred_exp</span> <span class="o">=</span> <span class="n">h_pred</span><span class="p">.</span><span class="nf">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (batch, 1, seq_len, pred_dim)
+</span>        
+        <span class="c1"># Concatenate
+</span>        <span class="n">h_joint</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span>
+            <span class="n">h_enc_exp</span><span class="p">.</span><span class="nf">expand</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">h_pred</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">h_pred_exp</span><span class="p">.</span><span class="nf">expand</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">h_enc</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># h_joint: (batch, time, seq_len, enc_dim+pred_dim)
+</span>        
+        <span class="c1"># Project to vocabulary
+</span>        <span class="n">logits</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">joint_net</span><span class="p">(</span><span class="n">h_joint</span><span class="p">)</span>
+        <span class="c1"># logits: (batch, time, seq_len, vocab_size+1)
+</span>        
+        <span class="k">return</span> <span class="n">logits</span><span class="p">,</span> <span class="n">new_encoder_state</span><span class="p">,</span> <span class="n">new_predictor_state</span>
+</code></pre></div></div>
+
+<h3 id="conformer-encoder">Conformer Encoder</h3>
+
+<p><strong>Why Conformer?</strong> Combines convolution (local patterns) + self-attention (long-range dependencies)</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ConformerEncoder</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">output_dim</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">num_layers</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">num_heads</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
+        
+        <span class="c1"># Subsampling: 4x downsampling to reduce sequence length
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">subsampling</span> <span class="o">=</span> <span class="nc">Conv2dSubsampling</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">,</span> <span class="n">factor</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        
+        <span class="c1"># Conformer blocks
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">conformer_blocks</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ModuleList</span><span class="p">([</span>
+            <span class="nc">ConformerBlock</span><span class="p">(</span><span class="n">output_dim</span><span class="p">,</span> <span class="n">num_heads</span><span class="p">)</span> 
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">num_layers</span><span class="p">)</span>
+        <span class="p">])</span>
+    
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># x: (batch, time, input_dim)
+</span>        
+        <span class="c1"># Subsampling
+</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">subsampling</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="c1"># x: (batch, time//4, output_dim)
+</span>        
+        <span class="c1"># Conformer blocks
+</span>        <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">conformer_blocks</span><span class="p">:</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="nf">block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">state</span>
+
+<span class="k">class</span> <span class="nc">ConformerBlock</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">num_heads</span><span class="p">):</span>
+        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
+        
+        <span class="c1"># Feed-forward module 1
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">ff1</span> <span class="o">=</span> <span class="nc">FeedForwardModule</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        
+        <span class="c1"># Multi-head self-attention
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">attention</span> <span class="o">=</span> <span class="nc">MultiHeadSelfAttention</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">num_heads</span><span class="p">)</span>
+        
+        <span class="c1"># Convolution module
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">conv</span> <span class="o">=</span> <span class="nc">ConvolutionModule</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">31</span><span class="p">)</span>
+        
+        <span class="c1"># Feed-forward module 2
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">ff2</span> <span class="o">=</span> <span class="nc">FeedForwardModule</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        
+        <span class="c1"># Layer norms
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">norm_ff1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LayerNorm</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">norm_att</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LayerNorm</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">norm_conv</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LayerNorm</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">norm_ff2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LayerNorm</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">norm_out</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LayerNorm</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># Feed-forward 1 (half-step residual)
+</span>        <span class="n">residual</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">norm_ff1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="nf">ff1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        
+        <span class="c1"># Self-attention
+</span>        <span class="n">residual</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">norm_att</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">attention</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">+</span> <span class="n">x</span>
+        
+        <span class="c1"># Convolution
+</span>        <span class="n">residual</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">norm_conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">+</span> <span class="n">x</span>
+        
+        <span class="c1"># Feed-forward 2 (half-step residual)
+</span>        <span class="n">residual</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">norm_ff2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="nf">ff2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        
+        <span class="c1"># Final norm
+</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">norm_out</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">state</span>
+</code></pre></div></div>
+
+<p><strong>Key features:</strong></p>
+<ul>
+  <li><strong>Macaron-style:</strong> Feed-forward at both beginning and end</li>
+  <li><strong>Depthwise convolution:</strong> Captures local patterns efficiently</li>
+  <li><strong>Relative positional encoding:</strong> Better for variable-length sequences</li>
+</ul>
+
+<h3 id="streaming-constraints">Streaming Constraints</h3>
+
+<p><strong>Problem:</strong> Self-attention in Conformer uses entire sequence → not truly streaming</p>
+
+<p><strong>Solution:</strong> Limited lookahead window</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">StreamingAttention</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">num_heads</span><span class="p">,</span> <span class="n">left_context</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">right_context</span><span class="o">=</span><span class="mi">32</span><span class="p">):</span>
+        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">attention</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">MultiheadAttention</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">num_heads</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">left_context</span> <span class="o">=</span> <span class="n">left_context</span>   <span class="c1"># Look at past 10 seconds
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">right_context</span> <span class="o">=</span> <span class="n">right_context</span>  <span class="c1"># Look ahead 320ms
+</span>    
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># x: (batch, time, dim)
+</span>        
+        <span class="k">if</span> <span class="n">cache</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c1"># Concatenate with cached past frames
+</span>            <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span><span class="n">cache</span><span class="p">,</span> <span class="n">x</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        
+        <span class="c1"># Apply attention with limited context
+</span>        <span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">shape</span>
+        
+        <span class="c1"># Create attention mask: can attend to left context + right context
+</span>        <span class="n">mask</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">create_streaming_mask</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">right_context</span><span class="p">)</span>
+        
+        <span class="c1"># Attention
+</span>        <span class="n">x_att</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">attention</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">attn_mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
+        
+        <span class="c1"># Cache for next chunk
+</span>        <span class="n">new_cache</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="o">-</span><span class="n">self</span><span class="p">.</span><span class="n">left_context</span><span class="p">:,</span> <span class="p">:]</span>
+        
+        <span class="c1"># Return only new frames (not cached ones)
+</span>        <span class="k">if</span> <span class="n">cache</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">x_att</span> <span class="o">=</span> <span class="n">x_att</span><span class="p">[:,</span> <span class="n">cache</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">1</span><span class="p">):,</span> <span class="p">:]</span>
+        
+        <span class="k">return</span> <span class="n">x_att</span><span class="p">,</span> <span class="n">new_cache</span>
+    
+    <span class="k">def</span> <span class="nf">create_streaming_mask</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">right_context</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Create mask where each position can attend to:
+        - All past positions
+        - Up to right_context future positions
+        </span><span class="sh">"""</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">triu</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">ones</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">),</span> <span class="n">diagonal</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">mask</span><span class="p">[:,</span> <span class="p">:</span><span class="n">right_context</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Allow right context
+</span>        <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="p">.</span><span class="nf">bool</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">mask</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="component-4-decoding-and-beam-search">Component 4: Decoding and Beam Search</h2>
+
+<h3 id="greedy-decoding-fast-suboptimal">Greedy Decoding (Fast, Suboptimal)</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">greedy_decode</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">audio_features</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Always pick highest-probability token
+    Fast but misses better hypotheses
+    </span><span class="sh">"""</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="bp">None</span>
+    
+    <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">audio_features</span><span class="p">:</span>
+        <span class="n">logits</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="n">best_token</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">best_token</span> <span class="o">!=</span> <span class="n">BLANK</span><span class="p">:</span>
+            <span class="n">tokens</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">best_token</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">tokens</span>
+</code></pre></div></div>
+
+<p><strong>Pros:</strong> O(T) time, minimal memory<br />
+<strong>Cons:</strong> Can’t recover from mistakes, 10-20% worse WER</p>
+
+<h3 id="beam-search-better-accuracy">Beam Search (Better Accuracy)</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">BeamSearchDecoder</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">beam_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">blank_idx</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">beam_size</span> <span class="o">=</span> <span class="n">beam_size</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">blank_idx</span> <span class="o">=</span> <span class="n">blank_idx</span>
+    
+    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">audio_features</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Maintain top-k hypotheses at each time step
+        </span><span class="sh">"""</span>
+        <span class="c1"># Initial beam: empty hypothesis
+</span>        <span class="n">beams</span> <span class="o">=</span> <span class="p">[</span><span class="nc">Hypothesis</span><span class="p">(</span><span class="n">tokens</span><span class="o">=</span><span class="p">[],</span> <span class="n">score</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">)]</span>
+        
+        <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">audio_features</span><span class="p">:</span>
+            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
+            
+            <span class="k">for</span> <span class="n">beam</span> <span class="ow">in</span> <span class="n">beams</span><span class="p">:</span>
+                <span class="c1"># Get logits for this beam
+</span>                <span class="n">logits</span><span class="p">,</span> <span class="n">new_state</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">beam</span><span class="p">.</span><span class="n">tokens</span><span class="p">,</span> <span class="n">beam</span><span class="p">.</span><span class="n">state</span><span class="p">)</span>
+                <span class="n">log_probs</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">log_softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+                
+                <span class="c1"># Extend with each possible token
+</span>                <span class="k">for</span> <span class="n">token_idx</span><span class="p">,</span> <span class="n">log_prob</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">log_probs</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">token_idx</span> <span class="o">==</span> <span class="n">self</span><span class="p">.</span><span class="n">blank_idx</span><span class="p">:</span>
+                        <span class="c1"># Blank: don't emit token, just update score
+</span>                        <span class="n">candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">Hypothesis</span><span class="p">(</span>
+                            <span class="n">tokens</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">tokens</span><span class="p">,</span>
+                            <span class="n">score</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">score</span> <span class="o">+</span> <span class="n">log_prob</span><span class="p">,</span>
+                            <span class="n">state</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">state</span>
+                        <span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># Non-blank: emit token
+</span>                        <span class="n">candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">Hypothesis</span><span class="p">(</span>
+                            <span class="n">tokens</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">tokens</span> <span class="o">+</span> <span class="p">[</span><span class="n">token_idx</span><span class="p">],</span>
+                            <span class="n">score</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">score</span> <span class="o">+</span> <span class="n">log_prob</span><span class="p">,</span>
+                            <span class="n">state</span><span class="o">=</span><span class="n">new_state</span>
+                        <span class="p">))</span>
+            
+            <span class="c1"># Prune to top beam_size hypotheses
+</span>            <span class="n">candidates</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">h</span><span class="p">:</span> <span class="n">h</span><span class="p">.</span><span class="n">score</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">beams</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[:</span><span class="n">self</span><span class="p">.</span><span class="n">beam_size</span><span class="p">]</span>
+        
+        <span class="c1"># Return best hypothesis
+</span>        <span class="k">return</span> <span class="n">beams</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">tokens</span>
+
+<span class="k">class</span> <span class="nc">Hypothesis</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">score</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">tokens</span> <span class="o">=</span> <span class="n">tokens</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">score</span> <span class="o">=</span> <span class="n">score</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">state</span>
+</code></pre></div></div>
+
+<p><strong>Complexity:</strong> O(T × B × V) where T=time, B=beam size, V=vocabulary size<br />
+<strong>Typical parameters:</strong> B=10, V=1000 → manageable</p>
+
+<h3 id="language-model-fusion">Language Model Fusion</h3>
+
+<p><strong>Problem:</strong> Acoustic model doesn’t know linguistic patterns (grammar, common phrases)</p>
+
+<p><strong>Solution:</strong> Integrate language model (LM) scores</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">beam_search_with_lm</span><span class="p">(</span><span class="n">acoustic_model</span><span class="p">,</span> <span class="n">lm</span><span class="p">,</span> <span class="n">audio_features</span><span class="p">,</span> <span class="n">lm_weight</span><span class="o">=</span><span class="mf">0.3</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Combine acoustic model + language model scores
+    </span><span class="sh">"""</span>
+    <span class="n">beams</span> <span class="o">=</span> <span class="p">[</span><span class="nc">Hypothesis</span><span class="p">(</span><span class="n">tokens</span><span class="o">=</span><span class="p">[],</span> <span class="n">score</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">)]</span>
+    
+    <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">audio_features</span><span class="p">:</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">beam</span> <span class="ow">in</span> <span class="n">beams</span><span class="p">:</span>
+            <span class="n">logits</span><span class="p">,</span> <span class="n">new_state</span> <span class="o">=</span> <span class="nf">acoustic_model</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">beam</span><span class="p">.</span><span class="n">tokens</span><span class="p">,</span> <span class="n">beam</span><span class="p">.</span><span class="n">state</span><span class="p">)</span>
+            <span class="n">acoustic_log_probs</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">log_softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+            
+            <span class="k">for</span> <span class="n">token_idx</span><span class="p">,</span> <span class="n">acoustic_log_prob</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">acoustic_log_probs</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">token_idx</span> <span class="o">==</span> <span class="n">BLANK</span><span class="p">:</span>
+                    <span class="c1"># Blank token
+</span>                    <span class="n">combined_score</span> <span class="o">=</span> <span class="n">beam</span><span class="p">.</span><span class="n">score</span> <span class="o">+</span> <span class="n">acoustic_log_prob</span>
+                    <span class="n">candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">Hypothesis</span><span class="p">(</span>
+                        <span class="n">tokens</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">tokens</span><span class="p">,</span>
+                        <span class="n">score</span><span class="o">=</span><span class="n">combined_score</span><span class="p">,</span>
+                        <span class="n">state</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">state</span>
+                    <span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Get LM score for this token
+</span>                    <span class="n">lm_log_prob</span> <span class="o">=</span> <span class="n">lm</span><span class="p">.</span><span class="nf">score</span><span class="p">(</span><span class="n">beam</span><span class="p">.</span><span class="n">tokens</span> <span class="o">+</span> <span class="p">[</span><span class="n">token_idx</span><span class="p">])</span>
+                    
+                    <span class="c1"># Combine scores
+</span>                    <span class="n">combined_score</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">beam</span><span class="p">.</span><span class="n">score</span> <span class="o">+</span>
+                        <span class="n">acoustic_log_prob</span> <span class="o">+</span>
+                        <span class="n">lm_weight</span> <span class="o">*</span> <span class="n">lm_log_prob</span>
+                    <span class="p">)</span>
+                    
+                    <span class="n">candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">Hypothesis</span><span class="p">(</span>
+                        <span class="n">tokens</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">tokens</span> <span class="o">+</span> <span class="p">[</span><span class="n">token_idx</span><span class="p">],</span>
+                        <span class="n">score</span><span class="o">=</span><span class="n">combined_score</span><span class="p">,</span>
+                        <span class="n">state</span><span class="o">=</span><span class="n">new_state</span>
+                    <span class="p">))</span>
+            
+        <span class="n">candidates</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">h</span><span class="p">:</span> <span class="n">h</span><span class="p">.</span><span class="n">score</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">beams</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[:</span><span class="n">beam_size</span><span class="p">]</span>
+    
+    <span class="k">return</span> <span class="n">beams</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">tokens</span>
+</code></pre></div></div>
+
+<p><strong>LM types:</strong></p>
+<ul>
+  <li><strong>N-gram LM (KenLM):</strong> Fast (&lt; 1ms), large memory (GBs)</li>
+  <li><strong>Neural LM (LSTM/Transformer):</strong> Slower (5-20ms), better quality</li>
+</ul>
+
+<p><strong>Production choice:</strong> N-gram for first-pass, neural LM for rescoring top hypotheses</p>
+
+<hr />
+
+<h2 id="latency-optimization">Latency Optimization</h2>
+
+<h3 id="target-breakdown">Target Breakdown</h3>
+
+<p><strong>Total latency budget: 200ms</strong></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>VAD:                    2ms
+Feature extraction:     5ms
+Encoder forward:       80ms  ← Bottleneck
+Decoder (beam search): 10ms
+Post-processing:        3ms
+Network overhead:      20ms
+Total:               120ms ✓ (60ms margin)
+</code></pre></div></div>
+
+<h3 id="technique-1-model-quantization">Technique 1: Model Quantization</h3>
+
+<p><strong>INT8 Quantization:</strong> Convert float32 weights to int8</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch.quantization</span> <span class="k">as</span> <span class="n">quantization</span>
+
+<span class="c1"># Post-training quantization (easiest)
+</span><span class="n">model_fp32</span> <span class="o">=</span> <span class="nf">load_model</span><span class="p">()</span>
+<span class="n">model_fp32</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
+
+<span class="c1"># Fuse operations (Conv+BN+ReLU → single op)
+</span><span class="n">model_fused</span> <span class="o">=</span> <span class="n">quantization</span><span class="p">.</span><span class="nf">fuse_modules</span><span class="p">(</span>
+    <span class="n">model_fp32</span><span class="p">,</span>
+    <span class="p">[[</span><span class="sh">'</span><span class="s">conv</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">bn</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">relu</span><span class="sh">'</span><span class="p">]]</span>
+<span class="p">)</span>
+
+<span class="c1"># Quantize
+</span><span class="n">model_int8</span> <span class="o">=</span> <span class="n">quantization</span><span class="p">.</span><span class="nf">quantize_dynamic</span><span class="p">(</span>
+    <span class="n">model_fused</span><span class="p">,</span>
+    <span class="p">{</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">,</span> <span class="n">nn</span><span class="p">.</span><span class="n">LSTM</span><span class="p">,</span> <span class="n">nn</span><span class="p">.</span><span class="n">Conv2d</span><span class="p">},</span>
+    <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">qint8</span>
+<span class="p">)</span>
+
+<span class="c1"># Save
+</span><span class="n">torch</span><span class="p">.</span><span class="nf">save</span><span class="p">(</span><span class="n">model_int8</span><span class="p">.</span><span class="nf">state_dict</span><span class="p">(),</span> <span class="sh">'</span><span class="s">model_int8.pth</span><span class="sh">'</span><span class="p">)</span>
+
+<span class="c1"># Results:
+# - Model size: 200MB → 50MB (4x smaller)
+# - Inference speed: 80ms → 30ms (2.7x faster)
+# - Accuracy: WER 5.2% → 5.4% (0.2% degradation)
+</span></code></pre></div></div>
+
+<p><strong>Why quantization works:</strong></p>
+<ul>
+  <li><strong>Smaller memory footprint:</strong> Fits in L1/L2 cache</li>
+  <li><strong>Faster math:</strong> INT8 operations 4x faster than FP32 on CPU</li>
+  <li><strong>Minimal accuracy loss:</strong> Neural networks are surprisingly robust</li>
+</ul>
+
+<h3 id="technique-2-knowledge-distillation">Technique 2: Knowledge Distillation</h3>
+
+<p><strong>Train small model to mimic large model</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">distillation_loss</span><span class="p">(</span><span class="n">student_logits</span><span class="p">,</span> <span class="n">teacher_logits</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">3.0</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Soft targets from teacher help student learn better
+    </span><span class="sh">"""</span>
+    <span class="c1"># Soften probabilities with temperature
+</span>    <span class="n">student_soft</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">log_softmax</span><span class="p">(</span><span class="n">student_logits</span> <span class="o">/</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">teacher_soft</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">teacher_logits</span> <span class="o">/</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="c1"># KL divergence
+</span>    <span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">kl_div</span><span class="p">(</span><span class="n">student_soft</span><span class="p">,</span> <span class="n">teacher_soft</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="sh">'</span><span class="s">batchmean</span><span class="sh">'</span><span class="p">)</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">*</span> <span class="p">(</span><span class="n">temperature</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">loss</span>
+
+<span class="c1"># Training
+</span><span class="n">teacher</span> <span class="o">=</span> <span class="n">large_model</span>  <span class="c1"># 18 layers, 80ms inference
+</span><span class="n">student</span> <span class="o">=</span> <span class="n">small_model</span>  <span class="c1"># 8 layers, 30ms inference
+</span>
+<span class="k">for</span> <span class="n">audio</span><span class="p">,</span> <span class="n">transcript</span> <span class="ow">in</span> <span class="n">training_data</span><span class="p">:</span>
+    <span class="c1"># Get teacher predictions (no backprop)
+</span>    <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
+        <span class="n">teacher_logits</span> <span class="o">=</span> <span class="nf">teacher</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+    
+    <span class="c1"># Student predictions
+</span>    <span class="n">student_logits</span> <span class="o">=</span> <span class="nf">student</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+    
+    <span class="c1"># Distillation loss
+</span>    <span class="n">loss</span> <span class="o">=</span> <span class="nf">distillation_loss</span><span class="p">(</span><span class="n">student_logits</span><span class="p">,</span> <span class="n">teacher_logits</span><span class="p">)</span>
+    
+    <span class="c1"># Optimize
+</span>    <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
+    <span class="n">optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
+
+<span class="c1"># Results:
+# - Student (8 layers): 30ms, WER 5.8%
+# - Teacher (18 layers): 80ms, WER 5.0%
+# - Without distillation: 30ms, WER 7.2%
+# → Distillation closes the gap!
+</span></code></pre></div></div>
+
+<h3 id="technique-3-pruning">Technique 3: Pruning</h3>
+
+<p><strong>Remove unimportant weights</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch.nn.utils.prune</span> <span class="k">as</span> <span class="n">prune</span>
+
+<span class="k">def</span> <span class="nf">prune_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="mf">0.4</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Remove 40% of weights with minimal accuracy loss
+    </span><span class="sh">"""</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">model</span><span class="p">.</span><span class="nf">named_modules</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nf">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">nn</span><span class="p">.</span><span class="n">Conv2d</span><span class="p">)</span> <span class="ow">or</span> <span class="nf">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">):</span>
+            <span class="c1"># L1 unstructured pruning
+</span>            <span class="n">prune</span><span class="p">.</span><span class="nf">l1_unstructured</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sh">'</span><span class="s">weight</span><span class="sh">'</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="n">amount</span><span class="p">)</span>
+            
+            <span class="c1"># Remove pruning reparameterization
+</span>            <span class="n">prune</span><span class="p">.</span><span class="nf">remove</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="sh">'</span><span class="s">weight</span><span class="sh">'</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">model</span>
+
+<span class="c1"># Results:
+# - 40% pruning: WER 5.0% → 5.3%, Speed +20%
+# - 60% pruning: WER 5.0% → 6.2%, Speed +40%
+</span></code></pre></div></div>
+
+<h3 id="technique-4-caching">Technique 4: Caching</h3>
+
+<p><strong>Cache intermediate results across chunks</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">StreamingASRWithCache</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span> <span class="o">=</span> <span class="bp">None</span>
+    
+    <span class="k">def</span> <span class="nf">process_chunk</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_chunk</span><span class="p">):</span>
+        <span class="c1"># Extract features (no caching needed, fast)
+</span>        <span class="n">features</span> <span class="o">=</span> <span class="nf">extract_features</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
+        
+        <span class="c1"># Encoder: reuse cached hidden states
+</span>        <span class="n">encoder_out</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span>
+            <span class="n">features</span><span class="p">,</span>
+            <span class="n">cache</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Decoder: maintain beam state
+</span>        <span class="n">tokens</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">decoder</span><span class="p">(</span>
+            <span class="n">encoder_out</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span>
+        <span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">tokens</span>
+    
+    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Call at end of utterance</span><span class="sh">"""</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span> <span class="o">=</span> <span class="bp">None</span>
+</code></pre></div></div>
+
+<p><strong>Savings:</strong></p>
+<ul>
+  <li><strong>Without cache:</strong> Process all frames every chunk → 100ms</li>
+  <li><strong>With cache:</strong> Process only new frames → 30ms (3.3x speedup)</li>
+</ul>
+
+<hr />
+
+<h2 id="scaling-to-millions-of-users">Scaling to Millions of Users</h2>
+
+<h3 id="throughput-analysis">Throughput Analysis</h3>
+
+<p><strong>Per-stream compute:</strong></p>
+<ul>
+  <li>Encoder: 30ms (after optimization)</li>
+  <li>Decoder: 10ms</li>
+  <li>Total: 40ms per 100ms audio chunk</li>
+</ul>
+
+<p><strong>CPU/GPU capacity:</strong></p>
+<ul>
+  <li>CPU (16 cores): ~50 concurrent streams</li>
+  <li>GPU (T4): ~200 concurrent streams</li>
+</ul>
+
+<p><strong>For 10M concurrent streams:</strong></p>
+<ul>
+  <li>GPUs needed: 10M / 200 = 50,000 GPUs</li>
+  <li>Cost @ $0.50/hr: $25k/hour = $18M/month</li>
+</ul>
+
+<p><strong>Way too expensive!</strong> Need further optimization.</p>
+
+<h3 id="strategy-1-batching">Strategy 1: Batching</h3>
+
+<p><strong>Batch multiple streams together</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">batch_inference</span><span class="p">(</span><span class="n">audio_chunks</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Process 32 streams simultaneously on GPU
+    </span><span class="sh">"""</span>
+    <span class="c1"># Pad to same length
+</span>    <span class="n">max_len</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">audio_chunks</span><span class="p">)</span>
+    <span class="n">padded</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">np</span><span class="p">.</span><span class="nf">pad</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_len</span> <span class="o">-</span> <span class="nf">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)))</span>
+        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">audio_chunks</span>
+    <span class="p">]</span>
+    
+    <span class="c1"># Stack into batch
+</span>    <span class="n">batch</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">(</span><span class="n">padded</span><span class="p">)</span>  <span class="c1"># (32, max_len, 80)
+</span>    
+    <span class="c1"># Single forward pass
+</span>    <span class="n">outputs</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>  <span class="c1"># ~40ms for 32 streams
+</span>    
+    <span class="k">return</span> <span class="n">outputs</span>
+
+<span class="c1"># Results:
+# - Without batching: 40ms per stream
+# - With batching (32): 40ms / 32 = 1.25ms per stream (32x speedup)
+# - GPU needed: 10M / (200 × 32) = 1,562 GPUs
+# - Cost: $0.78M/month (23x cheaper!)
+</span></code></pre></div></div>
+
+<h3 id="strategy-2-regional-deployment">Strategy 2: Regional Deployment</h3>
+
+<p><strong>Deploy closer to users to reduce latency</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>North America: 3M users → 500 GPUs → 3 data centers
+Europe: 2M users → 330 GPUs → 2 data centers
+Asia: 4M users → 660 GPUs → 4 data centers
+...
+
+Total: ~1,500 GPUs globally
+</code></pre></div></div>
+
+<p><strong>Benefits:</strong></p>
+<ul>
+  <li>Lower network latency (30ms → 10ms)</li>
+  <li>Better fault isolation</li>
+  <li>Regulatory compliance (data residency)</li>
+</ul>
+
+<h3 id="strategy-3-hybrid-cloud-edge">Strategy 3: Hybrid Cloud-Edge</h3>
+
+<p><strong>Run simple queries on-device, complex queries on cloud</strong></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">route_request</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">user_context</span><span class="p">):</span>
+    <span class="c1"># Estimate query complexity
+</span>    <span class="k">if</span> <span class="nf">is_simple_command</span><span class="p">(</span><span class="n">audio</span><span class="p">):</span>  <span class="c1"># "play music", "set timer"
+</span>        <span class="k">return</span> <span class="nf">on_device_asr</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>  <span class="c1"># 30ms, free, offline
+</span>    
+    <span class="k">elif</span> <span class="nf">is_dictation</span><span class="p">(</span><span class="n">audio</span><span class="p">):</span>  <span class="c1"># Long-form transcription
+</span>        <span class="k">return</span> <span class="nf">cloud_asr</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>  <span class="c1"># 80ms, $0.01/min, high accuracy
+</span>    
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># Conversational query
+</span>        <span class="k">return</span> <span class="nf">cloud_asr</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>  <span class="c1"># Best quality for complex queries
+</span></code></pre></div></div>
+
+<p><strong>Distribution:</strong></p>
+<ul>
+  <li>70% simple commands → on-device</li>
+  <li>30% complex queries → cloud</li>
+  <li>Effective cloud load: 3M concurrent (70% savings!)</li>
+</ul>
+
+<hr />
+
+<h2 id="production-example-putting-it-all-together">Production Example: Putting It All Together</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">asyncio</span>
+<span class="kn">import</span> <span class="n">websockets</span>
+<span class="kn">import</span> <span class="n">torch</span>
+
+<span class="k">class</span> <span class="nc">ProductionStreamingASR</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="c1"># Load optimized model
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">load_optimized_model</span><span class="p">()</span>
+        
+        <span class="c1"># VAD
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="nc">SileroVAD</span><span class="p">()</span>
+        
+        <span class="c1"># Session management
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">sessions</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># session_id → StreamingSession
+</span>        
+        <span class="c1"># Metrics
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="nc">Metrics</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">load_optimized_model</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Load quantized, pruned model</span><span class="sh">"""</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="nc">StreamingRNNT</span><span class="p">(</span><span class="n">vocab_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+        
+        <span class="c1"># Load pre-trained weights
+</span>        <span class="n">checkpoint</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sh">'</span><span class="s">rnnt_optimized.pth</span><span class="sh">'</span><span class="p">)</span>
+        <span class="n">model</span><span class="p">.</span><span class="nf">load_state_dict</span><span class="p">(</span><span class="n">checkpoint</span><span class="p">)</span>
+        
+        <span class="c1"># Quantize
+</span>        <span class="n">model_quantized</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">quantization</span><span class="p">.</span><span class="nf">quantize_dynamic</span><span class="p">(</span>
+            <span class="n">model</span><span class="p">,</span>
+            <span class="p">{</span><span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">,</span> <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">LSTM</span><span class="p">},</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">qint8</span>
+        <span class="p">)</span>
+        
+        <span class="n">model_quantized</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">model_quantized</span>
+    
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">handle_stream</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Handle websocket connection from client</span><span class="sh">"""</span>
+        <span class="n">session_id</span> <span class="o">=</span> <span class="nf">generate_session_id</span><span class="p">()</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="nc">StreamingSession</span><span class="p">(</span><span class="n">session_id</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">sessions</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">session</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">async</span> <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">websocket</span><span class="p">:</span>
+                <span class="c1"># Receive audio chunk (binary, 100ms @ 16kHz)
+</span>                <span class="n">audio_bytes</span> <span class="o">=</span> <span class="n">message</span>
+                <span class="n">audio_array</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">frombuffer</span><span class="p">(</span><span class="n">audio_bytes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">int16</span><span class="p">)</span>
+                <span class="n">audio_float</span> <span class="o">=</span> <span class="n">audio_array</span><span class="p">.</span><span class="nf">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">/</span> <span class="mf">32768.0</span>
+                
+                <span class="c1"># Process
+</span>                <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="p">.</span><span class="nf">process_chunk</span><span class="p">(</span><span class="n">audio_float</span><span class="p">)</span>
+                <span class="n">latency</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>  <span class="c1"># ms
+</span>                
+                <span class="c1"># Send partial transcript
+</span>                <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+                    <span class="k">await</span> <span class="n">websocket</span><span class="p">.</span><span class="nf">send</span><span class="p">(</span><span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">({</span>
+                        <span class="sh">'</span><span class="s">type</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">partial</span><span class="sh">'</span><span class="p">,</span>
+                        <span class="sh">'</span><span class="s">transcript</span><span class="sh">'</span><span class="p">:</span> <span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">],</span>
+                        <span class="sh">'</span><span class="s">tokens</span><span class="sh">'</span><span class="p">:</span> <span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">tokens</span><span class="sh">'</span><span class="p">],</span>
+                        <span class="sh">'</span><span class="s">is_final</span><span class="sh">'</span><span class="p">:</span> <span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">is_final</span><span class="sh">'</span><span class="p">]</span>
+                    <span class="p">}))</span>
+                
+                <span class="c1"># Track metrics
+</span>                <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="nf">record_latency</span><span class="p">(</span><span class="n">latency</span><span class="p">)</span>
+        
+        <span class="k">except</span> <span class="n">websockets</span><span class="p">.</span><span class="n">ConnectionClosed</span><span class="p">:</span>
+            <span class="c1"># Finalize session
+</span>            <span class="n">final_transcript</span> <span class="o">=</span> <span class="n">session</span><span class="p">.</span><span class="nf">finalize</span><span class="p">()</span>
+            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Session </span><span class="si">{</span><span class="n">session_id</span><span class="si">}</span><span class="s"> ended: </span><span class="si">{</span><span class="n">final_transcript</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="c1"># Cleanup
+</span>            <span class="k">del</span> <span class="n">self</span><span class="p">.</span><span class="n">sessions</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="sh">'</span><span class="s">0.0.0.0</span><span class="sh">'</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">8765</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Start WebSocket server</span><span class="sh">"""</span>
+        <span class="n">start_server</span> <span class="o">=</span> <span class="n">websockets</span><span class="p">.</span><span class="nf">serve</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">handle_stream</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+        <span class="n">asyncio</span><span class="p">.</span><span class="nf">get_event_loop</span><span class="p">().</span><span class="nf">run_until_complete</span><span class="p">(</span><span class="n">start_server</span><span class="p">)</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Streaming ASR server running on ws://</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s">:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+        <span class="n">asyncio</span><span class="p">.</span><span class="nf">get_event_loop</span><span class="p">().</span><span class="nf">run_forever</span><span class="p">()</span>
+
+<span class="k">class</span> <span class="nc">StreamingSession</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">session_id</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">vad</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">session_id</span> <span class="o">=</span> <span class="n">session_id</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="n">vad</span>
+        
+        <span class="c1"># State
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">partial_transcript</span> <span class="o">=</span> <span class="sh">""</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">audio_buffer</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">def</span> <span class="nf">process_chunk</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
+        <span class="c1"># VAD check
+</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">is_speech</span><span class="p">(</span><span class="n">audio</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        
+        <span class="c1"># Extract features
+</span>        <span class="n">features</span> <span class="o">=</span> <span class="nf">extract_mel_features</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+        
+        <span class="c1"># Encode
+</span>        <span class="n">encoder_out</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span>
+            <span class="n">features</span><span class="p">,</span>
+            <span class="n">cache</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Decode (beam search)
+</span>        <span class="n">tokens</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">decoder</span><span class="p">(</span>
+            <span class="n">encoder_out</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span><span class="p">,</span>
+            <span class="n">beam_size</span><span class="o">=</span><span class="mi">5</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Convert tokens to text
+</span>        <span class="n">new_text</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="nf">decode</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">partial_transcript</span> <span class="o">+=</span> <span class="n">new_text</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">:</span> <span class="n">new_text</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">tokens</span><span class="sh">'</span><span class="p">:</span> <span class="n">tokens</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">is_final</span><span class="sh">'</span><span class="p">:</span> <span class="bp">False</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">End of utterance processing</span><span class="sh">"""</span>
+        <span class="c1"># Post-processing
+</span>        <span class="n">final_transcript</span> <span class="o">=</span> <span class="nf">post_process</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">partial_transcript</span><span class="p">)</span>
+        
+        <span class="c1"># Reset state
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">partial_transcript</span> <span class="o">=</span> <span class="sh">""</span>
+        
+        <span class="k">return</span> <span class="n">final_transcript</span>
+
+<span class="c1"># Run server
+</span><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="sh">'</span><span class="s">__main__</span><span class="sh">'</span><span class="p">:</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="nc">ProductionStreamingASR</span><span class="p">()</span>
+    <span class="n">server</span><span class="p">.</span><span class="nf">run</span><span class="p">()</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="key-takeaways">Key Takeaways</h2>
+
+<p>✅ <strong>RNN-T architecture</strong> enables true streaming without future context<br />
+✅ <strong>Conformer encoder</strong> combines convolution + attention for best accuracy<br />
+✅ <strong>State management</strong> critical for maintaining context across chunks<br />
+✅ <strong>Quantization + pruning</strong> achieve 4x compression, 3x speedup, &lt; 1% WER loss<br />
+✅ <strong>Batching</strong> provides 32x throughput improvement on GPUs<br />
+✅ <strong>Hybrid cloud-edge</strong> reduces cloud load by 70%<br />
+✅ <strong>VAD</strong> saves 50-70% compute by filtering silence</p>
+
+<hr />
+
+<h2 id="further-reading">Further Reading</h2>
+
+<p><strong>Papers:</strong></p>
+<ul>
+  <li><a href="https://arxiv.org/abs/1211.3711">RNN-Transducer (Graves 2012)</a></li>
+  <li><a href="https://arxiv.org/abs/2005.08100">Conformer (Google 2020)</a></li>
+  <li><a href="https://arxiv.org/abs/2005.03191">ContextNet (Google 2020)</a></li>
+  <li><a href="https://arxiv.org/abs/1811.06621">Streaming E2E ASR</a></li>
+</ul>
+
+<p><strong>Open-Source:</strong></p>
+<ul>
+  <li><a href="https://github.com/espnet/espnet">ESPnet</a> - End-to-end speech processing</li>
+  <li><a href="https://github.com/speechbrain/speechbrain">SpeechBrain</a> - PyTorch-based toolkit</li>
+  <li><a href="https://github.com/kaldi-asr/kaldi">Kaldi</a> - Classic ASR toolkit</li>
+</ul>
+
+<p><strong>Courses:</strong></p>
+<ul>
+  <li><a href="http://web.stanford.edu/class/cs224s/">Stanford CS224S: Spoken Language Processing</a></li>
+  <li><a href="https://www.coursera.org/learn/nlp-sequence-models">Coursera: Speech Recognition and Synthesis</a></li>
+</ul>
+
+<hr />
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Streaming ASR is a fascinating blend of signal processing, deep learning, and systems engineering. The key challenges—low latency, high throughput, and maintaining accuracy without future context—require careful architectural choices and aggressive optimization.</p>
+
+<p>As voice interfaces become ubiquitous, streaming ASR systems will continue to evolve. Future directions include:</p>
+<ul>
+  <li><strong>Multi-modal models</strong> (audio + video for better accuracy)</li>
+  <li><strong>Personalization</strong> (adapt to individual speaking styles)</li>
+  <li><strong>Emotion recognition</strong> (detect sentiment, stress, sarcasm)</li>
+  <li><strong>On-device models</strong> (&lt; 10MB, &lt; 50ms, works offline)</li>
+</ul>
+
+<p>The fundamentals covered here—RNN-T, streaming architectures, optimization techniques—will remain relevant as the field advances.</p>
+
+<p>Now go build a voice assistant that feels truly conversational! 🎤🚀</p>
+
+<hr />
+
+<p><strong>Originally published at:</strong> <a href="https://www.arunbaby.com/speech-tech/0001-streaming-asr/">arunbaby.com/speech-tech/0001-streaming-asr</a></p>
+
+<p><em>If you found this helpful, consider sharing it with others who might benefit.</em></p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#asr" class="page__taxonomy-item p-category" rel="tag">asr</a><span class="sep">, </span>
+    
+      <a href="/tags/#real-time" class="page__taxonomy-item p-category" rel="tag">real-time</a><span class="sep">, </span>
+    
+      <a href="/tags/#streaming" class="page__taxonomy-item p-category" rel="tag">streaming</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#speech-tech" class="page__taxonomy-item p-category" rel="tag">speech-tech</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time class="dt-published" datetime="2025-10-13T14:55:52+05:30">October 13, 2025</time></p>
+
+      </footer>
+
+      <section class="page__share">
+  <h4 class="page__share-title">Share on</h4>
+
+  <a href="https://twitter.com/intent/tweet?via=arunbaby0&text=Streaming+ASR+Architecture%20https%3A%2F%2Fwww.arunbaby.com%2Fspeech-tech%2F0001-streaming-asr%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.arunbaby.com%2Fspeech-tech%2F0001-streaming-asr%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https://www.arunbaby.com/speech-tech/0001-streaming-asr/" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="#" class="pagination--pager disabled">Previous</a>
+    
+    
+      <a href="/speech-tech/0002-speech-classification/" class="pagination--pager" title="Speech Command Classification">Next</a>
+    
+  </nav>
+
+
+    </div>
+
+    
+  </article>
+
+  
+  
+</div>
+
+      
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';" role="search">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/arunbaby0" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+          <li><a href="https://github.com/arunbaby0" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+          <li><a href="https://www.linkedin.com/in/arunbaby0/" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i> LinkedIn</a></li>
+        
+      
+        
+          <li><a href="https://scholar.google.co.in/citations?user=6fSYWhkAAAAJ" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-graduation-cap" aria-hidden="true"></i> Google Scholar</a></li>
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 1990 - 2143 <a href="https://www.arunbaby.com">Arun Baby</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0JRJPEC9SS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-0JRJPEC9SS', { 'anonymize_ip': false});
+</script>
+
+
+
+
+
+
+
+
+  </body>
+</html>

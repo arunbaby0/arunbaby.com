@@ -1,0 +1,1566 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.26.2 by Michael Rose
+  Copyright 2013-2024 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+
+<html lang="en-US" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Classification Pipeline Design - Arun Baby</title>
+<meta name="description" content="From raw data to production predictions: building a classification pipeline that handles millions of requests with 99.9% uptime.">
+
+
+  <meta name="author" content="Arun Baby">
+  
+  <meta property="article:author" content="Arun Baby">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Arun Baby">
+<meta property="og:title" content="Classification Pipeline Design">
+<meta property="og:url" content="https://www.arunbaby.com/ml-system-design/0002-classification-pipeline/">
+
+
+  <meta property="og:description" content="From raw data to production predictions: building a classification pipeline that handles millions of requests with 99.9% uptime.">
+
+
+
+  <meta property="og:image" content="https://www.arunbaby.com/assets/images/profile-photo.png">
+
+
+
+  <meta name="twitter:site" content="@arunbaby0">
+  <meta name="twitter:title" content="Classification Pipeline Design">
+  <meta name="twitter:description" content="From raw data to production predictions: building a classification pipeline that handles millions of requests with 99.9% uptime.">
+  <meta name="twitter:url" content="https://www.arunbaby.com/ml-system-design/0002-classification-pipeline/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+      <meta name="twitter:image" content="https://www.arunbaby.com/assets/images/profile-photo.png">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2025-10-13T14:55:52+05:30">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://www.arunbaby.com/ml-system-design/0002-classification-pipeline/">
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Arun Baby Feed">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+  
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@latest/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@latest/css/all.min.css"></noscript>
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single" dir="ltr">
+    <nav class="skip-links">
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+           
+          <span class="site-subtitle">Arun Baby</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a
+                href="/about/"
+                
+                
+              >About</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/dsa/"
+                
+                
+              >DSA</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/ml-system-design/"
+                
+                
+              >ML Systems</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/speech-tech/"
+                
+                
+              >Speech Tech</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/publications/"
+                
+                
+              >Publications</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/statuses/"
+                
+                
+              >Statuses</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/contact/"
+                
+                
+              >Contact</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <i class="fas fa-search"></i>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person" class="h-card">
+
+  
+    <div class="author__avatar">
+      <a href="https://www.arunbaby.com/">
+        <img src="/assets/images/profile-photo.png" alt="Arun Baby" itemprop="image" class="u-photo">
+      </a>
+    </div>
+  
+
+  <div class="author__content">
+    <h3 class="author__name p-name" itemprop="name">
+      <a class="u-url" rel="me" href="https://www.arunbaby.com/" itemprop="url">Arun Baby</a>
+    </h3>
+    
+      <div class="author__bio p-note" itemprop="description">
+        <p>Becoming <strong>Unlabelable</strong></p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name" class="p-locality">India</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="https://twitter.com/arunbaby0" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/arunbaby0" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+            <li><a href="https://www.linkedin.com/in/arunbaby0/" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span class="label">LinkedIn</span></a></li>
+          
+        
+          
+            <li><a href="https://scholar.google.co.in/citations?user=6fSYWhkAAAAJ" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fas fa-fw fa-graduation-cap" aria-hidden="true"></i><span class="label">Google Scholar</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer me">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Classification Pipeline Design">
+    <meta itemprop="description" content="From raw data to production predictions: building a classification pipeline that handles millions of requests with 99.9% uptime.">
+    <meta itemprop="datePublished" content="2025-10-13T14:55:52+05:30">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">
+            <a href="https://www.arunbaby.com/ml-system-design/0002-classification-pipeline/" itemprop="url">Classification Pipeline Design
+</a>
+          </h1>
+          
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
+              <ul class="toc__menu"><li><a href="#introduction">Introduction</a></li><li><a href="#problem-definition">Problem Definition</a><ul><li><a href="#functional-requirements">Functional Requirements</a></li><li><a href="#non-functional-requirements">Non-Functional Requirements</a></li><li><a href="#example-use-case-spam-detection">Example Use Case: Spam Detection</a></li></ul></li><li><a href="#high-level-architecture">High-Level Architecture</a></li><li><a href="#component-1-input-validation">Component 1: Input Validation</a><ul><li><a href="#schema-validation-with-pydantic">Schema Validation with Pydantic</a></li><li><a href="#input-sanitization">Input Sanitization</a></li></ul></li><li><a href="#component-2-feature-engineering">Component 2: Feature Engineering</a><ul><li><a href="#feature-store-pattern">Feature Store Pattern</a></li><li><a href="#feature-transformation-pipeline">Feature Transformation Pipeline</a></li></ul></li><li><a href="#component-3-model-serving">Component 3: Model Serving</a><ul><li><a href="#multi-model-serving-with-ab-testing">Multi-Model Serving with A/B Testing</a></li><li><a href="#model-caching">Model Caching</a></li></ul></li><li><a href="#component-4-post-processing">Component 4: Post-Processing</a><ul><li><a href="#threshold-optimization">Threshold Optimization</a></li><li><a href="#calibration">Calibration</a></li></ul></li><li><a href="#component-5-explainability">Component 5: Explainability</a><ul><li><a href="#shap-values">SHAP Values</a></li><li><a href="#rule-based-explanations">Rule-Based Explanations</a></li></ul></li><li><a href="#monitoring--drift-detection">Monitoring &amp; Drift Detection</a><ul><li><a href="#metrics-collection">Metrics Collection</a></li><li><a href="#data-drift-detection">Data Drift Detection</a></li></ul></li><li><a href="#deployment-strategies">Deployment Strategies</a><ul><li><a href="#blue-green-deployment">Blue-Green Deployment</a></li></ul></li><li><a href="#complete-example-spam-classifier-service">Complete Example: Spam Classifier Service</a></li><li><a href="#key-takeaways">Key Takeaways</a></li><li><a href="#further-reading">Further Reading</a></li></ul>
+            </nav>
+          </aside>
+        
+        <p><strong>From raw data to production predictions: building a classification pipeline that handles millions of requests with 99.9% uptime.</strong></p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Classification is one of the most common machine learning tasks in production: spam detection, content moderation, fraud detection, sentiment analysis, image categorization, and countless others. While training a classifier might take hours in a Jupyter notebook, deploying it to production requires a sophisticated pipeline that handles:</p>
+
+<ul>
+  <li><strong>Real-time inference</strong> (&lt; 100ms latency)</li>
+  <li><strong>Feature engineering</strong> at scale</li>
+  <li><strong>Model versioning</strong> and A/B testing</li>
+  <li><strong>Data drift</strong> detection and handling</li>
+  <li><strong>Explainability</strong> for debugging and compliance</li>
+  <li><strong>Monitoring</strong> for performance degradation</li>
+  <li><strong>Graceful degradation</strong> when components fail</li>
+</ul>
+
+<p>This post focuses on building an end-to-end classification system that processes millions of predictions daily while maintaining high availability and performance.</p>
+
+<p><strong>What you’ll learn:</strong></p>
+<ul>
+  <li>End-to-end pipeline architecture for production classification</li>
+  <li>Feature engineering and feature store patterns</li>
+  <li>Model serving strategies and optimization</li>
+  <li>A/B testing and model deployment</li>
+  <li>Monitoring, alerting, and data drift detection</li>
+  <li>Real-world examples from Uber, Airbnb, and Meta</li>
+</ul>
+
+<hr />
+
+<h2 id="problem-definition">Problem Definition</h2>
+
+<p>Design a production classification system (example: spam detection for user messages) that:</p>
+
+<h3 id="functional-requirements">Functional Requirements</h3>
+
+<ol>
+  <li><strong>Real-time Inference</strong>
+    <ul>
+      <li>Classify incoming data in real-time</li>
+      <li>Return predictions within latency budget</li>
+      <li>Handle variable request rates</li>
+    </ul>
+  </li>
+  <li><strong>Multi-class Support</strong>
+    <ul>
+      <li>Binary classification (spam/not spam)</li>
+      <li>Multi-class (topic categorization)</li>
+      <li>Multi-label (multiple tags per item)</li>
+    </ul>
+  </li>
+  <li><strong>Feature Processing</strong>
+    <ul>
+      <li>Transform raw data into model-ready features</li>
+      <li>Handle missing values and outliers</li>
+      <li>Cache expensive feature computations</li>
+    </ul>
+  </li>
+  <li><strong>Model Updates</strong>
+    <ul>
+      <li>Deploy new models without downtime</li>
+      <li>A/B test model versions</li>
+      <li>Rollback bad deployments quickly</li>
+    </ul>
+  </li>
+  <li><strong>Explainability</strong>
+    <ul>
+      <li>Provide reasoning for predictions</li>
+      <li>Support debugging and compliance</li>
+      <li>Build user trust</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="non-functional-requirements">Non-Functional Requirements</h3>
+
+<ol>
+  <li><strong>Latency</strong>
+    <ul>
+      <li>p50 &lt; 20ms (median)</li>
+      <li>p99 &lt; 100ms (99th percentile)</li>
+      <li>Tail latency critical for user experience</li>
+    </ul>
+  </li>
+  <li><strong>Throughput</strong>
+    <ul>
+      <li>1M predictions per day</li>
+      <li>~12 QPS average, ~100 QPS peak</li>
+      <li>Horizontal scaling for growth</li>
+    </ul>
+  </li>
+  <li><strong>Availability</strong>
+    <ul>
+      <li>99.9% uptime (&lt; 9 hours downtime/year)</li>
+      <li>Graceful degradation on failures</li>
+      <li>No single points of failure</li>
+    </ul>
+  </li>
+  <li><strong>Accuracy</strong>
+    <ul>
+      <li>Maintain &gt; 90% precision</li>
+      <li>Maintain &gt; 85% recall</li>
+      <li>Monitor for drift</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="example-use-case-spam-detection">Example Use Case: Spam Detection</h3>
+
+<ul>
+  <li><strong>Input:</strong> User message (text, metadata)</li>
+  <li><strong>Output:</strong> {spam, not_spam, confidence}</li>
+  <li><strong>Scale:</strong> 1M messages/day</li>
+  <li><strong>Latency:</strong> &lt; 50ms p99</li>
+  <li><strong>False positive cost:</strong> High (blocks legitimate messages)</li>
+  <li><strong>False negative cost:</strong> Medium (spam gets through)</li>
+</ul>
+
+<hr />
+
+<h2 id="high-level-architecture">High-Level Architecture</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────┐
+│                  Client Application                  │
+└────────────────────┬────────────────────────────────┘
+                     │ HTTP/gRPC request
+                     ▼
+┌─────────────────────────────────────────────────────┐
+│                   API Gateway                        │
+│  • Rate limiting                                     │
+│  • Authentication                                    │
+│  • Request validation                                │
+└────────────────────┬────────────────────────────────┘
+                     ▼
+┌─────────────────────────────────────────────────────┐
+│             Classification Service                   │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  1. Input Validation &amp; Preprocessing         │  │
+│  └──────────────┬───────────────────────────────┘  │
+│                 ▼                                    │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  2. Feature Engineering                      │  │
+│  │     • Feature Store lookup (cached)          │  │
+│  │     • Real-time feature computation          │  │
+│  │     • Feature transformation                 │  │
+│  └──────────────┬───────────────────────────────┘  │
+│                 ▼                                    │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  3. Model Inference                          │  │
+│  │     • Model serving (TF/PyTorch)             │  │
+│  │     • A/B testing routing                    │  │
+│  │     • Prediction caching                     │  │
+│  └──────────────┬───────────────────────────────┘  │
+│                 ▼                                    │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  4. Post-processing                          │  │
+│  │     • Threshold optimization                 │  │
+│  │     • Calibration                            │  │
+│  │     • Explainability generation              │  │
+│  └──────────────┬───────────────────────────────┘  │
+│                 ▼                                    │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  5. Logging &amp; Monitoring                     │  │
+│  │     • Prediction logs → Kafka                │  │
+│  │     • Metrics → Prometheus                   │  │
+│  │     • Traces → Jaeger                        │  │
+│  └──────────────────────────────────────────────┘  │
+└────────────────────┬────────────────────────────────┘
+                     ▼
+              Response to client
+</code></pre></div></div>
+
+<p><strong>Latency Budget (100ms total):</strong></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Input validation:      5ms
+Feature extraction:   25ms  ← Often bottleneck
+Model inference:      40ms
+Post-processing:      10ms
+Logging (async):       0ms
+Network overhead:     20ms
+Total:               100ms ✓
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="component-1-input-validation">Component 1: Input Validation</h2>
+
+<h3 id="schema-validation-with-pydantic">Schema Validation with Pydantic</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">validator</span><span class="p">,</span> <span class="n">Field</span>
+<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">import</span> <span class="n">re</span>
+
+<span class="k">class</span> <span class="nc">ClassificationRequest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Validate incoming classification requests
+    </span><span class="sh">"""</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="nc">Field</span><span class="p">(...,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
+    <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nc">Field</span><span class="p">(...,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">language</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nc">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="sh">"</span><span class="s">en</span><span class="sh">"</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="sh">"</span><span class="s">^[a-z]{2}$</span><span class="sh">"</span><span class="p">)</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="nc">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    
+    <span class="nd">@validator</span><span class="p">(</span><span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">text_not_empty</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span> <span class="ow">or</span> <span class="n">v</span><span class="p">.</span><span class="nf">isspace</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sh">'</span><span class="s">Text cannot be empty or whitespace only</span><span class="sh">'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span><span class="p">.</span><span class="nf">strip</span><span class="p">()</span>
+    
+    <span class="nd">@validator</span><span class="p">(</span><span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">text_length_check</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">10000</span><span class="p">:</span>
+            <span class="c1"># Truncate instead of rejecting
+</span>            <span class="k">return</span> <span class="n">v</span><span class="p">[:</span><span class="mi">10000</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">v</span>
+    
+    <span class="nd">@validator</span><span class="p">(</span><span class="sh">'</span><span class="s">metadata</span><span class="sh">'</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">metadata_size_check</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">and</span> <span class="nf">len</span><span class="p">(</span><span class="nf">str</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sh">'</span><span class="s">Metadata too large</span><span class="sh">'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+    
+    <span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
+        <span class="c1"># Example for API docs
+</span>        <span class="n">schema_extra</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">"</span><span class="s">example</span><span class="sh">"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">Check out this amazing offer!</span><span class="sh">"</span><span class="p">,</span>
+                <span class="sh">"</span><span class="s">user_id</span><span class="sh">"</span><span class="p">:</span> <span class="mi">12345</span><span class="p">,</span>
+                <span class="sh">"</span><span class="s">language</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">en</span><span class="sh">"</span><span class="p">,</span>
+                <span class="sh">"</span><span class="s">metadata</span><span class="sh">"</span><span class="p">:</span> <span class="p">{</span><span class="sh">"</span><span class="s">platform</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">web</span><span class="sh">"</span><span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+
+<span class="c1"># Usage in API endpoint
+</span><span class="kn">from</span> <span class="n">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">HTTPException</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="nc">FastAPI</span><span class="p">()</span>
+
+<span class="nd">@app.post</span><span class="p">(</span><span class="sh">"</span><span class="s">/classify</span><span class="sh">"</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">classify</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">ClassificationRequest</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Pydantic automatically validates
+</span>        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">classifier</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+    <span class="k">except</span> <span class="nb">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="nc">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="nf">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+</code></pre></div></div>
+
+<h3 id="input-sanitization">Input Sanitization</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">html</span>
+<span class="kn">import</span> <span class="n">unicodedata</span>
+
+<span class="k">def</span> <span class="nf">sanitize_text</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Clean and normalize input text
+    </span><span class="sh">"""</span>
+    <span class="c1"># HTML unescape
+</span>    <span class="n">text</span> <span class="o">=</span> <span class="n">html</span><span class="p">.</span><span class="nf">unescape</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    
+    <span class="c1"># Unicode normalization (NFKC = compatibility composition)
+</span>    <span class="n">text</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="p">.</span><span class="nf">normalize</span><span class="p">(</span><span class="sh">'</span><span class="s">NFKC</span><span class="sh">'</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    
+    <span class="c1"># Remove control characters
+</span>    <span class="n">text</span> <span class="o">=</span> <span class="sh">''</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">ch</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">text</span> <span class="k">if</span> <span class="n">unicodedata</span><span class="p">.</span><span class="nf">category</span><span class="p">(</span><span class="n">ch</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="sh">'</span><span class="s">C</span><span class="sh">'</span> <span class="ow">or</span> <span class="n">ch</span> <span class="ow">in</span> <span class="sh">'</span><span class="se">\n\r\t</span><span class="sh">'</span><span class="p">)</span>
+    
+    <span class="c1"># Normalize whitespace
+</span>    <span class="n">text</span> <span class="o">=</span> <span class="sh">'</span><span class="s"> </span><span class="sh">'</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">text</span><span class="p">.</span><span class="nf">split</span><span class="p">())</span>
+    
+    <span class="k">return</span> <span class="n">text</span>
+
+
+<span class="c1"># Example
+</span><span class="n">text</span> <span class="o">=</span> <span class="sh">"</span><span class="s">Hello</span><span class="se">\u00A0</span><span class="s">world</span><span class="sh">"</span>  <span class="c1"># Non-breaking space
+</span><span class="n">clean</span> <span class="o">=</span> <span class="nf">sanitize_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>  <span class="c1"># "Hello world"
+</span></code></pre></div></div>
+
+<hr />
+
+<h2 id="component-2-feature-engineering">Component 2: Feature Engineering</h2>
+
+<h3 id="feature-store-pattern">Feature Store Pattern</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">import</span> <span class="n">redis</span>
+<span class="kn">import</span> <span class="n">json</span>
+<span class="kn">from</span> <span class="n">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
+
+<span class="k">class</span> <span class="nc">FeatureStore</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Centralized feature storage with caching
+    </span><span class="sh">"""</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">redis_client</span><span class="p">:</span> <span class="n">redis</span><span class="p">.</span><span class="n">Redis</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">redis</span> <span class="o">=</span> <span class="n">redis_client</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">default_ttl</span> <span class="o">=</span> <span class="mi">3600</span>  <span class="c1"># 1 hour
+</span>    
+    <span class="k">def</span> <span class="nf">get_user_features</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="sh">"""</span><span class="s">
+        Get cached user features or compute
+        </span><span class="sh">"""</span>
+        <span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">features:user:</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="sh">"</span>
+        
+        <span class="c1"># Try cache
+</span>        <span class="n">cached</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">redis</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cached</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="p">.</span><span class="nf">loads</span><span class="p">(</span><span class="n">cached</span><span class="p">)</span>
+        
+        <span class="c1"># Compute expensive features
+</span>        <span class="n">features</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_compute_user_features</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+        
+        <span class="c1"># Cache for future requests
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">redis</span><span class="p">.</span><span class="nf">setex</span><span class="p">(</span>
+            <span class="n">cache_key</span><span class="p">,</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">default_ttl</span><span class="p">,</span>
+            <span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+        <span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">features</span>
+    
+    <span class="k">def</span> <span class="nf">_compute_user_features</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="sh">"""</span><span class="s">
+        Compute user-level features (expensive)
+        </span><span class="sh">"""</span>
+        <span class="c1"># Query database
+</span>        <span class="n">user</span> <span class="o">=</span> <span class="n">db</span><span class="p">.</span><span class="nf">get_user</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="c1"># Profile features
+</span>            <span class="sh">'</span><span class="s">account_age_days</span><span class="sh">'</span><span class="p">:</span> <span class="p">(</span><span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">user</span><span class="p">.</span><span class="n">created_at</span><span class="p">).</span><span class="n">days</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">verified</span><span class="sh">'</span><span class="p">:</span> <span class="n">user</span><span class="p">.</span><span class="n">is_verified</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">follower_count</span><span class="sh">'</span><span class="p">:</span> <span class="n">user</span><span class="p">.</span><span class="n">followers</span><span class="p">,</span>
+            
+            <span class="c1"># Behavioral features (aggregated)
+</span>            <span class="sh">'</span><span class="s">messages_sent_7d</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="nf">_count_messages</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">days</span><span class="o">=</span><span class="mi">7</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">spam_reports_received</span><span class="sh">'</span><span class="p">:</span> <span class="n">user</span><span class="p">.</span><span class="n">spam_reports</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">avg_message_length</span><span class="sh">'</span><span class="p">:</span> <span class="n">user</span><span class="p">.</span><span class="n">avg_message_length</span><span class="p">,</span>
+            
+            <span class="c1"># Engagement features
+</span>            <span class="sh">'</span><span class="s">reply_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">user</span><span class="p">.</span><span class="n">replies_received</span> <span class="o">/</span> <span class="nf">max</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="n">messages_sent</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">block_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">user</span><span class="p">.</span><span class="n">blocks_received</span> <span class="o">/</span> <span class="nf">max</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="n">messages_sent</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">extract_text_features</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="sh">"""</span><span class="s">
+        Extract real-time text features (fast, no caching needed)
+        </span><span class="sh">"""</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="c1"># Length features
+</span>            <span class="sh">'</span><span class="s">char_count</span><span class="sh">'</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">text</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">word_count</span><span class="sh">'</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">text</span><span class="p">.</span><span class="nf">split</span><span class="p">()),</span>
+            <span class="sh">'</span><span class="s">avg_word_length</span><span class="sh">'</span><span class="p">:</span> <span class="nf">sum</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">text</span><span class="p">.</span><span class="nf">split</span><span class="p">())</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">text</span><span class="p">.</span><span class="nf">split</span><span class="p">()),</span>
+            
+            <span class="c1"># Pattern features
+</span>            <span class="sh">'</span><span class="s">url_count</span><span class="sh">'</span><span class="p">:</span> <span class="n">text</span><span class="p">.</span><span class="nf">count</span><span class="p">(</span><span class="sh">'</span><span class="s">http</span><span class="sh">'</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">email_count</span><span class="sh">'</span><span class="p">:</span> <span class="n">text</span><span class="p">.</span><span class="nf">count</span><span class="p">(</span><span class="sh">'</span><span class="s">@</span><span class="sh">'</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">exclamation_count</span><span class="sh">'</span><span class="p">:</span> <span class="n">text</span><span class="p">.</span><span class="nf">count</span><span class="p">(</span><span class="sh">'</span><span class="s">!</span><span class="sh">'</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">question_count</span><span class="sh">'</span><span class="p">:</span> <span class="n">text</span><span class="p">.</span><span class="nf">count</span><span class="p">(</span><span class="sh">'</span><span class="s">?</span><span class="sh">'</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">capital_ratio</span><span class="sh">'</span><span class="p">:</span> <span class="nf">sum</span><span class="p">(</span><span class="n">c</span><span class="p">.</span><span class="nf">isupper</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">text</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">text</span><span class="p">),</span>
+            
+            <span class="c1"># Linguistic features
+</span>            <span class="sh">'</span><span class="s">unique_word_ratio</span><span class="sh">'</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="nf">set</span><span class="p">(</span><span class="n">text</span><span class="p">.</span><span class="nf">lower</span><span class="p">().</span><span class="nf">split</span><span class="p">()))</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">text</span><span class="p">.</span><span class="nf">split</span><span class="p">()),</span>
+            <span class="sh">'</span><span class="s">repeated_char_ratio</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="nf">_count_repeated_chars</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">_count_repeated_chars</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">Count characters repeated 3+ times (e.g., </span><span class="sh">'</span><span class="s">hellooo</span><span class="sh">'</span><span class="s">)</span><span class="sh">"""</span>
+        <span class="kn">import</span> <span class="n">re</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="n">re</span><span class="p">.</span><span class="nf">findall</span><span class="p">(</span><span class="sa">r</span><span class="sh">'</span><span class="s">(.)\1{2,}</span><span class="sh">'</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nf">len</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="feature-transformation-pipeline">Feature Transformation Pipeline</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">StandardScaler</span>
+<span class="kn">from</span> <span class="n">sklearn.feature_extraction.text</span> <span class="kn">import</span> <span class="n">TfidfVectorizer</span>
+<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+
+<span class="k">class</span> <span class="nc">FeatureTransformer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Transform raw features into model-ready format
+    </span><span class="sh">"""</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="c1"># Fit on training data
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">scaler</span> <span class="o">=</span> <span class="nc">StandardScaler</span><span class="p">()</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">tfidf</span> <span class="o">=</span> <span class="nc">TfidfVectorizer</span><span class="p">(</span><span class="n">max_features</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">ngram_range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        
+        <span class="c1"># Feature names for debugging
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">numerical_features</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sh">'</span><span class="s">account_age_days</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">follower_count</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">messages_sent_7d</span><span class="sh">'</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">char_count</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">word_count</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">url_count</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">exclamation_count</span><span class="sh">'</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">capital_ratio</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">unique_word_ratio</span><span class="sh">'</span>
+        <span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_features</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">text_features</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Combine and transform all features
+        </span><span class="sh">"""</span>
+        <span class="c1"># Numerical features
+</span>        <span class="n">numerical</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span>
+            <span class="n">user_features</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">numerical_features</span>
+        <span class="p">])</span>
+        <span class="n">numerical_scaled</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">scaler</span><span class="p">.</span><span class="nf">transform</span><span class="p">(</span><span class="n">numerical</span><span class="p">.</span><span class="nf">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        
+        <span class="c1"># Text features (TF-IDF)
+</span>        <span class="n">text_vec</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">tfidf</span><span class="p">.</span><span class="nf">transform</span><span class="p">([</span><span class="n">text</span><span class="p">]).</span><span class="nf">toarray</span><span class="p">()</span>
+        
+        <span class="c1"># Concatenate all features
+</span>        <span class="n">features</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">concatenate</span><span class="p">([</span>
+            <span class="n">numerical_scaled</span><span class="p">,</span>
+            <span class="n">text_vec</span>
+        <span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">features</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Return 1D array
+</span>    
+    <span class="k">def</span> <span class="nf">get_feature_names</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">Get all feature names for explainability</span><span class="sh">"""</span>
+        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">numerical_features</span> <span class="o">+</span> <span class="nf">list</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">tfidf</span><span class="p">.</span><span class="nf">get_feature_names_out</span><span class="p">())</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="component-3-model-serving">Component 3: Model Serving</h2>
+
+<h3 id="multi-model-serving-with-ab-testing">Multi-Model Serving with A/B Testing</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
+<span class="kn">import</span> <span class="n">hashlib</span>
+<span class="kn">import</span> <span class="n">torch</span>
+
+<span class="k">class</span> <span class="nc">ModelServer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Serve multiple model versions with A/B testing
+    </span><span class="sh">"""</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="c1"># Load models
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">models</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">v1</span><span class="sh">'</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">jit</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sh">'</span><span class="s">spam_classifier_v1.pt</span><span class="sh">'</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">v2</span><span class="sh">'</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">jit</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sh">'</span><span class="s">spam_classifier_v2.pt</span><span class="sh">'</span><span class="p">)</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># Traffic split (%)
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">traffic_split</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">v1</span><span class="sh">'</span><span class="p">:</span> <span class="mi">90</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">v2</span><span class="sh">'</span><span class="p">:</span> <span class="mi">10</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># Model metadata
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">model_info</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">v1</span><span class="sh">'</span><span class="p">:</span> <span class="p">{</span><span class="sh">'</span><span class="s">deployed_at</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">2025-01-01</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">training_accuracy</span><span class="sh">'</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">},</span>
+            <span class="sh">'</span><span class="s">v2</span><span class="sh">'</span><span class="p">:</span> <span class="p">{</span><span class="sh">'</span><span class="s">deployed_at</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">2025-01-15</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">training_accuracy</span><span class="sh">'</span><span class="p">:</span> <span class="mf">0.94</span><span class="p">}</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">select_model</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Consistent hashing for A/B test assignment
+        
+        Same user always gets same model (important for consistency)
+        </span><span class="sh">"""</span>
+        <span class="c1"># Hash user_id to [0, 99]
+</span>        <span class="n">hash_val</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">hashlib</span><span class="p">.</span><span class="nf">md5</span><span class="p">(</span><span class="nf">str</span><span class="p">(</span><span class="n">user_id</span><span class="p">).</span><span class="nf">encode</span><span class="p">()).</span><span class="nf">hexdigest</span><span class="p">(),</span> <span class="mi">16</span><span class="p">)</span>
+        <span class="n">bucket</span> <span class="o">=</span> <span class="n">hash_val</span> <span class="o">%</span> <span class="mi">100</span>
+        
+        <span class="c1"># Assign to model based on traffic split
+</span>        <span class="k">if</span> <span class="n">bucket</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">traffic_split</span><span class="p">[</span><span class="sh">'</span><span class="s">v1</span><span class="sh">'</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="sh">'</span><span class="s">v1</span><span class="sh">'</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sh">'</span><span class="s">v2</span><span class="sh">'</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+        <span class="sh">"""</span><span class="s">
+        Run inference with selected model
+        
+        Returns:
+            prediction: Class label (0 or 1)
+            probabilities: Class probabilities
+            model_version: Which model was used
+        </span><span class="sh">"""</span>
+        <span class="c1"># Select model
+</span>        <span class="n">model_version</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">select_model</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">[</span><span class="n">model_version</span><span class="p">]</span>
+        
+        <span class="c1"># Convert to tensor
+</span>        <span class="n">features_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">float32</span><span class="p">).</span><span class="nf">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        
+        <span class="c1"># Inference
+</span>        <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
+            <span class="n">logits</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">features_tensor</span><span class="p">)</span>
+            <span class="n">probabilities</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">).</span><span class="nf">numpy</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">prediction</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">probabilities</span><span class="p">))</span>
+        
+        <span class="k">return</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">probabilities</span><span class="p">,</span> <span class="n">model_version</span>
+</code></pre></div></div>
+
+<h3 id="model-caching">Model Caching</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span>
+<span class="kn">import</span> <span class="n">hashlib</span>
+
+<span class="k">class</span> <span class="nc">CachedModelServer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Cache predictions for identical inputs
+    </span><span class="sh">"""</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model_server</span><span class="p">:</span> <span class="n">ModelServer</span><span class="p">,</span> <span class="n">cache_size</span><span class="o">=</span><span class="mi">10000</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model_server</span> <span class="o">=</span> <span class="n">model_server</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">cache_size</span> <span class="o">=</span> <span class="n">cache_size</span>
+    
+    <span class="k">def</span> <span class="nf">_feature_hash</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">Create hash of feature vector</span><span class="sh">"""</span>
+        <span class="k">return</span> <span class="n">hashlib</span><span class="p">.</span><span class="nf">sha256</span><span class="p">(</span><span class="n">features</span><span class="p">.</span><span class="nf">tobytes</span><span class="p">()).</span><span class="nf">hexdigest</span><span class="p">()</span>
+    
+    <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">predict_cached</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">feature_hash</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">Cached prediction (won</span><span class="sh">'</span><span class="s">t actually work with mutable args, just illustrative)</span><span class="sh">"""</span>
+        <span class="c1"># In practice, use Redis or Memcached for distributed caching
+</span>        <span class="k">pass</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Try cache first, fallback to model
+        </span><span class="sh">"""</span>
+        <span class="n">feature_hash</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_feature_hash</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+        <span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">pred:</span><span class="si">{</span><span class="n">feature_hash</span><span class="si">}</span><span class="s">:</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="sh">"</span>
+        
+        <span class="c1"># Try Redis cache
+</span>        <span class="n">cached</span> <span class="o">=</span> <span class="n">redis_client</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cached</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="p">.</span><span class="nf">loads</span><span class="p">(</span><span class="n">cached</span><span class="p">)</span>
+        
+        <span class="c1"># Cache miss - run model
+</span>        <span class="n">prediction</span><span class="p">,</span> <span class="n">probabilities</span><span class="p">,</span> <span class="n">model_version</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model_server</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span>
+            <span class="n">features</span><span class="p">,</span> <span class="n">user_id</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Cache result (5 minute TTL)
+</span>        <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">probabilities</span><span class="p">.</span><span class="nf">tolist</span><span class="p">(),</span> <span class="n">model_version</span><span class="p">)</span>
+        <span class="n">redis_client</span><span class="p">.</span><span class="nf">setex</span><span class="p">(</span><span class="n">cache_key</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+        
+        <span class="k">return</span> <span class="n">result</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="component-4-post-processing">Component 4: Post-Processing</h2>
+
+<h3 id="threshold-optimization">Threshold Optimization</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">sklearn.metrics</span> <span class="kn">import</span> <span class="n">precision_recall_curve</span><span class="p">,</span> <span class="n">f1_score</span>
+<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+
+<span class="k">class</span> <span class="nc">ThresholdOptimizer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Find optimal classification threshold
+    </span><span class="sh">"""</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">target_precision</span><span class="o">=</span><span class="mf">0.95</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">target_precision</span> <span class="o">=</span> <span class="n">target_precision</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1"># Default
+</span>    
+    <span class="k">def</span> <span class="nf">optimize</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y_proba</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Find threshold that maximizes recall while maintaining precision
+        
+        Common in spam detection: high precision required (few false positives)
+        </span><span class="sh">"""</span>
+        <span class="n">precisions</span><span class="p">,</span> <span class="n">recalls</span><span class="p">,</span> <span class="n">thresholds</span> <span class="o">=</span> <span class="nf">precision_recall_curve</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_proba</span><span class="p">)</span>
+        
+        <span class="c1"># Find highest recall where precision &gt;= target
+</span>        <span class="n">valid_indices</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">where</span><span class="p">(</span><span class="n">precisions</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">target_precision</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">valid_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Warning: Cannot achieve </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">target_precision</span><span class="si">}</span><span class="s"> precision</span><span class="sh">"</span><span class="p">)</span>
+            <span class="c1"># Fall back to threshold that maximizes F1
+</span>            <span class="n">f1_scores</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">precisions</span> <span class="o">*</span> <span class="n">recalls</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">precisions</span> <span class="o">+</span> <span class="n">recalls</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+            <span class="n">best_idx</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">f1_scores</span><span class="p">)</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">thresholds</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Choose threshold with maximum recall among valid options
+</span>            <span class="n">best_idx</span> <span class="o">=</span> <span class="n">valid_indices</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">recalls</span><span class="p">[</span><span class="n">valid_indices</span><span class="p">])]</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">thresholds</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span>
+        
+        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Optimal threshold: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">threshold</span><span class="si">:</span><span class="p">.</span><span class="mi">3</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Precision: </span><span class="si">{</span><span class="n">precisions</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">3</span><span class="n">f</span><span class="si">}</span><span class="s">, Recall: </span><span class="si">{</span><span class="n">recalls</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">3</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">threshold</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">probabilities</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">Apply optimized threshold</span><span class="sh">"""</span>
+        <span class="nf">return </span><span class="p">(</span><span class="n">probabilities</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">threshold</span><span class="p">).</span><span class="nf">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="calibration">Calibration</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">sklearn.calibration</span> <span class="kn">import</span> <span class="n">CalibratedClassifierCV</span>
+
+<span class="k">class</span> <span class="nc">CalibratedClassifier</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Ensure predicted probabilities match actual frequencies
+    
+    Example: If model predicts 70% spam, ~70% should actually be spam
+    </span><span class="sh">"""</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">base_model</span><span class="p">):</span>
+<span class="c1"># Wrap model with calibration
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">calibrated_model</span> <span class="o">=</span> <span class="nc">CalibratedClassifierCV</span><span class="p">(</span>
+            <span class="n">base_model</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="sh">'</span><span class="s">sigmoid</span><span class="sh">'</span><span class="p">,</span>  <span class="c1"># or 'isotonic'
+</span>    <span class="n">cv</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Train with calibration</span><span class="sh">"""</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">calibrated_model</span><span class="p">.</span><span class="nf">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">predict_proba</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Return calibrated probabilities</span><span class="sh">"""</span>
+        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">calibrated_model</span><span class="p">.</span><span class="nf">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+
+<span class="c1"># Before calibration:
+# Predicted 80% spam → Actually 65% spam (overconfident)
+</span>
+<span class="c1"># After calibration:
+# Predicted 80% spam → Actually 78% spam (calibrated)
+</span></code></pre></div></div>
+
+<hr />
+
+<h2 id="component-5-explainability">Component 5: Explainability</h2>
+
+<h3 id="shap-values">SHAP Values</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">shap</span>
+
+<span class="k">class</span> <span class="nc">ExplainableClassifier</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Generate explanations for predictions
+    </span><span class="sh">"""</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">feature_names</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">feature_names</span> <span class="o">=</span> <span class="n">feature_names</span>
+        
+        <span class="c1"># Initialize SHAP explainer
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">explainer</span> <span class="o">=</span> <span class="n">shap</span><span class="p">.</span><span class="nc">TreeExplainer</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">explain</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Generate human-readable explanation
+        </span><span class="sh">"""</span>
+        <span class="c1"># Compute SHAP values
+</span>        <span class="n">shap_values</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">explainer</span><span class="p">.</span><span class="nf">shap_values</span><span class="p">(</span><span class="n">features</span><span class="p">.</span><span class="nf">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        
+        <span class="c1"># Get top contributing features
+</span>        <span class="n">feature_contributions</span> <span class="o">=</span> <span class="nf">list</span><span class="p">(</span><span class="nf">zip</span><span class="p">(</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">feature_names</span><span class="p">,</span>
+    <span class="n">shap_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="p">))</span>
+        <span class="n">feature_contributions</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nf">abs</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        
+        <span class="c1"># Format explanation
+</span>        <span class="n">top_features</span> <span class="o">=</span> <span class="n">feature_contributions</span><span class="p">[:</span><span class="n">top_k</span><span class="p">]</span>
+        <span class="n">explanation</span> <span class="o">=</span> <span class="sh">"</span><span class="s">Key factors: </span><span class="sh">"</span>
+        <span class="n">explanation</span> <span class="o">+=</span> <span class="sh">"</span><span class="s">, </span><span class="sh">"</span><span class="p">.</span><span class="nf">join</span><span class="p">([</span>
+            <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s"> (</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="o">+</span><span class="p">.</span><span class="mi">3</span><span class="n">f</span><span class="si">}</span><span class="s">)</span><span class="sh">"</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">top_features</span>
+        <span class="p">])</span>
+        
+        <span class="k">return</span> <span class="n">explanation</span>
+
+
+<span class="c1"># Example output:
+# "Key factors: url_count (+0.234), capital_ratio (+0.156), exclamation_count (+0.089)"
+</span></code></pre></div></div>
+
+<h3 id="rule-based-explanations">Rule-Based Explanations</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">generate_explanation</span><span class="p">(</span><span class="n">features</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">prediction</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Simple rule-based explanation (faster than SHAP)
+    </span><span class="sh">"""</span>
+    <span class="k">if</span> <span class="n">prediction</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># Spam
+</span>        <span class="n">reasons</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">if</span> <span class="n">features</span><span class="p">[</span><span class="sh">'</span><span class="s">url_count</span><span class="sh">'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">reasons</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sh">"</span><span class="s">contains multiple URLs</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">features</span><span class="p">[</span><span class="sh">'</span><span class="s">exclamation_count</span><span class="sh">'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">reasons</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sh">"</span><span class="s">excessive exclamation marks</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">features</span><span class="p">[</span><span class="sh">'</span><span class="s">capital_ratio</span><span class="sh">'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
+            <span class="n">reasons</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sh">"</span><span class="s">too many capital letters</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">features</span><span class="p">[</span><span class="sh">'</span><span class="s">repeated_char_ratio</span><span class="sh">'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.1</span><span class="p">:</span>
+            <span class="n">reasons</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sh">"</span><span class="s">repeated characters</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">reasons</span><span class="p">:</span>
+            <span class="n">reasons</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sh">"</span><span class="s">multiple spam indicators detected</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Classified as spam because: </span><span class="si">{</span><span class="sh">'</span><span class="s">, </span><span class="sh">'</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">reasons</span><span class="p">)</span><span class="si">}</span><span class="sh">"</span>
+    
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># Not spam
+</span>        <span class="k">return</span> <span class="sh">"</span><span class="s">No spam indicators detected</span><span class="sh">"</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="monitoring--drift-detection">Monitoring &amp; Drift Detection</h2>
+
+<h3 id="metrics-collection">Metrics Collection</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">prometheus_client</span> <span class="kn">import</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">,</span> <span class="n">Gauge</span>
+<span class="kn">import</span> <span class="n">time</span>
+
+<span class="c1"># Define metrics
+</span><span class="n">prediction_counter</span> <span class="o">=</span> <span class="nc">Counter</span><span class="p">(</span>
+    <span class="sh">'</span><span class="s">classification_predictions_total</span><span class="sh">'</span><span class="p">,</span>
+    <span class="sh">'</span><span class="s">Total predictions</span><span class="sh">'</span><span class="p">,</span>
+    <span class="p">[</span><span class="sh">'</span><span class="s">model_version</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">prediction_class</span><span class="sh">'</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="n">latency_histogram</span> <span class="o">=</span> <span class="nc">Histogram</span><span class="p">(</span>
+    <span class="sh">'</span><span class="s">classification_latency_seconds</span><span class="sh">'</span><span class="p">,</span>
+    <span class="sh">'</span><span class="s">Prediction latency</span><span class="sh">'</span><span class="p">,</span>
+    <span class="n">buckets</span><span class="o">=</span><span class="p">[</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.025</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="n">model_confidence</span> <span class="o">=</span> <span class="nc">Histogram</span><span class="p">(</span>
+    <span class="sh">'</span><span class="s">classification_confidence</span><span class="sh">'</span><span class="p">,</span>
+    <span class="sh">'</span><span class="s">Prediction confidence</span><span class="sh">'</span><span class="p">,</span>
+    <span class="p">[</span><span class="sh">'</span><span class="s">model_version</span><span class="sh">'</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">MonitoredClassifier</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Classifier with built-in monitoring
+    </span><span class="sh">"""</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">classifier</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="n">classifier</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
+        
+        <span class="c1"># Run prediction
+</span>        <span class="n">prediction</span><span class="p">,</span> <span class="n">probabilities</span><span class="p">,</span> <span class="n">model_version</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">classifier</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span>
+            <span class="n">features</span><span class="p">,</span> <span class="n">user_id</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Record metrics
+</span>        <span class="n">latency</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="n">latency_histogram</span><span class="p">.</span><span class="nf">observe</span><span class="p">(</span><span class="n">latency</span><span class="p">)</span>
+        
+        <span class="n">prediction_counter</span><span class="p">.</span><span class="nf">labels</span><span class="p">(</span>
+            <span class="n">model_version</span><span class="o">=</span><span class="n">model_version</span><span class="p">,</span>
+            <span class="n">prediction_class</span><span class="o">=</span><span class="n">prediction</span>
+        <span class="p">).</span><span class="nf">inc</span><span class="p">()</span>
+        
+        <span class="n">confidence</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">probabilities</span><span class="p">)</span>
+        <span class="n">model_confidence</span><span class="p">.</span><span class="nf">labels</span><span class="p">(</span><span class="n">model_version</span><span class="o">=</span><span class="n">model_version</span><span class="p">).</span><span class="nf">observe</span><span class="p">(</span><span class="n">confidence</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">probabilities</span><span class="p">,</span> <span class="n">model_version</span>
+</code></pre></div></div>
+
+<h3 id="data-drift-detection">Data Drift Detection</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">scipy</span> <span class="kn">import</span> <span class="n">stats</span>
+<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+
+<span class="k">class</span> <span class="nc">DriftDetector</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Detect distribution shift in features
+    </span><span class="sh">"""</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">reference_data</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">feature_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        reference_data: Training data statistics
+        </span><span class="sh">"""</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">reference_stats</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">feature</span><span class="p">:</span> <span class="p">{</span>
+                <span class="sh">'</span><span class="s">mean</span><span class="sh">'</span><span class="p">:</span> <span class="n">reference_data</span><span class="p">[:,</span> <span class="n">i</span><span class="p">].</span><span class="nf">mean</span><span class="p">(),</span>
+                <span class="sh">'</span><span class="s">std</span><span class="sh">'</span><span class="p">:</span> <span class="n">reference_data</span><span class="p">[:,</span> <span class="n">i</span><span class="p">].</span><span class="nf">std</span><span class="p">(),</span>
+                <span class="sh">'</span><span class="s">min</span><span class="sh">'</span><span class="p">:</span> <span class="n">reference_data</span><span class="p">[:,</span> <span class="n">i</span><span class="p">].</span><span class="nf">min</span><span class="p">(),</span>
+                <span class="sh">'</span><span class="s">max</span><span class="sh">'</span><span class="p">:</span> <span class="n">reference_data</span><span class="p">[:,</span> <span class="n">i</span><span class="p">].</span><span class="nf">max</span><span class="p">()</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">feature</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">feature_names</span><span class="p">)</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">detect_drift</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">current_data</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">feature_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Compare current data to reference distribution
+        
+        Returns:
+            Dictionary of features with significant drift
+        </span><span class="sh">"""</span>
+        <span class="n">drift_alerts</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">feature</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">feature_names</span><span class="p">):</span>
+            <span class="n">ref_stats</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">reference_stats</span><span class="p">[</span><span class="n">feature</span><span class="p">]</span>
+            <span class="n">current_values</span> <span class="o">=</span> <span class="n">current_data</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span>
+            
+            <span class="c1"># Statistical tests
+</span>            <span class="c1"># 1. KS test (distribution shift)
+</span>            <span class="n">ks_statistic</span><span class="p">,</span> <span class="n">ks_pvalue</span> <span class="o">=</span> <span class="n">stats</span><span class="p">.</span><span class="nf">ks_2samp</span><span class="p">(</span>
+                <span class="n">current_values</span><span class="p">,</span>
+                <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">normal</span><span class="p">(</span><span class="n">ref_stats</span><span class="p">[</span><span class="sh">'</span><span class="s">mean</span><span class="sh">'</span><span class="p">],</span> <span class="n">ref_stats</span><span class="p">[</span><span class="sh">'</span><span class="s">std</span><span class="sh">'</span><span class="p">],</span> <span class="nf">len</span><span class="p">(</span><span class="n">current_values</span><span class="p">))</span>
+            <span class="p">)</span>
+            
+            <span class="c1"># 2. Mean shift (Z-score)
+</span>            <span class="n">current_mean</span> <span class="o">=</span> <span class="n">current_values</span><span class="p">.</span><span class="nf">mean</span><span class="p">()</span>
+            <span class="n">z_score</span> <span class="o">=</span> <span class="nf">abs</span><span class="p">(</span><span class="n">current_mean</span> <span class="o">-</span> <span class="n">ref_stats</span><span class="p">[</span><span class="sh">'</span><span class="s">mean</span><span class="sh">'</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">ref_stats</span><span class="p">[</span><span class="sh">'</span><span class="s">std</span><span class="sh">'</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+            
+            <span class="c1"># Alert if significant drift
+</span>            <span class="k">if</span> <span class="n">ks_pvalue</span> <span class="o">&lt;</span> <span class="mf">0.01</span> <span class="ow">or</span> <span class="n">z_score</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">drift_alerts</span><span class="p">[</span><span class="n">feature</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="sh">'</span><span class="s">z_score</span><span class="sh">'</span><span class="p">:</span> <span class="n">z_score</span><span class="p">,</span>
+                    <span class="sh">'</span><span class="s">ks_pvalue</span><span class="sh">'</span><span class="p">:</span> <span class="n">ks_pvalue</span><span class="p">,</span>
+                    <span class="sh">'</span><span class="s">current_mean</span><span class="sh">'</span><span class="p">:</span> <span class="n">current_mean</span><span class="p">,</span>
+                    <span class="sh">'</span><span class="s">reference_mean</span><span class="sh">'</span><span class="p">:</span> <span class="n">ref_stats</span><span class="p">[</span><span class="sh">'</span><span class="s">mean</span><span class="sh">'</span><span class="p">]</span>
+                <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="n">drift_alerts</span>
+
+
+<span class="c1"># Usage
+</span><span class="n">detector</span> <span class="o">=</span> <span class="nc">DriftDetector</span><span class="p">(</span><span class="n">training_data</span><span class="p">,</span> <span class="n">feature_names</span><span class="p">)</span>
+
+<span class="c1"># Check daily
+</span><span class="n">current_batch</span> <span class="o">=</span> <span class="nf">get_last_24h_features</span><span class="p">()</span>
+<span class="n">drift</span> <span class="o">=</span> <span class="n">detector</span><span class="p">.</span><span class="nf">detect_drift</span><span class="p">(</span><span class="n">current_batch</span><span class="p">,</span> <span class="n">feature_names</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">drift</span><span class="p">:</span>
+    <span class="nf">send_alert</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Drift detected in features: </span><span class="si">{</span><span class="nf">list</span><span class="p">(</span><span class="n">drift</span><span class="p">.</span><span class="nf">keys</span><span class="p">())</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+    <span class="nf">trigger_model_retraining</span><span class="p">()</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="deployment-strategies">Deployment Strategies</h2>
+
+<h3 id="blue-green-deployment">Blue-Green Deployment</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">BlueGreenDeployment</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Zero-downtime deployment with instant rollback
+    </span><span class="sh">"""</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">models</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">blue</span><span class="sh">'</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>   <span class="c1"># Current production
+</span>            <span class="sh">'</span><span class="s">green</span><span class="sh">'</span><span class="p">:</span> <span class="bp">None</span>   <span class="c1"># New version
+</span>        <span class="p">}</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">active</span> <span class="o">=</span> <span class="sh">'</span><span class="s">blue</span><span class="sh">'</span>
+    
+    <span class="k">def</span> <span class="nf">deploy_new_version</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">new_model</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Deploy to green environment
+        </span><span class="sh">"""</span>
+        <span class="n">inactive</span> <span class="o">=</span> <span class="sh">'</span><span class="s">green</span><span class="sh">'</span> <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">active</span> <span class="o">==</span> <span class="sh">'</span><span class="s">blue</span><span class="sh">'</span> <span class="k">else</span> <span class="sh">'</span><span class="s">blue</span><span class="sh">'</span>
+        
+        <span class="c1"># Load new model to inactive environment
+</span>        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Loading new model to </span><span class="si">{</span><span class="n">inactive</span><span class="si">}</span><span class="s">...</span><span class="sh">"</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">[</span><span class="n">inactive</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_model</span>
+        
+        <span class="c1"># Run smoke tests
+</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="nf">smoke_test</span><span class="p">(</span><span class="n">inactive</span><span class="p">):</span>
+            <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Smoke tests failed! Keeping current version.</span><span class="sh">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        
+        <span class="c1"># Switch traffic
+</span>        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Switching traffic from </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">active</span><span class="si">}</span><span class="s"> to </span><span class="si">{</span><span class="n">inactive</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">active</span> <span class="o">=</span> <span class="n">inactive</span>
+        
+        <span class="k">return</span> <span class="bp">True</span>
+    
+    <span class="k">def</span> <span class="nf">smoke_test</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Basic health checks before switching traffic
+        </span><span class="sh">"""</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">[</span><span class="n">environment</span><span class="p">]</span>
+        
+        <span class="c1"># Test with sample inputs
+</span>        <span class="n">test_cases</span> <span class="o">=</span> <span class="nf">load_test_cases</span><span class="p">()</span>
+        
+        <span class="k">for</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">expected_output</span> <span class="ow">in</span> <span class="n">test_cases</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">output</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">False</span>
+            <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Smoke test failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">False</span>
+        
+        <span class="k">return</span> <span class="bp">True</span>
+    
+    <span class="k">def</span> <span class="nf">rollback</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Instant rollback to previous version
+        </span><span class="sh">"""</span>
+        <span class="n">old</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">active</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">active</span> <span class="o">=</span> <span class="sh">'</span><span class="s">green</span><span class="sh">'</span> <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">active</span> <span class="o">==</span> <span class="sh">'</span><span class="s">blue</span><span class="sh">'</span> <span class="k">else</span> <span class="sh">'</span><span class="s">blue</span><span class="sh">'</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Rolled back from </span><span class="si">{</span><span class="n">old</span><span class="si">}</span><span class="s"> to </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">active</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="complete-example-spam-classifier-service">Complete Example: Spam Classifier Service</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">HTTPException</span>
+<span class="kn">from</span> <span class="n">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span>
+<span class="kn">import</span> <span class="n">asyncio</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="nc">FastAPI</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="sh">"</span><span class="s">Spam Classification Service</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="c1"># Initialize components
+</span><span class="n">feature_store</span> <span class="o">=</span> <span class="nc">FeatureStore</span><span class="p">(</span><span class="n">redis_client</span><span class="p">)</span>
+<span class="n">feature_transformer</span> <span class="o">=</span> <span class="nc">FeatureTransformer</span><span class="p">()</span>
+<span class="n">model_server</span> <span class="o">=</span> <span class="nc">ModelServer</span><span class="p">()</span>
+<span class="n">threshold_optimizer</span> <span class="o">=</span> <span class="nc">ThresholdOptimizer</span><span class="p">(</span><span class="n">target_precision</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>
+<span class="n">explainer</span> <span class="o">=</span> <span class="nc">ExplainableClassifier</span><span class="p">(</span><span class="n">model_server</span><span class="p">.</span><span class="n">models</span><span class="p">[</span><span class="sh">'</span><span class="s">v1</span><span class="sh">'</span><span class="p">],</span> <span class="n">feature_names</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">SpamRequest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span>
+
+<span class="k">class</span> <span class="nc">SpamResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">is_spam</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">explanation</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">model_version</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">latency_ms</span><span class="p">:</span> <span class="nb">float</span>
+
+<span class="nd">@app.post</span><span class="p">(</span><span class="sh">"</span><span class="s">/classify</span><span class="sh">"</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">SpamResponse</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">classify_message</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">SpamRequest</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Main classification endpoint
+    </span><span class="sh">"""</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
+    
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># 1. Sanitize input
+</span>        <span class="n">clean_text</span> <span class="o">=</span> <span class="nf">sanitize_text</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">text</span><span class="p">)</span>
+        
+        <span class="c1"># 2. Feature engineering (parallel)
+</span>        <span class="n">user_features_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">create_task</span><span class="p">(</span>
+            <span class="n">asyncio</span><span class="p">.</span><span class="nf">to_thread</span><span class="p">(</span><span class="n">feature_store</span><span class="p">.</span><span class="n">get_user_features</span><span class="p">,</span> <span class="n">request</span><span class="p">.</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">text_features</span> <span class="o">=</span> <span class="n">feature_store</span><span class="p">.</span><span class="nf">extract_text_features</span><span class="p">(</span><span class="n">clean_text</span><span class="p">)</span>
+        <span class="n">user_features</span> <span class="o">=</span> <span class="k">await</span> <span class="n">user_features_task</span>
+        
+        <span class="c1"># 3. Transform features
+</span>        <span class="n">features</span> <span class="o">=</span> <span class="n">feature_transformer</span><span class="p">.</span><span class="nf">transform</span><span class="p">(</span>
+            <span class="n">user_features</span><span class="p">,</span>
+            <span class="n">text_features</span><span class="p">,</span>
+            <span class="n">clean_text</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># 4. Model inference
+</span>        <span class="n">prediction</span><span class="p">,</span> <span class="n">probabilities</span><span class="p">,</span> <span class="n">model_version</span> <span class="o">=</span> <span class="n">model_server</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span>
+            <span class="n">features</span><span class="p">,</span>
+            <span class="n">request</span><span class="p">.</span><span class="n">user_id</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># 5. Apply threshold
+</span>        <span class="n">is_spam</span> <span class="o">=</span> <span class="n">threshold_optimizer</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">probabilities</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">confidence</span> <span class="o">=</span> <span class="nf">float</span><span class="p">(</span><span class="n">probabilities</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        
+        <span class="c1"># 6. Generate explanation
+</span>        <span class="n">explanation</span> <span class="o">=</span> <span class="n">explainer</span><span class="p">.</span><span class="nf">explain</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+        
+        <span class="c1"># 7. Calculate latency
+</span>        <span class="n">latency_ms</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+        
+        <span class="c1"># 8. Log prediction (async)
+</span>        <span class="n">asyncio</span><span class="p">.</span><span class="nf">create_task</span><span class="p">(</span><span class="nf">log_prediction</span><span class="p">(</span>
+            <span class="n">request</span><span class="p">,</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">confidence</span><span class="p">,</span> <span class="n">model_version</span>
+        <span class="p">))</span>
+        
+        <span class="k">return</span> <span class="nc">SpamResponse</span><span class="p">(</span>
+            <span class="n">is_spam</span><span class="o">=</span><span class="nf">bool</span><span class="p">(</span><span class="n">is_spam</span><span class="p">),</span>
+            <span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span>
+            <span class="n">explanation</span><span class="o">=</span><span class="n">explanation</span><span class="p">,</span>
+            <span class="n">model_version</span><span class="o">=</span><span class="n">model_version</span><span class="p">,</span>
+            <span class="n">latency_ms</span><span class="o">=</span><span class="n">latency_ms</span>
+        <span class="p">)</span>
+    
+    <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="c1"># Log error
+</span>        <span class="n">logger</span><span class="p">.</span><span class="nf">error</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Classification error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="sh">"</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="nc">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="sh">"</span><span class="s">Classification failed</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">log_prediction</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">confidence</span><span class="p">,</span> <span class="n">model_version</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Async logging to Kafka
+    </span><span class="sh">"""</span>
+    <span class="n">log_entry</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="sh">'</span><span class="s">timestamp</span><span class="sh">'</span><span class="p">:</span> <span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">().</span><span class="nf">isoformat</span><span class="p">(),</span>
+        <span class="sh">'</span><span class="s">user_id</span><span class="sh">'</span><span class="p">:</span> <span class="n">request</span><span class="p">.</span><span class="n">user_id</span><span class="p">,</span>
+        <span class="sh">'</span><span class="s">text_hash</span><span class="sh">'</span><span class="p">:</span> <span class="n">hashlib</span><span class="p">.</span><span class="nf">sha256</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">text</span><span class="p">.</span><span class="nf">encode</span><span class="p">()).</span><span class="nf">hexdigest</span><span class="p">(),</span>
+        <span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="p">:</span> <span class="nf">int</span><span class="p">(</span><span class="n">prediction</span><span class="p">),</span>
+        <span class="sh">'</span><span class="s">confidence</span><span class="sh">'</span><span class="p">:</span> <span class="nf">float</span><span class="p">(</span><span class="n">confidence</span><span class="p">),</span>
+        <span class="sh">'</span><span class="s">model_version</span><span class="sh">'</span><span class="p">:</span> <span class="n">model_version</span>
+    <span class="p">}</span>
+    
+    <span class="n">kafka_producer</span><span class="p">.</span><span class="nf">send</span><span class="p">(</span><span class="sh">'</span><span class="s">predictions</span><span class="sh">'</span><span class="p">,</span> <span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">(</span><span class="n">log_entry</span><span class="p">))</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="key-takeaways">Key Takeaways</h2>
+
+<p>✅ <strong>Feature stores</strong> centralize feature computation and caching<br />
+✅ <strong>A/B testing</strong> enables safe model rollouts with consistent user assignment<br />
+✅ <strong>Threshold optimization</strong> balances precision/recall for business needs<br />
+✅ <strong>Monitoring</strong> catches drift and performance degradation early<br />
+✅ <strong>Explainability</strong> builds trust and aids debugging
+✅ <strong>Deployment strategies</strong> enable zero-downtime updates and instant rollback</p>
+
+<hr />
+
+<h2 id="further-reading">Further Reading</h2>
+
+<p><strong>Papers:</strong></p>
+<ul>
+  <li><a href="https://developers.google.com/machine-learning/guides/rules-of-ml">Rules of Machine Learning (Google)</a></li>
+  <li><a href="https://www.uber.com/blog/michelangelo-machine-learning-platform/">Michelangelo: Uber’s ML Platform</a></li>
+  <li><a href="https://medium.com/airbnb-engineering/using-machine-learning-to-predict-value-of-homes-on-airbnb-9272d3d4739d">Airbnb’s ML Infrastructure</a></li>
+</ul>
+
+<p><strong>Tools:</strong></p>
+<ul>
+  <li><a href="https://mlflow.org/">MLflow</a> - ML lifecycle management</li>
+  <li><a href="https://feast.dev/">Feast</a> - Feature store</li>
+  <li><a href="https://www.bentoml.com/">BentoML</a> - Model serving</li>
+  <li><a href="https://www.evidentlyai.com/">Evidently</a> - ML monitoring</li>
+</ul>
+
+<p><strong>Books:</strong></p>
+<ul>
+  <li><em>Machine Learning Design Patterns</em> (Lakshmanan et al.)</li>
+  <li><em>Designing Machine Learning Systems</em> (Chip Huyen)</li>
+</ul>
+
+<hr />
+
+<p><strong>Originally published at:</strong> <a href="https://www.arunbaby.com/ml-system-design/0002-classification-pipeline/">arunbaby.com/ml-system-design/0002-classification-pipeline</a></p>
+
+<p><em>If you found this helpful, consider sharing it with others who might benefit.</em></p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#classification" class="page__taxonomy-item p-category" rel="tag">classification</a><span class="sep">, </span>
+    
+      <a href="/tags/#pipeline" class="page__taxonomy-item p-category" rel="tag">pipeline</a><span class="sep">, </span>
+    
+      <a href="/tags/#production-ml" class="page__taxonomy-item p-category" rel="tag">production-ml</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#ml-system-design" class="page__taxonomy-item p-category" rel="tag">ml-system-design</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time class="dt-published" datetime="2025-10-13T14:55:52+05:30">October 13, 2025</time></p>
+
+      </footer>
+
+      <section class="page__share">
+  <h4 class="page__share-title">Share on</h4>
+
+  <a href="https://twitter.com/intent/tweet?via=arunbaby0&text=Classification+Pipeline+Design%20https%3A%2F%2Fwww.arunbaby.com%2Fml-system-design%2F0002-classification-pipeline%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.arunbaby.com%2Fml-system-design%2F0002-classification-pipeline%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https://www.arunbaby.com/ml-system-design/0002-classification-pipeline/" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/ml-system-design/0001-recommendation-system/" class="pagination--pager" title="Recommendation System: Candidate Retrieval">Previous</a>
+    
+    
+      <a href="#" class="pagination--pager disabled">Next</a>
+    
+  </nav>
+
+
+    </div>
+
+    
+  </article>
+
+  
+  
+</div>
+
+      
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';" role="search">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/arunbaby0" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+          <li><a href="https://github.com/arunbaby0" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+          <li><a href="https://www.linkedin.com/in/arunbaby0/" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i> LinkedIn</a></li>
+        
+      
+        
+          <li><a href="https://scholar.google.co.in/citations?user=6fSYWhkAAAAJ" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-graduation-cap" aria-hidden="true"></i> Google Scholar</a></li>
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 1990 - 2143 <a href="https://www.arunbaby.com">Arun Baby</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0JRJPEC9SS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-0JRJPEC9SS', { 'anonymize_ip': false});
+</script>
+
+
+
+
+
+
+
+
+  </body>
+</html>
