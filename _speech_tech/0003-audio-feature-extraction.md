@@ -1802,6 +1802,18 @@ class TorchAudioExtractor:
             hop_length=160,
             n_mels=n_mels
         )
+        
+        # Amplitude → dB conversion
+        self.db_transform = torchaudio.transforms.AmplitudeToDB()
+    
+    def to(self, device):
+        """
+        Move transforms to a device (CPU/GPU) and return self.
+        """
+        self.mfcc_transform = self.mfcc_transform.to(device)
+        self.mel_transform = self.mel_transform.to(device)
+        self.db_transform = self.db_transform.to(device)
+        return self
     
     def extract(self, audio: torch.Tensor) -> Dict[str, torch.Tensor]:
         """
@@ -1819,7 +1831,7 @@ class TorchAudioExtractor:
         # Extract
         mfccs = self.mfcc_transform(audio)  # (batch, n_mfcc, time)
         mel = self.mel_transform(audio)     # (batch, n_mels, time)
-        mel_db = torchaudio.transforms.AmplitudeToDB()(mel)
+        mel_db = self.db_transform(mel)
         
         return {
             'mfcc': mfccs,
