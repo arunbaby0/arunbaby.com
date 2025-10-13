@@ -24,26 +24,26 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Arun Baby">
 <meta property="og:title" content="Streaming ASR Architecture">
-<meta property="og:url" content="https://www.arunbaby.com/speech-tech/0001-streaming-asr/">
+<meta property="og:url" content="http://localhost:4005/speech-tech/0001-streaming-asr/">
 
 
   <meta property="og:description" content="Why batch ASR won’t work for voice assistants, and how streaming models transcribe speech as you speak in under 200ms.">
 
 
 
-  <meta property="og:image" content="https://www.arunbaby.com/assets/images/profile-photo.png">
+  <meta property="og:image" content="http://localhost:4005/assets/images/profile-photo.png">
 
 
 
   <meta name="twitter:site" content="@arunbaby0">
   <meta name="twitter:title" content="Streaming ASR Architecture">
   <meta name="twitter:description" content="Why batch ASR won’t work for voice assistants, and how streaming models transcribe speech as you speak in under 200ms.">
-  <meta name="twitter:url" content="https://www.arunbaby.com/speech-tech/0001-streaming-asr/">
+  <meta name="twitter:url" content="http://localhost:4005/speech-tech/0001-streaming-asr/">
 
   
     <meta name="twitter:card" content="summary">
     
-      <meta name="twitter:image" content="https://www.arunbaby.com/assets/images/profile-photo.png">
+      <meta name="twitter:image" content="http://localhost:4005/assets/images/profile-photo.png">
     
   
 
@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-10-13T15:50:12+05:30">
+  <meta property="article:published_time" content="2025-10-13T17:02:06+05:30">
 
 
 
@@ -62,7 +62,7 @@
   
 
 
-<link rel="canonical" href="https://www.arunbaby.com/speech-tech/0001-streaming-asr/">
+<link rel="canonical" href="http://localhost:4005/speech-tech/0001-streaming-asr/">
 
 
 
@@ -199,7 +199,7 @@
 
   
     <div class="author__avatar">
-      <a href="https://www.arunbaby.com/">
+      <a href="http://localhost:4005/">
         <img src="/assets/images/profile-photo.png" alt="Arun Baby" itemprop="image" class="u-photo">
       </a>
     </div>
@@ -207,7 +207,7 @@
 
   <div class="author__content">
     <h3 class="author__name p-name" itemprop="name">
-      <a class="u-url" rel="me" href="https://www.arunbaby.com/" itemprop="url">Arun Baby</a>
+      <a class="u-url" rel="me" href="http://localhost:4005/" itemprop="url">Arun Baby</a>
     </h3>
     
       <div class="author__bio p-note" itemprop="description">
@@ -313,14 +313,14 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Streaming ASR Architecture">
     <meta itemprop="description" content="Why batch ASR won’t work for voice assistants, and how streaming models transcribe speech as you speak in under 200ms.">
-    <meta itemprop="datePublished" content="2025-10-13T15:50:12+05:30">
+    <meta itemprop="datePublished" content="2025-10-13T17:02:06+05:30">
     
 
     <div class="page__inner-wrap">
       
         <header>
           <h1 id="page-title" class="page__title" itemprop="headline">
-            <a href="https://www.arunbaby.com/speech-tech/0001-streaming-asr/" itemprop="url">Streaming ASR Architecture
+            <a href="http://localhost:4005/speech-tech/0001-streaming-asr/" itemprop="url">Streaming ASR Architecture
 </a>
           </h1>
           
@@ -337,7 +337,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          22 minute read
+          23 minute read
         
       </span>
     
@@ -1029,11 +1029,15 @@ Transcription Output
         <span class="c1"># Apply attention with limited context
 </span>        <span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">shape</span>
         
-        <span class="c1"># Create attention mask: can attend to left context + right context
-</span>        <span class="n">mask</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">create_streaming_mask</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">right_context</span><span class="p">)</span>
+        <span class="c1"># Create attention mask for causal attention with limited right context
+</span>        <span class="c1"># PyTorch expects attn_mask shape (target_len, source_len)
+</span>        <span class="n">mask</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">create_streaming_mask</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">right_context</span><span class="p">).</span><span class="nf">to</span><span class="p">(</span><span class="n">x</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
         
         <span class="c1"># Attention
-</span>        <span class="n">x_att</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">attention</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">attn_mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
+</span>        <span class="c1"># nn.MultiheadAttention expects (time, batch, dim)
+</span>        <span class="n">x_tbf</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="nf">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">x_att_tbf</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">attention</span><span class="p">(</span><span class="n">x_tbf</span><span class="p">,</span> <span class="n">x_tbf</span><span class="p">,</span> <span class="n">x_tbf</span><span class="p">,</span> <span class="n">attn_mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
+        <span class="n">x_att</span> <span class="o">=</span> <span class="n">x_att_tbf</span><span class="p">.</span><span class="nf">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         
         <span class="c1"># Cache for next chunk
 </span>        <span class="n">new_cache</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="o">-</span><span class="n">self</span><span class="p">.</span><span class="n">left_context</span><span class="p">:,</span> <span class="p">:]</span>
@@ -1050,10 +1054,13 @@ Transcription Output
         - All past positions
         - Up to right_context future positions
         </span><span class="sh">"""</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">triu</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">ones</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">),</span> <span class="n">diagonal</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">mask</span><span class="p">[:,</span> <span class="p">:</span><span class="n">right_context</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Allow right context
-</span>        <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="p">.</span><span class="nf">bool</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">mask</span>
+        <span class="c1"># Start with upper-triangular ones (disallow future)
+</span>        <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">triu</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">ones</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">),</span> <span class="n">diagonal</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># Allow limited lookahead: zero-out first right_context super-diagonals
+</span>        <span class="k">if</span> <span class="n">right_context</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">triu</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">ones</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">),</span> <span class="n">diagonal</span><span class="o">=</span><span class="mi">1</span><span class="o">+</span><span class="n">right_context</span><span class="p">)</span>
+        <span class="c1"># Convert to bool mask where True = disallow
+</span>        <span class="k">return</span> <span class="n">mask</span><span class="p">.</span><span class="nf">bool</span><span class="p">()</span>
 </code></pre></div></div>
 
 <hr />
@@ -1713,18 +1720,18 @@ Total: ~1,500 GPUs globally
 
         
 
-  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time class="dt-published" datetime="2025-10-13T15:50:12+05:30">October 13, 2025</time></p>
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time class="dt-published" datetime="2025-10-13T17:02:06+05:30">October 13, 2025</time></p>
 
       </footer>
 
       <section class="page__share">
   <h4 class="page__share-title">Share on</h4>
 
-  <a href="https://twitter.com/intent/tweet?via=arunbaby0&text=Streaming+ASR+Architecture%20https%3A%2F%2Fwww.arunbaby.com%2Fspeech-tech%2F0001-streaming-asr%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+  <a href="https://twitter.com/intent/tweet?via=arunbaby0&text=Streaming+ASR+Architecture%20http%3A%2F%2Flocalhost%3A4005%2Fspeech-tech%2F0001-streaming-asr%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.arunbaby.com%2Fspeech-tech%2F0001-streaming-asr%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A4005%2Fspeech-tech%2F0001-streaming-asr%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https://www.arunbaby.com/speech-tech/0001-streaming-asr/" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=http://localhost:4005/speech-tech/0001-streaming-asr/" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
 </section>
 
 
@@ -1799,7 +1806,7 @@ Total: ~1,500 GPUs globally
   </ul>
 </div>
 
-<div class="page__footer-copyright">&copy; 1990 - 2143 <a href="https://www.arunbaby.com">Arun Baby</a>.</div>
+<div class="page__footer-copyright">&copy; 1990 - 2143 <a href="http://localhost:4005">Arun Baby</a>.</div>
 
       </footer>
     </div>
@@ -1813,21 +1820,6 @@ Total: ~1,500 GPUs globally
 <script src="/assets/js/lunr/lunr.min.js"></script>
 <script src="/assets/js/lunr/lunr-store.js"></script>
 <script src="/assets/js/lunr/lunr-en.js"></script>
-
-
-
-
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-0JRJPEC9SS"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-0JRJPEC9SS', { 'anonymize_ip': false});
-</script>
-
-
 
 
 
