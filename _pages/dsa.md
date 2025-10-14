@@ -36,9 +36,10 @@ Each problem includes:
 
 **Trees & Graphs:**
 - [Binary Tree Traversal](/dsa/0007-binary-tree-traversal/)
+- [Validate Binary Search Tree](/dsa/0008-validate-binary-search-tree/)
 
 **Sorting & Searching:**
-- Coming soon...
+- [Binary Search](/dsa/0009-binary-search/)
 
 **String Manipulation:**
 - Coming soon...

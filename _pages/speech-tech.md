@@ -32,6 +32,10 @@ Each post includes:
 - [Voice Activity Detection](/speech-tech/0004-voice-activity-detection/)
 - [Audio Preprocessing & Signal Processing](/speech-tech/0007-audio-preprocessing/)
 
+**Real-time Processing:**
+- [Streaming Speech Pipeline](/speech-tech/0008-streaming-speech-pipeline/)
+- [Real-time Keyword Spotting](/speech-tech/0009-keyword-spotting/)
+
 **Text-to-Speech (TTS):**
 - [TTS System Fundamentals](/speech-tech/0006-text-to-speech-basics/)
 

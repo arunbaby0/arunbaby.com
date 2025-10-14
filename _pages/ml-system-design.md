@@ -42,6 +42,12 @@ Each design includes:
 **Feature Engineering:**
 - [Feature Engineering at Scale](/ml-system-design/0007-feature-engineering/)
 
+**Model Deployment:**
+- [Model Serving Architecture](/ml-system-design/0008-model-serving-architecture/)
+
+**Model Training:**
+- [Online Learning Systems](/ml-system-design/0009-online-learning-systems/)
+
 **Search & Ranking:**
 - Coming soon...
 
