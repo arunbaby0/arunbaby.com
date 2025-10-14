@@ -30,6 +30,7 @@ Each post includes:
 **Audio Processing:**
 - [Audio Feature Extraction](/speech-tech/0003-audio-feature-extraction/)
 - [Voice Activity Detection](/speech-tech/0004-voice-activity-detection/)
+- [Audio Preprocessing & Signal Processing](/speech-tech/0007-audio-preprocessing/)
 
 **Text-to-Speech (TTS):**
 - [TTS System Fundamentals](/speech-tech/0006-text-to-speech-basics/)

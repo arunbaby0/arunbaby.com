@@ -17,7 +17,7 @@ A structured 60-day learning journey through three interconnected domains of com
 
 ## Progress Tracker
 
-**Posts Completed:** 18 / 180 (10.0%)
+**Posts Completed:** 21 / 180 (11.7%)
 
 **Last Updated:** {{ site.time | date: '%B %d, %Y' }}
 
@@ -28,7 +28,7 @@ A structured 60-day learning journey through three interconnected domains of com
 - [x] **#4:** [Best Time to Buy/Sell Stock](/dsa/0004-best-time-buy-sell-stock/) + [A/B Testing Systems](/ml-system-design/0004-ab-testing-systems/) + [Voice Activity Detection](/speech-tech/0004-voice-activity-detection/)
 - [x] **#5:** [Maximum Subarray](/dsa/0005-maximum-subarray/) + [Batch vs Real-Time Inference](/ml-system-design/0005-batch-realtime-inference/) + [Speaker Recognition](/speech-tech/0005-speaker-recognition/)
 - [x] **#6:** [Climbing Stairs](/dsa/0006-climbing-stairs/) + [Model Evaluation Metrics](/ml-system-design/0006-model-evaluation-metrics/) + [TTS System Fundamentals](/speech-tech/0006-text-to-speech-basics/)
-- [ ] **#7:** Binary Tree Traversal + Feature Engineering + Audio Preprocessing
+- [x] **#7:** [Binary Tree Traversal](/dsa/0007-binary-tree-traversal/) + [Feature Engineering](/ml-system-design/0007-feature-engineering/) + [Audio Preprocessing](/speech-tech/0007-audio-preprocessing/)
 
 ### Week 2-9: Coming Soon
 Topic mapping in progress...

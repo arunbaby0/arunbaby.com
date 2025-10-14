@@ -39,6 +39,9 @@ Each design includes:
 **Model Evaluation:**
 - [Model Evaluation Metrics](/ml-system-design/0006-model-evaluation-metrics/)
 
+**Feature Engineering:**
+- [Feature Engineering at Scale](/ml-system-design/0007-feature-engineering/)
+
 **Search & Ranking:**
 - Coming soon...
 

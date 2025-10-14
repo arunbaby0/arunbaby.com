@@ -35,7 +35,7 @@ Each problem includes:
 - [Climbing Stairs](/dsa/0006-climbing-stairs/)
 
 **Trees & Graphs:**
-- Coming soon...
+- [Binary Tree Traversal](/dsa/0007-binary-tree-traversal/)
 
 **Sorting & Searching:**
 - Coming soon...
