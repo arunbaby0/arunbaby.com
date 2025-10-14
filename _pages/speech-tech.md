@@ -32,7 +32,7 @@ Each post includes:
 - [Voice Activity Detection](/speech-tech/0004-voice-activity-detection/)
 
 **Text-to-Speech (TTS):**
-- Coming soon...
+- [TTS System Fundamentals](/speech-tech/0006-text-to-speech-basics/)
 
 **Speaker Technology:**
 - [Speaker Recognition & Verification](/speech-tech/0005-speaker-recognition/)

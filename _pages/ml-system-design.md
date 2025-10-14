@@ -36,6 +36,9 @@ Each design includes:
 **Model Serving:**
 - [Batch vs Real-Time Inference](/ml-system-design/0005-batch-realtime-inference/)
 
+**Model Evaluation:**
+- [Model Evaluation Metrics](/ml-system-design/0006-model-evaluation-metrics/)
+
 **Search & Ranking:**
 - Coming soon...
 
