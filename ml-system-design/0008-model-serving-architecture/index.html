@@ -1,0 +1,2166 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.26.2 by Michael Rose
+  Copyright 2013-2024 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+
+<html lang="en-US" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Model Serving Architecture - Arun Baby</title>
+<meta name="description" content="Design production-grade model serving systems that deliver predictions at scale with low latency and high reliability.">
+
+
+  <meta name="author" content="Arun Baby">
+  
+  <meta property="article:author" content="Arun Baby">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Arun Baby">
+<meta property="og:title" content="Model Serving Architecture">
+<meta property="og:url" content="https://www.arunbaby.com/ml-system-design/0008-model-serving-architecture/">
+
+
+  <meta property="og:description" content="Design production-grade model serving systems that deliver predictions at scale with low latency and high reliability.">
+
+
+
+  <meta property="og:image" content="https://www.arunbaby.com/assets/images/profile-photo.png">
+
+
+
+  <meta name="twitter:site" content="@arunbaby0">
+  <meta name="twitter:title" content="Model Serving Architecture">
+  <meta name="twitter:description" content="Design production-grade model serving systems that deliver predictions at scale with low latency and high reliability.">
+  <meta name="twitter:url" content="https://www.arunbaby.com/ml-system-design/0008-model-serving-architecture/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+      <meta name="twitter:image" content="https://www.arunbaby.com/assets/images/profile-photo.png">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2025-10-14T22:37:37+05:30">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://www.arunbaby.com/ml-system-design/0008-model-serving-architecture/">
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Arun Baby Feed">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+  
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@latest/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@latest/css/all.min.css"></noscript>
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single" dir="ltr">
+    <nav class="skip-links">
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+           
+          <span class="site-subtitle">Arun Baby</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a
+                href="/about/"
+                
+                
+              >About</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/dsa/"
+                
+                
+              >DSA</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/ml-system-design/"
+                
+                
+              >ML Systems</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/speech-tech/"
+                
+                
+              >Speech Tech</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/publications/"
+                
+                
+              >Publications</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/statuses/"
+                
+                
+              >Statuses</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/contact/"
+                
+                
+              >Contact</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <i class="fas fa-search"></i>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person" class="h-card">
+
+  
+    <div class="author__avatar">
+      <a href="https://www.arunbaby.com/">
+        <img src="/assets/images/profile-photo.png" alt="Arun Baby" itemprop="image" class="u-photo">
+      </a>
+    </div>
+  
+
+  <div class="author__content">
+    <h3 class="author__name p-name" itemprop="name">
+      <a class="u-url" rel="me" href="https://www.arunbaby.com/" itemprop="url">Arun Baby</a>
+    </h3>
+    
+      <div class="author__bio p-note" itemprop="description">
+        <p>Becoming <strong>Unlabelable</strong></p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name" class="p-locality">India</span>
+        </li>
+      
+
+      
+        
+          
+            <li><a href="https://twitter.com/arunbaby0" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/arunbaby0" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+          
+            <li><a href="https://www.linkedin.com/in/arunbaby0/" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span class="label">LinkedIn</span></a></li>
+          
+        
+          
+            <li><a href="https://scholar.google.co.in/citations?user=6fSYWhkAAAAJ" rel="nofollow noopener noreferrer me" itemprop="sameAs"><i class="fas fa-fw fa-graduation-cap" aria-hidden="true"></i><span class="label">Google Scholar</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer me">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Model Serving Architecture">
+    <meta itemprop="description" content="Design production-grade model serving systems that deliver predictions at scale with low latency and high reliability.">
+    <meta itemprop="datePublished" content="2025-10-14T22:37:37+05:30">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">
+            <a href="https://www.arunbaby.com/ml-system-design/0008-model-serving-architecture/" itemprop="url">Model Serving Architecture
+</a>
+          </h1>
+          
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          22 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
+              <ul class="toc__menu"><li><a href="#introduction">Introduction</a></li><li><a href="#model-serving-architecture-overview">Model Serving Architecture Overview</a></li><li><a href="#serving-patterns">Serving Patterns</a><ul><li><a href="#pattern-1-rest-api-serving">Pattern 1: REST API Serving</a></li><li><a href="#pattern-2-grpc-serving">Pattern 2: gRPC Serving</a></li><li><a href="#pattern-3-batch-serving">Pattern 3: Batch Serving</a></li></ul></li><li><a href="#model-loading-strategies">Model Loading Strategies</a><ul><li><a href="#strategy-1-eager-loading">Strategy 1: Eager Loading</a></li><li><a href="#strategy-2-lazy-loading">Strategy 2: Lazy Loading</a></li><li><a href="#strategy-3-model-caching-with-expiration">Strategy 3: Model Caching with Expiration</a></li></ul></li><li><a href="#model-versioning--ab-testing">Model Versioning &amp; A/B Testing</a><ul><li><a href="#multi-model-serving">Multi-Model Serving</a></li></ul></li><li><a href="#optimization-techniques">Optimization Techniques</a><ul><li><a href="#1-model-quantization">1. Model Quantization</a></li><li><a href="#2-batch-inference">2. Batch Inference</a></li></ul></li><li><a href="#monitoring--observability">Monitoring &amp; Observability</a><ul><li><a href="#prediction-logging">Prediction Logging</a></li></ul></li><li><a href="#connection-to-bst-validation-day-8-dsa">Connection to BST Validation (Day 8 DSA)</a></li><li><a href="#advanced-serving-patterns">Advanced Serving Patterns</a><ul><li><a href="#1-shadow-mode-deployment">1. Shadow Mode Deployment</a></li><li><a href="#2-canary-deployment">2. Canary Deployment</a></li><li><a href="#3-multi-armed-bandit-serving">3. Multi-Armed Bandit Serving</a></li></ul></li><li><a href="#infrastructure--deployment">Infrastructure &amp; Deployment</a><ul><li><a href="#containerized-serving-with-docker">Containerized Serving with Docker</a></li><li><a href="#kubernetes-deployment">Kubernetes Deployment</a></li></ul></li><li><a href="#feature-store-integration">Feature Store Integration</a></li><li><a href="#cost-optimization">Cost Optimization</a><ul><li><a href="#1-request-batching-for-cost-reduction">1. Request Batching for Cost Reduction</a></li><li><a href="#2-model-compression-for-cheaper-hosting">2. Model Compression for Cheaper Hosting</a></li></ul></li><li><a href="#troubleshooting--debugging">Troubleshooting &amp; Debugging</a><ul><li><a href="#prediction-debugging">Prediction Debugging</a></li></ul></li><li><a href="#key-takeaways">Key Takeaways</a></li></ul>
+            </nav>
+          </aside>
+        
+        <p><strong>Design production-grade model serving systems that deliver predictions at scale with low latency and high reliability.</strong></p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p><strong>Model serving</strong> is the process of deploying ML models to production and making predictions available to end users or downstream systems.</p>
+
+<p><strong>Why it’s critical:</strong></p>
+<ul>
+  <li><strong>Bridge training and production:</strong> Trained models are useless without serving</li>
+  <li><strong>Performance matters:</strong> Latency directly impacts user experience</li>
+  <li><strong>Scale requirements:</strong> Handle millions of requests per second</li>
+  <li><strong>Reliability:</strong> Downtime = lost revenue</li>
+</ul>
+
+<p><strong>Key challenges:</strong></p>
+<ul>
+  <li>Low latency (&lt; 100ms for many applications)</li>
+  <li>High throughput (handle traffic spikes)</li>
+  <li>Model versioning and rollback</li>
+  <li>A/B testing and gradual rollouts</li>
+  <li>Monitoring and debugging</li>
+</ul>
+
+<hr />
+
+<h2 id="model-serving-architecture-overview">Model Serving Architecture Overview</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────┐
+│                     Client Applications                  │
+│          (Web, Mobile, Backend Services)                 │
+└────────────────────┬────────────────────────────────────┘
+                     │ HTTP/gRPC requests
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│                    Load Balancer                         │
+│            (nginx, ALB, GCP Load Balancer)              │
+└────────────────────┬────────────────────────────────────┘
+                     │
+          ┌──────────┼──────────┐
+          ▼          ▼          ▼
+    ┌─────────┐ ┌─────────┐ ┌─────────┐
+    │ Serving │ │ Serving │ │ Serving │
+    │ Instance│ │ Instance│ │ Instance│
+    │    1    │ │    2    │ │    N    │
+    └────┬────┘ └────┬────┘ └────┬────┘
+         │           │           │
+         ▼           ▼           ▼
+    ┌────────────────────────────────┐
+    │      Model Repository          │
+    │   (S3, GCS, Model Registry)    │
+    └────────────────────────────────┘
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="serving-patterns">Serving Patterns</h2>
+
+<h3 id="pattern-1-rest-api-serving">Pattern 1: REST API Serving</h3>
+
+<p><strong>Best for:</strong> Web applications, microservices</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">HTTPException</span>
+<span class="kn">from</span> <span class="n">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span>
+<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="n">joblib</span>
+<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="kn">import</span> <span class="n">time</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="nc">FastAPI</span><span class="p">()</span>
+
+<span class="c1"># Load model on startup
+</span><span class="n">model</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="nd">@app.on_event</span><span class="p">(</span><span class="sh">"</span><span class="s">startup</span><span class="sh">"</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">load_model</span><span class="p">():</span>
+    <span class="sh">"""</span><span class="s">Load model when server starts</span><span class="sh">"""</span>
+    <span class="k">global</span> <span class="n">model</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">joblib</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sh">'</span><span class="s">model.pkl</span><span class="sh">'</span><span class="p">)</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Model loaded successfully</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">PredictionRequest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">Request schema</span><span class="sh">"""</span>
+    <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    
+<span class="k">class</span> <span class="nc">PredictionResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">Response schema</span><span class="sh">"""</span>
+    <span class="n">prediction</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">model_version</span><span class="p">:</span> <span class="nb">str</span>
+
+<span class="nd">@app.post</span><span class="p">(</span><span class="sh">"</span><span class="s">/predict</span><span class="sh">"</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">PredictionResponse</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">PredictionRequest</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Make prediction
+    
+    Returns: Prediction with confidence
+    </span><span class="sh">"""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Convert to numpy array
+</span>        <span class="n">features</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="n">request</span><span class="p">.</span><span class="n">features</span><span class="p">])</span>
+        
+        <span class="c1"># Make prediction
+</span>        <span class="n">prediction</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="c1"># Get confidence (if available)
+</span>        <span class="k">if</span> <span class="nf">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="sh">'</span><span class="s">predict_proba</span><span class="sh">'</span><span class="p">):</span>
+            <span class="n">proba</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">predict_proba</span><span class="p">(</span><span class="n">features</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">confidence</span> <span class="o">=</span> <span class="nf">float</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="n">proba</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">confidence</span> <span class="o">=</span> <span class="mf">1.0</span>
+        
+        <span class="k">return</span> <span class="nc">PredictionResponse</span><span class="p">(</span>
+            <span class="n">prediction</span><span class="o">=</span><span class="nf">float</span><span class="p">(</span><span class="n">prediction</span><span class="p">),</span>
+            <span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span>
+            <span class="n">model_version</span><span class="o">=</span><span class="sh">"</span><span class="s">v1.0</span><span class="sh">"</span>
+        <span class="p">)</span>
+    
+    <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="nc">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="nf">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+
+<span class="nd">@app.get</span><span class="p">(</span><span class="sh">"</span><span class="s">/health</span><span class="sh">"</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">health_check</span><span class="p">():</span>
+    <span class="sh">"""</span><span class="s">Health check endpoint</span><span class="sh">"""</span>
+    <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="nc">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">503</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="sh">"</span><span class="s">Model not loaded</span><span class="sh">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="sh">"</span><span class="s">status</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">healthy</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">model_loaded</span><span class="sh">"</span><span class="p">:</span> <span class="bp">True</span><span class="p">}</span>
+
+<span class="nd">@app.get</span><span class="p">(</span><span class="sh">"</span><span class="s">/ready</span><span class="sh">"</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">readiness_check</span><span class="p">():</span>
+    <span class="sh">"""</span><span class="s">Readiness probe endpoint</span><span class="sh">"""</span>
+    <span class="c1"># Optionally include lightweight self-test
+</span>    <span class="k">return</span> <span class="p">{</span><span class="sh">"</span><span class="s">ready</span><span class="sh">"</span><span class="p">:</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">}</span>
+
+<span class="c1"># Run with: uvicorn app:app --host 0.0.0.0 --port 8000
+</span></code></pre></div></div>
+
+<p><strong>Usage:</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-X</span> POST <span class="s2">"http://localhost:8000/predict"</span> <span class="se">\</span>
+  <span class="nt">-H</span> <span class="s2">"Content-Type: application/json"</span> <span class="se">\</span>
+  <span class="nt">-d</span> <span class="s1">'{"features": [1.0, 2.0, 3.0, 4.0]}'</span>
+</code></pre></div></div>
+
+<h3 id="pattern-2-grpc-serving">Pattern 2: gRPC Serving</h3>
+
+<p><strong>Best for:</strong> High-performance, low-latency applications</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># prediction.proto
+</span><span class="sh">"""</span><span class="s">
+syntax = </span><span class="sh">"</span><span class="s">proto3</span><span class="sh">"</span><span class="s">;
+
+service PredictionService {
+  rpc Predict (PredictRequest) returns (PredictResponse);
+}
+
+message PredictRequest {
+  repeated float features = 1;
+}
+
+message PredictResponse {
+  float prediction = 1;
+  float confidence = 2;
+}
+</span><span class="sh">"""</span>
+
+<span class="c1"># server.py
+</span><span class="kn">import</span> <span class="n">grpc</span>
+<span class="kn">from</span> <span class="n">concurrent</span> <span class="kn">import</span> <span class="n">futures</span>
+<span class="kn">import</span> <span class="n">prediction_pb2</span>
+<span class="kn">import</span> <span class="n">prediction_pb2_grpc</span>
+<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="n">joblib</span>
+
+<span class="k">class</span> <span class="nc">PredictionServicer</span><span class="p">(</span><span class="n">prediction_pb2_grpc</span><span class="p">.</span><span class="n">PredictionServiceServicer</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">gRPC Prediction Service</span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">joblib</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sh">'</span><span class="s">model.pkl</span><span class="sh">'</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">Predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Handle prediction request</span><span class="sh">"""</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Convert features
+</span>            <span class="n">features</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="nf">list</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">features</span><span class="p">)])</span>
+            
+            <span class="c1"># Predict
+</span>            <span class="n">prediction</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            
+            <span class="c1"># Get confidence
+</span>            <span class="k">if</span> <span class="nf">hasattr</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">,</span> <span class="sh">'</span><span class="s">predict_proba</span><span class="sh">'</span><span class="p">):</span>
+                <span class="n">proba</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict_proba</span><span class="p">(</span><span class="n">features</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">confidence</span> <span class="o">=</span> <span class="nf">float</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="n">proba</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">confidence</span> <span class="o">=</span> <span class="mf">1.0</span>
+            
+            <span class="k">return</span> <span class="n">prediction_pb2</span><span class="p">.</span><span class="nc">PredictResponse</span><span class="p">(</span>
+                <span class="n">prediction</span><span class="o">=</span><span class="nf">float</span><span class="p">(</span><span class="n">prediction</span><span class="p">),</span>
+                <span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span>
+            <span class="p">)</span>
+        
+        <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">context</span><span class="p">.</span><span class="nf">set_code</span><span class="p">(</span><span class="n">grpc</span><span class="p">.</span><span class="n">StatusCode</span><span class="p">.</span><span class="n">INTERNAL</span><span class="p">)</span>
+            <span class="n">context</span><span class="p">.</span><span class="nf">set_details</span><span class="p">(</span><span class="nf">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">prediction_pb2</span><span class="p">.</span><span class="nc">PredictResponse</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">serve</span><span class="p">():</span>
+    <span class="sh">"""</span><span class="s">Start gRPC server</span><span class="sh">"""</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">grpc</span><span class="p">.</span><span class="nf">server</span><span class="p">(</span><span class="n">futures</span><span class="p">.</span><span class="nc">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">))</span>
+    <span class="n">prediction_pb2_grpc</span><span class="p">.</span><span class="nf">add_PredictionServiceServicer_to_server</span><span class="p">(</span>
+        <span class="nc">PredictionServicer</span><span class="p">(),</span> <span class="n">server</span>
+    <span class="p">)</span>
+    <span class="n">server</span><span class="p">.</span><span class="nf">add_insecure_port</span><span class="p">(</span><span class="sh">'</span><span class="s">[::]:50051</span><span class="sh">'</span><span class="p">)</span>
+    <span class="n">server</span><span class="p">.</span><span class="nf">start</span><span class="p">()</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">gRPC server started on port 50051</span><span class="sh">"</span><span class="p">)</span>
+    <span class="n">server</span><span class="p">.</span><span class="nf">wait_for_termination</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="sh">'</span><span class="s">__main__</span><span class="sh">'</span><span class="p">:</span>
+    <span class="nf">serve</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><strong>Performance comparison:</strong></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Metric          REST API    gRPC
+───────────────────────────────────
+Latency (p50)   15ms       5ms
+Latency (p99)   50ms       20ms
+Throughput      5K rps     15K rps
+Payload size    JSON       Protocol Buffers (smaller)
+</code></pre></div></div>
+
+<h3 id="pattern-3-batch-serving">Pattern 3: Batch Serving</h3>
+
+<p><strong>Best for:</strong> Offline predictions, large-scale inference</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">from</span> <span class="n">multiprocessing</span> <span class="kn">import</span> <span class="n">Pool</span>
+<span class="kn">import</span> <span class="n">joblib</span>
+
+<span class="k">class</span> <span class="nc">BatchPredictor</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Batch prediction system
+    
+    Efficient for processing large datasets
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">n_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">joblib</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">n_workers</span> <span class="o">=</span> <span class="n">n_workers</span>
+    
+    <span class="k">def</span> <span class="nf">predict_batch</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features_df</span><span class="p">:</span> <span class="n">pd</span><span class="p">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Predict on large dataset
+        
+        Args:
+            features_df: DataFrame with features
+        
+        Returns:
+            Array of predictions
+        </span><span class="sh">"""</span>
+        <span class="n">n_samples</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">features_df</span><span class="p">)</span>
+        <span class="n">n_batches</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_samples</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">batch_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">self</span><span class="p">.</span><span class="n">batch_size</span>
+        
+        <span class="n">predictions</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">n_batches</span><span class="p">):</span>
+            <span class="n">start_idx</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">batch_size</span>
+            <span class="n">end_idx</span> <span class="o">=</span> <span class="nf">min</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">)</span>
+            
+            <span class="n">batch</span> <span class="o">=</span> <span class="n">features_df</span><span class="p">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">start_idx</span><span class="p">:</span><span class="n">end_idx</span><span class="p">].</span><span class="n">values</span>
+            <span class="n">batch_pred</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+            <span class="n">predictions</span><span class="p">.</span><span class="nf">extend</span><span class="p">(</span><span class="n">batch_pred</span><span class="p">)</span>
+            
+            <span class="nf">if </span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Processed </span><span class="si">{</span><span class="n">end_idx</span><span class="si">}</span><span class="s">/</span><span class="si">{</span><span class="n">n_samples</span><span class="si">}</span><span class="s"> samples</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">predict_parallel</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features_df</span><span class="p">:</span> <span class="n">pd</span><span class="p">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Parallel batch prediction
+        
+        Splits data across multiple processes
+        </span><span class="sh">"""</span>
+        <span class="c1"># Split data into chunks
+</span>        <span class="n">chunk_size</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">features_df</span><span class="p">)</span> <span class="o">//</span> <span class="n">self</span><span class="p">.</span><span class="n">n_workers</span>
+        <span class="n">chunks</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">features_df</span><span class="p">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">chunk_size</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">features_df</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">)</span>
+        <span class="p">]</span>
+        
+        <span class="c1"># Process in parallel
+</span>        <span class="k">with</span> <span class="nc">Pool</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">n_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">pool</span><span class="p">.</span><span class="nf">map</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">_predict_chunk</span><span class="p">,</span> <span class="n">chunks</span><span class="p">)</span>
+        
+        <span class="c1"># Combine results
+</span>        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">concatenate</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">_predict_chunk</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">chunk_df</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Predict on single chunk</span><span class="sh">"""</span>
+        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">chunk_df</span><span class="p">.</span><span class="n">values</span><span class="p">)</span>
+
+<span class="c1"># Usage
+</span><span class="n">predictor</span> <span class="o">=</span> <span class="nc">BatchPredictor</span><span class="p">(</span><span class="sh">'</span><span class="s">model.pkl</span><span class="sh">'</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">n_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+<span class="c1"># Load large dataset
+</span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="nf">read_parquet</span><span class="p">(</span><span class="sh">'</span><span class="s">features.parquet</span><span class="sh">'</span><span class="p">)</span>
+
+<span class="c1"># Predict
+</span><span class="n">predictions</span> <span class="o">=</span> <span class="n">predictor</span><span class="p">.</span><span class="nf">predict_parallel</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># Save results
+</span><span class="n">results_df</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="nf">copy</span><span class="p">()</span>
+<span class="n">results_df</span><span class="p">[</span><span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">predictions</span>
+<span class="n">results_df</span><span class="p">.</span><span class="nf">to_parquet</span><span class="p">(</span><span class="sh">'</span><span class="s">predictions.parquet</span><span class="sh">'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="model-loading-strategies">Model Loading Strategies</h2>
+
+<h3 id="strategy-1-eager-loading">Strategy 1: Eager Loading</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">EagerModelServer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Load model on server startup
+    
+    Pros: Fast predictions, simple
+    Cons: High startup time, high memory
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">):</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Loading model...</span><span class="sh">"</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">joblib</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Model loaded!</span><span class="sh">"</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Make prediction (fast)</span><span class="sh">"""</span>
+        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="strategy-2-lazy-loading">Strategy 2: Lazy Loading</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">LazyModelServer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Load model on first request
+    
+    Pros: Fast startup
+    Cons: First request is slow
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model_path</span> <span class="o">=</span> <span class="n">model_path</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">None</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Load model if needed, then predict</span><span class="sh">"""</span>
+        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Loading model on first request...</span><span class="sh">"</span><span class="p">)</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">joblib</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">model_path</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="strategy-3-model-caching-with-expiration">Strategy 3: Model Caching with Expiration</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">import</span> <span class="n">threading</span>
+
+<span class="k">class</span> <span class="nc">CachedModelServer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Load model with cache expiration
+    
+    Automatically reloads model periodically
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">,</span> <span class="n">cache_ttl_minutes</span><span class="o">=</span><span class="mi">60</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model_path</span> <span class="o">=</span> <span class="n">model_path</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">cache_ttl</span> <span class="o">=</span> <span class="nf">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="n">cache_ttl_minutes</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">last_loaded</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">lock</span> <span class="o">=</span> <span class="n">threading</span><span class="p">.</span><span class="nc">Lock</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">_load_model</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Load model with lock</span><span class="sh">"""</span>
+        <span class="k">with</span> <span class="n">self</span><span class="p">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Loading model from </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">model_path</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">joblib</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">model_path</span><span class="p">)</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">last_loaded</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Predict with cache check</span><span class="sh">"""</span>
+        <span class="c1"># Check if model needs refresh
+</span>        <span class="nf">if </span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> 
+            <span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">last_loaded</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">cache_ttl</span><span class="p">):</span>
+            <span class="n">self</span><span class="p">.</span><span class="nf">_load_model</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="model-versioning--ab-testing">Model Versioning &amp; A/B Testing</h2>
+
+<h3 id="multi-model-serving">Multi-Model Serving</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Dict</span>
+<span class="kn">import</span> <span class="n">random</span>
+
+<span class="k">class</span> <span class="nc">ModelVersion</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">V1</span> <span class="o">=</span> <span class="sh">"</span><span class="s">v1</span><span class="sh">"</span>
+    <span class="n">V2</span> <span class="o">=</span> <span class="sh">"</span><span class="s">v2</span><span class="sh">"</span>
+    <span class="n">V3</span> <span class="o">=</span> <span class="sh">"</span><span class="s">v3</span><span class="sh">"</span>
+
+<span class="k">class</span> <span class="nc">MultiModelServer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Serve multiple model versions
+    
+    Supports A/B testing and gradual rollouts
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">traffic_split</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># version → weight
+</span>    
+    <span class="k">def</span> <span class="nf">load_model</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">ModelVersion</span><span class="p">,</span> <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Load a specific model version</span><span class="sh">"""</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Loading </span><span class="si">{</span><span class="n">version</span><span class="p">.</span><span class="n">value</span><span class="si">}</span><span class="s"> from </span><span class="si">{</span><span class="n">model_path</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">[</span><span class="n">version</span><span class="p">.</span><span class="n">value</span><span class="p">]</span> <span class="o">=</span> <span class="n">joblib</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">set_traffic_split</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">split</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]):</span>
+        <span class="sh">"""</span><span class="s">
+        Set traffic distribution
+        
+        Args:
+            split: Dict mapping version to weight
+                   e.g., {</span><span class="sh">"</span><span class="s">v1</span><span class="sh">"</span><span class="s">: 0.9, </span><span class="sh">"</span><span class="s">v2</span><span class="sh">"</span><span class="s">: 0.1}
+        </span><span class="sh">"""</span>
+        <span class="c1"># Validate weights sum to 1
+</span>        <span class="n">total</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">split</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
+        <span class="k">assert</span> <span class="nf">abs</span><span class="p">(</span><span class="n">total</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Weights must sum to 1, got </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="sh">"</span>
+        
+        <span class="n">self</span><span class="p">.</span><span class="n">traffic_split</span> <span class="o">=</span> <span class="n">split</span>
+    
+    <span class="k">def</span> <span class="nf">select_model</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="bp">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sh">"""</span><span class="s">
+        Select model version based on traffic split
+        
+        Args:
+            user_id: Optional user ID for deterministic routing
+        
+        Returns:
+            Selected model version
+        </span><span class="sh">"""</span>
+        <span class="k">if</span> <span class="n">user_id</span><span class="p">:</span>
+            <span class="c1"># Deterministic selection (consistent for same user)
+</span>            <span class="kn">import</span> <span class="n">hashlib</span>
+            <span class="n">hash_val</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">hashlib</span><span class="p">.</span><span class="nf">md5</span><span class="p">(</span><span class="n">user_id</span><span class="p">.</span><span class="nf">encode</span><span class="p">()).</span><span class="nf">hexdigest</span><span class="p">(),</span> <span class="mi">16</span><span class="p">)</span>
+            <span class="n">rand_val</span> <span class="o">=</span> <span class="p">(</span><span class="n">hash_val</span> <span class="o">%</span> <span class="mi">10000</span><span class="p">)</span> <span class="o">/</span> <span class="mf">10000.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Random selection
+</span>            <span class="n">rand_val</span> <span class="o">=</span> <span class="n">random</span><span class="p">.</span><span class="nf">random</span><span class="p">()</span>
+        
+        <span class="c1"># Select based on cumulative weights
+</span>        <span class="n">cumulative</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">version</span><span class="p">,</span> <span class="n">weight</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">traffic_split</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
+            <span class="n">cumulative</span> <span class="o">+=</span> <span class="n">weight</span>
+            <span class="k">if</span> <span class="n">rand_val</span> <span class="o">&lt;</span> <span class="n">cumulative</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">version</span>
+        
+        <span class="c1"># Fallback to first version
+</span>        <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">traffic_split</span><span class="p">.</span><span class="nf">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Make prediction with version selection
+        
+        Returns: (prediction, version_used)
+        </span><span class="sh">"""</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">select_model</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">[</span><span class="n">version</span><span class="p">]</span>
+        <span class="n">prediction</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">version</span>
+
+<span class="c1"># Usage
+</span><span class="n">server</span> <span class="o">=</span> <span class="nc">MultiModelServer</span><span class="p">()</span>
+
+<span class="c1"># Load models
+</span><span class="n">server</span><span class="p">.</span><span class="nf">load_model</span><span class="p">(</span><span class="n">ModelVersion</span><span class="p">.</span><span class="n">V1</span><span class="p">,</span> <span class="sh">'</span><span class="s">model_v1.pkl</span><span class="sh">'</span><span class="p">)</span>
+<span class="n">server</span><span class="p">.</span><span class="nf">load_model</span><span class="p">(</span><span class="n">ModelVersion</span><span class="p">.</span><span class="n">V2</span><span class="p">,</span> <span class="sh">'</span><span class="s">model_v2.pkl</span><span class="sh">'</span><span class="p">)</span>
+
+<span class="c1"># Start with 90% v1, 10% v2
+</span><span class="n">server</span><span class="p">.</span><span class="nf">set_traffic_split</span><span class="p">({</span><span class="sh">"</span><span class="s">v1</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">,</span> <span class="sh">"</span><span class="s">v2</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">})</span>
+
+<span class="c1"># Make predictions
+</span><span class="n">features</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]]</span>
+<span class="n">prediction</span><span class="p">,</span> <span class="n">version</span> <span class="o">=</span> <span class="n">server</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">user_id</span><span class="o">=</span><span class="sh">"</span><span class="s">user_123</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Prediction: </span><span class="si">{</span><span class="n">prediction</span><span class="si">}</span><span class="s">, Version: </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="c1"># Gradually increase v2 traffic
+</span><span class="n">server</span><span class="p">.</span><span class="nf">set_traffic_split</span><span class="p">({</span><span class="sh">"</span><span class="s">v1</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="sh">"</span><span class="s">v2</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">})</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="optimization-techniques">Optimization Techniques</h2>
+
+<h3 id="1-model-quantization">1. Model Quantization</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
+<span class="kn">import</span> <span class="n">torch.quantization</span>
+
+<span class="k">def</span> <span class="nf">quantize_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">example_input</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Quantize PyTorch model to INT8
+    
+    Reduces model size by ~4x, speeds up inference
+    
+    Args:
+        model: PyTorch model
+        example_input: Sample input for calibration
+    
+    Returns:
+        Quantized model
+    </span><span class="sh">"""</span>
+    <span class="c1"># Set model to eval mode
+</span>    <span class="n">model</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
+    
+    <span class="c1"># Specify quantization configuration
+</span>    <span class="n">model</span><span class="p">.</span><span class="n">qconfig</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">quantization</span><span class="p">.</span><span class="nf">get_default_qconfig</span><span class="p">(</span><span class="sh">'</span><span class="s">fbgemm</span><span class="sh">'</span><span class="p">)</span>
+    
+    <span class="c1"># Prepare for quantization
+</span>    <span class="n">model_prepared</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">quantization</span><span class="p">.</span><span class="nf">prepare</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    
+    <span class="c1"># Calibrate with example data
+</span>    <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
+        <span class="nf">model_prepared</span><span class="p">(</span><span class="n">example_input</span><span class="p">)</span>
+    
+    <span class="c1"># Convert to quantized model
+</span>    <span class="n">model_quantized</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">quantization</span><span class="p">.</span><span class="nf">convert</span><span class="p">(</span><span class="n">model_prepared</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">model_quantized</span>
+
+<span class="c1"># Example
+</span><span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="nc">Sequential</span><span class="p">(</span>
+    <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span>
+    <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="nc">ReLU</span><span class="p">(),</span>
+    <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">example_input</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">quantized_model</span> <span class="o">=</span> <span class="nf">quantize_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">example_input</span><span class="p">)</span>
+
+<span class="c1"># Quantized model is ~4x smaller and faster
+</span><span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Original size: </span><span class="si">{</span><span class="nf">get_model_size</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s"> MB</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Quantized size: </span><span class="si">{</span><span class="nf">get_model_size</span><span class="p">(</span><span class="n">quantized_model</span><span class="p">)</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s"> MB</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="2-batch-inference">2. Batch Inference</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">asyncio</span>
+<span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">deque</span>
+<span class="kn">import</span> <span class="n">time</span>
+
+<span class="k">class</span> <span class="nc">BatchingPredictor</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Batch multiple requests for efficient inference
+    
+    Collects requests and processes them in batches
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">max_batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">max_wait_ms</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">max_batch_size</span> <span class="o">=</span> <span class="n">max_batch_size</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">max_wait_ms</span> <span class="o">=</span> <span class="n">max_wait_ms</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">queue</span> <span class="o">=</span> <span class="nf">deque</span><span class="p">()</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">processing</span> <span class="o">=</span> <span class="bp">False</span>
+    
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Add request to batch queue
+        
+        Returns: Future that resolves with prediction
+        </span><span class="sh">"""</span>
+        <span class="n">future</span> <span class="o">=</span> <span class="n">asyncio</span><span class="p">.</span><span class="nc">Future</span><span class="p">()</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">queue</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">features</span><span class="p">,</span> <span class="n">future</span><span class="p">))</span>
+        
+        <span class="c1"># Start batch processing if not already running
+</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">processing</span><span class="p">:</span>
+            <span class="n">asyncio</span><span class="p">.</span><span class="nf">create_task</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nf">_process_batch</span><span class="p">())</span>
+        
+        <span class="k">return</span> <span class="k">await</span> <span class="n">future</span>
+    
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_process_batch</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Process accumulated requests as batch</span><span class="sh">"""</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">processing</span> <span class="o">=</span> <span class="bp">True</span>
+        
+        <span class="c1"># Wait for batch to fill or timeout
+</span>        <span class="k">await</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">sleep</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">max_wait_ms</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">queue</span><span class="p">:</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">processing</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="k">return</span>
+        
+        <span class="c1"># Collect batch
+</span>        <span class="n">batch</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">futures</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">while</span> <span class="n">self</span><span class="p">.</span><span class="n">queue</span> <span class="ow">and</span> <span class="nf">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">max_batch_size</span><span class="p">:</span>
+            <span class="n">features</span><span class="p">,</span> <span class="n">future</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">queue</span><span class="p">.</span><span class="nf">popleft</span><span class="p">()</span>
+            <span class="n">batch</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+            <span class="n">futures</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+        
+        <span class="c1"># Run batch inference
+</span>        <span class="n">batch_array</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">batch_array</span><span class="p">)</span>
+        
+        <span class="c1"># Resolve futures
+</span>        <span class="k">for</span> <span class="n">future</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">futures</span><span class="p">,</span> <span class="n">predictions</span><span class="p">):</span>
+            <span class="n">future</span><span class="p">.</span><span class="nf">set_result</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
+        
+        <span class="n">self</span><span class="p">.</span><span class="n">processing</span> <span class="o">=</span> <span class="bp">False</span>
+        
+        <span class="c1"># Process remaining queue
+</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">queue</span><span class="p">:</span>
+            <span class="n">asyncio</span><span class="p">.</span><span class="nf">create_task</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nf">_process_batch</span><span class="p">())</span>
+
+<span class="c1"># Usage
+</span><span class="n">predictor</span> <span class="o">=</span> <span class="nc">BatchingPredictor</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">max_batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">max_wait_ms</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">handle_request</span><span class="p">(</span><span class="n">features</span><span class="p">):</span>
+    <span class="n">prediction</span> <span class="o">=</span> <span class="k">await</span> <span class="n">predictor</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">prediction</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="monitoring--observability">Monitoring &amp; Observability</h2>
+
+<h3 id="prediction-logging">Prediction Logging</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">logging</span>
+<span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">asdict</span>
+<span class="kn">from</span> <span class="n">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span> <span class="n">json</span>
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">PredictionLog</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">Log entry for each prediction</span><span class="sh">"""</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">model_version</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">features</span><span class="p">:</span> <span class="nb">list</span>
+    <span class="n">prediction</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">latency_ms</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="bp">None</span>
+    
+<span class="k">class</span> <span class="nc">MonitoredModelServer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Model server with comprehensive monitoring
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">model_version</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model_version</span> <span class="o">=</span> <span class="n">model_version</span>
+        
+        <span class="c1"># Setup logging
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="p">.</span><span class="nf">getLogger</span><span class="p">(</span><span class="sh">'</span><span class="s">model_server</span><span class="sh">'</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="p">.</span><span class="n">INFO</span><span class="p">)</span>
+        
+        <span class="c1"># Metrics
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">prediction_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">latencies</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">error_count</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">user_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Make prediction with logging
+        
+        Returns: (prediction, confidence, metadata)
+        </span><span class="sh">"""</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Make prediction
+</span>            <span class="n">prediction</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">([</span><span class="n">features</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+            
+            <span class="c1"># Get confidence
+</span>            <span class="k">if</span> <span class="nf">hasattr</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">,</span> <span class="sh">'</span><span class="s">predict_proba</span><span class="sh">'</span><span class="p">):</span>
+                <span class="n">proba</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict_proba</span><span class="p">([</span><span class="n">features</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">confidence</span> <span class="o">=</span> <span class="nf">float</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="n">proba</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">confidence</span> <span class="o">=</span> <span class="mf">1.0</span>
+            
+            <span class="c1"># Calculate latency
+</span>            <span class="n">latency_ms</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+            
+            <span class="c1"># Log prediction
+</span>            <span class="n">log_entry</span> <span class="o">=</span> <span class="nc">PredictionLog</span><span class="p">(</span>
+                <span class="n">timestamp</span><span class="o">=</span><span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">().</span><span class="nf">isoformat</span><span class="p">(),</span>
+                <span class="n">model_version</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">model_version</span><span class="p">,</span>
+                <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span>
+                <span class="n">prediction</span><span class="o">=</span><span class="nf">float</span><span class="p">(</span><span class="n">prediction</span><span class="p">),</span>
+                <span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span>
+                <span class="n">latency_ms</span><span class="o">=</span><span class="n">latency_ms</span><span class="p">,</span>
+                <span class="n">user_id</span><span class="o">=</span><span class="n">user_id</span>
+            <span class="p">)</span>
+            
+            <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span><span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">(</span><span class="nf">asdict</span><span class="p">(</span><span class="n">log_entry</span><span class="p">)))</span>
+            
+            <span class="c1"># Update metrics
+</span>            <span class="n">self</span><span class="p">.</span><span class="n">prediction_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">latencies</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">latency_ms</span><span class="p">)</span>
+            
+            <span class="k">return</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">confidence</span><span class="p">,</span> <span class="p">{</span><span class="sh">'</span><span class="s">latency_ms</span><span class="sh">'</span><span class="p">:</span> <span class="n">latency_ms</span><span class="p">}</span>
+        
+        <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">error_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">error</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Prediction failed: </span><span class="si">{</span><span class="nf">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+            <span class="k">raise</span>
+    
+    <span class="k">def</span> <span class="nf">get_metrics</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Get serving metrics</span><span class="sh">"""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">latencies</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">prediction_count</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">prediction_count</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">error_count</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">error_count</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">error_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">error_count</span> <span class="o">/</span> <span class="nf">max</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">prediction_count</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">latency_p50</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">percentile</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">latencies</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">latency_p95</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">percentile</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">latencies</span><span class="p">,</span> <span class="mi">95</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">latency_p99</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">percentile</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">latencies</span><span class="p">,</span> <span class="mi">99</span><span class="p">),</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="connection-to-bst-validation-day-8-dsa">Connection to BST Validation (Day 8 DSA)</h2>
+
+<p>Model serving systems validate predictions similar to BST range checking:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">PredictionBoundsValidator</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Validate predictions fall within expected ranges
+    
+    Similar to BST validation with min/max bounds
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># feature → (min, max)
+</span>    
+    <span class="k">def</span> <span class="nf">set_bounds</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">feature_name</span><span class="p">,</span> <span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Set validation bounds</span><span class="sh">"""</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">bounds</span><span class="p">[</span><span class="n">feature_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">validate_input</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Validate input features
+        
+        Like BST range checking: each value must be in [min, max]
+        </span><span class="sh">"""</span>
+        <span class="n">violations</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">feature_name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">features</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">feature_name</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">bounds</span><span class="p">:</span>
+                <span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">bounds</span><span class="p">[</span><span class="n">feature_name</span><span class="p">]</span>
+                
+                <span class="c1"># Range check (like BST validation)
+</span>                <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="n">min_val</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="n">max_val</span><span class="p">:</span>
+                    <span class="n">violations</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span>
+                        <span class="sh">'</span><span class="s">feature</span><span class="sh">'</span><span class="p">:</span> <span class="n">feature_name</span><span class="p">,</span>
+                        <span class="sh">'</span><span class="s">value</span><span class="sh">'</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span>
+                        <span class="sh">'</span><span class="s">bounds</span><span class="sh">'</span><span class="p">:</span> <span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span>
+                    <span class="p">})</span>
+        
+        <span class="k">return</span> <span class="nf">len</span><span class="p">(</span><span class="n">violations</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">violations</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="advanced-serving-patterns">Advanced Serving Patterns</h2>
+
+<h3 id="1-shadow-mode-deployment">1. Shadow Mode Deployment</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ShadowModeServer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Run new model in shadow mode
+    
+    New model receives traffic but doesn</span><span class="sh">'</span><span class="s">t affect users
+    Predictions are logged for comparison
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">production_model</span><span class="p">,</span> <span class="n">shadow_model</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">production_model</span> <span class="o">=</span> <span class="n">production_model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">shadow_model</span> <span class="o">=</span> <span class="n">shadow_model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">comparison_logs</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Make predictions with both models
+        
+        Returns: Production prediction (shadow runs async)
+        </span><span class="sh">"""</span>
+        <span class="kn">import</span> <span class="n">asyncio</span>
+        
+        <span class="c1"># Production prediction (synchronous)
+</span>        <span class="n">prod_prediction</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">production_model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+        
+        <span class="c1"># Shadow prediction (async, doesn't block)
+</span>        <span class="n">asyncio</span><span class="p">.</span><span class="nf">create_task</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nf">_shadow_predict</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">prod_prediction</span><span class="p">))</span>
+        
+        <span class="k">return</span> <span class="n">prod_prediction</span>
+    
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_shadow_predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">prod_prediction</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Run shadow model and log comparison</span><span class="sh">"""</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">shadow_prediction</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">shadow_model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+            
+            <span class="c1"># Log comparison
+</span>            <span class="n">self</span><span class="p">.</span><span class="n">comparison_logs</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span>
+                <span class="sh">'</span><span class="s">features</span><span class="sh">'</span><span class="p">:</span> <span class="n">features</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">production</span><span class="sh">'</span><span class="p">:</span> <span class="n">prod_prediction</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">shadow</span><span class="sh">'</span><span class="p">:</span> <span class="n">shadow_prediction</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">difference</span><span class="sh">'</span><span class="p">:</span> <span class="nf">abs</span><span class="p">(</span><span class="n">prod_prediction</span> <span class="o">-</span> <span class="n">shadow_prediction</span><span class="p">)</span>
+            <span class="p">})</span>
+        <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Shadow prediction failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">get_shadow_metrics</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Analyze shadow model performance</span><span class="sh">"""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">comparison_logs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+        
+        <span class="n">differences</span> <span class="o">=</span> <span class="p">[</span><span class="n">log</span><span class="p">[</span><span class="sh">'</span><span class="s">difference</span><span class="sh">'</span><span class="p">]</span> <span class="k">for</span> <span class="n">log</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">comparison_logs</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">num_predictions</span><span class="sh">'</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">comparison_logs</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">mean_difference</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">differences</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">max_difference</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="n">differences</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">agreement_rate</span><span class="sh">'</span><span class="p">:</span> <span class="nf">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">differences</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&lt;</span> <span class="mf">0.01</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">differences</span><span class="p">)</span>
+        <span class="p">}</span>
+
+<span class="c1"># Usage
+</span><span class="n">shadow_server</span> <span class="o">=</span> <span class="nc">ShadowModeServer</span><span class="p">(</span>
+    <span class="n">production_model</span><span class="o">=</span><span class="n">model_v1</span><span class="p">,</span>
+    <span class="n">shadow_model</span><span class="o">=</span><span class="n">model_v2</span>
+<span class="p">)</span>
+
+<span class="c1"># Normal serving
+</span><span class="n">prediction</span> <span class="o">=</span> <span class="n">shadow_server</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+
+<span class="c1"># Analyze shadow performance
+</span><span class="n">metrics</span> <span class="o">=</span> <span class="n">shadow_server</span><span class="p">.</span><span class="nf">get_shadow_metrics</span><span class="p">()</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Shadow agreement rate: </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">agreement_rate</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="2-canary-deployment">2. Canary Deployment</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">CanaryDeployment</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Gradual rollout with automated rollback
+    
+    Monitors metrics and automatically rolls back if issues detected
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">stable_model</span><span class="p">,</span> <span class="n">canary_model</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">stable_model</span> <span class="o">=</span> <span class="n">stable_model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">canary_model</span> <span class="o">=</span> <span class="n">canary_model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">canary_percentage</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">stable</span><span class="sh">'</span><span class="p">:</span> <span class="p">{</span><span class="sh">'</span><span class="s">errors</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="sh">'</span><span class="s">predictions</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="sh">'</span><span class="s">latencies</span><span class="sh">'</span><span class="p">:</span> <span class="p">[]},</span>
+            <span class="sh">'</span><span class="s">canary</span><span class="sh">'</span><span class="p">:</span> <span class="p">{</span><span class="sh">'</span><span class="s">errors</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="sh">'</span><span class="s">predictions</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="sh">'</span><span class="s">latencies</span><span class="sh">'</span><span class="p">:</span> <span class="p">[]}</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">set_canary_percentage</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">percentage</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Set canary traffic percentage</span><span class="sh">"""</span>
+        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">percentage</span> <span class="o">&lt;=</span> <span class="mi">100</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">canary_percentage</span> <span class="o">=</span> <span class="n">percentage</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Canary traffic: </span><span class="si">{</span><span class="n">percentage</span><span class="si">}</span><span class="s">%</span><span class="sh">"</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">user_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Predict with canary logic
+        
+        Routes percentage of traffic to canary
+        </span><span class="sh">"""</span>
+        <span class="kn">import</span> <span class="n">random</span>
+        <span class="kn">import</span> <span class="n">time</span>
+        
+        <span class="c1"># Determine which model to use
+</span>        <span class="n">use_canary</span> <span class="o">=</span> <span class="n">random</span><span class="p">.</span><span class="nf">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">canary_percentage</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span>
+        <span class="n">model_name</span> <span class="o">=</span> <span class="sh">'</span><span class="s">canary</span><span class="sh">'</span> <span class="k">if</span> <span class="n">use_canary</span> <span class="k">else</span> <span class="sh">'</span><span class="s">stable</span><span class="sh">'</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">canary_model</span> <span class="k">if</span> <span class="n">use_canary</span> <span class="k">else</span> <span class="n">self</span><span class="p">.</span><span class="n">stable_model</span>
+        
+        <span class="c1"># Make prediction with metrics
+</span>        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">prediction</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+            <span class="n">latency</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+            
+            <span class="c1"># Record metrics
+</span>            <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">[</span><span class="n">model_name</span><span class="p">][</span><span class="sh">'</span><span class="s">predictions</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">[</span><span class="n">model_name</span><span class="p">][</span><span class="sh">'</span><span class="s">latencies</span><span class="sh">'</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">latency</span><span class="p">)</span>
+            
+            <span class="k">return</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">model_name</span>
+        
+        <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># Record error
+</span>            <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">[</span><span class="n">model_name</span><span class="p">][</span><span class="sh">'</span><span class="s">errors</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">raise</span>
+    
+    <span class="k">def</span> <span class="nf">check_health</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Check canary health
+        
+        Returns: (is_healthy, should_rollback, reason)
+        </span><span class="sh">"""</span>
+        <span class="n">canary_metrics</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">canary</span><span class="sh">'</span><span class="p">]</span>
+        <span class="n">stable_metrics</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">stable</span><span class="sh">'</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="n">canary_metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">predictions</span><span class="sh">'</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
+            <span class="c1"># Not enough data yet
+</span>            <span class="k">return</span> <span class="bp">True</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="sh">"</span><span class="s">Insufficient data</span><span class="sh">"</span>
+        
+        <span class="c1"># Calculate error rates
+</span>        <span class="n">canary_error_rate</span> <span class="o">=</span> <span class="n">canary_metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">errors</span><span class="sh">'</span><span class="p">]</span> <span class="o">/</span> <span class="n">canary_metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">predictions</span><span class="sh">'</span><span class="p">]</span>
+        <span class="n">stable_error_rate</span> <span class="o">=</span> <span class="n">stable_metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">errors</span><span class="sh">'</span><span class="p">]</span> <span class="o">/</span> <span class="nf">max</span><span class="p">(</span><span class="n">stable_metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">predictions</span><span class="sh">'</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+        
+        <span class="c1"># Check if error rate is significantly higher
+</span>        <span class="k">if</span> <span class="n">canary_error_rate</span> <span class="o">&gt;</span> <span class="n">stable_error_rate</span> <span class="o">*</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Error rate too high: </span><span class="si">{</span><span class="n">canary_error_rate</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span>
+        
+        <span class="c1"># Check latency
+</span>        <span class="n">canary_p95</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">percentile</span><span class="p">(</span><span class="n">canary_metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">latencies</span><span class="sh">'</span><span class="p">],</span> <span class="mi">95</span><span class="p">)</span>
+        <span class="n">stable_p95</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">percentile</span><span class="p">(</span><span class="n">stable_metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">latencies</span><span class="sh">'</span><span class="p">],</span> <span class="mi">95</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">canary_p95</span> <span class="o">&gt;</span> <span class="n">stable_p95</span> <span class="o">*</span> <span class="mf">1.5</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Latency too high: </span><span class="si">{</span><span class="n">canary_p95</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">ms</span><span class="sh">"</span>
+        
+        <span class="k">return</span> <span class="bp">True</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="sh">"</span><span class="s">Healthy</span><span class="sh">"</span>
+    
+    <span class="k">def</span> <span class="nf">auto_rollout</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">target_percentage</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">check_interval</span><span class="o">=</span><span class="mi">60</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Automatically increase canary traffic
+        
+        Rolls back if health checks fail
+        </span><span class="sh">"""</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="k">while</span> <span class="n">current</span> <span class="o">&lt;</span> <span class="n">target_percentage</span><span class="p">:</span>
+            <span class="c1"># Increase canary traffic
+</span>            <span class="n">current</span> <span class="o">=</span> <span class="nf">min</span><span class="p">(</span><span class="n">current</span> <span class="o">+</span> <span class="n">step</span><span class="p">,</span> <span class="n">target_percentage</span><span class="p">)</span>
+            <span class="n">self</span><span class="p">.</span><span class="nf">set_canary_percentage</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+            
+            <span class="c1"># Wait and check health
+</span>            <span class="n">time</span><span class="p">.</span><span class="nf">sleep</span><span class="p">(</span><span class="n">check_interval</span><span class="p">)</span>
+            
+            <span class="n">is_healthy</span><span class="p">,</span> <span class="n">should_rollback</span><span class="p">,</span> <span class="n">reason</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">check_health</span><span class="p">()</span>
+            
+            <span class="k">if</span> <span class="n">should_rollback</span><span class="p">:</span>
+                <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">❌ Rollback triggered: </span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+                <span class="n">self</span><span class="p">.</span><span class="nf">set_canary_percentage</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Rollback to stable
+</span>                <span class="k">return</span> <span class="bp">False</span>
+            
+            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">✓ Health check passed at </span><span class="si">{</span><span class="n">current</span><span class="si">}</span><span class="s">%</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">🎉 Canary rollout complete!</span><span class="sh">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+<span class="c1"># Usage
+</span><span class="n">canary</span> <span class="o">=</span> <span class="nc">CanaryDeployment</span><span class="p">(</span><span class="n">stable_model</span><span class="o">=</span><span class="n">model_v1</span><span class="p">,</span> <span class="n">canary_model</span><span class="o">=</span><span class="n">model_v2</span><span class="p">)</span>
+
+<span class="c1"># Start with 5% traffic
+</span><span class="n">canary</span><span class="p">.</span><span class="nf">set_canary_percentage</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="c1"># Automatic gradual rollout
+</span><span class="n">success</span> <span class="o">=</span> <span class="n">canary</span><span class="p">.</span><span class="nf">auto_rollout</span><span class="p">(</span><span class="n">target_percentage</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">check_interval</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="3-multi-armed-bandit-serving">3. Multi-Armed Bandit Serving</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">BanditModelServer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Multi-armed bandit for model selection
+    
+    Dynamically allocates traffic based on performance
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">models</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Args:
+            models: Dict of {model_name: model}
+        </span><span class="sh">"""</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">models</span> <span class="o">=</span> <span class="n">models</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">rewards</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">models</span><span class="p">.</span><span class="nf">keys</span><span class="p">()}</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">counts</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">models</span><span class="p">.</span><span class="nf">keys</span><span class="p">()}</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># Exploration rate
+</span>    
+    <span class="k">def</span> <span class="nf">select_model</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Select model using epsilon-greedy strategy
+        
+        Returns: model_name
+        </span><span class="sh">"""</span>
+        <span class="kn">import</span> <span class="n">random</span>
+        
+        <span class="c1"># Explore: random selection
+</span>        <span class="k">if</span> <span class="n">random</span><span class="p">.</span><span class="nf">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">epsilon</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">random</span><span class="p">.</span><span class="nf">choice</span><span class="p">(</span><span class="nf">list</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">.</span><span class="nf">keys</span><span class="p">()))</span>
+        
+        <span class="c1"># Exploit: select best performing model
+</span>        <span class="n">avg_rewards</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">rewards</span><span class="p">)</span> <span class="k">if</span> <span class="n">rewards</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">rewards</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">rewards</span><span class="p">.</span><span class="nf">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="nf">max</span><span class="p">(</span><span class="n">avg_rewards</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">avg_rewards</span><span class="p">.</span><span class="n">get</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">true_label</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Make prediction and optionally update rewards
+        
+        Args:
+            features: Input features
+            true_label: Optional ground truth for reward
+        
+        Returns: (prediction, model_used)
+        </span><span class="sh">"""</span>
+        <span class="c1"># Select model
+</span>        <span class="n">model_name</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">select_model</span><span class="p">()</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">[</span><span class="n">model_name</span><span class="p">]</span>
+        
+        <span class="c1"># Make prediction
+</span>        <span class="n">prediction</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">counts</span><span class="p">[</span><span class="n">model_name</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="c1"># Update reward if ground truth available
+</span>        <span class="k">if</span> <span class="n">true_label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">reward</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="n">prediction</span> <span class="o">==</span> <span class="n">true_label</span> <span class="k">else</span> <span class="mf">0.0</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">rewards</span><span class="p">[</span><span class="n">model_name</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">model_name</span>
+    
+    <span class="k">def</span> <span class="nf">get_model_stats</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Get statistics for each model</span><span class="sh">"""</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">.</span><span class="nf">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">rewards</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
+                <span class="n">stats</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="sh">'</span><span class="s">count</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">counts</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
+                    <span class="sh">'</span><span class="s">avg_reward</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">rewards</span><span class="p">[</span><span class="n">name</span><span class="p">]),</span>
+                    <span class="sh">'</span><span class="s">selection_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">counts</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">/</span> <span class="nf">sum</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">counts</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
+                <span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">stats</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="sh">'</span><span class="s">count</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">counts</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
+                    <span class="sh">'</span><span class="s">avg_reward</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="sh">'</span><span class="s">selection_rate</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span>
+                <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="n">stats</span>
+
+<span class="c1"># Usage
+</span><span class="n">bandit</span> <span class="o">=</span> <span class="nc">BanditModelServer</span><span class="p">({</span>
+    <span class="sh">'</span><span class="s">model_a</span><span class="sh">'</span><span class="p">:</span> <span class="n">model_a</span><span class="p">,</span>
+    <span class="sh">'</span><span class="s">model_b</span><span class="sh">'</span><span class="p">:</span> <span class="n">model_b</span><span class="p">,</span>
+    <span class="sh">'</span><span class="s">model_c</span><span class="sh">'</span><span class="p">:</span> <span class="n">model_c</span>
+<span class="p">})</span>
+
+<span class="c1"># Serve with automatic optimization
+</span><span class="k">for</span> <span class="n">features</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">data_stream</span><span class="p">:</span>
+    <span class="n">prediction</span><span class="p">,</span> <span class="n">model_used</span> <span class="o">=</span> <span class="n">bandit</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">true_label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+    
+<span class="c1"># Check which model performs best
+</span><span class="n">stats</span> <span class="o">=</span> <span class="n">bandit</span><span class="p">.</span><span class="nf">get_model_stats</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">stat</span><span class="p">[</span><span class="sh">'</span><span class="s">avg_reward</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="s"> accuracy, </span><span class="si">{</span><span class="n">stat</span><span class="p">[</span><span class="sh">'</span><span class="s">selection_rate</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="o">%</span><span class="si">}</span><span class="s"> traffic</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="infrastructure--deployment">Infrastructure &amp; Deployment</h2>
+
+<h3 id="containerized-serving-with-docker">Containerized Serving with Docker</h3>
+
+<div class="language-dockerfile highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Dockerfile for model serving</span>
+<span class="k">FROM</span><span class="s"> python:3.9-slim</span>
+
+<span class="k">WORKDIR</span><span class="s"> /app</span>
+
+<span class="c"># Install dependencies</span>
+<span class="k">COPY</span><span class="s"> requirements.txt .</span>
+<span class="k">RUN </span>pip <span class="nb">install</span> <span class="nt">--no-cache-dir</span> <span class="nt">-r</span> requirements.txt
+
+<span class="c"># Copy model and code</span>
+<span class="k">COPY</span><span class="s"> model.pkl .</span>
+<span class="k">COPY</span><span class="s"> serve.py .</span>
+
+<span class="c"># Expose port</span>
+<span class="k">EXPOSE</span><span class="s"> 8000</span>
+
+<span class="c"># Health check</span>
+<span class="k">HEALTHCHECK</span><span class="s"> --interval=30s --timeout=3s \</span>
+  CMD curl -f http://localhost:8000/health || exit 1
+
+<span class="c"># Run server</span>
+<span class="k">CMD</span><span class="s"> ["uvicorn", "serve:app", "--host", "0.0.0.0", "--port", "8000"]</span>
+</code></pre></div></div>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># docker-compose.yml</span>
+<span class="na">version</span><span class="pi">:</span> <span class="s1">'</span><span class="s">3.8'</span>
+
+<span class="na">services</span><span class="pi">:</span>
+  <span class="na">model-server</span><span class="pi">:</span>
+    <span class="na">build</span><span class="pi">:</span> <span class="s">.</span>
+    <span class="na">ports</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s2">"</span><span class="s">8000:8000"</span>
+    <span class="na">environment</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">MODEL_PATH=/app/model.pkl</span>
+      <span class="pi">-</span> <span class="s">LOG_LEVEL=INFO</span>
+    <span class="na">volumes</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">./models:/app/models</span>
+    <span class="na">deploy</span><span class="pi">:</span>
+      <span class="na">replicas</span><span class="pi">:</span> <span class="m">3</span>
+      <span class="na">resources</span><span class="pi">:</span>
+        <span class="na">limits</span><span class="pi">:</span>
+          <span class="na">cpus</span><span class="pi">:</span> <span class="s1">'</span><span class="s">2'</span>
+          <span class="na">memory</span><span class="pi">:</span> <span class="s">4G</span>
+    <span class="na">healthcheck</span><span class="pi">:</span>
+      <span class="na">test</span><span class="pi">:</span> <span class="pi">[</span><span class="s2">"</span><span class="s">CMD"</span><span class="pi">,</span> <span class="s2">"</span><span class="s">curl"</span><span class="pi">,</span> <span class="s2">"</span><span class="s">-f"</span><span class="pi">,</span> <span class="s2">"</span><span class="s">http://localhost:8000/health"</span><span class="pi">]</span>
+      <span class="na">interval</span><span class="pi">:</span> <span class="s">30s</span>
+      <span class="na">timeout</span><span class="pi">:</span> <span class="s">10s</span>
+      <span class="na">retries</span><span class="pi">:</span> <span class="m">3</span>
+
+  <span class="na">load-balancer</span><span class="pi">:</span>
+    <span class="na">image</span><span class="pi">:</span> <span class="s">nginx:alpine</span>
+    <span class="na">ports</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s2">"</span><span class="s">80:80"</span>
+    <span class="na">volumes</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">./nginx.conf:/etc/nginx/nginx.conf</span>
+    <span class="na">depends_on</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">model-server</span>
+</code></pre></div></div>
+
+<h3 id="kubernetes-deployment">Kubernetes Deployment</h3>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># deployment.yaml</span>
+<span class="na">apiVersion</span><span class="pi">:</span> <span class="s">apps/v1</span>
+<span class="na">kind</span><span class="pi">:</span> <span class="s">Deployment</span>
+<span class="na">metadata</span><span class="pi">:</span>
+  <span class="na">name</span><span class="pi">:</span> <span class="s">model-serving</span>
+<span class="na">spec</span><span class="pi">:</span>
+  <span class="na">replicas</span><span class="pi">:</span> <span class="m">5</span>
+  <span class="na">selector</span><span class="pi">:</span>
+    <span class="na">matchLabels</span><span class="pi">:</span>
+      <span class="na">app</span><span class="pi">:</span> <span class="s">model-serving</span>
+  <span class="na">template</span><span class="pi">:</span>
+    <span class="na">metadata</span><span class="pi">:</span>
+      <span class="na">labels</span><span class="pi">:</span>
+        <span class="na">app</span><span class="pi">:</span> <span class="s">model-serving</span>
+        <span class="na">version</span><span class="pi">:</span> <span class="s">v1</span>
+    <span class="na">spec</span><span class="pi">:</span>
+      <span class="na">containers</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">model-server</span>
+        <span class="na">image</span><span class="pi">:</span> <span class="s">your-registry/model-serving:v1</span>
+        <span class="na">ports</span><span class="pi">:</span>
+        <span class="pi">-</span> <span class="na">containerPort</span><span class="pi">:</span> <span class="m">8000</span>
+        <span class="na">env</span><span class="pi">:</span>
+        <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">MODEL_VERSION</span>
+          <span class="na">value</span><span class="pi">:</span> <span class="s2">"</span><span class="s">v1.0"</span>
+        <span class="na">resources</span><span class="pi">:</span>
+          <span class="na">requests</span><span class="pi">:</span>
+            <span class="na">memory</span><span class="pi">:</span> <span class="s2">"</span><span class="s">2Gi"</span>
+            <span class="na">cpu</span><span class="pi">:</span> <span class="s2">"</span><span class="s">1000m"</span>
+          <span class="na">limits</span><span class="pi">:</span>
+            <span class="na">memory</span><span class="pi">:</span> <span class="s2">"</span><span class="s">4Gi"</span>
+            <span class="na">cpu</span><span class="pi">:</span> <span class="s2">"</span><span class="s">2000m"</span>
+        <span class="na">livenessProbe</span><span class="pi">:</span>
+          <span class="na">httpGet</span><span class="pi">:</span>
+            <span class="na">path</span><span class="pi">:</span> <span class="s">/health</span>
+            <span class="na">port</span><span class="pi">:</span> <span class="m">8000</span>
+          <span class="na">initialDelaySeconds</span><span class="pi">:</span> <span class="m">30</span>
+          <span class="na">periodSeconds</span><span class="pi">:</span> <span class="m">10</span>
+        <span class="na">readinessProbe</span><span class="pi">:</span>
+          <span class="na">httpGet</span><span class="pi">:</span>
+            <span class="na">path</span><span class="pi">:</span> <span class="s">/ready</span>
+            <span class="na">port</span><span class="pi">:</span> <span class="m">8000</span>
+          <span class="na">initialDelaySeconds</span><span class="pi">:</span> <span class="m">5</span>
+          <span class="na">periodSeconds</span><span class="pi">:</span> <span class="m">5</span>
+<span class="nn">---</span>
+<span class="na">apiVersion</span><span class="pi">:</span> <span class="s">v1</span>
+<span class="na">kind</span><span class="pi">:</span> <span class="s">Service</span>
+<span class="na">metadata</span><span class="pi">:</span>
+  <span class="na">name</span><span class="pi">:</span> <span class="s">model-serving-service</span>
+<span class="na">spec</span><span class="pi">:</span>
+  <span class="na">selector</span><span class="pi">:</span>
+    <span class="na">app</span><span class="pi">:</span> <span class="s">model-serving</span>
+  <span class="na">ports</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="na">protocol</span><span class="pi">:</span> <span class="s">TCP</span>
+    <span class="na">port</span><span class="pi">:</span> <span class="m">80</span>
+    <span class="na">targetPort</span><span class="pi">:</span> <span class="m">8000</span>
+  <span class="na">type</span><span class="pi">:</span> <span class="s">LoadBalancer</span>
+<span class="nn">---</span>
+<span class="na">apiVersion</span><span class="pi">:</span> <span class="s">autoscaling/v2</span>
+<span class="na">kind</span><span class="pi">:</span> <span class="s">HorizontalPodAutoscaler</span>
+<span class="na">metadata</span><span class="pi">:</span>
+  <span class="na">name</span><span class="pi">:</span> <span class="s">model-serving-hpa</span>
+<span class="na">spec</span><span class="pi">:</span>
+  <span class="na">scaleTargetRef</span><span class="pi">:</span>
+    <span class="na">apiVersion</span><span class="pi">:</span> <span class="s">apps/v1</span>
+    <span class="na">kind</span><span class="pi">:</span> <span class="s">Deployment</span>
+    <span class="na">name</span><span class="pi">:</span> <span class="s">model-serving</span>
+  <span class="na">minReplicas</span><span class="pi">:</span> <span class="m">3</span>
+  <span class="na">maxReplicas</span><span class="pi">:</span> <span class="m">20</span>
+  <span class="na">metrics</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="na">type</span><span class="pi">:</span> <span class="s">Resource</span>
+    <span class="na">resource</span><span class="pi">:</span>
+      <span class="na">name</span><span class="pi">:</span> <span class="s">cpu</span>
+      <span class="na">target</span><span class="pi">:</span>
+        <span class="na">type</span><span class="pi">:</span> <span class="s">Utilization</span>
+        <span class="na">averageUtilization</span><span class="pi">:</span> <span class="m">70</span>
+  <span class="pi">-</span> <span class="na">type</span><span class="pi">:</span> <span class="s">Resource</span>
+    <span class="na">resource</span><span class="pi">:</span>
+      <span class="na">name</span><span class="pi">:</span> <span class="s">memory</span>
+      <span class="na">target</span><span class="pi">:</span>
+        <span class="na">type</span><span class="pi">:</span> <span class="s">Utilization</span>
+        <span class="na">averageUtilization</span><span class="pi">:</span> <span class="m">80</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="feature-store-integration">Feature Store Integration</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ModelServerWithFeatureStore</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Model server integrated with feature store
+    
+    Fetches features on-demand for prediction
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">feature_store</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">feature_store</span> <span class="o">=</span> <span class="n">feature_store</span>
+    
+    <span class="k">def</span> <span class="nf">predict_from_entity_id</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Make prediction given entity ID
+        
+        Fetches features from feature store
+        
+        Args:
+            entity_id: ID to fetch features for
+        
+        Returns: Prediction
+        </span><span class="sh">"""</span>
+        <span class="c1"># Fetch features from feature store
+</span>        <span class="n">features</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">feature_store</span><span class="p">.</span><span class="nf">get_online_features</span><span class="p">(</span>
+            <span class="n">entity_id</span><span class="o">=</span><span class="n">entity_id</span><span class="p">,</span>
+            <span class="n">feature_names</span><span class="o">=</span><span class="p">[</span>
+                <span class="sh">'</span><span class="s">user_age</span><span class="sh">'</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">user_income</span><span class="sh">'</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">user_num_purchases_30d</span><span class="sh">'</span><span class="p">,</span>
+                <span class="sh">'</span><span class="s">user_avg_purchase_amount</span><span class="sh">'</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Convert to array
+</span>        <span class="n">feature_array</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">features</span><span class="p">[</span><span class="sh">'</span><span class="s">user_age</span><span class="sh">'</span><span class="p">],</span>
+            <span class="n">features</span><span class="p">[</span><span class="sh">'</span><span class="s">user_income</span><span class="sh">'</span><span class="p">],</span>
+            <span class="n">features</span><span class="p">[</span><span class="sh">'</span><span class="s">user_num_purchases_30d</span><span class="sh">'</span><span class="p">],</span>
+            <span class="n">features</span><span class="p">[</span><span class="sh">'</span><span class="s">user_avg_purchase_amount</span><span class="sh">'</span><span class="p">]</span>
+        <span class="p">]</span>
+        
+        <span class="c1"># Make prediction
+</span>        <span class="n">prediction</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">([</span><span class="n">feature_array</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">entity_id</span><span class="sh">'</span><span class="p">:</span> <span class="n">entity_id</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="p">:</span> <span class="nf">float</span><span class="p">(</span><span class="n">prediction</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">features_used</span><span class="sh">'</span><span class="p">:</span> <span class="n">features</span>
+        <span class="p">}</span>
+
+<span class="c1"># Usage with caching
+</span><span class="kn">from</span> <span class="n">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span>
+
+<span class="k">class</span> <span class="nc">CachedFeatureStore</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">Feature store with caching</span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">backend</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">backend</span> <span class="o">=</span> <span class="n">backend</span>
+    
+    <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">get_online_features</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">,</span> <span class="n">feature_names</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Cached feature retrieval</span><span class="sh">"""</span>
+        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">backend</span><span class="p">.</span><span class="nf">get_features</span><span class="p">(</span><span class="n">entity_id</span><span class="p">,</span> <span class="n">feature_names</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="cost-optimization">Cost Optimization</h2>
+
+<h3 id="1-request-batching-for-cost-reduction">1. Request Batching for Cost Reduction</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">CostOptimizedServer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Optimize costs by batching and caching
+    
+    Reduces number of model invocations
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">batch_wait_ms</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">batch_wait_ms</span> <span class="o">=</span> <span class="n">batch_wait_ms</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">pending_requests</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">stats</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">cache_hits</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">cache_misses</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">batches_processed</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">cost_saved</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span>
+        <span class="p">}</span>
+    
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">predict_with_caching</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">cache_key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Predict with caching
+        
+        Args:
+            features: Input features
+            cache_key: Optional cache key
+        
+        Returns: Prediction
+        </span><span class="sh">"""</span>
+        <span class="c1"># Check cache
+</span>        <span class="k">if</span> <span class="n">cache_key</span> <span class="ow">and</span> <span class="n">cache_key</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">:</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">cache_hits</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">[</span><span class="n">cache_key</span><span class="p">]</span>
+        
+        <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">cache_misses</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="c1"># Add to batch
+</span>        <span class="n">future</span> <span class="o">=</span> <span class="n">asyncio</span><span class="p">.</span><span class="nc">Future</span><span class="p">()</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">pending_requests</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">features</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">cache_key</span><span class="p">))</span>
+        
+        <span class="c1"># Trigger batch processing if needed
+</span>        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">pending_requests</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">batch_size</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">self</span><span class="p">.</span><span class="nf">_process_batch</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="k">await</span> <span class="n">future</span>
+    
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">_process_batch</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Process accumulated requests as batch</span><span class="sh">"""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">pending_requests</span><span class="p">:</span>
+            <span class="k">return</span>
+        
+        <span class="c1"># Extract batch
+</span>        <span class="n">batch_features</span> <span class="o">=</span> <span class="p">[</span><span class="n">req</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">req</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">pending_requests</span><span class="p">]</span>
+        <span class="n">futures</span> <span class="o">=</span> <span class="p">[</span><span class="n">req</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">req</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">pending_requests</span><span class="p">]</span>
+        <span class="n">cache_keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">req</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">req</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">pending_requests</span><span class="p">]</span>
+        
+        <span class="c1"># Run batch inference
+</span>        <span class="n">predictions</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">batch_features</span><span class="p">)</span>
+        
+        <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">batches_processed</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="c1"># Distribute results
+</span>        <span class="k">for</span> <span class="n">pred</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">cache_key</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">futures</span><span class="p">,</span> <span class="n">cache_keys</span><span class="p">):</span>
+            <span class="c1"># Cache result
+</span>            <span class="k">if</span> <span class="n">cache_key</span><span class="p">:</span>
+                <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">[</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">pred</span>
+            
+            <span class="c1"># Resolve future
+</span>            <span class="n">future</span><span class="p">.</span><span class="nf">set_result</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
+        
+        <span class="c1"># Clear requests
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">pending_requests</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="c1"># Calculate cost savings (batching is cheaper)
+</span>        <span class="n">cost_per_single_request</span> <span class="o">=</span> <span class="mf">0.001</span>  <span class="c1"># $0.001 per request
+</span>        <span class="n">cost_per_batch</span> <span class="o">=</span> <span class="mf">0.010</span>  <span class="c1"># $0.01 per batch
+</span>        <span class="n">savings</span> <span class="o">=</span> <span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span> <span class="o">*</span> <span class="n">cost_per_single_request</span><span class="p">)</span> <span class="o">-</span> <span class="n">cost_per_batch</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">cost_saved</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="n">savings</span>
+    
+    <span class="k">def</span> <span class="nf">get_cost_stats</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Get cost optimization statistics</span><span class="sh">"""</span>
+        <span class="n">total_requests</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">cache_hits</span><span class="sh">'</span><span class="p">]</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">cache_misses</span><span class="sh">'</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="sh">'</span><span class="s">total_requests</span><span class="sh">'</span><span class="p">:</span> <span class="n">total_requests</span><span class="p">,</span>
+            <span class="sh">'</span><span class="s">cache_hit_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">cache_hits</span><span class="sh">'</span><span class="p">]</span> <span class="o">/</span> <span class="nf">max</span><span class="p">(</span><span class="n">total_requests</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">batches_processed</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">batches_processed</span><span class="sh">'</span><span class="p">],</span>
+            <span class="sh">'</span><span class="s">avg_batch_size</span><span class="sh">'</span><span class="p">:</span> <span class="n">total_requests</span> <span class="o">/</span> <span class="nf">max</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">batches_processed</span><span class="sh">'</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="sh">'</span><span class="s">estimated_cost_saved</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">cost_saved</span><span class="sh">'</span><span class="p">]</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="2-model-compression-for-cheaper-hosting">2. Model Compression for Cheaper Hosting</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
+
+<span class="k">def</span> <span class="nf">compress_model_for_deployment</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">sample_input</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Compress model for cheaper hosting
+    
+    Techniques:
+    - Quantization (INT8)
+    - Pruning
+    - Knowledge distillation
+    
+    Returns: Compressed model
+    </span><span class="sh">"""</span>
+    <span class="c1"># 1. Quantization
+</span>    <span class="n">model</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
+    <span class="n">model_quantized</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">quantization</span><span class="p">.</span><span class="nf">quantize_dynamic</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span>
+        <span class="p">{</span><span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">},</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">qint8</span>
+    <span class="p">)</span>
+    
+    <span class="c1"># 2. Pruning (remove small weights)
+</span>    <span class="kn">import</span> <span class="n">torch.nn.utils.prune</span> <span class="k">as</span> <span class="n">prune</span>
+    
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">model_quantized</span><span class="p">.</span><span class="nf">named_modules</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nf">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">):</span>
+            <span class="n">prune</span><span class="p">.</span><span class="nf">l1_unstructured</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sh">'</span><span class="s">weight</span><span class="sh">'</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    
+    <span class="c1"># 3. Verify accuracy
+</span>    <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
+        <span class="n">original_output</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">sample_input</span><span class="p">)</span>
+        <span class="n">compressed_output</span> <span class="o">=</span> <span class="nf">model_quantized</span><span class="p">(</span><span class="n">sample_input</span><span class="p">)</span>
+        
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">abs</span><span class="p">(</span><span class="n">original_output</span> <span class="o">-</span> <span class="n">compressed_output</span><span class="p">).</span><span class="nf">mean</span><span class="p">()</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Compression error: </span><span class="si">{</span><span class="n">diff</span><span class="si">:</span><span class="p">.</span><span class="mi">4</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">model_quantized</span>
+
+<span class="c1"># Compare costs
+</span><span class="n">original_size_mb</span> <span class="o">=</span> <span class="nf">get_model_size</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">compressed_size_mb</span> <span class="o">=</span> <span class="nf">get_model_size</span><span class="p">(</span><span class="n">compressed_model</span><span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Size reduction: </span><span class="si">{</span><span class="n">original_size_mb</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">MB → </span><span class="si">{</span><span class="n">compressed_size_mb</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">MB</span><span class="sh">"</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Cost savings: ~$</span><span class="si">{</span><span class="p">(</span><span class="n">original_size_mb</span> <span class="o">-</span> <span class="n">compressed_size_mb</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.10</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">/month</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="troubleshooting--debugging">Troubleshooting &amp; Debugging</h2>
+
+<h3 id="prediction-debugging">Prediction Debugging</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">DebuggableModelServer</span><span class="p">:</span>
+    <span class="sh">"""</span><span class="s">
+    Model server with debugging capabilities
+    
+    Helps diagnose prediction issues
+    </span><span class="sh">"""</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+    
+    <span class="k">def</span> <span class="nf">predict_with_debug</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Make prediction with optional debug info
+        
+        Returns: (prediction, debug_info)
+        </span><span class="sh">"""</span>
+        <span class="n">debug_info</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="c1"># Record input stats
+</span>            <span class="n">debug_info</span><span class="p">[</span><span class="sh">'</span><span class="s">input_stats</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="sh">'</span><span class="s">mean</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">features</span><span class="p">),</span>
+                <span class="sh">'</span><span class="s">std</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">std</span><span class="p">(</span><span class="n">features</span><span class="p">),</span>
+                <span class="sh">'</span><span class="s">min</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">min</span><span class="p">(</span><span class="n">features</span><span class="p">),</span>
+                <span class="sh">'</span><span class="s">max</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="n">features</span><span class="p">),</span>
+                <span class="sh">'</span><span class="s">nan_count</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">isnan</span><span class="p">(</span><span class="n">features</span><span class="p">).</span><span class="nf">sum</span><span class="p">()</span>
+            <span class="p">}</span>
+            
+            <span class="c1"># Check for anomalies
+</span>            <span class="n">debug_info</span><span class="p">[</span><span class="sh">'</span><span class="s">anomalies</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_detect_anomalies</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+        
+        <span class="c1"># Make prediction
+</span>        <span class="n">prediction</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">([</span><span class="n">features</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="c1"># Record prediction confidence
+</span>            <span class="k">if</span> <span class="nf">hasattr</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">,</span> <span class="sh">'</span><span class="s">predict_proba</span><span class="sh">'</span><span class="p">):</span>
+                <span class="n">proba</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict_proba</span><span class="p">([</span><span class="n">features</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">debug_info</span><span class="p">[</span><span class="sh">'</span><span class="s">confidence</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="nf">float</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="n">proba</span><span class="p">))</span>
+                <span class="n">debug_info</span><span class="p">[</span><span class="sh">'</span><span class="s">class_probabilities</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">proba</span><span class="p">.</span><span class="nf">tolist</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">debug_info</span>
+    
+    <span class="k">def</span> <span class="nf">_detect_anomalies</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">Detect input anomalies</span><span class="sh">"""</span>
+        <span class="n">anomalies</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="c1"># Check for NaN
+</span>        <span class="k">if</span> <span class="n">np</span><span class="p">.</span><span class="nf">any</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">isnan</span><span class="p">(</span><span class="n">features</span><span class="p">)):</span>
+            <span class="n">anomalies</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sh">"</span><span class="s">Contains NaN values</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="c1"># Check for extreme values
+</span>        <span class="n">z_scores</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">abs</span><span class="p">((</span><span class="n">features</span> <span class="o">-</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">features</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">std</span><span class="p">(</span><span class="n">features</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">np</span><span class="p">.</span><span class="nf">any</span><span class="p">(</span><span class="n">z_scores</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">):</span>
+            <span class="n">anomalies</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sh">"</span><span class="s">Contains outliers (z-score &gt; 3)</span><span class="sh">"</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">anomalies</span>
+    
+    <span class="k">def</span> <span class="nf">explain_prediction</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        Explain prediction using SHAP or similar
+        
+        Returns: Feature importance
+        </span><span class="sh">"""</span>
+        <span class="c1"># Simplified explanation (in practice, use SHAP)
+</span>        <span class="k">if</span> <span class="nf">hasattr</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">,</span> <span class="sh">'</span><span class="s">feature_importances_</span><span class="sh">'</span><span class="p">):</span>
+            <span class="n">importances</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">feature_importances_</span>
+            
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="sa">f</span><span class="sh">'</span><span class="s">feature_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="sh">'</span><span class="p">:</span> <span class="p">{</span><span class="sh">'</span><span class="s">value</span><span class="sh">'</span><span class="p">:</span> <span class="n">features</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="sh">'</span><span class="s">importance</span><span class="sh">'</span><span class="p">:</span> <span class="n">imp</span><span class="p">}</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">imp</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">importances</span><span class="p">)</span>
+            <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="p">{}</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="key-takeaways">Key Takeaways</h2>
+
+<p>✅ <strong>Multiple serving patterns</strong> - REST, gRPC, batch for different needs<br />
+✅ <strong>Model versioning essential</strong> - Support A/B testing and rollbacks<br />
+✅ <strong>Optimize for latency</strong> - Quantization, batching, caching<br />
+✅ <strong>Monitor everything</strong> - Latency, errors, prediction distribution<br />
+✅ <strong>Validate inputs/outputs</strong> - Catch issues early<br />
+✅ <strong>Scale horizontally</strong> - Add more serving instances<br />
+✅ <strong>Connection to validation</strong> - Like BST range checking</p>
+
+<hr />
+
+<p><strong>Originally published at:</strong> <a href="https://www.arunbaby.com/ml-system-design/0008-model-serving-architecture/">arunbaby.com/ml-system-design/0008-model-serving-architecture</a></p>
+
+<p><em>If you found this helpful, consider sharing it with others who might benefit.</em></p>
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#deployment" class="page__taxonomy-item p-category" rel="tag">deployment</a><span class="sep">, </span>
+    
+      <a href="/tags/#inference" class="page__taxonomy-item p-category" rel="tag">inference</a><span class="sep">, </span>
+    
+      <a href="/tags/#latency" class="page__taxonomy-item p-category" rel="tag">latency</a><span class="sep">, </span>
+    
+      <a href="/tags/#model-serving" class="page__taxonomy-item p-category" rel="tag">model-serving</a><span class="sep">, </span>
+    
+      <a href="/tags/#scalability" class="page__taxonomy-item p-category" rel="tag">scalability</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#ml-system-design" class="page__taxonomy-item p-category" rel="tag">ml-system-design</a>
+    
+    </span>
+  </p>
+
+
+        
+      </footer>
+
+      <div class="page__related page__related--full">
+  <h2 class="page__related-title">Related across topics</h2>
+  <style>
+    /* Make section span full content width and use 2 equal columns */
+    .page__related--full { float: inline-start; width: 100%; padding: 0; }
+    .cross-related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+    @media (max-width: 768px) { .cross-related-grid { grid-template-columns: 1fr; } }
+    /* Ensure archive cards stretch nicely in the grid */
+    .cross-related-grid .list__item, .cross-related-grid .grid__item { width: auto; float: none; margin: 0; }
+  </style>
+  <div class="cross-related-grid">
+    
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dsa/0008-validate-binary-search-tree/" rel="permalink">Validate Binary Search Tree
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          23 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Master BST validation to understand data integrity in tree structures, critical for indexing and search systems.
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/speech-tech/0008-streaming-speech-pipeline/" rel="permalink">Streaming Speech Processing Pipeline
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Build real-time speech processing pipelines that handle audio streams with minimal latency for live transcription and voice interfaces.
+</p>
+  </article>
+</div>
+
+  </div>
+</div>
+
+      <section class="page__share">
+  <h4 class="page__share-title">Share on</h4>
+
+  <a href="https://twitter.com/intent/tweet?via=arunbaby0&text=Model+Serving+Architecture%20https%3A%2F%2Fwww.arunbaby.com%2Fml-system-design%2F0008-model-serving-architecture%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.arunbaby.com%2Fml-system-design%2F0008-model-serving-architecture%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https://www.arunbaby.com/ml-system-design/0008-model-serving-architecture/" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/ml-system-design/0007-feature-engineering/" class="pagination--pager" title="Feature Engineering at Scale">Previous</a>
+    
+    
+      <a href="/ml-system-design/0009-online-learning-systems/" class="pagination--pager" title="Online Learning Systems">Next</a>
+    
+  </nav>
+
+
+    </div>
+
+    
+  </article>
+
+  
+  
+</div>
+
+      
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';" role="search">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/arunbaby0" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+          <li><a href="https://github.com/arunbaby0" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+          <li><a href="https://www.linkedin.com/in/arunbaby0/" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i> LinkedIn</a></li>
+        
+      
+        
+          <li><a href="https://scholar.google.co.in/citations?user=6fSYWhkAAAAJ" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-graduation-cap" aria-hidden="true"></i> Google Scholar</a></li>
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 1990 - 2143 <a href="https://www.arunbaby.com">Arun Baby</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0JRJPEC9SS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-0JRJPEC9SS', { 'anonymize_ip': false});
+</script>
+
+
+
+
+
+
+
+
+  </body>
+</html>
