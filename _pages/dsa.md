@@ -28,6 +28,11 @@ Each problem includes:
 
 **Linked Lists:**
 - [Merge Two Sorted Lists](/dsa/0003-merge-sorted-lists/)
+- [Reverse Linked List](/dsa/0010-reverse-linked-list/)
+- [Add Two Numbers](/dsa/0012-add-two-numbers/)
+
+**Design:**
+- [LRU Cache](/dsa/0011-lru-cache/)
 
 **Dynamic Programming:**
 - [Best Time to Buy/Sell Stock](/dsa/0004-best-time-buy-sell-stock/)

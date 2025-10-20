@@ -48,6 +48,11 @@ Each design includes:
 **Model Training:**
 - [Online Learning Systems](/ml-system-design/0009-online-learning-systems/)
 
+**Infrastructure:**
+- [Caching Strategies](/ml-system-design/0010-caching-strategies/)
+- [Content Delivery Networks](/ml-system-design/0011-content-delivery-network/)
+- [Distributed ML Systems](/ml-system-design/0012-distributed-systems/)
+
 **Search & Ranking:**
 - Coming soon...
 

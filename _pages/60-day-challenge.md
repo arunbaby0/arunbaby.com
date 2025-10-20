@@ -17,7 +17,7 @@ A structured 60-day learning journey through three interconnected domains of com
 
 ## Progress Tracker
 
-**Posts Completed:** 27 / 180 (15.0%)
+**Posts Completed:** 36 / 180 (20.0%)
 
 **Last Updated:** {{ site.time | date: '%B %d, %Y' }}
 
@@ -33,9 +33,9 @@ A structured 60-day learning journey through three interconnected domains of com
 ### Week 2: Data Structures & Validation (Posts 8-14)
 - [x] **#8:** [Validate BST](/dsa/0008-validate-binary-search-tree/) + [Model Serving Architecture](/ml-system-design/0008-model-serving-architecture/) + [Streaming Pipeline](/speech-tech/0008-streaming-speech-pipeline/)
 - [x] **#9:** [Binary Search](/dsa/0009-binary-search/) + [Online Learning](/ml-system-design/0009-online-learning-systems/) + [Keyword Spotting](/speech-tech/0009-keyword-spotting/)
-- [ ] **#10:** Reverse Linked List + Caching Strategies + Voice Enhancement
-- [ ] **#11:** LRU Cache + Content Delivery Networks + Speech Separation
-- [ ] **#12:** Add Two Numbers + Distributed Systems + Multi-Speaker ASR
+- [x] **#10:** [Reverse Linked List](/dsa/0010-reverse-linked-list/) + [Caching Strategies](/ml-system-design/0010-caching-strategies/) + [Voice Enhancement](/speech-tech/0010-voice-enhancement/)
+- [x] **#11:** [LRU Cache](/dsa/0011-lru-cache/) + [Content Delivery Networks](/ml-system-design/0011-content-delivery-network/) + [Speech Separation](/speech-tech/0011-speech-separation/)
+- [x] **#12:** [Add Two Numbers](/dsa/0012-add-two-numbers/) + [Distributed ML Systems](/ml-system-design/0012-distributed-systems/) + [Multi-Speaker ASR](/speech-tech/0012-multi-speaker-asr/)
 - [ ] **#13:** Longest Substring Without Repeating + Feature Hashing + Audio Compression
 - [ ] **#14:** Container With Most Water + Load Balancing + Acoustic Modeling
 
