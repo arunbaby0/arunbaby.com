@@ -832,7 +832,7 @@ def safe_max_area(height: List[int]) -> ContainerResult:
 
 The **greedy optimization and resource management** principles from this problem directly apply to ML system design:
 
-### 1. Resource Allocation (Day 13 ML System Design)
+### 1. Resource Allocation for ML
 
 Just like finding the maximum water container:
 

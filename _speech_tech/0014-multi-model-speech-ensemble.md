@@ -81,7 +81,7 @@ Speech models are **noisy and uncertain**. Ensembles help because:
 
 ### The Backtracking Connection
 
-Just like **Generate Parentheses** (Day 14 DSA) and **Model Ensembling** (Day 14 ML):
+Just like the **Generate Parentheses** problem and **Model Ensembling** systems:
 
 | Generate Parentheses | Speech Ensemble |
 |----------------------|-----------------|
@@ -1271,7 +1271,7 @@ Google uses sophisticated multi-model ensembles for Voice Search:
 
 ✅ **Same pattern as DSA and ML** - explore combinations with constraints
 
-### Connection to Day 14 Theme: Backtracking and Combination Strategies
+### Connection to Thematic Link: Backtracking and Combination Strategies
 
 All three topics converge on the same core algorithm:
 

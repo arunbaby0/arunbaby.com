@@ -83,7 +83,7 @@ Model ensembles are **widely used in production** because they:
 
 ### The Backtracking Connection
 
-Just like **Generate Parentheses** (Day 14 DSA):
+Just like the **Generate Parentheses** problem:
 
 | Generate Parentheses | Model Ensembling |
 |----------------------|------------------|
@@ -1318,7 +1318,7 @@ Netflix uses one of the most sophisticated ensemble systems in production:
 
 ✅ **Same backtracking pattern** as Generate Parentheses—explore combinations with constraints
 
-### Connection to Day 14 Theme: Backtracking and Combination Strategies
+### Connection to Thematic Link: Backtracking and Combination Strategies
 
 All three topics share the same core pattern:
 

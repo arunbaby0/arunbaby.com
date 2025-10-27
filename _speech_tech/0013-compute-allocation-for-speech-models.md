@@ -95,7 +95,7 @@ Bottleneck: Acoustic Model (47% of time)
 
 ### The Greedy Optimization Connection
 
-Just like **Container With Most Water** (Day 13 DSA) and **Resource Allocation for ML** (Day 13 ML):
+Just like the **Container With Most Water** problem and **Resource Allocation for ML** systems:
 
 | Container Problem | Speech Compute Allocation |
 |-------------------|---------------------------|
@@ -1162,7 +1162,7 @@ Google Assistant processes billions of speech requests daily with <100ms latency
 
 ✅ **Same principles as ML systems** - greedy optimization for resource allocation
 
-### Connection to Day 13 Theme: Greedy Optimization and Resource Management
+### Connection to Thematic Link: Greedy Optimization and Resource Management
 
 All three topics converge on the same fundamental insight:
 

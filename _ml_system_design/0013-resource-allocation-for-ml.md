@@ -80,7 +80,7 @@ At a typical large tech company:
 
 ### The Greedy Optimization Connection
 
-Just like **Container With Most Water** (Day 13 DSA):
+Just like the **Container With Most Water** problem:
 
 | Container Problem | Resource Allocation |
 |-------------------|---------------------|
@@ -1350,7 +1350,7 @@ For a typical mid-size ML team (1000 GPUs):
 
 ✅ **Similar principles apply** to container optimization (DSA) and speech compute allocation
 
-### Connection to Day 13 Theme: Greedy Optimization and Resource Management
+### Connection to Thematic Link: Greedy Optimization and Resource Management
 
 All three topics share the same core insight:
 

@@ -960,7 +960,7 @@ def generate_parallel(n: int, num_processes: int = 4) -> List[str]:
 
 The **backtracking and combination generation** pattern from this problem directly applies to ML ensemble systems:
 
-### 1. Model Ensemble Selection (Day 14 ML System Design)
+### 1. Model Ensemble Selection
 
 **Problem:** Given N trained models, select the best subset for an ensemble.
 
