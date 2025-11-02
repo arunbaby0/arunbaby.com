@@ -90,3 +90,67 @@
   background-color: $background-color;
   color: yiq-contrast-color($background-color, $dark, $light, $threshold);
 }
+
+/*
+   Minimal breakpoint mixin shim
+   Replaces vendor breakpoint to avoid Sass import issues
+   Supports:
+   - breakpoint($min)
+   - breakpoint($min, $max)
+   - breakpoint($feature, $value) e.g. breakpoint('min-width', 768px)
+   ========================================================================== */
+
+@mixin breakpoint($args...) {
+  $len: length($args);
+
+  @if $len == 1 {
+    $min: nth($args, 1);
+    @media (min-width: $min) { @content; }
+  }
+  @else if $len == 2 {
+    $a: nth($args, 1);
+    $b: nth($args, 2);
+
+    @if type-of($a) == 'number' and type-of($b) == 'number' {
+      @media (min-width: $a) and (max-width: $b) { @content; }
+    }
+    @else if type-of($a) == 'string' {
+      @media (#{$a}: #{$b}) { @content; }
+    }
+    @else {
+      @media (min-width: $a) { @content; }
+    }
+  }
+  @else {
+    @content;
+  }
+}
+
+/*
+   Susy span() shim
+   Supports: span(<columns> of <total>)
+   Example: span(2.5 of 12) => 20.833333%
+   ========================================================================== */
+
+@function span($args...) {
+  $len: length($args);
+
+  // Case: span(2.5 of 12) comes in as 1 arg which is a list [2.5, of, 12]
+  @if $len == 1 {
+    $val: nth($args, 1);
+    @if type-of($val) == 'list' and length($val) >= 3 and nth($val, 2) == of {
+      $columns: nth($val, 1);
+      $total: nth($val, 3);
+      @return ($columns / $total) * 100%;
+    }
+  }
+
+  // Case: span(2.5, of, 12)
+  @if $len == 3 and nth($args, 2) == of {
+    $columns: nth($args, 1);
+    $total: nth($args, 3);
+    @return ($columns / $total) * 100%;
+  }
+
+  @return null;
+}
