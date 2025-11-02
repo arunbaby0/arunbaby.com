@@ -52,6 +52,16 @@ Each design includes:
 - [Caching Strategies](/ml-system-design/0010-caching-strategies/)
 - [Content Delivery Networks](/ml-system-design/0011-content-delivery-network/)
 - [Distributed ML Systems](/ml-system-design/0012-distributed-systems/)
+- [Resource Allocation for ML](/ml-system-design/0013-resource-allocation-for-ml/)
+
+**Model Optimization:**
+- [Model Ensembling](/ml-system-design/0014-model-ensembling/)
+
+**Unsupervised Learning:**
+- [Clustering Systems](/ml-system-design/0015-clustering-systems/)
+
+**Real-Time Systems:**
+- [Event Stream Processing](/ml-system-design/0016-event-stream-processing/)
 
 **Search & Ranking:**
 - Coming soon...

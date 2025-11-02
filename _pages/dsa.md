@@ -46,8 +46,17 @@ Each problem includes:
 **Sorting & Searching:**
 - [Binary Search](/dsa/0009-binary-search/)
 
-**String Manipulation:**
-- Coming soon...
+**Two Pointers & Greedy:**
+- [Container With Most Water](/dsa/0013-container-with-most-water/)
+
+**Backtracking:**
+- [Generate Parentheses](/dsa/0014-generate-parentheses/)
+
+**String Manipulation & Hash Tables:**
+- [Group Anagrams](/dsa/0015-group-anagrams/)
+
+**Intervals:**
+- [Merge Intervals](/dsa/0016-merge-intervals/)
 
 ---
 

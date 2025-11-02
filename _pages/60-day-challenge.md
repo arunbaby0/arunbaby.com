@@ -17,7 +17,7 @@ A structured 60-day learning journey through three interconnected domains of com
 
 ## Progress Tracker
 
-**Posts Completed:** 36 / 180 (20.0%)
+**Posts Completed:** 48 / 180 (26.7%)
 
 **Last Updated:** {{ site.time | date: '%B %d, %Y' }}
 
@@ -36,8 +36,10 @@ A structured 60-day learning journey through three interconnected domains of com
 - [x] **#10:** [Reverse Linked List](/dsa/0010-reverse-linked-list/) + [Caching Strategies](/ml-system-design/0010-caching-strategies/) + [Voice Enhancement](/speech-tech/0010-voice-enhancement/)
 - [x] **#11:** [LRU Cache](/dsa/0011-lru-cache/) + [Content Delivery Networks](/ml-system-design/0011-content-delivery-network/) + [Speech Separation](/speech-tech/0011-speech-separation/)
 - [x] **#12:** [Add Two Numbers](/dsa/0012-add-two-numbers/) + [Distributed ML Systems](/ml-system-design/0012-distributed-systems/) + [Multi-Speaker ASR](/speech-tech/0012-multi-speaker-asr/)
-- [ ] **#13:** Longest Substring Without Repeating + Feature Hashing + Audio Compression
-- [ ] **#14:** Container With Most Water + Load Balancing + Acoustic Modeling
+- [x] **#13:** [Container With Most Water](/dsa/0013-container-with-most-water/) + [Resource Allocation for ML](/ml-system-design/0013-resource-allocation-for-ml/) + [Compute Allocation for Speech Models](/speech-tech/0013-compute-allocation-for-speech-models/)
+- [x] **#14:** [Generate Parentheses](/dsa/0014-generate-parentheses/) + [Model Ensembling](/ml-system-design/0014-model-ensembling/) + [Multi-model Speech Ensemble](/speech-tech/0014-multi-model-speech-ensemble/)
+- [x] **#15:** [Group Anagrams](/dsa/0015-group-anagrams/) + [Clustering Systems](/ml-system-design/0015-clustering-systems/) + [Speaker Clustering (Diarization)](/speech-tech/0015-speaker-clustering-diarization/)
+- [x] **#16:** [Merge Intervals](/dsa/0016-merge-intervals/) + [Event Stream Processing](/ml-system-design/0016-event-stream-processing/) + [Real-time Audio Segmentation](/speech-tech/0016-real-time-audio-segmentation/)
 
 ### Week 3-9: Coming Soon
 Topic mapping in progress...

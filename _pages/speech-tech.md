@@ -32,6 +32,7 @@ Each post includes:
 - [Voice Activity Detection](/speech-tech/0004-voice-activity-detection/)
 - [Audio Preprocessing & Signal Processing](/speech-tech/0007-audio-preprocessing/)
 - [Voice Enhancement & Noise Reduction](/speech-tech/0010-voice-enhancement/)
+- [Real-time Audio Segmentation](/speech-tech/0016-real-time-audio-segmentation/)
 
 **Real-time Processing:**
 - [Streaming Speech Pipeline](/speech-tech/0008-streaming-speech-pipeline/)
@@ -42,10 +43,15 @@ Each post includes:
 
 **Speaker Technology:**
 - [Speaker Recognition & Verification](/speech-tech/0005-speaker-recognition/)
+- [Speaker Clustering (Diarization)](/speech-tech/0015-speaker-clustering-diarization/)
 
 **Speech Separation:**
 - [Speech Separation](/speech-tech/0011-speech-separation/)
 - [Multi-Speaker ASR](/speech-tech/0012-multi-speaker-asr/)
+
+**Pipeline Optimization:**
+- [Compute Allocation for Speech Models](/speech-tech/0013-compute-allocation-for-speech-models/)
+- [Multi-model Speech Ensemble](/speech-tech/0014-multi-model-speech-ensemble/)
 
 **Conversational AI:**
 - Coming soon...
