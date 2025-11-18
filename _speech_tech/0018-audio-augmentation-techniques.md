@@ -329,18 +329,69 @@ Mitigations:
 
 ### What to Monitor
 
-- Distribution of SNRs applied
-- Distribution of speed/pitch factors
-- Fraction of samples with each augmentation
-- Impact on WER/MOS:
-  - Compare training with and without specific augmentations
+- **Distribution of SNRs** applied over the training set.
+- **Distribution of speed/pitch factors** (are you overusing extreme values?).
+- **Fraction of samples** that receive each augmentation type.
+- **Impact on WER/MOS**:
+  - Compare training with and without specific augmentations,
+  - Track metric changes when you tweak augmentation configs.
+
+These should appear as first-class metrics in your monitoring stack, not just
+as ad-hoc logs.
 
 ### Debug Techniques
 
 - Build tools to visualize:
-  - Waveforms and spectrograms before/after augmentation
-  - Listen to augmented audio for a random subset each experiment
-- Log a sample of augmented examples per epoch
+  - Waveforms and spectrograms **before/after** augmentation,
+  - Overlays that highlight masked/warped regions on spectrograms.
+- Add a small “inspection” mode:
+  - Sample N utterances per epoch,
+  - Save augmented audio and features,
+  - Make them accessible via a lightweight web UI.
+- Periodically **listen to augmented audio** across various tasks and languages
+  to catch unnatural or damaging augmentations.
+
+## Failure Modes & Guardrails
+
+Audio augmentation is powerful but easy to misuse. Common failure modes:
+
+- **Over-augmentation**
+  - Too much noise or distortion leads to:
+    - Models that underfit clean data,
+    - Unnatural spectrograms that don’t resemble deployment audio.
+  - Guardrails:
+    - Cap augmentation strength (e.g., SNR ≥ 5 dB),
+    - Use curriculum-style schedules (weaker early, stronger later).
+
+- **Label inconsistency**
+  - Augmentations that invalidate labels:
+    - Trimming utterances that remove labeled content,
+    - Heavy time warping that breaks alignments for CTC/RNN-T.
+  - Guardrails:
+    - Make sure text/labels are updated (or augmentation is disabled) when
+      transforms change time scale or content.
+    - For alignments, prefer feature-space masking (SpecAugment) that preserves
+      global timing.
+
+- **Domain mismatch**
+  - Applying augmentations that are unrealistic for the target domain:
+    - Adding car noise to smart speaker data that mostly comes from quiet homes,
+    - Applying extreme reverberation where close-talk microphones dominate.
+  - Guardrails:
+    - Build per-domain augmentation configs,
+    - Validate with domain experts and real recordings.
+
+- **Hidden performance bottlenecks**
+  - Expensive augmentations (e.g., repeated FFTs, Python loops) running per sample.
+  - Guardrails:
+    - Benchmark augmentation CPU time separately,
+    - Move repeated computations (e.g., RIR FFTs) offline or cache them.
+
+Design your system so each augmentation has:
+
+- A **clear contract** (input/output shapes, label behavior),
+- Known **cost characteristics**,
+- A documented **safe operating regime** (where it helps rather than hurts).
 
 ## Real-World Examples
 

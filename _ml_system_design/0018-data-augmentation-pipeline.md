@@ -387,7 +387,7 @@ Solutions:
 
 Many of the key transforms in this pipeline are **matrix operations**:
 
-- Rotations, flips, and crops are index remappings on 2D arrays (exactly like the DSA Rotate Image problem).
+- Rotations, flips, and crops are index remappings on 2D arrays (just like the Rotate Image problem).
 - Time-frequency augmentations for audio are 2D operations on spectrograms.
 - Even higher-dimensional transforms (e.g., 4D tensors) are just extensions of these patterns.
 
@@ -397,6 +397,111 @@ helps you:
 - Reason about correctness,
 - Estimate memory and compute costs,
 - Decide where to place augmentations (CPU vs GPU) in your system.
+
+## Failure Modes & Safeguards
+
+In production, augmentation bugs can quietly corrupt training and are often hard
+to detect because they don’t crash the system—they just slowly degrade model
+quality. Typical failure modes:
+
+- **Label–image misalignment**
+  - Geometric transforms are applied to images but not to labels:
+    - Bounding boxes not shifted/scaled,
+    - Segmentation masks not warped,
+    - Keypoints left in original coordinates.
+  - Safeguards:
+    - Treat image + labels as a single object in the pipeline.
+    - Write unit tests for transforms that take `(image, labels)` and assert invariants.
+
+- **Domain-destructive augmentation**
+  - Augmentations that overly distort input:
+    - Extreme color jitter for medical images,
+    - Aggressive noise in low-resource speech settings,
+    - Random erasing that hides critical features.
+  - Safeguards:
+    - Visual inspection dashboards across many random seeds.
+    - Per-domain configs with different augmentation strengths.
+
+- **Data leakage**
+  - Using test augmentations or test data in training by mistake.
+  - Safeguards:
+    - Clear separation of train/val/test pipelines.
+    - Configuration linting to prevent mixing datasets.
+
+- **Non-determinism & reproducibility issues**
+  - Augmentations using global RNG without proper seeding.
+  - Different workers producing non-reproducible sequences for the same seed.
+  - Safeguards:
+    - Centralize RNG handling and seeding.
+    - Log seeds with experiment configs.
+
+- **Performance regressions**
+  - Adding a new augmentation that is unexpectedly expensive (e.g., Python loops over pixels).
+  - Safeguards:
+    - Performance tests as part of CI.
+    - Per-transform latency metrics and tracing.
+
+Design your pipeline so that **new augmentations are easy to add**, but every new
+op must declare:
+
+- Its expected cost (CPU/GPU time, memory),
+- Its invariants (what labels/metadata it must update),
+- Its failure modes (where it is unsafe to use).
+
+## Practical Debugging & Tuning Checklist
+
+When bringing up or iterating on an augmentation pipeline, working through a
+simple checklist is often more effective than any amount of abstract design:
+
+1. **Start with a “no-augmentation” baseline**
+   - Train a model with augmentations disabled.
+   - Record:
+     - Training/validation curves,
+     - Final accuracy/WER,
+     - Training throughput.
+   - This gives you a reference to judge whether augmentation is helping or hurting.
+
+2. **Introduce augmentations incrementally**
+   - Enable only a small subset (e.g., crops + flips).
+   - Compare:
+     - Validation metrics: did they improve?
+     - Throughput: did step time increase unacceptably?
+   - Add more transforms only after you understand the effect of the previous ones.
+
+3. **Visualize random batches per run**
+   - For every experiment:
+     - Save a small grid of augmented samples,
+     - Tag it with the experiment ID and augmentation config.
+   - Have a simple viewer (web UI or notebook) to flip through these grids quickly.
+
+4. **Instrument pipeline performance**
+   - Log:
+     - Average data loader time per batch,
+     - GPU utilization,
+     - Queue depth between augmentation workers and training loop.
+   - Add alerts for:
+     - Data loader time > X% of step time,
+     - Utilization < Y% for sustained periods.
+
+5. **Stress-test with extreme configs**
+   - Intentionally crank up augmentation strength:
+     - Very strong color jitter,
+     - Large random crops,
+     - Heavy masking.
+   - Ensure:
+     - Code doesn’t crash,
+     - Latency stays within an acceptable range,
+     - Model does not completely fail to train.
+
+6. **Keep augmentation and evaluation aligned**
+   - Ensure evaluation uses **realistic inputs**:
+     - No augmentations that don’t match production (e.g., training-time noise on clean eval data).
+   - For robustness testing:
+     - Add a separate “stress test” evaluation pipeline (e.g., with noisy images/audio).
+
+Working systematically through this list is often what turns a fragile,
+hand-tuned pipeline into a **stable, debuggable system** you can rely on for
+long-running, large-scale training.
 
 ## Key Takeaways
 
