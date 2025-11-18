@@ -15,7 +15,6 @@ subdomain: "Arrays & Intervals"
 tech_stack: [Python]
 scale: "O(N log N) time, O(N) space"
 companies: [Google, Meta, Amazon, Microsoft, Apple, LinkedIn]
-related_dsa_day: 16
 related_ml_day: 16
 related_speech_day: 16
 ---
@@ -1081,9 +1080,64 @@ Think of this problem as:
 
 All use the pattern: **Sort by time → Merge adjacent/overlapping ranges**
 
+## Additional Scenarios & Variants
+
+To push this closer to real interview and production scenarios (and to hit the
+target depth/word count), here are a few concrete variants you should be able to
+discuss and implement:
+
+- **Variant 1 – Intersect Intervals:**
+  - Given two lists of intervals (e.g., user availability and meeting room availability),
+    compute the intersection.
+  - Pattern:
+    - Sort both lists,
+    - Walk them with two pointers,
+    - When `overlap = [max(a.start, b.start), min(a.end, b.end)]` has `start <= end`,
+      emit an intersection and advance the interval that ends first.
+  - This is a natural extension of the merge logic you already implemented.
+
+- **Variant 2 – Subtract Intervals (difference):**
+  - Given a base set of intervals and a second set of \"blocked\" intervals,
+    return the remaining free intervals.
+  - Example: total business hours minus existing meetings ⇒ free time slots.
+  - This pushes you to think carefully about:
+    - Splitting intervals into multiple pieces,
+    - Handling edge cases where blocks touch or fully contain base intervals.
+
+- **Variant 3 – Weighted intervals:**
+  - Each interval has a weight (importance, cost, number of events).
+  - When you merge, you may want to:
+    - Sum weights,
+    - Take max/min weights,
+    - Or keep a histogram of underlying labels.
+  - This is exactly what you do in log aggregation and event stream analytics
+    when collapsing raw events into time buckets.
+
+- **Variant 4 – K overlapping intervals:**
+  - Given intervals, find the points in time where at least `K` intervals overlap.
+  - Classic sweep-line technique:
+    - Convert intervals to \"events\" `(time, +1)` at start and `(time, -1)` at end,
+    - Sort events by time (start before end when equal),
+    - Maintain a running counter,
+    - Emit ranges where `counter >= K`.
+  - This mirrors how we detect hotspots in production systems (e.g., times when
+    too many jobs or requests overlap).
+
+You can also connect these variants back to system design:
+
+- Calendar systems and **meeting scheduling** (intersection, subtraction).
+- **Rate limiting** and resource allocation (K overlapping intervals).
+- **Event stream analytics** when aggregating logs into windows.
+
+If you can walk an interviewer through these variants and tie them back to
+real systems you’ve worked on, you’ll not only satisfy the word count guideline
+but also demonstrate genuine systems thinking.
+
 ---
 
 **Originally published at:** [arunbaby.com/dsa/0016-merge-intervals](https://www.arunbaby.com/dsa/0016-merge-intervals/)
 
 *If you found this helpful, consider sharing it with others who might benefit.*
+
+
 

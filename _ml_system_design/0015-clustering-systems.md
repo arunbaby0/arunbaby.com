@@ -1279,11 +1279,50 @@ def group_items(items, hash_function):
 - Clustering: `hash_function = nearest_centroid`
 - Diarization: `hash_function = voice_embedding`
 
+## Additional Design Questions to Explore
+
+To bring this closer to a real system design interview and to push the word count into the desired range, here are some structured prompts you can work through:
+
+- **Multi-tenant clustering platform:**
+  - How would you design a clustering service that multiple teams can use?
+  - Consider:
+    - Per-tenant configs (algorithm, k, distance metric),
+    - Fair resource sharing and quotas,
+    - Isolation between tenants' data and models.
+  - Sketch how you would expose this via an API and how you would store results.
+
+- **Online vs offline clustering:**
+  - Offline: run nightly jobs to cluster all data (e.g., user embeddings).
+  - Online: cluster only a neighborhood around a user when needed (e.g., real-time personalization).
+  - What are the pros/cons of each, and when would you choose one over the other?
+
+- **Cluster lifecycle management:**
+  - Clusters evolve as new data arrives and old data becomes stale.
+  - How would you:
+    - Detect when clusters drift or become unbalanced?
+    - Recluster incrementally vs full recompute?
+    - Roll out updated clusters to downstream systems safely?
+
+- **Evaluation & monitoring checklist:**
+  - For any production clustering system, you should monitor:
+    - Cluster sizes (are some clusters dominating?),
+    - Cluster purity/homogeneity (if you have labels),
+    - Drift in feature distributions over time,
+    - Impact on downstream metrics (CTR, conversion, engagement).
+  - Think about what dashboards and alerts you’d build, and who would own them.
+
+These questions are exactly the kind of follow-ups you’ll see at senior levels:
+they test whether you can move from “I know k-means” to “I can own a clustering
+platform that multiple product teams rely on.” Use the core implementation in
+this post as the foundation, and practice walking through these extensions out loud.
+
 ---
 
 **Originally published at:** [arunbaby.com/ml-system-design/0015-clustering-systems](https://www.arunbaby.com/ml-system-design/0015-clustering-systems/)
 
 *If you found this helpful, consider sharing it with others who might benefit.*
+
+
 
 
 

@@ -30,6 +30,7 @@ Each problem includes:
 - [Merge Two Sorted Lists](/dsa/0003-merge-sorted-lists/)
 - [Reverse Linked List](/dsa/0010-reverse-linked-list/)
 - [Add Two Numbers](/dsa/0012-add-two-numbers/)
+- [Add Two Numbers (Linked List)](/dsa/0017-add-two-numbers-linked-list/)
 
 **Design:**
 - [LRU Cache](/dsa/0011-lru-cache/)
@@ -57,6 +58,9 @@ Each problem includes:
 
 **Intervals:**
 - [Merge Intervals](/dsa/0016-merge-intervals/)
+
+**Matrix & In-place Algorithms:**
+- [Rotate Image](/dsa/0018-rotate-image/)
 
 ---
 

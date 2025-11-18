@@ -33,6 +33,7 @@ Each post includes:
 - [Audio Preprocessing & Signal Processing](/speech-tech/0007-audio-preprocessing/)
 - [Voice Enhancement & Noise Reduction](/speech-tech/0010-voice-enhancement/)
 - [Real-time Audio Segmentation](/speech-tech/0016-real-time-audio-segmentation/)
+ - [Audio Augmentation Techniques](/speech-tech/0018-audio-augmentation-techniques/)
 
 **Real-time Processing:**
 - [Streaming Speech Pipeline](/speech-tech/0008-streaming-speech-pipeline/)
@@ -57,7 +58,7 @@ Each post includes:
 - Coming soon...
 
 **Model Optimization:**
-- Coming soon...
+- [Distributed Speech Training](/speech-tech/0017-distributed-speech-training/)
 
 ---
 

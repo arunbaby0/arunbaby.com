@@ -1222,11 +1222,47 @@ Think of this problem as:
 
 All use the same pattern: **create signature → hash → group by signature**
 
+## Additional Practice & Variants
+
+If you want to deepen your understanding and move closer to production use cases, here are some structured follow-ups:
+
+- **Variant 1 – Top-K Anagram Groups:**
+  - Given a list of words, return only the **K largest** anagram groups.
+  - Forces you to combine grouping with **heap / sorting** logic.
+  - Think about how to stream this when the vocabulary is huge.
+
+- **Variant 2 – Online Anagram Service:**
+  - Build an HTTP service with two endpoints:
+    - `POST /word` to insert a new word into the system.
+    - `GET /anagrams?word=...` to retrieve all known anagrams of a given word.
+  - Internally, you still use the same **signature → list-of-words** hash map,
+    but now you must think about:
+    - Concurrency (multiple writers/readers),
+    - Persistence (Redis / database),
+    - Eviction or TTLs if memory is constrained.
+
+- **Variant 3 – Fuzzy Anagrams:**
+  - Allow up to 1 character insertion/deletion/substitution (edit distance 1).
+  - You can still start from the exact-anagram hash grouping,
+    but now you need a **secondary similarity check** inside each bucket.
+  - This parallels approximate matching in search systems and LSH in clustering.
+
+Beyond interviews, this problem is a good mental model for any system where you:
+1. Define a **signature** for items (exact or approximate),
+2. Use that signature as a **hash key or index**,
+3. Group or retrieve items efficiently based on that signature.
+
+Once you can explain and implement this pattern fluently, you are in a good place
+to reason about higher-level systems like feature stores, deduplication pipelines,
+and similarity-based retrieval engines.
+
 ---
 
 **Originally published at:** [arunbaby.com/dsa/0015-group-anagrams](https://www.arunbaby.com/dsa/0015-group-anagrams/)
 
 *If you found this helpful, consider sharing it with others who might benefit.*
+
+
 
 
 

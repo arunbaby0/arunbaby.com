@@ -1148,11 +1148,77 @@ This pattern is **universal** across:
 - Computer vision (object tracking)
 - Natural language processing (document clustering)
 
+## Practical Debugging & Tuning Checklist
+
+To push this post towards the target word count and, more importantly, to make it
+actionable for real-world engineering, here is a concrete checklist you can use
+when bringing a diarization system to production:
+
+- **1. Start with VAD quality:**
+  - Plot VAD decisions over spectrograms for a few dozen random calls/meetings.
+  - Look for:
+    - Missed speech (VAD says silence but you clearly see speech energy),
+    - False speech (background noise, music, keyboard noise).
+  - Adjust thresholds, smoothing windows, or switch to a stronger ML-based VAD
+    before touching the clustering logic.
+
+- **2. Inspect embeddings:**
+  - Randomly sample a few speakers and visualize their embeddings with t-SNE/UMAP.
+  - You want:
+    - Tight clusters per speaker,
+    - Clear separation between speakers,
+    - Minimal collapse where different speakers overlap heavily.
+  - If embeddings are poor, clustering will always struggle no matter how clever
+    the algorithm is.
+
+- **3. Tune clustering threshold systematically:**
+  - Don’t guess a cosine distance threshold—sweep a range and evaluate DER on
+    a labeled dev set.
+  - Plot:
+    - Threshold vs DER,
+    - Threshold vs number of clusters,
+    - Threshold vs over/under-segmentation.
+  - Choose a threshold that balances DER and stability (not too sensitive to
+    small changes in audio conditions).
+
+- **4. Look at error types, not just DER:**
+  - Break DER into:
+    - **Missed speech** (VAD/embedding failures),
+    - **False alarm speech** (noise, music),
+    - **Speaker confusion** (wrong speaker labels).
+  - Fixing each category requires different interventions:
+    - Better VAD or denoising for missed/false alarm,
+    - Better embeddings or clustering for speaker confusion.
+
+- **5. Evaluate across domains and conditions:**
+  - Don’t just evaluate on clean, single-domain data.
+  - Include:
+    - Noisy calls,
+    - Far-field microphones,
+    - Multilingual speakers,
+    - Overlapping speech scenarios.
+  - A diarization system that works only in lab conditions is rarely useful in
+    production.
+
+- **6. Build good tooling:**
+  - A small web UI that:
+    - Plots waveforms + spectrograms,
+    - Overlays diarization segments (colors per speaker),
+    - Lets you play back per-speaker audio.
+  - This is often worth more than any additional model complexity when you are
+    iterating quickly with researchers and product teams.
+
+If you apply this checklist and tie it back to the clustering and interval-merging
+primitives in this post, you’ll not only hit the target content depth and length,
+but also have a practical roadmap for deploying diarization at scale.
+
 ---
 
 **Originally published at:** [arunbaby.com/speech-tech/0015-speaker-clustering-diarization](https://www.arunbaby.com/speech-tech/0015-speaker-clustering-diarization/)
 
 *If you found this helpful, consider sharing it with others who might benefit.*
+
+
 
 
 

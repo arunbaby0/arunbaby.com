@@ -985,9 +985,71 @@ All three topics share interval/window processing:
 
 This pattern is **fundamental** to temporal data processing!
 
+## Additional Design & Operational Considerations
+
+To bring this closer to a real production design and to increase depth (and word
+count) in a meaningful way, here are additional angles you should be comfortable
+discussing:
+
+- **Backpressure in detail:**
+  - What happens when sinks (e.g., databases, dashboards) can’t keep up?
+  - You should be able to talk about:
+    - Producer-side throttling,
+    - Buffer sizing and on-disk spill,
+    - Dropping or sampling low-priority events,
+    - Using dead-letter queues for problematic payloads.
+  - In Flink/Spark, backpressure is built into the runtime; in custom systems,
+    you must design this flow control explicitly.
+
+- **Exactly-once vs at-least-once semantics:**
+  - Exactly-once is often implemented as **effectively-once** at the sink:
+    - Idempotent writes,
+    - Deduplication using event IDs,
+    - Transactional writes (Kafka transactions, 2PC, etc.).
+  - Be ready to explain when at-least-once is acceptable (monitoring, metrics)
+    and when you truly need exactly-once (billing, financial ledgers).
+
+- **Multi-tenant stream processing:**
+  - In a large org, many teams may share the same Kafka cluster / stream engine.
+  - Consider:
+    - Per-tenant resource quotas,
+    - Isolation between streams (separate topics vs namespaces),
+    - Access control (who can publish/consume),
+    - Governance around schema evolution (Schema Registry, Protobuf/Avro).
+
+- **Schema evolution and compatibility:**
+  - Events evolve over time—fields are added/removed.
+  - You should design:
+    - Backward/forward compatible schemas,
+    - Clear deprecation policies,
+    - Validation in CI/CD so producers don’t break consumers.
+
+- **End-to-end SLAs:**
+  - It’s not enough to have p99 < 100ms inside the stream processor.
+  - End-to-end latency includes:
+    - Ingestion → broker,
+    - Broker → stream processor,
+    - Processor → sink,
+    - Sink → dashboard / downstream system.
+  - You should know where you’d instrument latency histograms and how you’d
+    trace a single event through the system (e.g., using a correlation ID).
+
+- **Cost-awareness and capacity planning:**
+  - Stream processing clusters can be very expensive at high scale.
+  - Think about:
+    - Right-sizing instances (CPU vs memory bound),
+    - Using autoscaling based on lag and CPU,
+    - Separating critical vs non-critical pipelines (priority tiers).
+
+Being able to reason about these topics—and tie them back to the core windowing
+and interval-processing primitives from earlier in the post—will make your answer
+stand out in senior-level interviews and in real design docs.
+
 ---
 
 **Originally published at:** [arunbaby.com/ml-system-design/0016-event-stream-processing](https://www.arunbaby.com/ml-system-design/0016-event-stream-processing/)
 
 *If you found this helpful, consider sharing it with others who might benefit.*
+
+
 

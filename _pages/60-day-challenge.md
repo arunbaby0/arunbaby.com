@@ -17,7 +17,7 @@ A structured 60-day learning journey through three interconnected domains of com
 
 ## Progress Tracker
 
-**Posts Completed:** 48 / 180 (26.7%)
+**Posts Completed:** 54 / 180 (30.0%)
 
 **Last Updated:** {{ site.time | date: '%B %d, %Y' }}
 
@@ -40,6 +40,8 @@ A structured 60-day learning journey through three interconnected domains of com
 - [x] **#14:** [Generate Parentheses](/dsa/0014-generate-parentheses/) + [Model Ensembling](/ml-system-design/0014-model-ensembling/) + [Multi-model Speech Ensemble](/speech-tech/0014-multi-model-speech-ensemble/)
 - [x] **#15:** [Group Anagrams](/dsa/0015-group-anagrams/) + [Clustering Systems](/ml-system-design/0015-clustering-systems/) + [Speaker Clustering (Diarization)](/speech-tech/0015-speaker-clustering-diarization/)
 - [x] **#16:** [Merge Intervals](/dsa/0016-merge-intervals/) + [Event Stream Processing](/ml-system-design/0016-event-stream-processing/) + [Real-time Audio Segmentation](/speech-tech/0016-real-time-audio-segmentation/)
+- [x] **#17:** [Add Two Numbers (Linked List)](/dsa/0017-add-two-numbers-linked-list/) + [Distributed Training Architecture](/ml-system-design/0017-distributed-training-architecture/) + [Distributed Speech Training](/speech-tech/0017-distributed-speech-training/)
+- [x] **#18:** [Rotate Image](/dsa/0018-rotate-image/) + [Data Augmentation Pipeline](/ml-system-design/0018-data-augmentation-pipeline/) + [Audio Augmentation Techniques](/speech-tech/0018-audio-augmentation-techniques/)
 
 ### Week 3-9: Coming Soon
 Topic mapping in progress...
