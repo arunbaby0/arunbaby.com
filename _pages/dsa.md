@@ -49,6 +49,7 @@ Each problem includes:
 
 **Two Pointers & Greedy:**
 - [Container With Most Water](/dsa/0013-container-with-most-water/)
+- [Jump Game](/dsa/0020-jump-game/)
 
 **Backtracking:**
 - [Generate Parentheses](/dsa/0014-generate-parentheses/)

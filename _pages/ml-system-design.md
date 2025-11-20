@@ -48,6 +48,7 @@ Each design includes:
 **Model Training:**
 - [Online Learning Systems](/ml-system-design/0009-online-learning-systems/)
 - [Distributed Training Architecture](/ml-system-design/0017-distributed-training-architecture/)
+- [Online Learning Systems (Advanced)](/ml-system-design/0020-online-learning-systems/)
 
 **Data Augmentation:**
 - [Data Augmentation Pipeline](/ml-system-design/0018-data-augmentation-pipeline/)

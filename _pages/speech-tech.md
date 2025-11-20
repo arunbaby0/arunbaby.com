@@ -63,6 +63,9 @@ Each post includes:
 **Speech MLOps:**
 - [Speech Experiment Management](/speech-tech/0019-speech-experiment-management/)
 
+**Adaptive Systems:**
+- [Adaptive Speech Models](/speech-tech/0020-adaptive-speech-models/)
+
 ---
 
 ## Speech Tech Index
