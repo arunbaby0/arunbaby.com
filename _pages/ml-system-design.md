@@ -52,6 +52,9 @@ Each design includes:
 **Data Augmentation:**
 - [Data Augmentation Pipeline](/ml-system-design/0018-data-augmentation-pipeline/)
 
+**MLOps & Experiment Tracking:**
+- [Experiment Tracking Systems](/ml-system-design/0019-experiment-tracking-systems/)
+
 **Infrastructure:**
 - [Caching Strategies](/ml-system-design/0010-caching-strategies/)
 - [Content Delivery Networks](/ml-system-design/0011-content-delivery-network/)

@@ -17,7 +17,7 @@ A structured 60-day learning journey through three interconnected domains of com
 
 ## Progress Tracker
 
-**Posts Completed:** 54 / 180 (30.0%)
+**Posts Completed:** 57 / 180 (31.7%)
 
 **Last Updated:** {{ site.time | date: '%B %d, %Y' }}
 
@@ -42,6 +42,7 @@ A structured 60-day learning journey through three interconnected domains of com
 - [x] **#16:** [Merge Intervals](/dsa/0016-merge-intervals/) + [Event Stream Processing](/ml-system-design/0016-event-stream-processing/) + [Real-time Audio Segmentation](/speech-tech/0016-real-time-audio-segmentation/)
 - [x] **#17:** [Add Two Numbers (Linked List)](/dsa/0017-add-two-numbers-linked-list/) + [Distributed Training Architecture](/ml-system-design/0017-distributed-training-architecture/) + [Distributed Speech Training](/speech-tech/0017-distributed-speech-training/)
 - [x] **#18:** [Rotate Image](/dsa/0018-rotate-image/) + [Data Augmentation Pipeline](/ml-system-design/0018-data-augmentation-pipeline/) + [Audio Augmentation Techniques](/speech-tech/0018-audio-augmentation-techniques/)
+- [x] **#19:** [Spiral Matrix](/dsa/0019-spiral-matrix/) + [Experiment Tracking Systems](/ml-system-design/0019-experiment-tracking-systems/) + [Speech Experiment Management](/speech-tech/0019-speech-experiment-management/)
 
 ### Week 3-9: Coming Soon
 Topic mapping in progress...

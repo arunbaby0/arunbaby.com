@@ -60,6 +60,9 @@ Each post includes:
 **Model Optimization:**
 - [Distributed Speech Training](/speech-tech/0017-distributed-speech-training/)
 
+**Speech MLOps:**
+- [Speech Experiment Management](/speech-tech/0019-speech-experiment-management/)
+
 ---
 
 ## Speech Tech Index

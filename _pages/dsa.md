@@ -61,6 +61,7 @@ Each problem includes:
 
 **Matrix & In-place Algorithms:**
 - [Rotate Image](/dsa/0018-rotate-image/)
+- [Spiral Matrix](/dsa/0019-spiral-matrix/)
 
 ---
 
