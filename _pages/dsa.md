@@ -39,6 +39,7 @@ Each problem includes:
 - [Best Time to Buy/Sell Stock](/dsa/0004-best-time-buy-sell-stock/)
 - [Maximum Subarray](/dsa/0005-maximum-subarray/)
 - [Climbing Stairs](/dsa/0006-climbing-stairs/)
+- [Unique Paths](/dsa/0021-unique-paths/)
 
 **Trees & Graphs:**
 - [Binary Tree Traversal](/dsa/0007-binary-tree-traversal/)

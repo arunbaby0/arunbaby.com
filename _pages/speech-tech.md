@@ -66,6 +66,9 @@ Each post includes:
 **Adaptive Systems:**
 - [Adaptive Speech Models](/speech-tech/0020-adaptive-speech-models/)
 
+**Speech Model Design:**
+- [Speech Architecture Search](/speech-tech/0021-speech-architecture-search/)
+
 ---
 
 ## Speech Tech Index
