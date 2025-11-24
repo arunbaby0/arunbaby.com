@@ -1,0 +1,966 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.26.2 by Michael Rose
+  Copyright 2013-2024 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+
+<html lang="en-US" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>ASR Beam Search Implementation - Arun Baby</title>
+<meta name="description" content="Implementing the core decoding logic of modern Speech Recognition systems, handling alignment, blanks, and language models.">
+
+
+  <meta name="author" content="Arun Baby">
+  
+  <meta property="article:author" content="Arun Baby">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Arun Baby">
+<meta property="og:title" content="ASR Beam Search Implementation">
+<meta property="og:url" content="https://www.arunbaby.com/speech-tech/0023-asr-beam-search-implementation/">
+
+
+  <meta property="og:description" content="Implementing the core decoding logic of modern Speech Recognition systems, handling alignment, blanks, and language models.">
+
+
+
+  <meta property="og:image" content="https://www.arunbaby.com/assets/images/profile-photo.png">
+
+
+
+  <meta name="twitter:site" content="@arunbaby0">
+  <meta name="twitter:title" content="ASR Beam Search Implementation">
+  <meta name="twitter:description" content="Implementing the core decoding logic of modern Speech Recognition systems, handling alignment, blanks, and language models.">
+  <meta name="twitter:url" content="https://www.arunbaby.com/speech-tech/0023-asr-beam-search-implementation/">
+
+  
+    <meta name="twitter:card" content="summary">
+    
+      <meta name="twitter:image" content="https://www.arunbaby.com/assets/images/profile-photo.png">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2025-11-24T23:16:44+05:30">
+
+
+
+
+
+  
+
+  
+
+
+<link rel="canonical" href="https://www.arunbaby.com/speech-tech/0023-asr-beam-search-implementation/">
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Arun Baby Feed">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+  
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@latest/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@latest/css/all.min.css"></noscript>
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single" dir="ltr">
+    <nav class="skip-links">
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+           
+          <span class="site-subtitle">Arun Baby</span>
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a
+                href="/about/"
+                
+                
+              >About</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/dsa/"
+                
+                
+              >DSA</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/ml-system-design/"
+                
+                
+              >ML Systems</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/speech-tech/"
+                
+                
+              >Speech Tech</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/publications/"
+                
+                
+              >Publications</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/statuses/"
+                
+                
+              >Statuses</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/contact/"
+                
+                
+              >Contact</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <i class="fas fa-search"></i>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+
+
+<div id="main" role="main" class="no-author-sidebar">
+  
+  <div class="sidebar sticky">
+  
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="ASR Beam Search Implementation">
+    <meta itemprop="description" content="Implementing the core decoding logic of modern Speech Recognition systems, handling alignment, blanks, and language models.">
+    <meta itemprop="datePublished" content="2025-11-24T23:16:44+05:30">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">
+            <a href="https://www.arunbaby.com/speech-tech/0023-asr-beam-search-implementation/" itemprop="url">ASR Beam Search Implementation
+</a>
+          </h1>
+          
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
+              <ul class="toc__menu"><li><a href="#problem">Problem</a></li><li><a href="#background-a-brief-history-of-decoders">Background: A Brief History of Decoders</a></li><li><a href="#why-greedy-fails-in-speech">Why Greedy Fails in Speech</a></li><li><a href="#algorithm-ctc-beam-search">Algorithm: CTC Beam Search</a><ul><li><a href="#the-state-space">The State Space</a></li><li><a href="#python-implementation">Python Implementation</a></li></ul></li><li><a href="#adding-a-language-model-lm">Adding a Language Model (LM)</a><ul><li><a href="#kenlm-integration">KenLM Integration</a></li></ul></li><li><a href="#measuring-success-word-error-rate-wer">Measuring Success: Word Error Rate (WER)</a><ul><li><a href="#python-implementation-of-wer">Python Implementation of WER</a></li></ul></li><li><a href="#streaming-asr-the-infinite-loop">Streaming ASR: The Infinite Loop</a></li><li><a href="#hot-word-boosting-contextual-biasing">Hot-Word Boosting (Contextual Biasing)</a></li><li><a href="#debugging-the-decoder">Debugging the Decoder</a></li><li><a href="#appendix-a-the-mathematics-of-ctc">Appendix A: The Mathematics of CTC</a></li><li><a href="#appendix-b-complete-python-decoder-class">Appendix B: Complete Python Decoder Class</a></li><li><a href="#appendix-c-the-asr-troubleshooting-guide">Appendix C: The ASR Troubleshooting Guide</a></li><li><a href="#appendix-d-deep-dive-into-wfst-weighted-finite-state-transducers">Appendix D: Deep Dive into WFST (Weighted Finite State Transducers)</a></li><li><a href="#conclusion">Conclusion</a></li></ul>
+            </nav>
+          </aside>
+        
+        <p><strong>Implementing the core decoding logic of modern Speech Recognition systems, handling alignment, blanks, and language models.</strong></p>
+
+<h2 id="problem">Problem</h2>
+
+<p>Standard Beam Search (for Transformers) generates one token at a time.
+CTC Beam Search processes a sequence of probabilities over time steps.</p>
+
+<p><strong>The Rules of CTC:</strong></p>
+<ol>
+  <li><strong>Blank Token (<code class="language-plaintext highlighter-rouge">&lt;blk&gt;</code>):</strong> A special token that represents “silence” or “no transition”.</li>
+  <li><strong>Collapse Repeats:</strong> <code class="language-plaintext highlighter-rouge">AA</code> -&gt; <code class="language-plaintext highlighter-rouge">A</code>.</li>
+  <li><strong>Blanks Separate:</strong> <code class="language-plaintext highlighter-rouge">A &lt;blk&gt; A</code> -&gt; <code class="language-plaintext highlighter-rouge">AA</code>. (This allows us to spell words like “Aaron”).</li>
+</ol>
+
+<p><strong>Example:</strong></p>
+<ul>
+  <li>Output: <code class="language-plaintext highlighter-rouge">h h e e l l l &lt;blk&gt; l l o</code></li>
+  <li>Collapse: <code class="language-plaintext highlighter-rouge">h e l &lt;blk&gt; l o</code></li>
+  <li>Remove Blanks: <code class="language-plaintext highlighter-rouge">h e l l o</code></li>
+</ul>
+
+<h2 id="background-a-brief-history-of-decoders">Background: A Brief History of Decoders</h2>
+
+<p>To understand CTC, we must understand what came before.</p>
+
+<ol>
+  <li><strong>HMM-GMM (1980s-2000s):</strong> The “Dark Ages”. We modeled speech as a Hidden Markov Model. The decoder was a massive Viterbi search over a graph of Phonemes -&gt; Triphones -&gt; Words -&gt; Sentences. It was complex, fragile, and required expert linguistic knowledge.</li>
+  <li><strong>HMM-DNN (2010-2015):</strong> We replaced the Gaussian Mixture Models (GMMs) with Deep Neural Networks (DNNs) to predict phoneme probabilities. The decoder remained the same Viterbi beast.</li>
+  <li><strong>CTC (2006/2015):</strong> Alex Graves introduced CTC. Suddenly, we didn’t need phoneme alignment. The model learned to align itself. The decoder became a simple “Prefix Search”.</li>
+  <li><strong>RNN-T (Transducer):</strong> An upgrade to CTC that removes the conditional independence assumption. It’s the standard for streaming ASR today (Siri, Google Assistant).</li>
+  <li><strong>Attention (Whisper):</strong> The decoder is just a text generator (like GPT) that attends to the audio. Simple, but hard to stream.</li>
+</ol>
+
+<p>Standard Beam Search (for Transformers) generates one token at a time.
+CTC Beam Search processes a sequence of probabilities over time steps.</p>
+
+<p><strong>The Rules of CTC:</strong></p>
+<ol>
+  <li><strong>Blank Token (<code class="language-plaintext highlighter-rouge">&lt;blk&gt;</code>):</strong> A special token that represents “silence” or “no transition”.</li>
+  <li><strong>Collapse Repeats:</strong> <code class="language-plaintext highlighter-rouge">AA</code> -&gt; <code class="language-plaintext highlighter-rouge">A</code>.</li>
+  <li><strong>Blanks Separate:</strong> <code class="language-plaintext highlighter-rouge">A &lt;blk&gt; A</code> -&gt; <code class="language-plaintext highlighter-rouge">AA</code>. (This allows us to spell words like “Aaron”).</li>
+</ol>
+
+<p><strong>Example:</strong></p>
+<ul>
+  <li>Output: <code class="language-plaintext highlighter-rouge">h h e e l l l &lt;blk&gt; l l o</code></li>
+  <li>Collapse: <code class="language-plaintext highlighter-rouge">h e l &lt;blk&gt; l o</code></li>
+  <li>Remove Blanks: <code class="language-plaintext highlighter-rouge">h e l l o</code></li>
+</ul>
+
+<h2 id="why-greedy-fails-in-speech">Why Greedy Fails in Speech</h2>
+
+<p>Imagine the audio for “The cat”.</p>
+<ul>
+  <li>Frame 10: P(The) = 0.6, P(A) = 0.4</li>
+  <li>Frame 11: P(cat) = 0.4, P(car) = 0.6</li>
+</ul>
+
+<p>Greedy might pick “The car”.
+But maybe “A cat” was more likely overall if we looked at the whole sequence.
+Beam Search allows us to keep “A” alive as a hypothesis until we see “cat”, which confirms it.</p>
+
+<h2 id="algorithm-ctc-beam-search">Algorithm: CTC Beam Search</h2>
+
+<p>This is more complex than standard Beam Search because we have to track two probabilities for each hypothesis:</p>
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">P_b</code>: Probability ending in a <strong>Blank</strong>.</li>
+  <li><code class="language-plaintext highlighter-rouge">P_nb</code>: Probability ending in a <strong>Non-Blank</strong>.</li>
+</ol>
+
+<p>Why? Because if the next token is the <em>same</em> as the last one, the behavior depends on whether there was a blank in between.</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">A</code> + <code class="language-plaintext highlighter-rouge">A</code> = <code class="language-plaintext highlighter-rouge">A</code> (Merge)</li>
+  <li><code class="language-plaintext highlighter-rouge">A</code> + <code class="language-plaintext highlighter-rouge">&lt;blk&gt;</code> + <code class="language-plaintext highlighter-rouge">A</code> = <code class="language-plaintext highlighter-rouge">AA</code> (No Merge)</li>
+</ul>
+
+<h3 id="the-state-space">The State Space</h3>
+<p>A hypothesis is defined by the text prefix (e.g., “hel”).
+At each time step <code class="language-plaintext highlighter-rouge">t</code>, we update the probabilities of all active prefixes based on the acoustic probabilities <code class="language-plaintext highlighter-rouge">y_t</code>.</p>
+
+<h3 id="python-implementation">Python Implementation</h3>
+
+<p>This is a simplified version of the algorithm used in libraries like <code class="language-plaintext highlighter-rouge">pyctcdecode</code>.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+
+<span class="k">def</span> <span class="nf">ctc_beam_search</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">vocab</span><span class="p">,</span> <span class="n">beam_width</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    probs: (T, V) numpy array of probabilities
+    vocab: list of characters (index 0 is &lt;blk&gt;)
+    </span><span class="sh">"""</span>
+    <span class="n">T</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">probs</span><span class="p">.</span><span class="n">shape</span>
+    
+    <span class="c1"># beam: dict mapping prefix -&gt; probability
+</span>    <span class="c1"># We work in log domain to avoid underflow
+</span>    <span class="n">beam</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">))</span>
+    
+    <span class="c1"># Initialize with empty prefix
+</span>    <span class="c1"># We track two scores: (score_blank, score_non_blank)
+</span>    <span class="n">beam</span><span class="p">[()]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">))</span>
+    
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
+        <span class="n">next_beam</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="p">(</span><span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">),</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">)))</span>
+        
+        <span class="c1"># Get top-K prefixes from previous step
+</span>        <span class="c1"># Sort by total score (logsumexp of blank and non-blank)
+</span>        <span class="n">sorted_prefixes</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span>
+            <span class="n">beam</span><span class="p">.</span><span class="nf">items</span><span class="p">(),</span>
+            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span>
+        <span class="p">)[:</span><span class="n">beam_width</span><span class="p">]</span>
+        
+        <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="p">(</span><span class="n">p_b</span><span class="p">,</span> <span class="n">p_nb</span><span class="p">)</span> <span class="ow">in</span> <span class="n">sorted_prefixes</span><span class="p">:</span>
+            <span class="c1"># 1. Handle Blank Token (Index 0)
+</span>            <span class="n">pr_blank</span> <span class="o">=</span> <span class="n">probs</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># If we add a blank, the prefix doesn't change.
+</span>            <span class="c1"># New blank score = log(P(blank at t)) + log(P_total at t-1)
+</span>            <span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span> <span class="o">=</span> <span class="n">next_beam</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span>
+            <span class="n">n_p_b</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">n_p_b</span><span class="p">,</span> <span class="n">pr_blank</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">p_b</span><span class="p">,</span> <span class="n">p_nb</span><span class="p">))</span>
+            <span class="n">next_beam</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span><span class="p">)</span>
+            
+            <span class="c1"># 2. Handle Non-Blank Tokens
+</span>            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">V</span><span class="p">):</span>
+                <span class="n">pr_char</span> <span class="o">=</span> <span class="n">probs</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">v</span><span class="p">]</span>
+                <span class="n">char</span> <span class="o">=</span> <span class="n">vocab</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+                
+                <span class="c1"># Case A: Repeat character (e.g., "l" -&gt; "l")
+</span>                <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">char</span><span class="p">:</span>
+                    <span class="c1"># 1. Merge (from non-blank): "l" + "l" -&gt; "l"
+</span>                    <span class="c1"># We update the NON-blank score of the SAME prefix
+</span>                    <span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span> <span class="o">=</span> <span class="n">next_beam</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span>
+                    <span class="n">n_p_nb</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">n_p_nb</span><span class="p">,</span> <span class="n">pr_char</span> <span class="o">+</span> <span class="n">p_nb</span><span class="p">)</span>
+                    <span class="n">next_beam</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span><span class="p">)</span>
+                    
+                    <span class="c1"># 2. No Merge (from blank): "l" + &lt;blk&gt; + "l" -&gt; "ll"
+</span>                    <span class="c1"># We extend the prefix
+</span>                    <span class="n">new_prefix</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="p">(</span><span class="n">char</span><span class="p">,)</span>
+                    <span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span> <span class="o">=</span> <span class="n">next_beam</span><span class="p">[</span><span class="n">new_prefix</span><span class="p">]</span>
+                    <span class="n">n_p_nb</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">n_p_nb</span><span class="p">,</span> <span class="n">pr_char</span> <span class="o">+</span> <span class="n">p_b</span><span class="p">)</span>
+                    <span class="n">next_beam</span><span class="p">[</span><span class="n">new_prefix</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span><span class="p">)</span>
+                    
+                <span class="c1"># Case B: New character
+</span>                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">new_prefix</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="p">(</span><span class="n">char</span><span class="p">,)</span>
+                    <span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span> <span class="o">=</span> <span class="n">next_beam</span><span class="p">[</span><span class="n">new_prefix</span><span class="p">]</span>
+                    <span class="c1"># We can come from blank OR non-blank
+</span>                    <span class="n">n_p_nb</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">n_p_nb</span><span class="p">,</span> <span class="n">pr_char</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">p_b</span><span class="p">,</span> <span class="n">p_nb</span><span class="p">))</span>
+                    <span class="n">next_beam</span><span class="p">[</span><span class="n">new_prefix</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span><span class="p">)</span>
+                    
+        <span class="n">beam</span> <span class="o">=</span> <span class="n">next_beam</span>
+        
+    <span class="c1"># Final cleanup: Return top hypothesis
+</span>    <span class="n">best_prefix</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">beam</span><span class="p">.</span><span class="nf">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="sh">""</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">best_prefix</span><span class="p">)</span>
+
+<span class="c1"># Mock Data
+# T=3, V=3 (&lt;blk&gt;, A, B)
+</span><span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span>
+    <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">],</span> <span class="c1"># Mostly A
+</span>    <span class="p">[</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">],</span> <span class="c1"># Mostly Blank
+</span>    <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">]</span>  <span class="c1"># Mostly B
+</span><span class="p">]))</span>
+<span class="n">vocab</span> <span class="o">=</span> <span class="p">[</span><span class="sh">'</span><span class="s">&lt;blk&gt;</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">A</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">B</span><span class="sh">'</span><span class="p">]</span>
+<span class="nf">print</span><span class="p">(</span><span class="nf">ctc_beam_search</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">vocab</span><span class="p">))</span> <span class="c1"># Output: "AB"
+</span></code></pre></div></div>
+
+<h2 id="adding-a-language-model-lm">Adding a Language Model (LM)</h2>
+
+<p>The acoustic model (AM) is good at sounds, but bad at grammar.</p>
+<ul>
+  <li>AM hears: “I want to wreck a nice beach.”</li>
+  <li>LM knows: “I want to recognize speech.”</li>
+</ul>
+
+<p>We fuse them during the beam search.
+<code class="language-plaintext highlighter-rouge">Score = Score_AM + (alpha * Score_LM) + (beta * Word_Count)</code></p>
+
+<ul>
+  <li><strong>Alpha:</strong> Weight of the LM (usually 0.5 - 2.0).</li>
+  <li><strong>Beta:</strong> Word insertion bonus (encourages longer sentences).</li>
+</ul>
+
+<h3 id="kenlm-integration">KenLM Integration</h3>
+<p>In production, we use <strong>KenLM</strong>, a highly optimized C++ library for n-gram language models.
+We query the LM every time we append a space character (end of a word).</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Pseudo-code for LM scoring
+</span><span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="sh">'</span><span class="s"> </span><span class="sh">'</span><span class="p">:</span>
+    <span class="n">word</span> <span class="o">=</span> <span class="nf">get_last_word</span><span class="p">(</span><span class="n">new_prefix</span><span class="p">)</span>
+    <span class="n">lm_score</span> <span class="o">=</span> <span class="n">lm</span><span class="p">.</span><span class="nf">score</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+    <span class="n">n_p_nb</span> <span class="o">+=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">lm_score</span>
+</code></pre></div></div>
+
+<h2 id="measuring-success-word-error-rate-wer">Measuring Success: Word Error Rate (WER)</h2>
+
+<p>In classification, we use Accuracy. In ASR, we use WER.
+<code class="language-plaintext highlighter-rouge">WER = (S + D + I) / N</code></p>
+<ul>
+  <li><strong>S (Substitutions):</strong> “cat” -&gt; “hat”</li>
+  <li><strong>D (Deletions):</strong> “the cat” -&gt; “cat”</li>
+  <li><strong>I (Insertions):</strong> “cat” -&gt; “the cat”</li>
+  <li><strong>N:</strong> Total number of words in the reference.</li>
+</ul>
+
+<p><strong>Note:</strong> WER can be &gt; 100% if you insert a lot of garbage!</p>
+
+<h3 id="python-implementation-of-wer">Python Implementation of WER</h3>
+
+<p>This uses the Levenshtein Distance algorithm (Dynamic Programming!).</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">calculate_wer</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">reference</span><span class="p">.</span><span class="nf">split</span><span class="p">()</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="p">.</span><span class="nf">split</span><span class="p">()</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+    
+    <span class="c1"># DP Matrix
+</span>    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">zeros</span><span class="p">((</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">m</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">m</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span> <span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">j</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">m</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">h</span><span class="p">[</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sub</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">ins</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">rem</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nf">min</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="n">ins</span><span class="p">,</span> <span class="n">rem</span><span class="p">)</span>
+                
+    <span class="k">return</span> <span class="n">d</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">/</span> <span class="n">n</span>
+
+<span class="n">ref</span> <span class="o">=</span> <span class="sh">"</span><span class="s">the cat sat on the mat</span><span class="sh">"</span>
+<span class="n">hyp</span> <span class="o">=</span> <span class="sh">"</span><span class="s">the cat sat on mat</span><span class="sh">"</span> <span class="c1"># Deletion
+</span><span class="nf">print</span><span class="p">(</span><span class="nf">calculate_wer</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">hyp</span><span class="p">))</span> <span class="c1"># 1/6 = 16.6%
+</span></code></pre></div></div>
+
+<h2 id="streaming-asr-the-infinite-loop">Streaming ASR: The Infinite Loop</h2>
+
+<p>Standard Beam Search waits for the end of the file. In a live meeting, you can’t wait.
+We need <strong>Streaming Decoding</strong>.</p>
+
+<p><strong>Challenges:</strong></p>
+<ol>
+  <li><strong>Latency:</strong> Users expect text to appear &lt; 200ms after they speak.</li>
+  <li><strong>Stability:</strong> The decoder might change its mind. “I want to…” -&gt; “I want two…”. This “flicker” is annoying.</li>
+</ol>
+
+<p><strong>Solution:</strong></p>
+<ul>
+  <li><strong>Partial Results:</strong> Output the current best hypothesis every 100ms.</li>
+  <li><strong>Endpointing:</strong> If the user pauses for &gt; 500ms, finalize the sentence and clear the beam history.</li>
+  <li><strong>Stability Heuristic:</strong> Only display words that have been stable for 3 frames.</li>
+</ul>
+
+<h2 id="hot-word-boosting-contextual-biasing">Hot-Word Boosting (Contextual Biasing)</h2>
+
+<p>If you build an ASR for a medical app, it needs to know “Hydrochlorothiazide”. A generic LM won’t know it.
+We use <strong>Contextual Biasing</strong>.</p>
+
+<p><strong>Algorithm:</strong></p>
+<ol>
+  <li>Build a <strong>Trie</strong> of hot-words (e.g., contact names, drug names).</li>
+  <li>During Beam Search, traverse the Trie with the current prefix.</li>
+  <li>If we are inside a hot-word node, add a bonus score.</li>
+</ol>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Pseudo-code
+</span><span class="k">if</span> <span class="n">current_prefix</span> <span class="ow">in</span> <span class="n">hot_word_trie</span><span class="p">:</span>
+    <span class="n">score</span> <span class="o">+=</span> <span class="n">boosting_weight</span>
+</code></pre></div></div>
+
+<h2 id="debugging-the-decoder">Debugging the Decoder</h2>
+
+<p>When your WER (Word Error Rate) is high, how do you know if it’s the Model or the Decoder?</p>
+
+<ol>
+  <li><strong>Force Alignment:</strong> Feed the <em>correct</em> transcript into the decoder and see its probability. If the probability is high but the decoder didn’t pick it, your <strong>Beam Width</strong> is too small (search error).</li>
+  <li><strong>Greedy Check:</strong> If Greedy Search gives garbage, your <strong>Model</strong> is bad (modeling error).</li>
+  <li><strong>LM Weight Tuning:</strong> Grid search <code class="language-plaintext highlighter-rouge">alpha</code> and <code class="language-plaintext highlighter-rouge">beta</code> on a validation set. A bad alpha can ruin a perfect acoustic model.</li>
+</ol>
+
+<h2 id="appendix-a-the-mathematics-of-ctc">Appendix A: The Mathematics of CTC</h2>
+
+<p>For those who want to understand the “Forward-Backward” algorithm used in CTC training.</p>
+
+<p><strong>Objective:</strong> Maximize <code class="language-plaintext highlighter-rouge">P(Y|X)</code>.
+Since many paths map to <code class="language-plaintext highlighter-rouge">Y</code> (e.g., <code class="language-plaintext highlighter-rouge">AA</code> and <code class="language-plaintext highlighter-rouge">A</code> both map to <code class="language-plaintext highlighter-rouge">A</code>), we sum over all valid paths.</p>
+
+<p><code class="language-plaintext highlighter-rouge">P(Y|X) = Sum_{pi in Path(Y)} P(pi|X)</code></p>
+
+<p><strong>Dynamic Programming (Forward Variable alpha):</strong>
+<code class="language-plaintext highlighter-rouge">alpha_t(s)</code>: Probability of outputting the first <code class="language-plaintext highlighter-rouge">s</code> characters of <code class="language-plaintext highlighter-rouge">Y</code> after <code class="language-plaintext highlighter-rouge">t</code> time steps.</p>
+
+<p><strong>Transitions:</strong></p>
+<ul>
+  <li>If <code class="language-plaintext highlighter-rouge">Y[s] == Y[s-2]</code> (repeat char): We can only come from <code class="language-plaintext highlighter-rouge">alpha_{t-1}(s)</code> or <code class="language-plaintext highlighter-rouge">alpha_{t-1}(s-1)</code>.</li>
+  <li>If <code class="language-plaintext highlighter-rouge">Y[s] != Y[s-2]</code> (new char): We can also come from <code class="language-plaintext highlighter-rouge">alpha_{t-1}(s-2)</code> (skipping the blank).</li>
+</ul>
+
+<p>This <code class="language-plaintext highlighter-rouge">O(T * S)</code> algorithm is what allows CTC to be differentiable and trainable via backpropagation.</p>
+
+<h2 id="appendix-b-complete-python-decoder-class">Appendix B: Complete Python Decoder Class</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+
+<span class="k">class</span> <span class="nc">CTCDecoder</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">vocab</span><span class="p">,</span> <span class="n">beam_width</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">vocab</span> <span class="o">=</span> <span class="n">vocab</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">beam_width</span> <span class="o">=</span> <span class="n">beam_width</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">beta</span>
+        
+    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">probs</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        probs: (T, V)
+        Returns: best_string
+        </span><span class="sh">"""</span>
+        <span class="c1"># Initialization
+</span>        <span class="n">beam</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="p">(</span><span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">),</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">)))</span>
+        <span class="n">beam</span><span class="p">[()]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">))</span>
+        
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">probs</span><span class="p">)):</span>
+            <span class="n">next_beam</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="p">(</span><span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">),</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">)))</span>
+            
+            <span class="c1"># Pruning: Only keep top beam_width
+</span>            <span class="n">sorted_beam</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span>
+                <span class="n">beam</span><span class="p">.</span><span class="nf">items</span><span class="p">(),</span>
+                <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span>
+                <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span>
+            <span class="p">)[:</span><span class="n">self</span><span class="p">.</span><span class="n">beam_width</span><span class="p">]</span>
+            
+            <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="p">(</span><span class="n">p_b</span><span class="p">,</span> <span class="n">p_nb</span><span class="p">)</span> <span class="ow">in</span> <span class="n">sorted_beam</span><span class="p">:</span>
+                <span class="c1"># ... (Same logic as above) ...
+</span>                <span class="c1"># See main article for the core loop
+</span>                <span class="k">pass</span>
+                
+            <span class="n">beam</span> <span class="o">=</span> <span class="n">next_beam</span>
+            
+        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">_get_best_hypothesis</span><span class="p">(</span><span class="n">beam</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_best_hypothesis</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">beam</span><span class="p">):</span>
+        <span class="n">best_prefix</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">beam</span><span class="p">.</span><span class="nf">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="sh">""</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">best_prefix</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="appendix-c-the-asr-troubleshooting-guide">Appendix C: The ASR Troubleshooting Guide</h2>
+
+<p><strong>Problem: The decoder outputs nothing.</strong></p>
+<ul>
+  <li><strong>Cause:</strong> Your blank probability is 1.0 everywhere.</li>
+  <li><strong>Fix:</strong> Check your training data. Are your labels aligned? Is the learning rate too high (exploding gradients)?</li>
+</ul>
+
+<p><strong>Problem: The decoder repeats words (“hello hello hello”).</strong></p>
+<ul>
+  <li><strong>Cause:</strong> The model is confident for too many frames.</li>
+  <li><strong>Fix:</strong> Increase the blank probability penalty or use a Language Model with a repetition penalty.</li>
+</ul>
+
+<p><strong>Problem: WER is 100%.</strong></p>
+<ul>
+  <li><strong>Cause:</strong> Vocabulary mismatch. Are you using the same char-to-int mapping as training?</li>
+  <li><strong>Fix:</strong> Verify <code class="language-plaintext highlighter-rouge">vocab.json</code>.</li>
+</ul>
+
+<h2 id="appendix-d-deep-dive-into-wfst-weighted-finite-state-transducers">Appendix D: Deep Dive into WFST (Weighted Finite State Transducers)</h2>
+
+<p>Before Deep Learning took over, ASR was built on <strong>WFSTs</strong>.
+Even today, the <strong>Kaldi</strong> toolkit (which powers many production systems) uses them.</p>
+
+<p><strong>What is a WFST?</strong>
+It’s a graph where edges have:</p>
+<ol>
+  <li><strong>Input Label</strong> (e.g., Phoneme)</li>
+  <li><strong>Output Label</strong> (e.g., Word)</li>
+  <li><strong>Weight</strong> (Probability)</li>
+</ol>
+
+<p><strong>The Composition (H o C o L o G):</strong>
+We build a massive static graph by composing four smaller graphs:</p>
+<ul>
+  <li><strong>H (HMM):</strong> Maps HMM states to Context-Dependent Phones.</li>
+  <li><strong>C (Context):</strong> Maps Context-Dependent Phones to Phones.</li>
+  <li><strong>L (Lexicon):</strong> Maps Phones to Words (Pronunciation Dictionary).</li>
+  <li><strong>G (Grammar):</strong> Maps Words to Sentences (Language Model).</li>
+</ul>
+
+<p><strong>Decoding:</strong>
+Decoding is simply finding the shortest path in the <code class="language-plaintext highlighter-rouge">H o C o L o G</code> graph.
+This is extremely fast because the graph is pre-compiled and optimized (determinized and minimized).</p>
+
+<p><strong>Why learn this?</strong>
+If you work on <strong>Edge AI</strong> (embedded devices), you might not have the RAM for a Transformer. A WFST decoder is incredibly memory-efficient and fast.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Implementing a CTC Beam Search decoder is a rite of passage. It forces you to understand the probabilistic nature of speech.</p>
+
+<p>While end-to-end models (like Whisper) are replacing complex decoders with simple <code class="language-plaintext highlighter-rouge">model.generate()</code>, understanding <strong>Beam Search</strong> is still crucial for:</p>
+<ol>
+  <li><strong>Streaming ASR</strong> (where Transformers are too slow).</li>
+  <li><strong>Keyword Spotting</strong> (Wake word detection).</li>
+  <li><strong>Customization</strong> (Adding hot-words).</li>
+</ol>
+
+<p><strong>Key Takeaways:</strong></p>
+<ul>
+  <li><strong>CTC</strong> handles the alignment between audio and text.</li>
+  <li><strong>Beam Search</strong> keeps multiple hypotheses alive to correct early mistakes.</li>
+  <li><strong>LMs</strong> are essential for fixing homophones (“beach” vs “speech”).</li>
+</ul>
+
+<hr />
+
+<p><strong>Originally published at:</strong> <a href="https://www.arunbaby.com/speech-tech/0023-asr-beam-search-implementation/">arunbaby.com/speech-tech/0023-asr-beam-search-implementation</a></p>
+
+<p><em>If you found this helpful, consider sharing it with others who might benefit.</em></p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/tags/#asr" class="page__taxonomy-item p-category" rel="tag">asr</a><span class="sep">, </span>
+    
+      <a href="/tags/#beam-search" class="page__taxonomy-item p-category" rel="tag">beam-search</a><span class="sep">, </span>
+    
+      <a href="/tags/#ctc" class="page__taxonomy-item p-category" rel="tag">ctc</a><span class="sep">, </span>
+    
+      <a href="/tags/#decoding" class="page__taxonomy-item p-category" rel="tag">decoding</a><span class="sep">, </span>
+    
+      <a href="/tags/#kenlm" class="page__taxonomy-item p-category" rel="tag">kenlm</a>
+    
+    </span>
+  </p>
+
+
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#speech-tech" class="page__taxonomy-item p-category" rel="tag">speech-tech</a>
+    
+    </span>
+  </p>
+
+
+        
+      </footer>
+
+      <div class="page__related page__related--full">
+  <h2 class="page__related-title">Related across topics</h2>
+  <style>
+    /* Make section span full content width and use 2 equal columns */
+    .page__related--full { float: inline-start; width: 100%; padding: 0; }
+    .cross-related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+    @media (max-width: 768px) { .cross-related-grid { grid-template-columns: 1fr; } }
+    /* Ensure archive cards stretch nicely in the grid */
+    .cross-related-grid .list__item, .cross-related-grid .grid__item { width: auto; float: none; margin: 0; }
+  </style>
+  <div class="cross-related-grid">
+    
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/dsa/0023-decode-ways/" rel="permalink">Decode Ways
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">A deceptive counting problem that teaches the fundamentals of state transitions and connects directly to Beam Search.
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ml-system-design/0023-beam-search-decoding/" rel="permalink">Beam Search Decoding
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">The industry-standard algorithm for converting probabilistic model outputs into coherent text sequences.
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/speech-tech/0023-asr-beam-search-implementation/" rel="permalink">ASR Beam Search Implementation
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Implementing the core decoding logic of modern Speech Recognition systems, handling alignment, blanks, and language models.
+</p>
+  </article>
+</div>
+
+  </div>
+</div>
+
+      <section class="page__share">
+  <h4 class="page__share-title">Share on</h4>
+
+  <a href="https://twitter.com/intent/tweet?via=arunbaby0&text=ASR+Beam+Search+Implementation%20https%3A%2F%2Fwww.arunbaby.com%2Fspeech-tech%2F0023-asr-beam-search-implementation%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.arunbaby.com%2Fspeech-tech%2F0023-asr-beam-search-implementation%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https://www.arunbaby.com/speech-tech/0023-asr-beam-search-implementation/" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/speech-tech/0022-cost-efficient-speech-systems/" class="pagination--pager" title="Cost-efficient Speech Systems">Previous</a>
+    
+    
+      <a href="/speech-tech/0024-speech-tokenization/" class="pagination--pager" title="Speech Tokenization">Next</a>
+    
+  </nav>
+
+
+    </div>
+
+    
+  </article>
+
+  
+  
+</div>
+
+      
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';" role="search">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/arunbaby0" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+          <li><a href="https://github.com/arunbaby0" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+        
+          <li><a href="https://www.linkedin.com/in/arunbaby0/" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i> LinkedIn</a></li>
+        
+      
+        
+          <li><a href="https://scholar.google.co.in/citations?user=6fSYWhkAAAAJ" rel="nofollow noopener noreferrer"><i class="fas fa-fw fa-graduation-cap" aria-hidden="true"></i> Google Scholar</a></li>
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 1990 - 2143 <a href="https://www.arunbaby.com">Arun Baby</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0JRJPEC9SS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-0JRJPEC9SS', { 'anonymize_ip': false});
+</script>
+
+
+
+
+
+
+
+
+  </body>
+</html>
