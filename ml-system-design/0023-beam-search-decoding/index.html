@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-11-26T09:08:15+05:30">
+  <meta property="article:published_time" content="2025-11-26T15:14:27+05:30">
 
 
 
@@ -201,7 +201,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Beam Search Decoding">
     <meta itemprop="description" content="The industry-standard algorithm for converting probabilistic model outputs into coherent text sequences.">
-    <meta itemprop="datePublished" content="2025-11-26T09:08:15+05:30">
+    <meta itemprop="datePublished" content="2025-11-26T15:14:27+05:30">
     
 
     <div class="page__inner-wrap">
@@ -240,7 +240,7 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#problem">Problem</a><ul><li><a href="#why-not-brute-force">Why not Brute Force?</a></li><li><a href="#why-not-brute-force-1">Why not Brute Force?</a></li></ul></li><li><a href="#strategy-1-greedy-search">Strategy 1: Greedy Search</a></li><li><a href="#strategy-2-beam-search">Strategy 2: Beam Search</a><ul><li><a href="#visualizing-the-beam">Visualizing the Beam</a></li><li><a href="#python-implementation">Python Implementation</a></li><li><a href="#complexity-analysis">Complexity Analysis</a></li></ul></li><li><a href="#advanced-beam-search-techniques">Advanced Beam Search Techniques</a></li><li><a href="#beam-search-vs-sampling-nucleustop-p">Beam Search vs. Sampling (Nucleus/Top-P)</a><ul><li><a href="#1-temperature">1. Temperature</a></li><li><a href="#2-top-k-sampling">2. Top-K Sampling</a></li><li><a href="#3-top-p-nucleus-sampling">3. Top-P (Nucleus) Sampling</a></li></ul></li><li><a href="#production-engineering-c-implementation">Production Engineering: C++ Implementation</a><ul><li><a href="#kv-caching--memory-bandwidth">KV Caching &amp; Memory Bandwidth</a></li></ul></li><li><a href="#system-design-considerations">System Design Considerations</a><ul><li><a href="#1-latency-vs-width">1. Latency vs. Width</a></li><li><a href="#2-batching">2. Batching</a></li></ul></li><li><a href="#case-study-google-translate">Case Study: Google Translate</a></li><li><a href="#appendix-a-full-c-production-implementation">Appendix A: Full C++ Production Implementation</a></li><li><a href="#appendix-b-the-ultimate-decoding-glossary">Appendix B: The Ultimate Decoding Glossary</a></li><li><a href="#appendix-c-key-research-papers-summarized">Appendix C: Key Research Papers Summarized</a></li><li><a href="#appendix-d-full-python-implementation-of-nucleus-sampling">Appendix D: Full Python Implementation of Nucleus Sampling</a></li><li><a href="#conclusion">Conclusion</a></li></ul>
+              <ul class="toc__menu"><li><a href="#problem">Problem</a><ul><li><a href="#why-not-brute-force">Why not Brute Force?</a></li><li><a href="#why-not-brute-force-1">Why not Brute Force?</a></li></ul></li><li><a href="#high-level-architecture-the-beam-search-pipeline">High-Level Architecture: The Beam Search Pipeline</a></li><li><a href="#strategy-1-greedy-search">Strategy 1: Greedy Search</a></li><li><a href="#strategy-2-beam-search">Strategy 2: Beam Search</a><ul><li><a href="#visualizing-the-beam">Visualizing the Beam</a></li><li><a href="#python-implementation">Python Implementation</a></li><li><a href="#complexity-analysis">Complexity Analysis</a></li></ul></li><li><a href="#advanced-beam-search-techniques">Advanced Beam Search Techniques</a></li><li><a href="#beam-search-vs-sampling-nucleustop-p">Beam Search vs. Sampling (Nucleus/Top-P)</a><ul><li><a href="#1-temperature">1. Temperature</a></li><li><a href="#2-top-k-sampling">2. Top-K Sampling</a></li><li><a href="#3-top-p-nucleus-sampling">3. Top-P (Nucleus) Sampling</a></li></ul></li><li><a href="#production-engineering-c-implementation">Production Engineering: C++ Implementation</a><ul><li><a href="#kv-caching--memory-bandwidth">KV Caching &amp; Memory Bandwidth</a></li></ul></li><li><a href="#system-design-considerations">System Design Considerations</a><ul><li><a href="#1-latency-vs-width">1. Latency vs. Width</a></li><li><a href="#2-batching">2. Batching</a></li></ul></li><li><a href="#case-study-google-translate">Case Study: Google Translate</a></li><li><a href="#appendix-a-full-c-production-implementation">Appendix A: Full C++ Production Implementation</a></li><li><a href="#appendix-b-the-ultimate-decoding-glossary">Appendix B: The Ultimate Decoding Glossary</a></li><li><a href="#appendix-c-key-research-papers-summarized">Appendix C: Key Research Papers Summarized</a></li><li><a href="#appendix-d-full-python-implementation-of-nucleus-sampling">Appendix D: Full Python Implementation of Nucleus Sampling</a></li><li><a href="#conclusion">Conclusion</a></li></ul>
             </nav>
           </aside>
         
@@ -275,6 +275,28 @@
 <h3 id="why-not-brute-force-1">Why not Brute Force?</h3>
 <p>If the vocabulary size is <code class="language-plaintext highlighter-rouge">V</code> (e.g., 50,000) and the sequence length is <code class="language-plaintext highlighter-rouge">T</code> (e.g., 20), the number of possible sequences is <code class="language-plaintext highlighter-rouge">V^T</code>.
 <code class="language-plaintext highlighter-rouge">50,000^20</code> is larger than the number of atoms in the universe. We cannot check them all.</p>
+
+<h2 id="high-level-architecture-the-beam-search-pipeline">High-Level Architecture: The Beam Search Pipeline</h2>
+
+<pre><code class="language-ascii">+-----------+     +------------+     +-----------------+
+| Input Seq | --&gt; |  Encoder   | --&gt; |  Hidden States  |
++-----------+     +------------+     +-----------------+
+                                            |
+                                            v
+                                   +-----------------+
+                                   |     Decoder     | &lt;--- (KV Cache)
+                                   +-----------------+
+                                            |
+                                            v
+                                   +-----------------+
+                                   |   Logits (V)    |
+                                   +-----------------+
+                                            |
+                                            v
+                                   +-----------------+
+                                   |   Beam Search   | --&gt; Top-K Sequences
+                                   +-----------------+
+</code></pre>
 
 <h2 id="strategy-1-greedy-search">Strategy 1: Greedy Search</h2>
 
@@ -399,8 +421,8 @@
 
 <h3 id="complexity-analysis">Complexity Analysis</h3>
 <ul>
-  <li><strong>Time Complexity:</strong> <code class="language-plaintext highlighter-rouge">O(T * K * V)</code> (naive) or <code class="language-plaintext highlighter-rouge">O(T * K * log K)</code> (optimized with top-k selection).</li>
-  <li><strong>Space Complexity:</strong> <code class="language-plaintext highlighter-rouge">O(T * K)</code>. We store <code class="language-plaintext highlighter-rouge">K</code> sequences of length <code class="language-plaintext highlighter-rouge">T</code>.</li>
+  <li><strong>Time Complexity:</strong> (O(T \times K \times V)) (naive) or (O(T \times K \times \log K)) (optimized with top-k selection).</li>
+  <li><strong>Space Complexity:</strong> (O(T \times K)). We store (K) sequences of length (T).</li>
 </ul>
 
 <h2 id="advanced-beam-search-techniques">Advanced Beam Search Techniques</h2>
@@ -768,6 +790,10 @@ Every step, we need to read the entire model weights from VRAM.</p>
 <p><strong>Originally published at:</strong> <a href="https://www.arunbaby.com/ml-system-design/0023-beam-search-decoding/">arunbaby.com/ml-system-design/0023-beam-search-decoding</a></p>
 
 <p><em>If you found this helpful, consider sharing it with others who might benefit.</em></p>
+
+<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
+  Created with LLM assistance
+</div>
 
         
       </section>
