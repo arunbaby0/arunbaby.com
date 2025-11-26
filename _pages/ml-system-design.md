@@ -29,6 +29,7 @@ Each design includes:
 
 **Data Infrastructure:**
 - [Data Preprocessing Pipeline](/ml-system-design/0003-data-preprocessing/)
+- [Batch Processing Pipelines](/ml-system-design/0026-batch-processing-pipelines/)
 
 **Experimentation & Metrics:**
 - [A/B Testing Systems](/ml-system-design/0004-ab-testing-systems/)
@@ -55,6 +56,7 @@ Each design includes:
 
 **MLOps & Experiment Tracking:**
 - [Experiment Tracking Systems](/ml-system-design/0019-experiment-tracking-systems/)
+- [Model Monitoring Systems](/ml-system-design/0025-model-monitoring-systems/)
 
 **AutoML & Model Design:**
 - [Neural Architecture Search](/ml-system-design/0021-neural-architecture-search/)
@@ -64,6 +66,7 @@ Each design includes:
 - [Content Delivery Networks](/ml-system-design/0011-content-delivery-network/)
 - [Distributed ML Systems](/ml-system-design/0012-distributed-systems/)
 - [Resource Allocation for ML](/ml-system-design/0013-resource-allocation-for-ml/)
+- [Cost Optimization for ML](/ml-system-design/0022-cost-optimization-for-ml/)
 
 **Model Optimization:**
 - [Model Ensembling](/ml-system-design/0014-model-ensembling/)
@@ -81,7 +84,8 @@ Each design includes:
 - Coming soon...
 
 **Natural Language Processing:**
-- Coming soon...
+- [Beam Search Decoding](/ml-system-design/0023-beam-search-decoding/)
+- [Tokenization Systems](/ml-system-design/0024-tokenization-systems/)
 
 **Real-Time Systems:**
 - Coming soon...

@@ -39,6 +39,22 @@ If we just use words, our vocabulary size explodes (English has >1 million words
 
 Modern LLMs (GPT-4, Llama 3) use **Subword Tokenization**—a sweet spot between characters and words. In this post, we will design a production-grade tokenizer, exploring algorithms like BPE, WordPiece, and SentencePiece that power the AI revolution.
 
+## High-Level Architecture: The Tokenization Pipeline
+
+```ascii
++-----------+     +--------------+     +-----------------+
+| Raw Text  | --> | Normalizer   | --> |  Pre-Tokenizer  |
++-----------+     +--------------+     +-----------------+
+"Héllo!"          "hello!"             ["hello", "!"]
+                                             |
+                                             v
++-----------+     +--------------+     +-----------------+
+| Token IDs | <-- | Post-Process | <-- |    Model        |
++-----------+     +--------------+     +-----------------+
+[101, 7592,       [CLS] hello !        BPE / WordPiece
+ 999, 102]        [SEP]
+```
+
 ## The Spectrum of Tokenization
 
 ### 1. Character-Level

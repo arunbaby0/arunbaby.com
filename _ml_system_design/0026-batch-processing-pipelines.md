@@ -41,6 +41,21 @@ But 90% of ML workloads are still Batch.
 3.  **Transformation:** dbt (SQL) or Spark (Python).
 4.  **Orchestration:** Airflow / Dagster / Prefect.
 
+## High-Level Architecture: The Modern Data Stack
+
+```ascii
++-----------+     +------------+     +-------------+     +-------------+
+|  Sources  | --> | Ingestion  | --> |  Data Lake  | --> |  Warehouse  |
++-----------+     +------------+     +-------------+     +-------------+
+(Postgres)        (Fivetran)         (S3 / GCS)          (Snowflake)
+                                                               |
+                                                               v
++-----------+     +------------+     +-------------+     +-------------+
+| Dashboard | <-- | Serving    | <-- | Transform   | <-- | Orchestrator|
++-----------+     +------------+     +-------------+     +-------------+
+(Tableau)         (Redis/API)        (dbt / Spark)       (Airflow)
+```
+
 ## Deep Dive: Apache Airflow (Orchestration)
 
 Airflow allows you to define pipelines as code (Python).
@@ -271,7 +286,7 @@ Moving data from Mapper to Reducer over the network.
 **Sort-Based Shuffle:**
 Spark sorts data on the Mapper side before sending it.
 It uses **Timsort** (Hybrid of Merge Sort and Insertion Sort).
-- **Complexity:** `O(N log N)`.
+- **Complexity:** \(O(N \log N)\).
 - **Memory:** Efficient. Spills to disk if RAM is full.
 
 **Tuning:**
@@ -425,4 +440,8 @@ Uber built an internal ML-as-a-Service platform.
 
 Batch processing is the workhorse of ML.
 While Real-Time is sexy, Batch is reliable, replayable, and easy to debug.
-If you can afford the latency, **always choose Batch**.
+*If you found this helpful, consider sharing it with others who might benefit.*
+
+<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
+  Created with LLM assistance
+</div>

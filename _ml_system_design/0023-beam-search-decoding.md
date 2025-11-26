@@ -51,6 +51,29 @@ Since multiplying probabilities results in tiny numbers (underflow), we work wit
 If the vocabulary size is `V` (e.g., 50,000) and the sequence length is `T` (e.g., 20), the number of possible sequences is `V^T`.
 `50,000^20` is larger than the number of atoms in the universe. We cannot check them all.
 
+## High-Level Architecture: The Beam Search Pipeline
+
+```ascii
++-----------+     +------------+     +-----------------+
+| Input Seq | --> |  Encoder   | --> |  Hidden States  |
++-----------+     +------------+     +-----------------+
+                                            |
+                                            v
+                                   +-----------------+
+                                   |     Decoder     | <--- (KV Cache)
+                                   +-----------------+
+                                            |
+                                            v
+                                   +-----------------+
+                                   |   Logits (V)    |
+                                   +-----------------+
+                                            |
+                                            v
+                                   +-----------------+
+                                   |   Beam Search   | --> Top-K Sequences
+                                   +-----------------+
+```
+
 ## Strategy 1: Greedy Search
 
 The simplest approach: Always pick the token with the highest probability at each step.
@@ -158,8 +181,8 @@ def beam_search_decoder(model, start_token, end_token, k=3, max_len=20):
 ```
 
 ### Complexity Analysis
-- **Time Complexity:** `O(T * K * V)` (naive) or `O(T * K * log K)` (optimized with top-k selection).
-- **Space Complexity:** `O(T * K)`. We store `K` sequences of length `T`.
+- **Time Complexity:** \(O(T \times K \times V)\) (naive) or \(O(T \times K \times \log K)\) (optimized with top-k selection).
+- **Space Complexity:** \(O(T \times K)\). We store \(K\) sequences of length \(T\).
 
 ## Advanced Beam Search Techniques
 
@@ -471,3 +494,7 @@ As an ML Engineer, you won't just call `model.generate()`. You will tune `K`, im
 **Originally published at:** [arunbaby.com/ml-system-design/0023-beam-search-decoding](https://www.arunbaby.com/ml-system-design/0023-beam-search-decoding/)
 
 *If you found this helpful, consider sharing it with others who might benefit.*
+
+<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
+  Created with LLM assistance
+</div>

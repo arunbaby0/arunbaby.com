@@ -23,6 +23,8 @@ Each post includes:
 
 **Automatic Speech Recognition (ASR):**
 - [Streaming ASR Architecture](/speech-tech/0001-streaming-asr/)
+- [ASR Beam Search Implementation](/speech-tech/0023-asr-beam-search-implementation/)
+- [Batch Speech Processing](/speech-tech/0026-batch-speech-processing/)
 
 **Speech Classification:**
 - [Speech Command Classification](/speech-tech/0002-speech-classification/)
@@ -34,6 +36,7 @@ Each post includes:
 - [Voice Enhancement & Noise Reduction](/speech-tech/0010-voice-enhancement/)
 - [Real-time Audio Segmentation](/speech-tech/0016-real-time-audio-segmentation/)
  - [Audio Augmentation Techniques](/speech-tech/0018-audio-augmentation-techniques/)
+- [Speech Tokenization](/speech-tech/0024-speech-tokenization/)
 
 **Real-time Processing:**
 - [Streaming Speech Pipeline](/speech-tech/0008-streaming-speech-pipeline/)
@@ -53,6 +56,7 @@ Each post includes:
 **Pipeline Optimization:**
 - [Compute Allocation for Speech Models](/speech-tech/0013-compute-allocation-for-speech-models/)
 - [Multi-model Speech Ensemble](/speech-tech/0014-multi-model-speech-ensemble/)
+- [Cost-Efficient Speech Systems](/speech-tech/0022-cost-efficient-speech-systems/)
 
 **Conversational AI:**
 - Coming soon...
@@ -62,6 +66,7 @@ Each post includes:
 
 **Speech MLOps:**
 - [Speech Experiment Management](/speech-tech/0019-speech-experiment-management/)
+- [Speech Quality Monitoring](/speech-tech/0025-speech-quality-monitoring/)
 
 **Adaptive Systems:**
 - [Adaptive Speech Models](/speech-tech/0020-adaptive-speech-models/)

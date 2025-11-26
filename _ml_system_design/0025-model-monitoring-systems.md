@@ -49,7 +49,20 @@ The relationship between inputs and outputs `P(Y|X)` changes.
 The distribution of the target variable `P(Y)` changes.
 - **Example:** In a fraud model, usually 1% is fraud. Suddenly, 20% is fraud (attack underway).
 
-## System Architecture: The Monitoring Stack
+## High-Level Architecture: The Monitoring Stack
+
+```ascii
++-----------+     +------------+     +-------------+
+| Live App  | --> | Log Stream | --> | Drift Calc  |
++-----------+     +------------+     +-------------+
+(FastAPI/Go)      (Kafka/S3)         (Airflow/Spark)
+                                           |
+                                           v
++-----------+     +------------+     +-------------+
+| Alerting  | <-- | Dashboard  | <-- | Metrics DB  |
++-----------+     +------------+     +-------------+
+(PagerDuty)       (Grafana)          (Prometheus)
+```
 
 How do we build a system to catch this?
 
@@ -427,6 +440,11 @@ Most models are "Static" (trained once).
 **Safety:**
 - **Holdout Set:** Keep a fixed "Golden Set" of data. Evaluate the model on it every minute. If accuracy drops, rollback.
 
+If you found this helpful, consider sharing it with others who might benefit.
+
+<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
+  Created with LLM assistance
+</div>
 ## Privacy: Differential Privacy in Monitoring
 
 You want to know the distribution of "Income", but you can't log individual incomes.

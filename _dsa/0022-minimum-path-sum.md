@@ -138,8 +138,8 @@ def minPathSum_recursive(grid):
 ```
 
 ### Complexity Analysis
-- **Time Complexity:** `O(2^(m+n))`. At each step, we branch into two possibilities. The depth of the recursion is `m+n`. This is exponential and extremely slow for large grids.
-- **Space Complexity:** `O(m+n)` for the recursion stack.
+- **Time Complexity:** \(O(2^{m+n})\). At each step, we branch into two possibilities. The depth of the recursion is \(m+n\). This is exponential and extremely slow for large grids.
+- **Space Complexity:** \(O(m+n)\) for the recursion stack.
 
 ### Why is it slow?
 Let's trace the calls for a simple 2x2 grid.
@@ -187,8 +187,8 @@ def minPathSum_memo(grid):
 ```
 
 ### Complexity Analysis
-- **Time Complexity:** `O(m * n)`. There are `m * n` unique states (cells). Each state is computed once.
-- **Space Complexity:** `O(m * n)` for the memoization table + `O(m + n)` for recursion stack.
+- **Time Complexity:** \(O(m \times n)\). There are \(m \times n\) unique states (cells). Each state is computed once.
+- **Space Complexity:** \(O(m \times n)\) for the memoization table + \(O(m + n)\) for recursion stack.
 
 This is much better! But we can do even better by removing the recursion overhead.
 
@@ -293,8 +293,8 @@ def minPathSum_iterative(grid):
 ```
 
 ### Complexity Analysis
-- **Time Complexity:** `O(m * n)`. We iterate through the grid once.
-- **Space Complexity:** `O(m * n)` for the `dp` table.
+- **Time Complexity:** \(O(m \times n)\). We iterate through the grid once.
+- **Space Complexity:** \(O(m \times n)\) for the `dp` table.
 
 ## Approach 4: Space Optimization (In-Place)
 
@@ -321,7 +321,7 @@ def minPathSum_inplace(grid):
     return grid[m-1][n-1]
 ```
 
-- **Space Complexity:** `O(1)`.
+- **Space Complexity:** \(O(1)\).
 
 ## Approach 5: Space Optimization (1D Array)
 
@@ -364,7 +364,7 @@ def minPathSum_1d(grid):
     return dp[n-1]
 ```
 
-- **Space Complexity:** `O(n)`. This is the most optimal space complexity without modifying input.
+- **Space Complexity:** \(O(n)\). This is the most optimal space complexity without modifying input.
 
 ## Multi-Language Implementations
 
@@ -650,3 +650,7 @@ Happy Coding!
 **Originally published at:** [arunbaby.com/dsa/0022-minimum-path-sum](https://www.arunbaby.com/dsa/0022-minimum-path-sum/)
 
 *If you found this helpful, consider sharing it with others who might benefit.*
+
+<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
+  Created with LLM assistance
+</div>

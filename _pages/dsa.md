@@ -40,10 +40,15 @@ Each problem includes:
 - [Maximum Subarray](/dsa/0005-maximum-subarray/)
 - [Climbing Stairs](/dsa/0006-climbing-stairs/)
 - [Unique Paths](/dsa/0021-unique-paths/)
+- [Minimum Path Sum](/dsa/0022-minimum-path-sum/)
+- [Decode Ways](/dsa/0023-decode-ways/)
+- [Word Break](/dsa/0024-word-break/)
 
 **Trees & Graphs:**
 - [Binary Tree Traversal](/dsa/0007-binary-tree-traversal/)
 - [Validate Binary Search Tree](/dsa/0008-validate-binary-search-tree/)
+- [Validate Binary Search Tree (Day 25)](/dsa/0025-validate-bst/)
+- [Binary Tree Level Order Traversal](/dsa/0026-level-order-traversal/)
 
 **Sorting & Searching:**
 - [Binary Search](/dsa/0009-binary-search/)

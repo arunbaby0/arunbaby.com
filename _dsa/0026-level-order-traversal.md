@@ -90,8 +90,8 @@ class Solution:
 ```
 
 **Complexity Analysis:**
-- **Time:** `O(N)`. We visit every node once.
-- **Space:** `O(N)` (or `O(W)` where W is max width). In a perfect binary tree, the last level has `N/2` nodes.
+- **Time:** \(O(N)\). We visit every node once.
+- **Space:** \(O(N)\) (or \(O(W)\) where W is max width). In a perfect binary tree, the last level has \(N/2\) nodes.
 
 ## Approach 2: Recursive DFS (Preorder)
 
@@ -122,7 +122,7 @@ class Solution:
 ```
 
 **Pros:** Simpler code (no queue).
-**Cons:** Uses system stack `O(H)` space. BFS uses heap space.
+**Cons:** Uses system stack \(O(H)\) space. BFS uses heap space.
 
 ## Variant: Zigzag Level Order Traversal
 
@@ -204,12 +204,9 @@ class Solution:
 
 **Solution:**
 Standard BFS, but `result.insert(0, level)` or `result.reverse()` at the end.
-`reverse()` is `O(N)` but amortized `O(1)` per level. `insert(0)` is `O(N)` per level (Total `O(N^2)`). **Always use reverse.**
+`reverse()` is \(O(N)\) but amortized \(O(1)\) per level. `insert(0)` is \(O(N)\) per level (Total \(O(N^2)\)). **Always use reverse.**
 
-## Variant 4: Binary Tree Right Side View
-
-**Problem:** Imagine standing on the right side of the tree. Return the values of the nodes you can see.
-Basically, the **last node** of each level.
+## Variant 4:A Binary Search Tree (BST) is the backbone of efficient search. It guarantees \(O(\log N)\) lookup. But this guarantee only holds if the tree is valid. If a single node is out of place, the search algorithm breaks.t node** of each level.
 
 ```python
 class Solution:
@@ -500,7 +497,7 @@ class Codec:
 To find the shortest path between `A` and `B` in a massive graph.
 Run BFS from `A` forward and from `B` backward.
 Meet in the middle.
-**Complexity:** `O(b^(d/2))` instead of `O(b^d)`. Huge saving!
+**Complexity:** \(O(b^{d/2})\) instead of \(O(b^d)\). Huge saving!
 
 ## Appendix C: The "Rotting Oranges" Pattern
 
@@ -525,7 +522,7 @@ This pattern appears in:
     **A:** Yes, using Recursion (DFS) and passing the level index (Approach 2). Or using two arrays (current_level, next_level).
 
 2.  **Q:** "What is the space complexity of BFS?"
-    **A:** `O(W)` where `W` is the maximum width. In a full binary tree, the last level has `N/2` leaves, so `O(N)`.
+    **A:** \(O(W)\) where \(W\) is the maximum width. In a full binary tree, the last level has \(N/2\) leaves, so \(O(N)\).
 
 3.  **Q:** "When should you use DFS vs BFS?"
     **A:**
@@ -625,13 +622,13 @@ class Solution:
 ## Deep Dive: Queue Implementation (Array vs. Linked List)
 
 **Array (Python List):**
-- `pop(0)` is `O(N)` because we have to shift all elements. **Bad.**
-- `pop()` is `O(1)`.
+- `pop(0)` is \(O(N)\) because we have to shift all elements. **Bad.**
+- `pop()` is \(O(1)\).
 
 **Linked List (Python deque):**
 - Doubly Linked List.
-- `popleft()` is `O(1)`. **Good.**
-- `append()` is `O(1)`.
+- `popleft()` is \(O(1)\). **Good.**
+- `append()` is \(O(1)\).
 
 **Circular Buffer (Ring Buffer):**
 - Fixed size array.
@@ -699,11 +696,11 @@ This allows `O(1)` neighbor finding.
 ## Deep Dive: Python `deque` Internals
 
 Why is `deque` faster than `list` for popping from the front?
-**List:** Contiguous memory array. `pop(0)` requires shifting `N-1` elements. `O(N)`.
+**List:** Contiguous memory array. `pop(0)` requires shifting \(N-1\) elements. \(O(N)\).
 **Deque:** Doubly Linked List of **Blocks** (Arrays).
 - Each block stores 64 elements.
 - `popleft()` just increments a pointer in the first block.
-- If the block becomes empty, we unlink it. `O(1)`.
+- If the block becomes empty, we unlink it. \(O(1)\).
 - **Cache Locality:** Better than a standard Linked List (one node per element) because of the block structure.
 
 ## Advanced Variant 13: Check Completeness of a Binary Tree
@@ -797,7 +794,11 @@ class Solution:
                 else:
                     # Odd Level: Even values, Decreasing
                     if node.val % 2 != 0 or node.val >= prev:
-                        return False
+*If you found this helpful, consider sharing it with others who might benefit.*
+
+<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
+  Created with LLM assistance
+</div>
                         
                 prev = node.val
                 if node.left: q.append(node.left)

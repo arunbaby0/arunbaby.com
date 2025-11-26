@@ -69,6 +69,28 @@ Greedy might pick "The car".
 But maybe "A cat" was more likely overall if we looked at the whole sequence.
 Beam Search allows us to keep "A" alive as a hypothesis until we see "cat", which confirms it.
 
+## High-Level Architecture: CTC Decoding Flow
+
+```ascii
++-------------+    +-------------+    +-------------+
+| Audio Frame | -> | Acoustic Mod| -> | Prob Matrix |
++-------------+    +-------------+    +-------------+
+                                           | (T x V)
+                                           v
+                                   +------------------+
+                                   | CTC Beam Search  |
+                                   +------------------+
+                                           |
+                      +--------------------+--------------------+
+                      |                                         |
+               (Expand Prefix)                           (Score with LM)
+                      |                                         |
+                      v                                         v
+             +----------------+                        +----------------+
+             | New Hypotheses | <--------------------- | Language Model |
+             +----------------+                        +----------------+
+```
+
 ## Algorithm: CTC Beam Search
 
 This is more complex than standard Beam Search because we have to track two probabilities for each hypothesis:
@@ -400,3 +422,7 @@ While end-to-end models (like Whisper) are replacing complex decoders with simpl
 **Originally published at:** [arunbaby.com/speech-tech/0023-asr-beam-search-implementation](https://www.arunbaby.com/speech-tech/0023-asr-beam-search-implementation/)
 
 *If you found this helpful, consider sharing it with others who might benefit.*
+
+<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
+  Created with LLM assistance
+</div>

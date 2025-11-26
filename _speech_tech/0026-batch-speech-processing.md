@@ -33,6 +33,21 @@ In Batch ASR (Otter.ai, YouTube Captions), **Accuracy is king**. You have the wh
 - **Compute:** Batch can run on a massive GPU cluster overnight.
 - **Features:** Batch enables Speaker Diarization ("Who said what?") and Summarization.
 
+## High-Level Architecture: The Batch Pipeline
+
+```ascii
++-----------+     +------------+     +-------------+
+| Raw Audio | --> | Preprocess | --> | Segmentation|
++-----------+     +------------+     +-------------+
+(MP3/M4A)         (FFMpeg/VAD)       (30s Chunks)
+                                           |
+                                           v
++-----------+     +------------+     +-------------+
+| Final Txt | <-- | Post-Proc  | <-- | Transcription|
++-----------+     +------------+     +-------------+
+(SRT/JSON)        (Diarization)      (Whisper/ASR)
+```
+
 ## Pipeline Architecture
 
 A typical Batch Speech Pipeline has 4 stages:
@@ -45,7 +60,7 @@ A typical Batch Speech Pipeline has 4 stages:
 
 2.  **Segmentation:**
     - Split long audio (1 hour) into chunks (30 seconds).
-    - Why? Transformer attention scales quadratically `O(N^2)`. You can't feed 1 hour into BERT.
+    - Why? Transformer attention scales quadratically \(O(N^2)\). You can't feed 1 hour into BERT.
 
 3.  **Transcription (ASR):**
     - Run Whisper / Conformer on each chunk.
@@ -278,7 +293,7 @@ Batch processing is expensive. How do we make it cheaper?
 
 **3. Flash Attention:**
 - IO-aware exact attention.
-- Reduces memory usage from `O(N^2)` to `O(N)`. Allows processing 1-hour files in one go.
+- Reduces memory usage from \(O(N^2)\) to \(O(N)\). Allows processing 1-hour files in one go.
 
 ## Advanced Topic: Multilingual ASR
 
@@ -403,4 +418,8 @@ It fails for:
 
 Batch processing allows us to use the "Heavy Artillery" of AI.
 We can use the biggest models, look at the entire context, and perform complex post-processing.
-For archival, search, and analytics, Batch is the way to go.
+*If you found this helpful, consider sharing it with others who might benefit.*
+
+<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
+  Created with LLM assistance
+</div>

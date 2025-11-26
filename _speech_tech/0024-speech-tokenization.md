@@ -73,6 +73,21 @@ These are **Neural Audio Codecs**.
 - Layer 2-8 tokens capture the fine details (timbre, noise).
 - This allows for high-fidelity compression (better than MP3 at low bitrates) and tokenization.
 
+## High-Level Architecture: The Speech-LLM Pipeline
+
+```ascii
++-----------+    +-------------+    +-------------+    +-------------+
+| Raw Audio | -> |   Encoder   | -> |  Quantizer  | -> | Discrete Tok|
++-----------+    +-------------+    +-------------+    +-------------+
+                      |                  |                  |
+                 (HuBERT/EnCodec)   (Codebook)         [34, 102, 88]
+                                                            |
+                                                            v
++-----------+    +-------------+    +-------------+    +-------------+
+| New Audio | <- |   Vocoder   | <- |  LLM / GPT  | <- | Prompt Toks |
++-----------+    +-------------+    +-------------+    +-------------+
+```
+
 ## System Design: Building a Speech-LLM
 
 Once we have speech tokens, we can build cool things.
@@ -167,6 +182,11 @@ As mentioned, a single codebook is too coarse. RVQ uses a cascade of `N` quantiz
 - **Bitrate Control:**
     - If we use 8 quantizers, we get high fidelity (6 kbps).
     - If we use only the first 2 quantizers during decoding, we get lower fidelity but lower bitrate (1.5 kbps).
+    - *If you found this helpful, consider sharing it with others who might benefit.*
+
+<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
+  Created with LLM assistance
+</div>
     - This allows **Bandwidth Scalability**.
 
 ### 3. Adversarial Loss (GAN)

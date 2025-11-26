@@ -67,6 +67,21 @@ Before the model even sees the data, we process it.
     - **Math:** This involves Fourier Transforms (FFT). While fast (`O(N log N)`), doing this for thousands of streams adds up.
     - **Optimization:** Use GPU-accelerated feature extraction (like `torchaudio` or `Kaldi` on GPU) instead of CPU-based `librosa`.
 
+## High-Level Architecture: The Efficient Pipeline
+
+```ascii
++-----------+    +-------------+    +-------------+    +-------------+
+| Raw Audio | -> | VAD Filter  | -> | Feature Ext | -> |  ASR Model  |
++-----------+    +-------------+    +-------------+    +-------------+
+                      |                    |                  |
+                 (Silence?)           (MFCCs/Spec)       (Transducer)
+                      |                    |                  |
+                      v                    v                  v
+                 +---------+        +-------------+    +-------------+
+                 | Discard |        | GPU/DSP Acc |    | Text Output |
+                 +---------+        +-------------+    +-------------+
+```
+
 ## Strategy 1: The Gatekeeper (Voice Activity Detection)
 
 The single most effective way to save money in a speech system is: **Don't process silence.**
@@ -346,3 +361,7 @@ By understanding the trade-offs between accuracy, latency, and cost, you can arc
 **Originally published at:** [arunbaby.com/speech-tech/0022-cost-efficient-speech-systems](https://www.arunbaby.com/speech-tech/0022-cost-efficient-speech-systems/)
 
 *If you found this helpful, consider sharing it with others who might benefit.*
+
+<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
+  Created with LLM assistance
+</div>

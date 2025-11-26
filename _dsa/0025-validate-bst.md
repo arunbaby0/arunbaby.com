@@ -53,7 +53,7 @@ A **valid BST** is defined as follows:
 
 ## Intuition
 
-A Binary Search Tree (BST) is the backbone of efficient search. It guarantees `O(log N)` lookup. But this guarantee only holds if the tree is valid. If a single node is out of place, the search algorithm breaks.
+A Binary Search Tree (BST) is the backbone of efficient search. It guarantees \(O(\log N)\) lookup. But this guarantee only holds if the tree is valid. If a single node is out of place, the search algorithm breaks.
 
 The most common mistake beginners make is checking only the immediate children:
 `node.left.val < node.val < node.right.val`
@@ -109,8 +109,8 @@ class Solution:
 ```
 
 **Complexity Analysis:**
-- **Time:** `O(N)`. We visit every node exactly once.
-- **Space:** `O(H)`, where `H` is the height of the tree (recursion stack). In worst case (skewed tree), `O(N)`.
+- **Time:** \(O(N)\). We visit every node exactly once.
+- **Space:** \(O(H)\), where \(H\) is the height of the tree (recursion stack). In worst case (skewed tree), \(O(N)\).
 
 ## Approach 2: Inorder Traversal
 
@@ -216,7 +216,7 @@ class Solution:
         return True
 ```
 
-**Pros:** `O(1)` Space!
+**Pros:** \(O(1)\) Space!
 **Cons:** Modifies the tree (not thread-safe). Slower due to pointer manipulation.
 
 ## System Design: Validating Database Indexes
@@ -238,7 +238,7 @@ class Solution:
 ## Advanced Variant 1: Recover Binary Search Tree
 
 **Problem:** Two nodes of a BST are swapped by mistake. Recover the tree without changing its structure.
-**Constraint:** Use `O(1)` space.
+**Constraint:** Use \(O(1)\) space.
 
 **Intuition:**
 If we do an Inorder Traversal of a valid BST, we get a sorted array: `[1, 2, 3, 4, 5]`.
@@ -247,7 +247,7 @@ Notice the inversions:
 1.  `4 > 3` (First violation). The larger value (`4`) is the first swapped node.
 2.  `3 > 2` (Second violation). The smaller value (`2`) is the second swapped node.
 
-We can find these two nodes using Morris Traversal (to keep `O(1)` space) and then swap their values.
+We can find these two nodes using Morris Traversal (to keep \(O(1)\) space) and then swap their values.
 
 ```python
 class Solution:
@@ -289,10 +289,10 @@ class Solution:
 ## Advanced Variant 2: BST Iterator
 
 **Problem:** Implement an iterator over a BST with `next()` and `hasNext()` methods.
-**Constraint:** `next()` and `hasNext()` should run in `O(1)` average time and use `O(H)` memory.
+**Constraint:** `next()` and `hasNext()` should run in \(O(1)\) average time and use \(O(H)\) memory.
 
 **Intuition:**
-We can't flatten the tree into a list (that takes `O(N)` memory).
+We can't flatten the tree into a list (that takes \(O(N)\) memory).
 Instead, we simulate the recursion stack.
 1.  Initialize: Push all left children of the root onto the stack.
 2.  `next()`: Pop a node. If it has a right child, push all *its* left children onto the stack.
@@ -451,6 +451,12 @@ This requires passing two values up the recursion: `(is_valid, black_height)`.
 We used Morris Traversal earlier. This is based on **Threaded Binary Trees**.
 A "Thread" is a pointer to the in-order successor (or predecessor) stored in the `right` (or `left`) child pointer if it would otherwise be null.
 
+*If you found this helpful, consider sharing it with others who might benefit.*
+
+<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
+  Created with LLM assistance
+</div>
+
 **Types:**
 1.  **Single Threaded:** Only right null pointers point to successor.
 2.  **Double Threaded:** Left null pointers point to predecessor too.
@@ -531,7 +537,7 @@ Check if it satisfies both Heap property and BST property.
 **Definition:** A self-adjusting BST.
 **Key Operation:** `Splay(node)`. Moves `node` to the root using rotations.
 **Property:** Recently accessed elements are near the root.
-**Amortized Complexity:** `O(log N)`.
+**Amortized Complexity:** \(O(\log N)\).
 
 **Rotations:**
 1.  **Zig:** Single rotation (like AVL).
@@ -540,7 +546,7 @@ Check if it satisfies both Heap property and BST property.
 
 **Validation:**
 Standard BST validation works. But we also care about **Balance**.
-A Splay Tree can be a linked list (`O(N)` worst case), but the *amortized* cost is logarithmic.
+A Splay Tree can be a linked list (\(O(N)\) worst case), but the *amortized* cost is logarithmic.
 
 ## Advanced Variant 8: Treaps (Tree + Heap)
 
@@ -549,7 +555,7 @@ A Splay Tree can be a linked list (`O(N)` worst case), but the *amortized* cost 
 -   **Priorities:** Randomly assigned. Follow Heap property.
 
 **Why?**
-Random priorities ensure the tree is balanced with high probability (`O(log N)` height).
+Random priorities ensure the tree is balanced with high probability (\(O(\log N)\) height).
 It avoids the complex rotation logic of AVL/Red-Black trees.
 
 **Validation:**
@@ -568,8 +574,8 @@ We create a **copy** of the node, and a copy of its parent, all the way to the r
 The new root represents the new version. The old root represents the old version.
 They share the unchanged subtrees.
 
-**Space Complexity:** `O(log N)` extra space per update.
-**Time Complexity:** `O(log N)` per update.
+**Space Complexity:** \(O(\log N)\) extra space per update.
+**Time Complexity:** \(O(\log N)\) per update.
 
 **Use Case:** Functional Programming (Haskell), Git, MVCC Databases.
 
@@ -587,14 +593,14 @@ This is similar to **Huffman Coding**, but the order of keys is fixed (must be B
 `dp[i][j]` = Min cost to construct OBST from keys `i` to `j`.
 `dp[i][j] = Sum(freq[i...j]) + min(dp[i][r-1] + dp[r+1][j])` for `r` from `i` to `j`.
 
-**Complexity:** `O(N^3)` time, `O(N^2)` space.
-**Knuth's Optimization:** Reduces time to `O(N^2)`.
+**Complexity:** \(O(N^3)\) time, \(O(N^2)\) space.
+**Knuth's Optimization:** Reduces time to \(O(N^2)\).
 
 ## Appendix C: Common BST Patterns
 
 1.  **Inorder is Sorted:** The most useful property.
 2.  **Preorder/Postorder Serialization:** A BST can be uniquely reconstructed from its Preorder traversal (if we know the bounds).
-3.  **Successor/Predecessor:** Finding the next/prev value is `O(H)`.
+3.  **Successor/Predecessor:** Finding the next/prev value is \(O(H)\).
 4.  **LCA (Lowest Common Ancestor):** In a BST, the LCA of `p` and `q` is the first node `n` such that `min(p, q) < n < max(p, q)`.
 
 ## Conclusion

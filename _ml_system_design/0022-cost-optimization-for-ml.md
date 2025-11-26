@@ -61,6 +61,31 @@ This is usually 70-80% of the cost.
 - **Egress:** Moving data out of the cloud provider (e.g., serving images to users).
 - **Cross-Zone/Region:** Moving data between availability zones (AZs) for redundancy. Training a model in Zone A with data in Zone B incurs massive costs.
 
+## High-Level Architecture: The Cost-Aware Pipeline
+
+```ascii
++----------------+       +------------------+       +-------------------+
+|  User Request  | ----> |  Load Balancer   | ----> |  Inference Router |
++----------------+       +------------------+       +-------------------+
+                                                            |
+                                         +------------------+------------------+
+                                         |                                     |
+                                 (High Confidence?)                     (Low Confidence?)
+                                         |                                     |
+                                         v                                     v
+                                +----------------+                    +----------------+
+                                |  CPU Cluster   |                    |  GPU Cluster   |
+                                | (DistilBERT)   |                    | (BERT-Large)   |
+                                +----------------+                    +----------------+
+                                         |                                     |
+                                         +------------------+------------------+
+                                                            |
+                                                            v
+                                                   +----------------+
+                                                   |    Response    |
+                                                   +----------------+
+```
+
 ## Strategy 1: The Spot Instance Revolution
 
 Cloud providers have excess capacity. They sell this spare capacity at a massive discount (60-90% off) called **Spot Instances** (AWS) or **Preemptible VMs** (GCP). The catch? They can take it back with a 30-second to 2-minute warning.
@@ -360,3 +385,7 @@ By mastering these techniques—Spot instances, quantization, architectural patt
 **Originally published at:** [arunbaby.com/ml-system-design/0022-cost-optimization-for-ml](https://www.arunbaby.com/ml-system-design/0022-cost-optimization-for-ml/)
 
 *If you found this helpful, consider sharing it with others who might benefit.*
+
+<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
+  Created with LLM assistance
+</div>

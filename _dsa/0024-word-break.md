@@ -88,8 +88,8 @@ def wordBreak_recursive(s: str, wordDict: List[str]) -> bool:
 ```
 
 **Complexity:**
-- **Time:** `O(2^N)`. In the worst case (e.g., `s = "aaaaa"`, `dict = ["a", "aa", "aaa"]`), we explore every possible partition.
-- **Space:** `O(N)` for recursion depth.
+- **Time:** \(O(2^N)\). In the worst case (e.g., `s = "aaaaa"`, `dict = ["a", "aa", "aaa"]`), we explore every possible partition.
+- **Space:** \(O(N)\) for recursion depth.
 
 ## Approach 2: Recursion with Memoization
 
@@ -120,8 +120,8 @@ def wordBreak_memo(s: str, wordDict: List[str]) -> bool:
 ```
 
 **Complexity:**
-- **Time:** `O(N^3)`. There are `N` states. For each state, we iterate `N` times. String slicing/hashing takes `O(N)`. Total `N * N * N`.
-- **Space:** `O(N)` for memoization.
+- **Time:** \(O(N^3)\). There are \(N\) states. For each state, we iterate \(N\) times. String slicing/hashing takes \(O(N)\). Total \(N \times N \times N\).
+- **Space:** \(O(N)\) for memoization.
 
 ## Approach 3: Iterative Dynamic Programming (BFS)
 
@@ -155,8 +155,8 @@ def wordBreak_dp(s: str, wordDict: List[str]) -> bool:
 ```
 
 **Complexity:**
-- **Time:** `O(N^3)`. Nested loops `O(N^2)` + substring slicing `O(N)`.
-- **Space:** `O(N)` for `dp` array.
+- **Time:** \(O(N^3)\). Nested loops \(O(N^2)\) + substring slicing \(O(N)\).
+- **Space:** \(O(N)\) for `dp` array.
 
 ## Optimization: Trie (Prefix Tree)
 
@@ -202,14 +202,19 @@ class Solution:
 ```
 
 **Complexity Analysis:**
-- **Time:** `O(N^2 + M * K)`, where `M` is the number of words and `K` is the average length of a word (for Trie construction). The DP part is still `O(N^2)` in worst case (e.g., "aaaaa"), but in practice, the Trie traversal stops much earlier than `N` steps.
-- **Space:** `O(M * K)` for the Trie.
+- **Time:** \(O(N^2 + M \times K)\), where \(M\) is the number of words and \(K\) is the average length of a word (for Trie construction). The DP part is still \(O(N^2)\) in worst case (e.g., "aaaaa"), but in practice, the Trie traversal stops much earlier than \(N\) steps.
+- **Space:** \(O(M \times K)\) for the Trie.
 
 ## Deep Dive: The Aho-Corasick Algorithm
 
-While not strictly necessary for "Word Break", the **Aho-Corasick** algorithm is the natural evolution of this problem. It builds a finite state machine (FSM) from the Trie that allows finding *all* occurrences of *all* dictionary words in the text in `O(N + Total_Matches)` time.
+While not strictly necessary for "Word Break", the **Aho-Corasick** algorithm is the natural evolution of this problem. It builds a finite state machine (FSM) from the Trie that allows finding *all* occurrences of *all* dictionary words in the text in \(O(N + \text{Total\_Matches})\) time.
 
 It adds "failure links" to the Trie nodes. If you fail to match a character at a deep node, the failure link takes you to the longest proper suffix that is also a prefix of some pattern.
+*If you found this helpful, consider sharing it with others who might benefit.*
+
+<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
+  Created with LLM assistance
+</div>
 
 **Why does this matter?**
 In network intrusion detection systems (like Snort) or virus scanners (ClamAV), we need to match thousands of signatures against a stream of packets. We can't run `Word Break` on every packet. Aho-Corasick allows us to scan the stream in linear time.

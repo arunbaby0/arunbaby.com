@@ -117,8 +117,8 @@ def numDecodings_recursive(s: str) -> int:
 ```
 
 ### Complexity Analysis
-- **Time Complexity:** `O(2^N)`. In the worst case (e.g., "111111"), every step branches into two. This is the Fibonacci sequence recursion.
-- **Space Complexity:** `O(N)` for the recursion stack.
+- **Time Complexity:** \(O(2^N)\). In the worst case (e.g., "111111"), every step branches into two. This is the Fibonacci sequence recursion.
+- **Space Complexity:** \(O(N)\) for the recursion stack.
 
 ## Approach 2: Recursion with Memoization
 
@@ -149,8 +149,8 @@ def numDecodings_memo(s: str) -> int:
     return decode(0)
 ```
 
-- **Time Complexity:** `O(N)`. We visit each index once.
-- **Space Complexity:** `O(N)` for memoization map + stack.
+- **Time Complexity:** \(O(N)\). We visit each index once.
+- **Space Complexity:** \(O(N)\) for memoization map + stack.
 
 ## Approach 3: Iterative Dynamic Programming
 
@@ -193,8 +193,8 @@ def numDecodings_dp(s: str) -> int:
 ```
 
 ### Complexity Analysis
-- **Time Complexity:** `O(N)`.
-- **Space Complexity:** `O(N)` for the `dp` array.
+- **Time Complexity:** \(O(N)\).
+- **Space Complexity:** \(O(N)\) for the `dp` array.
 
 ## Approach 4: Space Optimization (O(1) Space)
 
@@ -227,7 +227,7 @@ def numDecodings_optimized(s: str) -> int:
     return one_back
 ```
 
-- **Space Complexity:** `O(1)`.
+- **Space Complexity:** \(O(1)\).
 
 ## Detailed Walkthrough: Tracing "226"
 
@@ -546,3 +546,7 @@ Decode Ways is a masterclass in handling state transitions and edge cases. It te
 **Originally published at:** [arunbaby.com/dsa/0023-decode-ways](https://www.arunbaby.com/dsa/0023-decode-ways/)
 
 *If you found this helpful, consider sharing it with others who might benefit.*
+
+<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
+  Created with LLM assistance
+</div>
