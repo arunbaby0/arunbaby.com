@@ -720,6 +720,4 @@ Use **source separation** models (e.g., Conv-TasNet, Sudo RM-RF) to separate the
 
 *If you found this helpful, consider sharing it with others who might benefit.*
 
-<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
-  Created with LLM assistance
-</div>
+

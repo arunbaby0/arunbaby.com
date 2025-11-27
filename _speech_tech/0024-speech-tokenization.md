@@ -184,9 +184,7 @@ As mentioned, a single codebook is too coarse. RVQ uses a cascade of `N` quantiz
     - If we use only the first 2 quantizers during decoding, we get lower fidelity but lower bitrate (1.5 kbps).
     - *If you found this helpful, consider sharing it with others who might benefit.*
 
-<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
-  Created with LLM assistance
-</div>
+
     - This allows **Bandwidth Scalability**.
 
 ### 3. Adversarial Loss (GAN)

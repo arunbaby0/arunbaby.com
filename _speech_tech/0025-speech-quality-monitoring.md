@@ -83,9 +83,7 @@ It allows **Reference-Free** monitoring. You can run this on the client side (in
 
 *If you found this helpful, consider sharing it with others who might benefit.*
 
-<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
-  Created with LLM assistance
-</div>
+
 
 ## High-Level Architecture: Real-Time Quality Monitor
 

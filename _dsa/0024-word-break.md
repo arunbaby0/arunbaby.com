@@ -212,9 +212,7 @@ While not strictly necessary for "Word Break", the **Aho-Corasick** algorithm is
 It adds "failure links" to the Trie nodes. If you fail to match a character at a deep node, the failure link takes you to the longest proper suffix that is also a prefix of some pattern.
 *If you found this helpful, consider sharing it with others who might benefit.*
 
-<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
-  Created with LLM assistance
-</div>
+
 
 **Why does this matter?**
 In network intrusion detection systems (like Snort) or virus scanners (ClamAV), we need to match thousands of signatures against a stream of packets. We can't run `Word Break` on every packet. Aho-Corasick allows us to scan the stream in linear time.

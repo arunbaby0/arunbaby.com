@@ -420,6 +420,4 @@ Batch processing allows us to use the "Heavy Artillery" of AI.
 We can use the biggest models, look at the entire context, and perform complex post-processing.
 *If you found this helpful, consider sharing it with others who might benefit.*
 
-<div style="opacity: 0.6; font-size: 0.8em; margin-top: 2em;">
-  Created with LLM assistance
-</div>
+
