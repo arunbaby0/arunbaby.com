@@ -620,7 +620,7 @@ success_email = EmailOperator(
     task_id='success_email',
     to='ml-team@company.com',
     subject='ML Pipeline Success - {{ ds }}',
-    html_content='Pipeline completed successfully. Best AUC: {{ ti.xcom_pull(task_ids="evaluate_and_select_best", key="best_auc") }}',
+    html_content='Pipeline completed successfully. Best AUC: {{ ti.xcom_pull(task_ids=\'evaluate_and_select_best\', key=\'best_auc\') }}',
     dag=dag
 )
 
