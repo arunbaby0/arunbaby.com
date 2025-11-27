@@ -49,6 +49,11 @@ Each problem includes:
 - [Validate Binary Search Tree](/dsa/0008-validate-binary-search-tree/)
 - [Validate Binary Search Tree (Day 25)](/dsa/0025-validate-bst/)
 - [Binary Tree Level Order Traversal](/dsa/0026-level-order-traversal/)
+- [Construct Binary Tree from Preorder and Inorder Traversal](/dsa/0027-construct-binary-tree/)
+- [Kth Smallest Element in a BST](/dsa/0028-kth-smallest-in-bst/)
+- [Lowest Common Ancestor](/dsa/0029-lowest-common-ancestor/)
+- [Number of Islands](/dsa/0030-number-of-islands/)
+
 
 **Sorting & Searching:**
 - [Binary Search](/dsa/0009-binary-search/)

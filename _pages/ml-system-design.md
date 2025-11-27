@@ -48,7 +48,13 @@ Each design includes:
 
 **Model Training:**
 - [Online Learning Systems](/ml-system-design/0009-online-learning-systems/)
-- [Distributed Training Architecture](/ml-system-design/0017-distributed-training-architecture/)
+- [Distributed Training](/ml-system-design/0025-distributed-training/)
+- [Model Architecture Design](/ml-system-design/0027-model-architecture-design/)
+- [Ranking Systems at Scale](/ml-system-design/0028-ranking-systems-at-scale/)
+- [Hierarchical Classification](/ml-system-design/0029-hierarchical-classification/)
+
+**Recommendations:**
+- [Graph-based Recommendations](/ml-system-design/0030-graph-based-recommendations/)
 - [Online Learning Systems (Advanced)](/ml-system-design/0020-online-learning-systems/)
 
 **Data Augmentation:**
@@ -76,6 +82,7 @@ Each design includes:
 
 **Real-Time Systems:**
 - [Event Stream Processing](/ml-system-design/0016-event-stream-processing/)
+- [Model Architecture Design](/ml-system-design/0027-model-architecture-design/)
 
 **Search & Ranking:**
 - Coming soon...

@@ -39,7 +39,11 @@ Each post includes:
 - [Speech Tokenization](/speech-tech/0024-speech-tokenization/)
 
 **Real-time Processing:**
-- [Streaming Speech Pipeline](/speech-tech/0008-streaming-speech-pipeline/)
+- [Streaming Speech Systems](/speech-tech/0025-streaming-speech-systems/)
+- [End-to-End Speech Model Design](/speech-tech/0027-end-to-end-speech-model-design/)
+- [Voice Search Ranking](/speech-tech/0028-voice-search-ranking/)
+- [Hierarchical Speech Classification](/speech-tech/0029-hierarchical-speech-classification/)
+- [Social Voice Networks](/speech-tech/0030-social-voice-networks/)
 - [Real-time Keyword Spotting](/speech-tech/0009-keyword-spotting/)
 
 **Text-to-Speech (TTS):**
