@@ -516,6 +516,7 @@ train_task = ECSOperator(
 
 ## Implementation: Full ML Pipeline Orchestration
 
+{% raw %}
 ```python
 from airflow import DAG
 from airflow.operators.python import PythonOperator
@@ -627,6 +628,7 @@ success_email = EmailOperator(
 # Dependencies
 quality_check >> feature_eng >> train >> evaluate >> deploy >> success_email
 ```
+{% endraw %}
 
 ## Top Interview Questions
 
