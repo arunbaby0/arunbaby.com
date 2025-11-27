@@ -55,6 +55,9 @@ Each design includes:
 
 **Recommendations:**
 - [Graph-based Recommendations](/ml-system-design/0030-graph-based-recommendations/)
+
+**MLOps:**
+- [ML Pipeline Dependencies](/ml-system-design/0031-ml-pipeline-dependencies/)
 - [Online Learning Systems (Advanced)](/ml-system-design/0020-online-learning-systems/)
 
 **Data Augmentation:**
