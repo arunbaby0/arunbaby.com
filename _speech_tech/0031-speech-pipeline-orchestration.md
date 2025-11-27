@@ -411,6 +411,7 @@ User uploads audio to S3 → S3 Event triggers Lambda → Lambda starts Transcri
 **Challenge:** Input audio comes in 100+ formats (MP3, AAC, FLAC, OGG, ...).
 
 **Solution: Format Normalization Pipeline**
+{% raw %}
 ```python
 def normalize_audio(input_path, output_path):
     """
@@ -436,6 +437,7 @@ normalize = PythonOperator(
     dag=dag
 )
 ```
+{% endraw %}
 
 ## Deep Dive: Quality Gates in Speech Pipelines
 
