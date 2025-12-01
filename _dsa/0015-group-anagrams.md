@@ -15,7 +15,6 @@ subdomain: "Hash Tables & Strings"
 tech_stack: [Python]
 scale: "O(NK log K) time, O(NK) space"
 companies: [Google, Meta, Amazon, Microsoft, Apple, Bloomberg]
-related_dsa_day: 15
 related_ml_day: 15
 related_speech_day: 15
 ---

@@ -16,7 +16,6 @@ scale: "O(T) time"
 companies: [Meta (FAIR), Google, Microsoft]
 related_dsa_day: 24
 related_ml_day: 24
-related_speech_day: 24
 ---
 
 **The breakthrough that allows us to treat audio like text, enabling GPT-style models for speech.**

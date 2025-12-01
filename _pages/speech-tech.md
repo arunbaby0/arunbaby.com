@@ -45,6 +45,7 @@ Each post includes:
 - [Hierarchical Speech Classification](/speech-tech/0029-hierarchical-speech-classification/)
 - [Social Voice Networks](/speech-tech/0030-social-voice-networks/)
 - [Speech Pipeline Orchestration](/speech-tech/0031-speech-pipeline-orchestration/)
+- [Phonetic Search in Speech](/speech-tech/0032-phonetic-search/)
 - [Real-time Keyword Spotting](/speech-tech/0009-keyword-spotting/)
 
 **Text-to-Speech (TTS):**

@@ -16,7 +16,6 @@ tech_stack: [PyTorch, TensorFlow, Horovod, NCCL, Kubernetes, Ray, DeepSpeed]
 scale: "1K+ GPUs, 10B+ parameters, PB-scale data"
 companies: [Google, Meta, OpenAI, DeepMind, Microsoft, Amazon]
 related_dsa_day: 17
-related_ml_day: 17
 related_speech_day: 17
 ---
 

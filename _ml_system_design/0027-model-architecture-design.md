@@ -16,7 +16,6 @@ tech_stack: [PyTorch, TensorFlow, Keras, AutoKeras]
 scale: "From MobileNet to GPT-4"
 companies: [Google, Meta, OpenAI, DeepMind, NVIDIA]
 related_dsa_day: 27
-related_ml_day: 27
 related_speech_day: 27
 ---
 

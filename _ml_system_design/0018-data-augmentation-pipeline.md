@@ -16,7 +16,6 @@ tech_stack: [Python, PyTorch, TensorFlow, Kubernetes, Kafka, Redis, Ray]
 scale: "10M+ samples/day, multi-modal inputs, online & offline augmentation"
 companies: [Google, Meta, Amazon, Microsoft, Tesla, OpenAI]
 related_dsa_day: 18
-related_ml_day: 18
 related_speech_day: 18
 ---
 

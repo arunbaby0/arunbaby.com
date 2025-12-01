@@ -15,7 +15,6 @@ subdomain: "Linked Lists & Big Integers"
 tech_stack: [Python]
 scale: "O(N) time, O(1) extra space"
 companies: [Google, Meta, Amazon, Microsoft, Apple, Bloomberg]
-related_dsa_day: 17
 related_ml_day: 17
 related_speech_day: 17
 ---

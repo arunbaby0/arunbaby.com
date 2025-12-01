@@ -15,7 +15,6 @@ tech_stack: [Prometheus, Grafana, EvidentlyAI, Arize]
 scale: "Monitoring 1000+ models in production"
 companies: [Uber, Netflix, Datadog, Arize AI]
 related_dsa_day: 25
-related_ml_day: 25
 related_speech_day: 25
 ---
 

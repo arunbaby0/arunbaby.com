@@ -14,7 +14,6 @@ tech_stack: [Airflow, Kubeflow, Prefect, Dagster, Metaflow]
 scale: "Thousands of tasks, Petabytes of data"
 companies: [Netflix, Uber, Airbnb, Spotify]
 related_dsa_day: 31
-related_ml_day: 31
 related_speech_day: 31
 ---
 

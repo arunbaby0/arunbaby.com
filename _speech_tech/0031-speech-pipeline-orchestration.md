@@ -15,7 +15,6 @@ scale: "Real-time, Millions of audio hours"
 companies: [Google Speech, Amazon Transcribe, AssemblyAI]
 related_dsa_day: 31
 related_ml_day: 31
-related_speech_day: 31
 ---
 
 **"Orchestrating complex speech processing pipelines from audio ingestion to final output."**

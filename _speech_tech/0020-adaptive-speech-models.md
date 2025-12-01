@@ -17,7 +17,6 @@ scale: "Real-time adaptation, <500ms latency, multi-speaker/multi-domain"
 companies: [Google, Amazon, Apple, Microsoft, Meta, Nuance]
 related_dsa_day: 20
 related_ml_day: 20
-related_speech_day: 20
 ---
 
 **Design adaptive speech models that adjust in real-time to speakers, accents, noise, and domains—using the same greedy adaptation strategy as Jump Game and online learning systems.**

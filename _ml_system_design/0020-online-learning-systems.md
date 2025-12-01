@@ -16,7 +16,6 @@ tech_stack: [Python, River, Scikit-multiflow, Kafka, Redis, TensorFlow, PyTorch]
 scale: "1M+ updates/day, <10ms inference, continuous adaptation"
 companies: [Google, Meta, Amazon, Netflix, Uber, Spotify]
 related_dsa_day: 20
-related_ml_day: 20
 related_speech_day: 20
 ---
 

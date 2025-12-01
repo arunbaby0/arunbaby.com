@@ -15,7 +15,6 @@ subdomain: "Recursion & Backtracking"
 tech_stack: [Python]
 scale: "O(4^N / √N) time, O(N) space"
 companies: [Google, Meta, Amazon, Microsoft, Apple, Uber]
-related_dsa_day: 14
 related_ml_day: 14
 related_speech_day: 14
 ---

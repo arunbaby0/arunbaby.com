@@ -14,7 +14,6 @@ subdomain: "Sequence Dynamic Programming"
 tech_stack: [Python, C++, Java, Go, Rust]
 scale: "O(N) time, O(1) space"
 companies: [Facebook, Google, Uber, Microsoft, Amazon]
-related_dsa_day: 23
 related_ml_day: 23
 related_speech_day: 23
 ---

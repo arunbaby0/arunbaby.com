@@ -15,7 +15,6 @@ subdomain: "Matrix & 2D Array Algorithms"
 tech_stack: [Python]
 scale: "O(M×N) time, O(1) extra space"
 companies: [Google, Meta, Amazon, Microsoft, Apple, Bloomberg]
-related_dsa_day: 19
 related_ml_day: 19
 related_speech_day: 19
 ---

@@ -14,7 +14,6 @@ subdomain: "Grid Dynamic Programming"
 tech_stack: [Python, C++, Java]
 scale: "O(M×N) time, O(1) space"
 companies: [Google, Amazon, Apple, Bloomberg, Goldman Sachs]
-related_dsa_day: 22
 related_ml_day: 22
 related_speech_day: 22
 ---

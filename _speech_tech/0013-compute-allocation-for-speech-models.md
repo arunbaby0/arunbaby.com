@@ -18,7 +18,6 @@ scale: "10K+ requests/sec, <100ms latency, multi-model pipeline"
 companies: [Google, Amazon, Apple, Microsoft, Meta]
 related_dsa_day: 13
 related_ml_day: 13
-related_speech_day: 13
 ---
 
 **Optimize speech pipeline throughput by allocating compute to bottleneck stages using greedy resource management.**

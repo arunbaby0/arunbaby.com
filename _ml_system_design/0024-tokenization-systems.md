@@ -15,7 +15,6 @@ tech_stack: [Python, HuggingFace, SentencePiece]
 scale: "Billion-scale corpus processing"
 companies: [OpenAI, Google, Meta, HuggingFace]
 related_dsa_day: 24
-related_ml_day: 24
 related_speech_day: 24
 ---
 

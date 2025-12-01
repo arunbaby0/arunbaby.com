@@ -10,7 +10,6 @@ tags:
   - tree traversal
   - dfs
 difficulty: Medium
-related_dsa_day: 29
 related_ml_day: 29
 related_speech_day: 29
 ---

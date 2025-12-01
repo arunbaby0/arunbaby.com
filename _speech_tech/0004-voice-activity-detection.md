@@ -14,7 +14,6 @@ latency_requirement: "< 5ms"
 scale: "Real-time streaming"
 companies: [Google, Amazon, Microsoft, Zoom]
 related_dsa_day: 4
-related_speech_day: 4
 ---
 
 **How voice assistants and video conferencing apps detect when you're speaking vs silence, the critical first step in every speech pipeline.**

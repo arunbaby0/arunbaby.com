@@ -15,7 +15,6 @@ subdomain: "Array Algorithms"
 tech_stack: [Python]
 scale: "O(N) time, O(1) space"
 companies: [Google, Meta, Amazon, Microsoft, Apple]
-related_dsa_day: 13
 related_ml_day: 13
 related_speech_day: 13
 ---

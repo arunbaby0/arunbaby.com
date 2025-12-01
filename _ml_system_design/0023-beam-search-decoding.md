@@ -15,7 +15,6 @@ tech_stack: [Python, PyTorch, C++]
 scale: "O(T×K×V) time, O(T×K) space"
 companies: [Google, DeepL, OpenAI, Meta]
 related_dsa_day: 23
-related_ml_day: 23
 related_speech_day: 23
 ---
 

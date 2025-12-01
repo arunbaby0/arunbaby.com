@@ -16,7 +16,6 @@ tech_stack: [Python, PyTorch, TensorFlow, Ray, Optuna, NNI, ENAS, DARTS]
 scale: "1000s of architectures evaluated, 100+ GPU days, multi-objective optimization"
 companies: [Google, Meta, OpenAI, DeepMind, Microsoft, NVIDIA]
 related_dsa_day: 21
-related_ml_day: 21
 related_speech_day: 21
 ---
 

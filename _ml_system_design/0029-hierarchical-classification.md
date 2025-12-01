@@ -14,7 +14,6 @@ tech_stack: [TensorFlow, PyTorch, FAISS]
 scale: "Billions of items, Millions of categories"
 companies: [Amazon, Google Shopping, eBay, Wikipedia]
 related_dsa_day: 29
-related_ml_day: 29
 related_speech_day: 29
 ---
 

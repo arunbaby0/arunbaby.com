@@ -15,7 +15,6 @@ scale: "Real-time, Millions of Users"
 companies: [Clubhouse, Discord, Twitter Spaces, LinkedIn Audio]
 related_dsa_day: 30
 related_ml_day: 30
-related_speech_day: 30
 ---
 
 **"Building recommendation and moderation systems for voice-based social platforms."**

@@ -17,7 +17,6 @@ tech_stack: [Python, scikit-learn, XGBoost, LightGBM, Ray, Kubernetes]
 scale: "10+ models, 100K+ predictions/sec, multi-region deployment"
 companies: [Netflix, Spotify, Google, Meta, Airbnb, Uber]
 related_dsa_day: 14
-related_ml_day: 14
 related_speech_day: 14
 ---
 

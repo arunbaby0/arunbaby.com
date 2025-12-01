@@ -17,7 +17,6 @@ tech_stack: [Kafka, Apache Flink, Apache Spark Streaming, Redis, Cassandra, Prom
 scale: "Millions of events/sec, <100ms latency, multi-region"
 companies: [Netflix, Uber, LinkedIn, Airbnb, Twitter, Spotify]
 related_dsa_day: 16
-related_ml_day: 16
 related_speech_day: 16
 ---
 

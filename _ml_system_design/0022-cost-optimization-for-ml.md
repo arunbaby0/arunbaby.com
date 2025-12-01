@@ -15,7 +15,6 @@ tech_stack: [Python, AWS, Kubernetes, ONNX]
 scale: "Cluster-scale optimization"
 companies: [Uber, Airbnb, Netflix, Pinterest]
 related_dsa_day: 22
-related_ml_day: 22
 related_speech_day: 22
 ---
 

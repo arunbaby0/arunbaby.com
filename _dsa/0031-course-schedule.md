@@ -10,7 +10,6 @@ tags:
   - dfs
   - cycle detection
 difficulty: Medium
-related_dsa_day: 31
 related_ml_day: 31
 related_speech_day: 31
 ---

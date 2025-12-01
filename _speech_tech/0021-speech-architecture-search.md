@@ -18,7 +18,6 @@ scale: "1000s of architectures, 100+ GPU days, multi-lingual optimization"
 companies: [Google, Amazon, Apple, Microsoft, Meta, Baidu]
 related_dsa_day: 21
 related_ml_day: 21
-related_speech_day: 21
 ---
 
 **Design neural architecture search systems for speech models that automatically discover optimal ASR/TTS architectures—using dynamic programming and path optimization to navigate exponential search spaces.**

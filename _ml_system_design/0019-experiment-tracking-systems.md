@@ -16,7 +16,6 @@ tech_stack: [MLflow, Weights & Biases, Neptune, TensorBoard, PostgreSQL, S3, Git
 scale: "10K+ experiments, 1M+ runs, PB-scale artifacts"
 companies: [Google, Meta, OpenAI, Microsoft, Amazon, Uber, Airbnb]
 related_dsa_day: 19
-related_ml_day: 19
 related_speech_day: 19
 ---
 

@@ -16,7 +16,6 @@ tech_stack: [Apache Airflow, Apache Spark, Hadoop, AWS Glue]
 scale: "Petabytes of data"
 companies: [Airbnb, Netflix, Uber, Databricks]
 related_dsa_day: 26
-related_ml_day: 26
 related_speech_day: 26
 ---
 

@@ -17,7 +17,6 @@ tech_stack: [Python, scikit-learn, Faiss, Redis, Elasticsearch, Spark MLlib]
 scale: "Millions of data points, <100ms query latency, distributed processing"
 companies: [Netflix, Spotify, Google, Meta, Amazon, Uber, Airbnb]
 related_dsa_day: 15
-related_ml_day: 15
 related_speech_day: 15
 ---
 

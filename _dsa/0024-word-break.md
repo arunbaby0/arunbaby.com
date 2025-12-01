@@ -15,7 +15,6 @@ subdomain: "String Dynamic Programming"
 tech_stack: [Python, C++, Java, Go, Rust]
 scale: "O(N^2) time, O(N) space"
 companies: [Amazon, Google, Bloomberg, Microsoft, Meta]
-related_dsa_day: 24
 related_ml_day: 24
 related_speech_day: 24
 ---

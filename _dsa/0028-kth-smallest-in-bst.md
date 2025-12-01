@@ -13,7 +13,6 @@ subdomain: "Tree Algorithms"
 tech_stack: [Python, Java, C++]
 scale: "O(H + k) time, O(H) space"
 companies: [Uber, Google, Amazon, Facebook]
-related_dsa_day: 28
 related_ml_day: 28
 related_speech_day: 28
 ---

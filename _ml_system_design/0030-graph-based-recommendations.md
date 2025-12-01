@@ -14,7 +14,6 @@ tech_stack: [PyTorch Geometric, DGL, Neo4j, NetworkX]
 scale: "Billions of edges, Millions of nodes"
 companies: [Pinterest, LinkedIn, Facebook, Twitter]
 related_dsa_day: 30
-related_ml_day: 30
 related_speech_day: 30
 ---
 

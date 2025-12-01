@@ -14,7 +14,6 @@ tech_stack: [XGBoost, TensorFlow Ranking, Faiss]
 scale: "1B+ Items, 100ms Latency"
 companies: [Google, Netflix, Amazon, TikTok]
 related_dsa_day: 28
-related_ml_day: 28
 related_speech_day: 28
 ---
 

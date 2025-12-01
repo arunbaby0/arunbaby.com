@@ -55,6 +55,7 @@ Each design includes:
 
 **Recommendations:**
 - [Graph-based Recommendations](/ml-system-design/0030-graph-based-recommendations/)
+- [Semantic Search Systems](/ml-system-design/0032-semantic-search-systems/)
 
 **MLOps:**
 - [ML Pipeline Dependencies](/ml-system-design/0031-ml-pipeline-dependencies/)

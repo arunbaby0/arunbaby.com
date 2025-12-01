@@ -15,7 +15,6 @@ subdomain: "Dynamic Programming"
 tech_stack: [Python]
 scale: "O(M×N) time, O(M×N) space (optimizable to O(N))"
 companies: [Google, Meta, Amazon, Microsoft, Apple, Bloomberg]
-related_dsa_day: 21
 related_ml_day: 21
 related_speech_day: 21
 ---

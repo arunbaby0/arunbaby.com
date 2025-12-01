@@ -17,7 +17,6 @@ tech_stack: [Kubernetes, Ray, Kubeflow, Prometheus, Grafana, TensorFlow, PyTorch
 scale: "1000s of models, 100K+ GPU hours/month, multi-region"
 companies: [Google, Meta, Netflix, Uber, Airbnb]
 related_dsa_day: 13
-related_ml_day: 13
 related_speech_day: 13
 ---
 

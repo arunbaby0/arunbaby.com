@@ -15,7 +15,6 @@ scale: "Real-time, Thousands of Classes"
 companies: [Google, Amazon Alexa, Apple Siri]
 related_dsa_day: 29
 related_ml_day: 29
-related_speech_day: 29
 ---
 
 **"From broad categories to fine-grained speech understanding."**

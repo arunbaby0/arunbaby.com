@@ -14,7 +14,6 @@ subdomain: "Greedy Algorithms"
 tech_stack: [Python]
 scale: "O(N) time, O(1) space"
 companies: [Google, Meta, Amazon, Microsoft, Apple, Bloomberg]
-related_dsa_day: 20
 related_ml_day: 20
 related_speech_day: 20
 ---

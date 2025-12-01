@@ -14,7 +14,6 @@ subdomain: "Tree Algorithms"
 tech_stack: [Python, C++, Java]
 scale: "O(N) time, O(H) space"
 companies: [Facebook, Amazon, Microsoft, Bloomberg, LinkedIn]
-related_dsa_day: 25
 related_ml_day: 25
 related_speech_day: 25
 ---

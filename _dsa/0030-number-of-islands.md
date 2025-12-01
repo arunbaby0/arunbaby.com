@@ -11,7 +11,6 @@ tags:
   - union find
   - matrix
 difficulty: Medium
-related_dsa_day: 30
 related_ml_day: 30
 related_speech_day: 30
 ---

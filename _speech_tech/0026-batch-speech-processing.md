@@ -18,7 +18,6 @@ scale: "Transcribing millions of hours"
 companies: [Otter.ai, Rev.com, Descript, YouTube]
 related_dsa_day: 26
 related_ml_day: 26
-related_speech_day: 26
 ---
 
 **Real-time ASR is hard. Offline ASR is big.**

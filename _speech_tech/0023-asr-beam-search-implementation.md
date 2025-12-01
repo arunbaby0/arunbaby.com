@@ -16,7 +16,6 @@ scale: "O(T×V×W) time"
 companies: [Nuance, Google, Amazon, Apple]
 related_dsa_day: 23
 related_ml_day: 23
-related_speech_day: 23
 ---
 
 **Implementing the core decoding logic of modern Speech Recognition systems, handling alignment, blanks, and language models.**

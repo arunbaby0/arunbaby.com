@@ -54,6 +54,7 @@ Each problem includes:
 - [Lowest Common Ancestor](/dsa/0029-lowest-common-ancestor/)
 - [Number of Islands](/dsa/0030-number-of-islands/)
 - [Course Schedule](/dsa/0031-course-schedule/)
+- [Word Ladder](/dsa/0032-word-ladder/)
 
 
 **Sorting & Searching:**

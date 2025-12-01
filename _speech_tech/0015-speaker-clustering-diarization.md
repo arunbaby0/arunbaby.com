@@ -18,7 +18,6 @@ scale: "1000s of hours audio, <1s per minute of audio, real-time capable"
 companies: [Google, Amazon, Apple, Microsoft, Zoom, Otter.ai]
 related_dsa_day: 15
 related_ml_day: 15
-related_speech_day: 15
 ---
 
 **Build production speaker diarization systems that cluster audio segments by speaker using embedding-based similarity and hash-based grouping.**

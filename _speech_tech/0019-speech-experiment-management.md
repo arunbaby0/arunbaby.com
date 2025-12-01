@@ -18,7 +18,6 @@ scale: "1000s of experiments, multi-lingual models, 100K+ hours of audio"
 companies: [Google, Amazon, Apple, Microsoft, Meta, Baidu, OpenAI]
 related_dsa_day: 19
 related_ml_day: 19
-related_speech_day: 19
 ---
 
 **Design experiment management systems tailored for speech research—tracking audio data, models, metrics, and multi-dimensional experiments at scale.**
