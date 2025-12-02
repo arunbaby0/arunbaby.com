@@ -49,6 +49,7 @@ Each post includes:
 - [Multi-region Speech Deployment](/speech-tech/0033-multi-region-speech-deployment/)
 - [Dialog State Tracking](/speech-tech/0034-dialog-state-tracking/)
 - [Speech Boundary Detection](/speech-tech/0035-speech-boundary-detection/)
+- [Multi-task Speech Learning](/speech-tech/0036-multi-task-speech-learning/)
 - [Real-time Keyword Spotting](/speech-tech/0009-keyword-spotting/)
 
 **Text-to-Speech (TTS):**
