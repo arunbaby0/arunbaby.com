@@ -67,6 +67,8 @@ Each design includes:
 **MLOps:**
 - [ML Pipeline Dependencies](/ml-system-design/0031-ml-pipeline-dependencies/)
 - [Model Replication Systems](/ml-system-design/0033-model-replication-systems/)
+- [Resource Partitioning](/ml-system-design/0036-resource-partitioning/)
+- [Hyperparameter Optimization](/ml-system-design/0038-hyperparameter-optimization/)
 - [Online Learning Systems (Advanced)](/ml-system-design/0020-online-learning-systems/)
 
 **Data Augmentation:**

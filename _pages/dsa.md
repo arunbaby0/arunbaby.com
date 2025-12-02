@@ -60,6 +60,7 @@ Each problem includes:
 - [Surrounded Regions](/dsa/0035-surrounded-regions/)
 - [Partition Equal Subset Sum](/dsa/0036-partition-equal-subset-sum/)
 - [Longest Increasing Subsequence](/dsa/0037-longest-increasing-subsequence/)
+- [Coin Change](/dsa/0038-coin-change/)
 
 
 **Sorting & Searching:**
