@@ -56,9 +56,11 @@ Each design includes:
 **Recommendations:**
 - [Graph-based Recommendations](/ml-system-design/0030-graph-based-recommendations/)
 - [Semantic Search Systems](/ml-system-design/0032-semantic-search-systems/)
+- [Knowledge Graph Systems](/ml-system-design/0034-knowledge-graph-systems/)
 
 **MLOps:**
 - [ML Pipeline Dependencies](/ml-system-design/0031-ml-pipeline-dependencies/)
+- [Model Replication Systems](/ml-system-design/0033-model-replication-systems/)
 - [Online Learning Systems (Advanced)](/ml-system-design/0020-online-learning-systems/)
 
 **Data Augmentation:**

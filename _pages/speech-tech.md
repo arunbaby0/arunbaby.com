@@ -46,6 +46,8 @@ Each post includes:
 - [Social Voice Networks](/speech-tech/0030-social-voice-networks/)
 - [Speech Pipeline Orchestration](/speech-tech/0031-speech-pipeline-orchestration/)
 - [Phonetic Search in Speech](/speech-tech/0032-phonetic-search/)
+- [Multi-region Speech Deployment](/speech-tech/0033-multi-region-speech-deployment/)
+- [Dialog State Tracking](/speech-tech/0034-dialog-state-tracking/)
 - [Real-time Keyword Spotting](/speech-tech/0009-keyword-spotting/)
 
 **Text-to-Speech (TTS):**

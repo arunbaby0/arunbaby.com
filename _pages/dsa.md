@@ -55,6 +55,8 @@ Each problem includes:
 - [Number of Islands](/dsa/0030-number-of-islands/)
 - [Course Schedule](/dsa/0031-course-schedule/)
 - [Word Ladder](/dsa/0032-word-ladder/)
+- [Clone Graph](/dsa/0033-clone-graph/)
+- [Evaluate Division](/dsa/0034-evaluate-division/)
 
 
 **Sorting & Searching:**
