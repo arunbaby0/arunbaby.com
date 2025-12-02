@@ -59,6 +59,7 @@ Each problem includes:
 - [Evaluate Division](/dsa/0034-evaluate-division/)
 - [Surrounded Regions](/dsa/0035-surrounded-regions/)
 - [Partition Equal Subset Sum](/dsa/0036-partition-equal-subset-sum/)
+- [Longest Increasing Subsequence](/dsa/0037-longest-increasing-subsequence/)
 
 
 **Sorting & Searching:**

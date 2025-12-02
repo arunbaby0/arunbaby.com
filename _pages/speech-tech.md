@@ -50,6 +50,7 @@ Each post includes:
 - [Dialog State Tracking](/speech-tech/0034-dialog-state-tracking/)
 - [Speech Boundary Detection](/speech-tech/0035-speech-boundary-detection/)
 - [Multi-task Speech Learning](/speech-tech/0036-multi-task-speech-learning/)
+- [Sequence-to-Sequence Speech](/speech-tech/0037-sequence-to-sequence-speech/)
 - [Real-time Keyword Spotting](/speech-tech/0009-keyword-spotting/)
 
 **Text-to-Speech (TTS):**
