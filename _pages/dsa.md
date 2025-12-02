@@ -57,6 +57,7 @@ Each problem includes:
 - [Word Ladder](/dsa/0032-word-ladder/)
 - [Clone Graph](/dsa/0033-clone-graph/)
 - [Evaluate Division](/dsa/0034-evaluate-division/)
+- [Surrounded Regions](/dsa/0035-surrounded-regions/)
 
 
 **Sorting & Searching:**

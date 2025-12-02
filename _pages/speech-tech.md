@@ -48,6 +48,7 @@ Each post includes:
 - [Phonetic Search in Speech](/speech-tech/0032-phonetic-search/)
 - [Multi-region Speech Deployment](/speech-tech/0033-multi-region-speech-deployment/)
 - [Dialog State Tracking](/speech-tech/0034-dialog-state-tracking/)
+- [Speech Boundary Detection](/speech-tech/0035-speech-boundary-detection/)
 - [Real-time Keyword Spotting](/speech-tech/0009-keyword-spotting/)
 
 **Text-to-Speech (TTS):**

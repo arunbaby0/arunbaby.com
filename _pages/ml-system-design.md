@@ -58,6 +58,9 @@ Each design includes:
 - [Semantic Search Systems](/ml-system-design/0032-semantic-search-systems/)
 - [Knowledge Graph Systems](/ml-system-design/0034-knowledge-graph-systems/)
 
+**Computer Vision:**
+- [Boundary Detection in ML](/ml-system-design/0035-boundary-detection-in-ml/)
+
 **MLOps:**
 - [ML Pipeline Dependencies](/ml-system-design/0031-ml-pipeline-dependencies/)
 - [Model Replication Systems](/ml-system-design/0033-model-replication-systems/)
