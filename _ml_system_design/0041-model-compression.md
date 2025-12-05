@@ -516,3 +516,267 @@ Model compression is essential for deploying deep learning at scale. The key is 
 
 The future of AI is edge AI. As models grow larger, compression will become even more critical. Mastering these techniques is a must for ML engineers.
 
+## 24. Deep Dive: ONNX (Open Neural Network Exchange)
+
+**Problem:** Models trained in PyTorch can't run on TensorFlow Serving. Models trained in TensorFlow can't run on ONNX Runtime.
+
+**Solution:** ONNX is a universal format for neural networks.
+
+**Workflow:**
+1.  **Train** in PyTorch/TensorFlow/Keras.
+2.  **Export** to ONNX format.
+3.  **Optimize** using ONNX Runtime.
+4.  **Deploy** on any platform (mobile, edge, cloud).
+
+**Example (PyTorch → ONNX):**
+```python
+import torch
+import torch.onnx
+
+# Load PyTorch model
+model = torch.load('model.pth')
+model.eval()
+
+# Dummy input
+dummy_input = torch.randn(1, 3, 224, 224)
+
+# Export to ONNX
+torch.onnx.export(
+    model,
+    dummy_input,
+    "model.onnx",
+    export_params=True,
+    opset_version=13,
+    do_constant_folding=True,
+    input_names=['input'],
+    output_names=['output'],
+    dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
+)
+```
+
+**ONNX Runtime Optimizations:**
+*   **Graph Optimization:** Fuse operators, eliminate redundant nodes.
+*   **Quantization:** INT8 quantization.
+*   **Execution Providers:** CPU, CUDA, TensorRT, DirectML, CoreML.
+
+## 25. Mobile Deployment: iOS (Core ML)
+
+**Core ML** is Apple's framework for on-device ML.
+
+**Workflow:**
+1.  Train model in PyTorch/TensorFlow.
+2.  Convert to Core ML format (`.mlmodel`).
+3.  Integrate into iOS app.
+
+**Conversion (PyTorch → Core ML):**
+```python
+import coremltools as ct
+import torch
+
+# Load PyTorch model
+model = torch.load('model.pth')
+model.eval()
+
+# Trace the model
+example_input = torch.rand(1, 3, 224, 224)
+traced_model = torch.jit.trace(model, example_input)
+
+# Convert to Core ML
+mlmodel = ct.convert(
+    traced_model,
+    inputs=[ct.ImageType(name="input", shape=(1, 3, 224, 224))],
+    convert_to="neuralnetwork"  # or "mlprogram" for newer format
+)
+
+# Save
+mlmodel.save("model.mlmodel")
+```
+
+**Optimization:**
+*   **Quantization:** Use `ct.compression.quantize_weights()`.
+*   **Pruning:** Use `ct.compression.prune_weights()`.
+*   **Neural Engine:** Optimize for Apple's ANE (Neural Engine).
+
+## 26. Mobile Deployment: Android (TensorFlow Lite)
+
+**TensorFlow Lite** is Google's framework for mobile/edge ML.
+
+**Workflow:**
+1.  Train model in TensorFlow/Keras.
+2.  Convert to TFLite format (`.tflite`).
+3.  Integrate into Android app.
+
+**Conversion:**
+```python
+import tensorflow as tf
+
+# Load Keras model
+model = tf.keras.models.load_model('model.h5')
+
+# Convert to TFLite
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+tflite_model = converter.convert()
+
+# Save
+with open('model.tflite', 'wb') as f:
+    f.write(tflite_model)
+```
+
+**Optimization:**
+*   **GPU Delegate:** Use GPU for inference.
+*   **NNAPI Delegate:** Use Android's Neural Networks API.
+*   **Hexagon Delegate:** Use Qualcomm's DSP.
+
+## 27. Advanced Technique: Sparse Tensor Cores (NVIDIA)
+
+**NVIDIA Ampere** (A100, RTX 3090) introduced **Sparse Tensor Cores** that accelerate 2:4 structured sparsity.
+
+**2:4 Sparsity:** In every 4 consecutive weights, at least 2 must be zero.
+
+**Example:**
+```
+Original: [0.5, 0.3, 0.1, 0.2]
+2:4 Sparse: [0.5, 0.3, 0.0, 0.0]  ✓ (2 zeros out of 4)
+```
+
+**Speedup:** 2x faster than dense operations on Sparse Tensor Cores.
+
+**Training with 2:4 Sparsity:**
+```python
+import torch
+from torch.ao.pruning import prune_to_structured_sparsity
+
+model = MyModel()
+prune_to_structured_sparsity(model, sparsity_pattern="2:4")
+# Train normally
+```
+
+## 28. Deep Dive: Huffman Coding for Weight Compression
+
+**Idea:** Use variable-length encoding for weights. Frequent weights get shorter codes.
+
+**Algorithm:**
+1.  **Cluster** weights into $K$ centroids (e.g., 256).
+2.  **Count** frequency of each centroid.
+3.  **Build Huffman Tree:** Assign shorter codes to frequent centroids.
+4.  **Encode:** Replace each weight with its Huffman code.
+
+**Compression Ratio:**
+*   Fixed-length (8 bits): 8 bits/weight.
+*   Huffman: ~5-6 bits/weight (depending on distribution).
+
+**Trade-off:** Decoding overhead during inference.
+
+## 29. Production Case Study: MobileNet Deployment
+
+**Scenario:** Deploy MobileNetV2 for image classification on a smartphone.
+
+**Baseline (FP32):**
+*   **Size:** 14MB.
+*   **Latency:** 80ms (CPU).
+*   **Accuracy:** 72% (ImageNet).
+
+**Optimization Pipeline:**
+
+**Step 1: Quantization (INT8)**
+*   **Size:** 3.5MB (4x reduction).
+*   **Latency:** 25ms (3x speedup).
+*   **Accuracy:** 71.5% (0.5% drop).
+
+**Step 2: Pruning (50%)**
+*   **Size:** 1.75MB (2x reduction).
+*   **Latency:** 15ms (1.6x speedup).
+*   **Accuracy:** 70.8% (0.7% drop).
+
+**Step 3: Knowledge Distillation (MobileNetV2 → MobileNetV3-Small)**
+*   **Size:** 1.2MB.
+*   **Latency:** 10ms.
+*   **Accuracy:** 68% (4% drop from baseline).
+
+**Final Result:**
+*   **Size:** 1.2MB (12x compression).
+*   **Latency:** 10ms (8x speedup).
+*   **Accuracy:** 68% (acceptable for mobile use case).
+
+## 30. Advanced Technique: Neural ODE Compression
+
+**Neural ODEs** (Ordinary Differential Equations) model continuous transformations.
+
+**Compression:**
+*   Instead of storing weights for 100 layers, store the ODE parameters.
+*   **Benefit:** Constant memory regardless of depth.
+*   **Trade-off:** Slower inference (need to solve ODE).
+
+**Use Case:** Compressing very deep networks (ResNet-1000).
+
+## 31. Monitoring Compressed Models in Production
+
+**Metrics to Track:**
+1.  **Latency Distribution:** P50, P95, P99. Alert if P95 > SLA.
+2.  **Accuracy Drift:** Compare predictions with a "shadow" full-precision model.
+3.  **Resource Usage:** CPU, memory, battery drain (for mobile).
+4.  **Error Analysis:** Which classes have the highest error rate after compression?
+
+**A/B Testing:**
+*   **Control:** Full-precision model (10% of traffic).
+*   **Treatment:** Compressed model (90% of traffic).
+*   **Metrics:** Latency, accuracy, user engagement.
+
+**Rollback Strategy:**
+*   If compressed model's accuracy drops > 2%, automatically rollback to full-precision.
+
+## 32. Interview Deep Dive: Compression Trade-offs
+
+**Q: When would you use quantization vs pruning vs distillation?**
+
+**A:**
+*   **Quantization:** When you need fast inference on CPUs/mobile. Works well for CNNs. Minimal accuracy drop.
+*   **Pruning:** When you have specialized hardware (Sparse Tensor Cores) or can tolerate irregular sparsity. Best for very large models.
+*   **Distillation:** When you can afford to retrain. Best for transferring knowledge from an ensemble to a single model. Works well for NLP.
+
+**Q: How do you choose the quantization precision (INT8 vs INT4)?**
+
+**A:**
+*   **INT8:** Standard. 4x compression, <1% accuracy drop for most models.
+*   **INT4:** Aggressive. 8x compression, but 2-5% accuracy drop. Use only if latency is critical and accuracy drop is acceptable.
+*   **Mixed Precision:** Use INT4 for less sensitive layers, INT8 for sensitive layers.
+
+## 33. Future Research Directions
+
+**1. Learned Compression:**
+*   Use a neural network to learn the optimal compression strategy for each layer.
+*   **Example:** AutoML for compression.
+
+**2. Post-Training Sparsification:**
+*   Prune without retraining (like PTQ for quantization).
+*   **Challenge:** Maintaining accuracy.
+
+**3. Hardware-Aware Compression:**
+*   Compress specifically for the target hardware (e.g., iPhone 15 Pro's A17 chip).
+*   **Benefit:** Maximize performance on that specific device.
+
+## 34. Conclusion & Best Practices
+
+**Best Practices:**
+1.  **Start with Quantization:** Easiest, fastest, minimal accuracy drop.
+2.  **Combine Techniques:** Quantization + Pruning + Distillation for maximum compression.
+3.  **Profile First:** Measure latency bottlenecks before optimizing.
+4.  **Test on Target Device:** Don't rely on desktop benchmarks.
+5.  **Monitor in Production:** Track accuracy drift and latency.
+
+**Compression Checklist:**
+- [ ] Benchmark baseline model (size, latency, accuracy)
+- [ ] Apply INT8 quantization (PTQ or QAT)
+- [ ] Measure accuracy drop (<2% acceptable)
+- [ ] Apply structured pruning (30-50%)
+- [ ] Fine-tune pruned model
+- [ ] Consider distillation if retraining is feasible
+- [ ] Convert to target format (ONNX, TFLite, Core ML)
+- [ ] Test on target hardware
+- [ ] Deploy with monitoring
+- [ ] Set up A/B test
+- [ ] Monitor and iterate
+
+The art of model compression is balancing the three-way trade-off: **Size, Speed, Accuracy**. There's no one-size-fits-all solution. The best approach depends on your use case, hardware, and constraints. Mastering these techniques will make you indispensable in the era of edge AI.
+

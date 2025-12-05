@@ -598,6 +598,7 @@ def maxJumps(arr, d):
 
 Jump Game II is a beautiful problem that teaches us the power of greedy algorithms. The key insight—that we can make locally optimal choices to achieve a globally optimal solution—is a recurring theme in algorithm design.
 
+
 **Key Takeaways:**
 *   **Greedy > DP:** For this problem, greedy is simpler and faster.
 *   **BFS Perspective:** Thinking in terms of "levels" helps visualize the solution.
@@ -605,4 +606,288 @@ Jump Game II is a beautiful problem that teaches us the power of greedy algorith
 *   **Real-World Applications:** Routing, pathfinding, resource allocation.
 
 The variants (Jump Game I, III, IV, V, Frog Jump) test your ability to adapt the core algorithm to different constraints. Mastering these variations prepares you for a wide range of interview questions.
+
+## 24. Advanced Variant: Jump Game VI (DP with Deque)
+
+**Problem:** Given `nums` and `k`, you can jump at most `k` steps. Each position has a score. Maximize the total score.
+
+**Example:**
+```
+Input: nums = [1,-1,-2,4,-7,3], k = 2
+Output: 7
+Explanation: 0 -> 3 -> 5 (scores: 1 + 4 + 3 = 8, but we start at 1, so 1 + 4 + 3 = 8... actually the path is 0->3->5 with scores 1+4+3=8)
+```
+
+**Algorithm (DP with Monotonic Deque):**
+```python
+from collections import deque
+
+def maxResult(nums, k):
+    n = len(nums)
+    dp = [float('-inf')] * n
+    dp[0] = nums[0]
+    dq = deque([0])  # Stores indices
+    
+    for i in range(1, n):
+        # Remove indices that are out of range
+        while dq and dq[0] < i - k:
+            dq.popleft()
+        
+        # dp[i] = max(dp[j]) + nums[i] for j in [i-k, i-1]
+        dp[i] = dp[dq[0]] + nums[i]
+        
+        # Maintain decreasing deque
+        while dq and dp[dq[-1]] <= dp[i]:
+            dq.pop()
+        dq.append(i)
+    
+    return dp[n - 1]
+```
+
+**Complexity:** $O(N)$ using monotonic deque.
+
+## 25. Advanced Variant: Jump Game VII (String with Constraints)
+
+**Problem:** Given a binary string `s` and integers `minJump` and `maxJump`. You start at index 0. You can jump to index `j` if:
+*   `s[j] == '0'`
+*   `i + minJump <= j <= min(i + maxJump, n - 1)`
+
+Can you reach the last index?
+
+**Algorithm (BFS with Prefix Sum):**
+```python
+from collections import deque
+
+def canReach(s, minJump, maxJump):
+    n = len(s)
+    if s[-1] == '1':
+        return False
+    
+    queue = deque([0])
+    farthest = 0
+    
+    while queue:
+        i = queue.popleft()
+        
+        # Jump to range [i + minJump, i + maxJump]
+        start = max(i + minJump, farthest + 1)
+        end = min(i + maxJump, n - 1)
+        
+        for j in range(start, end + 1):
+            if s[j] == '0':
+                if j == n - 1:
+                    return True
+                queue.append(j)
+        
+        farthest = max(farthest, i + maxJump)
+    
+    return False
+```
+
+**Optimization:** Use a "visited" array to avoid revisiting indices.
+
+## 26. Competitive Programming: Jump Game Speedrun
+
+**Problem:** Given 1000 test cases, each with an array of length 10,000. Solve Jump Game II for all.
+
+**Optimization Techniques:**
+
+**1. Fast I/O:**
+```python
+import sys
+input = sys.stdin.readline
+
+def solve():
+    n = int(input())
+    nums = list(map(int, input().split()))
+    # ... greedy solution
+```
+
+**2. Avoid Unnecessary Checks:**
+```python
+# Early exit if we can already reach the end
+if current_end >= n - 1:
+    break
+```
+
+**3. Use Arrays Instead of Lists:**
+```python
+import array
+nums = array.array('i', map(int, input().split()))
+```
+
+**4. Inline Functions:**
+```python
+# Instead of max(a, b), use:
+farthest = a if a > b else b
+```
+
+## 27. Interview Strategy: Recognizing Jump Game Patterns
+
+**Pattern Recognition:**
+*   **Greedy:** If the problem asks for "minimum jumps" and you can jump anywhere within a range.
+*   **BFS:** If the problem has constraints on where you can jump (e.g., only to specific values).
+*   **DP:** If the problem asks for "maximum score" or "number of ways".
+
+**Common Variations:**
+1.  **Can Reach?** → Greedy (Jump Game I).
+2.  **Minimum Jumps?** → Greedy (Jump Game II).
+3.  **Reach Specific Value?** → BFS (Jump Game III).
+4.  **Jump with Constraints?** → BFS with HashMap (Jump Game IV).
+5.  **Maximum Visits?** → DP with Sorting (Jump Game V).
+6.  **Maximum Score?** → DP with Deque (Jump Game VI).
+
+## 28. Code Template: Universal Jump Game Solver
+
+```python
+def jump_game_template(nums, target_condition, jump_rules):
+    """
+    Universal template for Jump Game problems.
+    
+    Args:
+        nums: Input array
+        target_condition: Function that checks if we've reached the goal
+        jump_rules: Function that returns valid next positions
+    """
+    from collections import deque
+    
+    n = len(nums)
+    queue = deque([0])
+    visited = {0}
+    steps = 0
+    
+    while queue:
+        size = len(queue)
+        steps += 1
+        
+        for _ in range(size):
+            i = queue.popleft()
+            
+            if target_condition(i, n):
+                return steps - 1
+            
+            for j in jump_rules(i, nums, n):
+                if j not in visited:
+                    visited.add(j)
+                    queue.append(j)
+    
+    return -1  # Can't reach
+
+# Example usage for Jump Game II:
+def solve_jump_game_ii(nums):
+    return jump_game_template(
+        nums,
+        target_condition=lambda i, n: i == n - 1,
+        jump_rules=lambda i, nums, n: range(i + 1, min(i + nums[i] + 1, n))
+    )
+```
+
+## 29. Testing Strategy
+
+**Test Cases:**
+1.  **Single Element:** `[0]` → 0 jumps.
+2.  **All Ones:** `[1,1,1,1,1]` → 4 jumps.
+3.  **Large Jump:** `[10,1,1,1,1]` → 1 jump.
+4.  **Optimal Path Not Obvious:** `[2,3,1,1,4]` → 2 jumps.
+5.  **Maximum Constraints:** Array of length 10,000 with random values.
+
+**Edge Cases:**
+*   Empty array (if allowed).
+*   Array with zeros in the middle (should still be reachable per problem statement).
+*   Very large jump values (e.g., `nums[0] = 10000`).
+
+## 30. Common Interview Follow-ups
+
+**Q1: What if we need to return the actual path, not just the number of jumps?**
+**A:** Modify the greedy algorithm to store the path.
+
+```python
+def jump_with_path(nums):
+    n = len(nums)
+    if n == 1:
+        return 0, [0]
+    
+    jumps = 0
+    current_end = 0
+    farthest = 0
+    path = [0]
+    
+    for i in range(n - 1):
+        farthest = max(farthest, i + nums[i])
+        
+        if i == current_end:
+            jumps += 1
+            current_end = farthest
+            path.append(current_end)
+            
+            if current_end >= n - 1:
+                path[-1] = n - 1
+                break
+    
+    return jumps, path
+```
+
+**Q2: What if some positions are blocked (obstacles)?**
+**A:** Use BFS and skip blocked positions.
+
+**Q3: What if each jump has a cost, and we want to minimize total cost?**
+**A:** Use Dijkstra's algorithm.
+
+**Q4: What if we can jump backwards?**
+**A:** Use BFS (greedy won't work).
+
+## 31. Optimization: Space-Efficient DP
+
+For DP solutions, we often only need the last `k` values. Use a sliding window.
+
+```python
+def jump_game_dp_optimized(nums):
+    n = len(nums)
+    # Instead of dp = [inf] * n, use a deque of size k
+    from collections import deque
+    window = deque([0])  # dp[0] = 0
+    
+    for i in range(1, n):
+        # Remove old values outside the window
+        while window and window[0][0] < i - max_jump_distance:
+            window.popleft()
+        
+        # dp[i] = min(window) + 1
+        dp_i = window[0][1] + 1
+        
+        # Add to window
+        while window and window[-1][1] >= dp_i:
+            window.pop()
+        window.append((i, dp_i))
+    
+    return window[-1][1]
+```
+
+## 32. Conclusion & Summary
+
+Jump Game II is more than just a coding problem—it's a gateway to understanding greedy algorithms, graph traversal, and dynamic programming. The key insights:
+
+1.  **Greedy Works:** When we can make locally optimal choices that lead to global optimality.
+2.  **BFS is Versatile:** Model as a graph and use level-order traversal.
+3.  **DP for Variants:** When we need to track scores or counts.
+4.  **Proof Matters:** Always verify that greedy is correct (exchange argument).
+
+**Mastery Checklist:**
+- [ ] Solve Jump Game I (Can Reach?)
+- [ ] Solve Jump Game II (Minimum Jumps) in O(N) time, O(1) space
+- [ ] Solve Jump Game III (Reach Zero)
+- [ ] Solve Jump Game IV (BFS with HashMap)
+- [ ] Solve Jump Game V (DP with Sorting)
+- [ ] Solve Jump Game VI (DP with Deque)
+- [ ] Solve Jump Game VII (String Constraints)
+- [ ] Solve Frog Jump
+- [ ] Explain why greedy works (proof)
+- [ ] Implement the path reconstruction variant
+
+**Next Steps:**
+*   Practice on LeetCode: Problems 45, 55, 1306, 1345, 1340, 1696, 1871, 403.
+*   Study related problems: Minimum Cost to Reach Destination, Cheapest Flights Within K Stops.
+*   Explore advanced topics: A* search, Bidirectional BFS.
+
+The journey from "Can I reach the end?" to "What's the optimal path with constraints?" teaches us to think algorithmically and adapt solutions to new problems. This is the essence of problem-solving in computer science.
 
