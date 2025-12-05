@@ -254,7 +254,465 @@ Training on Spot Instances (preemptible) saves 70% cost but adds risk.
     -   **Tier 3 (Dev):** Time-sliced GPUs (MPS).
 4.  **Isolation:** K8s Namespaces + NetworkPolicies prevent Team A from calling Team B's model.
 
-## 16. Summary
+- **Isolation:** K8s Namespaces + NetworkPolicies prevent Team A from calling Team B's model.
+
+## 16. Deep Dive: Preemption and Priority Classes
+
+**Problem:** High-priority job arrives, but cluster is full.
+
+**Solution:** Preempt (kill) low-priority jobs.
+
+**Kubernetes PriorityClass:**
+```yaml
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority
+value: 1000
+globalDefault: false
+description: "For production inference"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: inference-pod
+spec:
+  priorityClassName: high-priority
+  containers:
+  - name: model
+    image: bert-serving
+```
+
+**Preemption Logic:**
+1. Scheduler sees high-priority pod can't fit.
+2. Finds low-priority pods to evict.
+3. Sends `SIGTERM` to those pods.
+4. Waits for graceful shutdown (default 30s).
+5. Schedules high-priority pod.
+
+**Best Practice:**
+- **Production Inference:** Priority 1000.
+- **Training:** Priority 500.
+- **Dev/Notebooks:** Priority 100.
+
+## 17. Deep Dive: Resource Fragmentation Problem
+
+**Scenario:** Cluster has 100 GPUs total, but they're spread across 100 nodes (1 GPU each).
+A job needs 8 GPUs on the same node (for NVLink). **It can't run.**
+
+**This is fragmentation.**
+
+**Solutions:**
+
+**1. Bin Packing (MostRequestedPriority):**
+- Pack pods tightly to leave some nodes completely empty.
+- Empty nodes can be terminated (autoscaling) or reserved for large jobs.
+
+**2. Defragmentation (Descheduler):**
+- Periodically evict pods from underutilized nodes.
+- Re-schedule them to consolidate resources.
+
+**3. Topology-Aware Scheduling:**
+- Prefer nodes with multiple GPUs when scheduling multi-GPU jobs.
+
+**Code (Custom Scheduler Plugin):**
+```go
+func (p *GPUTopologyPlugin) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
+    nodeInfo, _ := p.handle.SnapshotSharedLister().NodeInfos().Get(nodeName)
+    
+    // Count available GPUs on this node
+    availableGPUs := nodeInfo.Allocatable.ScalarResources["nvidia.com/gpu"]
+    
+    // Prefer nodes with more GPUs
+    return availableGPUs * 10, nil
+}
+```
+
+## 18. Advanced: NUMA-Aware Scheduling
+
+**NUMA (Non-Uniform Memory Access):** Modern servers have multiple CPU sockets. Memory attached to Socket 0 is faster for cores on Socket 0.
+
+**Problem:** If a pod's CPUs are on Socket 0 but its memory is on Socket 1, performance degrades (cross-socket memory access).
+
+**Solution: Topology Manager (K8s 1.18+):**
+```yaml
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: training
+    resources:
+      requests:
+        cpu: "16"
+        memory: "64Gi"
+  # Topology Manager ensures CPUs and memory are on the same NUMA node
+```
+
+**Policies:**
+- `none`: No alignment (default).
+- `best-effort`: Try to align, but don't fail if impossible.
+- `restricted`: Only allow if alignment is possible.
+- `single-numa-node`: All resources must be on a single NUMA node.
+
+## 19. Advanced: Network Topology-Aware Placement
+
+**Problem:** Distributed training has massive inter-GPU communication (All-Reduce).
+
+**Network Hierarchy:**
+```
+GPU 0 ←→ GPU 1  (NVLink: 600 GB/s)
+  ↓       ↓
+Node 0 ←→ Node 1  (InfiniBand: 200 GB/s)
+  ↓       ↓
+Rack 0 ←→ Rack 1  (Ethernet: 100 GB/s)
+```
+
+**Optimization:** Place all 8 GPUs of a job on the same node (NVLink) > same rack (IB) > different racks (Ethernet).
+
+**Implementation (Volcano Topology Plugin):**
+```yaml
+apiVersion: scheduling.volcano.sh/v1beta1
+kind: PodGroup
+metadata:
+  name: distributed-training
+spec:
+  minMember: 8
+  queue: default
+  # Topology constraint
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            job: distributed-training
+        topologyKey: "topology.kubernetes.io/zone"  # Same rack
+```
+
+## 20. Case Study: Google Borg (Predecessor to Kubernetes)
+
+**Borg** is Google's internal cluster manager (2003-present).
+
+**Key Innovations:**
+1. **Allocs (Allocations):** Reserve resources for future use.
+   - "I'll need 100 GPUs tomorrow at 9am."
+2. **Quota Reclamation:** If Team A's quota is unused, Team B can borrow it (but gets preempted when A returns).
+3. **Borgmaster:** Centralized scheduler (handles 10k+ machines).
+4. **Borglet:** Agent on each machine (like Kubelet).
+
+**Lessons for K8s:**
+- **Declarative API:** "I want 10 replicas" (not "start pod 1, start pod 2...").
+- **Labels/Selectors:** Flexible grouping.
+- **Reconciliation Loop:** Continuously drive actual state toward desired state.
+
+## 21. Production Monitoring and Debugging
+
+**Key Metrics:**
+
+1. **Cluster Utilization:**
+   ```
+   GPU_Utilization = (Allocated_GPUs / Total_GPUs) * 100
+   ```
+   - **Target:** > 80%.
+   - **Alert:** If < 60% for > 1 hour, investigate.
+
+2. **Pending Pods:**
+   - Pods stuck in `Pending` state indicate scheduling failures.
+   - **Reasons:** Insufficient resources, taints, affinity rules.
+
+3. **Preemption Rate:**
+   - How often are low-priority jobs killed?
+   - **High rate:** Users frustrated. Consider adding capacity.
+
+**Debugging Tools:**
+```bash
+# Why is my pod pending?
+kubectl describe pod my-pod | grep -A 10 Events
+
+# Common reasons:
+# - "Insufficient nvidia.com/gpu"
+# - "Node had taints that the pod didn't tolerate"
+# - "PodGroup is not ready" (gang scheduling)
+
+# Check node resources
+kubectl describe node gpu-node-01 | grep -A 5 Allocated
+
+# Check quota
+kubectl describe resourcequota -n team-nlp
+```
+
+## 22. Common Pitfalls and How to Avoid Them
+
+**Pitfall 1: Setting Limits Too High**
+- `limits.memory: 1TB` on a 512GB node.
+- **Result:** Pod gets scheduled, then OOMKilled.
+- **Fix:** Set `limits` close to `requests`.
+
+**Pitfall 2: Forgetting Gang Scheduling**
+- Distributed training job requests 100 GPUs.
+- K8s schedules 99, waits for 1.
+- **Result:** Deadlock (99 GPUs wasted).
+- **Fix:** Use Volcano/Kueue.
+
+**Pitfall 3: Ignoring Topology**
+- 8-GPU job spread across 8 nodes.
+- **Result:** 10x slower (network bottleneck).
+- **Fix:** Use affinity rules or topology-aware scheduler.
+
+**Pitfall 4: No Resource Quotas**
+- One team launches 1000 pods, starves everyone.
+- **Fix:** Enforce `ResourceQuota` per namespace.
+
+**Pitfall 5: Not Monitoring Fragmentation**
+- Cluster is "full" but no single node has 8 GPUs.
+- **Fix:** Run descheduler periodically.
+
+## 23. Advanced: Elastic Training with TorchElastic
+
+**Problem:** Spot instances can be reclaimed mid-training.
+
+**TorchElastic (PyTorch 1.9+):**
+- **Rendezvous:** Workers discover each other dynamically.
+- **Fault Tolerance:** If a worker dies, remaining workers re-form the group.
+- **Elasticity:** Can add/remove workers mid-training.
+
+**Code:**
+```python
+import torch.distributed as dist
+from torch.distributed.elastic.multiprocessing.errors import record
+
+@record
+def train():
+    dist.init_process_group(backend="nccl")
+    
+    # Training loop
+    for epoch in range(100):
+        for batch in dataloader:
+            # If a worker dies here, TorchElastic handles it
+            loss = model(batch)
+            loss.backward()
+            optimizer.step()
+
+if __name__ == "__main__":
+    # Launch with torchrun (replaces torch.distributed.launch)
+    # torchrun --nproc_per_node=8 --nnodes=10 train.py
+    train()
+```
+
+**Benefit:** Training survives spot interruptions without manual intervention.
+
+## 24. Further Reading
+
+1. **"Large-scale cluster management at Google with Borg" (Verma et al., 2015):** The Borg paper.
+2. **"Kubernetes Scheduling" (K8s Docs):** Official scheduler documentation.
+3. **"Volcano: A Cloud Native Batch System" (Volcano Team):** Gang scheduling for ML.
+4. **"Ray: A Distributed Framework for Emerging AI Applications" (Moritz et al., 2018):** Ray architecture.
+5. **"NVIDIA Multi-Instance GPU User Guide":** MIG configuration and best practices.
+
+- **NVIDIA Multi-Instance GPU User Guide:** MIG configuration and best practices.
+
+## 24. Interview Questions for Resource Partitioning
+
+**Q1: How would you design a scheduler for a multi-tenant GPU cluster?**
+*Answer:* Use Kubernetes with custom scheduler plugins. Implement:
+- **Gang scheduling** (Volcano) for distributed training
+- **Priority classes** for production vs. dev workloads
+- **Resource quotas** per team/namespace
+- **Topology-aware placement** to minimize network latency
+- **Preemption** for high-priority jobs
+
+**Q2: What's the difference between MIG and time-slicing?**
+*Answer:* 
+- **MIG:** Hardware partitioning. Strong isolation, dedicated memory, no context switching overhead. Only on A100/H100.
+- **Time-Slicing (MPS):** Software multiplexing. Weak isolation, shared memory, context switching overhead. Works on any GPU.
+
+**Q3: How do you handle a job that requests 100 GPUs but only 99 are available?**
+*Answer:* This is the gang scheduling problem. Solutions:
+- Use **Volcano/Kueue** to ensure all-or-nothing scheduling
+- Implement **backfilling**: If a small job can run without blocking the large job, schedule it
+- **Preemption**: Kill low-priority jobs to free resources
+
+**Q4: How would you optimize cost for training on spot instances?**
+*Answer:*
+- **Checkpointing** every 10 minutes to S3
+- **TorchElastic** for fault tolerance
+- **Mixed cluster**: On-demand for head node, spot for workers
+- **Diversification**: Use multiple instance types to reduce interruption probability
+
+**Q5: What metrics would you monitor for cluster health?**
+*Answer:*
+- **Utilization**: GPU/CPU/Memory usage (target >80%)
+- **Pending pods**: Indicates scheduling bottlenecks
+- **Preemption rate**: High rate = users frustrated
+- **Job completion time**: Detect performance degradation
+- **Network bandwidth**: Detect congestion
+
+## 25. Cost Optimization Strategies
+
+**1. Right-Sizing:**
+- Don't request 8 GPUs if you only use 4.
+- **Tool:** Profile with `nvidia-smi` to measure actual usage.
+
+**2. Spot Instance Strategies:**
+```python
+# Diversify across instance types
+instance_types = ['p3.8xlarge', 'p3.16xlarge', 'p4d.24xlarge']
+
+# Bid strategy: Max price = On-Demand price
+for instance_type in instance_types:
+    launch_spot_instance(
+        instance_type=instance_type,
+        max_price=get_on_demand_price(instance_type)
+    )
+```
+
+**3. Autoscaling Policies:**
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gpu-autoscaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: inference-service
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: nvidia.com/gpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+```
+
+**4. Idle Resource Reclamation:**
+- **Descheduler**: Evict pods from underutilized nodes.
+- **Cluster Autoscaler**: Terminate empty nodes after 10 minutes.
+
+**5. Batch Job Scheduling:**
+- Run low-priority batch jobs during off-peak hours (nights, weekends).
+- **Savings:** 50-70% by using cheaper spot instances.
+
+**Cost Breakdown Example:**
+```
+Training GPT-3 (175B params):
+- Hardware: 10,000 V100s for 1 month
+- On-Demand: $3/hr/GPU × 10,000 × 720 hrs = $21.6M
+- Spot (70% discount): $6.5M
+- Savings: $15.1M
+```
+
+## 26. Ethical Considerations
+
+**1. Energy Consumption:**
+- Training GPT-3 consumed ~1,287 MWh (equivalent to 120 US homes for a year).
+- **Mitigation:** 
+  - Use renewable energy data centers (Google, AWS have carbon-neutral regions)
+  - Efficient architectures (MoE, sparse models)
+  - Model distillation (train large, deploy small)
+
+**2. Access Inequality:**
+- Only large organizations can afford 10k GPU clusters.
+- **Impact:** Concentrates AI research in Big Tech.
+- **Solutions:**
+  - Public compute grants (NSF, EU HPC)
+  - Open-source pre-trained models (Hugging Face)
+  - Federated learning (train on distributed data)
+
+**3. Resource Hoarding:**
+- One team reserves 1000 GPUs "just in case".
+- **Fix:** Enforce quotas, implement "use it or lose it" policies.
+
+**4. Bias in Allocation:**
+- Prioritizing certain teams/projects over others.
+- **Transparency:** Publish allocation policies, audit logs.
+
+## 27. Advanced: Multi-Cloud Resource Partitioning
+
+**Scenario:** Burst to AWS when on-prem cluster is full.
+
+**Architecture:**
+```
+┌──────────────┐
+│  On-Prem K8s │ (Primary)
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│  Kubefed     │ (Federation)
+└──────┬───────┘
+       │
+   ┌───┴────┐
+   ▼        ▼
+┌─────┐  ┌─────┐
+│ AWS │  │ GCP │ (Burst)
+└─────┘  └─────┘
+```
+
+**Challenges:**
+1. **Data Transfer:** Moving training data to cloud is slow.
+   - **Solution:** Replicate data to S3/GCS in advance.
+2. **Network Latency:** Cross-cloud communication is slow.
+   - **Solution:** Use cloud for independent jobs, not distributed training.
+3. **Cost:** Egress fees can be expensive.
+   - **Solution:** Minimize data movement, use cloud-native storage.
+
+- **Solution:** Minimize data movement, use cloud-native storage.
+
+## 28. Production Deployment Checklist
+
+**Before launching a multi-tenant ML cluster:**
+
+**Infrastructure:**
+- [ ] Set up Kubernetes cluster with GPU support
+- [ ] Install NVIDIA device plugin
+- [ ] Configure MIG partitions (if using A100/H100)
+- [ ] Set up monitoring (Prometheus + Grafana)
+- [ ] Configure logging (ELK stack or CloudWatch)
+
+**Resource Management:**
+- [ ] Define ResourceQuotas for each team/namespace
+- [ ] Create PriorityClasses (production, training, dev)
+- [ ] Install gang scheduler (Volcano or Kueue)
+- [ ] Configure autoscaling policies
+- [ ] Set up descheduler for defragmentation
+
+**Security:**
+- [ ] Enable RBAC (Role-Based Access Control)
+- [ ] Configure NetworkPolicies for isolation
+- [ ] Set up Pod Security Policies
+- [ ] Enable audit logging
+- [ ] Implement secrets management (Vault or AWS Secrets Manager)
+
+**Cost Optimization:**
+- [ ] Enable cluster autoscaler
+- [ ] Configure spot instance policies
+- [ ] Set up cost monitoring (Kubecost)
+- [ ] Implement idle resource reclamation
+- [ ] Define off-peak batch job schedules
+
+**Disaster Recovery:**
+- [ ] Set up automated backups (etcd, persistent volumes)
+- [ ] Test failover procedures
+- [ ] Document runbooks for common issues
+- [ ] Configure alerts for critical failures
+- [ ] Implement multi-region redundancy (if needed)
+
+## 29. Further Reading
+
+1. **"Large-scale cluster management at Google with Borg" (Verma et al., 2015):** The Borg paper.
+2. **"Kubernetes Scheduling" (K8s Docs):** Official scheduler documentation.
+3. **"Volcano: A Cloud Native Batch System" (Volcano Team):** Gang scheduling for ML.
+4. **"Ray: A Distributed Framework for Emerging AI Applications" (Moritz et al., 2018):** Ray architecture.
+5. **"NVIDIA Multi-Instance GPU User Guide":** MIG configuration and best practices.
+
+## 30. Conclusion
+
+Resource partitioning in ML clusters is a balancing act between **utilization** (pack jobs tightly), **fairness** (everyone gets their share), and **performance** (avoid interference). The shift from static partitioning to dynamic, topology-aware scheduling has enabled organizations to train models 10x larger on the same hardware budget. As models grow (GPT-5 will likely need 100k+ GPUs), the challenges of gang scheduling, fault tolerance, and network optimization will only intensify. The future lies in **intelligent schedulers** that understand model characteristics (memory footprint, communication patterns) and **elastic training** that adapts to resource availability in real-time.
+
+## 31. Summary
 
 | Level | Technology | Strategy |
 | :--- | :--- | :--- |
@@ -263,6 +721,7 @@ Training on Spot Instances (preemptible) saves 70% cost but adds risk.
 | **Device** | NVIDIA MIG | Hardware Partitioning |
 | **Workload** | Ray / Volcano | Gang Scheduling |
 | **Cost** | Spot Instances | Checkpointing, Elasticity |
+| **Performance** | Topology-Aware | NUMA, Network Placement |
 
 ---
 

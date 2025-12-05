@@ -738,7 +738,192 @@ class UnionFind:
         return wA / wB
 ```
 
-## 29. Final Thoughts
+## 29. System Design: Building a Currency Conversion API
+
+**Scenario:** Design a microservice that handles 10,000 QPS (queries per second) for currency conversions.
+
+**Requirements:**
+1.  **Low Latency:** < 10ms p99.
+2.  **High Availability:** 99.99% uptime.
+3.  **Dynamic Updates:** Exchange rates update every minute.
+4.  **Arbitrage Detection:** Alert if cycles exist with product != 1.0.
+
+**Architecture:**
+
+```
+┌─────────────┐
+│   Client    │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────────────────────────┐
+│   API Gateway (Rate Limiting)   │
+└──────────────┬──────────────────┘
+               │
+               ▼
+┌──────────────────────────────────┐
+│  Conversion Service (Stateless)  │
+│  - Load Balancer (3 instances)   │
+└──────────────┬───────────────────┘
+               │
+        ┌──────┴──────┐
+        ▼             ▼
+┌──────────────┐  ┌──────────────┐
+│  Redis Cache │  │  Union-Find  │
+│  (Hot Pairs) │  │  In-Memory   │
+└──────────────┘  └──────┬───────┘
+                         │
+                         ▼
+                  ┌──────────────┐
+                  │  PostgreSQL  │
+                  │  (Equations) │
+                  └──────────────┘
+```
+
+**Implementation Details:**
+
+**1. Data Model (PostgreSQL):**
+```sql
+CREATE TABLE exchange_rates (
+    id SERIAL PRIMARY KEY,
+    from_currency VARCHAR(3),
+    to_currency VARCHAR(3),
+    rate DECIMAL(18, 8),
+    timestamp TIMESTAMP DEFAULT NOW(),
+    UNIQUE(from_currency, to_currency)
+);
+
+CREATE INDEX idx_currencies ON exchange_rates(from_currency, to_currency);
+```
+
+**2. In-Memory Union-Find:**
+```python
+class CurrencyConverter:
+    def __init__(self):
+        self.uf = UnionFind()
+        self.last_update = 0
+        self.lock = threading.RLock()
+    
+    def reload_from_db(self):
+        with self.lock:
+            # Fetch all rates
+            rates = db.query("SELECT from_currency, to_currency, rate FROM exchange_rates")
+            
+            # Rebuild Union-Find
+            self.uf = UnionFind()
+            for from_curr, to_curr, rate in rates:
+                self.uf.union(from_curr, to_curr, rate)
+            
+            self.last_update = time.time()
+    
+    def convert(self, from_curr, to_curr, amount):
+        # Check cache first
+        cache_key = f"{from_curr}:{to_curr}"
+        cached_rate = redis.get(cache_key)
+        
+        if cached_rate:
+            return amount * float(cached_rate)
+        
+        # Query Union-Find
+        with self.lock:
+            rate = self.uf.query(from_curr, to_curr)
+        
+        if rate == -1.0:
+            raise ValueError(f"No conversion path from {from_curr} to {to_curr}")
+        
+        # Cache for 60 seconds
+        redis.setex(cache_key, 60, rate)
+        
+        return amount * rate
+```
+
+**3. Background Worker (Rate Updates):**
+```python
+import schedule
+
+def update_rates():
+    # Fetch from external API (e.g., fixer.io)
+    new_rates = fetch_external_rates()
+    
+    # Update DB
+    for from_curr, to_curr, rate in new_rates:
+        db.execute("""
+            INSERT INTO exchange_rates (from_currency, to_currency, rate)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (from_currency, to_currency) 
+            DO UPDATE SET rate = EXCLUDED.rate, timestamp = NOW()
+        """, (from_curr, to_curr, rate))
+    
+    # Reload in-memory structure
+    converter.reload_from_db()
+    
+    # Detect arbitrage
+    detect_arbitrage()
+
+schedule.every(1).minutes.do(update_rates)
+```
+
+**4. Arbitrage Detection:**
+```python
+def detect_arbitrage():
+    # Find all cycles
+    # For each cycle, check if product != 1.0
+    # This is expensive, run asynchronously
+    
+    currencies = get_all_currencies()
+    graph = build_graph()
+    
+    for start in currencies:
+        # DFS to find cycles
+        visited = set()
+        path = []
+        product = 1.0
+        
+        def dfs(curr, prod):
+            if curr in visited:
+                if curr == start and abs(prod - 1.0) > 0.01:
+                    alert(f"Arbitrage detected: {path}, product={prod}")
+                return
+            
+            visited.add(curr)
+            path.append(curr)
+            
+            for neighbor, weight in graph[curr].items():
+                dfs(neighbor, prod * weight)
+            
+            path.pop()
+            visited.remove(curr)
+        
+        dfs(start, 1.0)
+```
+
+**5. Monitoring & Metrics:**
+```python
+from prometheus_client import Counter, Histogram
+
+conversion_requests = Counter('conversion_requests_total', 'Total conversion requests')
+conversion_latency = Histogram('conversion_latency_seconds', 'Conversion latency')
+cache_hits = Counter('cache_hits_total', 'Cache hits')
+cache_misses = Counter('cache_misses_total', 'Cache misses')
+
+@conversion_latency.time()
+def convert_with_metrics(from_curr, to_curr, amount):
+    conversion_requests.inc()
+    
+    if redis.exists(f"{from_curr}:{to_curr}"):
+        cache_hits.inc()
+    else:
+        cache_misses.inc()
+    
+    return converter.convert(from_curr, to_curr, amount)
+```
+
+**Performance:**
+- **Cold Query:** ~5ms (Union-Find lookup + DB roundtrip).
+- **Warm Query:** ~0.5ms (Redis cache hit).
+- **Throughput:** 10,000 QPS easily handled with 3 instances.
+
+## 30. Final Thoughts
 
 Evaluate Division is a classic example of how a math problem can be transformed into a graph problem. The choice of algorithm (DFS vs. Union-Find) depends heavily on the constraints (number of queries vs. updates). Mastering Union-Find with path compression and weight tracking is a powerful tool for your algorithmic toolkit.
 

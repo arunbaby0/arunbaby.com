@@ -619,7 +619,107 @@ CPUs are bad at graph processing (random memory access = cache misses).
 - Holds the entire graph in SRAM.
 - Zero latency communication between cores.
 
-## 32. Summary
+- Zero latency communication between cores.
+
+## 32. Deep Dive: Semantic Web vs. Knowledge Graphs
+
+**History:**
+- **Semantic Web (2001):** Tim Berners-Lee's vision. A web of data readable by machines.
+- **Standards:** RDF, OWL, SPARQL.
+- **Failure:** Too complex, academic, and rigid. "Ontology engineering" was too hard.
+
+**Knowledge Graphs (2012):**
+- **Google's Rebranding:** "Things, not strings."
+- **Pragmatism:** Focus on utility (Search, RecSys) rather than strict logical correctness.
+- **Shift:** From "Reasoning" to "Embedding". From "XML" to "JSON/LPG".
+
+**Key Difference:**
+- **Semantic Web:** Open world assumption. If it's not in the DB, it might still be true.
+- **Enterprise KG:** Closed world assumption. If it's not in the DB, it's false (usually).
+
+## 33. Deep Dive: Hyper-Relational Knowledge Graphs
+
+Standard KGs are triples: `(Obama, President, USA)`.
+But reality is complex: `(Obama, President, USA, Start:2009, End:2017, Source:Wikipedia)`.
+
+**Modeling Qualifiers:**
+1.  **Star-Schema (LPG):** Add properties to the edge.
+2.  **N-ary Relations (RDF):** Create an intermediate node.
+    - `(Obama) -> [Presidency] -> (USA)`
+    - `[Presidency] -> (Start: 2009)`
+
+**StarE (Hyper-Relational Embedding):**
+- Extends TransE/RotatE to handle qualifiers.
+- Embedding depends on $(h, r, t)$ AND $(key_1, value_1), (key_2, value_2)$.
+- **Benefit:** Better link prediction accuracy by using context.
+
+## 34. Deep Dive: Inductive vs. Transductive Learning
+
+**Transductive (TransE, RotatE):**
+- Learn an embedding for every node in the training set.
+- **Problem:** If a new user joins, we have no embedding. We must retrain the whole model.
+
+**Inductive (GraphSAGE, GAT):**
+- Learn a **function** to generate embeddings from features.
+- $f(features, neighbors)$.
+- **Benefit:** Can handle dynamic graphs (new nodes arriving constantly) without retraining.
+
+## 35. Case Study: Amazon Product Graph
+
+**Scale:** Billions of products, users, reviews.
+
+**Entities:** `Product`, `Brand`, `Category`, `User`.
+**Edges:** `bought_together`, `viewed_together`, `is_compatible_with` (Lens -> Camera).
+
+**Application: "Complementary Product Recommendation"**
+- If user buys "Canon EOS R5", recommend "RF 24-70mm Lens".
+- **Challenge:** Compatibility is strict. A Nikon lens won't fit.
+- **Solution:** KG explicitly models `compatible_mount` relationships. LLMs/Embeddings might guess "Lens fits Camera" generally, but KG ensures *exact* fit.
+
+## 36. Future Trends: Large Knowledge Models (LKMs)
+
+**KG + LLM Convergence:**
+1.  **KG-Enhanced LLM:** RAG (Retrieval Augmented Generation).
+2.  **LLM-Enhanced KG:** Use LLM to clean, populate, and reason over KG.
+3.  **LKM (Large Knowledge Model):** A single transformer trained on both Text (Common Crawl) and Subgraphs (Wikidata).
+    - Can output text OR graph structures.
+    - "Draw the family tree of the Targaryens" -> Outputs JSON graph.
+
+- "Draw the family tree of the Targaryens" -> Outputs JSON graph.
+
+## 37. Ethical Considerations in Knowledge Graphs
+
+**1. Bias in Entity Representation:**
+- KGs built from Wikipedia over-represent Western entities.
+- **Example:** "Scientist" nodes are 90% male, 80% Western.
+- **Impact:** Recommendation systems amplify this bias.
+- **Fix:** Actively source diverse data (non-English Wikipedia, local databases).
+
+**2. Privacy:**
+- KGs can link disparate data sources to de-anonymize individuals.
+- **Example:** `(User123, lives_in, ZIP_12345) + (User123, age, 34) + (User123, disease, Rare_Condition)` → Uniquely identifies a person.
+- **Mitigation:** Differential Privacy on graph queries. Add noise to aggregate statistics.
+
+**3. Misinformation:**
+- Automated KG construction from web data ingests false facts.
+- **Example:** Conspiracy theories ("Vaccine causes autism") might appear as edges if they're widely discussed online.
+- **Fix:** Source credibility scoring. Prioritize facts from .gov, .edu, peer-reviewed sources.
+
+## 38. Further Reading
+
+1.  **"Knowledge Graphs" (Hogan et al., 2021):** Comprehensive survey covering all aspects.
+2.  **"Translating Embeddings for Modeling Multi-relational Data" (Bordes et al., 2013):** The TransE paper.
+3.  **"Inductive Representation Learning on Large Graphs" (Hamilton et al., 2017):** The GraphSAGE paper.
+4.  **"Google's Knowledge Graph: Serving Billions of Queries" (Singhal, 2012):** The original blog post.
+5.  **"PinSage: Graph Convolutional Neural Networks for Web-Scale Recommender Systems" (Ying et al., 2018):** Pinterest's production GNN.
+
+- **"PinSage: Graph Convolutional Neural Networks for Web-Scale Recommender Systems" (Ying et al., 2018):** Pinterest's production GNN.
+
+## 39. Conclusion
+
+Knowledge Graphs represent a fundamental shift from "documents" to "facts." They power the world's most sophisticated AI systems—from Google Search to LinkedIn's Economic Graph to fraud detection at banks. The convergence of symbolic reasoning (graphs) and neural learning (embeddings, GNNs) is creating a new generation of **Neuro-Symbolic AI** that combines the best of both worlds: the interpretability and structure of graphs with the learning power of deep learning. As we move toward Large Knowledge Models (LKMs), the boundary between "structured data" and "unstructured text" will blur, enabling AI systems that can reason, learn, and explain.
+
+## 40. Summary
 
 | Component | Technology |
 | :--- | :--- |
@@ -629,6 +729,7 @@ CPUs are bad at graph processing (random memory access = cache misses).
 | **Inference** | GraphSAGE, TransE |
 | **Use Cases** | Search, RecSys, Fraud Detection |
 | **Scale** | Billions of nodes, Trillions of edges |
+| **Future** | Graph RAG, Neuro-Symbolic AI |
 
 ---
 

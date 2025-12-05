@@ -474,7 +474,426 @@ $$L_{total} = \lambda_1 L_{boundary} + \lambda_2 L_{segment} + \lambda_3 L_{dept
 - **Dice Score:** Overlap with ground truth.
 - **Hausdorff Distance:** Maximum boundary error.
 
-## 17. Summary
+- **Hausdorff Distance:** Maximum boundary error.
+
+## 17. Deep Dive: Conditional Random Fields (CRF) for Boundary Refinement
+
+**Problem:** CNN outputs are often blurry at boundaries due to pooling and upsampling.
+
+**Solution:** Post-process with a CRF to enforce spatial consistency.
+
+**Dense CRF (Fully Connected CRF):**
+- Every pixel is connected to every other pixel.
+- **Unary Potential:** CNN prediction for pixel $i$.
+- **Pairwise Potential:** Encourages similar pixels to have similar labels.
+
+$$E(x) = \sum_i \psi_u(x_i) + \sum_{i<j} \psi_p(x_i, x_j)$$
+
+Where:
+- $\psi_u(x_i) = -\log P(x_i)$ (from CNN).
+- $\psi_p(x_i, x_j) = \mu(x_i, x_j) \cdot k(f_i, f_j)$ (similarity kernel based on color and position).
+
+**Implementation (PyDenseCRF):**
+```python
+import pydensecrf.densecrf as dcrf
+from pydensecrf.utils import unary_from_softmax
+
+def crf_refine(image, prob_map):
+    h, w = image.shape[:2]
+    
+    # Create CRF
+    d = dcrf.DenseCRF2D(w, h, 2)  # 2 classes: boundary/non-boundary
+    
+    # Unary potential
+    U = unary_from_softmax(prob_map)
+    d.setUnaryEnergy(U)
+    
+    # Pairwise potentials
+    # Appearance kernel (color similarity)
+    d.addPairwiseGaussian(sxy=3, compat=3)
+    
+    # Smoothness kernel (spatial proximity)
+    d.addPairwiseBilateral(sxy=80, srgb=13, rgbim=image, compat=10)
+    
+    # Inference
+    Q = d.inference(5)  # 5 iterations
+    refined = np.argmax(Q, axis=0).reshape((h, w))
+    
+    return refined
+```
+
+**Result:** Sharp, clean boundaries aligned with object edges.
+
+## 18. Deep Dive: Attention Mechanisms for Boundary Detection
+
+**Observation:** Not all regions are equally important. Focus on boundary regions.
+
+**Spatial Attention:**
+```python
+class SpatialAttention(nn.Module):
+    def __init__(self, kernel_size=7):
+        super().__init__()
+        self.conv = nn.Conv2d(2, 1, kernel_size, padding=kernel_size//2)
+        self.sigmoid = nn.Sigmoid()
+    
+    def forward(self, x):
+        # Aggregate across channels
+        avg_out = torch.mean(x, dim=1, keepdim=True)
+        max_out, _ = torch.max(x, dim=1, keepdim=True)
+        
+        # Concatenate and convolve
+        attention = torch.cat([avg_out, max_out], dim=1)
+        attention = self.conv(attention)
+        attention = self.sigmoid(attention)
+        
+        return x * attention
+```
+
+**Channel Attention (SE Block):**
+```python
+class SEBlock(nn.Module):
+    def __init__(self, channels, reduction=16):
+        super().__init__()
+        self.fc = nn.Sequential(
+            nn.Linear(channels, channels // reduction),
+            nn.ReLU(),
+            nn.Linear(channels // reduction, channels),
+            nn.Sigmoid()
+        )
+    
+    def forward(self, x):
+        b, c, _, _ = x.size()
+        # Global average pooling
+        y = x.view(b, c, -1).mean(dim=2)
+        # Excitation
+        y = self.fc(y).view(b, c, 1, 1)
+        return x * y.expand_as(x)
+```
+
+## 19. Case Study: Instance Segmentation (Mask R-CNN)
+
+**Problem:** Detect boundaries of individual instances (e.g., 3 separate cars).
+
+**Mask R-CNN Architecture:**
+1. **Backbone:** ResNet-50 + FPN (Feature Pyramid Network).
+2. **RPN (Region Proposal Network):** Proposes bounding boxes.
+3. **RoI Align:** Extract features for each box (better than RoI Pooling, preserves spatial alignment).
+4. **Heads:**
+   - **Classification:** What class?
+   - **Box Regression:** Refine box coordinates.
+   - **Mask:** Binary mask for the instance (28x28, upsampled to box size).
+
+**Boundary Extraction:**
+- The mask head outputs a soft mask.
+- Apply threshold (0.5) to get binary mask.
+- Use `cv2.findContours()` to extract boundary polygon.
+
+**Production Optimization:**
+```python
+import detectron2
+from detectron2.engine import DefaultPredictor
+from detectron2.config import get_cfg
+
+cfg = get_cfg()
+cfg.merge_from_file("mask_rcnn_R_50_FPN_3x.yaml")
+cfg.MODEL.WEIGHTS = "model_final.pth"
+cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7
+
+predictor = DefaultPredictor(cfg)
+
+# Inference
+outputs = predictor(image)
+instances = outputs["instances"]
+
+# Extract boundaries
+for i in range(len(instances)):
+    mask = instances.pred_masks[i].cpu().numpy()
+    contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # contours[0] is the boundary polygon
+```
+
+## 20. Advanced: Differentiable Rendering for Boundary Optimization
+
+**Concept:** Treat boundary detection as an inverse rendering problem.
+
+**Pipeline:**
+1. **Predict:** 3D mesh of the object.
+2. **Render:** Project mesh to 2D using differentiable renderer (PyTorch3D).
+3. **Loss:** Compare rendered silhouette with target boundary.
+4. **Backprop:** Gradients flow through the renderer to update the mesh.
+
+**Code Sketch:**
+```python
+from pytorch3d.renderer import (
+    MeshRenderer, MeshRasterizer, SoftSilhouetteShader,
+    RasterizationSettings, PerspectiveCameras
+)
+
+# Define mesh
+verts, faces = load_mesh()
+
+# Differentiable renderer
+cameras = PerspectiveCameras()
+raster_settings = RasterizationSettings(image_size=512, blur_radius=1e-5)
+renderer = MeshRenderer(
+    rasterizer=MeshRasterizer(cameras=cameras, raster_settings=raster_settings),
+    shader=SoftSilhouetteShader()
+)
+
+# Render
+silhouette = renderer(meshes)
+
+# Loss
+loss = F.mse_loss(silhouette, target_boundary)
+loss.backward()
+
+# Update mesh vertices
+optimizer.step()
+```
+
+**Use Case:** 3D reconstruction from 2D images (e.g., NeRF, 3D Gaussian Splatting).
+
+## 21. Ethical Considerations
+
+**1. Bias in Medical Imaging:**
+- If training data is mostly from one demographic (e.g., Caucasian patients), boundary detection might fail on others.
+- **Fix:** Diverse, representative datasets.
+
+**2. Surveillance:**
+- Boundary detection enables person tracking and re-identification.
+- **Mitigation:** Privacy-preserving techniques (on-device processing, federated learning).
+
+**3. Deepfakes:**
+- Precise boundary detection enables realistic face swaps.
+- **Safeguard:** Watermarking, detection models.
+
+- **Safeguard:** Watermarking, detection models.
+
+## 22. Benchmark Datasets for Boundary Detection
+
+**1. BSDS500 (Berkeley Segmentation Dataset):**
+- 500 natural images with human-annotated boundaries.
+- **Metric:** F-measure (ODS/OIS).
+- **SOTA:** F-ODS = 0.82 (HED).
+
+**2. Cityscapes:**
+- 5,000 street scene images with fine annotations.
+- **Task:** Instance-level boundary detection for cars, pedestrians, etc.
+- **Metric:** Boundary IoU.
+
+**3. NYU Depth V2:**
+- 1,449 indoor RGB-D images.
+- **Task:** Depth discontinuities (boundaries in 3D).
+- **Use Case:** Robotics, AR/VR.
+
+**4. Medical Datasets:**
+- **ISIC (Skin Lesions):** Melanoma boundary detection.
+- **BraTS (Brain Tumors):** 3D tumor boundaries in MRI.
+- **DRIVE (Retinal Vessels):** Blood vessel segmentation.
+
+## 23. Production Monitoring and Debugging
+
+**Challenge:** Model works in lab, fails in production.
+
+**Monitoring Metrics:**
+1. **Boundary Precision/Recall:** Track over time.
+2. **Inference Latency:** P50, P95, P99.
+3. **GPU Utilization:** Should be > 80% for efficiency.
+4. **Error Cases:** Log images where Dice < 0.5.
+
+**Debugging Tools:**
+```python
+import wandb
+
+# Log predictions
+wandb.log({
+    "prediction": wandb.Image(pred_mask),
+    "ground_truth": wandb.Image(gt_mask),
+    "dice_score": dice,
+    "inference_time_ms": latency
+})
+
+# Alert if performance degrades
+if dice < 0.7:
+    wandb.alert(
+        title="Low Dice Score",
+        text=f"Dice = {dice} on image {image_id}"
+    )
+```
+
+**A/B Testing:**
+- Deploy new model to 5% of traffic.
+- Compare boundary quality (human eval or automated metrics).
+- Gradual rollout if metrics improve.
+
+## 24. Common Pitfalls and How to Avoid Them
+
+**Pitfall 1: Ignoring Class Imbalance**
+- Boundary pixels are < 5% of the image.
+- **Fix:** Use weighted loss or focal loss.
+
+**Pitfall 2: Over-smoothing**
+- Too much pooling/upsampling blurs boundaries.
+- **Fix:** Use skip connections (U-Net) or dilated convolutions.
+
+**Pitfall 3: Inconsistent Annotations**
+- Different annotators draw boundaries differently.
+- **Fix:** Multi-annotator consensus, use soft labels (average of multiple annotations).
+
+**Pitfall 4: Domain Shift**
+- Train on sunny day images, deploy on rainy nights.
+- **Fix:** Domain adaptation (CycleGAN), diverse training data.
+
+**Pitfall 5: Not Testing on Edge Cases**
+- Occlusion, motion blur, low light.
+- **Fix:** Curate a "hard examples" test set.
+
+## 25. Advanced: Boundary-Aware Data Augmentation
+
+Standard augmentation (rotation, flip) isn't enough for thin boundaries.
+
+**Elastic Deformation:**
+```python
+import elasticdeform
+
+# Deform image and mask together
+[image_deformed, mask_deformed] = elasticdeform.deform_random_grid(
+    [image, mask],
+    sigma=25,  # Deformation strength
+    points=3,  # Grid resolution
+    order=[3, 0],  # Interpolation order (cubic for image, nearest for mask)
+    axis=(0, 1)
+)
+```
+
+**Boundary-Specific Augmentation:**
+```python
+def augment_boundary(mask, dilation_range=(1, 3)):
+    # Randomly dilate or erode boundary
+    kernel_size = np.random.randint(*dilation_range)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
+    
+    if np.random.rand() > 0.5:
+        mask = cv2.dilate(mask, kernel)
+    else:
+        mask = cv2.erode(mask, kernel)
+    
+    return mask
+```
+
+## 26. Advanced: Multi-Scale Boundary Detection
+
+Objects have boundaries at different scales (fine hair vs. body outline).
+
+**Laplacian Pyramid:**
+```python
+def build_laplacian_pyramid(image, levels=4):
+    gaussian_pyramid = [image]
+    for i in range(levels):
+        image = cv2.pyrDown(image)
+        gaussian_pyramid.append(image)
+    
+    laplacian_pyramid = []
+    for i in range(levels):
+        size = (gaussian_pyramid[i].shape[1], gaussian_pyramid[i].shape[0])
+        expanded = cv2.pyrUp(gaussian_pyramid[i+1], dstsize=size)
+        laplacian = cv2.subtract(gaussian_pyramid[i], expanded)
+        laplacian_pyramid.append(laplacian)
+    
+    return laplacian_pyramid
+
+# Process each scale
+for level in laplacian_pyramid:
+    boundary_map = model(level)
+    # Fuse multi-scale outputs
+```
+
+    # Fuse multi-scale outputs
+```
+
+## 27. Hardware Considerations for Real-Time Boundary Detection
+
+**Challenge:** Autonomous vehicles need 60 FPS at 1080p.
+
+**Hardware Options:**
+1. **NVIDIA Jetson AGX Xavier:**
+   - 32 TOPS (INT8).
+   - Power: 30W.
+   - **Use Case:** Embedded systems, drones.
+
+2. **Tesla FSD Chip:**
+   - Custom ASIC for neural networks.
+   - 144 TOPS.
+   - **Use Case:** Tesla Autopilot.
+
+3. **Google Edge TPU:**
+   - 4 TOPS.
+   - Power: 2W.
+   - **Use Case:** Mobile devices, IoT.
+
+**Optimization for Edge:**
+```python
+# Model pruning
+import torch.nn.utils.prune as prune
+
+# Prune 30% of weights
+for module in model.modules():
+    if isinstance(module, nn.Conv2d):
+        prune.l1_unstructured(module, name='weight', amount=0.3)
+
+# Knowledge distillation
+teacher = UNet(channels=64)  # Large model
+student = UNet(channels=16)  # Small model
+
+# Train student to mimic teacher
+loss = F.mse_loss(student(x), teacher(x).detach())
+```
+
+loss = F.mse_loss(student(x), teacher(x).detach())
+```
+
+**Performance Benchmarks (1080p Image):**
+
+| Hardware | Model | FPS | Latency (ms) | Power (W) |
+| :--- | :--- | :--- | :--- | :--- |
+| **RTX 3090** | U-Net (FP32) | 120 | 8.3 | 350 |
+| **RTX 3090** | U-Net (INT8) | 350 | 2.9 | 350 |
+| **Jetson Xavier** | U-Net (INT8) | 45 | 22 | 30 |
+| **Edge TPU** | MobileNet-UNet | 15 | 67 | 2 |
+| **CPU (i9)** | U-Net (FP32) | 3 | 333 | 125 |
+
+**Takeaway:** For real-time edge deployment, use INT8 quantization + lightweight architecture.
+
+## 28. Interview Tips for Boundary Detection Problems
+
+**Q1: How would you handle class imbalance in boundary detection?**
+*Answer:* Use weighted loss (weight boundary pixels 10x higher), focal loss, or Dice loss which is robust to imbalance.
+
+**Q2: Why use skip connections in U-Net?**
+*Answer:* Pooling loses spatial information. Skip connections concatenate high-res features from the encoder to the decoder, recovering fine details needed for precise boundaries.
+
+**Q3: How to deploy a boundary detection model at 60 FPS?**
+*Answer:* Model quantization (FP32 → INT8), TensorRT optimization, use lightweight architectures (MobileNet backbone), process at lower resolution and upsample.
+
+**Q4: How to evaluate boundary quality?**
+*Answer:* Boundary IoU (intersection over union along the contour band), F-measure (precision/recall on boundary pixels), Hausdorff distance (maximum error).
+
+**Q5: What's the difference between edge detection and boundary detection?**
+*Answer:* Edge detection finds all intensity changes (low-level, includes texture). Boundary detection finds semantically meaningful object contours (high-level, requires understanding).
+
+## 29. Further Reading
+
+1. **"U-Net: Convolutional Networks for Biomedical Image Segmentation" (Ronneberger et al., 2015):** The U-Net paper.
+2. **"Holistically-Nested Edge Detection" (Xie & Tu, 2015):** HED architecture.
+3. **"Mask R-CNN" (He et al., 2017):** Instance segmentation standard.
+4. **"DeepLab: Semantic Image Segmentation with Deep Convolutional Nets, Atrous Convolution, and Fully Connected CRFs" (Chen et al., 2018):** CRF refinement.
+5. **"Attention U-Net: Learning Where to Look for the Pancreas" (Oktay et al., 2018):** Attention for medical imaging.
+
+## 30. Conclusion
+
+Boundary detection has evolved from simple gradient operators (Canny) to sophisticated deep learning models (U-Net, Mask R-CNN) that understand semantic context. The key challenges—thin structures, class imbalance, real-time performance—are being addressed through specialized loss functions (Dice, Tversky), attention mechanisms, and deployment optimizations (TensorRT, quantization). As we move toward 3D understanding and multi-modal fusion (LiDAR + Camera), boundary detection will remain a critical building block for autonomous systems, medical AI, and creative tools.
+
+## 31. Summary
 
 | Component | Technology |
 | :--- | :--- |
@@ -483,6 +902,7 @@ $$L_{total} = \lambda_1 L_{boundary} + \lambda_2 L_{segment} + \lambda_3 L_{dept
 | **Refinement** | Active Contours, CRF |
 | **Metrics** | Boundary IoU, F-Score |
 | **Deployment** | TensorRT, Quantization |
+| **Advanced** | Attention, Differentiable Rendering |
 
 ---
 

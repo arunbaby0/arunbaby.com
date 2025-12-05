@@ -470,13 +470,303 @@ class UnionFind:
 4. **Optimize:** Mention early termination for sparse boards.
 5. **Test:** Walk through a small example on the whiteboard.
 
-## 22. Summary
+- **Test:** Walk through a small example on the whiteboard.
+
+## 22. Deep Dive: Complexity Analysis for Different Grid Patterns
+
+The $O(MN)$ time complexity is a worst-case bound. Let's analyze specific patterns:
+
+**Pattern 1: Sparse Grid (Few `'O'`s)**
+- If only 1% of cells are `'O'`, DFS visits only those cells.
+- **Actual Time:** $O(0.01 \times MN) = O(MN)$ (still linear, but with small constant).
+
+**Pattern 2: Dense Border `'O'`s**
+- If the entire border is `'O'` and they're all connected, we visit all cells in one DFS.
+- **Actual Time:** $O(MN)$ (single connected component).
+
+**Pattern 3: Many Small Islands**
+- If we have $k$ disconnected islands, we run DFS $k$ times.
+- **Total Time:** $O(MN)$ (each cell visited once across all DFS calls).
+
+**Pattern 4: Checkerboard**
+- Alternating `'X'` and `'O'`. No large connected components.
+- **Actual Time:** $O(MN)$ (visit each `'O'` once).
+
+**Conclusion:** The algorithm is **input-adaptive** but always $O(MN)$ in the worst case.
+
+## 23. System Design: Distributed Grid Processing
+
+**Scenario:** Process a 100,000 x 100,000 grid (10 billion cells) for terrain analysis.
+
+**Challenge:** Cannot fit in memory of a single machine (400GB if 4 bytes per cell).
+
+**Solution: MapReduce-style Processing**
+
+**Step 1: Partition**
+- Divide grid into tiles (e.g., 1000x1000 each = 10,000 tiles).
+- Store tiles in HDFS or S3.
+
+**Step 2: Map Phase (Parallel)**
+- Each worker processes one tile.
+- Identify border cells that are `'O'`.
+- Mark internal safe regions within the tile.
+
+**Step 3: Reduce Phase (Merge Boundaries)**
+- **Problem:** A safe region might span multiple tiles.
+- **Solution:** Exchange border information between adjacent tiles.
+  - Tile A sends its right border to Tile B (its right neighbor).
+  - If Tile A's right border has `'O'` connected to Tile B's left border `'O'`, merge them.
+
+**Step 4: Global Propagation**
+- Use a distributed Union-Find (with Spark or Pregel).
+- Propagate "safe" status across tile boundaries.
+
+**Code Sketch (PySpark):**
+```python
+from pyspark import SparkContext
+
+sc = SparkContext()
+
+# Load tiles
+tiles = sc.textFile("s3://grid-tiles/*").map(parse_tile)
+
+# Map: Process each tile locally
+def process_tile(tile):
+    # Run DFS from tile borders
+    # Return (tile_id, safe_cells, border_info)
+    pass
+
+processed = tiles.map(process_tile)
+
+# Reduce: Merge adjacent tiles
+def merge_tiles(tile1, tile2):
+    # Check if borders connect
+    # Propagate safe status
+    pass
+
+final = processed.reduce(merge_tiles)
+```
+
+## 24. Advanced: GPU Acceleration for Massive Grids
+
+For real-time processing (e.g., video game terrain), we can use GPUs.
+
+**CUDA Approach:**
+1. **Kernel 1 (Border Marking):** Each thread checks if its cell is on the border and is `'O'`. If yes, mark as safe.
+2. **Kernel 2 (Propagation):** Iteratively propagate "safe" status to neighbors.
+   - Each thread checks its 4 neighbors. If any neighbor is safe and current cell is `'O'`, mark current as safe.
+   - Repeat until no changes (convergence).
+3. **Kernel 3 (Flip):** Each thread flips `'O'` to `'X'` if not safe.
+
+**Pseudocode:**
+```cuda
+__global__ void propagate_safe(char* board, bool* changed, int m, int n) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= m * n) return;
+    
+    int r = idx / n;
+    int c = idx % n;
+    
+    if (board[idx] == 'O') {
+        // Check neighbors
+        if ((r > 0 && board[(r-1)*n + c] == 'S') ||
+            (r < m-1 && board[(r+1)*n + c] == 'S') ||
+            (c > 0 && board[r*n + (c-1)] == 'S') ||
+            (c < n-1 && board[r*n + (c+1)] == 'S')) {
+            board[idx] = 'S';
+            *changed = true;
+        }
+    }
+}
+
+// Host code
+bool changed = true;
+while (changed) {
+    changed = false;
+    propagate_safe<<<blocks, threads>>>(d_board, d_changed, m, n);
+    cudaMemcpy(&changed, d_changed, sizeof(bool), cudaMemcpyDeviceToHost);
+}
+```
+
+**Speedup:** 10-100x for grids > 10,000 x 10,000.
+
+## 25. Code: Optimized BFS with Bidirectional Search
+
+For grids where we know both the "source" (border) and "target" (interior), we can use bidirectional BFS.
+
+**Idea:**
+- Start BFS from border (forward).
+- Start BFS from interior `'O'`s (backward).
+- Meet in the middle.
+
+**Benefit:** Reduces search space from $O(MN)$ to $O(\sqrt{MN})$ in some cases.
+
+**Implementation:**
+```python
+from collections import deque
+
+def solve_bidirectional(board):
+    if not board: return
+    m, n = len(board), len(board[0])
+    
+    # Forward: from border
+    forward_queue = deque()
+    for i in range(m):
+        if board[i][0] == 'O': forward_queue.append((i, 0))
+        if board[i][n-1] == 'O': forward_queue.append((i, n-1))
+    for j in range(1, n-1):
+        if board[0][j] == 'O': forward_queue.append((0, j))
+        if board[m-1][j] == 'O': forward_queue.append((m-1, j))
+    
+    # Backward: from interior
+    backward_queue = deque()
+    for i in range(1, m-1):
+        for j in range(1, n-1):
+            if board[i][j] == 'O':
+                backward_queue.append((i, j))
+    
+    # BFS from both sides
+    forward_visited = set()
+    backward_visited = set()
+    
+    while forward_queue or backward_queue:
+        # Forward step
+        if forward_queue:
+            r, c = forward_queue.popleft()
+            if (r, c) in backward_visited:
+                # Met in middle - this cell is safe
+                board[r][c] = 'S'
+            if 0 <= r < m and 0 <= c < n and board[r][c] == 'O':
+                board[r][c] = 'S'
+                forward_visited.add((r, c))
+                for dr, dc in [(1,0),(-1,0),(0,1),(0,-1)]:
+                    forward_queue.append((r+dr, c+dc))
+        
+        # Backward step (similar)
+        # ... (omitted for brevity)
+    
+    # Flip
+    for i in range(m):
+        for j in range(n):
+            if board[i][j] == 'O': board[i][j] = 'X'
+            elif board[i][j] == 'S': board[i][j] = 'O'
+```
+
+**Note:** For this specific problem, bidirectional search doesn't provide much benefit because we're not searching for a specific target. But it's a useful technique for other graph problems.
+
+## 26. Further Reading
+
+1. **"Introduction to Algorithms" (CLRS):** Chapter on Graph Algorithms (DFS/BFS).
+2. **"Competitive Programming 3" (Halim & Halim):** Flood Fill and Connected Components.
+3. **"The Algorithm Design Manual" (Skiena):** Graph Traversal Techniques.
+4. **LeetCode Discuss:** Top solutions for Surrounded Regions with optimizations.
+
+- **LeetCode Discuss:** Top solutions for Surrounded Regions with optimizations.
+
+## 27. Common Mistakes and How to Avoid Them
+
+**Mistake 1: Forgetting to Check Bounds**
+```python
+# Wrong
+dfs(r+1, c)  # Might go out of bounds
+
+# Right
+if r+1 < m:
+    dfs(r+1, c)
+```
+
+**Mistake 2: Modifying the Board During Iteration**
+```python
+# Wrong
+for i in range(m):
+    for j in range(n):
+        if board[i][j] == 'O':
+            board[i][j] = 'X'  # Changes board while iterating
+```
+**Fix:** Use a temporary marker (`'S'`) first, then flip in a second pass.
+
+**Mistake 3: Not Handling Empty Board**
+```python
+# Wrong
+m, n = len(board), len(board[0])  # Crashes if board is empty
+
+# Right
+if not board or not board[0]:
+    return
+```
+
+**Mistake 4: Infinite Recursion**
+```python
+# Wrong
+def dfs(r, c):
+    board[r][c] = 'S'
+    dfs(r+1, c)  # Might revisit same cell
+
+# Right
+def dfs(r, c):
+    if board[r][c] != 'O':  # Check before marking
+        return
+    board[r][c] = 'S'
+    dfs(r+1, c)
+```
+
+```
+
+## 28. Performance Tips for Production
+
+**1. Pre-allocate Data Structures:**
+```python
+# Instead of appending to lists dynamically
+visited = [[False] * n for _ in range(m)]  # Pre-allocate
+```
+
+**2. Use Bitwise Operations for Flags:**
+```python
+# Instead of board[r][c] = 'S', use bit flags
+SAFE = 0x01
+VISITED = 0x02
+board[r][c] |= SAFE  # Faster than string comparison
+```
+
+**3. Cache Border Cells:**
+```python
+# Pre-compute border cells once
+border_cells = [(i, 0) for i in range(m)] + [(i, n-1) for i in range(m)]
+```
+
+**4. Profile Before Optimizing:**
+```python
+import cProfile
+cProfile.run('solve(board)')
+# Identify bottlenecks before optimizing
+```
+
+## 29. Ethical Considerations in Grid Algorithms
+
+**1. Bias in Terrain Analysis:**
+- If using this algorithm for flood risk assessment, ensure the grid resolution is fair across all neighborhoods.
+- Low-income areas might have coarser grid data, leading to inaccurate flood predictions.
+
+**2. Privacy in Location Data:**
+- If the grid represents user locations (e.g., "safe zones" in a pandemic app), ensure anonymization.
+- Aggregating cells into regions can help preserve privacy.
+
+**3. Environmental Impact:**
+- Running massive grid computations on GPUs consumes significant energy.
+- **Mitigation:** Use energy-efficient algorithms, run during off-peak hours, or use renewable energy data centers.
+
+## 30. Conclusion
+
+The "Surrounded Regions" problem teaches us a fundamental principle in graph algorithms: **sometimes it's easier to find what you DON'T want (safe regions) than what you DO want (captured regions)**. This "reverse thinking" applies to many real-world problems: instead of detecting fraud, detect normal behavior and flag everything else. Instead of finding bugs, prove correctness and flag violations. The boundary traversal technique is a powerful pattern that appears in image processing, game development, and geographic information systems.
+
+## 31. Summary
 
 | Approach | Time | Space | Pros |
 | :--- | :--- | :--- | :--- |
 | **DFS** | $O(MN)$ | $O(MN)$ | Simple code |
 | **BFS** | $O(MN)$ | $O(MN)$ | Avoids stack overflow |
 | **Union-Find** | $O(MN \cdot \alpha(MN))$ | $O(MN)$ | Dynamic connectivity |
+| **GPU** | $O(MN / P)$ | $O(MN)$ | Massive parallelism |
 
 ---
 
