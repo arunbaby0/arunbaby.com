@@ -18,11 +18,11 @@ difficulty: Medium-Easy
 
 ## 1. Introduction: The Workflow Revolution
 
-For a long time, the obsession in AI was "Bigger Models." To get better answers, everyone thought we needed GPT-5, GPT-6, and GPT-7. The assumption was that intelligence scales with parameter count.
+For a long time, the obsession in AI was "Bigger Models." To get better answers, everyone thought we needed GPT-5, GPT-6, and GPT-7. The assumption was that intelligence scales primarily with parameter count.
 
-However, in 2024, a quiet revolution occurred. Research highlighted by Andrew Ng and teams from Stanford/Princeton showed that **Agentic Workflows**—wrapping a smaller model (like GPT-3.5 or Llama-3) in a smart loop—could outperform a larger model (GPT-4) running zero-shot.
+However, in 2024, a quiet revolution occurred. Research highlighted by Andrew Ng and teams from Stanford/Princeton showed that **Agentic Workflows**—wrapping a smaller model (like GPT-3.5 or Llama-3) in a smart cognitive loop—could outperform a larger model (GPT-4) running zero-shot.
 
-The paradigm has shifted. We are no longer just "Prompting" a model; we are "Flow Engineering" a system.
+The paradigm has shifted. We are no longer just "Prompting" a model to guess the right answer immediately; we are "Flow Engineering" a system to reason its way to the answer.
 In this post, we will dissect the four canonical design patterns for agentic systems: **Reflection, Tool Use, Planning, and Multi-Agent Collaboration.**
 
 ---
@@ -30,35 +30,34 @@ In this post, we will dissect the four canonical design patterns for agentic sys
 ## 2. Pattern 1: Reflection (The Editor Loop)
 
 Humans rarely write perfect code or perfect essays on the first try. We write a draft, look at it, spot errors, and rewrite.
-Standard LLM usage asks for perfection in one shot. This is unnatural. **Reflection** mimics the human edit loop.
+Standard naive LLM usage asks for perfection in one shot. This is unnatural. **Reflection** mimics the human edit loop.
 
 ### 2.1 The Architecture
-1.  **Actor:** Generates the initial output.
-2.  **Critic:** Promps the model to review the output. "Look for bugs, logic errors, or style issues."
-3.  **Reviser:** Takes the *Original Output* and the *Critique* and generates *Final Output*.
+1.  **Actor:** Generates the initial output (e.g., a Python function).
+2.  **Critic:** Prompts the model to review the output *without* rewriting it yet. "Look for bugs, logic errors, or style issues."
+3.  **Reviser:** Takes the *Original Output* and the *Critique* and produces the *Final Output*.
 
 ### 2.2 Case Study: Coding (HumanEval)
 On the HumanEval benchmark (Python coding problems):
 *   **GPT-4 Zero-Shot:** ~67% accuracy.
 *   **GPT-4 + Reflexion:** ~88% accuracy.
-*   *Why?* The model knows how to catch its own mistakes if you ask it to looking specifically for mistakes. It cannot do "Genration" and "Verification" in the same forward pass.
+*   *Mechanism:* The model knows how to catch its own mistakes if you ask it to look specifically for mistakes. It cannot do "Generation" and "Verification" in the same forward pass because generation is autoregressive (left-to-right). It hasn't seen the end of the line before it writes the start. Reflection provides a second pass.
 
-### 2.3 Implementation Logic
+### 2.3 Pseudo-Code Implementation
 ```python
 def reflection_loop(goal):
-    # 1. Draft
+    # Pass 1: Generation
     draft = llm.generate(goal)
     
-    # 2. Critique
+    # Pass 2: Verification
     critique = llm.generate(f"Critique this code for bugs: {draft}")
     
-    # 3. Decision
+    # Pass 3: Correction
     if "No bugs found" in critique:
         return draft
-        
-    # 4. Revise
-    final = llm.generate(f"Fix the code based on critique: {draft} \n Feedback: {critique}")
-    return final
+    else:
+        final = llm.generate(f"Fix the code based on critique: {draft} \n Feedback: {critique}")
+        return final
 ```
 
 ---
@@ -78,6 +77,7 @@ Tool use isn't just about accessing data; it's about offloading computation.
 *   *Task:* "What is 329 * 482?"
 *   *LLM:* "158,578" (Hallucination - doing math in weights is hard).
 *   *Agent:* Calls `calculator(329, 482)`. Returns `158578` (Fact).
+By offloading deterministic tasks to deterministic tools, we save the model's "Token Budget" for reasoning rather than computation.
 
 ---
 
@@ -100,11 +100,11 @@ For complex tasks ("Build a videogame" or "Research the impact of AI on healthca
     *   Executes Step 2.
     *   ...
 3.  **Replanner (Optional):**
-    *   If Step 3 fails ("Pygame library not found"), the Replanner updates the plan ("Install pygame first").
+    *   If Step 3 fails ("Pygame library not found"), the Replanner updates the plan ("Install pygame first") dynamically.
 
 ### 4.2 Dynamic vs. Static Planning
-*   **Static:** Generate 5 steps. Do 5 steps. (Fragile).
-*   **Dynamic:** Generate 5 steps. Do Step 1. Look at the result. Re-generate remaining 4 steps based on new world state. (Robust).
+*   **Static:** Generate 5 steps. Do 5 steps blindly. (Fragile).
+*   **Dynamic:** Generate 5 steps. Do Step 1. Look at the result. Re-generate the remaining 4 steps based on the new world state. (Robust).
 
 ---
 
@@ -118,14 +118,14 @@ Specialization reduces token confusion.
 *   **Worker A (Researcher):** Only has `search_tool`.
 *   **Worker B (Writer):** Only has `text_editor`.
 *   *Flow:* User -> Manager -> Researcher -> Manager -> Writer -> Manager -> User.
-*   *Benefit:* Encapsulation. The Writer doesn't need to see the messy search logs. It just sees the clean notes.
+*   *Benefit:* Encapsulation. The Writer doesn't need to see the messy search logs. It just sees the clean notes. This keeps the context window clean.
 
 ### 5.2 Joint Collaboration (The Debate)
 *   **Persona A:** "You are an optimistic feature designer."
 *   **Persona B:** "You are a cynical security engineer."
 *   *Task:* "Design a login system."
 *   *Flow:* A proposes. B critiques ("That's insecure"). A revises. B critiques.
-*   *Benefit:* Reducing hallucinations. The "Cynic" acts as a filter.
+*   *Benefit:* Reducing hallucinations. The "Cynic" acts as a filter, cancelling out the "Optimist's" tendency to invent features that don't exist.
 
 ### 5.3 Sequential Handoffs (The Assembly Line)
 *   **Agent A:** Scrapes data. Output: JSON. ->

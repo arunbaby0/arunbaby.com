@@ -8,8 +8,8 @@ tags:
   - memory
   - long-term-memory
   - vector-db
-  - rag
   - generative-agents
+  - memgpt
 difficulty: Easy
 ---
 
@@ -17,13 +17,13 @@ difficulty: Easy
 
 ## 1. Introduction: The Amnesia Problem
 
-LLMs are fundamentally **stateless**. If you send a request to GPT-4, it processes it and immediately "forgets" it. The only state that exists is the **Context Window** you verify pass in with every call.
+LLMs are fundamentally **stateless**. If you send a request to standard GPT-4, it processes it and immediately "forgets" it. The only state that exists is the **Context Window** you physically pass in with every call.
 
-For a chatbot, this is fine. You pass the chat history `[(User, "Hi"), (Bot, "Hi")]` in every turn.
-But for an **Autonomous Agent** running for days or weeks, handling thousands of steps, this breaks down.
-*   **Cost:** Passing 128k tokens per step is prohibitively expensive ($10/hour).
-*   **Capacity:** Even 1M tokens isn't enough for a whole lifetime of experiences.
-*   **Focus:** "Context Sets". If you feed the model too much noise (irrelevant history), it hallucinates or gets distracted.
+For a chatbot session, this is manageable. You pass the chat history `[(User, "Hi"), (Bot, "Hi")]` in every turn.
+But for an **Autonomous Agent** running for days, handling thousands of steps, this breaks down.
+1.  **Cost:** Passing 128k tokens per step is prohibitively expensive.
+2.  **Capacity:** Even 1M tokens isn't enough for a whole lifetime of experiences.
+3.  **Focus:** "Context Stuffing" reduces intelligence. If you feed the model too much noise (irrelevant history), it hallucinates or gets distracted.
 
 To build true agency, we need to engineer a **Memory Hierarchy** similar to the human brain, managing the flow of information from short-term perception to long-term storage.
 
@@ -31,7 +31,7 @@ To build true agency, we need to engineer a **Memory Hierarchy** similar to the 
 
 ## 2. The Cognitive Memory Hierarchy
 
-Just like computers (Registers -> RAM -> Hard Drive), agents utilize different tiers of memory to balance speed, cost, and capacity.
+Just like computers have layers (Registers -> RAM -> Hard Drive), agents utilize different tiers of memory to balance speed, cost, and capacity.
 
 ### 2.1 Sensory Memory (The Input)
 The raw user prompt and System Instructions.
@@ -41,17 +41,17 @@ The raw user prompt and System Instructions.
 
 ### 2.2 Short-Term / Working Memory (Context)
 This tracks the *current* conversation or active task. It holds the "Scratchpad" of thoughts.
-*   **Challenge:** The "Context Stuffing" problem.
+*   **The Challenge:** The "Context Stuffing" problem.
 *   **Strategy 1: Sliding Window.** Keep last $N$ turns. Simple, but forgets the beginning of the plan.
 *   **Strategy 2: Summarization.** As the window fills, call the LLM to summarize the oldest 10 turns into a paragraph ("I successfully downloaded the data and cleaned it"). Inject this summary and drop the raw logs.
 *   **Strategy 3: Entity Extraction.** Extract specific variables ("User Name: Alice", "Goal: Fix Bug") and store them in a state dictionary, reducing the text needed to purely essential facts.
 
 ### 2.3 Long-Term Memory (Episodic)
 Storage that persists *across* sessions. "What did we do last Tuesday?"
-*   **Implementation:** **Vector Databases (RAG)** (Pinecone, Milvus, pgvector).
+*   **Implementation:** **Vector Databases (RAG)** (Pinecone, Milvus).
 *   **Mechanism:**
     1.  Event happens ("User reset password").
-    2.  Embed text -> Vector (using models like `text-embedding-3`).
+    2.  Embed text -> Vector.
     3.  Store metadata `{"date": "2023-10-01", "type": "auth"}`.
     4.  Retrieve when relevant.
 
@@ -84,7 +84,7 @@ $$ Score = \alpha \cdot \text{Recency} + \beta \cdot \text{Importance} + \gamma 
 3.  **Relevance:** The standard Cosine Similarity to the module's current query.
 
 ### 3.3 The Reflection Tree (Synthesizing Wisdom)
-If you only store raw logs, the agent never "learns."
+If you only store raw logs, the agent never "learns." It just remembers details.
 *   *Process:* Periodically (e.g., every 100 observations), the agent takes a batch of memories and asks: *"What does this mean?"*
 *   *Input:* "Alice drank coffee Mon", "Alice drank coffee Tue", "Alice drank coffee Wed".
 *   *Insight:* "Alice is addicted to coffee."
@@ -98,7 +98,8 @@ If you only store raw logs, the agent never "learns."
 **MemGPT** (Memory-GPT) proposes a different analogy.
 *   **LLM Context = RAM.** (Fast, expensive, volatile).
 *   **Vector DB = Hard Drive.** (Slow, cheap, persistent).
-*   **Paging:** The OS (Prompt logic) manages "Virtual Memory." It swaps data in and out of the Context Window based on need. The LLM itself decides what to "write to disk" (save to DB) and what to "read from disk" (search DB) via function calls.
+*   **Paging:** The OS (Prompt logic) manages "Virtual Memory." It swaps data in and out of the Context Window based on need.
+*   **Mechanism:** The LLM itself decides what to "write to disk" (save to DB) and what to "read from disk" (search DB) via function calls.
 *   **Impact:** Enables agents to run "forever" (infinite context) by actively managing their own memory slots, just `malloc` and `free`.
 
 ---
@@ -113,72 +114,39 @@ How does an agent "learn to code"?
 
 ---
 
-## 6. Code: Implementing Generative Scoring
+## 6. Code: Implementing Generative Retrieval (Conceptual)
 
-Let's implement the Stanford retrieval logic in Python.
+The formula for the Stanford retrieval function.
 
 ```python
-import numpy as np
-from datetime import datetime, timedelta
-
-class MemoryNode:
-    def __init__(self, content, importance):
-        self.content = content
-        self.created_at = datetime.now()
-        self.importance = importance
-        # Mock embedding: In reality, call OpenAI API
-        self.embedding = np.random.rand(1536) 
+def retrieve_memories(query_vector, memory_stream, alpha=1, beta=1, gamma=1):
+    """
+    Ranks memories by Recency, Importance, and Relevance.
+    """
+    scored_memories = []
     
-class GenerativeMemory:
-    def __init__(self):
-        self.stream = []
+    current_time = now()
+    
+    for memory in memory_stream:
+        # 1. Relevance: Cosine Similarity
+        relevance = cosine_similarity(query_vector, memory.vector)
         
-    def add_memory(self, text, llm_rater):
-        """Adds a memory with an importance score."""
-        # In prod: score = llm.rate(text)
-        score = 5 # Mock importance
-        if "fire" in text: score = 10
-        if "coffee" in text: score = 2
+        # 2. Recency: Exponential Decay
+        time_diff = current_time - memory.timestamp
+        recency = 0.99 ** time_diff.hours
         
-        node = MemoryNode(text, score)
-        self.stream.append(node)
+        # 3. Importance: Pre-calculated static score (1-10)
+        importance = memory.importance_score / 10.0
         
-    def retrieve(self, query, alpha=1.0, beta=1.0, gamma=1.0):
-        """Retrieves top memories based on the 3-factor score."""
-        query_vec = np.random.rand(1536) # Mock query embedding
-        rankings = []
+        # Combined Score
+        total_score = (alpha * recency) + (beta * importance) + (gamma * relevance)
         
-        for node in self.stream:
-            # 1. Relevance (Cosine Similarity)
-            # dot product of normalized vectors
-            relevance = np.dot(node.embedding, query_vec)
-            
-            # 2. Recency (Exponential Decay)
-            # 0.995 decay per hour
-            delta_hours = (datetime.now() - node.created_at).total_seconds() / 3600
-            recency = 0.995 ** delta_hours
-            
-            # 3. Importance (Normalized 0-1)
-            importance = node.importance / 10.0
-            
-            # Weighted Sum
-            total_score = (alpha * recency) + (beta * importance) + (gamma * relevance)
-            rankings.append((total_score, node))
-            
-        # Sort by score descending
-        rankings.sort(key=lambda x: x[0], reverse=True)
-        return [r[1].content for r in rankings[:3]]
-
-# Usage
-brain = GenerativeMemory()
-brain.add_memory("I am an AI agent.", None)
-brain.add_memory("The house is on fire!", None) 
-brain.add_memory("I had toast for breakfast.", None)
-
-print("Query: 'Emergency?'")
-results = brain.retrieve("Emergency?")
-print("Retrieved:", results)
-# Should prioritize "House is on fire" due to Importance
+        scored_memories.append((total_score, memory))
+        
+    # Python's sort is stable
+    scored_memories.sort(key=lambda x: x[0], reverse=True)
+    
+    return [m[1] for m in scored_memories[:3]]
 ```
 
 ---
@@ -187,9 +155,7 @@ print("Retrieved:", results)
 
 Memory is the bedrock of identity.
 *   **Short-term memory** allows for coherent conversation.
-*   **Long-term memory** allowing for personalization.
+*   **Long-term memory** allows for personalization.
 *   **Reflection** allows for learning.
 
-Without robust memory architectures, AI agents will forever be "Goldfish"—brilliant in the moment, but incapable of growth.
-
-In the next section of the curriculum, we move from **Components** (Prompts, Models, Tools, Memory) to **Architectures** (Frameworks, Patterns, and Orchestration).
+Without robust memory architectures, AI agents will forever be "Goldfish"—brilliant in the moment, but incapable of growth. In the next section, we move from components to architectures, looking at the major frameworks like LangChain and AutoGen.
