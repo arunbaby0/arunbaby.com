@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-14T22:12:02+05:30">
+  <meta property="article:published_time" content="2025-12-14T22:21:53+05:30">
 
 
 
@@ -146,6 +146,12 @@
                 
                 
               >Speech Tech</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/ai-agents/"
+                
+                
+              >AI Agents</a>
             </li><li class="masthead__menu-item">
               <a
                 href="/publications/"
@@ -315,7 +321,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Retrieval-Augmented Generation (RAG)">
     <meta itemprop="description" content="“Giving the Brain a Library: The Foundation of Knowledge-Intensive Agents.”">
-    <meta itemprop="datePublished" content="2025-12-14T22:12:02+05:30">
+    <meta itemprop="datePublished" content="2025-12-14T22:21:53+05:30">
     
 
     <div class="page__inner-wrap">
@@ -339,7 +345,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          4 minute read
+          7 minute read
         
       </span>
     
@@ -354,7 +360,7 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#1-introduction-the-hallucination-problem">1. Introduction: The Hallucination Problem</a></li><li><a href="#2-the-mechanics-of-rag">2. The Mechanics of RAG</a><ul><li><a href="#21-phase-1-indexing-the-etl-pipeline">2.1 Phase 1: Indexing (The ETL Pipeline)</a></li><li><a href="#22-phase-2-retrieval-the-agent-loop">2.2 Phase 2: Retrieval (The Agent Loop)</a></li></ul></li><li><a href="#3-naive-rag-vs-advanced-rag">3. Naive RAG vs. Advanced RAG</a><ul><li><a href="#31-advanced-techniques">3.1 Advanced Techniques</a></li></ul></li><li><a href="#4-making-rag-a-tool">4. Making RAG a Tool</a><ul><li><a href="#the-agents-decision-process">The Agent’s Decision Process</a></li><li><a href="#router-engines">Router Engines</a></li></ul></li><li><a href="#5-code-a-minimal-vector-search">5. Code: A Minimal Vector Search</a></li><li><a href="#6-summary">6. Summary</a></li></ul>
+              <ul class="toc__menu"><li><a href="#1-introduction-the-hallucination-problem">1. Introduction: The Hallucination Problem</a></li><li><a href="#2-the-mechanics-of-rag">2. The Mechanics of RAG</a><ul><li><a href="#21-phase-1-indexing-the-etl-pipeline">2.1 Phase 1: Indexing (The ETL Pipeline)</a></li><li><a href="#22-phase-2-retrieval-the-agent-loop">2.2 Phase 2: Retrieval (The Agent Loop)</a></li></ul></li><li><a href="#3-deep-dive-vector-database-internals">3. Deep Dive: Vector Database Internals</a><ul><li><a href="#31-hnsw-hierarchical-navigable-small-worlds">3.1 HNSW (Hierarchical Navigable Small Worlds)</a></li><li><a href="#32-ivf-inverted-file-index">3.2 IVF (Inverted File Index)</a></li></ul></li><li><a href="#4-naive-rag-vs-advanced-rag">4. Naive RAG vs. Advanced RAG</a><ul><li><a href="#41-failure-modes">4.1 Failure Modes</a></li><li><a href="#42-advanced-patterns">4.2 Advanced Patterns</a></li></ul></li><li><a href="#5-rag-evaluation-ragas">5. RAG Evaluation (RAGAS)</a></li><li><a href="#6-making-rag-a-tool">6. Making RAG a Tool</a><ul><li><a href="#the-agentic-rag-pattern">The Agentic RAG Pattern</a></li><li><a href="#the-self-querying-retriever">The “Self-Querying” Retriever</a></li></ul></li><li><a href="#7-pseudo-code-semantic-search-logic">7. Pseudo-Code: Semantic Search Logic</a></li><li><a href="#8-summary">8. Summary</a></li></ul>
             </nav>
           </aside>
         
@@ -362,15 +368,16 @@
 
 <h2 id="1-introduction-the-hallucination-problem">1. Introduction: The Hallucination Problem</h2>
 
-<p>LLMs are “Frozen-in-Time” encyclopedias. GPT-4 knows everything about the world up to its training cutoff (e.g., 2023). It knows nothing about:</p>
+<p>LLMs are geniuses with amnesia. They are “Frozen-in-Time” encyclopedias. A base model like GPT-4 knows everything about the world up to its training cutoff (e.g., Oct 2023). It knows <strong>nothing</strong> about:</p>
 <ol>
   <li><strong>Recent Events:</strong> The winner of the Super Bowl yesterday.</li>
   <li><strong>Private Data:</strong> Your company’s internal wiki, your emails, or your proprietary codebase.</li>
+  <li><strong>Specific Domains:</strong> The nuances of your specific 200-page HR policy.</li>
 </ol>
 
-<p>When you ask an agent about these topics, it faces a dilemma: admit ignorance (rare) or make something up (common). This is <strong>Hallucination</strong>.</p>
+<p>When you ask an agent about these topics, it faces a dilemma: admit ignorance (which it is trained to avoid) or hallucinate (make up a plausible-sounding answer). For an autonomous agent executing actions, hallucination is fatal. You cannot have an agent acting on a hallucinated stock price or deleting a file it “thinks” is unused.</p>
 
-<p><strong>Retrieval-Augmented Generation (RAG)</strong> is the architecture that solves this. Instead of relying on the model’s <em>internal</em> weights (Parametric Memory), we allow it to look up information in an <em>external</em> database (Non-Parametric Memory) before answering.</p>
+<p><strong>Retrieval-Augmented Generation (RAG)</strong> is the architectural solution. Instead of relying on the model’s <em>internal</em> weights (Parametric Memory), we allow it to look up information in an <em>external</em> database (Non-Parametric Memory) before answering.</p>
 
 <p>For Agents, RAG is not just a feature; it is a <strong>Core Organ</strong>. It is the bridge between reasoning and reality.</p>
 
@@ -378,41 +385,42 @@
 
 <h2 id="2-the-mechanics-of-rag">2. The Mechanics of RAG</h2>
 
-<p>RAG is a pipeline. It consists of two phases: <strong>Indexing</strong> (Offline) and <strong>Retrieval</strong> (Runtime).</p>
+<p>RAG is fundamentally a data pipeline followed by an inference step. It consists of two distinct phases: <strong>Indexing</strong> (Offline) and <strong>Retrieval</strong> (Runtime).</p>
 
 <h3 id="21-phase-1-indexing-the-etl-pipeline">2.1 Phase 1: Indexing (The ETL Pipeline)</h3>
-<p>How do we turn a PDF into numbers?</p>
+<p>How do we turn a PDF into numbers that a machine can “understand”?</p>
 
 <ol>
-  <li><strong>Loading:</strong> Ingest data. Text, PDFs, Markdown, HTML.</li>
+  <li><strong>Loading:</strong> Ingest data. Text, PDFs, Markdown, HTML, Notion pages, Slack dumps.</li>
   <li><strong>Splitting (Chunking):</strong> LLMs have context limits. We can’t feed a 500-page book in one go. We split it into smaller “Chunks” (e.g., 500 tokens).
     <ul>
-      <li><em>Challenge:</em> Don’t split in the middle of a sentence. Keep semantic meaning intact (e.g., keep a question and its answer in the same chunk).</li>
+      <li><em>The Pivot:</em> Chunking is an art. If you chunk too small, you lose context (“It costs $5” - what is <em>it</em>?). If you chunk too big, you confuse the retrieval.</li>
+      <li><em>Strategy:</em> <strong>Recursive Character Splitting</strong> (split by paragraphs, then sentences) is the standard.</li>
     </ul>
   </li>
-  <li><strong>Embedding:</strong> We pass each chunk through an <strong>Embedding Model</strong> (e.g., OpenAI <code class="language-plaintext highlighter-rouge">text-embedding-3-small</code>).
+  <li><strong>Embedding:</strong> We pass each chunk through an <strong>Embedding Model</strong> (e.g., OpenAI <code class="language-plaintext highlighter-rouge">text-embedding-3-small</code>, <code class="language-plaintext highlighter-rouge">bge-m3</code>).
     <ul>
       <li><em>Input:</em> “The sky is blue.”</li>
       <li><em>Output:</em> <code class="language-plaintext highlighter-rouge">[0.12, -0.45, 0.88, ...]</code> (A vector of 1536 floating point numbers).</li>
-      <li><em>Concept:</em> This vector represents the <strong>semantic meaning</strong> of the text. “Dog” and “Puppy” will have vectors that are close together (high Cosine Similarity).</li>
+      <li><em>Concept:</em> This vector represents the <strong>semantic meaning</strong> of the text in a high-dimensional latent space.</li>
     </ul>
   </li>
-  <li><strong>Storing:</strong> Save the Vectors + Original Text in a <strong>Vector Database</strong> (Pinecone, Weaviate, Chroma).</li>
+  <li><strong>Storing:</strong> Save the Vectors + Original Text + Metadata in a <strong>Vector Database</strong> (Pinecone, Weaviate, Chroma).</li>
 </ol>
 
 <h3 id="22-phase-2-retrieval-the-agent-loop">2.2 Phase 2: Retrieval (The Agent Loop)</h3>
 <p>When the user asks a question:</p>
 
 <ol>
-  <li><strong>Query Embedding:</strong> User asks “What is our vacation policy?”. We embed this query into a vector.</li>
-  <li><strong>Semantic Search:</strong> We query the Vector DB: “Find the top 3 chunks closest to this query vector.”
+  <li><strong>Query Embedding:</strong> User asks “What is our vacation policy?”. We embed this query into a vector using the <em>same model</em> as indexing.</li>
+  <li><strong>Semantic Search (k-NN):</strong> We query the Vector DB: “Find the top 3 chunks geometrically closest to this query vector.”
     <ul>
       <li><em>Result:</em> Chunk A (“Vacation Policy…”), Chunk B (“Leave types…”).</li>
     </ul>
   </li>
   <li><strong>Context Injection:</strong> We construct a prompt:
 ```text
-System: Answer the user using ONLY the context below.
+System: Answer the user using ONLY the context below. Do not use outside knowledge.
 Context:
     <ul>
       <li>Vacation Policy: 20 days per year…</li>
@@ -427,104 +435,144 @@ Context:
 
 <hr />
 
-<h2 id="3-naive-rag-vs-advanced-rag">3. Naive RAG vs. Advanced RAG</h2>
+<h2 id="3-deep-dive-vector-database-internals">3. Deep Dive: Vector Database Internals</h2>
 
-<p>The pipeline above is “Naive RAG.” It works for simple demos but fails in production. Why?</p>
+<p>How does a database find the “nearest neighbor” among 100 million vectors in 10 milliseconds? It doesn’t compare them all (that would be $O(N)$). It uses <strong>Approximate Nearest Neighbors (ANN)</strong> algorithms.</p>
+
+<h3 id="31-hnsw-hierarchical-navigable-small-worlds">3.1 HNSW (Hierarchical Navigable Small Worlds)</h3>
+<p>This is the industry standard algorithm (used by Pinecone, Weaviate).</p>
 <ul>
-  <li><strong>Keyword Misses:</strong> “Vacation” vs “Time Off.” Vectors handle synonyms well, but specific jargon (Product IDs) fails.</li>
-  <li><strong>Loss of Context:</strong> A chunk saying “It costs $5” is useless if you don’t know <em>what</em> “It” refers to (which was in the previous chunk).</li>
+  <li><strong>Concept:</strong> It builds a multi-layer graph.
+    <ul>
+      <li><em>Top Layer:</em> Like an express highway. Long jumps across the vector space.</li>
+      <li><em>Bottom Layer:</em> Local roads. Dense connections between close neighbors.</li>
+    </ul>
+  </li>
+  <li><strong>Search:</strong> The query starts at the top, zooms to the general neighborhood of the data, and drills down to the local connections.</li>
+  <li><strong>Tradeoff:</strong> Fast search, but high memory usage (Requires storing the graph structure).</li>
 </ul>
 
-<h3 id="31-advanced-techniques">3.1 Advanced Techniques</h3>
+<h3 id="32-ivf-inverted-file-index">3.2 IVF (Inverted File Index)</h3>
+<p>Used by FAISS.</p>
+<ul>
+  <li><strong>Concept:</strong> Cluster the vectors into 1000 “Voronoi Cells” (centroids).</li>
+  <li><strong>Search:</strong> First, find which cell the query belongs to. Then scan only the vectors in that cell.</li>
+  <li><strong>Tradeoff:</strong> Very efficient, but recall can drop (if the answer is just on the border of another cell).</li>
+</ul>
+
+<hr />
+
+<h2 id="4-naive-rag-vs-advanced-rag">4. Naive RAG vs. Advanced RAG</h2>
+
+<p>The standard pipeline is called “Naive RAG.” It works for simple demos but fails in production.</p>
+
+<h3 id="41-failure-modes">4.1 Failure Modes</h3>
+<ul>
+  <li><strong>Keyword Misses:</strong> “Vacation” vs “Time Off.” Vectors handle typical synonyms, but specific jargon (Product IDs like <code class="language-plaintext highlighter-rouge">XJ-900</code> vs <code class="language-plaintext highlighter-rouge">XJ900</code>) often fails semantic search.</li>
+  <li><strong>Loss of Context:</strong> Retrieving a chunk that says “He agreed to the terms” is useless if the chunk doesn’t say <em>who</em> “He” is.</li>
+  <li><strong>Distraction:</strong> Retrieving 10 chunks, 9 of which are irrelevant, can confuse the LLM (“Lost in the Middle”).</li>
+</ul>
+
+<h3 id="42-advanced-patterns">4.2 Advanced Patterns</h3>
 <ol>
-  <li><strong>Hybrid Search:</strong> Combine Vector Search (Semantic) with Keyword Search (BM25).
+  <li><strong>Hybrid Search (Alpha):</strong> Combine Vector Search (Semantic) with Keyword Search (BM25/Splade).
     <ul>
-      <li><em>Why:</em> Ensure exact matches for IDs and Names work.</li>
+      <li><em>Formula:</em> $Score = \alpha \cdot VectorScore + (1-\alpha) \cdot KeywordScore$.</li>
+      <li><em>Why:</em> Ensures exact matches for IDs and Names work while retaining semantic understanding.</li>
     </ul>
   </li>
   <li><strong>Re-Ranking (The Cross-Encoder):</strong>
     <ul>
       <li>Retrieve top 50 results (fast &amp; loose).</li>
-      <li>Pass them through a powerful “Re-Ranker Model” (slow &amp; precise) to sort them by accurate relevance.</li>
+      <li>Pass them through a powerful “Re-Ranker Model” (e.g., Cohere Rerank) that compares the Query and Document interacting token-by-token.</li>
       <li>Take the top 5.</li>
+      <li><em>Impact:</em> Increases accuracy by 20-30%.</li>
     </ul>
   </li>
   <li><strong>Parent-Child Indexing:</strong>
     <ul>
       <li><em>Index:</em> Small chunks (sentences) for precise search.</li>
       <li><em>Retrieve:</em> The Parent chunk (full paragraph) for context.</li>
+      <li><em>Why:</em> “Small to search, Big to read.”</li>
     </ul>
   </li>
 </ol>
 
 <hr />
 
-<h2 id="4-making-rag-a-tool">4. Making RAG a Tool</h2>
+<h2 id="5-rag-evaluation-ragas">5. RAG Evaluation (RAGAS)</h2>
 
-<p>For an agent, RAG is just another <strong>Tool</strong>.
-We don’t hard-code the retrieval. We give the agent a tool called <code class="language-plaintext highlighter-rouge">search_knowledge_base(query)</code>.</p>
+<p>How do you look at your RAG system and say “It’s good”? Feeling good isn’t engineering.
+We use the <strong>RAGAS</strong> (RAG Assessment) framework, which defines metrics calculated by an LLM-as-a-Judge.</p>
 
-<h3 id="the-agents-decision-process">The Agent’s Decision Process</h3>
 <ol>
-  <li>User: “Hi.” -&gt; Agent: “Hi.” (No retrieval needed).</li>
-  <li>User: “How do I reset my password?” -&gt; Agent Thought: “This is a technical question. I should check the docs.” -&gt; Agent Action: <code class="language-plaintext highlighter-rouge">search_knowledge_base("password reset")</code>.</li>
+  <li><strong>Faithfulness:</strong> Does the answer come <em>solely</em> from the retrieved context? (Low hallucination).</li>
+  <li><strong>Answer Relevance:</strong> Does the answer actually address the user query?</li>
+  <li><strong>Context Precision:</strong> Did we retrieve the <em>right</em> chunks? (Signal-to-noise ratio).</li>
+  <li><strong>Context Recall:</strong> Did we retrieve <em>all</em> the necessary info?</li>
 </ol>
 
-<h3 id="router-engines">Router Engines</h3>
-<p>Sometimes you have multiple databases (Sales DB, HR DB, Codebase).
-You create a <strong>Router Query Engine</strong>.</p>
+<hr />
+
+<h2 id="6-making-rag-a-tool">6. Making RAG a Tool</h2>
+
+<p>For an agent, RAG is just another <strong>Tool</strong>.
+We don’t hard-code the retrieval. We give the agent a tool call.</p>
+
+<h3 id="the-agentic-rag-pattern">The Agentic RAG Pattern</h3>
 <ul>
-  <li>Agent analyzes query.</li>
-  <li>Routes to <code class="language-plaintext highlighter-rouge">HR_Index</code> or <code class="language-plaintext highlighter-rouge">Sales_Index</code>.</li>
+  <li><strong>Tool:</strong> <code class="language-plaintext highlighter-rouge">search_knowledge_base(query: str, filters: dict)</code></li>
+  <li><strong>Description:</strong> “Use this tool to look up technical documentation. You can filter by year or tag.”</li>
+</ul>
+
+<h3 id="the-self-querying-retriever">The “Self-Querying” Retriever</h3>
+<p>An advanced pattern where the LLM writes a Structured Database Query.</p>
+<ul>
+  <li><em>User:</em> “Show me emails from Alice last week.”</li>
+  <li><em>LLM:</em> <code class="language-plaintext highlighter-rouge">search(query="from Alice", filter={"date": "&gt; 2023-10-01"})</code></li>
+  <li><em>Runtime:</em> Applies a Metadata Filter on the Vector DB. This is vastly superior to pure semantic search for structured questions.</li>
 </ul>
 
 <hr />
 
-<h2 id="5-code-a-minimal-vector-search">5. Code: A Minimal Vector Search</h2>
+<h2 id="7-pseudo-code-semantic-search-logic">7. Pseudo-Code: Semantic Search Logic</h2>
 
-<p>Using <code class="language-plaintext highlighter-rouge">scikit-learn</code> for simplicity (in memory).</p>
+<p>Understanding the inner loop of a vector search engine (conceptual).</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
-<span class="kn">from</span> <span class="n">sklearn.metrics.pairwise</span> <span class="kn">import</span> <span class="n">cosine_similarity</span>
-
-<span class="c1"># 1. Mock Database
-</span><span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="sh">"</span><span class="s">Apple is a fruit.</span><span class="sh">"</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">Apple is a tech company.</span><span class="sh">"</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">Bananas are yellow.</span><span class="sh">"</span>
-<span class="p">]</span>
-<span class="c1"># Mock Embeddings (Usually from API)
-</span><span class="n">embeddings</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span>
-    <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>   <span class="c1"># Fruit
-</span>    <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>   <span class="c1"># Tech
-</span>    <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># Banana (close to fruit)
-</span><span class="p">])</span>
-
-<span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="n">query_vec</span><span class="p">):</span>
-    <span class="c1"># 2. Similarity
-</span>    <span class="n">similarities</span> <span class="o">=</span> <span class="nf">cosine_similarity</span><span class="p">([</span><span class="n">query_vec</span><span class="p">],</span> <span class="n">embeddings</span><span class="p">)</span>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">semantic_search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+    <span class="c1"># 1. Embed Query
+</span>    <span class="n">query_vector</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">embed</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
     
-    <span class="c1"># 3. Top-K
-</span>    <span class="n">top_k_idx</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">similarities</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">documents</span><span class="p">[</span><span class="n">top_k_idx</span><span class="p">]</span>
-
-<span class="c1"># Query: "iPhone" -&gt; Vector [0, 0.9, 0]
-</span><span class="nf">print</span><span class="p">(</span><span class="nf">search</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]))</span> 
-<span class="c1"># Output: "Apple is a tech company."
-</span></code></pre></div></div>
+    <span class="c1"># 2. Score All Documents (Naive Calculation)
+</span>    <span class="n">scores</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">database</span><span class="p">:</span>
+        <span class="c1"># Cosine Similarity = (A . B) / (|A| * |B|)
+</span>        <span class="n">score</span> <span class="o">=</span> <span class="nf">dot_product</span><span class="p">(</span><span class="n">query_vector</span><span class="p">,</span> <span class="n">doc</span><span class="p">.</span><span class="n">vector</span><span class="p">)</span>
+        <span class="n">scores</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">score</span><span class="p">,</span> <span class="n">doc</span><span class="p">))</span>
+        
+    <span class="c1"># 3. Sort (Rank)
+</span>    <span class="n">scores</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    
+    <span class="c1"># 4. Filter (Optional Hybrid Step)
+</span>    <span class="c1"># Check for keyword matches if needed
+</span>    
+    <span class="c1"># 5. Return Top K
+</span>    <span class="k">return</span> <span class="n">scores</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span>
+</code></pre></div></div>
 
 <hr />
 
-<h2 id="6-summary">6. Summary</h2>
+<h2 id="8-summary">8. Summary</h2>
 
 <p>RAG turns an LLM from a Dreamer into a Librarian.</p>
 <ul>
   <li><strong>Vectors</strong> encode meaning.</li>
-  <li><strong>Vector DBs</strong> enable fast search.</li>
+  <li><strong>Vector DBs</strong> enable fast search (HNSW).</li>
   <li><strong>Agents</strong> use retrieval as a tool to ground their answers in fact.</li>
 </ul>
 
-<p>In the next post, we will look at the input side of this pipeline: <strong>Document Processing</strong>. How do we actually read messy PDFs, Tables, and Charts?</p>
+<p>However, RAG is only as good as the incoming data. If you feed it messy PDFs, you get messy vectors.
+In the next post, we will look at the input side of this pipeline: <strong>Document Processing</strong>. How do we actually read messy PDFs, Tables, and Charts?</p>
 
         
       </section>
@@ -543,9 +591,13 @@ You create a <strong>Router Query Engine</strong>.</p>
     
       <a href="/tags/#embeddings" class="page__taxonomy-item p-category" rel="tag">embeddings</a><span class="sep">, </span>
     
+      <a href="/tags/#hnsw" class="page__taxonomy-item p-category" rel="tag">hnsw</a><span class="sep">, </span>
+    
       <a href="/tags/#knowledge-retrieval" class="page__taxonomy-item p-category" rel="tag">knowledge-retrieval</a><span class="sep">, </span>
     
       <a href="/tags/#rag" class="page__taxonomy-item p-category" rel="tag">rag</a><span class="sep">, </span>
+    
+      <a href="/tags/#ragas" class="page__taxonomy-item p-category" rel="tag">ragas</a><span class="sep">, </span>
     
       <a href="/tags/#vector-db" class="page__taxonomy-item p-category" rel="tag">vector-db</a>
     

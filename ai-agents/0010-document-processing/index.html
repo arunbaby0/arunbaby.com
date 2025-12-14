@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-14T22:12:02+05:30">
+  <meta property="article:published_time" content="2025-12-14T22:21:53+05:30">
 
 
 
@@ -146,6 +146,12 @@
                 
                 
               >Speech Tech</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/ai-agents/"
+                
+                
+              >AI Agents</a>
             </li><li class="masthead__menu-item">
               <a
                 href="/publications/"
@@ -315,7 +321,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Document Processing for Agents">
     <meta itemprop="description" content="“Garbage In, Garbage Out. The Art of Reading Messy Data.”">
-    <meta itemprop="datePublished" content="2025-12-14T22:12:02+05:30">
+    <meta itemprop="datePublished" content="2025-12-14T22:21:53+05:30">
     
 
     <div class="page__inner-wrap">
@@ -339,7 +345,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          3 minute read
+          5 minute read
         
       </span>
     
@@ -354,7 +360,7 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#1-introduction-the-pdf-trap">1. Introduction: The PDF Trap</a></li><li><a href="#2-extraction-strategies">2. Extraction Strategies</a><ul><li><a href="#21-strategy-1-text-based-extraction-fast">2.1 Strategy 1: Text-Based Extraction (Fast)</a></li><li><a href="#22-strategy-2-ocr-optical-character-recognition">2.2 Strategy 2: OCR (Optical Character Recognition)</a></li><li><a href="#23-strategy-3-vision-language-models-the-new-standard">2.3 Strategy 3: Vision-Language Models (The New Standard)</a></li></ul></li><li><a href="#3-the-table-problem">3. The Table Problem</a></li><li><a href="#4-multi-modal-rag">4. Multi-Modal RAG</a><ul><li><a href="#41-indexing-images">4.1 Indexing Images</a></li><li><a href="#42-retrieval">4.2 Retrieval</a></li></ul></li><li><a href="#5-code-using-llamaparse">5. Code: Using LlamaParse</a></li><li><a href="#6-summary">6. Summary</a></li></ul>
+              <ul class="toc__menu"><li><a href="#1-introduction-the-pdf-trap">1. Introduction: The PDF Trap</a></li><li><a href="#2-extraction-strategies-the-hierarchy-of-power">2. Extraction Strategies: The Hierarchy of Power</a><ul><li><a href="#21-strategy-1-text-based-extraction-the-cheap-way">2.1 Strategy 1: Text-Based Extraction (The Cheap Way)</a></li><li><a href="#22-strategy-2-ocr-optical-character-recognition">2.2 Strategy 2: OCR (Optical Character Recognition)</a></li><li><a href="#23-strategy-3-vision-language-models-the-new-gold-standard">2.3 Strategy 3: Vision-Language Models (The New Gold Standard)</a></li></ul></li><li><a href="#3-the-table-problem-the-final-boss">3. The Table Problem: The Final Boss</a></li><li><a href="#4-chunking-strategies-cutting-the-cake">4. Chunking Strategies: Cutting the Cake</a><ul><li><a href="#41-recursive-character-splitting">4.1 Recursive Character Splitting</a></li><li><a href="#42-semantic-chunking">4.2 Semantic Chunking</a></li></ul></li><li><a href="#5-multi-modal-rag">5. Multi-Modal RAG</a><ul><li><a href="#51-pattern-image-to-text-indexing">5.1 Pattern: Image-to-Text Indexing</a></li><li><a href="#52-retrieval-flow">5.2 Retrieval Flow</a></li></ul></li><li><a href="#6-code-modern-parsing-pipeline-conceptual">6. Code: Modern Parsing Pipeline (Conceptual)</a></li><li><a href="#7-summary">7. Summary</a></li></ul>
             </nav>
           </aside>
         
@@ -362,58 +368,70 @@
 
 <h2 id="1-introduction-the-pdf-trap">1. Introduction: The PDF Trap</h2>
 
-<p>We like to think of data as clean JSON or SQL. In reality, 80% of enterprise knowledge is locked in <strong>Unstructured Documents</strong>: mostly PDFs, PowerPoints, and Excel sheets.</p>
+<p>We like to think of enterprise data as clean rows in a SQL database. In reality, <strong>80% of enterprise knowledge</strong> is locked in “Unstructured Documents”: PDF contracts, PowerPoint slides, Excel financial models, and PNG screenshots of dashboards.</p>
 
-<p>For an human, a PDF is easy to read. For an LLM, a PDF is a nightmare.</p>
+<p>For a human, a PDF is easy to read. For an LLM, a PDF is a nightmare.</p>
 <ul>
-  <li><strong>No Structure:</strong> A PDF doesn’t know what a “Paragraph” is. It only knows “Place character ‘A’ at coordinates x=10, y=20.”</li>
+  <li><strong>No Semantic Structure:</strong> A PDF doesn’t know what a “Paragraph” or a “Header” is. It only knows “Place character ‘A’ at coordinates x=10, y=20.”</li>
   <li><strong>Tables:</strong> A table in a PDF is just a grid of lines and floating text. Reconstructing the row/column relationship is an NP-hard problem for traditional parsers.</li>
   <li><strong>Layout:</strong> Multi-column layouts confuse standard text extractors (reading across columns instead of down).</li>
 </ul>
 
-<p>If your Agent’s retrieval system (RAG) feeds it garbage text from a broken PDF parse, the Agent will fail. <strong>Document Processing</strong> is the unsexy but critical precursor to intelligence.</p>
+<p>If your Agent’s retrieval system (RAG) feeds it garbage text from a broken PDF parse, the Agent will fail to answer even simple questions. <strong>Document Processing</strong> is the unsexy but critical precursor to intelligence.</p>
 
 <hr />
 
-<h2 id="2-extraction-strategies">2. Extraction Strategies</h2>
+<h2 id="2-extraction-strategies-the-hierarchy-of-power">2. Extraction Strategies: The Hierarchy of Power</h2>
 
-<p>How do we get text out?</p>
+<p>How do we get text out? There are three main strategies, ordered by cost and quality.</p>
 
-<h3 id="21-strategy-1-text-based-extraction-fast">2.1 Strategy 1: Text-Based Extraction (Fast)</h3>
+<h3 id="21-strategy-1-text-based-extraction-the-cheap-way">2.1 Strategy 1: Text-Based Extraction (The Cheap Way)</h3>
 <ul>
-  <li><strong>Tools:</strong> <code class="language-plaintext highlighter-rouge">pypdf</code>, <code class="language-plaintext highlighter-rouge">PyMuPDF</code>.</li>
+  <li><strong>Tools:</strong> <code class="language-plaintext highlighter-rouge">pypdf</code>, <code class="language-plaintext highlighter-rouge">PyMuPDF</code>, <code class="language-plaintext highlighter-rouge">pdfplumber</code>.</li>
   <li><strong>Mechanism:</strong> Extracts the underlying text stream embedded in the file.</li>
-  <li><strong>Pros:</strong> Extremely fast (milliseconds). Cheap.</li>
-  <li><strong>Cons:</strong> Fails on Scanned PDFs (images). Fails on complex layouts (tables, forms).</li>
+  <li><strong>Pros:</strong> Extremely fast (milliseconds). Cheap (CPU only).</li>
+  <li><strong>Cons:</strong>
+    <ul>
+      <li>Fails on <strong>Scanned PDFs</strong> (images wrapped in PDF).</li>
+      <li>Fails on complex layouts (merges columns).</li>
+      <li>Fails on tables (flattens them into a string mess).</li>
+    </ul>
+  </li>
 </ul>
 
 <h3 id="22-strategy-2-ocr-optical-character-recognition">2.2 Strategy 2: OCR (Optical Character Recognition)</h3>
 <ul>
-  <li><strong>Tools:</strong> <code class="language-plaintext highlighter-rouge">Tesseract</code> (Open Source), Amazon Textract, Google Document AI.</li>
+  <li><strong>Tools:</strong> <code class="language-plaintext highlighter-rouge">Tesseract</code> (Open Source), Amazon Textract, Google Document AI, Azure Layout Analysis.</li>
   <li><strong>Mechanism:</strong> Renders the PDF as an image, then looks for shapes of letters.</li>
-  <li><strong>Pros:</strong> Works on scanned documents and screenshots.</li>
-  <li><strong>Cons:</strong> Slow. Expensive. Often misreads “0” as “O” or “1” as “l”.</li>
+  <li><strong>Pros:</strong> Works on scanned documents and screenshots. Can detect “Forms” and key-value pairs.</li>
+  <li><strong>Cons:</strong> Slow. Expensive. Often misreads “0” (zero) as “O” (letter) or “1” as “l”.</li>
 </ul>
 
-<h3 id="23-strategy-3-vision-language-models-the-new-standard">2.3 Strategy 3: Vision-Language Models (The New Standard)</h3>
+<h3 id="23-strategy-3-vision-language-models-the-new-gold-standard">2.3 Strategy 3: Vision-Language Models (The New Gold Standard)</h3>
 <ul>
-  <li><strong>Tools:</strong> GPT-4V, LlamaParse (LlamaIndex), Unstructured.io.</li>
+  <li><strong>Tools:</strong> <strong>GPT-4o Vision</strong>, <strong>LlamaParse (LlamaIndex)</strong>, <strong>Unstructured.io</strong>.</li>
   <li><strong>Mechanism:</strong>
     <ol>
       <li>Take a screenshot of the PDF page.</li>
-      <li>Send it to a Vision Model (GPT-4o).</li>
-      <li>Prompt: “Transcribe this page into Markdown, preserving tables.”</li>
+      <li>Send it to a Multi-Modal LLM.</li>
+      <li>Prompt: “Transcribe this page into Markdown, carefully preserving all tables and headers.”</li>
     </ol>
   </li>
-  <li><strong>Pros:</strong> <strong>Understand Layout.</strong> It “sees” the difference between a header and a footer. It reconstructs tables perfectly into Markdown.</li>
-  <li><strong>Cons:</strong> Most expensive (Vision tokens are pricey). Slower.</li>
+  <li><strong>Pros:</strong>
+    <ul>
+      <li><strong>Understanding:</strong> It “sees” that bold text is a header.</li>
+      <li><strong>Tables:</strong> It reconstructs tables perfectly into Markdown syntax (<code class="language-plaintext highlighter-rouge">| col | col |</code>).</li>
+      <li><strong>Charts:</strong> It can describe “Revenue is uptrending” from a bar chart.</li>
+    </ul>
+  </li>
+  <li><strong>Cons:</strong> Expensive (Vision tokens cost money). High latency (seconds per page).</li>
 </ul>
 
 <hr />
 
-<h2 id="3-the-table-problem">3. The Table Problem</h2>
+<h2 id="3-the-table-problem-the-final-boss">3. The Table Problem: The Final Boss</h2>
 
-<p>Tables are the nemesis of Agents.</p>
+<p>Tables are the nemesis of RAG Agents.</p>
 <ul>
   <li>
     <table>
@@ -428,82 +446,113 @@
   </li>
   <li><em>Bad Parse:</em> “Revenue 2020 10M” (Lost the relationship).</li>
   <li><em>Agent Query:</em> “What was revenue in 2020?”</li>
-  <li><em>Result:</em> Agent fails.</li>
+  <li><em>Retrieved Chunk:</em> “Revenue 2020 10M”</li>
+  <li><em>Agent Answer:</em> “The revenue is 10M.” (Lucky guess, but robust agents fail).</li>
 </ul>
 
 <p><strong>Solution: Markdown Conversion.</strong>
-We must force the extractor to output Markdown Tables (<code class="language-plaintext highlighter-rouge">| Col | Col |</code>). LLMs are trained heavily on Markdown tables and can reason about them.</p>
+We must force the extractor to output Markdown Tables. LLMs are trained heavily on Markdown (from GitHub READMEs) and can reason about them exceptionally well.</p>
 <ul>
-  <li><strong>LlamaParse</strong> is currently the state-of-the-art for this, utilizing a specialized model to detect table borders and reconstruct the grid.</li>
+  <li><strong>LlamaParse</strong> is currently the state-of-the-art for this. It utilizes a trained model just to detect table borders and reconstruct the grid structure before generating text.</li>
 </ul>
 
 <hr />
 
-<h2 id="4-multi-modal-rag">4. Multi-Modal RAG</h2>
+<h2 id="4-chunking-strategies-cutting-the-cake">4. Chunking Strategies: Cutting the Cake</h2>
+
+<p>Once you have text, you must split it.</p>
+
+<h3 id="41-recursive-character-splitting">4.1 Recursive Character Splitting</h3>
+<p>The default.</p>
+<ol>
+  <li>Split by Paragraph <code class="language-plaintext highlighter-rouge">\n\n</code>.</li>
+  <li>If too big, split by Sentence <code class="language-plaintext highlighter-rouge">.</code>.</li>
+  <li>If too big, split by Word ` `.
+    <ul>
+      <li><strong>Overlap:</strong> Always keep 50-100 tokens of overlap so sentences aren’t cut in half.</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="42-semantic-chunking">4.2 Semantic Chunking</h3>
+<p>Instead of splitting by size, split by <strong>Meaning</strong>.</p>
+<ol>
+  <li>Embed every sentence.</li>
+  <li>Calculate cosine similarity between S1 and S2.</li>
+  <li>If similarity drops below a threshold (e.g., 0.7), start a new chunk.
+    <ul>
+      <li><em>Result:</em> You get coherent “Topics”.</li>
+    </ul>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="5-multi-modal-rag">5. Multi-Modal RAG</h2>
 
 <p>What about charts? A Vector Database cannot “search” a bar chart.</p>
 
-<h3 id="41-indexing-images">4.1 Indexing Images</h3>
+<h3 id="51-pattern-image-to-text-indexing">5.1 Pattern: Image-to-Text Indexing</h3>
 <ol>
   <li><strong>Extraction:</strong> Detect images in the PDF. Crop them.</li>
-  <li><strong>Captioning:</strong> Send the image to a Vision Model. “Describe this chart in detail.”
+  <li><strong>Captioning:</strong> Send the image to a Vision Model. “Describe this chart in detail, including data points.”
     <ul>
-      <li><em>Result:</em> “A bar chart showing Q3 Sales rising by 20%.”</li>
+      <li><em>Result:</em> “A bar chart showing Q3 Sales rising by 20% to $12M.”</li>
     </ul>
   </li>
   <li><strong>Embedding:</strong> Embed the <strong>Caption</strong> (Text) into the Vector DB.</li>
   <li><strong>Storage:</strong> Store the original Image path in metadata.</li>
 </ol>
 
-<h3 id="42-retrieval">4.2 Retrieval</h3>
+<h3 id="52-retrieval-flow">5.2 Retrieval Flow</h3>
 <ol>
   <li>User: “Did sales go up?”</li>
   <li>Search matches the <em>Caption</em> (“Sales rising…”).</li>
-  <li>Agent retrieves the caption (and optionally displays the image to the user).</li>
+  <li>Agent retrieves the caption and says “Yes, sales rose 20%.”</li>
+  <li>Optional: Agent displays the original image to the user.</li>
 </ol>
 
 <hr />
 
-<h2 id="5-code-using-llamaparse">5. Code: Using LlamaParse</h2>
+<h2 id="6-code-modern-parsing-pipeline-conceptual">6. Code: Modern Parsing Pipeline (Conceptual)</h2>
 
-<p>Example of using a modern parser (Conceptual).</p>
+<p>How an “Agentic Ingestion Pipeline” looks in pseudocode.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># pip install llama-parse
-</span><span class="kn">from</span> <span class="n">llama_parse</span> <span class="kn">import</span> <span class="n">LlamaParse</span>
-
-<span class="n">parser</span> <span class="o">=</span> <span class="nc">LlamaParse</span><span class="p">(</span>
-    <span class="n">api_key</span><span class="o">=</span><span class="sh">"</span><span class="s">llx-...</span><span class="sh">"</span><span class="p">,</span>
-    <span class="n">result_type</span><span class="o">=</span><span class="sh">"</span><span class="s">markdown</span><span class="sh">"</span>  <span class="c1"># The magic setting
-</span><span class="p">)</span>
-
-<span class="c1"># Parse a complex PDF
-</span><span class="n">documents</span> <span class="o">=</span> <span class="n">parser</span><span class="p">.</span><span class="nf">load_data</span><span class="p">(</span><span class="sh">"</span><span class="s">./annual_report.pdf</span><span class="sh">"</span><span class="p">)</span>
-
-<span class="nf">print</span><span class="p">(</span><span class="n">documents</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">text</span><span class="p">[:</span><span class="mi">500</span><span class="p">])</span>
-<span class="c1"># Output:
-# # Annual Report 2023
-# 
-# ## Financial Highlights
-# | Metric | 2022 | 2023 |
-# |--------|------|------|
-# | Revenue| 10B  | 12B  |
-</span></code></pre></div></div>
-
-<p>The output is clean Markdown, ready for chunking and embedding.</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">ingest_document</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+    <span class="c1"># 1. Routing
+</span>    <span class="k">if</span> <span class="nf">is_scanned</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="sh">"</span><span class="s">vision</span><span class="sh">"</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="sh">"</span><span class="s">text</span><span class="sh">"</span>
+        
+    <span class="c1"># 2. Parsing (LlamaParse or Unstructured)
+</span>    <span class="n">text</span> <span class="o">=</span> <span class="n">parser</span><span class="p">.</span><span class="nf">parse</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">output_format</span><span class="o">=</span><span class="sh">"</span><span class="s">markdown</span><span class="sh">"</span><span class="p">)</span>
+    
+    <span class="c1"># 3. Image Extraction
+</span>    <span class="n">images</span> <span class="o">=</span> <span class="nf">extract_images</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">img</span> <span class="ow">in</span> <span class="n">images</span><span class="p">:</span>
+        <span class="n">caption</span> <span class="o">=</span> <span class="n">vision_model</span><span class="p">.</span><span class="nf">caption</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+        <span class="n">text</span> <span class="o">+=</span> <span class="sa">f</span><span class="sh">"</span><span class="se">\n\n</span><span class="s">![Image](</span><span class="si">{</span><span class="n">caption</span><span class="si">}</span><span class="s">)</span><span class="sh">"</span>
+        
+    <span class="c1"># 4. Semantic Chunking
+</span>    <span class="n">chunks</span> <span class="o">=</span> <span class="nf">semantic_chunker</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    
+    <span class="c1"># 5. Indexing
+</span>    <span class="n">vector_db</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span>
+</code></pre></div></div>
 
 <hr />
 
-<h2 id="6-summary">6. Summary</h2>
+<h2 id="7-summary">7. Summary</h2>
 
-<p>Don’t cheap out on your parser.</p>
+<p>Document Processing determines the <strong>Ceiling</strong> of your agent’s intelligence.</p>
 <ul>
-  <li>If you use <code class="language-plaintext highlighter-rouge">pypdf</code> on a financial report, your agent will be stupid.</li>
-  <li>If you use <strong>Vision/Markdown parsing</strong>, your agent can read tables and charts like a human analyst.</li>
+  <li><strong>Text Extraction:</strong> Use <code class="language-plaintext highlighter-rouge">pypdf</code> for simple text, <code class="language-plaintext highlighter-rouge">LlamaParse</code> for everything else.</li>
+  <li><strong>Tables:</strong> Must be converted to Markdown.</li>
+  <li><strong>Charts:</strong> Must be captioned by Vision models.</li>
 </ul>
 
-<p>Data quality &gt; Model quality.</p>
-
-<p>In the next post, we will look at <strong>Vector Search</strong> algorithms in depth: HNSW, IVF, and metrics.</p>
+<p>In the next section (Day 11), we will look at <strong>Vector Search Algorithms</strong> in depth and how to scale this to millions of documents.</p>
 
         
       </section>
@@ -519,6 +568,8 @@ We must force the extractor to output Markdown Tables (<code class="language-pla
   <p class="page__taxonomy">
     <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
     <span itemprop="keywords">
+    
+      <a href="/tags/#llamaparse" class="page__taxonomy-item p-category" rel="tag">llamaparse</a><span class="sep">, </span>
     
       <a href="/tags/#multimodal" class="page__taxonomy-item p-category" rel="tag">multimodal</a><span class="sep">, </span>
     

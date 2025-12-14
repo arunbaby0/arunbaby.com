@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-14T22:12:02+05:30">
+  <meta property="article:published_time" content="2025-12-14T22:21:53+05:30">
 
 
 
@@ -146,6 +146,12 @@
                 
                 
               >Speech Tech</a>
+            </li><li class="masthead__menu-item">
+              <a
+                href="/ai-agents/"
+                
+                
+              >AI Agents</a>
             </li><li class="masthead__menu-item">
               <a
                 href="/publications/"
@@ -315,7 +321,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="LLM Capabilities for Agents">
     <meta itemprop="description" content="“The Engine of Autonomy: Understanding the Agentic ‘Brain’.”">
-    <meta itemprop="datePublished" content="2025-12-14T22:12:02+05:30">
+    <meta itemprop="datePublished" content="2025-12-14T22:21:53+05:30">
     
 
     <div class="page__inner-wrap">
@@ -339,7 +345,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          10 minute read
+          12 minute read
         
       </span>
     
@@ -368,6 +374,8 @@
 
 <p>In this deep dive, we will move beyond the marketing hype of “AI” and dissect the specific <strong>neuro-symbolic capabilities</strong> required for an LLM to function as an effective agent. We will explore reasoning paradigms, the mechanics of context, the landscape of models available today, and the benchmarks that actually matter.</p>
 
+<p>This is not a post about “How to use ChatGPT.” CA post about the computer science of agency—how we map the fuzzy, probabilistic outputs of a neural network into the rigid, deterministic world of software action.</p>
+
 <hr />
 
 <h2 id="2-the-agentic-capability-hierarchy">2. The Agentic Capability Hierarchy</h2>
@@ -375,114 +383,126 @@
 <p>Not all LLMs can be agents. A model might be excellent at creative writing (high perplexity, good flow) but terrible at agency. Agency requires a specific set of skills, often referred to as the <strong>“Cybernetic Stack”</strong> of LLMs.</p>
 
 <h3 id="21-steerability--instruction-following">2.1 Steerability &amp; Instruction Following</h3>
-<p>The most basic requirement. Can the model follow a rule?</p>
+<p>The most basic requirement is obedience. Can the model follow a rule, even when the context distracts it?</p>
+
 <ul>
-  <li><strong>The Problem:</strong> Pre-trained base models (like raw GPT-3) are just “Pattern Completers.” If you prompt <em>“The capital of France is”</em>, it completes <em>“Paris.”</em> If you prompt <em>“Do not output the capital of France”</em>, a base model might get confused because it sees “Capital of France” and autocompletes “Paris.”</li>
-  <li><strong>The Solution:</strong> <strong>RLHF (Reinforcement Learning from Human Feedback)</strong>. Models are specifically trained to prioritize <strong>Instructions</strong> over probability. Even newer techniques like <strong>DPO (Direct Preference Optimization)</strong> are used to fine-tune models to prefer helpful, obedient responses.</li>
-  <li><strong>Agent Relevance:</strong> Agents rely on <strong>System Prompts</strong>—massive blocks of text defining rules (“Never delete files,” “Always return JSON”). A model with low steerability (like many early open-source models) will “forget” these rules as the conversation gets longer (Instruction Drift). High-quality agent models (GPT-4o, Claude 3.5) treat the System Prompt as a constitution.</li>
+  <li><strong>The Problem:</strong> Pre-trained base models (like raw GPT-3) are just “Pattern Completers.” If you prompt <em>“The capital of France is”</em>, it completes <em>“Paris.”</em> If you prompt <em>“Do not output the capital of France”</em>, a base model might get confused because it sees “Capital of France” and autocompletes “Paris.” It is optimizing for statistical likelihood, not semantic command.</li>
+  <li><strong>The Solution:</strong> This is where <strong>RLHF (Reinforcement Learning from Human Feedback)</strong> changed the world. Models are specifically trained to prioritize <strong>System Instructions</strong> over their own training data probability.</li>
+  <li><strong>Agent Relevance:</strong> Agents rely on <strong>System Prompts</strong>—massive blocks of text defining rules (“Never delete files,” “Always return JSON”). A model with low steerability (like many early open-source models) will “forget” these rules as the conversation gets longer, a phenomenon known as <strong>Instruction Drift</strong>. High-quality agent models (GPT-4o, Claude 3.5 Sonnet) treat the System Prompt as a constitution, adhering to it even when the user tries to jailbreak it.</li>
 </ul>
 
 <h3 id="22-reasoning-system-2-thinking">2.2 Reasoning (System 2 Thinking)</h3>
-<p>Daniel Kahneman distinguishes between System 1 (Fast/Intuitive) and System 2 (Slow/Logical).</p>
+<p>Daniel Kahneman, in “Thinking, Fast and Slow”, distinguishes between System 1 (Fast/Intuitive) and System 2 (Slow/Logical).</p>
 <ul>
-  <li><strong>Standard Generation:</strong> LLMs naturally operate in System 1. They generate the next token immediately based on surface-level statistics.</li>
-  <li><strong>Agentic Need:</strong> Agents face multi-step logic puzzles. “If user is in US, check inventory A. If inventory A is empty, check inventory B, but only if it’s a weekday.”</li>
-  <li><strong>Capabilities:</strong>
-    <ul>
-      <li><strong>Deductive Reasoning:</strong> $A \to B, B \to C, \therefore A \to C$.</li>
-      <li><strong>Inductive Reasoning:</strong> Seeing 3 examples in the prompt and guessing the underlying rule.</li>
-      <li><strong>Abductive Reasoning:</strong> Guessing the most likely cause of an observation (Essential for Debugging).</li>
-    </ul>
-  </li>
-  <li><strong>Chain of Thought (CoT):</strong> The ability to generate “intermediate reasoning tokens” before the final answer. Research shows that models that cannot “think out loud” perform significantly worse on agentic tasks.</li>
+  <li><strong>System 1:</strong> “What is 2+2?” -&gt; “4”. Instant.</li>
+  <li><strong>System 2:</strong> “What is 17 * 24?” -&gt; “Let me think… 10<em>24=240, 7</em>20=140…” Slow.</li>
+</ul>
+
+<p>Standard LLMs naturally operate in System 1. They generate the next token immediately based on surface-level statistics. Agents, however, <em>need</em> System 2. They face multi-step logic puzzles: “If the user is in the US, check inventory A. If inventory A is empty, check inventory B, but only if it’s a weekday.”</p>
+
+<p>To enable this, we rely on <strong>Reasoning Paradigms</strong>:</p>
+<ul>
+  <li><strong>Deductive Reasoning:</strong> deriving a conclusion from premises ($A \to B, B \to C, \therefore A \to C$).</li>
+  <li><strong>Inductive Reasoning:</strong> Seeing examples in the prompt and generalizing the rule.</li>
+  <li><strong>Abductive Reasoning:</strong> The most critical for debugging. Seeing an observation (“The server returned 500”) and inferring the most likely cause (“The database connection string is probably wrong”).</li>
 </ul>
 
 <h3 id="23-grounding--tool-use">2.3 Grounding &amp; Tool Use</h3>
-<p>Pure LLMs live in a world of text hallucinations. Agents must live in reality.</p>
+<p>Pure LLMs live in a world of hallucination and text. Agents must live in reality. Grounding is the capability to map a fuzzy human intent (“Book me a flight”) to a <strong>rigid schema</strong> (<code class="language-plaintext highlighter-rouge">book_flight(origin="SFO", dest="LHR", date="2024-01-01")</code>).</p>
+
+<p>This requires <strong>Semantic-to-Syntactic Translation</strong>.</p>
 <ul>
-  <li><strong>The Capability:</strong> The ability to map a fuzzy intent (“Book me a flight”) to a <strong>rigid schema</strong> (<code class="language-plaintext highlighter-rouge">book_flight(origin="SFO", dest="LHR", date="2024-01-01")</code>).</li>
-  <li><strong>Structured Output:</strong> This is the killer feature of 2024. Models are now fine-tuned to output valid JSON or XML. This isn’t just “writing code”; it’s about adhering to a specific <strong>syntax constraint</strong> while maintaining <strong>semantic intent</strong>.</li>
-  <li><strong>Constraint Satisfaction:</strong> A good agent model respects <code class="language-plaintext highlighter-rouge">enums</code> (e.g., “Only choose from [RED, GREEN, BLUE]”). A bad model might output “YELLOW” because it “liked that color better.”</li>
+  <li><strong>Structured Output:</strong> This is the killer feature of modern models. Models like GPT-4o are fine-tuned to output valid JSON or XML tokens. This isn’t just “writing code”; it’s about adhering to a specific <strong>syntax constraint</strong> while maintaining <strong>semantic intent</strong>.</li>
+  <li><strong>Constraint Satisfaction:</strong> A good agent model respects <code class="language-plaintext highlighter-rouge">enums</code>. If a function only accepts <code class="language-plaintext highlighter-rouge">[RED, GREEN, BLUE]</code>, a bad model might output “YELLOW” because it “liked that color better” in the context of a painting. A grounded model understands that “Yellow” is an illegal move in this state space.</li>
 </ul>
 
 <h3 id="24-context-window-management">2.4 Context Window Management</h3>
 <p>The Agent’s “Working Memory.”</p>
 <ul>
-  <li><strong>Needle in a Haystack:</strong> Can the model find one specific fact (e.g., a password or ID) buried in 100,000 tokens of logs?</li>
-  <li><strong>recency Bias (Attention Sinks):</strong> Models tend to pay most attention to the <strong>Beginning</strong> (System Prompt) and the <strong>End</strong> (User Query). The “Middle” is often a dead zone.</li>
-  <li><strong>Agent Relevance:</strong> As an agent works, its history log grows. If the model’s retrieval capability degrades as context fills, the agent becomes “senile”—forgetting what it did 5 minutes ago.</li>
+  <li><strong>Needle in a Haystack:</strong> Can the model find one specific fact (e.g., a specific transaction ID) buried in 100,000 tokens of server logs?</li>
+  <li><strong>Attention Sinks:</strong> Models tend to pay most attention to the <strong>Beginning</strong> (System Prompt) and the <strong>End</strong> (User Query). The “Middle” is often a dead zone, known as the “Lost in the Middle” phenomenon.</li>
+  <li><strong>Agent Relevance:</strong> As an agent works, its history log grows. If the model’s retrieval capability degrades as context fills, the agent becomes “senile”—forgetting what it did 5 minutes ago, or re-running a tool it already ran.</li>
 </ul>
 
 <hr />
 
 <h2 id="3-dissecting-reasoning-paradigms">3. Dissecting Reasoning Paradigms</h2>
 
-<p>How do we extract “Reasoning” from a next-token predictor?</p>
+<p>How do we extract “Reasoning” from a next-token predictor? We use structural prompting strategies to force the model into “System 2” mode.</p>
 
 <h3 id="31-chain-of-thought-cot">3.1 Chain of Thought (CoT)</h3>
+<p>This is the foundational technique.</p>
 <ul>
   <li><em>Prompt:</em> “What is 23 * 45?”</li>
-  <li><em>Standard:</em> “1035” (Might be hallucinated).</li>
+  <li><em>Standard:</em> “1035” (This might be a hallucination based on similar numbers in training data).</li>
   <li><em>CoT:</em> “Let’s break it down. 20 * 45 = 900. 3 * 45 = 135. 900 + 135 = 1035.”</li>
-  <li><strong>Why it works:</strong> It spreads the computation across more tokens. The model effectively writes its own “scratchpad” data to the context window, which it can then attend to for the subsequent tokens.</li>
 </ul>
 
+<p><strong>Why it works:</strong>
+Computation takes time. In an LLM, time = tokens. By forcing the model to generate intermediate tokens, we are giving it <strong>computational space</strong> to resolve the logic. It’s effectively writing its own “scratchpad” data to the context window, which it can then attend to for subsequent calcualtions. An agent without CoT is like a human trying to do calculus in their head; an agent <em>with</em> CoT is a human with a pen and paper.</p>
+
 <h3 id="32-tree-of-thoughts-tot">3.2 Tree of Thoughts (ToT)</h3>
-<p>For complex planning, linear thinking isn’t enough.</p>
+<p>For complex planning, linear thinking (CoT) isn’t enough. We need exploration.</p>
 <ul>
-  <li><strong>Mechanism:</strong> The agent explores multiple “branches” of possibilities.</li>
-  <li><em>Branch 1:</em> “I could search Google.” -&gt; <em>Eval:</em> Too slow.</li>
-  <li><em>Branch 2:</em> “I could check the cache.” -&gt; <em>Eval:</em> Fast, but might be stale.</li>
-  <li><em>Selection:</em> “I will check the cache first.”</li>
-  <li><strong>Implementation:</strong> This requires the model to hold multiple conflicting states in its head (or the runtime to manage multiple prompt chains).</li>
+  <li><strong>Mechanism:</strong> The agent explores multiple “branches” of possibilities simultaneously or sequentially.</li>
+  <li><em>Branch 1:</em> “I could search Google for the answer.” -&gt; <em>Evaluation:</em> “This might be slow.”</li>
+  <li><em>Branch 2:</em> “I could check the local cache.” -&gt; <em>Evaluation:</em> “Fast, but might be stale.”</li>
+  <li><em>Selection:</em> “I will check the cache first, and if that fails, search Google.”</li>
 </ul>
+
+<p><strong>Implementation:</strong>
+This usually isn’t just a prompt; it’s a runtime architecture. The Python wrapper runs the model 3 times to generate 3 thoughts, evaluates them (using a Judge model), and picks the winner.</p>
 
 <h3 id="33-self-refinement-reflexion">3.3 Self-Refinement (Reflexion)</h3>
 <p>The ability to critique one’s own output.</p>
 <ul>
-  <li><em>Draft 1:</em> Writes code.</li>
-  <li><em>Self-Prompt:</em> “Are there any bugs in this code?”</li>
-  <li><em>Critique:</em> “Yes, I missed an edge case for null inputs.”</li>
-  <li><em>Draft 2:</em> Rewrites code.</li>
-  <li><strong>Agent Relevance:</strong> This is crucial for autonomous coders. They must “Loop until passing.”</li>
+  <li><em>Draft 1:</em> Writes code to parse a CSV.</li>
+  <li><em>Self-Prompt:</em> “Are there any bugs in this code? Check for edge cases.”</li>
+  <li><em>Critique:</em> “Yes, I missed the case where the CSV has no header row.”</li>
+  <li><em>Draft 2:</em> Rewrites code to handle headerless CSVs.</li>
 </ul>
+
+<p><strong>Agent Relevance:</strong>
+This is crucial for autonomous coders (like Devin). They must “Loop until passing.” A model that can self-correct is exponentially more valuable than a model that is 10% smarter but rigid.</p>
 
 <hr />
 
 <h2 id="4-the-model-landscape-choosing-your-brain">4. The Model Landscape: Choosing Your Brain</h2>
 
-<p>Which model should you use for your agent?</p>
+<p>Which model should you use for your agent? The answer depends on your budget, latency requirements, and complexity.</p>
 
 <h3 id="41-frontier-models-the-big-brains">4.1 “Frontier” Models (The Big Brains)</h3>
-<p>These are closed-source, massive models (likely 1T+ parameters).</p>
+<p>These are closed-source, massive models (likely 1T+ parameters). They are the “General Contractors” of agency.</p>
+
 <ul>
   <li><strong>GPT-4o (OpenAI):</strong> The reigning champion for general agency.
     <ul>
-      <li><em>Pros:</em> Best-in-class Instruction Following, native Function Calling fine-tuning, highly reliable JSON mode. Fast.</li>
-      <li><em>Cons:</em> Expensive, “Lazy” (sometimes refuses to code full solutions), strict safety filters (refusals).</li>
+      <li><em>Pros:</em> Best-in-class Instruction Following. Native Function Calling fine-tuning means it rarely hallucintates tool parameters. Extremely fast time-to-first-token.</li>
+      <li><em>Cons:</em> Expensive. “Lazy” (sometimes refuses to code full solutions, preferring to leave placeholders like <code class="language-plaintext highlighter-rouge"># ... rest of code</code>). Strict safety filters can trigger false refusals on benign tasks.</li>
     </ul>
   </li>
   <li><strong>Claude 3.5 Sonnet (Anthropic):</strong> The “Coder’s Choice.”
     <ul>
-      <li><em>Pros:</em> Exceptional at coding and complex reasoning. Huge context window (200k) with excellent “Needle in Haystack” retrieval. Often feels more “human” and less robotic than GPT.</li>
-      <li><em>Cons:</em> Function calling format is slightly different (uses XML heavily in training).</li>
+      <li><em>Pros:</em> Exceptional at coding and complex reasoning. Many benchmarks place it above GPT-4o for pure logic. Huge context window (200k) with excellent “Needle in Haystack” retrieval. It feels more “human” and verbose (“Sure! Here is the code…”).</li>
+      <li><em>Cons:</em> Function calling format is slightly different (uses XML heavily in training, though supports JSON).</li>
     </ul>
   </li>
-  <li><strong>Gemini 1.5 Pro (Google):</strong> The “Running Room.”
+  <li><strong>Gemini 1.5 Pro (Google):</strong> The “Context King.”
     <ul>
-      <li><em>Pros:</em> Massive 1M-2M token context window. Multimodal (can watch videos/screencasts). Great for “Reading the manual” agents.</li>
+      <li><em>Pros:</em> Massive 2M token context window. This changes the architecture entirely—you don’t need RAG; you just stuff the entire manual into the context. Multimodal (can watch videos/screencasts of bugs).</li>
       <li><em>Cons:</em> Historically slightly higher hallucination rates on rigid logic than GPT-4, though catching up fast.</li>
     </ul>
   </li>
 </ul>
 
 <h3 id="42-open-weights-models-the-private-brains">4.2 Open Weights Models (The Private Brains)</h3>
-<p>Models you can host yourself.</p>
+<p>Models you can host yourself. Essential for healthcare, finance, or privacy-critical agents.</p>
+
 <ul>
   <li><strong>Llama 3.1 70B &amp; 405B (Meta):</strong>
     <ul>
       <li><em>Pros:</em> GPT-4 class performance for free (if you have the GPUs). Uncensored (mostly). You own your data. Excellent Tool Calling support.</li>
-      <li><em>Cons:</em> Hosting 405B parameters is technically difficult and expensive ($$$ GPU clusters). The 70B model is the sweet spot for enterprise agents.</li>
+      <li><em>Cons:</em> Hosting 405B parameters is technically difficult and expensive ($$$ GPU clusters). The 70B model is the sweet spot for enterprise agents, fitting on a single fast node.</li>
     </ul>
   </li>
   <li><strong>Mistral Large / Mixtral:</strong>
@@ -495,41 +515,41 @@
 <h3 id="43-specialized-models-the-savants">4.3 Specialized Models (The Savants)</h3>
 <ul>
   <li><strong>NexusRaven / Gorilla:</strong> Models fine-tuned <em>exclusively</em> on API calling. They might forget who the President is, but they can construct a perfect AWS CLI command from a fuzzy prompt better than GPT-4.</li>
-  <li><strong>DeepSeek Coder:</strong> Models trained on massive github repos. Excellent for coding agents.</li>
+  <li><strong>DeepSeek Coder:</strong> Models trained on massive troves of GitHub code. Excellent for autonomous software engineering agents.</li>
 </ul>
 
 <hr />
 
 <h2 id="5-benchmarking-agency">5. Benchmarking Agency</h2>
 
-<p>How do we know if a model is a good agent? Standard NLP benchmarks (MMLU, HELM) are multiple choice. They don’t test agency. We use <strong>Agentic Benchmarks</strong>.</p>
+<p>How do we know if a model is a good agent? Standard NLP benchmarks (MMLU, HELM) are multiple choice (“A, B, C, D”). They don’t test agency. We use <strong>Agentic Benchmarks</strong> which are dynamic.</p>
 
 <h3 id="51-humaneval--mbpp-coding">5.1 HumanEval &amp; MBPP (Coding)</h3>
 <ul>
   <li><em>Task:</em> “Write a Python function to reverse a list.”</li>
-  <li><em>Metric:</em> Pass@1 (Does the code run and pass tests on the first try?).</li>
-  <li><em>Significance:</em> Coding is a proxy for rigorous logic and syntax adherence. Models good at code are usually good at agents.</li>
+  <li><em>Metric:</em> <strong>Pass@1</strong>. We take the generated code and actually run it against a suite of unit tests.</li>
+  <li><em>Significance:</em> Coding is a proxy for rigorous logic and syntax adherence. Models good at code are usually good at agents because both require handling rigid structures (APIs/Syntax) and logical flow control.</li>
 </ul>
 
 <h3 id="52-agentbench--webshop">5.2 AgentBench / WebShop</h3>
 <ul>
   <li><em>Task:</em> “Go to amazon.com, find a blue HDMI cable under $10, and add it to cart.”</li>
   <li><em>Metric:</em> Success Rate within N steps.</li>
-  <li><em>Significance:</em> Tests environment navigation, HTML parsing, decision making. A model needs to handle dynamic observations (“out of stock”).</li>
+  <li><em>Significance:</em> Tests environment navigation, HTML parsing, and decision making. A model needs to handle dynamic observations (“out of stock”) and pivot its strategy.</li>
 </ul>
 
 <h3 id="53-swe-bench-the-everest">5.3 SWE-Bench (The Everest)</h3>
 <p>This is the gold standard for software engineering agents.</p>
 <ul>
   <li><em>Task:</em> “Here is a real GitHub Issue from a popular repo (e.g., Django, scikit-learn). Fix it.”</li>
-  <li><em>Process:</em> The agent is given the codebase. It must write a reproduction script, locate the bug, fix it, and pass the tests.</li>
+  <li><em>Process:</em> The agent is given the codebase (files). It must write a reproduction script, locate the bug, fix it, and pass the tests.</li>
   <li><em>Scores:</em>
     <ul>
       <li>GPT-4 (Unassisted): ~2%</li>
       <li>Devin/Specialized Agents: ~13-20%</li>
     </ul>
   </li>
-  <li><em>Reality Check:</em> This shows how early we are. Most agents fail at real-world software engineering.</li>
+  <li><em>Reality Check:</em> This shows how early we are. Most agents fail at real-world software engineering because the context is too large and the reasoning chain is too long (hundreds of steps).</li>
 </ul>
 
 <hr />
@@ -539,32 +559,32 @@
 <p>Should you fine-tune your own model for your agent?</p>
 
 <h3 id="61-the-prompt-engineering-first-rule">6.1 The “Prompt Engineering First” Rule</h3>
-<p>Always exhaust prompt engineering (Context + Examples) first. It is cheaper, faster, and easier to debug. Fine-tuning adds a maintenance burden.</p>
+<p>Always exhaust prompt engineering (Context + Few-Shot Examples) first. It is cheaper, faster, and easier to debug. Fine-tuning adds a permanent maintenance burden (you have to re-train every time base models update).</p>
 
 <h3 id="62-when-to-fine-tune">6.2 When to Fine-Tune</h3>
 <ol>
-  <li><strong>Unique Toolset:</strong> If you have a proprietary internal API with 5,000 functions, GPT-4 won’t know it. Fine-tuning a Llama-3 model on your API docs (Input: “Refund user”, Output: <code class="language-plaintext highlighter-rouge">api.refund(uid)</code>) can make it an expert router.</li>
-  <li><strong>Style/Tone Enforcement:</strong> If your agent needs to speak in a specific brand voice (e.g., “A 17th Century Pirate Lawyer”), fine-tuning is better than a long system prompt.</li>
-  <li><strong>Latency/Cost (Distillation):</strong> You can train a small model (8B parameters) to mimic the outputs of a large model (GPT-4) for your specific task, allowing you to run it 10x cheaper and faster.</li>
+  <li><strong>Unique Toolset:</strong> If you have a proprietary internal API with 5,000 unusual functions, GPT-4 won’t know it. Fine-tuning a Llama-3 model on your API docs (Input: “Refund user”, Output: <code class="language-plaintext highlighter-rouge">api.refund(uid)</code>) can make it an expert router.</li>
+  <li><strong>Style/Tone Enforcement:</strong> If your agent needs to speak in a specific brand voice (e.g., “A 17th Century Pirate Lawyer”), fine-tuning is better than a long system prompt which consumes tokens.</li>
+  <li><strong>Latency/Cost (Distillation):</strong> You can train a small model (8B parameters) to mimic the outputs of a large model (GPT-4) for your specific task, allowing you to run it 10x cheaper and 5x faster. This is how many “Router” agents are built.</li>
 </ol>
 
 <hr />
 
 <h2 id="7-the-future-reasoning-tokens">7. The Future: Reasoning Tokens</h2>
 
-<p>We are on the cusp of models that “think” a new way.
-Rumors of OpenAI’s “Project Strawberry” (Q<em>) suggest models that perform internal tree-search optimization (like AlphaGo) *during inference</em> before outputting a single token.</p>
+<p>We are on the cusp of models that “think” in a fundamentally new way.
+Rumors of OpenAI’s “Project Strawberry” (Q<em>) and Google’s AlphaProof suggest models that perform <strong>internal tree-search optimization</strong> (like AlphaGo) *during inference</em> before outputting a single token.</p>
 
 <ul>
   <li><em>Current:</em> Inference is constant time (proportional to output length).</li>
-  <li><em>Future:</em> Inference time is variable. “Take 10 seconds to think about this chess move.”</li>
+  <li><em>Future:</em> Inference time is variable. “Take 10 seconds to think about this chess move.” “Take 1 hour to think about this cure for cancer.”</li>
 </ul>
 
-<p>This will transform agents from “Fast Guessers” to “Deep Thinkers,” potentially solving the “Zero-Shot Reliability” problem.</p>
+<p>This will transform agents from “Fast Guessers” to “Deep Thinkers,” potentially solving the “Zero-Shot Reliability” problem. An agent that can simulate 1,000 paths forward before choosing one action will be radically more reliable than our current greedy autoregressive models.</p>
 
 <h2 id="8-summary">8. Summary</h2>
 
-<p>The LLM is the <strong>Cognitive Substrate</strong> of the agent.</p>
+<p>The LLM is the <strong>Cognitive Substrate</strong> of the agent. It provides the reasoning capabilities that allow the agent to navigate the world.</p>
 
 <ul>
   <li><strong>Steerability</strong> ensures it listens to you.</li>
