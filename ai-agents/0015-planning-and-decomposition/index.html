@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-14T23:01:57+05:30">
+  <meta property="article:published_time" content="2025-12-15T14:32:24+05:30">
 
 
 
@@ -321,7 +321,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Planning and Decomposition">
     <meta itemprop="description" content="“If you fail to plan, you are planning to fail (and burn tokens).”">
-    <meta itemprop="datePublished" content="2025-12-14T23:01:57+05:30">
+    <meta itemprop="datePublished" content="2025-12-15T14:32:24+05:30">
     
 
     <div class="page__inner-wrap">
@@ -345,7 +345,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          5 minute read
+          7 minute read
         
       </span>
     
@@ -360,7 +360,7 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#1-introduction-the-greedy-agent-problem">1. Introduction: The Greedy Agent Problem</a></li><li><a href="#2-planning-architectures">2. Planning Architectures</a><ul><li><a href="#21-plan-and-solve-linear-planning">2.1 Plan-and-Solve (Linear Planning)</a></li><li><a href="#22-dynamic-replanning-adaptive">2.2 Dynamic Replanning (Adaptive)</a></li><li><a href="#23-hierarchical-planning-the-manager-worker">2.3 Hierarchical Planning (The Manager-Worker)</a></li></ul></li><li><a href="#3-decomposition-strategies">3. Decomposition Strategies</a><ul><li><a href="#31-temporal-decomposition">3.1 Temporal Decomposition</a></li><li><a href="#32-logical-decomposition-least-to-most">3.2 Logical Decomposition (Least-to-Most)</a></li><li><a href="#33-dag-planning-dependency-graphs">3.3 DAG Planning (Dependency Graphs)</a></li></ul></li><li><a href="#4-the-planner-prompts">4. The Planner Prompts</a></li><li><a href="#5-code-a-dynamic-planner-class">5. Code: A Dynamic Planner Class</a></li><li><a href="#6-summary">6. Summary</a></li></ul>
+              <ul class="toc__menu"><li><a href="#1-introduction-the-greedy-agent-problem">1. Introduction: The Greedy Agent Problem</a></li><li><a href="#2-planning-architectures">2. Planning Architectures</a><ul><li><a href="#21-plan-and-solve-linear-planning">2.1 Plan-and-Solve (Linear Planning)</a></li><li><a href="#22-dynamic-replanning-adaptive-plan-and-solve">2.2 Dynamic Replanning (Adaptive Plan-and-Solve)</a></li><li><a href="#23-hierarchical-planning-the-manager-worker">2.3 Hierarchical Planning (The Manager-Worker)</a></li></ul></li><li><a href="#3-decomposition-strategies">3. Decomposition Strategies</a><ul><li><a href="#31-temporal-decomposition">3.1 Temporal Decomposition</a></li><li><a href="#32-logical-decomposition-least-to-most">3.2 Logical Decomposition (Least-to-Most)</a></li><li><a href="#33-dag-planning-dependency-graphs">3.3 DAG Planning (Dependency Graphs)</a></li></ul></li><li><a href="#4-constraint-satisfaction-problems-csp">4. Constraint Satisfaction Problems (CSP)</a></li><li><a href="#5-code-a-dynamic-planner-class">5. Code: A Dynamic Planner Class</a></li><li><a href="#6-summary">6. Summary</a></li></ul>
             </nav>
           </aside>
         
@@ -373,9 +373,11 @@ ReAct looks at the current state, decides the <em>immediate</em> next step, acts
 <ul>
   <li><em>Analogy:</em> ReAct is like driving by looking only 5 feet in front of the car. You might avoid the pothole, but you might also miss the turnoff for the highway and drive in circles.</li>
   <li><em>Symptom:</em> For long-horizon tasks (“Write a full-stack app”), ReAct agents get “distracted.” They spend 50 steps perfecting the CSS of the login button and forget to write the backend API.</li>
+  <li><em>Cost:</em> Without a plan, agents often backtrack, repeating expensive RAG searches or tool calls.</li>
 </ul>
 
-<p>To solve complex problems, we need <strong>Planning</strong>. The agent must separate “Strategy” (What to do) from “Execution” (Doing it).</p>
+<p>To solve complex problems, we need <strong>Planning</strong>. The agent must separate “Strategy” (What to do globaly) from “Execution” (How to do the local task).
+In this post, we will explore the Plan-and-Solve patterns, Hierarchical Architectures, and the use of DAGs (Directed Acyclic Graphs) for parallel agent execution.</p>
 
 <hr />
 
@@ -384,61 +386,76 @@ ReAct looks at the current state, decides the <em>immediate</em> next step, acts
 <p>There are three main paradigms for giving agents foresight.</p>
 
 <h3 id="21-plan-and-solve-linear-planning">2.1 Plan-and-Solve (Linear Planning)</h3>
-<p>The simplest upgrade over ReAct.</p>
+<p>The simplest upgrade over ReAct. It breaks the “Think-Act” loop into two phases.</p>
+
 <ul>
-  <li><strong>Step 1 (Planner):</strong> Ask the LLM to generate a static checklist.
+  <li><strong>Phase 1 (The Architect):</strong> Ask the LLM to generate a static checklist.
     <ul>
-      <li><em>Prompt:</em> “Create a step-by-step plan to build a Snake game.”</li>
+      <li><em>Prompt:</em> “You are a Software Architect. Create a step-by-step plan to build a Snake game in Python. Do not write code yet.”</li>
       <li><em>Output:</em>
         <ol>
-          <li>Write <code class="language-plaintext highlighter-rouge">snake.py</code> class.</li>
-          <li>Write <code class="language-plaintext highlighter-rouge">food.py</code> class.</li>
-          <li>Write main game loop.</li>
-          <li>Add unit tests.</li>
+          <li>Set up <code class="language-plaintext highlighter-rouge">pygame</code> environment.</li>
+          <li>Create <code class="language-plaintext highlighter-rouge">Snake</code> class with movement logic.</li>
+          <li>Create <code class="language-plaintext highlighter-rouge">Food</code> class with random placement.</li>
+          <li>Implement collision detection.</li>
+          <li>Write the game loop.</li>
         </ol>
       </li>
     </ul>
   </li>
-  <li><strong>Step 2 (Executor):</strong> Data-drive the execution. The agent iterates through the list index by index.</li>
+  <li><strong>Phase 2 (The Builder):</strong> Data-drive the execution. The agent iterates through the list index by index.
+    <ul>
+      <li><em>Prompt:</em> “Current Task: Set up <code class="language-plaintext highlighter-rouge">pygame</code>. Execute this.”</li>
+    </ul>
+  </li>
   <li><strong>Pros:</strong> Keeps the agent focused. Global context is maintained.</li>
-  <li><strong>Cons:</strong> <strong>Brittle.</strong> If Step 1 reveals that <code class="language-plaintext highlighter-rouge">snake.py</code> needs a library that doesn’t exist, the plan breaks. It lacks adaptability.</li>
+  <li><strong>Cons:</strong> <strong>Brittle.</strong> If Step 1 reveals that <code class="language-plaintext highlighter-rouge">pygame</code> is not installed on the system, the plan breaks. It lacks adaptability concepts.</li>
 </ul>
 
-<h3 id="22-dynamic-replanning-adaptive">2.2 Dynamic Replanning (Adaptive)</h3>
-<p>A more robust approach. The Plan is not a static text; it’s a <strong>State Object</strong>.</p>
+<h3 id="22-dynamic-replanning-adaptive-plan-and-solve">2.2 Dynamic Replanning (Adaptive Plan-and-Solve)</h3>
+<p>A more robust approach. The Plan is not a static text; it’s a <strong>Mutable State Object</strong>.</p>
 <ul>
   <li><strong>State:</strong> <code class="language-plaintext highlighter-rouge">Plan: [Task A (Done), Task B (Todo), Task C (Todo)]</code></li>
   <li><strong>The Loop:</strong>
     <ol>
       <li>Pick first “Todo” task (Task B).</li>
-      <li>Execute it.</li>
+      <li>Execute it (using ReAct).</li>
       <li><strong>Observation:</strong> “Task B failed because database is locked.”</li>
-      <li><strong>Replan:</strong> The Planner Agent looks at the failure and the remaining plan.</li>
+      <li><strong>Replan Trigger:</strong> The Executor reports failure to the Planner.</li>
+      <li><strong>Replan:</strong> The Planner Agent looks at the failure and the global goal.</li>
       <li><strong>New Plan:</strong> <code class="language-plaintext highlighter-rouge">[Task A (Done), Task B.1 (Unlock DB), Task B.2 (Retry Task B), Task C (Todo)]</code>.</li>
     </ol>
   </li>
-  <li><em>Impact:</em> The agent can pivot while maintaining the long-term goal.</li>
+  <li><em>Impact:</em> The agent can pivot while maintaining the long-term goal. This mimics how humans handle unexpected obstacles.</li>
 </ul>
 
 <h3 id="23-hierarchical-planning-the-manager-worker">2.3 Hierarchical Planning (The Manager-Worker)</h3>
 <p>For massive tasks, a linear list is too long (Step 1 to Step 100). The context window overflows.
-We use a Tree Structure.</p>
+We use a <strong>Recursive Tree Structure</strong>.</p>
+
 <ul>
-  <li><strong>Level 0 (CEO):</strong> “Goal: Launch Website.” -&gt; Decomposes into: “Frontend”, “Backend”, “Deploy”.</li>
+  <li><strong>Level 0 (CEO Agent):</strong> “Goal: Launch Website.” -&gt; Decomposes into: “Frontend”, “Backend”, “Deploy”.</li>
   <li><strong>Level 1 (VP of Frontend):</strong> “Goal: Frontend.” -&gt; Decomposes into: “HTML”, “CSS”, “JS”.</li>
   <li><strong>Level 2 (Worker):</strong> “Goal: HTML.” -&gt; Writes the code.</li>
-  <li><em>Mechanism:</em> Each “Manager” agent spawns a sub-agent, waits for the result, and reports up the chain.</li>
-  <li><em>Tool Check:</em> The “CEO” uses a <code class="language-plaintext highlighter-rouge">delegate_to_backend(task)</code> tool.</li>
+  <li><strong>Mechanism:</strong>
+    <ul>
+      <li>The “CEO” does not have tools to write code. It has a tool called <code class="language-plaintext highlighter-rouge">delegate_to_backend(task)</code>.</li>
+      <li>When called, a <em>new</em> agent spawns with a fresh context window.</li>
+      <li>When the sub-agent finishes, it returns a <strong>Summary</strong> (“Backend created at /api”).</li>
+      <li>The CEO sees only the summary, keeping its context clean.</li>
+    </ul>
+  </li>
+  <li><strong>Frameworks:</strong> This is the core logic of <strong>CrewAI</strong> and <strong>LangGraph</strong>.</li>
 </ul>
 
 <hr />
 
 <h2 id="3-decomposition-strategies">3. Decomposition Strategies</h2>
 
-<p>How do we break a problem down?</p>
+<p>How do we break a problem down? The prompt strategy matters.</p>
 
 <h3 id="31-temporal-decomposition">3.1 Temporal Decomposition</h3>
-<p>“Do A, then B, then C.”</p>
+<p>“Do A, then B, then C.” Use this for procedural tasks.</p>
 <ul>
   <li><em>Input:</em> “Tell me the percentage growth of Tesla stock compared to Ford in 2023.”</li>
   <li><em>Plan:</em>
@@ -452,7 +469,7 @@ We use a Tree Structure.</p>
 </ul>
 
 <h3 id="32-logical-decomposition-least-to-most">3.2 Logical Decomposition (Least-to-Most)</h3>
-<p>Break a hard question into easy sub-questions.</p>
+<p>Break a hard question into easy sub-questions. Use this for reasoning/riddles.</p>
 <ul>
   <li><em>Input:</em> “Is the current President of the US older than the iPhone?”</li>
   <li><em>Sub-Q 1:</em> “Who is the current President?” -&gt; Biden.</li>
@@ -463,7 +480,7 @@ We use a Tree Structure.</p>
 </ul>
 
 <h3 id="33-dag-planning-dependency-graphs">3.3 DAG Planning (Dependency Graphs)</h3>
-<p>Sometimes tasks can be parallel.</p>
+<p>Sometimes tasks describe a graph, not a list.</p>
 <ul>
   <li><em>Graph:</em>
     <ul>
@@ -472,91 +489,128 @@ We use a Tree Structure.</p>
       <li>Task C (Synthesize Report - Depends on A &amp; B)</li>
     </ul>
   </li>
-  <li><em>Execution:</em> Run A and B in parallel (using <code class="language-plaintext highlighter-rouge">asyncio</code>). When both finish, unlock C.</li>
-  <li><em>Frameworks:</em> <strong>LangGraph</strong> excels at this DAG structure.</li>
+  <li><em>Execution:</em>
+    <ul>
+      <li>The engine detects that A and B have no dependencies.</li>
+      <li>It spins up two threads/agents to run A and B <strong>Parallel</strong>.</li>
+      <li>It waits (joins) for both to complete.</li>
+      <li>It unlocks C.</li>
+    </ul>
+  </li>
+  <li><em>Performance:</em> This reduces wall-clock latency significantly for I/O bound agents.</li>
 </ul>
 
 <hr />
 
-<h2 id="4-the-planner-prompts">4. The Planner Prompts</h2>
+<h2 id="4-constraint-satisfaction-problems-csp">4. Constraint Satisfaction Problems (CSP)</h2>
 
-<p>The “Planner” is just an LLM. Its prompt needs to be specific.</p>
+<p>Advanced planners don’t just list steps; they solve constraints.</p>
 <ul>
-  <li><em>Bad Prompt:</em> “Make a plan.”</li>
-  <li><em>Good Prompt:</em> “You are a Technical Planner. Break this objective down into atomic, executable steps. Each step must be achievable by a single function call. Output a JSON list of objects: <code class="language-plaintext highlighter-rouge">{'id': 1, 'description': '...', 'dependencies': []}</code>.”</li>
+  <li><em>Task:</em> “Book a flight to Paris under $500 leaving on a Friday.”</li>
+  <li><em>Constraints:</em> <code class="language-plaintext highlighter-rouge">price &lt; 500</code>, <code class="language-plaintext highlighter-rouge">dest = Paris</code>, <code class="language-plaintext highlighter-rouge">day = Friday</code>.</li>
+  <li><em>Planner Logic:</em>
+    <ol>
+      <li>Search flights.</li>
+      <li>Filter results against constraints.</li>
+      <li>If <code class="language-plaintext highlighter-rouge">results == 0</code>, <strong>Relax Constraint</strong>.</li>
+      <li>“No flights under $500. Searching under $600.”</li>
+    </ol>
+  </li>
+  <li>This feedback loop is critical for travel/booking agents.</li>
 </ul>
-
-<p><strong>Output Schema Enforcment</strong> is critical. If the planner outputs prose (“First, you typically…”), the executor cannot parse it. You need structured JSON.</p>
 
 <hr />
 
 <h2 id="5-code-a-dynamic-planner-class">5. Code: A Dynamic Planner Class</h2>
 
-<p>Conceptual logic for a Replanning Agent.</p>
+<p>A conceptual implementation of a “Replanning Agent” that is self-healing.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">PlannerAgent</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">goal</span><span class="p">):</span>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">json</span>
+
+<span class="k">class</span> <span class="nc">PlannerAgent</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">goal</span><span class="p">,</span> <span class="n">llm</span><span class="p">,</span> <span class="n">executor</span><span class="p">):</span>
         <span class="n">self</span><span class="p">.</span><span class="n">goal</span> <span class="o">=</span> <span class="n">goal</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">plan</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># List of strings
+        <span class="n">self</span><span class="p">.</span><span class="n">llm</span> <span class="o">=</span> <span class="n">llm</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">executor</span> <span class="o">=</span> <span class="n">executor</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">plan</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># List of structs {id, desc, status}
 </span>        <span class="n">self</span><span class="p">.</span><span class="n">completed_steps</span> <span class="o">=</span> <span class="p">[]</span>
         
     <span class="k">def</span> <span class="nf">generate_initial_plan</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="c1"># Call LLM to get list
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">plan</span> <span class="o">=</span> <span class="n">llm</span><span class="p">.</span><span class="nf">generate_json</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Goal: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">goal</span><span class="si">}</span><span class="s">. Create plan.</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Initial Plan: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">plan</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+        <span class="c1"># Enforce JSON Schema for the plan
+</span>        <span class="n">context</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Goal: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">goal</span><span class="si">}</span><span class="s">. Create a detailed step-by-step plan.</span><span class="sh">"</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">llm</span><span class="p">.</span><span class="nf">generate_json</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">PLAN_SCHEMA</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">plan</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="sh">'</span><span class="s">steps</span><span class="sh">'</span><span class="p">]</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Initial Plan: </span><span class="si">{</span><span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="sh">'</span><span class="s">desc</span><span class="sh">'</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">plan</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">execute_next</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">plan</span><span class="p">:</span>
             <span class="k">return</span> <span class="sh">"</span><span class="s">Done</span><span class="sh">"</span>
             
         <span class="n">current_step</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">plan</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Executing: </span><span class="si">{</span><span class="n">current_step</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Executing Step: </span><span class="si">{</span><span class="n">current_step</span><span class="p">[</span><span class="sh">'</span><span class="s">desc</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
         
-        <span class="c1"># Hands off to Executor (ReAct Agent)
-</span>        <span class="n">result</span><span class="p">,</span> <span class="n">success</span> <span class="o">=</span> <span class="n">Executor</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span><span class="n">current_step</span><span class="p">)</span>
+        <span class="c1"># 1. Handoff to Executor (The ReAct Agent)
+</span>        <span class="c1"># We give the Executor the *Global Goal* context too
+</span>        <span class="n">result</span><span class="p">,</span> <span class="n">success</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">executor</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span>
+            <span class="n">task</span><span class="o">=</span><span class="n">current_step</span><span class="p">[</span><span class="sh">'</span><span class="s">desc</span><span class="sh">'</span><span class="p">],</span> 
+            <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="sh">"</span><span class="s">global_goal</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">goal</span><span class="p">}</span>
+        <span class="p">)</span>
         
-        <span class="k">if</span> <span class="n">success</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">completed_steps</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">current_step</span><span class="p">)</span>
+        <span class="c1"># 2. Check Success
+</span>        <span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">completed_steps</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span><span class="sh">"</span><span class="s">step</span><span class="sh">"</span><span class="p">:</span> <span class="n">current_step</span><span class="p">,</span> <span class="sh">"</span><span class="s">result</span><span class="sh">"</span><span class="p">:</span> <span class="n">result</span><span class="p">})</span>
             <span class="n">self</span><span class="p">.</span><span class="n">plan</span><span class="p">.</span><span class="nf">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># Remove from Todo
 </span>        <span class="k">else</span><span class="p">:</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Step failed. Replanning...</span><span class="sh">"</span><span class="p">)</span>
+            <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Step failed. Triggering Replanning...</span><span class="sh">"</span><span class="p">)</span>
             <span class="n">self</span><span class="p">.</span><span class="nf">replan</span><span class="p">(</span><span class="n">failed_step</span><span class="o">=</span><span class="n">current_step</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
             
     <span class="k">def</span> <span class="nf">replan</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">failed_step</span><span class="p">,</span> <span class="n">error</span><span class="p">):</span>
+        <span class="sh">"""</span><span class="s">
+        The Core Logic: Ask the Planner to fix the mess.
+        </span><span class="sh">"""</span>
         <span class="n">context</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"""</span><span class="s">
         Goal: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">goal</span><span class="si">}</span><span class="s">
-        Completed: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">completed_steps</span><span class="si">}</span><span class="s">
-        Failed Step: </span><span class="si">{</span><span class="n">failed_step</span><span class="si">}</span><span class="s">
+        Completed Steps: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">completed_steps</span><span class="si">}</span><span class="s">
+        
+        The Current Step FAILED.
+        Step: </span><span class="si">{</span><span class="n">failed_step</span><span class="p">[</span><span class="sh">'</span><span class="s">desc</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">
         Error: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s">
+        
         Remaining Plan: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">plan</span><span class="si">}</span><span class="s">
         
-        INSTRUCTION: Fix the plan. Break the failed step down or try an alternative.
+        INSTRUCTION: Update the plan. You can:
+        1. Break the failed step into smaller steps.
+        2. Propose a different way to achieve the goal.
+        3. Skip the step if it</span><span class="sh">'</span><span class="s">s optional.
         </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">plan</span> <span class="o">=</span> <span class="n">llm</span><span class="p">.</span><span class="nf">generate_json</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">New Plan: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">plan</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">llm</span><span class="p">.</span><span class="nf">generate_json</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">PLAN_SCHEMA</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">plan</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="sh">'</span><span class="s">steps</span><span class="sh">'</span><span class="p">]</span> <span class="c1"># Overwrite the queue
+</span>        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">New Plan: </span><span class="si">{</span><span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="sh">'</span><span class="s">desc</span><span class="sh">'</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">plan</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
 
-<span class="c1"># Usage
-</span><span class="n">agent</span> <span class="o">=</span> <span class="nc">PlannerAgent</span><span class="p">(</span><span class="sh">"</span><span class="s">Write a Weather App</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">agent</span><span class="p">.</span><span class="nf">generate_initial_plan</span><span class="p">()</span>
-<span class="k">while</span> <span class="n">agent</span><span class="p">.</span><span class="n">plan</span><span class="p">:</span>
-    <span class="n">agent</span><span class="p">.</span><span class="nf">execute_next</span><span class="p">()</span>
-</code></pre></div></div>
+<span class="c1"># Usage Simulation
+# agent = PlannerAgent("Write a Weather App")
+# agent.generate_initial_plan()
+# while agent.plan:
+#    agent.execute_next()
+</span></code></pre></div></div>
 
 <hr />
 
 <h2 id="6-summary">6. Summary</h2>
 
 <p>Planning turns an Agent from a “Task Doer” into a “Project Manager.”</p>
+
 <ul>
-  <li><strong>Plan-and-Solve</strong> avoids distraction.</li>
-  <li><strong>Replanning</strong> handles reality.</li>
-  <li><strong>Hierarchies</strong> handle scale.</li>
+  <li><strong>Plan-and-Solve</strong> avoids distraction by separating concerns.</li>
+  <li><strong>Replanning</strong> handles the messy reality of API failures.</li>
+  <li><strong>Hierarchies</strong> (Manager-Worker) allow agents to match the scale of human organizations.</li>
+  <li><strong>DAGs</strong> allow for high-performance parallelism.</li>
 </ul>
 
 <p>An agent without a plan is a leaf in the wind. An agent with a plan is a guided missile.</p>
 
 <p>This concludes the “Foundations” and “Intermediate Concepts” of our curriculum. We have covered Models, Prompts, Tools, Memory, RAG, and Planning.
-In the next section (Days 16-28), we will move into <strong>Deep Domain Specialization</strong>: Real-time Pipelines, Voice Agents, and Vision Agents.</p>
+In the next section (Days 16-28), we will move into <strong>Deep Domain Specialization</strong>: Real-time Pipelines, Voice Agents with WebRTC, and Vision Agents.</p>
 
         
       </section>
@@ -572,6 +626,8 @@ In the next section (Days 16-28), we will move into <strong>Deep Domain Speciali
   <p class="page__taxonomy">
     <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
     <span itemprop="keywords">
+    
+      <a href="/tags/#csp" class="page__taxonomy-item p-category" rel="tag">csp</a><span class="sep">, </span>
     
       <a href="/tags/#dag" class="page__taxonomy-item p-category" rel="tag">dag</a><span class="sep">, </span>
     
