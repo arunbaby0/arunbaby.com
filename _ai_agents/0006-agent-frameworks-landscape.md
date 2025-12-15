@@ -199,4 +199,4 @@ There is no "Best Framework." There is only the right level of abstraction for y
 *   Building a **Stock Research Bot**? Use AutoGen (Code Execution).
 *   Building a **Story Writer**? Use CrewAI (Creativity).
 
-In the next post, we will put this theory aside and **Build Your First Agent** from scratch, using raw Python to see exactly what these frameworks hide from you.
+With the landscape understood, the next step is to **Build Your First Agent** from scratch, using raw Python to see exactly what these frameworks hide from you.

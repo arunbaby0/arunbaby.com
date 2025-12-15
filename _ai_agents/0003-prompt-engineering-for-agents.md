@@ -128,7 +128,7 @@ How do you know if V2 is better than V1? You can't eyeball it.
 *   **The Pipeline:** `CI/CD for Prompts`. When you merge a PR changing the prompt, an automated test suite runs the 50 inputs and reports if the score dropped.
 
 ### 4.3 Automated Optimization (DSPy)
-This is the frontier (Day 29 topic, but worth mentioning).
+This is the frontier of rigorous evaluation (often using frameworks like DSPy).
 **DSPy** (Stanford) is a framework that abstracts prompts away. You write the "Signature" (Input: Question, Output: Answer), and an **Optimizer** algorithm treats the prompt as a set of weights. It iterates, rewriting the prompt automatically, observing the metric, and converging on the optimal phrasing ("Think in Hindi then translate", etc.) that humans might never guess.
 
 ---

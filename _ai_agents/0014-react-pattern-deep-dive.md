@@ -223,4 +223,4 @@ The ReAct pattern works because it respects the **Correspondence Theory of Truth
 
 By mastering the nuances of this loop—stopping sequences, parsing robustness, and error feedback—you move from "Prompt Engineering" to "Agent Runtime Engineering," building systems that can autonomously navigate the real world.
 
-In the next post, we will look at how to scale this up to problems that require complex strategy using **Planning and Decomposition**.
+While ReAct loops handle immediate tasks, larger problems require comprehensive **Planning and Decomposition** strategies.

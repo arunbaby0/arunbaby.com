@@ -18,7 +18,7 @@ difficulty: Medium-Easy
 
 ## 1. Introduction: The Greedy Agent Problem
 
-The ReAct pattern (Day 14) is powerful, but it suffers from a fundamental flaw: it is **myopic** (short-sighted).
+The ReAct pattern is powerful, but it suffers from a fundamental flaw: it is **myopic** (short-sighted).
 ReAct looks at the current state, decides the *immediate* next step, acts, and repeats.
 *   *Analogy:* ReAct is like driving by looking only 5 feet in front of the car. You might avoid the pothole, but you might also miss the turnoff for the highway and drive in circles.
 *   *Symptom:* For long-horizon tasks ("Write a full-stack app"), ReAct agents get "distracted." They spend 50 steps perfecting the CSS of the login button and forget to write the backend API.
@@ -216,4 +216,4 @@ Planning turns an Agent from a "Task Doer" into a "Project Manager."
 An agent without a plan is a leaf in the wind. An agent with a plan is a guided missile.
 
 This concludes the "Foundations" and "Intermediate Concepts" of our curriculum. We have covered Models, Prompts, Tools, Memory, RAG, and Planning.
-In the next section (Days 16-28), we will move into **Deep Domain Specialization**: Real-time Pipelines, Voice Agents with WebRTC, and Vision Agents.
+With planning in place, we move into **Deep Domain Specialization**: Real-time Pipelines, Voice Agents, and Vision Agents.

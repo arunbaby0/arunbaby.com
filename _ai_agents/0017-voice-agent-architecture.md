@@ -214,4 +214,4 @@ Voice Agents are a distributed systems problem wrapped in a UX problem.
 *   **Barge-In** requires rigorous state management to prevent feedback loops.
 *   **Cost** requires careful model selection.
 
-In the next post, we will look at **Frameworks (LiveKit/Pipecat)** that abstract this complexity away, handling the WebRTC networking and VAD logic for you, so you don't have to build the plumbing from scratch.
+To manage this complexity, we often rely on dedicated **Voice Frameworks** that abstract away the plumbing of WebRTC and VAD.

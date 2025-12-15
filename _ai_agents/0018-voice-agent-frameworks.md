@@ -22,7 +22,7 @@ difficulty: Medium
 
 ## 1. Introduction: The WebRTC Nightmare
 
-In Day 16, we built a WebSocket pipeline. That works for server-to-server or simple hobby apps.
+Simple WebSocket pipelines work for server-to-server or simple hobby apps.
 But if you want to run a Voice Agent in a browser (Chrome/Safari), connect to a Telephone Line (SIP), or handle bad 4G connections, you enter the world of **WebRTC (Web Real-Time Communication)**.
 
 **Why WebRTC is Hard (The "DIY" Trap):**
@@ -184,4 +184,4 @@ If LiveKit/Pipecat is "Platform-as-a-Service" (PaaS) where you write code, there
 
 These frameworks standardize the **Transport Layer** so you can focus entirely on the **Intelligence Layer**.
 
-In the next post, we will zoom in on the specific algorithmic challenge of **Voice Activity Detection**: the math of detecting silence.
+A critical component of these frameworks is **Voice Activity Detection (VAD)**, the math of detecting silence.

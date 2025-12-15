@@ -153,4 +153,4 @@ Document Processing determines the **Ceiling** of your agent's intelligence.
 *   **Tables:** Must be converted to Markdown.
 *   **Charts:** Must be captioned by Vision models.
 
-In the next section (Day 11), we will look at **Vector Search Algorithms** in depth and how to scale this to millions of documents.
+To scale this to millions of documents, we must master **Vector Search Algorithms** like HNSW and quantization.

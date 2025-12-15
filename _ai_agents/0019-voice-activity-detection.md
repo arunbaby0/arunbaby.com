@@ -196,4 +196,4 @@ VAD is the heartbeat of a Voice Agent. It defines the "Rhythm" of conversation.
 *   **State Machines** are required to handle the jitter of raw probabilities.
 *   **Semantic Analysis** prevents interrupting users who are thinking.
 
-In the next post, we will look at the bleeding edge: **Real-Time Speech-to-Speech Agents**, where we remove text from the loop entirely models like GPT-4o Audio.
+Beyond VAD, the frontier of voice is **Real-Time Speech-to-Speech Agents**, removing text from the loop entirely.

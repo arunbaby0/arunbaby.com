@@ -401,4 +401,4 @@ Vector Search gives your agent a **Long-Term Memory**. Without it, an agent is t
 
 By mastering these layers, you move from a simple retrieval script to a robust **Knowledge Retrieval Architecture** capable of supporting enterprise-grade agents.
 
-In the next post, we will look at **Context Window Management**, which handles how we feed this retrieved data into the LLM efficiently.
+With retrieval mastered, the next challenge is managing the **Context Window**, deciding how to feed this data into the LLM efficiently.

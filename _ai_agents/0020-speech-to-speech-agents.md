@@ -20,7 +20,7 @@ difficulty: Medium
 
 ## 1. Introduction: The Cascade Problem
 
-For the last 4 days, we discussed the **Cascade Architecture**:
+Standard voice agents use a **Cascade Architecture**:
 `Audio -> STT -> Text -> LLM -> Text -> TTS -> Audio`.
 
 This works—it powers Siri, Alexa, and most enterprise bots—but it has two fatal flaws that prevent true "Human-Level" interaction:
@@ -143,6 +143,4 @@ Speech-to-Speech is the endgame for Voice Agents.
 *   **Emotion** is preserved, enabling true empathy in medical/support agents.
 *   **Complexity** shifts from "Pipeline Engineering" (gluing STT/TTS) to "Model Deployment" (hosting a massive transformer).
 
-This concludes our section on **Real-Time & Voice**. We have moved from simple WebSockets to cutting-edge Omni-models.
-
-In the next section (Days 21-25), we will move to **Vision Agents**, learning how to make agents "See" screens, documents, and the physical world.
+This concludes the exploration of Real-Time & Voice. The journey moves next to **Vision Agents**, learning how to make agents "See" screens, documents, and the physical world.

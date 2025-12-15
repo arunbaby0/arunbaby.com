@@ -64,7 +64,7 @@ def reflection_loop(goal):
 
 ## 3. Pattern 2: Tool Use (The ReAct Loop)
 
-We have covered this extensively in previous posts. This is the pattern where the LLM stops being a "Know-it-all" and becomes a "Seek-it-all."
+This is the pattern where the LLM stops being a "Know-it-all" and becomes a "Seek-it-all."
 
 ### 3.1 The Architecture
 *   **Thought:** The model reasons about what is missing.
@@ -170,4 +170,4 @@ The job of the AI Engineer is shifting. We are no longer just "Prompting." We ar
 *   **Planning** makes agents capable of long horizons.
 *   **Multi-Agent** makes agents specialized.
 
-In the next section of the curriculum (Days 9-28), we enter the **Intermediate** phase. We will stop talking about generic agents and start building agents that master specific domains, starting with the most important domain of all: **RAG and Document Intelligence**.
+To build agents that master specific domains, we must first master **RAG and Document Intelligence**, which allows agents to read and retrieve external knowledge.

@@ -177,4 +177,4 @@ RAG turns an LLM from a Dreamer into a Librarian.
 *   **Agents** use retrieval as a tool to ground their answers in fact.
 
 However, RAG is only as good as the incoming data. If you feed it messy PDFs, you get messy vectors.
-In the next post, we will look at the input side of this pipeline: **Document Processing**. How do we actually read messy PDFs, Tables, and Charts?
+Next, we must look at the input side of this pipeline: **Document Processing**. How do we actually read messy PDFs, Tables, and Charts?

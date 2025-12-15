@@ -22,7 +22,7 @@ difficulty: Medium
 
 ## 1. Introduction: The 200ms Wall
 
-In the previous fifteen days of this curriculum, we have built agents that "Reasoned". They took their time. They accepted a prompt, thought for 10 seconds, searched a vector database, formulated a plan, and eventually replied. For a Chatbot, an Email Assistant, or a Code Generator, 10 seconds is acceptable. The user is accustomed to waiting for a "complex" result.
+Historically, agent development focused on reasoning. Agents accepted a prompt, thought for 10 seconds, searched a vector database, formulated a plan, and eventually replied. For a Chatbot, an Email Assistant, or a Code Generator, 10 seconds is acceptable. The user is accustomed to waiting for a "complex" result.
 
 However, for a **Voice Agent**, a **Trading Agent**, or a **Real-Time Gaming Agent**, 10 seconds is not just bad; it is broken.
 
@@ -339,6 +339,4 @@ Real-time is the frontier of Agent UX. It is where "Software Engineering" meets 
 *   **Backpressure** handling ensures the agent doesn't sound "Laggy" during interruptions.
 *   **Orchestration** decouples the brain from the mouth.
 
-A standard REST API engineer thinks in "Transactions" (Atomic, Independent). A Real-Time Agent engineer thinks in "Flows" (Continuous, Dependent).
-
-In the next post, we will apply these pipelines specifically to **Voice Agents**, adding the complexity of Speech-to-Text accuracy, Cost Analysis, and the specific physics of sound.
+These real-time pipelines are the foundation for **Voice Agents**, which add layers of complexity regarding STT accuracy, Cost Analysis, and the physics of sound.
