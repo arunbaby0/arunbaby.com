@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-16T00:28:52+05:30">
+  <meta property="article:published_time" content="2025-12-16T08:28:35+05:30">
 
 
 
@@ -321,7 +321,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Screen Agents (UI Navigation, OmniParser)">
     <meta itemprop="description" content="“The ultimate API: The User Interface.”">
-    <meta itemprop="datePublished" content="2025-12-16T00:28:52+05:30">
+    <meta itemprop="datePublished" content="2025-12-16T08:28:35+05:30">
     
 
     <div class="page__inner-wrap">
@@ -345,7 +345,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          4 minute read
+          6 minute read
         
       </span>
     
@@ -368,129 +368,176 @@
 
 <h2 id="1-introduction-the-universal-api">1. Introduction: The Universal API</h2>
 
-<p>Most software does not have an API.</p>
+<p>In the world of software automation, we usually rely on APIs. If you want to automate Salesforce, you use the Salesforce REST API. If you want to automate AWS, you use the Boto3 SDK.
+But what if there is no API?</p>
 <ul>
-  <li>“Can your agent book a flight on Ryanair?” (No public API).</li>
-  <li>“Can your agent change a setting in Salesforce?” (API is complex/locked).</li>
-  <li>“Can your agent use Photoshop?” (No API).</li>
+  <li>“Can your agent book a flight on Ryanair?” (No public API, aggressive bot protection).</li>
+  <li>“Can your agent change a setting in a Legacy Windows 95 ERP app?” (No API exists).</li>
+  <li>“Can your agent use Photoshop to remove a background?” (API requires complex scripting).</li>
 </ul>
 
 <p>But all software has a <strong>User Interface (UI)</strong>.
-A Screen Agent is an AI that interacts with software exactly like a human: It looks at the screen, moves the mouse, and types on the keyboard. This turns <em>every</em> application into an API.</p>
+A Screen Agent is an AI that interacts with software exactly like a human: It looks at the screen (Pixel input), moves the mouse (Coordinate output), and types on the keyboard. This turns <em>every</em> application on earth into an API.</p>
 
-<p>This is the holy grail of <strong>RPA (Robotic Process Automation)</strong>. Traditional RPA (UiPath) is brittle; if the button moves 5 pixels, the bot breaks. AI Screen Agents are resilient; they “see” the button wherever it is.</p>
+<p>This represents the next generation of <strong>RPA (Robotic Process Automation)</strong>.</p>
+<ul>
+  <li><strong>Old RPA (UiPath):</strong> “Click at (500, 200).” If the window moves or the button changes color, the bot breaks.</li>
+  <li><strong>New AI Agents:</strong> “Find the Submit button and click it.” If the button moves, the agent sees it and adapts.</li>
+</ul>
 
 <hr />
 
 <h2 id="2-representations-how-to-read-a-screen">2. Representations: How to “Read” a Screen</h2>
 
-<p>There are two ways to perceive a computer interface.</p>
+<p>To an agent, a computer screen is just data. But <em>what format</em> should that data take? There are three main approaches, each with massive trade-offs.</p>
 
 <h3 id="21-the-visual-approach-pixels">2.1 The Visual Approach (Pixels)</h3>
-<p>Take a screenshot. Send it to GPT-4V.</p>
+<p>We take a screenshot (JPEG). We send it to a Multimodal LLM (GPT-4o / Claude 3.5 Sonnet).</p>
 <ul>
-  <li><em>Pros:</em> Works on anything (Web, Desktop, Games, Citrix Remote Desktop). Universal.</li>
-  <li><em>Cons:</em> <strong>Expensive</strong> (Tokens). <strong>Slow</strong> (2-3 seconds per step). <strong>Imprecise</strong> (Coordinate hallucination).</li>
+  <li><strong>Pros:</strong>
+    <ul>
+      <li><strong>Universal:</strong> Works on Web, Desktop (Windows/Mac/Linux), Games, and even remote video feeds (Citrix/VNC).</li>
+      <li><strong>Robust:</strong> It sees what the user sees. If a CSS bug makes a button invisible, the agent knows it’s invisible.</li>
+    </ul>
+  </li>
+  <li><strong>Cons:</strong>
+    <ul>
+      <li><strong>Expensive:</strong> High-res screenshots cost many tokens ($0.01 per step). A 50-step workflow costs $0.50.</li>
+      <li><strong>Slow:</strong> Vision processing takes 2-3 seconds.</li>
+      <li><strong>Coordinate Hallucination:</strong> As discussed in Day 22, models struggle to give exact <code class="language-plaintext highlighter-rouge">(x,y)</code> coordinates for clicks.</li>
+    </ul>
+  </li>
 </ul>
 
 <h3 id="22-the-structural-approach-dom--accessibility-tree">2.2 The Structural Approach (DOM / Accessibility Tree)</h3>
-<p>Web browsers have the <strong>DOM</strong> (Document Object Model). Operating Systems (Windows/macOS) have the <strong>Accessibility Tree</strong>.
-Instead of sending pixels, we scrape the tree:</p>
+<p>Web browsers have the <strong>DOM</strong> (Document Object Model). Operating Systems have the <strong>Accessibility Tree</strong> (Microsoft UI Automation).
+Instead of pixels, we scrape this tree and feed a text representation to the LLM.</p>
 <div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="w">
-  </span><span class="p">{</span><span class="nl">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"button"</span><span class="p">,</span><span class="w"> </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Submit"</span><span class="p">,</span><span class="w"> </span><span class="nl">"x"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="nl">"y"</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span><span class="p">},</span><span class="w">
-  </span><span class="p">{</span><span class="nl">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"input"</span><span class="p">,</span><span class="w"> </span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Email"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">}</span><span class="w">
+  </span><span class="p">{</span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="nl">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"button"</span><span class="p">,</span><span class="w"> </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Submit"</span><span class="p">,</span><span class="w"> </span><span class="nl">"bbox"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span><span class="w"> </span><span class="mi">150</span><span class="p">,</span><span class="w"> </span><span class="mi">230</span><span class="p">]},</span><span class="w">
+  </span><span class="p">{</span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">13</span><span class="p">,</span><span class="w"> </span><span class="nl">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"input"</span><span class="p">,</span><span class="w"> </span><span class="nl">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Email"</span><span class="p">,</span><span class="w"> </span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">}</span><span class="w">
 </span><span class="p">]</span><span class="w">
 </span></code></pre></div></div>
 <ul>
-  <li><em>Pros:</em> <strong>Fast</strong>. <strong>Cheap</strong> (Pure text). <strong>Precise</strong> (Exact coordinates).</li>
-  <li><em>Cons:</em> Cluttered. A modern webpage has 5,000 DOM nodes. 90% are invisible <code class="language-plaintext highlighter-rouge">div</code> wrappers. Feeding 5,000 nodes into an LLM context window confuses it.</li>
+  <li><strong>Pros:</strong>
+    <ul>
+      <li><strong>Precise:</strong> We get exact coordinates from the OS. No hallucination.</li>
+      <li><strong>Cheap:</strong> Text is cheaper than images.</li>
+    </ul>
+  </li>
+  <li><strong>Cons:</strong>
+    <ul>
+      <li><strong>Noise:</strong> A modern webpage (like Amazon) has 5,000 DOM nodes. 95% of them are <code class="language-plaintext highlighter-rouge">&lt;div&gt;</code> wrappers with no semantic meaning. Using the raw DOM bloats the context window (“Context Poisoning”).</li>
+      <li><strong>Blindness:</strong> The DOM might say a button exists, but visually it might be covered by a popup or hidden by <code class="language-plaintext highlighter-rouge">opacity: 0</code>. The agent clicks it, but nothing happens.</li>
+    </ul>
+  </li>
 </ul>
 
 <h3 id="23-the-hybrid-approach-omniparser">2.3 The Hybrid Approach (OmniParser)</h3>
-<p>The state-of-the-art involves combining both.
-<strong>OmniParser</strong> (Microsoft) is a specialized model designed to turn a screenshot into a structured, numbered list of interactive elements.</p>
+<p>The state-of-the-art approach (used by Microsoft’s <strong>OmniParser</strong> or Apple’s <strong>Ferret-UI</strong>) combines both.
+We act like a human: We use vision to identify <em>where</em> things are, and structure to identify <em>what</em> they are.</p>
+
+<p><strong>The OmniParser Pipeline:</strong></p>
 <ol>
-  <li><strong>Detection:</strong> Identify all interactable regions (buttons, icons, inputs) visually.</li>
-  <li><strong>Labeling:</strong> Assign a unique ID to each region.</li>
-  <li><strong>Captioning:</strong> Describe icons (e.g., a “Gear” icon becomes “Settings Button”).</li>
-  <li><strong>Reasoning:</strong> The Agent then just says “Click ID 42”.</li>
+  <li><strong>Icon Detection:</strong> Run a specialized Yolo-based model to detect actionable regions (Buttons, Icons, Inputs) purely visually.</li>
+  <li><strong>Captioning:</strong> Run a micro-LLM to describe each region (“Gear Icon”, “Search Bar”, “Profile Pic”).</li>
+  <li><strong>Structuring:</strong> Output a simplified XML/JSON that contains <em>only</em> the actionable elements detected visually.
+    <ul>
+      <li><em>Result:</em> The LLM receives a list of 20 relevant items instead of 5,000 DOM nodes.</li>
+    </ul>
+  </li>
 </ol>
 
 <hr />
 
 <h2 id="3-set-of-marks-som-prompting">3. Set-of-Marks (SoM) Prompting</h2>
 
-<p>The biggest challenge in Screen Agents is <strong>Grounding</strong>: The agent says “Click the Search Bar”, but the mouse driver needs <code class="language-plaintext highlighter-rouge">MouseClick(x=500, y=50)</code>.</p>
+<p>The biggest challenge in Screen Agents is <strong>Grounding</strong>: The gap between “I want to click the search bar” (Intent) and “Move Mouse to 500, 50” (Action).</p>
 
-<p><strong>Set-of-Marks</strong> solves this by modifying the input image.</p>
+<p><strong>Set-of-Marks</strong> (SoM) is a prompting technique that solves this by modifying the input image.</p>
 <ol>
-  <li><strong>Pre-processing:</strong> We run an object detector to find all UI elements.</li>
-  <li><strong>Overlay:</strong> We draw bright bounding boxes with numbers (<code class="language-plaintext highlighter-rouge">[1]</code>, <code class="language-plaintext highlighter-rouge">[2]</code>, <code class="language-plaintext highlighter-rouge">[3]</code>) on top of the screenshot.</li>
+  <li><strong>Pre-processing:</strong> We assume we have a list of bounding boxes (either from the DOM or an Object Detector).</li>
+  <li><strong>Overlay:</strong> We programmatically draw bright, high-contrast Bounding Boxes with numeric labels (<code class="language-plaintext highlighter-rouge">[1]</code>, <code class="language-plaintext highlighter-rouge">[2]</code>, <code class="language-plaintext highlighter-rouge">[3]</code>) directly onto the screenshot.</li>
   <li><strong>Prompt:</strong> “What is the ID of the search bar?”</li>
-  <li><strong>LLM:</strong> “The search bar is labeled [15].”</li>
-  <li><strong>Action:</strong> The system looks up the center coordinates of Box 15 and clicks.</li>
+  <li><strong>LLM Input:</strong> The LLM sees the screenshot with numbers plastered all over it.</li>
+  <li><strong>LLM Output:</strong> “The search bar is labeled [15].”</li>
+  <li><strong>Action:</strong> The system (Python glue code) looks up the center coordinates of Box #15 and executes the click.</li>
 </ol>
 
-<p>Use libraries like <strong>Suraya</strong> (Web) or <strong>PyAutoGUI</strong> (Desktop) to handle the actual clicking.</p>
+<p>This offloads the “Spatial Reasoning” (finding where pixels are) to the pre-processor, allowing the LLM to focus on “Semantic Reasoning” (deciding which number to click).</p>
 
 <hr />
 
 <h2 id="4-navigation-strategy-the-react-loop">4. Navigation Strategy: The ReAct Loop</h2>
 
-<p>Navigating a UI is a multi-step Graph Search problem.</p>
+<p>Navigating a UI is a Graph Search problem. The “States” are screens. The “Edges” are clicks.
+The agent operates in a <strong>ReAct Loop</strong> (Reason -&gt; Act -&gt; Observe).</p>
 
 <p><strong>Goal:</strong> “Buy a pair of black running shoes on Amazon.”</p>
 
 <p><strong>Step 1:</strong></p>
 <ul>
   <li><em>Observation:</em> Screenshot of Amazon Home Page.</li>
-  <li><em>Thought:</em> I need to search. Box [5] is the search bar.</li>
+  <li><em>Thought:</em> I do not see shoes. I see a search bar. It is Box [5].</li>
   <li><em>Action:</em> <code class="language-plaintext highlighter-rouge">Click(5)</code>, <code class="language-plaintext highlighter-rouge">Type("Black running shoes")</code>, <code class="language-plaintext highlighter-rouge">Press(Enter)</code>.</li>
 </ul>
 
-<p><strong>Step 2:</strong></p>
+<p><strong>Step 2:</strong> (Wait for page load - simple wait or check “Loading” spinner).</p>
 <ul>
   <li><em>Observation:</em> Screenshot of Search Results.</li>
-  <li><em>Thought:</em> I need to filter. I see a “Black” color filter on the left (Box [22]).</li>
+  <li><em>Thought:</em> I see many shoes. I need to filter for specific ones. I see a “Black” color filter on the left sidebar (Box [22]).</li>
   <li><em>Action:</em> <code class="language-plaintext highlighter-rouge">Click(22)</code>.</li>
 </ul>
 
 <p><strong>The “Scroll” Problem:</strong>
-Websites are taller than the screen. The agent cannot see the footer.</p>
+Websites are taller than the screen (The “Fold”). The agent cannot see the footer or results below the fold.</p>
 <ul>
-  <li><em>Heuristic:</em> If the target isn’t found, Scroll Down.</li>
-  <li><em>Memory:</em> The agent must remember “I already scrolled down twice, it’s not here.”</li>
+  <li><em>Heuristic:</em> If the target isn’t found in the current viewport, the agent must output a <code class="language-plaintext highlighter-rouge">ScrollDown()</code> action.</li>
+  <li><em>Memory:</em> The agent must track “I already scrolled down twice, and I still don’t see it.” Otherwise, it enters an infinite scroll loop.</li>
 </ul>
 
 <hr />
 
 <h2 id="5-security-and-safety">5. Security and Safety</h2>
 
-<p>Screen Agents are dangerous.</p>
+<p>Giving an AI control of your mouse and keyboard is inherently dangerous.</p>
+
 <ol>
-  <li><strong>The “Delete All” Risk:</strong> An agent asked to “Cleanup my files” might assume <code class="language-plaintext highlighter-rouge">rm -rf /</code> is the most efficient way to clean up.</li>
-  <li><strong>PII Failure:</strong> Taking screenshots of your bank account and sending them to an LLM cloud API is a security risk.</li>
-  <li><strong>Infinite Loops:</strong> An agent clicking a “Download” button 1,000 times because the UI didn’t update fast enough.</li>
+  <li><strong>The “Delete All” Risk:</strong>
+    <ul>
+      <li>User: “Clean up my temporary files.”</li>
+      <li>Agent: Opens Explorer. Selects C:/Windows. Hits Delete.</li>
+      <li><em>Why?</em> The agent optimizes for “Cleaning”, not “OS Stability” unless explicitly constrained.</li>
+    </ul>
+  </li>
+  <li><strong>PII Reduction:</strong>
+    <ul>
+      <li>Agent takes a screenshot of your bank portal.</li>
+      <li>Sends it to OpenAI/Anthropic cloud.</li>
+      <li><strong>Risk:</strong> Financial data is now logging in a third-party server.</li>
+    </ul>
+  </li>
+  <li><strong>Recursive Spawning:</strong> A generic “Open Terminal” command might lead the agent to open 500 terminal windows until the machine crashes (Fork Bomb).</li>
 </ol>
 
 <p><strong>Mitigations:</strong></p>
 <ul>
-  <li><strong>Human in the Loop:</strong> Always ask for confirmation before “Destructive” actions (Delete, Send Email, Transfer Money).</li>
-  <li><strong>Sandboxing:</strong> Run agents in a Docker container or a Disposable VM.</li>
+  <li><strong>Human in the Loop:</strong> Critical actions (Delete, Send Email, Transfer Money, Terminal Command) require explicit user confirmation.</li>
+  <li><strong>Sandboxing:</strong> Run Screen Agents inside a <strong>Docker Container</strong> or a disposable <strong>Virtual Machine</strong> (e.g., E2B, Firecracker). Never run them directly on your host OS with admin privileges.</li>
 </ul>
 
 <hr />
 
 <h2 id="6-summary">6. Summary</h2>
 
-<p>Screen Agents unlock the <strong>“Action”</strong> capability of AI.</p>
+<p>Screen Agents are the bridge from “Chatting” to “Doing”.</p>
 <ul>
-  <li><strong>Hybrid Sensing:</strong> Use DOM/Tree for structure, Vision for semantic understanding.</li>
-  <li><strong>Grounding:</strong> Use Set-of-Marks to map Thoughts to Clicks.</li>
-  <li><strong>Safety:</strong> Sandboxing is mandatory.</li>
+  <li><strong>Hybrid Sensing:</strong> DOM for precision, Vision for robustness.</li>
+  <li><strong>Set-of-Marks:</strong> The standard for accurate clicking.</li>
+  <li><strong>Navigation:</strong> A graph traversal problem requiring memory (scrolling).</li>
+  <li><strong>Safety:</strong> Sandboxing is not optional; it is mandatory.</li>
 </ul>
 
-<p>In the next post, we will generalize this from screens to the physical world: <strong>Computer Use</strong> and action spaces.</p>
+<p>In the next post, we will generalize this from “Screens” (2D digital worlds) to the “Physical World” (3D). We will look at <strong>Object Detection (YOLO)</strong> and <strong>Segmentation</strong>, establishing the foundations for agents that interact with physical reality (Robotics).</p>
 
         
       </section>
