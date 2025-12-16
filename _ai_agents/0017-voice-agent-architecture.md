@@ -12,6 +12,9 @@ tags:
   - deepgram
   - elevenlabs
   - barge-in
+related_dsa_day: 17
+related_ml_day: 17
+related_speech_day: 17
   - echo-cancellation
   - cost-analysis
 difficulty: Medium

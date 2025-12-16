@@ -12,6 +12,9 @@ tags:
   - kv-cache
   - compression
 difficulty: Medium-Easy
+related_dsa_day: 12
+related_ml_day: 12
+related_speech_day: 12
 ---
 
 **"The Finite Canvas of Intelligence: Managing the Agent's RAM."**

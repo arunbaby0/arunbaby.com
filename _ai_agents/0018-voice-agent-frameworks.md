@@ -12,6 +12,9 @@ tags:
   - frameworks
   - sip
   - sfu
+related_dsa_day: 18
+related_ml_day: 18
+related_speech_day: 18
   - stun-turn
   - vapi
   - retell

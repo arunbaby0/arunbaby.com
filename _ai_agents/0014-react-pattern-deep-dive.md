@@ -12,6 +12,9 @@ tags:
   - agents
   - mrkl
   - toolformer
+related_dsa_day: 14
+related_ml_day: 14
+related_speech_day: 14
 difficulty: Medium-Easy
 ---
 

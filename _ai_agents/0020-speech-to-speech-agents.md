@@ -12,6 +12,9 @@ tags:
   - multimodal
   - audio-tokenization
   - vq-vae
+related_dsa_day: 20
+related_ml_day: 20
+related_speech_day: 20
   - encodec
 difficulty: Medium
 ---

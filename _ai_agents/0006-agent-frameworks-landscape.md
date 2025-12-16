@@ -12,6 +12,9 @@ tags:
   - crewai
   - llamaindex
 difficulty: Easy
+related_dsa_day: 6
+related_ml_day: 6
+related_speech_day: 6
 ---
 
 **"To Framework or Not to Framework? Navigating the Agent Ecosystem."**

@@ -12,6 +12,9 @@ tags:
   - streaming
   - asyncio
   - backpressure
+related_dsa_day: 16
+related_ml_day: 16
+related_speech_day: 16
   - tcp-udp
   - load-balancing
   - redis

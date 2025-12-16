@@ -12,6 +12,9 @@ tags:
   - ragas
   - knowledge-retrieval
 difficulty: Medium-Easy
+related_dsa_day: 9
+related_ml_day: 9
+related_speech_day: 9
 ---
 
 **"Giving the Brain a Library: The Foundation of Knowledge-Intensive Agents."**

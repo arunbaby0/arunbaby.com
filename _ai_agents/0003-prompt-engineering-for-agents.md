@@ -12,6 +12,9 @@ tags:
   - chain-of-thought
 difficulty: Easy
 ---
+related_dsa_day: 3
+related_ml_day: 3
+related_speech_day: 3
 
 **"Programming with English: The High-Level Language of 2024."**
 

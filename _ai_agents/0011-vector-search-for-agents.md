@@ -12,6 +12,9 @@ tags:
   - faiss
   - rrf
   - hybrid-search
+related_dsa_day: 11
+related_ml_day: 11
+related_speech_day: 11
 difficulty: Medium-Easy
 ---
 

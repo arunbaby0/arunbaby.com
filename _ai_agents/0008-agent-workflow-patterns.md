@@ -12,6 +12,9 @@ tags:
   - andrew-ng
   - multi-agent
 difficulty: Medium-Easy
+related_dsa_day: 8
+related_ml_day: 8
+related_speech_day: 8
 ---
 
 **"Better workflows beat better models." — Dr. Andrew Ng**

@@ -12,6 +12,9 @@ tags:
   - benchmarks
 difficulty: Easy
 ---
+related_dsa_day: 2
+related_ml_day: 2
+related_speech_day: 2
 
 **"The Engine of Autonomy: Understanding the Agentic 'Brain'."**
 

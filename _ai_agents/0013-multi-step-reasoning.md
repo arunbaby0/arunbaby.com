@@ -12,6 +12,9 @@ tags:
   - o1
   - pal
 difficulty: Medium-Easy
+related_dsa_day: 13
+related_ml_day: 13
+related_speech_day: 13
 ---
 
 **"Thinking Fast and Slow: How to make LLMs stop guessing and start solving."**

@@ -12,6 +12,9 @@ tags:
   - turn-taking
   - end-of-speech
   - zero-crossing-rate
+related_dsa_day: 19
+related_ml_day: 19
+related_speech_day: 19
 difficulty: Medium
 ---
 

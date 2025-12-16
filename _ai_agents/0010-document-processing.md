@@ -12,6 +12,9 @@ tags:
   - unstructured
   - llamaparse
 difficulty: Medium-Easy
+related_dsa_day: 10
+related_ml_day: 10
+related_speech_day: 10
 ---
 
 **"Garbage In, Garbage Out. The Art of Reading Messy Data."**

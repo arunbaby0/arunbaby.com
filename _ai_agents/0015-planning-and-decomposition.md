@@ -12,6 +12,9 @@ tags:
   - reasoning
   - csp
 difficulty: Medium-Easy
+related_dsa_day: 15
+related_ml_day: 15
+related_speech_day: 15
 ---
 
 **"If you fail to plan, you are planning to fail (and burn tokens)."**

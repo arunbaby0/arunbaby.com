@@ -12,6 +12,9 @@ tags:
   - memgpt
 difficulty: Easy
 ---
+related_dsa_day: 5
+related_ml_day: 5
+related_speech_day: 5
 
 **"The difference between a Chatbot and a Partner is Memory."**
 

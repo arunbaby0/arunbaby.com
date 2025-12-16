@@ -12,6 +12,9 @@ tags:
   - philosophy
   - history
 difficulty: Easy
+related_dsa_day: 1
+related_ml_day: 1
+related_speech_day: 1
 ---
 
 **"From Passive Tools to Active Assistants: The Cognitive Revolution in Software."**
