@@ -33,16 +33,17 @@ Each topic includes:
 
 **Vision Agents:**
 - [Vision Agent Fundamentals](/ai-agents/0021-vision-agent-fundamentals/)
-- [Screenshot Understanding Agents](/ai-agents/0022-screenshot-understanding/)
+- [Screenshot Understanding Agents](/ai-agents/0022-screenshot-understanding-agents/)
 
 **Multi-Agent Systems:**
 - [Multi-Agent Architectures](/ai-agents/0029-multi-agent-architectures/)
-- [Agent Communication Protocols](/ai-agents/0030-agent-communication/)
+- [Agent Communication Protocols](/ai-agents/0030-agent-communication-protocols/)
 
 **Advanced Topics:**
-- [Autonomous Agent Architectures](/ai-agents/0038-autonomous-agents/)
-- [Agent Evaluation Frameworks](/ai-agents/0042-agent-evaluation/)
-- [Agent Reliability Engineering](/ai-agents/0056-agent-reliability/)
+- [Web Browsing Agents](/ai-agents/0036-web-browsing-agents/)
+- [Code Execution Agents](/ai-agents/0037-code-execution-agents/)
+- [Autonomous Agent Architectures](/ai-agents/0038-autonomous-agent-architectures/)
+- [Agent Evaluation Frameworks](/ai-agents/0042-agent-evaluation-frameworks/)
 
 ---
 
