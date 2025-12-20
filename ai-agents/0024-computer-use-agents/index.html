@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-20T18:15:29+05:30">
+  <meta property="article:published_time" content="2025-12-20T22:24:35+05:30">
 
 
 
@@ -321,7 +321,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Computer Use Agents">
     <meta itemprop="description" content="“Moving from ‘Chatting’ with an AI to ‘Co-working’ with an OS.”">
-    <meta itemprop="datePublished" content="2025-12-20T18:15:29+05:30">
+    <meta itemprop="datePublished" content="2025-12-20T22:24:35+05:30">
     
 
     <div class="page__inner-wrap">
@@ -368,7 +368,7 @@
 
 <h2 id="1-introduction-the-agent-as-an-operator">1. Introduction: The Agent as an Operator</h2>
 
-<p>In our previous posts, we saw agents browsing the web (Day 23) and understanding screenshots (Day 22). But a <strong>Computer Use Agent</strong> goes a step further: it treats the entire Operating System (Windows, macOS, Linux) as its environment.</p>
+<p>A <strong>Computer Use Agent</strong> goes a step further than browsing and screenshot understanding: it treats the entire Operating System (Windows, macOS, Linux) as its environment.</p>
 
 <p>Instead of just interacting with a DOM tree or a mobile app, these agents operate the <strong>Mouse and Keyboard</strong> just like a human. They can open Excel, move files between folders, install software, and debug code in a local VS Code instance.</p>
 
@@ -438,9 +438,9 @@
 
 <h2 id="6-logic-link-tokenization-as-an-action-space">6. Logic Link: Tokenization as an Action Space</h2>
 
-<p>In our ML section (Day 24), we discuss <strong>Tokenization (BPE/SentencePiece)</strong>. How does this relate to Computer Use?</p>
+<p>In our ML section, we discuss <strong>Tokenization (BPE/SentencePiece)</strong>. How does this relate to Computer Use?</p>
 
-<p>In NLP, we break down “Unstructured Text” into a “Structured Vocabulary” (Tokens). 
+<p>In NLP, we break down “Unstructured Text” into a “Structured Vocabulary” (Tokens).
 In Computer Use, we break down a “Infinite GUI” into a “Structured Action Vocabulary” (Move, Click, Type).</p>
 
 <p>Just as a model learns which <em>sub-word</em> comes next, a Computer Use Agent learns which <em>sub-action</em> comes next. If the agent sees an “Open” dialog, its “Action Word” should highly likely be <code class="language-plaintext highlighter-rouge">mouse_move</code> followed by <code class="language-plaintext highlighter-rouge">click</code>.</p>
@@ -473,8 +473,8 @@ In Computer Use, we break down a “Infinite GUI” into a “Structured Action 
 <h3 id="81-the-tool-definition-contract">8.1 The Tool-Definition Contract</h3>
 <p>Unlike previous models that just “wrote code” to control the mouse, Claude’s computer use tools are defined with a strict schema. The model doesn’t just output <code class="language-plaintext highlighter-rouge">mouse_click</code>; it outputs a structured request:</p>
 <div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mouse_move"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"coordinate"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">450</span><span class="p">,</span><span class="w"> </span><span class="mi">210</span><span class="p">]</span><span class="w">
+ </span><span class="nl">"action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mouse_move"</span><span class="p">,</span><span class="w">
+ </span><span class="nl">"coordinate"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">450</span><span class="p">,</span><span class="w"> </span><span class="mi">210</span><span class="p">]</span><span class="w">
 </span><span class="p">}</span><span class="w">
 </span></code></pre></div></div>
 
@@ -551,13 +551,10 @@ In Computer Use, we break down a “Infinite GUI” into a “Structured Action 
 <ul>
   <li><em>Cause:</em> A pop-up appeared that the agent didn’t expect.</li>
   <li><em>Cause:</em> The mouse clicked 2 pixels too far to the left.</li>
-  <li><em>The Fix:</em> <strong>Self-Correction Loops</strong>.
-    <ul>
-      <li>The agent must take a screenshot <em>after</em> every action.</li>
-      <li>It must compare “Expected State” vs “Actual State.”</li>
-      <li>If they don’t match, the agent must “Backtrack” (e.g., hit <code class="language-plaintext highlighter-rouge">Esc</code>) and try a different approach.</li>
-    </ul>
-  </li>
+  <li><em>The Fix:</em> <strong>Self-Correction Loops</strong>.</li>
+  <li>The agent must take a screenshot <em>after</em> every action.</li>
+  <li>It must compare “Expected State” vs “Actual State.”</li>
+  <li>If they don’t match, the agent must “Backtrack” (e.g., hit <code class="language-plaintext highlighter-rouge">Esc</code>) and try a different approach.</li>
 </ul>
 
 <hr />
@@ -627,16 +624,16 @@ Models like <strong>Google RT-2</strong> or <strong>Figure 01</strong> don’t o
 
 <p><strong>The “Fallthrough” Code:</strong></p>
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">click_button</span><span class="p">(</span><span class="n">label</span><span class="p">):</span>
-    <span class="c1"># 1. Try to find the button in the Accessibility Tree (Fast/Reliable)
-</span>    <span class="n">coord</span> <span class="o">=</span> <span class="n">accessibility_api</span><span class="p">.</span><span class="nf">get_coordinates</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">coord</span><span class="p">:</span> <span class="k">return</span> <span class="n">mouse</span><span class="p">.</span><span class="nf">click</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
+ <span class="c1"># 1. Try to find the button in the Accessibility Tree (Fast/Reliable)
+</span> <span class="n">coord</span> <span class="o">=</span> <span class="n">accessibility_api</span><span class="p">.</span><span class="nf">get_coordinates</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+ <span class="k">if</span> <span class="n">coord</span><span class="p">:</span> <span class="k">return</span> <span class="n">mouse</span><span class="p">.</span><span class="nf">click</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
 
-    <span class="c1"># 2. If not found, run Vision (Slower/Contextual)
-</span>    <span class="n">screenshot</span> <span class="o">=</span> <span class="n">cam</span><span class="p">.</span><span class="nf">capture</span><span class="p">()</span>
-    <span class="n">coord</span> <span class="o">=</span> <span class="n">mllm</span><span class="p">.</span><span class="nf">detect_button</span><span class="p">(</span><span class="n">screenshot</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">coord</span><span class="p">:</span> <span class="k">return</span> <span class="n">mouse</span><span class="p">.</span><span class="nf">click</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
+ <span class="c1"># 2. If not found, run Vision (Slower/Contextual)
+</span> <span class="n">screenshot</span> <span class="o">=</span> <span class="n">cam</span><span class="p">.</span><span class="nf">capture</span><span class="p">()</span>
+ <span class="n">coord</span> <span class="o">=</span> <span class="n">mllm</span><span class="p">.</span><span class="nf">detect_button</span><span class="p">(</span><span class="n">screenshot</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
+ <span class="k">if</span> <span class="n">coord</span><span class="p">:</span> <span class="k">return</span> <span class="n">mouse</span><span class="p">.</span><span class="nf">click</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
 
-    <span class="k">raise</span> <span class="nc">Exception</span><span class="p">(</span><span class="sh">"</span><span class="s">Button not found</span><span class="sh">"</span><span class="p">)</span>
+ <span class="k">raise</span> <span class="nc">Exception</span><span class="p">(</span><span class="sh">"</span><span class="s">Button not found</span><span class="sh">"</span><span class="p">)</span>
 </code></pre></div></div>
 
 <hr />
@@ -814,7 +811,7 @@ Models like <strong>Google RT-2</strong> or <strong>Figure 01</strong> don’t o
   <li><strong>Benchmarking:</strong> Explore <strong>OSWorld</strong> or <strong>Tau Bench</strong> to see how your agent stacks up against state-of-the-art models.</li>
 </ol>
 
-<p>In the next post, we will look at <strong>Human-in-the-Loop Patterns</strong>, exploring how to keep the human “In control” while the agent performs these high-risk computer operations.</p>
+<p><strong>Further reading (optional):</strong> If you want to keep humans in control during high-risk computer actions, see <a href="/ai-agents/0025-human-in-the-loop-patterns/">Human-in-the-Loop Patterns</a>.</p>
 
         
       </section>

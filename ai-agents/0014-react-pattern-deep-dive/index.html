@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-20T18:15:29+05:30">
+  <meta property="article:published_time" content="2025-12-20T22:24:35+05:30">
 
 
 
@@ -321,7 +321,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="The ReAct Pattern Deep Dive">
     <meta itemprop="description" content="“Reason + Act: The Loop that Changed Everything.”">
-    <meta itemprop="datePublished" content="2025-12-20T18:15:29+05:30">
+    <meta itemprop="datePublished" content="2025-12-20T22:24:35+05:30">
     
 
     <div class="page__inner-wrap">
@@ -469,12 +469,9 @@ When the model generates <code class="language-plaintext highlighter-rouge">Acti
 <p>LLMs are messy. Sometimes they write <code class="language-plaintext highlighter-rouge">Action: search(Neo)</code>. Sometimes <code class="language-plaintext highlighter-rouge">Action: search("Neo")</code>. Sometimes <code class="language-plaintext highlighter-rouge">Action: [search, Neo]</code>.</p>
 <ul>
   <li><strong>The Parser:</strong> Your regex needs to be forgiving.</li>
-  <li><strong>Self-Correction:</strong> If the parser fails, do <em>not</em> crash the agent. Feed the error back to the model.
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">Observation: Invalid Syntax. You wrote 'search(Neo)' but I expected 'search("Neo")'. Please try again.</code></li>
-      <li>The model, seeing the error in its memory, will virtually always correct itself in the next turn.</li>
-    </ul>
-  </li>
+  <li><strong>Self-Correction:</strong> If the parser fails, do <em>not</em> crash the agent. Feed the error back to the model.</li>
+  <li><code class="language-plaintext highlighter-rouge">Observation: Invalid Syntax. You wrote 'search(Neo)' but I expected 'search("Neo")'. Please try again.</code></li>
+  <li>The model, seeing the error in its memory, will virtually always correct itself in the next turn.</li>
 </ul>
 
 <hr />
@@ -514,12 +511,9 @@ When the model generates <code class="language-plaintext highlighter-rouge">Acti
   <li>Step 1: 500 tokens.</li>
   <li>Step 10: 8,000 tokens.</li>
   <li>Step 20: Crash (Context Limit).</li>
-  <li><strong>Fix:</strong> <strong>Thought Summarization.</strong>
-    <ul>
-      <li>When $N &gt; 10$, take the first 5 steps and summarize them: <em>“Steps 1-5 involved searching for the actor and confirming his identity.”</em></li>
-      <li>Replace the raw log with the summary.</li>
-    </ul>
-  </li>
+  <li><strong>Fix:</strong> <strong>Thought Summarization.</strong></li>
+  <li>When $N &gt; 10$, take the first 5 steps and summarize them: <em>“Steps 1-5 involved searching for the actor and confirming his identity.”</em></li>
+  <li>Replace the raw log with the summary.</li>
 </ul>
 
 <hr />
@@ -558,48 +552,48 @@ This simple addition (asking the model “Why?”) creates <strong>Self-Healing 
 <span class="n">MAX_STEPS</span> <span class="o">=</span> <span class="mi">10</span>
 
 <span class="k">def</span> <span class="nf">run_react_agent</span><span class="p">(</span><span class="n">question</span><span class="p">,</span> <span class="n">llm</span><span class="p">,</span> <span class="n">tools</span><span class="p">):</span>
-    <span class="c1"># 1. Initialize Prompt
-</span>    <span class="n">history</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"""</span><span class="s">System: Use Thought/Action/Observation.</span><span class="se">\n</span><span class="s">Question: </span><span class="si">{</span><span class="n">question</span><span class="si">}</span><span class="se">\n</span><span class="sh">"""</span>
-    
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">MAX_STEPS</span><span class="p">):</span>
-        <span class="c1"># 2. Generate Thought &amp; Action
-</span>        <span class="c1"># Stop at "Observation:" to let Python take over
-</span>        <span class="n">response</span> <span class="o">=</span> <span class="n">llm</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span><span class="n">history</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="p">[</span><span class="sh">"</span><span class="s">Observation:</span><span class="sh">"</span><span class="p">])</span>
-        
-        <span class="c1"># Append the thought to history
-</span>        <span class="n">history</span> <span class="o">+=</span> <span class="n">response</span>
-        
-        <span class="c1"># 3. Check for Final Answer
-</span>        <span class="k">if</span> <span class="sh">"</span><span class="s">Final Answer:</span><span class="sh">"</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">response</span><span class="p">.</span><span class="nf">split</span><span class="p">(</span><span class="sh">"</span><span class="s">Final Answer:</span><span class="sh">"</span><span class="p">)[</span><span class="mi">1</span><span class="p">].</span><span class="nf">strip</span><span class="p">()</span>
-            
-        <span class="c1"># 4. Parse Action
-</span>        <span class="c1"># Regex to find: Action: tool_name("arg")
-</span>        <span class="n">action_match</span> <span class="o">=</span> <span class="n">re</span><span class="p">.</span><span class="nf">search</span><span class="p">(</span><span class="sa">r</span><span class="sh">"</span><span class="s">Action: (\w+)\((.*)\)</span><span class="sh">"</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">action_match</span><span class="p">:</span>
-            <span class="c1"># Feedback Loop for Parser Error
-</span>            <span class="n">history</span> <span class="o">+=</span> <span class="sh">"</span><span class="se">\n</span><span class="s">Observation: Parse Error. Please use format Action: tool(arg)</span><span class="se">\n</span><span class="sh">"</span>
-            <span class="k">continue</span>
-                
-        <span class="n">tool_name</span> <span class="o">=</span> <span class="n">action_match</span><span class="p">.</span><span class="nf">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">tool_arg</span> <span class="o">=</span> <span class="n">action_match</span><span class="p">.</span><span class="nf">group</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">strip</span><span class="p">(</span><span class="sh">'"'</span><span class="p">)</span> <span class="c1"># Clean quotes
-</span>        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">[Step </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s">] Executing </span><span class="si">{</span><span class="n">tool_name</span><span class="si">}</span><span class="s"> with </span><span class="si">{</span><span class="n">tool_arg</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="c1"># 5. Execute Tool
-</span>        <span class="k">if</span> <span class="n">tool_name</span> <span class="ow">in</span> <span class="n">tools</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">tools</span><span class="p">[</span><span class="n">tool_name</span><span class="p">](</span><span class="n">tool_arg</span><span class="p">)</span>
-            <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Tool Error: </span><span class="si">{</span><span class="nf">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="sh">"</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Error: Tool </span><span class="sh">'</span><span class="si">{</span><span class="n">tool_name</span><span class="si">}</span><span class="sh">'</span><span class="s"> not found.</span><span class="sh">"</span>
-            
-        <span class="c1"># 6. Append Observation
-</span>        <span class="n">observation</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">Observation: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="se">\n</span><span class="sh">"</span>
-        <span class="n">history</span> <span class="o">+=</span> <span class="n">observation</span>
-        
-    <span class="k">return</span> <span class="sh">"</span><span class="s">Error: Max steps reached without final answer.</span><span class="sh">"</span>
+ <span class="c1"># 1. Initialize Prompt
+</span> <span class="n">history</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"""</span><span class="s">System: Use Thought/Action/Observation.</span><span class="se">\n</span><span class="s">Question: </span><span class="si">{</span><span class="n">question</span><span class="si">}</span><span class="se">\n</span><span class="sh">"""</span>
+
+ <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">MAX_STEPS</span><span class="p">):</span>
+ <span class="c1"># 2. Generate Thought &amp; Action
+</span> <span class="c1"># Stop at "Observation:" to let Python take over
+</span> <span class="n">response</span> <span class="o">=</span> <span class="n">llm</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span><span class="n">history</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="p">[</span><span class="sh">"</span><span class="s">Observation:</span><span class="sh">"</span><span class="p">])</span>
+
+ <span class="c1"># Append the thought to history
+</span> <span class="n">history</span> <span class="o">+=</span> <span class="n">response</span>
+
+ <span class="c1"># 3. Check for Final Answer
+</span> <span class="k">if</span> <span class="sh">"</span><span class="s">Final Answer:</span><span class="sh">"</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+ <span class="k">return</span> <span class="n">response</span><span class="p">.</span><span class="nf">split</span><span class="p">(</span><span class="sh">"</span><span class="s">Final Answer:</span><span class="sh">"</span><span class="p">)[</span><span class="mi">1</span><span class="p">].</span><span class="nf">strip</span><span class="p">()</span>
+
+ <span class="c1"># 4. Parse Action
+</span> <span class="c1"># Regex to find: Action: tool_name("arg")
+</span> <span class="n">action_match</span> <span class="o">=</span> <span class="n">re</span><span class="p">.</span><span class="nf">search</span><span class="p">(</span><span class="sa">r</span><span class="sh">"</span><span class="s">Action: (\w+)\((.*)\)</span><span class="sh">"</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+
+ <span class="k">if</span> <span class="ow">not</span> <span class="n">action_match</span><span class="p">:</span>
+ <span class="c1"># Feedback Loop for Parser Error
+</span> <span class="n">history</span> <span class="o">+=</span> <span class="sh">"</span><span class="se">\n</span><span class="s">Observation: Parse Error. Please use format Action: tool(arg)</span><span class="se">\n</span><span class="sh">"</span>
+ <span class="k">continue</span>
+
+ <span class="n">tool_name</span> <span class="o">=</span> <span class="n">action_match</span><span class="p">.</span><span class="nf">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+ <span class="n">tool_arg</span> <span class="o">=</span> <span class="n">action_match</span><span class="p">.</span><span class="nf">group</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="nf">strip</span><span class="p">(</span><span class="sh">'"'</span><span class="p">)</span> <span class="c1"># Clean quotes
+</span> <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">[Step </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s">] Executing </span><span class="si">{</span><span class="n">tool_name</span><span class="si">}</span><span class="s"> with </span><span class="si">{</span><span class="n">tool_arg</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+
+ <span class="c1"># 5. Execute Tool
+</span> <span class="k">if</span> <span class="n">tool_name</span> <span class="ow">in</span> <span class="n">tools</span><span class="p">:</span>
+ <span class="k">try</span><span class="p">:</span>
+ <span class="n">result</span> <span class="o">=</span> <span class="n">tools</span><span class="p">[</span><span class="n">tool_name</span><span class="p">](</span><span class="n">tool_arg</span><span class="p">)</span>
+ <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+ <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Tool Error: </span><span class="si">{</span><span class="nf">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="sh">"</span>
+ <span class="k">else</span><span class="p">:</span>
+ <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Error: Tool </span><span class="sh">'</span><span class="si">{</span><span class="n">tool_name</span><span class="si">}</span><span class="sh">'</span><span class="s"> not found.</span><span class="sh">"</span>
+
+ <span class="c1"># 6. Append Observation
+</span> <span class="n">observation</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">Observation: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="se">\n</span><span class="sh">"</span>
+ <span class="n">history</span> <span class="o">+=</span> <span class="n">observation</span>
+
+ <span class="k">return</span> <span class="sh">"</span><span class="s">Error: Max steps reached without final answer.</span><span class="sh">"</span>
 </code></pre></div></div>
 
 <hr />

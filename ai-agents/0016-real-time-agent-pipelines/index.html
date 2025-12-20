@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-20T18:15:29+05:30">
+  <meta property="article:published_time" content="2025-12-20T22:24:35+05:30">
 
 
 
@@ -321,7 +321,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Real-Time Agent Pipelines">
     <meta itemprop="description" content="“Speed is not a feature. Speed is the product.”">
-    <meta itemprop="datePublished" content="2025-12-20T18:15:29+05:30">
+    <meta itemprop="datePublished" content="2025-12-20T22:24:35+05:30">
     
 
     <div class="page__inner-wrap">
@@ -430,20 +430,14 @@ This is nearly 3 seconds of dead air. In a voice conversation, 3 seconds is an e
 
 <ul>
   <li><strong>User:</strong> Speaks “Hello”.</li>
-  <li><strong>STT (Stream):</strong> The server processes audio chunks as they arrive.
-    <ul>
-      <li>T=10ms: “H”</li>
-      <li>T=20ms: “Hel”</li>
-      <li>T=30ms: “Hello”</li>
-    </ul>
-  </li>
+  <li><strong>STT (Stream):</strong> The server processes audio chunks as they arrive.</li>
+  <li>T=10ms: “H”</li>
+  <li>T=20ms: “Hel”</li>
+  <li>T=30ms: “Hello”</li>
   <li><strong>LLM (Stream):</strong> The LLM receives “Hello”. It <strong>Immediately</strong> starts generating tokens. It does not wait for the sentence to be grammatically complete (though sometimes it should, which we will discuss in VAD).</li>
-  <li><strong>LLM Output (Stream):</strong>
-    <ul>
-      <li>T=100ms: Generates “Hi” (Token 1).</li>
-      <li>T=150ms: Generates “ there” (Token 2).</li>
-    </ul>
-  </li>
+  <li><strong>LLM Output (Stream):</strong></li>
+  <li>T=100ms: Generates “Hi” (Token 1).</li>
+  <li>T=150ms: Generates “ there” (Token 2).</li>
   <li><strong>TTS (Stream):</strong> The TTS engine receives “Hi”. It immediately synthesizes those phonemes into audio bytes.</li>
   <li><strong>Network (Stream):</strong> The server pushes the audio bytes for “Hi” to the user.</li>
   <li>
@@ -502,17 +496,17 @@ You <strong>must</strong> use <code class="language-plaintext highlighter-rouge"
 <h3 id="41-the-event-loop-mechanics-single-threaded-concurrency">4.1 The Event Loop Mechanics: Single-Threaded Concurrency</h3>
 <p>In a blocking server (e.g., Flask with Sync Workers):</p>
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">handle_request</span><span class="p">():</span>
-    <span class="n">audio</span> <span class="o">=</span> <span class="nf">receive_audio</span><span class="p">()</span> <span class="c1"># BLOCKS the thread for 2 seconds waiting for network
-</span>    <span class="n">text</span> <span class="o">=</span> <span class="nf">transcribe</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span> <span class="c1"># BLOCKS the thread for processing
-</span>    <span class="k">return</span> <span class="n">text</span>
+ <span class="n">audio</span> <span class="o">=</span> <span class="nf">receive_audio</span><span class="p">()</span> <span class="c1"># BLOCKS the thread for 2 seconds waiting for network
+</span> <span class="n">text</span> <span class="o">=</span> <span class="nf">transcribe</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span> <span class="c1"># BLOCKS the thread for processing
+</span> <span class="k">return</span> <span class="n">text</span>
 </code></pre></div></div>
 <p>If you have 10 users, you need 10 threads. 1000 users = 1000 threads. The OS spends significant CPU time just context-switching between threads (saving/loading registers). You hit the “C10K Problem” (Connecting 10k users) very quickly.</p>
 
 <p>In <code class="language-plaintext highlighter-rouge">asyncio</code>:</p>
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">async</span> <span class="k">def</span> <span class="nf">handle_request</span><span class="p">():</span>
-    <span class="n">audio</span> <span class="o">=</span> <span class="k">await</span> <span class="nf">receive_audio</span><span class="p">()</span> <span class="c1"># Yields control.
-</span>    <span class="n">text</span> <span class="o">=</span> <span class="k">await</span> <span class="nf">transcribe</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">text</span>
+ <span class="n">audio</span> <span class="o">=</span> <span class="k">await</span> <span class="nf">receive_audio</span><span class="p">()</span> <span class="c1"># Yields control.
+</span> <span class="n">text</span> <span class="o">=</span> <span class="k">await</span> <span class="nf">transcribe</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+ <span class="k">return</span> <span class="n">text</span>
 </code></pre></div></div>
 <p>Here, <code class="language-plaintext highlighter-rouge">await</code> is a magical keyword. It tells the Event Loop: <em>“I am waiting for IO (Network/Disk). I release the CPU. Go do work for someone else. Wake me up when the data arrives.”</em>
 One single thread can handle 10,000 connections because at any given millisecond, 9,999 of them are just waiting for packets.</p>
@@ -521,36 +515,36 @@ One single thread can handle 10,000 connections because at any given millisecond
 <p>The most elegant pattern for pipelines is the <strong>Async Generator</strong>.</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">async</span> <span class="k">def</span> <span class="nf">llm_stream</span><span class="p">(</span><span class="n">prompt</span><span class="p">):</span>
-    <span class="c1"># This call initiates the stream but doesn't block the whole function
-</span>    <span class="n">stream</span> <span class="o">=</span> <span class="k">await</span> <span class="n">openai</span><span class="p">.</span><span class="n">chat</span><span class="p">.</span><span class="n">completions</span><span class="p">.</span><span class="nf">create</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="sh">"</span><span class="s">gpt-4o</span><span class="sh">"</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
-        <span class="n">token</span> <span class="o">=</span> <span class="n">chunk</span><span class="p">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">delta</span><span class="p">.</span><span class="n">content</span>
-        <span class="k">if</span> <span class="n">token</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="n">token</span>  <span class="c1"># Emits token to the consumer immediately
+ <span class="c1"># This call initiates the stream but doesn't block the whole function
+</span> <span class="n">stream</span> <span class="o">=</span> <span class="k">await</span> <span class="n">openai</span><span class="p">.</span><span class="n">chat</span><span class="p">.</span><span class="n">completions</span><span class="p">.</span><span class="nf">create</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="sh">"</span><span class="s">gpt-4o</span><span class="sh">"</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+ <span class="k">async</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
+ <span class="n">token</span> <span class="o">=</span> <span class="n">chunk</span><span class="p">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">delta</span><span class="p">.</span><span class="n">content</span>
+ <span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+ <span class="k">yield</span> <span class="n">token</span> <span class="c1"># Emits token to the consumer immediately
 </span>
 <span class="k">async</span> <span class="k">def</span> <span class="nf">tts_stream</span><span class="p">(</span><span class="n">text_iterator</span><span class="p">):</span>
-    <span class="nb">buffer</span> <span class="o">=</span> <span class="sh">""</span>
-    <span class="k">async</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">text_iterator</span><span class="p">:</span>
-        <span class="nb">buffer</span> <span class="o">+=</span> <span class="n">token</span>
-        <span class="c1"># Heuristic: Send to TTS only on sentence boundaries or commas
-</span>        <span class="c1"># This optimizes for audio quality (intonation) vs latency
-</span>        <span class="k">if</span> <span class="nf">ends_sentence</span><span class="p">(</span><span class="nb">buffer</span><span class="p">):</span>
-            <span class="n">audio</span> <span class="o">=</span> <span class="k">await</span> <span class="nf">synthesize</span><span class="p">(</span><span class="nb">buffer</span><span class="p">)</span>
-            <span class="k">yield</span> <span class="n">audio</span>
-            <span class="nb">buffer</span> <span class="o">=</span> <span class="sh">""</span>
+ <span class="nb">buffer</span> <span class="o">=</span> <span class="sh">""</span>
+ <span class="k">async</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">text_iterator</span><span class="p">:</span>
+ <span class="nb">buffer</span> <span class="o">+=</span> <span class="n">token</span>
+ <span class="c1"># Heuristic: Send to TTS only on sentence boundaries or commas
+</span> <span class="c1"># This optimizes for audio quality (intonation) vs latency
+</span> <span class="k">if</span> <span class="nf">ends_sentence</span><span class="p">(</span><span class="nb">buffer</span><span class="p">):</span>
+ <span class="n">audio</span> <span class="o">=</span> <span class="k">await</span> <span class="nf">synthesize</span><span class="p">(</span><span class="nb">buffer</span><span class="p">)</span>
+ <span class="k">yield</span> <span class="n">audio</span>
+ <span class="nb">buffer</span> <span class="o">=</span> <span class="sh">""</span>
 
 <span class="c1"># The Pipeline
 </span><span class="k">async</span> <span class="k">def</span> <span class="nf">handle_websocket</span><span class="p">(</span><span class="n">ws</span><span class="p">):</span>
-    <span class="k">await</span> <span class="n">ws</span><span class="p">.</span><span class="nf">accept</span><span class="p">()</span>
-    <span class="n">prompt</span> <span class="o">=</span> <span class="k">await</span> <span class="n">ws</span><span class="p">.</span><span class="nf">receive_text</span><span class="p">()</span>
-    
-    <span class="c1"># We pipe the generators together like Unix pipes
-</span>    <span class="c1"># Data flows: Network -&gt; iterator -&gt; iterator -&gt; Network
-</span>    <span class="n">text_stream</span> <span class="o">=</span> <span class="nf">llm_stream</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
-    <span class="n">audio_stream</span> <span class="o">=</span> <span class="nf">tts_stream</span><span class="p">(</span><span class="n">text_stream</span><span class="p">)</span> 
-    
-    <span class="k">async</span> <span class="k">for</span> <span class="n">audio_chunk</span> <span class="ow">in</span> <span class="n">audio_stream</span><span class="p">:</span>
-        <span class="k">await</span> <span class="n">ws</span><span class="p">.</span><span class="nf">send_bytes</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
+ <span class="k">await</span> <span class="n">ws</span><span class="p">.</span><span class="nf">accept</span><span class="p">()</span>
+ <span class="n">prompt</span> <span class="o">=</span> <span class="k">await</span> <span class="n">ws</span><span class="p">.</span><span class="nf">receive_text</span><span class="p">()</span>
+
+ <span class="c1"># We pipe the generators together like Unix pipes
+</span> <span class="c1"># Data flows: Network -&gt; iterator -&gt; iterator -&gt; Network
+</span> <span class="n">text_stream</span> <span class="o">=</span> <span class="nf">llm_stream</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
+ <span class="n">audio_stream</span> <span class="o">=</span> <span class="nf">tts_stream</span><span class="p">(</span><span class="n">text_stream</span><span class="p">)</span>
+
+ <span class="k">async</span> <span class="k">for</span> <span class="n">audio_chunk</span> <span class="ow">in</span> <span class="n">audio_stream</span><span class="p">:</span>
+ <span class="k">await</span> <span class="n">ws</span><span class="p">.</span><span class="nf">send_bytes</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
 </code></pre></div></div>
 
 <p>This code is <strong>lazy</strong>. No processing happens until the final <code class="language-plaintext highlighter-rouge">async for</code> loop pulls data properly.</p>
@@ -577,13 +571,10 @@ The LLM generates a 3-minute speech in 5 seconds. It pushes all that text to the
 <p><strong>Solution: Flow Control (Backpressure)</strong></p>
 <ul>
   <li><strong>Buffer Cap:</strong> Limit the output queue to 5 chunks. If the queue is full, <code class="language-plaintext highlighter-rouge">await</code> (pause) the producer.
-<code class="language-plaintext highlighter-rouge">await output_queue.put(audio)</code> -&gt; This line blocks if queue is full. This naturally slows down the LLM to match the Network speed.</li>
-  <li><strong>Clearing:</strong> On interruption (Barge-In), you must support a <code class="language-plaintext highlighter-rouge">clear_buffer()</code> command.
-    <ul>
-      <li>This requires accessing the internal buffer of the WebSocket or simply sending a control signal to the client: <code class="language-plaintext highlighter-rouge">"IGNORE_PREVIOUS_AUDIO"</code>.</li>
-      <li>Server-side, you drop all pending items in the <code class="language-plaintext highlighter-rouge">output_queue</code>.</li>
-    </ul>
-  </li>
+ <code class="language-plaintext highlighter-rouge">await output_queue.put(audio)</code> -&gt; This line blocks if queue is full. This naturally slows down the LLM to match the Network speed.</li>
+  <li><strong>Clearing:</strong> On interruption (Barge-In), you must support a <code class="language-plaintext highlighter-rouge">clear_buffer()</code> command.</li>
+  <li>This requires accessing the internal buffer of the WebSocket or simply sending a control signal to the client: <code class="language-plaintext highlighter-rouge">"IGNORE_PREVIOUS_AUDIO"</code>.</li>
+  <li>Server-side, you drop all pending items in the <code class="language-plaintext highlighter-rouge">output_queue</code>.</li>
 </ul>
 
 <hr />
@@ -594,13 +585,10 @@ The LLM generates a 3-minute speech in 5 seconds. It pushes all that text to the
 
 <ul>
   <li><strong>Input Queue:</strong> Receives Audio Chunks from WS.</li>
-  <li><strong>VAD Worker:</strong>
-    <ul>
-      <li>Consumes Input.</li>
-      <li>Detects “Speech Start” -&gt; Emits “User Speaking” Event.</li>
-      <li>Detects “Speech End” -&gt; Emits “User Utterance” Event.</li>
-    </ul>
-  </li>
+  <li><strong>VAD Worker:</strong></li>
+  <li>Consumes Input.</li>
+  <li>Detects “Speech Start” -&gt; Emits “User Speaking” Event.</li>
+  <li>Detects “Speech End” -&gt; Emits “User Utterance” Event.</li>
   <li><strong>STT Worker:</strong> Consumes Utterance. Emits Text.</li>
   <li><strong>Agent Brain:</strong> Consumes Text. Maintains State. Decides Action (RAG/Tool). Emits Start Token.</li>
   <li><strong>TTS Worker:</strong> Consumes Tokens. Emits Audio.</li>
@@ -611,13 +599,10 @@ The LLM generates a 3-minute speech in 5 seconds. It pushes all that text to the
 <ul>
   <li><em>Scenario:</em> User speaks while Agent is talking.</li>
   <li><em>VAD Worker:</em> Detects speech energy. Sends <code class="language-plaintext highlighter-rouge">INTERRUPT</code> event.</li>
-  <li><em>Orchestrator:</em>
-    <ul>
-      <li>Calls <code class="language-plaintext highlighter-rouge">TTS_Worker.cancel()</code></li>
-      <li>Calls <code class="language-plaintext highlighter-rouge">LLM_Worker.cancel()</code></li>
-      <li>Sends <code class="language-plaintext highlighter-rouge">ws.send_json({"type": "clear_audio"})</code> to client.</li>
-    </ul>
-  </li>
+  <li><em>Orchestrator:</em></li>
+  <li>Calls <code class="language-plaintext highlighter-rouge">TTS_Worker.cancel()</code></li>
+  <li>Calls <code class="language-plaintext highlighter-rouge">LLM_Worker.cancel()</code></li>
+  <li>Sends <code class="language-plaintext highlighter-rouge">ws.send_json({"type": "clear_audio"})</code> to client.</li>
   <li><em>Result:</em> Agent shuts up instantly, feeling “Listening”.</li>
 </ul>
 
@@ -644,9 +629,9 @@ You need multiple servers. But WebSockets are stateful.</p>
       <li>User A sends audio. Gateway 1 publishes to Redis Channel <code class="language-plaintext highlighter-rouge">input:user_a</code>.</li>
       <li>Processor subscribes to <code class="language-plaintext highlighter-rouge">input:user_a</code>. Processes it.</li>
       <li>Processor publishes audio to <code class="language-plaintext highlighter-rouge">output:user_a</code>.</li>
-      <li>Gateway 1 subscribes to <code class="language-plaintext highlighter-rouge">output:user_a</code>. Forwards bytes to WebSocket.
-    *   <em>Pros:</em> Infinite scaling. Processing layer can crash without dropping the connection.
-    *   <em>Cons:</em> Adds ~5-10ms latency (Redis RTT).</li>
+      <li>Gateway 1 subscribes to <code class="language-plaintext highlighter-rouge">output:user_a</code>. Forwards bytes to WebSocket.</li>
+      <li><em>Pros:</em> Infinite scaling. Processing layer can crash without dropping the connection.</li>
+      <li><em>Cons:</em> Adds ~5-10ms latency (Redis RTT).</li>
     </ul>
   </li>
 </ol>
@@ -665,70 +650,70 @@ You need multiple servers. But WebSockets are stateful.</p>
 <span class="n">app</span> <span class="o">=</span> <span class="nc">FastAPI</span><span class="p">()</span>
 
 <span class="k">class</span> <span class="nc">ConnectionManager</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">active_connections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">WebSocket</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+ <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+ <span class="n">self</span><span class="p">.</span><span class="n">active_connections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">WebSocket</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">:</span> <span class="n">WebSocket</span><span class="p">):</span>
-        <span class="k">await</span> <span class="n">websocket</span><span class="p">.</span><span class="nf">accept</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">active_connections</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
+ <span class="k">async</span> <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">:</span> <span class="n">WebSocket</span><span class="p">):</span>
+ <span class="k">await</span> <span class="n">websocket</span><span class="p">.</span><span class="nf">accept</span><span class="p">()</span>
+ <span class="n">self</span><span class="p">.</span><span class="n">active_connections</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">disconnect</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">:</span> <span class="n">WebSocket</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">active_connections</span><span class="p">.</span><span class="nf">remove</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
+ <span class="k">def</span> <span class="nf">disconnect</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">:</span> <span class="n">WebSocket</span><span class="p">):</span>
+ <span class="n">self</span><span class="p">.</span><span class="n">active_connections</span><span class="p">.</span><span class="nf">remove</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
 
 <span class="n">manager</span> <span class="o">=</span> <span class="nc">ConnectionManager</span><span class="p">()</span>
 
 <span class="nd">@app.websocket</span><span class="p">(</span><span class="sh">"</span><span class="s">/ws/audio</span><span class="sh">"</span><span class="p">)</span>
 <span class="k">async</span> <span class="k">def</span> <span class="nf">websocket_endpoint</span><span class="p">(</span><span class="n">websocket</span><span class="p">:</span> <span class="n">WebSocket</span><span class="p">):</span>
-    <span class="k">await</span> <span class="n">manager</span><span class="p">.</span><span class="nf">connect</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
-    <span class="n">session_id</span> <span class="o">=</span> <span class="nf">str</span><span class="p">(</span><span class="n">uuid</span><span class="p">.</span><span class="nf">uuid4</span><span class="p">())</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Session </span><span class="si">{</span><span class="n">session_id</span><span class="si">}</span><span class="s"> started</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="c1"># Queues for inter-task communication
-</span>    <span class="c1"># maxsize=10 provides Backpressure!
-</span>    <span class="n">input_queue</span> <span class="o">=</span> <span class="n">asyncio</span><span class="p">.</span><span class="nc">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span> 
-    
-    <span class="c1"># Start the Processing Worker in background
-</span>    <span class="n">worker_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">create_task</span><span class="p">(</span><span class="nf">run_agent_pipeline</span><span class="p">(</span><span class="n">session_id</span><span class="p">,</span> <span class="n">input_queue</span><span class="p">,</span> <span class="n">websocket</span><span class="p">))</span>
-    
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="c1"># 1. Receive packet
-</span>            <span class="c1"># receive_bytes blocks until data arrives
-</span>            <span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">websocket</span><span class="p">.</span><span class="nf">receive_bytes</span><span class="p">()</span>
-            
-            <span class="c1"># Put into queue. If worker is slow, this will eventually block,
-</span>            <span class="c1"># signaling the network layer to stop reading (TCP Window Scaling).
-</span>            <span class="k">await</span> <span class="n">input_queue</span><span class="p">.</span><span class="nf">put</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-            
-    <span class="k">except</span> <span class="n">WebSocketDisconnect</span><span class="p">:</span>
-        <span class="n">manager</span><span class="p">.</span><span class="nf">disconnect</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
-        <span class="n">worker_task</span><span class="p">.</span><span class="nf">cancel</span><span class="p">()</span> <span class="c1"># Kill the worker
-</span>        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Session </span><span class="si">{</span><span class="n">session_id</span><span class="si">}</span><span class="s"> ended</span><span class="sh">"</span><span class="p">)</span>
+ <span class="k">await</span> <span class="n">manager</span><span class="p">.</span><span class="nf">connect</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
+ <span class="n">session_id</span> <span class="o">=</span> <span class="nf">str</span><span class="p">(</span><span class="n">uuid</span><span class="p">.</span><span class="nf">uuid4</span><span class="p">())</span>
+ <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Session </span><span class="si">{</span><span class="n">session_id</span><span class="si">}</span><span class="s"> started</span><span class="sh">"</span><span class="p">)</span>
+
+ <span class="c1"># Queues for inter-task communication
+</span> <span class="c1"># maxsize=10 provides Backpressure!
+</span> <span class="n">input_queue</span> <span class="o">=</span> <span class="n">asyncio</span><span class="p">.</span><span class="nc">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+ <span class="c1"># Start the Processing Worker in background
+</span> <span class="n">worker_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">create_task</span><span class="p">(</span><span class="nf">run_agent_pipeline</span><span class="p">(</span><span class="n">session_id</span><span class="p">,</span> <span class="n">input_queue</span><span class="p">,</span> <span class="n">websocket</span><span class="p">))</span>
+
+ <span class="k">try</span><span class="p">:</span>
+ <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+ <span class="c1"># 1. Receive packet
+</span> <span class="c1"># receive_bytes blocks until data arrives
+</span> <span class="n">data</span> <span class="o">=</span> <span class="k">await</span> <span class="n">websocket</span><span class="p">.</span><span class="nf">receive_bytes</span><span class="p">()</span>
+
+ <span class="c1"># Put into queue. If worker is slow, this will eventually block,
+</span> <span class="c1"># signaling the network layer to stop reading (TCP Window Scaling).
+</span> <span class="k">await</span> <span class="n">input_queue</span><span class="p">.</span><span class="nf">put</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+ <span class="k">except</span> <span class="n">WebSocketDisconnect</span><span class="p">:</span>
+ <span class="n">manager</span><span class="p">.</span><span class="nf">disconnect</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
+ <span class="n">worker_task</span><span class="p">.</span><span class="nf">cancel</span><span class="p">()</span> <span class="c1"># Kill the worker
+</span> <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Session </span><span class="si">{</span><span class="n">session_id</span><span class="si">}</span><span class="s"> ended</span><span class="sh">"</span><span class="p">)</span>
 
 <span class="k">async</span> <span class="k">def</span> <span class="nf">run_agent_pipeline</span><span class="p">(</span><span class="n">session_id</span><span class="p">,</span> <span class="n">input_queue</span><span class="p">,</span> <span class="n">ws</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Simulates the AI processing pipeline independent of the network loop.
-    </span><span class="sh">"""</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Worker for </span><span class="si">{</span><span class="n">session_id</span><span class="si">}</span><span class="s"> started</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="n">audio_chunk</span> <span class="o">=</span> <span class="k">await</span> <span class="n">input_queue</span><span class="p">.</span><span class="nf">get</span><span class="p">()</span>
-            
-            <span class="c1"># Simulated VAD
-</span>            <span class="n">is_speech</span> <span class="o">=</span> <span class="nf">process_vad</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">is_speech</span><span class="p">:</span>
-                 <span class="c1"># Logic...
-</span>                 <span class="k">pass</span>
-                 
-            <span class="c1"># Simulated TTS Output
-</span>            <span class="c1"># await ws.send_bytes(generated_audio)
-</span>            
-    <span class="k">except</span> <span class="n">asyncio</span><span class="p">.</span><span class="n">CancelledError</span><span class="p">:</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Worker cancelled</span><span class="sh">"</span><span class="p">)</span>
+ <span class="sh">"""</span><span class="s">
+ Simulates the AI processing pipeline independent of the network loop.
+ </span><span class="sh">"""</span>
+ <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Worker for </span><span class="si">{</span><span class="n">session_id</span><span class="si">}</span><span class="s"> started</span><span class="sh">"</span><span class="p">)</span>
+ <span class="k">try</span><span class="p">:</span>
+ <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+ <span class="n">audio_chunk</span> <span class="o">=</span> <span class="k">await</span> <span class="n">input_queue</span><span class="p">.</span><span class="nf">get</span><span class="p">()</span>
+
+ <span class="c1"># Simulated VAD
+</span> <span class="n">is_speech</span> <span class="o">=</span> <span class="nf">process_vad</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
+ <span class="k">if</span> <span class="n">is_speech</span><span class="p">:</span>
+ <span class="c1"># Logic...
+</span> <span class="k">pass</span>
+
+ <span class="c1"># Simulated TTS Output
+</span> <span class="c1"># await ws.send_bytes(generated_audio)
+</span>
+ <span class="k">except</span> <span class="n">asyncio</span><span class="p">.</span><span class="n">CancelledError</span><span class="p">:</span>
+ <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Worker cancelled</span><span class="sh">"</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">process_vad</span><span class="p">(</span><span class="n">chunk</span><span class="p">):</span>
-    <span class="c1"># Mock VAD
-</span>    <span class="k">return</span> <span class="bp">True</span>
+ <span class="c1"># Mock VAD
+</span> <span class="k">return</span> <span class="bp">True</span>
 </code></pre></div></div>
 
 <hr />

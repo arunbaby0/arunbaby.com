@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-20T18:15:29+05:30">
+  <meta property="article:published_time" content="2025-12-20T22:24:35+05:30">
 
 
 
@@ -321,7 +321,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Retrieval-Augmented Generation (RAG)">
     <meta itemprop="description" content="“Giving the Brain a Library: The Foundation of Knowledge-Intensive Agents.”">
-    <meta itemprop="datePublished" content="2025-12-20T18:15:29+05:30">
+    <meta itemprop="datePublished" content="2025-12-20T22:24:35+05:30">
     
 
     <div class="page__inner-wrap">
@@ -360,7 +360,7 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#1-introduction-the-hallucination-problem">1. Introduction: The Hallucination Problem</a></li><li><a href="#2-the-mechanics-of-rag">2. The Mechanics of RAG</a><ul><li><a href="#21-phase-1-indexing-the-etl-pipeline">2.1 Phase 1: Indexing (The ETL Pipeline)</a></li><li><a href="#22-phase-2-retrieval-the-agent-loop">2.2 Phase 2: Retrieval (The Agent Loop)</a></li></ul></li><li><a href="#3-deep-dive-vector-database-internals">3. Deep Dive: Vector Database Internals</a><ul><li><a href="#31-hnsw-hierarchical-navigable-small-worlds">3.1 HNSW (Hierarchical Navigable Small Worlds)</a></li><li><a href="#32-ivf-inverted-file-index">3.2 IVF (Inverted File Index)</a></li></ul></li><li><a href="#4-naive-rag-vs-advanced-rag">4. Naive RAG vs. Advanced RAG</a><ul><li><a href="#41-failure-modes">4.1 Failure Modes</a></li><li><a href="#42-advanced-patterns">4.2 Advanced Patterns</a></li></ul></li><li><a href="#5-rag-evaluation-ragas">5. RAG Evaluation (RAGAS)</a></li><li><a href="#6-making-rag-a-tool">6. Making RAG a Tool</a><ul><li><a href="#the-agentic-rag-pattern">The Agentic RAG Pattern</a></li><li><a href="#the-self-querying-retriever">The “Self-Querying” Retriever</a></li></ul></li><li><a href="#7-pseudo-code-semantic-search-logic">7. Pseudo-Code: Semantic Search Logic</a></li><li><a href="#8-summary">8. Summary</a></li></ul>
+              <ul class="toc__menu"><li><a href="#1-introduction-the-hallucination-problem">1. Introduction: The Hallucination Problem</a></li><li><a href="#2-the-mechanics-of-rag">2. The Mechanics of RAG</a><ul><li><a href="#21-phase-1-indexing-the-etl-pipeline">2.1 Phase 1: Indexing (The ETL Pipeline)</a></li><li><a href="#22-phase-2-retrieval-the-agent-loop">2.2 Phase 2: Retrieval (The Agent Loop)</a></li></ul></li><li><a href="#8-summary">8. Summary</a></li></ul>
             </nav>
           </aside>
         
@@ -419,145 +419,119 @@
     </ul>
   </li>
   <li><strong>Context Injection:</strong> We construct a prompt:
-```text
-System: Answer the user using ONLY the context below. Do not use outside knowledge.
-Context:
+ ```text
+ System: Answer the user using ONLY the context below. Do not use outside knowledge.
+ Context:
     <ul>
       <li>Vacation Policy: 20 days per year…</li>
       <li>Leave types: Sick, Annual…</li>
     </ul>
-
-    <p>User: What is our vacation policy?
-```</p>
-  </li>
-  <li><strong>Generation:</strong> The LLM reads the context and answers “You get 20 days pear year.”</li>
-</ol>
-
-<hr />
-
-<h2 id="3-deep-dive-vector-database-internals">3. Deep Dive: Vector Database Internals</h2>
-
-<p>How does a database find the “nearest neighbor” among 100 million vectors in 10 milliseconds? It doesn’t compare them all (that would be $O(N)$). It uses <strong>Approximate Nearest Neighbors (ANN)</strong> algorithms.</p>
-
-<h3 id="31-hnsw-hierarchical-navigable-small-worlds">3.1 HNSW (Hierarchical Navigable Small Worlds)</h3>
-<p>This is the industry standard algorithm (used by Pinecone, Weaviate).</p>
-<ul>
-  <li><strong>Concept:</strong> It builds a multi-layer graph.
-    <ul>
-      <li><em>Top Layer:</em> Like an express highway. Long jumps across the vector space.</li>
-      <li><em>Bottom Layer:</em> Local roads. Dense connections between close neighbors.</li>
-    </ul>
-  </li>
-  <li><strong>Search:</strong> The query starts at the top, zooms to the general neighborhood of the data, and drills down to the local connections.</li>
-  <li><strong>Tradeoff:</strong> Fast search, but high memory usage (Requires storing the graph structure).</li>
-</ul>
-
-<h3 id="32-ivf-inverted-file-index">3.2 IVF (Inverted File Index)</h3>
-<p>Used by FAISS.</p>
-<ul>
-  <li><strong>Concept:</strong> Cluster the vectors into 1000 “Voronoi Cells” (centroids).</li>
-  <li><strong>Search:</strong> First, find which cell the query belongs to. Then scan only the vectors in that cell.</li>
-  <li><strong>Tradeoff:</strong> Very efficient, but recall can drop (if the answer is just on the border of another cell).</li>
-</ul>
-
-<hr />
-
-<h2 id="4-naive-rag-vs-advanced-rag">4. Naive RAG vs. Advanced RAG</h2>
-
-<p>The standard pipeline is called “Naive RAG.” It works for simple demos but fails in production.</p>
-
-<h3 id="41-failure-modes">4.1 Failure Modes</h3>
-<ul>
-  <li><strong>Keyword Misses:</strong> “Vacation” vs “Time Off.” Vectors handle typical synonyms, but specific jargon (Product IDs like <code class="language-plaintext highlighter-rouge">XJ-900</code> vs <code class="language-plaintext highlighter-rouge">XJ900</code>) often fails semantic search.</li>
-  <li><strong>Loss of Context:</strong> Retrieving a chunk that says “He agreed to the terms” is useless if the chunk doesn’t say <em>who</em> “He” is.</li>
-  <li><strong>Distraction:</strong> Retrieving 10 chunks, 9 of which are irrelevant, can confuse the LLM (“Lost in the Middle”).</li>
-</ul>
-
-<h3 id="42-advanced-patterns">4.2 Advanced Patterns</h3>
-<ol>
-  <li><strong>Hybrid Search (Alpha):</strong> Combine Vector Search (Semantic) with Keyword Search (BM25/Splade).
-    <ul>
-      <li><em>Formula:</em> $Score = \alpha \cdot VectorScore + (1-\alpha) \cdot KeywordScore$.</li>
-      <li><em>Why:</em> Ensures exact matches for IDs and Names work while retaining semantic understanding.</li>
-    </ul>
-  </li>
-  <li><strong>Re-Ranking (The Cross-Encoder):</strong>
-    <ul>
-      <li>Retrieve top 50 results (fast &amp; loose).</li>
-      <li>Pass them through a powerful “Re-Ranker Model” (e.g., Cohere Rerank) that compares the Query and Document interacting token-by-token.</li>
-      <li>Take the top 5.</li>
-      <li><em>Impact:</em> Increases accuracy by 20-30%.</li>
-    </ul>
-  </li>
-  <li><strong>Parent-Child Indexing:</strong>
-    <ul>
-      <li><em>Index:</em> Small chunks (sentences) for precise search.</li>
-      <li><em>Retrieve:</em> The Parent chunk (full paragraph) for context.</li>
-      <li><em>Why:</em> “Small to search, Big to read.”</li>
-    </ul>
   </li>
 </ol>
 
-<hr />
+<p>User: What is our vacation policy?</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>4. **Generation:** The LLM reads the context and answers "You get 20 days pear year."
 
-<h2 id="5-rag-evaluation-ragas">5. RAG Evaluation (RAGAS)</h2>
+---
 
-<p>How do you look at your RAG system and say “It’s good”? Feeling good isn’t engineering.
-We use the <strong>RAGAS</strong> (RAG Assessment) framework, which defines metrics calculated by an LLM-as-a-Judge.</p>
+## 3. Deep Dive: Vector Database Internals
 
-<ol>
-  <li><strong>Faithfulness:</strong> Does the answer come <em>solely</em> from the retrieved context? (Low hallucination).</li>
-  <li><strong>Answer Relevance:</strong> Does the answer actually address the user query?</li>
-  <li><strong>Context Precision:</strong> Did we retrieve the <em>right</em> chunks? (Signal-to-noise ratio).</li>
-  <li><strong>Context Recall:</strong> Did we retrieve <em>all</em> the necessary info?</li>
-</ol>
+How does a database find the "nearest neighbor" among 100 million vectors in 10 milliseconds? It doesn't compare them all (that would be $O(N)$). It uses **Approximate Nearest Neighbors (ANN)** algorithms.
 
-<hr />
+### 3.1 HNSW (Hierarchical Navigable Small Worlds)
+This is the industry standard algorithm (used by Pinecone, Weaviate).
+* **Concept:** It builds a multi-layer graph.
+ * *Top Layer:* Like an express highway. Long jumps across the vector space.
+ * *Bottom Layer:* Local roads. Dense connections between close neighbors.
+* **Search:** The query starts at the top, zooms to the general neighborhood of the data, and drills down to the local connections.
+* **Tradeoff:** Fast search, but high memory usage (Requires storing the graph structure).
 
-<h2 id="6-making-rag-a-tool">6. Making RAG a Tool</h2>
+### 3.2 IVF (Inverted File Index)
+Used by FAISS.
+* **Concept:** Cluster the vectors into 1000 "Voronoi Cells" (centroids).
+* **Search:** First, find which cell the query belongs to. Then scan only the vectors in that cell.
+* **Tradeoff:** Very efficient, but recall can drop (if the answer is just on the border of another cell).
 
-<p>For an agent, RAG is just another <strong>Tool</strong>.
-We don’t hard-code the retrieval. We give the agent a tool call.</p>
+---
 
-<h3 id="the-agentic-rag-pattern">The Agentic RAG Pattern</h3>
-<ul>
-  <li><strong>Tool:</strong> <code class="language-plaintext highlighter-rouge">search_knowledge_base(query: str, filters: dict)</code></li>
-  <li><strong>Description:</strong> “Use this tool to look up technical documentation. You can filter by year or tag.”</li>
-</ul>
+## 4. Naive RAG vs. Advanced RAG
 
-<h3 id="the-self-querying-retriever">The “Self-Querying” Retriever</h3>
-<p>An advanced pattern where the LLM writes a Structured Database Query.</p>
-<ul>
-  <li><em>User:</em> “Show me emails from Alice last week.”</li>
-  <li><em>LLM:</em> <code class="language-plaintext highlighter-rouge">search(query="from Alice", filter={"date": "&gt; 2023-10-01"})</code></li>
-  <li><em>Runtime:</em> Applies a Metadata Filter on the Vector DB. This is vastly superior to pure semantic search for structured questions.</li>
-</ul>
+The standard pipeline is called "Naive RAG." It works for simple demos but fails in production.
 
-<hr />
+### 4.1 Failure Modes
+* **Keyword Misses:** "Vacation" vs "Time Off." Vectors handle typical synonyms, but specific jargon (Product IDs like `XJ-900` vs `XJ900`) often fails semantic search.
+* **Loss of Context:** Retrieving a chunk that says "He agreed to the terms" is useless if the chunk doesn't say *who* "He" is.
+* **Distraction:** Retrieving 10 chunks, 9 of which are irrelevant, can confuse the LLM ("Lost in the Middle").
 
-<h2 id="7-pseudo-code-semantic-search-logic">7. Pseudo-Code: Semantic Search Logic</h2>
+### 4.2 Advanced Patterns
+1. **Hybrid Search (Alpha):** Combine Vector Search (Semantic) with Keyword Search (BM25/Splade).
+ * *Formula:* $Score = \alpha \cdot VectorScore + (1-\alpha) \cdot KeywordScore$.
+ * *Why:* Ensures exact matches for IDs and Names work while retaining semantic understanding.
+2. **Re-Ranking (The Cross-Encoder):**
+ * Retrieve top 50 results (fast &amp; loose).
+ * Pass them through a powerful "Re-Ranker Model" (e.g., Cohere Rerank) that compares the Query and Document interacting token-by-token.
+ * Take the top 5.
+ * *Impact:* Increases accuracy by 20-30%.
+3. **Parent-Child Indexing:**
+ * *Index:* Small chunks (sentences) for precise search.
+ * *Retrieve:* The Parent chunk (full paragraph) for context.
+ * *Why:* "Small to search, Big to read."
 
-<p>Understanding the inner loop of a vector search engine (conceptual).</p>
+---
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">semantic_search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
-    <span class="c1"># 1. Embed Query
-</span>    <span class="n">query_vector</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">embed</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-    
-    <span class="c1"># 2. Score All Documents (Naive Calculation)
-</span>    <span class="n">scores</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">database</span><span class="p">:</span>
-        <span class="c1"># Cosine Similarity = (A . B) / (|A| * |B|)
-</span>        <span class="n">score</span> <span class="o">=</span> <span class="nf">dot_product</span><span class="p">(</span><span class="n">query_vector</span><span class="p">,</span> <span class="n">doc</span><span class="p">.</span><span class="n">vector</span><span class="p">)</span>
-        <span class="n">scores</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">score</span><span class="p">,</span> <span class="n">doc</span><span class="p">))</span>
-        
-    <span class="c1"># 3. Sort (Rank)
-</span>    <span class="n">scores</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    
-    <span class="c1"># 4. Filter (Optional Hybrid Step)
-</span>    <span class="c1"># Check for keyword matches if needed
-</span>    
-    <span class="c1"># 5. Return Top K
-</span>    <span class="k">return</span> <span class="n">scores</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span>
+## 5. RAG Evaluation (RAGAS)
+
+How do you look at your RAG system and say "It's good"? Feeling good isn't engineering.
+We use the **RAGAS** (RAG Assessment) framework, which defines metrics calculated by an LLM-as-a-Judge.
+
+1. **Faithfulness:** Does the answer come *solely* from the retrieved context? (Low hallucination).
+2. **Answer Relevance:** Does the answer actually address the user query?
+3. **Context Precision:** Did we retrieve the *right* chunks? (Signal-to-noise ratio).
+4. **Context Recall:** Did we retrieve *all* the necessary info?
+
+---
+
+## 6. Making RAG a Tool
+
+For an agent, RAG is just another **Tool**.
+We don't hard-code the retrieval. We give the agent a tool call.
+
+### The Agentic RAG Pattern
+* **Tool:** `search_knowledge_base(query: str, filters: dict)`
+* **Description:** "Use this tool to look up technical documentation. You can filter by year or tag."
+
+### The "Self-Querying" Retriever
+An advanced pattern where the LLM writes a Structured Database Query.
+* *User:* "Show me emails from Alice last week."
+* *LLM:* `search(query="from Alice", filter={"date": "&gt; 2023-10-01"})`
+* *Runtime:* Applies a Metadata Filter on the Vector DB. This is vastly superior to pure semantic search for structured questions.
+
+---
+
+## 7. Pseudo-Code: Semantic Search Logic
+
+Understanding the inner loop of a vector search engine (conceptual).
+
+```python
+def semantic_search(query, k=5):
+ # 1. Embed Query
+ query_vector = model.embed(query)
+
+ # 2. Score All Documents (Naive Calculation)
+ scores = []
+ for doc in database:
+ # Cosine Similarity = (A . B) / (|A| * |B|)
+ score = dot_product(query_vector, doc.vector)
+ scores.append((score, doc))
+
+ # 3. Sort (Rank)
+ scores.sort(reverse=True)
+
+ # 4. Filter (Optional Hybrid Step)
+ # Check for keyword matches if needed
+
+ # 5. Return Top K
+ return scores[:k]
 </code></pre></div></div>
 
 <hr />
