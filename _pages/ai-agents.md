@@ -43,7 +43,13 @@ Each topic includes:
 - [Web Browsing Agents](/ai-agents/0036-web-browsing-agents/)
 - [Code Execution Agents](/ai-agents/0037-code-execution-agents/)
 - [Autonomous Agent Architectures](/ai-agents/0038-autonomous-agent-architectures/)
+- [Self-Reflection and Critique](/ai-agents/0039-self-reflection-and-critique/)
+- [Hierarchical Planning](/ai-agents/0040-hierarchical-planning/)
+- [World Models for Agents](/ai-agents/0041-world-models-for-agents/)
 - [Agent Evaluation Frameworks](/ai-agents/0042-agent-evaluation-frameworks/)
+- [Testing AI Agents](/ai-agents/0043-testing-ai-agents/)
+- [Prompt Injection Defense](/ai-agents/0044-prompt-injection-defense/)
+- [Data Leakage Prevention](/ai-agents/0045-data-leakage-prevention/)
 
 ---
 
