@@ -15,6 +15,7 @@ scale: "1M+ commands/day"
 companies: [Google, Amazon, Apple]
 related_dsa_day: 2
 related_ml_day: 2
+related_agents_day: 2
 ---
 
 **How voice assistants recognize "turn on the lights" from raw audio in under 100ms without full ASR transcription.**

@@ -18,6 +18,7 @@ scale: "1M+ requests/sec globally, 50+ regions"
 companies: [Cloudflare, Akamai, AWS CloudFront, Google Cloud CDN, Azure CDN, Fastly]
 related_dsa_day: 11
 related_speech_day: 11
+related_agents_day: 11
 ---
 
 **Design a global CDN for ML systems: Edge caching reduces latency from 500ms to 50ms. Critical for real-time predictions worldwide.**

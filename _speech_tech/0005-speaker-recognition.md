@@ -15,6 +15,7 @@ latency_requirement: "< 100ms"
 scale: "Millions of speakers"
 companies: [Google, Amazon, Microsoft, Apple]
 related_dsa_day: 5
+related_agents_day: 5
 ---
 
 **How voice assistants recognize who's speaking, the biometric authentication powering "Hey Alexa" and personalized experiences.**

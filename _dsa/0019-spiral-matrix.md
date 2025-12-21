@@ -17,6 +17,7 @@ scale: "O(M×N) time, O(1) extra space"
 companies: [Google, Meta, Amazon, Microsoft, Apple, Bloomberg]
 related_ml_day: 19
 related_speech_day: 19
+related_agents_day: 19
 ---
 
 **Master systematic matrix traversal—the same pattern used for tracking experiments, processing logs, and managing state in ML systems.**

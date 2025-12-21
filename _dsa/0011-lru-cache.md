@@ -17,6 +17,7 @@ scale: "O(1) operations, production caching"
 companies: [Google, Meta, Amazon, Microsoft, Netflix, LinkedIn]
 related_ml_day: 11
 related_speech_day: 11
+related_agents_day: 11
 ---
 
 **Master LRU cache design: O(1) get/put with hash map + doubly linked list. Critical for interviews and production caching systems.**

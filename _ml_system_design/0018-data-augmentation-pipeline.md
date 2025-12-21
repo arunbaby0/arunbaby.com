@@ -17,6 +17,7 @@ scale: "10M+ samples/day, multi-modal inputs, online & offline augmentation"
 companies: [Google, Meta, Amazon, Microsoft, Tesla, OpenAI]
 related_dsa_day: 18
 related_speech_day: 18
+related_agents_day: 18
 ---
 
 **Design a robust data augmentation pipeline that applies rich transformations to large-scale datasets without becoming the training bottleneck.**

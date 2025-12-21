@@ -15,6 +15,7 @@ scale: "O(max(m,n)) time complexity"
 companies: [Google, Meta, Amazon, Microsoft, Apple, Bloomberg]
 related_ml_day: 12
 related_speech_day: 12
+related_agents_day: 12
 ---
 
 **Master digit-by-digit addition with linked lists: Handle carry propagation elegantly. Classic problem teaching pointer manipulation and edge cases.**

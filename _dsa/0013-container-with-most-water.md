@@ -17,6 +17,7 @@ scale: "O(N) time, O(1) space"
 companies: [Google, Meta, Amazon, Microsoft, Apple]
 related_ml_day: 13
 related_speech_day: 13
+related_agents_day: 13
 ---
 
 **Master the two-pointer greedy technique that powers resource optimization in production ML systems.**

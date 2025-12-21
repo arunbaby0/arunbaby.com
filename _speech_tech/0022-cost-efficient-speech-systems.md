@@ -16,6 +16,7 @@ scale: "Edge/Device-level optimization"
 companies: [Apple, Amazon (Alexa), Sonos, Garmin]
 related_dsa_day: 22
 related_ml_day: 22
+related_agents_day: 22
 ---
 
 **Strategies for building profitable speech recognition systems by optimizing the entire pipeline from signal processing to hardware.**

@@ -15,6 +15,7 @@ scale: "Real-time streaming"
 companies: [Google, Amazon, Microsoft, Apple, Meta, Spotify]
 related_dsa_day: 7
 related_ml_day: 7
+related_agents_day: 7
 ---
 
 **Clean audio is the foundation of robust speech systems, master preprocessing pipelines that handle real-world noise and variability.**

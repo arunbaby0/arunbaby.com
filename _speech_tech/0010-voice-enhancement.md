@@ -16,6 +16,7 @@ scale: "Real-time processing, low latency"
 companies: [Krisp, Dolby, NVIDIA, Zoom, Microsoft, Google, Meta]
 related_dsa_day: 10
 related_ml_day: 10
+related_agents_day: 10
 ---
 
 **Build systems that enhance voice quality by removing noise, improving intelligibility, and optimizing audio for speech applications.**

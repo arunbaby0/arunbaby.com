@@ -17,6 +17,7 @@ scale: "O(N²) time, O(1) extra space"
 companies: [Google, Meta, Amazon, Microsoft, Apple]
 related_ml_day: 18
 related_speech_day: 18
+related_agents_day: 18
 ---
 
 **Master in-place matrix rotation—the same 2D transformation pattern that powers image and spectrogram augmentations in modern ML systems.**

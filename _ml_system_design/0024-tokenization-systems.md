@@ -16,6 +16,7 @@ scale: "Billion-scale corpus processing"
 companies: [OpenAI, Google, Meta, HuggingFace]
 related_dsa_day: 24
 related_speech_day: 24
+related_agents_day: 24
 ---
 
 **The critical preprocessing step that defines the vocabulary and capabilities of Large Language Models.**

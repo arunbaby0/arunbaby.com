@@ -15,6 +15,7 @@ scale: "Millions of audio hours"
 companies: [Spotify, Audible, YouTube, Apple Music]
 related_dsa_day: 32
 related_ml_day: 32
+related_agents_day: 32
 ---
 
 **"Finding 'Jon' when the user types 'John', or 'Symphony' when they say 'Simfoni'."**

@@ -14,6 +14,7 @@ scale: "All models"
 companies: [Google, Meta, Netflix, Uber, Airbnb]
 related_dsa_day: 6
 related_speech_day: 6
+related_agents_day: 6
 ---
 
 **How to measure if your ML model is actually good, choosing the right metrics is as important as building the model itself.**

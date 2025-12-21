@@ -17,6 +17,7 @@ scale: "O(4^N / √N) time, O(N) space"
 companies: [Google, Meta, Amazon, Microsoft, Apple, Uber]
 related_ml_day: 14
 related_speech_day: 14
+related_agents_day: 14
 ---
 
 **Master backtracking to generate all valid combinations—the foundation of ensemble model selection and multi-model systems.**

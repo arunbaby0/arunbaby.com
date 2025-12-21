@@ -16,6 +16,7 @@ scale: "Monitoring 1000+ models in production"
 companies: [Uber, Netflix, Datadog, Arize AI]
 related_dsa_day: 25
 related_speech_day: 25
+related_agents_day: 25
 ---
 
 **The silent killer of ML models is not a bug in the code, but a change in the world.**

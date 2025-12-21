@@ -15,6 +15,7 @@ scale: "Multi-region, 99.99% uptime"
 companies: [Netflix, Uber, Spotify, Amazon]
 related_dsa_day: 33
 related_speech_day: 33
+related_agents_day: 33
 ---
 
 **"Ensuring your ML models are available everywhere, all the time."**

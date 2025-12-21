@@ -16,6 +16,7 @@ scale: "Cluster-scale optimization"
 companies: [Uber, Airbnb, Netflix, Pinterest]
 related_dsa_day: 22
 related_speech_day: 22
+related_agents_day: 22
 ---
 
 **A comprehensive guide to FinOps for Machine Learning: reducing TCO without compromising accuracy or latency.**

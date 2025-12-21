@@ -18,6 +18,7 @@ scale: "Millions of events/sec, <100ms latency, multi-region"
 companies: [Netflix, Uber, LinkedIn, Airbnb, Twitter, Spotify]
 related_dsa_day: 16
 related_speech_day: 16
+related_agents_day: 16
 ---
 
 **Build production event stream processing systems that handle millions of events per second using windowing and temporal aggregation—applying the same interval merging principles from algorithm design.**

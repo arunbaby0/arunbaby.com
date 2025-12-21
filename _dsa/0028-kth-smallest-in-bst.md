@@ -15,6 +15,7 @@ scale: "O(H + k) time, O(H) space"
 companies: [Uber, Google, Amazon, Facebook]
 related_ml_day: 28
 related_speech_day: 28
+related_agents_day: 28
 ---
 
 **Finding the median or the 99th percentile is easy in a sorted array. Can we do it in a tree?**

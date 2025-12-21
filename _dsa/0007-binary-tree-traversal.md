@@ -18,6 +18,7 @@ time_complexity: "O(n)"
 space_complexity: "O(h)"
 related_ml_day: 7
 related_speech_day: 7
+related_agents_day: 7
 ---
 
 **Master the fundamental patterns of tree traversal: the gateway to solving hundreds of tree problems in interviews.**

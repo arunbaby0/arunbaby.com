@@ -16,6 +16,7 @@ scale: "Low latency, high throughput"
 companies: [Google, Meta, Netflix, Uber, Amazon, Twitter]
 related_dsa_day: 10
 related_speech_day: 10
+related_agents_day: 10
 ---
 
 **Design efficient caching layers for ML systems to reduce latency, save compute costs, and improve user experience at scale.**

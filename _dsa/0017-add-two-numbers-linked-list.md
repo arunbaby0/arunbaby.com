@@ -17,6 +17,7 @@ scale: "O(N) time, O(1) extra space"
 companies: [Google, Meta, Amazon, Microsoft, Apple, Bloomberg]
 related_ml_day: 17
 related_speech_day: 17
+related_agents_day: 17
 ---
 
 **Simulate arbitrary-precision addition on linked lists—the same sequential pattern used in large-scale distributed training and streaming pipelines.**

@@ -17,6 +17,7 @@ scale: "O(NK log K) time, O(NK) space"
 companies: [Google, Meta, Amazon, Microsoft, Apple, Bloomberg]
 related_ml_day: 15
 related_speech_day: 15
+related_agents_day: 15
 ---
 
 **Master hash-based grouping to solve anagrams—the foundation of clustering systems and speaker diarization in production ML.**

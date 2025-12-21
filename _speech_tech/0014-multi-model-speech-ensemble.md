@@ -18,6 +18,7 @@ scale: "10+ models, 100K+ utterances/day, <150ms latency"
 companies: [Google, Amazon, Apple, Microsoft, Meta, Baidu]
 related_dsa_day: 14
 related_ml_day: 14
+related_agents_day: 14
 ---
 
 **Build production speech systems that combine multiple ASR/TTS models using backtracking-based selection strategies to achieve state-of-the-art accuracy.**

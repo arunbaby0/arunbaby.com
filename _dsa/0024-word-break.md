@@ -17,6 +17,7 @@ scale: "O(N^2) time, O(N) space"
 companies: [Amazon, Google, Bloomberg, Microsoft, Meta]
 related_ml_day: 24
 related_speech_day: 24
+related_agents_day: 24
 ---
 
 **The fundamental string segmentation problem that powers spell checkers, search engines, and tokenizers.**

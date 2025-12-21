@@ -15,6 +15,7 @@ scale: "Billions of features"
 companies: [Google, Meta, Uber, Netflix, Airbnb]
 related_dsa_day: 7
 related_speech_day: 7
+related_agents_day: 7
 ---
 
 **Feature engineering makes or breaks ML models, learn how to build scalable, production-ready feature pipelines that power real-world systems.**

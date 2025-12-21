@@ -16,6 +16,7 @@ time_complexity: "O(n)"
 space_complexity: "O(1)"
 related_ml_day: 5
 related_speech_day: 5
+related_agents_day: 5
 ---
 
 **Master the pattern behind online algorithms, streaming analytics, and dynamic programming, a single elegant idea powering countless production systems.**

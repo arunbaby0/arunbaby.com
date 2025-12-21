@@ -17,6 +17,7 @@ scale: "1M+ updates/day, <10ms inference, continuous adaptation"
 companies: [Google, Meta, Amazon, Netflix, Uber, Spotify]
 related_dsa_day: 20
 related_speech_day: 20
+related_agents_day: 20
 ---
 
 **Design online learning systems that adapt models in real-time using greedy updates—the same adaptive decision-making pattern from Jump Game applied to streaming data.**

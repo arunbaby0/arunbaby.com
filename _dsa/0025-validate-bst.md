@@ -16,6 +16,7 @@ scale: "O(N) time, O(H) space"
 companies: [Facebook, Amazon, Microsoft, Bloomberg, LinkedIn]
 related_ml_day: 25
 related_speech_day: 25
+related_agents_day: 25
 ---
 
 **The gatekeeper of data integrity. How do we ensure our sorted structures are actually sorted?**

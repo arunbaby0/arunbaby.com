@@ -16,6 +16,7 @@ scale: "O(T×K×V) time, O(T×K) space"
 companies: [Google, DeepL, OpenAI, Meta]
 related_dsa_day: 23
 related_speech_day: 23
+related_agents_day: 23
 ---
 
 **The industry-standard algorithm for converting probabilistic model outputs into coherent text sequences.**

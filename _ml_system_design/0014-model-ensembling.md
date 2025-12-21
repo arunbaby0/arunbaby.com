@@ -18,6 +18,7 @@ scale: "10+ models, 100K+ predictions/sec, multi-region deployment"
 companies: [Netflix, Spotify, Google, Meta, Airbnb, Uber]
 related_dsa_day: 14
 related_speech_day: 14
+related_agents_day: 14
 ---
 
 **Build production ensemble systems that combine multiple models using backtracking strategies to explore optimal combinations.**

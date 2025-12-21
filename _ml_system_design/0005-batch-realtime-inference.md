@@ -16,6 +16,7 @@ scale: "1M+ predictions/day"
 companies: [Google, Meta, Netflix, Uber, Airbnb]
 related_dsa_day: 5
 related_speech_day: 5
+related_agents_day: 5
 ---
 
 **How to choose between batch and real-time inference, the architectural decision that shapes your entire ML serving infrastructure.**

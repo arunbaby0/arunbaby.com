@@ -16,6 +16,7 @@ scale: "Global, multi-region, edge deployment"
 companies: [Google, Amazon, Apple, Microsoft]
 related_dsa_day: 33
 related_ml_day: 33
+related_agents_day: 33
 ---
 
 **"Deploying speech models close to users for low-latency voice experiences."**

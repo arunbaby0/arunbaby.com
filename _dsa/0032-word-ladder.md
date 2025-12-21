@@ -12,6 +12,7 @@ tags:
 difficulty: Hard
 related_ml_day: 32
 related_speech_day: 32
+related_agents_day: 32
 ---
 
 **"Transforming 'cold' to 'warm' one letter at a time."**

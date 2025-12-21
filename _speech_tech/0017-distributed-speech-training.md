@@ -18,6 +18,7 @@ scale: "Millions of hours of audio, 1000+ GPUs, global training clusters"
 companies: [Google, Amazon, Apple, Microsoft, Meta, Baidu, OpenAI]
 related_dsa_day: 17
 related_ml_day: 17
+related_agents_day: 17
 ---
 
 **Design distributed training pipelines for large-scale speech models that efficiently handle hundreds of thousands of hours of sequential audio data.**

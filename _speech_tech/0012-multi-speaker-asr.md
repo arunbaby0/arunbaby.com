@@ -17,6 +17,7 @@ scale: "Real-time, < 300ms latency, 2-10 speakers"
 companies: [Google, Meta, Microsoft, Zoom, Otter.ai, Fireflies.ai, AssemblyAI]
 related_dsa_day: 12
 related_ml_day: 12
+related_agents_day: 12
 ---
 
 **Build production multi-speaker ASR systems: Combine speech recognition, speaker diarization, and overlap handling for real-world conversations.**

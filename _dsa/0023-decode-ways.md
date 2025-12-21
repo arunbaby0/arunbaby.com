@@ -16,6 +16,7 @@ scale: "O(N) time, O(1) space"
 companies: [Facebook, Google, Uber, Microsoft, Amazon]
 related_ml_day: 23
 related_speech_day: 23
+related_agents_day: 23
 ---
 
 **A deceptive counting problem that teaches the fundamentals of state transitions and connects directly to Beam Search.**

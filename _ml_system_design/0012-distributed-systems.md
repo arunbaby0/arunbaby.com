@@ -17,6 +17,7 @@ scale: "Multi-region, petabyte-scale, millions of requests/sec"
 companies: [Google, Meta, Amazon, Netflix, Uber, Airbnb, Twitter]
 related_dsa_day: 12
 related_speech_day: 12
+related_agents_day: 12
 ---
 
 **Design distributed ML systems that scale to billions of predictions: Master replication, sharding, consensus, and fault tolerance for production ML.**

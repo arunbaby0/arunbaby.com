@@ -18,6 +18,7 @@ scale: "Millions of data points, <100ms query latency, distributed processing"
 companies: [Netflix, Spotify, Google, Meta, Amazon, Uber, Airbnb]
 related_dsa_day: 15
 related_speech_day: 15
+related_agents_day: 15
 ---
 
 **Design production clustering systems that group similar items using hash-based and distance-based approaches for recommendations, search, and analytics.**

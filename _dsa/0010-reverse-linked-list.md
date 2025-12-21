@@ -17,6 +17,7 @@ time_complexity: "O(n)"
 space_complexity: "O(1) iterative, O(n) recursive"
 related_ml_day: 10
 related_speech_day: 10
+related_agents_day: 10
 ---
 
 **Master linked list manipulation through reversal - a fundamental pattern for understanding pointer logic and in-place algorithms.**

@@ -16,6 +16,7 @@ time_complexity: "O(n)"
 space_complexity: "O(1)"
 related_ml_day: 6
 related_speech_day: 6
+related_agents_day: 6
 ---
 
 **The Fibonacci problem in disguise, teaching the fundamental transition from recursion to dynamic programming to space optimization.**

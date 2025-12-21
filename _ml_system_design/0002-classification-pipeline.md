@@ -14,6 +14,7 @@ key_components: [preprocessing, model-serving, monitoring]
 companies: [Google, Meta, Uber, Airbnb]
 related_dsa_day: 2
 related_speech_day: 2
+related_agents_day: 2
 ---
 
 **From raw data to production predictions: building a classification pipeline that handles millions of requests with 99.9% uptime.**

@@ -13,6 +13,7 @@ tags:
 difficulty: Medium
 related_ml_day: 30
 related_speech_day: 30
+related_agents_day: 30
 ---
 
 **"Counting connected components in a 2D grid."**

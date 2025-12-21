@@ -16,6 +16,7 @@ scale: "O(N) time, O(1) space"
 companies: [Google, Meta, Amazon, Microsoft, Apple, Bloomberg]
 related_ml_day: 20
 related_speech_day: 20
+related_agents_day: 20
 ---
 
 **Master greedy decision-making to determine reachability—the same adaptive strategy used in online learning and real-time speech systems.**

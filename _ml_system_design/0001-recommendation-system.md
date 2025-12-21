@@ -14,6 +14,7 @@ key_components: [embeddings, ann-search, caching]
 companies: [Google, Meta, Netflix, YouTube]
 related_dsa_day: 1
 related_speech_day: 1
+related_agents_day: 1
 ---
 
 **How do you narrow down 10 million items to 1000 candidates in under 50ms? The art of fast retrieval at scale.**

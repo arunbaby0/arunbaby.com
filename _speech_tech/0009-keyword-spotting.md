@@ -16,6 +16,7 @@ scale: "Always-on, ultra-low latency"
 companies: [Google, Amazon, Apple, Microsoft, Nuance, Picovoice]
 related_dsa_day: 9
 related_ml_day: 9
+related_agents_day: 9
 ---
 
 **Build lightweight models that detect specific keywords in audio streams with minimal latency and power consumption for voice interfaces.**

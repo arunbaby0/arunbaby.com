@@ -15,6 +15,7 @@ time_complexity: "O(n+m)"
 space_complexity: "O(1)"
 related_ml_day: 3
 related_speech_day: 3
+related_agents_day: 3
 ---
 
 **The pointer manipulation pattern that powers merge sort, data pipeline merging, and multi-source stream processing.**

@@ -17,6 +17,7 @@ scale: "1K+ GPUs, 10B+ parameters, PB-scale data"
 companies: [Google, Meta, OpenAI, DeepMind, Microsoft, Amazon]
 related_dsa_day: 17
 related_speech_day: 17
+related_agents_day: 17
 ---
 
 **Design distributed training architectures that can efficiently process massive sequential datasets and train billion-parameter models across thousands of GPUs.**

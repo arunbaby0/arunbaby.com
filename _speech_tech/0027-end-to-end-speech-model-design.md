@@ -18,6 +18,7 @@ scale: "Training on 10k+ hours of audio"
 companies: [Google, OpenAI, Amazon, Apple]
 related_dsa_day: 27
 related_ml_day: 27
+related_agents_day: 27
 ---
 
 **Goodbye HMMs. Goodbye Phonemes. Goodbye Lexicons. We are teaching the machine to Listen, Attend, and Spell.**

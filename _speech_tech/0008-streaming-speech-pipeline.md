@@ -16,6 +16,7 @@ scale: "Real-time streaming"
 companies: [Google, Amazon, Microsoft, Apple, Meta, Zoom]
 related_dsa_day: 8
 related_ml_day: 8
+related_agents_day: 8
 ---
 
 **Build real-time speech processing pipelines that handle audio streams with minimal latency for live transcription and voice interfaces.**

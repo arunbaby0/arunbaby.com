@@ -19,6 +19,7 @@ scale: "Real-time quality estimation"
 companies: [Zoom, Twilio, Discord, Spotify]
 related_dsa_day: 25
 related_ml_day: 25
+related_agents_day: 25
 ---
 
 **How do we know if the audio sounds "good" without asking a human?**

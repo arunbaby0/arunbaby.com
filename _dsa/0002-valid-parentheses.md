@@ -15,6 +15,7 @@ time_complexity: "O(n)"
 space_complexity: "O(n)"
 related_ml_day: 2
 related_speech_day: 2
+related_agents_day: 2
 ---
 
 **Why a simple stack solves bracket matching, expression parsing, and even neural network depth management in one elegant pattern.**

@@ -15,6 +15,7 @@ scale: "1B+ Items, 100ms Latency"
 companies: [Google, Netflix, Amazon, TikTok]
 related_dsa_day: 28
 related_speech_day: 28
+related_agents_day: 28
 ---
 
 **How does Google search 50 billion pages in 0.1 seconds? The answer is the "Ranking Funnel".**

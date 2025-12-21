@@ -18,6 +18,7 @@ scale: "Millions of utterances, online & offline augmentation, multi-lingual"
 companies: [Google, Amazon, Apple, Microsoft, Meta, Baidu]
 related_dsa_day: 18
 related_ml_day: 18
+related_agents_day: 18
 ---
 
 **Use audio augmentation techniques to make speech models robust to noise, accents, channels, and real-world conditions—built on the same matrix/tensor transformation principles as image rotation.**

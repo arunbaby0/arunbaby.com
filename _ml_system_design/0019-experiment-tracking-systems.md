@@ -17,6 +17,7 @@ scale: "10K+ experiments, 1M+ runs, PB-scale artifacts"
 companies: [Google, Meta, OpenAI, Microsoft, Amazon, Uber, Airbnb]
 related_dsa_day: 19
 related_speech_day: 19
+related_agents_day: 19
 ---
 
 **Design robust experiment tracking systems that enable systematic exploration, reproducibility, and collaboration across large ML teams.**

@@ -16,6 +16,7 @@ scale: "Real-time model updates"
 companies: [Google, Meta, Netflix, Uber, Spotify, LinkedIn]
 related_dsa_day: 9
 related_speech_day: 9
+related_agents_day: 9
 ---
 
 **Design systems that learn continuously from streaming data, adapting to changing patterns without full retraining.**

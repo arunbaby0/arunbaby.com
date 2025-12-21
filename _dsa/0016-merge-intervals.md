@@ -17,6 +17,7 @@ scale: "O(N log N) time, O(N) space"
 companies: [Google, Meta, Amazon, Microsoft, Apple, LinkedIn]
 related_ml_day: 16
 related_speech_day: 16
+related_agents_day: 16
 ---
 
 **Master interval processing to handle overlapping ranges—the foundation of event streams and temporal reasoning in production systems.**

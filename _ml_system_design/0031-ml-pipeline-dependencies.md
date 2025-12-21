@@ -15,6 +15,7 @@ scale: "Thousands of tasks, Petabytes of data"
 companies: [Netflix, Uber, Airbnb, Spotify]
 related_dsa_day: 31
 related_speech_day: 31
+related_agents_day: 31
 ---
 
 **"Managing complex ML workflows with thousands of interdependent tasks."**

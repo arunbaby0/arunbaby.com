@@ -17,6 +17,7 @@ time_complexity: "O(log n)"
 space_complexity: "O(1) iterative, O(log n) recursive"
 related_ml_day: 9
 related_speech_day: 9
+related_agents_day: 9
 ---
 
 **Master binary search to understand logarithmic algorithms and efficient searching, foundational for optimization and search systems.**

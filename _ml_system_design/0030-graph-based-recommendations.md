@@ -15,6 +15,7 @@ scale: "Billions of edges, Millions of nodes"
 companies: [Pinterest, LinkedIn, Facebook, Twitter]
 related_dsa_day: 30
 related_speech_day: 30
+related_agents_day: 30
 ---
 
 **"Leveraging the connection structure to predict what users will love."**

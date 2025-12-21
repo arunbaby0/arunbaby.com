@@ -15,6 +15,7 @@ scale: "10M+ concurrent streams"
 companies: [Google, Amazon, Apple]
 related_dsa_day: 1
 related_ml_day: 1
+related_agents_day: 1
 ---
 
 **Why batch ASR won't work for voice assistants, and how streaming models transcribe speech as you speak in under 200ms.**

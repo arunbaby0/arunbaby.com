@@ -15,6 +15,7 @@ scale: "Billions of documents, <100ms latency"
 companies: [Google, Amazon, Spotify, Notion]
 related_dsa_day: 32
 related_speech_day: 32
+related_agents_day: 32
 ---
 
 **"Moving beyond keywords to understand the *meaning* of a query."**

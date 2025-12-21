@@ -17,6 +17,7 @@ time_complexity: "O(n)"
 space_complexity: "O(h)"
 related_ml_day: 8
 related_speech_day: 8
+related_agents_day: 8
 ---
 
 **Master BST validation to understand data integrity in tree structures, critical for indexing and search systems.**

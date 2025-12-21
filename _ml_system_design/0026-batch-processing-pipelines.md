@@ -17,6 +17,7 @@ scale: "Petabytes of data"
 companies: [Airbnb, Netflix, Uber, Databricks]
 related_dsa_day: 26
 related_speech_day: 26
+related_agents_day: 26
 ---
 
 **Not everything needs to be real-time. Sometimes, "tomorrow morning" is fast enough.**

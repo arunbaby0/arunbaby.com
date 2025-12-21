@@ -15,6 +15,7 @@ scale: "Real-time, High Ambiguity"
 companies: [Google Assistant, Alexa, Siri]
 related_dsa_day: 28
 related_ml_day: 28
+related_agents_day: 28
 ---
 
 **"Play Call Me Maybe". Did you mean the song, the video, or the contact named 'Maybe'?**

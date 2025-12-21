@@ -16,6 +16,7 @@ time_complexity: "O(n)"
 space_complexity: "O(1)"
 related_ml_day: 4
 related_speech_day: 4
+related_agents_day: 4
 ---
 
 **The single-pass pattern that powers streaming analytics, online algorithms, and real-time decision making in production systems.**

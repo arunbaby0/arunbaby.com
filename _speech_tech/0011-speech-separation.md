@@ -18,6 +18,7 @@ scale: "Real-time streaming, < 50ms latency"
 companies: [Google, Meta, Zoom, Microsoft, Dolby, Krisp, Descript]
 related_dsa_day: 11
 related_ml_day: 11
+related_agents_day: 11
 ---
 
 **Separate overlapping speakers with 99%+ accuracy: Deep learning solves the cocktail party problem for meeting transcription and voice assistants.**

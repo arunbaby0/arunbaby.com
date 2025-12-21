@@ -14,6 +14,7 @@ scale: "1TB+ data/day"
 companies: [Google, Meta, Netflix, Uber]
 related_dsa_day: 3
 related_speech_day: 3
+related_agents_day: 3
 ---
 
 **How to build production-grade pipelines that clean, transform, and validate billions of data points before training.**

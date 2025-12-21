@@ -16,6 +16,7 @@ scale: "Millions of predictions/second"
 companies: [Google, Meta, Uber, Netflix, Airbnb, Spotify]
 related_dsa_day: 8
 related_speech_day: 8
+related_agents_day: 8
 ---
 
 **Design production-grade model serving systems that deliver predictions at scale with low latency and high reliability.**

@@ -16,6 +16,7 @@ scale: "O(M×N) time, O(1) space"
 companies: [Google, Amazon, Apple, Bloomberg, Goldman Sachs]
 related_ml_day: 22
 related_speech_day: 22
+related_agents_day: 22
 ---
 
 **The classic grid optimization problem that bridges the gap between simple recursion and 2D Dynamic Programming.**

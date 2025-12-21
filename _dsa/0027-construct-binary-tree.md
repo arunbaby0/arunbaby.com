@@ -16,6 +16,7 @@ scale: "O(N) time, O(N) space"
 companies: [Amazon, Microsoft, Bloomberg, Google, Apple]
 related_ml_day: 27
 related_speech_day: 27
+related_agents_day: 27
 ---
 
 **Given two arrays, can you rebuild the original tree? It's like solving a jigsaw puzzle where the pieces are numbers.**

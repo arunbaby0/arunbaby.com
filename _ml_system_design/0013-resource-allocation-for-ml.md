@@ -18,6 +18,7 @@ scale: "1000s of models, 100K+ GPU hours/month, multi-region"
 companies: [Google, Meta, Netflix, Uber, Airbnb]
 related_dsa_day: 13
 related_speech_day: 13
+related_agents_day: 13
 ---
 
 **Build production ML infrastructure that dynamically allocates resources using greedy optimization to maximize throughput and minimize costs.**

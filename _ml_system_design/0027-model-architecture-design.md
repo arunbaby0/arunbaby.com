@@ -17,6 +17,7 @@ scale: "From MobileNet to GPT-4"
 companies: [Google, Meta, OpenAI, DeepMind, NVIDIA]
 related_dsa_day: 27
 related_speech_day: 27
+related_agents_day: 27
 ---
 
 **Architecture is destiny. The difference between 50% accuracy and 90% accuracy is often just a skip connection.**

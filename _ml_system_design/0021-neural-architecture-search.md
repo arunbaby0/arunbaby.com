@@ -17,6 +17,7 @@ scale: "1000s of architectures evaluated, 100+ GPU days, multi-objective optimiz
 companies: [Google, Meta, OpenAI, DeepMind, Microsoft, NVIDIA]
 related_dsa_day: 21
 related_speech_day: 21
+related_agents_day: 21
 ---
 
 **Design neural architecture search systems that automatically discover optimal model architectures using dynamic programming and path optimization—the same principles from grid path counting scaled to exponential search spaces.**

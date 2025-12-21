@@ -15,6 +15,7 @@ scale: "Real-time streaming"
 companies: [Google, Amazon, Microsoft, Apple, Meta]
 related_dsa_day: 6
 related_ml_day: 6
+related_agents_day: 6
 ---
 
 **From text to natural speech: understanding modern neural TTS architectures that power Alexa, Google Assistant, and Siri.**

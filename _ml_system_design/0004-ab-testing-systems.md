@@ -15,6 +15,7 @@ scale: "10M+ users"
 companies: [Google, Meta, Netflix, Airbnb, Uber]
 related_dsa_day: 4
 related_speech_day: 4
+related_agents_day: 4
 ---
 
 **How to design experimentation platforms that enable rapid iteration while maintaining statistical rigor at scale.**

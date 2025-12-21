@@ -17,6 +17,7 @@ scale: "Real-time (<100ms latency), streaming audio, multi-speaker"
 companies: [Google, Amazon, Apple, Microsoft, Zoom, Otter.ai]
 related_dsa_day: 16
 related_ml_day: 16
+related_agents_day: 16
 ---
 
 **Build production audio segmentation systems that detect boundaries in real-time using interval merging and temporal processing—the same principles from merge intervals and event stream processing.**

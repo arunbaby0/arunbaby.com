@@ -17,6 +17,7 @@ scale: "O(M×N) time, O(M×N) space (optimizable to O(N))"
 companies: [Google, Meta, Amazon, Microsoft, Apple, Bloomberg]
 related_ml_day: 21
 related_speech_day: 21
+related_agents_day: 21
 ---
 
 **Master grid path counting with dynamic programming—the same optimization technique used in neural architecture search and speech model design.**

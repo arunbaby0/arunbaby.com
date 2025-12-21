@@ -15,6 +15,7 @@ time_complexity: "O(n)"
 space_complexity: "O(n)"
 related_ml_day: 1
 related_speech_day: 1
+related_agents_day: 1
 ---
 
 **The hash table trick that makes O(n²) become O(n) and why this pattern appears everywhere from feature stores to embedding lookups.**

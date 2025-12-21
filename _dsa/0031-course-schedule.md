@@ -12,6 +12,7 @@ tags:
 difficulty: Medium
 related_ml_day: 31
 related_speech_day: 31
+related_agents_day: 31
 ---
 
 **"Can you finish all courses given their prerequisites?"**
