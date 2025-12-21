@@ -242,3 +242,11 @@ Then add 20 adversarial test cases and ensure no secret-like patterns ever appea
 
 
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0045-data-leakage-prevention](https://www.arunbaby.com/ai-agents/0045-data-leakage-prevention/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

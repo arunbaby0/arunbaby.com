@@ -426,3 +426,11 @@ Speech Tokenization bridges the gap between Signal Processing and NLP. It allows
 2.  **RVQ** allows hierarchical representation (Coarse -> Fine).
 3.  **Semantic Tokens** capture meaning; **Acoustic Tokens** capture style.
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/speech-tech/0024-speech-tokenization](https://www.arunbaby.com/speech-tech/0024-speech-tokenization/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

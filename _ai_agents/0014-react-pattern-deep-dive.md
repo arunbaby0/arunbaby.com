@@ -227,3 +227,11 @@ The ReAct pattern works because it respects the **Correspondence Theory of Truth
 By mastering the nuances of this loop—stopping sequences, parsing robustness, and error feedback—you move from "Prompt Engineering" to "Agent Runtime Engineering," building systems that can autonomously navigate the real world.
 
 While ReAct loops handle immediate tasks, larger problems require comprehensive **Planning and Decomposition** strategies.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0014-react-pattern-deep-dive](https://www.arunbaby.com/ai-agents/0014-react-pattern-deep-dive/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

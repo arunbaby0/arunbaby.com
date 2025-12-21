@@ -226,3 +226,11 @@ Prompt Engineering for agents is not about finding "magic words." It is about:
 4. **Defending Integirty:** Protecting the instructions from injection attacks.
 
 The prompt is the **Operating System** of the agent. Treat it with the same respect you treat your kernel code.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0003-prompt-engineering-for-agents](https://www.arunbaby.com/ai-agents/0003-prompt-engineering-for-agents/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

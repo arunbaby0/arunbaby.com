@@ -566,3 +566,11 @@ Then add one improvement (conflict detection or a backoff state) and measure if 
 - Evidence and critique loops: [Self-Reflection and Critique](/ai-agents/0039-self-reflection-and-critique/)
 
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0041-world-models-for-agents](https://www.arunbaby.com/ai-agents/0041-world-models-for-agents/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

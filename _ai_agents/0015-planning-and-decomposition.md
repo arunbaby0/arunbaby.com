@@ -220,3 +220,11 @@ An agent without a plan is a leaf in the wind. An agent with a plan is a guided 
 
 This concludes the "Foundations" and "Intermediate Concepts" of our curriculum. We have covered Models, Prompts, Tools, Memory, RAG, and Planning.
 With planning in place, we move into **Deep Domain Specialization**: Real-time Pipelines, Voice Agents, and Vision Agents.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0015-planning-and-decomposition](https://www.arunbaby.com/ai-agents/0015-planning-and-decomposition/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

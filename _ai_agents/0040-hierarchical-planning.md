@@ -592,3 +592,11 @@ If you can make this predictable, you’re ready for bigger autonomous systems.
 - For critique rubrics and revision loops: [Self-Reflection and Critique](/ai-agents/0039-self-reflection-and-critique/)
 
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0040-hierarchical-planning](https://www.arunbaby.com/ai-agents/0040-hierarchical-planning/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

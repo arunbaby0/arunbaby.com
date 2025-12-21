@@ -704,3 +704,11 @@ Every step matters. Poor chunking cascades to poor retrieval. Poor retrieval cas
 
 **The future is RAG + Agents:** Systems that not only retrieve but reason, plan, and take action based on retrieved knowledge. Start with RAG fundamentals, then explore the agentic frontier.
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/ml-system-design/0045-rag-systems](https://www.arunbaby.com/ml-system-design/0045-rag-systems/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

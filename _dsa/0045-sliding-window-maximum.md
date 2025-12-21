@@ -579,3 +579,11 @@ Once you internalize this pattern, you'll see opportunities to apply it everywhe
 
 **Practice Challenge:** Implement sliding window maximum without using any library data structures (raw arrays only). This deepens understanding of the underlying mechanics.
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/dsa/0045-sliding-window-maximum](https://www.arunbaby.com/dsa/0045-sliding-window-maximum/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

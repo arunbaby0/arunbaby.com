@@ -157,3 +157,11 @@ Document Processing determines the **Ceiling** of your agent's intelligence.
 * **Charts:** Must be captioned by Vision models.
 
 To scale this to millions of documents, we must master **Vector Search Algorithms** like HNSW and quantization.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0010-document-processing](https://www.arunbaby.com/ai-agents/0010-document-processing/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

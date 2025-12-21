@@ -405,3 +405,11 @@ Vector Search gives your agent a **Long-Term Memory**. Without it, an agent is t
 By mastering these layers, you move from a simple retrieval script to a robust **Knowledge Retrieval Architecture** capable of supporting enterprise-grade agents.
 
 With retrieval mastered, the next challenge is managing the **Context Window**, deciding how to feed this data into the LLM efficiently.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0011-vector-search-for-agents](https://www.arunbaby.com/ai-agents/0011-vector-search-for-agents/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

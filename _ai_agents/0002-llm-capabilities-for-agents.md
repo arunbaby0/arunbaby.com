@@ -194,3 +194,11 @@ The LLM is the **Cognitive Substrate** of the agent. It provides the reasoning c
 * **Context** ensures it remembers.
 
 Building an agent starts with selecting the right model for the complexity of your task. A coding agent needs Claude 3.5 or GPT-4o. A classification agent might do fine with Llama-3-8B. The art is in matching the brain size to the problem size.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0002-llm-capabilities-for-agents](https://www.arunbaby.com/ai-agents/0002-llm-capabilities-for-agents/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

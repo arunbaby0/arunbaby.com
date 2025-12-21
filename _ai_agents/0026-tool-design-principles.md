@@ -386,3 +386,11 @@ Designing tools for agents is about bridging the gap between **unstructured lang
 4. **Observability:** Implement tracing (LangSmith) to see why an agent picked the "wrong" tool.
 
 **Further reading (optional):** If you want to connect tools to real services safely, see [API Integration Patterns](/ai-agents/0027-api-integration-patterns/).
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0026-tool-design-principles](https://www.arunbaby.com/ai-agents/0026-tool-design-principles/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

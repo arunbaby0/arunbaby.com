@@ -420,3 +420,11 @@ We can use the biggest models, look at the entire context, and perform complex p
 *If you found this helpful, consider sharing it with others who might benefit.*
 
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/speech-tech/0026-batch-speech-processing](https://www.arunbaby.com/speech-tech/0026-batch-speech-processing/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

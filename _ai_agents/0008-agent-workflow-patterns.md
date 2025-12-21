@@ -174,3 +174,11 @@ The job of the AI Engineer is shifting. We are no longer just "Prompting." We ar
 * **Multi-Agent** makes agents specialized.
 
 To build agents that master specific domains, we must first master **RAG and Document Intelligence**, which allows agents to read and retrieve external knowledge.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0008-agent-workflow-patterns](https://www.arunbaby.com/ai-agents/0008-agent-workflow-patterns/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

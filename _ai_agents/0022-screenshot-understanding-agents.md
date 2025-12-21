@@ -284,3 +284,11 @@ Multimodal LLMs are the "Prefrontal Cortex" of a Vision Agent. They provide reas
 This knowledge bridges the gap between raw pixels and smart actions.
 
 **Further reading (optional):** If you want to apply screenshot understanding to real UI control, see [UI Automation Agents](/ai-agents/0023-ui-automation-agents/) and [Computer Use Agents](/ai-agents/0024-computer-use-agents/).
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0022-screenshot-understanding-agents](https://www.arunbaby.com/ai-agents/0022-screenshot-understanding-agents/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

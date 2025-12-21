@@ -747,3 +747,11 @@ def k_way_merge(sources, key_func=lambda x: x, next_func=None):
 
 The k-way merge pattern is one of the most versatile algorithmic patterns. Once you master it, you'll see it everywhere—databases, distributed systems, log processing, and more. It's a testament to how a simple idea (use a heap to find the min efficiently) can solve a wide range of problems elegantly.
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/dsa/0042-merge-k-sorted-lists](https://www.arunbaby.com/dsa/0042-merge-k-sorted-lists/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

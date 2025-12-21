@@ -433,3 +433,11 @@ You implement LLM-as-a-Judge. Every trace is scored automatically. You only look
 In the DSA track, we solve **Evaluate Division** using **Graph Reasoning**. Tracing is exactly this: finding the "path" from a query to an answer. Each thought is a node, and each tool call is an edge.
 
 In the ML track, we look at **Knowledge Graph Systems**. They provide the "MAP" of context. Tracing ensures the agent is staying "on the map" of truth and not wandering into the void of hallucination.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0034-observability-tracing](https://www.arunbaby.com/ai-agents/0034-observability-tracing/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

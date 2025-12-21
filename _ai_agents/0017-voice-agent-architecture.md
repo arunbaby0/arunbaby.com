@@ -218,3 +218,11 @@ Voice Agents are a distributed systems problem wrapped in a UX problem.
 * **Cost** requires careful model selection.
 
 To manage this complexity, we often rely on dedicated **Voice Frameworks** that abstract away the plumbing of WebRTC and VAD.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0017-voice-agent-architecture](https://www.arunbaby.com/ai-agents/0017-voice-agent-architecture/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

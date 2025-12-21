@@ -442,3 +442,11 @@ While Real-Time is sexy, Batch is reliable, replayable, and easy to debug.
 *If you found this helpful, consider sharing it with others who might benefit.*
 
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/ml-system-design/0026-batch-processing-pipelines](https://www.arunbaby.com/ml-system-design/0026-batch-processing-pipelines/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

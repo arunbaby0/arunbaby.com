@@ -572,3 +572,11 @@ If you can make that predictable, you’re already doing “autonomous architect
 - If your agent depends on web sources, see [Web Browsing Agents](/ai-agents/0036-web-browsing-agents/) for safe retrieval and citation pipelines.
 
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0038-autonomous-agent-architectures](https://www.arunbaby.com/ai-agents/0038-autonomous-agent-architectures/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

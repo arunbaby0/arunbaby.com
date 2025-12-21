@@ -746,3 +746,11 @@ loss = -log(exp(sim(emb1, emb2) / tau) / (exp(sim(emb1, emb2) / tau) + exp(sim(e
 
 The journey from "who spoke when" to production-ready diarization involves mastering embeddings, clustering, and system design. As meetings move online and voice interfaces proliferate, diarization will become even more critical. The techniques you've learned here—from x-vectors to EEND to multi-modal fusion—will serve you well in building the next generation of speech systems.
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/speech-tech/0041-speaker-diarization](https://www.arunbaby.com/speech-tech/0041-speaker-diarization/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

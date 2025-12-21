@@ -343,3 +343,11 @@ Real-time is the frontier of Agent UX. It is where "Software Engineering" meets 
 * **Orchestration** decouples the brain from the mouth.
 
 These real-time pipelines are the foundation for **Voice Agents**, which add layers of complexity regarding STT accuracy, Cost Analysis, and the physics of sound.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0016-real-time-agent-pipelines](https://www.arunbaby.com/ai-agents/0016-real-time-agent-pipelines/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

@@ -147,3 +147,11 @@ Speech-to-Speech is the endgame for Voice Agents.
 * **Complexity** shifts from "Pipeline Engineering" (gluing STT/TTS) to "Model Deployment" (hosting a massive transformer).
 
 This concludes the exploration of Real-Time & Voice. The journey moves next to **Vision Agents**, learning how to make agents "See" screens, documents, and the physical world.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0020-speech-to-speech-agents](https://www.arunbaby.com/ai-agents/0020-speech-to-speech-agents/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

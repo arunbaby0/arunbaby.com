@@ -927,3 +927,11 @@ def convert_with_metrics(from_curr, to_curr, amount):
 
 Evaluate Division is a classic example of how a math problem can be transformed into a graph problem. The choice of algorithm (DFS vs. Union-Find) depends heavily on the constraints (number of queries vs. updates). Mastering Union-Find with path compression and weight tracking is a powerful tool for your algorithmic toolkit.
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/dsa/0034-evaluate-division](https://www.arunbaby.com/dsa/0034-evaluate-division/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

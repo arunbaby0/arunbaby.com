@@ -373,3 +373,11 @@ Multi-agent architecture is about moving from "Simple Software" to "Digital Orga
 4. **Debugging MAS:** Use tools like **LangFuse** to visualize the "Graph" of your agent interactions. If a task fails, you need to know exactly which specialist dropped the ball.
 
 In the next and final post of this series, we will look at **Agent Communication Protocols**: the specific "Language" and "Schemas" agents use to talk to each other reliably without human intervention.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0029-multi-agent-architectures](https://www.arunbaby.com/ai-agents/0029-multi-agent-architectures/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

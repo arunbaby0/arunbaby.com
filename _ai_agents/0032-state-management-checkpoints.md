@@ -359,3 +359,11 @@ This structure is easy to serialize, easy to debug in a database row, and it sca
 * Store a **digest** (short summary + a few key fields) in the checkpoint.
 
 If you follow this rule, you keep checkpoints lightweight, and your “resume” operation stays fast and predictable even as tasks run for days.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0032-state-management-checkpoints](https://www.arunbaby.com/ai-agents/0032-state-management-checkpoints/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

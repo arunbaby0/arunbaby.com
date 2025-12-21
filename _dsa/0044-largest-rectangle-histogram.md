@@ -614,3 +614,11 @@ Once you internalize this pattern, a whole class of problems becomes tractable. 
 
 **Practice:** Solve the related problems to cement your understanding. The pattern will become second nature!
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/dsa/0044-largest-rectangle-histogram](https://www.arunbaby.com/dsa/0044-largest-rectangle-histogram/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

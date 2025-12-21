@@ -352,3 +352,11 @@ This knowledge turns any software ever written into a programmable interface for
 5. **Think in Loops:** Always implement a ReAct loop with a "Max Steps" limit to prevent infinite loops (and infinite bills).
 
 **Further reading (optional):** If you want to generalize from screens (2D digital worlds) to full operating systems, see [Computer Use Agents](/ai-agents/0024-computer-use-agents/).
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0023-ui-automation-agents](https://www.arunbaby.com/ai-agents/0023-ui-automation-agents/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

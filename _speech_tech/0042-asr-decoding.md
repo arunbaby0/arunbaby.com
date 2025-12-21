@@ -712,3 +712,11 @@ ASR decoding is where the magic happens—turning probabilities into words. The 
 
 The journey from "audio in" to "text out" is complex but rewarding. Master it, and you'll have the skills to build world-class speech systems.
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/speech-tech/0042-asr-decoding](https://www.arunbaby.com/speech-tech/0042-asr-decoding/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

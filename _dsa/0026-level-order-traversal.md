@@ -859,3 +859,11 @@ class Solution:
 
 Level Order Traversal is the "Hello World" of BFS.
 Mastering the `while queue: ... for _ in range(len(queue)):` pattern is crucial. It appears in graph problems, tree problems, and even matrix problems (Rotting Oranges).
+
+
+---
+
+**Originally published at:** [arunbaby.com/dsa/0026-level-order-traversal](https://www.arunbaby.com/dsa/0026-level-order-traversal/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

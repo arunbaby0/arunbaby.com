@@ -162,3 +162,11 @@ Memory is the bedrock of identity.
 * **Reflection** allows for learning.
 
 Without robust memory architectures, AI agents will forever be "Goldfish"—brilliant in the moment, but incapable of growth. In the next section, we move from components to architectures, looking at the major frameworks like LangChain and AutoGen.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0005-memory-architectures](https://www.arunbaby.com/ai-agents/0005-memory-architectures/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

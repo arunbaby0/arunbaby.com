@@ -360,3 +360,11 @@ Role-Based Design transforms "Chatbots" into "Digital Workforces." It is the mov
 **Congratulations!** You have completed the first masterclass in advanced agentic architecture. You have moved from "A Chat with an AI" to "Coordinating a team of Digital Specialists."
 
 **Further reading (optional):** If you want to make role-based squads reliable for long-running tasks, see [State Management and Checkpoints](/ai-agents/0032-state-management-checkpoints/).
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0031-role-based-agent-design](https://www.arunbaby.com/ai-agents/0031-role-based-agent-design/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

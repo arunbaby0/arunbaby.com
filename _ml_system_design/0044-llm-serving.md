@@ -588,3 +588,11 @@ As models get larger and contexts get longer, these optimizations become even mo
 
 **The key insight:** LLM inference is memory-bound, not compute-bound. Optimize for memory, and throughput will follow.
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/ml-system-design/0044-llm-serving](https://www.arunbaby.com/ml-system-design/0044-llm-serving/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

@@ -590,3 +590,11 @@ Don’t let the agent “execute” by calling external services directly from g
 **Further reading (optional):** If you want the broader system view (roles, state, recovery, tracing), see [Role-Based Agent Design](/ai-agents/0031-role-based-agent-design/), [State Management and Checkpoints](/ai-agents/0032-state-management-checkpoints/), [Error Handling and Recovery](/ai-agents/0033-error-handling-recovery/), and [Observability and Tracing](/ai-agents/0034-observability-tracing/).
 
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0037-code-execution-agents](https://www.arunbaby.com/ai-agents/0037-code-execution-agents/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

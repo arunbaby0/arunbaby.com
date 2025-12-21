@@ -436,3 +436,11 @@ In ASR (Speech-to-Text), a common failure is **Hallucination**.
 
 Speech Quality Monitoring is moving from "Signal Processing" (PESQ) to "Deep Learning" (NISQA).
 Just like in Vision (Perceptual Loss) and NLP (BERTScore), we are learning that **Neural Networks are the best judges of Neural Networks**.
+
+
+---
+
+**Originally published at:** [arunbaby.com/speech-tech/0025-speech-quality-monitoring](https://www.arunbaby.com/speech-tech/0025-speech-quality-monitoring/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

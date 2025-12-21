@@ -218,3 +218,11 @@ Multi-Step Reasoning turns an LLM from a Text Predictor into a Logic Engine.
 For an autonomous agent, **never** accept the first token as truth for a critical decision. Force the model to think, verify, and vote before acting.
 
 Reasoning is efficient, but it becomes actionable when combined with tools in the **ReAct Pattern**.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0013-multi-step-reasoning](https://www.arunbaby.com/ai-agents/0013-multi-step-reasoning/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

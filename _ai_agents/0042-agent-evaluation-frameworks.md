@@ -637,3 +637,11 @@ Run it on every agent change and chart metrics over time.
 - Debugging + metrics: [Observability and Tracing](/ai-agents/0034-observability-tracing/)
 
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0042-agent-evaluation-frameworks](https://www.arunbaby.com/ai-agents/0042-agent-evaluation-frameworks/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

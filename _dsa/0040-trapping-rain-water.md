@@ -671,3 +671,11 @@ def benchmark():
 ```
 
 (Detailed benchmarking code would go here).
+
+
+---
+
+**Originally published at:** [arunbaby.com/dsa/0040-trapping-rain-water](https://www.arunbaby.com/dsa/0040-trapping-rain-water/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

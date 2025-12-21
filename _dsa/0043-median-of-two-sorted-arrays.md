@@ -642,3 +642,11 @@ Mastering this problem opens the door to many advanced topics: distributed compu
 
 **The journey from $O(m+n)$ to $O(\log \min(m,n))$ teaches us that the right perspective can transform a problem.**
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/dsa/0043-median-of-two-sorted-arrays](https://www.arunbaby.com/dsa/0043-median-of-two-sorted-arrays/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

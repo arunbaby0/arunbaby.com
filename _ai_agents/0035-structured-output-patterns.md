@@ -471,3 +471,11 @@ Design a recursive, self-healing system where agents can update their own schema
 In the DSA track, we solve **Design Twitter**. This is about defining **Interfaces**. A Tweet is a structured object. If your API doesn't follow the schema, the system crashes. Structured output is the "Interface of the Agent."
 
 In the ML track, we look at **Recommendation Systems**. RecSys takes messy user history and maps it into **Structured Embeddings**. Structured output is how we map a user's natural language bio into structured "Interest Categories" that a RecSys can consume.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0035-structured-output-patterns](https://www.arunbaby.com/ai-agents/0035-structured-output-patterns/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

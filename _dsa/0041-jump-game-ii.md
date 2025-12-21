@@ -891,3 +891,11 @@ Jump Game II is more than just a coding problem—it's a gateway to understandin
 
 The journey from "Can I reach the end?" to "What's the optimal path with constraints?" teaches us to think algorithmically and adapt solutions to new problems. This is the essence of problem-solving in computer science.
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/dsa/0041-jump-game-ii](https://www.arunbaby.com/dsa/0041-jump-game-ii/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

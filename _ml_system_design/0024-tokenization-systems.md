@@ -492,3 +492,11 @@ Tokenization is the first layer of the stack. If it's bad, your model is bad.
 - **Wrong algorithm?** You can't handle emojis or Chinese.
 
 Understanding BPE and SentencePiece gives you the power to debug why your model thinks "2+2" is different from " 2 + 2".
+
+
+---
+
+**Originally published at:** [arunbaby.com/ml-system-design/0024-tokenization-systems](https://www.arunbaby.com/ml-system-design/0024-tokenization-systems/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

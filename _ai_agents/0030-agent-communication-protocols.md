@@ -367,3 +367,11 @@ Agent Communication is the "Glue" of the agentic world. Without standard protoco
 4. **Observability:** Use tools like **LangSmith** to monitor the protocol exchange. If two agents are "arguing" (Infinite Loop), you need to catch it early.
 
 **Congratulations!** You have completed the 10-day intensive course on AI Agents. You are now equipped with the knowledge to build, coordinate, and secure teams of intelligent agents that can see, hear, read, and act in the real world.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0030-agent-communication-protocols](https://www.arunbaby.com/ai-agents/0030-agent-communication-protocols/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

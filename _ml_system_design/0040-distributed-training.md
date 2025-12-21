@@ -608,3 +608,11 @@ Distributed training is the backbone of modern AI. From GPT to Stable Diffusion,
 *   **Expect Failures:** Checkpointing and elastic training are essential.
 
 The future of AI depends on our ability to train ever-larger models efficiently. Mastering distributed training is no longer optional—it's a core skill for ML engineers.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ml-system-design/0040-distributed-training](https://www.arunbaby.com/ml-system-design/0040-distributed-training/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

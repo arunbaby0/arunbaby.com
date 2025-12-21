@@ -188,3 +188,11 @@ If LiveKit/Pipecat is "Platform-as-a-Service" (PaaS) where you write code, there
 These frameworks standardize the **Transport Layer** so you can focus entirely on the **Intelligence Layer**.
 
 A critical component of these frameworks is **Voice Activity Detection (VAD)**, the math of detecting silence.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0018-voice-agent-frameworks](https://www.arunbaby.com/ai-agents/0018-voice-agent-frameworks/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

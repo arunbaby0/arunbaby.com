@@ -780,3 +780,11 @@ prune_to_structured_sparsity(model, sparsity_pattern="2:4")
 
 The art of model compression is balancing the three-way trade-off: **Size, Speed, Accuracy**. There's no one-size-fits-all solution. The best approach depends on your use case, hardware, and constraints. Mastering these techniques will make you indispensable in the era of edge AI.
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/ml-system-design/0041-model-compression](https://www.arunbaby.com/ml-system-design/0041-model-compression/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

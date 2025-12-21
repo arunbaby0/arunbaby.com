@@ -191,3 +191,11 @@ Tool Calling is what makes AI useful.
 * **Strict Security** (Sandboxing) ensures the agent doesn't burn down the house.
 
 By mastering these fundamentals, you can build agents that don't just talk, but *do*—transforming business workflows from manual drudgery to autonomous execution.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0004-tool-calling-fundamentals](https://www.arunbaby.com/ai-agents/0004-tool-calling-fundamentals/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

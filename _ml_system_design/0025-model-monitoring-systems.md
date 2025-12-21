@@ -514,3 +514,11 @@ This turns "Low Confidence" from a failure into a feature.
 
 Monitoring is the difference between a "Science Project" and a "Product".
 A model is a living organism. It eats data. If the food spoils, the organism gets sick. Your job is to be the doctor.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ml-system-design/0025-model-monitoring-systems](https://www.arunbaby.com/ml-system-design/0025-model-monitoring-systems/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

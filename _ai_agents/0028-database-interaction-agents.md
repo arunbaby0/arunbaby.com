@@ -346,3 +346,11 @@ Building a database agent is about creating a **Translation Protocol** between h
 4. **Iterative Refinement:** Use error-reflection loops to let the agent fix its own syntax mistakes.
 
 **Further reading (optional):** If you want to coordinate multiple specialized agents (like a SQL agent and a vision agent), see [Multi-Agent Architectures](/ai-agents/0029-multi-agent-architectures/).
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0028-database-interaction-agents](https://www.arunbaby.com/ai-agents/0028-database-interaction-agents/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

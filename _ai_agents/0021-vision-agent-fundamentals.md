@@ -247,3 +247,11 @@ We have moved from the rigid, blind world of APIs to the flexible, noisy world o
 This architecture forms the "Hardware" of the agent's visual brain.
 
 **Further reading (optional):** If you want to see how multimodal LLMs integrate the vision signal into reasoning, see [Screenshot Understanding Agents](/ai-agents/0022-screenshot-understanding-agents/).
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0021-vision-agent-fundamentals](https://www.arunbaby.com/ai-agents/0021-vision-agent-fundamentals/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

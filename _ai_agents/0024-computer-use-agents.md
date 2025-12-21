@@ -394,3 +394,11 @@ Computer Use Agents move the AI away from the chat box and into the workstation.
 4. **Benchmarking:** Explore **OSWorld** or **Tau Bench** to see how your agent stacks up against state-of-the-art models.
 
 **Further reading (optional):** If you want to keep humans in control during high-risk computer actions, see [Human-in-the-Loop Patterns](/ai-agents/0025-human-in-the-loop-patterns/).
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0024-computer-use-agents](https://www.arunbaby.com/ai-agents/0024-computer-use-agents/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

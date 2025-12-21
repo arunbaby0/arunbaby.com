@@ -635,3 +635,11 @@ Wake Word Detection is the unsung hero of voice AI. It's the first line of defen
 *   **Privacy:** Process as much as possible on-device.
 
 The next generation of KWS will be multimodal (audio + visual), contextual (gaze-aware), and personalized (adapts to your voice). The challenge is to do all this while consuming less than 1 mW of power.
+
+
+---
+
+**Originally published at:** [arunbaby.com/speech-tech/0040-wake-word-detection](https://www.arunbaby.com/speech-tech/0040-wake-word-detection/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

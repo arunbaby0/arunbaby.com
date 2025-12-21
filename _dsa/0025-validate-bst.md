@@ -609,3 +609,11 @@ Validating a BST is the "Hello World" of Tree algorithms, but it teaches us the 
 - In `isValidBST`, we must pass the *context* (min/max constraints).
 
 This pattern—passing constraints down the tree—appears everywhere, from **Alpha-Beta Pruning** in Game AI to **Constraint Satisfaction Problems** in AI planning.
+
+
+---
+
+**Originally published at:** [arunbaby.com/dsa/0025-validate-bst](https://www.arunbaby.com/dsa/0025-validate-bst/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

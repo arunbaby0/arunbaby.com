@@ -200,3 +200,11 @@ VAD is the heartbeat of a Voice Agent. It defines the "Rhythm" of conversation.
 * **Semantic Analysis** prevents interrupting users who are thinking.
 
 Beyond VAD, the frontier of voice is **Real-Time Speech-to-Speech Agents**, removing text from the loop entirely.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0019-voice-activity-detection](https://www.arunbaby.com/ai-agents/0019-voice-activity-detection/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

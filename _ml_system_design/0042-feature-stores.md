@@ -680,3 +680,11 @@ user_embedding_view = FeatureView(
 
 Feature stores are the backbone of production ML. They ensure that the features used in training are the same as those used in inference, eliminating one of the most common sources of bugs in ML systems. As ML adoption grows, feature stores will become as essential as databases are today.
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/ml-system-design/0042-feature-stores](https://www.arunbaby.com/ml-system-design/0042-feature-stores/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

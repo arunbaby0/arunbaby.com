@@ -576,3 +576,11 @@ Build a tiny “draft + critic” system:
 - For browser-grounded evidence: [Web Browsing Agents](/ai-agents/0036-web-browsing-agents/)
 
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0039-self-reflection-and-critique](https://www.arunbaby.com/ai-agents/0039-self-reflection-and-critique/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

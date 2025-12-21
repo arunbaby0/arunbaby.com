@@ -602,3 +602,11 @@ The choice between HNSW, IVF, and PQ depends on your accuracy, speed, and memory
 
 As embeddings become ubiquitous, vector databases will become as fundamental as SQL databases. Mastering them is essential for any ML engineer building production AI systems.
 
+
+
+---
+
+**Originally published at:** [arunbaby.com/ml-system-design/0043-vector-databases](https://www.arunbaby.com/ml-system-design/0043-vector-databases/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

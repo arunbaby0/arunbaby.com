@@ -331,3 +331,11 @@ AI Agents are the realization of the computer science dream: a machine that does
 While currently fragile and expensive, they are improving at a double-exponential rate. Transitioning your mindset from "Building APIs" to "Building Tools for Agents" is the most critical skill for a modern software engineer.
 
 Deep understanding of LLM capabilities and Prompt Engineering is crucial for building these robust agents.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0001-what-are-ai-agents](https://www.arunbaby.com/ai-agents/0001-what-are-ai-agents/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

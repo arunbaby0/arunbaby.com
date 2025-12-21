@@ -375,3 +375,11 @@ Human-in-the-Loop is not a failure of AI; it is an architecture for **Reliabilit
 4. **Ethics & Policy:** Always define clear "Red Lines" where the agent is forced to stop and ask for help.
 
 **Congratulations!** You have completed the foundation of human-agent collaboration. In the next section, we move to **Enterprise Scaling**, looking at how to manage fleets of thousands of agents in production environments.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0025-human-in-the-loop-patterns](https://www.arunbaby.com/ai-agents/0025-human-in-the-loop-patterns/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

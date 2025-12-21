@@ -591,3 +591,11 @@ Word Break is more than just a LeetCode Medium. It is the gateway to **Computati
 - It scales up to **Spell Checkers** and **Search Engines**.
 
 Mastering this problem gives you the tools to understand how machines "read" text. Next time you see a red squiggly line under a typo, you'll know exactly what's happening under the hood.
+
+
+---
+
+**Originally published at:** [arunbaby.com/dsa/0024-word-break](https://www.arunbaby.com/dsa/0024-word-break/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

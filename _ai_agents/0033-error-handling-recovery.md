@@ -373,3 +373,11 @@ Resilience is what turns an AI "Toy" into an AI "Tool."
 In the DSA track, we solve **Clone Graph**. Handling **Cycles** is the core challenge. An agent in an error-retry loop is a "Cycle" in a state graph. Your **Circuit Breaker** (Section 4) is the "Visited Set" that prevents the algorithm from running forever.
 
 In the ML track, we discuss **Model Replication**. In a distributed system, you don't trust a single node. In an agentic system, you use **Model Diversity** (switching models during errors) to ensure that a cognitive bias in one model doesn't crash the entire mission.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0033-error-handling-recovery](https://www.arunbaby.com/ai-agents/0033-error-handling-recovery/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+

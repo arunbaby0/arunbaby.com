@@ -324,3 +324,11 @@ Building an agent is not magic. It is just **Looping over an LLM**.
 You have now built a Level 3 Agent. You understand the raw mechanics. When you switch to **LangGraph** in the next section, you will understand that it is simply a state machine wrapping this exact `while` loop logic with better persistence and typing.
 
 With the basics built, we can now look at **Agent Workflow Patterns**, arranging these agents into "Editors," "Planners," and "Reviewers" to solve much harder problems.
+
+
+---
+
+**Originally published at:** [arunbaby.com/ai-agents/0007-building-your-first-agent](https://www.arunbaby.com/ai-agents/0007-building-your-first-agent/)
+
+*If you found this helpful, consider sharing it with others who might benefit.*
+
