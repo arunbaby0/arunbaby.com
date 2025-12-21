@@ -11,10 +11,10 @@ tags:
   - react
   - basics
 difficulty: Easy
----
 related_dsa_day: 7
 related_ml_day: 7
 related_speech_day: 7
+---
 
 **"Hello World? No, Hello Agent."**
 

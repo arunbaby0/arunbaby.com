@@ -11,10 +11,10 @@ tags:
   - security
   - pydantic
 difficulty: Easy
----
 related_dsa_day: 4
 related_ml_day: 4
 related_speech_day: 4
+---
 
 **"Giving the Brain Hands to Act: The Interface Between Intelligence and Infrastructure."**
 
