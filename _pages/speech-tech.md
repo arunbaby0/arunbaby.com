@@ -86,6 +86,19 @@ Each post includes:
 **Speech Model Design:**
 - [Speech Architecture Search](/speech-tech/0021-speech-architecture-search/)
 
+**Transfer Learning & Domain Adaptation:**
+- [Cross-Lingual Speech Transfer](/speech-tech/0046-cross-lingual-speech-transfer/)
+- [Custom Language Modeling for ASR](/speech-tech/0050-custom-language-modeling/)
+
+**Model Deployment:**
+- [Speech Model Export (ONNX/TFLite)](/speech-tech/0047-speech-model-export/)
+
+**Search & Retrieval:**
+- [Phonetic Trie for Speech Recognition](/speech-tech/0048-phonetic-trie/)
+
+**Pipeline Orchestration:**
+- [Speech Pipeline Dependencies](/speech-tech/0049-speech-pipeline-dependencies/)
+
 ---
 
 ## Speech Tech Index

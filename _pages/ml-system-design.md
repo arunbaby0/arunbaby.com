@@ -70,6 +70,15 @@ Each design includes:
 - [Resource Partitioning](/ml-system-design/0036-resource-partitioning/)
 - [Hyperparameter Optimization](/ml-system-design/0038-hyperparameter-optimization/)
 - [Online Learning Systems (Advanced)](/ml-system-design/0020-online-learning-systems/)
+- [Transfer Learning Systems](/ml-system-design/0046-transfer-learning/)
+- [Model Serialization Systems](/ml-system-design/0047-model-serialization/)
+- [DAG-based Pipeline Orchestration](/ml-system-design/0049-dag-pipeline-orchestration/)
+
+**Search & Retrieval:**
+- [Trie-based Search Systems](/ml-system-design/0048-trie-based-search/)
+
+**Natural Language Processing:**
+- [Character-Level Language Models](/ml-system-design/0050-character-level-language-models/)
 
 **Data Augmentation:**
 - [Data Augmentation Pipeline](/ml-system-design/0018-data-augmentation-pipeline/)

@@ -51,6 +51,19 @@ Each topic includes:
 - [Prompt Injection Defense](/ai-agents/0044-prompt-injection-defense/)
 - [Data Leakage Prevention](/ai-agents/0045-data-leakage-prevention/)
 
+**Optimization & Efficiency:**
+- [Token Efficiency Optimization](/ai-agents/0046-token-efficiency-optimization/)
+- [Cost Management for AI Agents](/ai-agents/0047-cost-management-for-agents/)
+
+**Real-Time & Streaming:**
+- [Streaming and Real-Time Agents](/ai-agents/0048-streaming-real-time-agents/)
+
+**Orchestration & Planning:**
+- [Dependency Graphs for Agent Tasks](/ai-agents/0049-dependency-graphs-for-agents/)
+
+**Domain Specialization:**
+- [Building Domain-Specific Agents](/ai-agents/0050-building-domain-specific-agents/)
+
 ---
 
 ## Problem Index

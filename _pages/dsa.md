@@ -61,6 +61,11 @@ Each problem includes:
 - [Partition Equal Subset Sum](/dsa/0036-partition-equal-subset-sum/)
 - [Longest Increasing Subsequence](/dsa/0037-longest-increasing-subsequence/)
 - [Coin Change](/dsa/0038-coin-change/)
+- [Binary Tree Maximum Path Sum](/dsa/0046-binary-tree-max-path-sum/)
+- [Serialize and Deserialize Binary Tree](/dsa/0047-serialize-deserialize-tree/)
+- [Word Search II](/dsa/0048-word-search-ii/)
+- [Course Schedule (Topological Sort)](/dsa/0049-course-schedule/)
+- [Alien Dictionary](/dsa/0050-alien-dictionary/)
 
 
 **Sorting & Searching:**
