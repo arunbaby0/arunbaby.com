@@ -1036,7 +1036,7 @@ class CompiledPrompt:
         """Render the compiled prompt with variables."""
         result = self.optimized
         for key, value in variables.items():
-            result = result.replace(f"{{{key}}}", str(value))
+            result = result.replace("{" + key + "}", str(value))
         return result
 ```
 

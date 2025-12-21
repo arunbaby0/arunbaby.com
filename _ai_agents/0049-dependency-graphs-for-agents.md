@@ -240,12 +240,12 @@ class TaskPlanner:
 Goal: {goal}
 
 Output JSON:
-{{
+{chr(123)}
   "tasks": [
-    {{"id": "task_1", "description": "...", "dependencies": []}},
-    {{"id": "task_2", "description": "...", "dependencies": ["task_1"]}}
+    {chr(123)}"id": "task_1", "description": "...", "dependencies": []{chr(125)},
+    {chr(123)}"id": "task_2", "description": "...", "dependencies": ["task_1"]{chr(125)}
   ]
-}}
+{chr(125)}
 
 Rules:
 - Each task should be atomic and achievable
