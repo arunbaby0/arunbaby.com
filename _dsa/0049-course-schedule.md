@@ -8,194 +8,205 @@ tags:
   - graph
   - topological-sort
   - bfs
-  - dfs
-  - cycle-detection
+  - kahn-algorithm
+  - medium
 difficulty: Medium
 subdomain: "Graph Algorithms"
 tech_stack: Python
-scale: "O(V + E)"
-companies: Amazon, Google, Uber, Coursera
+scale: "Scheduling 100k jobs with dependencies"
+companies: Amazon, Google, Uber, Netflix
+related_dsa_day: 49
 related_ml_day: 49
 related_speech_day: 49
 related_agents_day: 49
 ---
 
-**"Putting on socks before shoes is a dependency. Topological sort is just the math of getting dressed."**
+**"You can't build the roof before you pour the foundation."**
 
-## 1. Introduction: The Prerequisite Problem
+## 1. Problem Statement
 
-Imagine you are a university student planning your major.
-- You want to take **Advanced AI (Course A)**.
-- But A requires **Machine Learning (Course B)**.
-- And B requires **Calculus (Course C)**.
-- And C requires **A**.
+This is the canonical "Dependency Resolution" problem.
+There are `numCourses` courses you have to take, labeled from `0` to `numCourses - 1`. You are given an array `prerequisites` where `prerequisites[i] = [a, b]` indicates that you **must** take course `b` first if you want to take course `a`.
 
-Wait. If C requires A, and A requires C... you can never graduate! This is a **Cycle**.
+Return `true` if you can finish all courses. Otherwise, return `false`.
 
-The **Course Schedule** problem asks two fundamental questions:
-1. **Feasibility**: Given a set of courses and prerequisites, is it even *possible* to finish all of them? (i.e., Is there a cycle?)
-2. **Ordering**: If it is possible, in what order should I take them?
+**Example 1:**
+-   Input: `numCourses = 2`, `prerequisites = [[1,0]]`
+-   Output: `true`
+-   Explanation: To take course 1 you should have finished course 0. So it is possible.
 
-This is not just about college. This is how:
-- `pip install` resolves package dependencies.
-- `make` determines which files to compile first.
-- `Task scheduling` systems decide which jobs to run.
+**Example 2:**
+-   Input: `numCourses = 2`, `prerequisites = [[1,0],[0,1]]`
+-   Output: `false`
+-   Explanation: To take 1 you need 0. To take 0 you need 1. Impossible (Cycle).
 
 ---
 
-## 2. Modeling the Problem: The Graph
+## 2. Understanding the Problem
 
-We can model this as a **Directed Graph**:
-- **Nodes (V)**: Courses (0, 1, 2...).
-- **Edges (E)**: Prerequisites. An edge `B -> A` means "Take B before A".
+### 2.1 Directed Acyclic Graphs (DAGs)
+This problem models a **Directed Graph**.
+-   Nodes = Courses.
+-   Edges = Dependencies (`b -> a` implies `b` creates `a`).
 
-### Example 1 (Linear)
-`[1, 0]` means "To take 1, you must first take 0".
-Graph: `0 -> 1`
-Order: `0, 1`. Valid!
+The question "Can I finish?" is synonymous with: **"Does this graph contain a Cycle?"**
+If there is a cycle (`A -> B -> A`), you can never start A or B.
+If there is no cycle (a DAG), there always exists a valid linear ordering, called a **Topological Sort**.
 
-### Example 2 (Branching)
-`[1, 0], [2, 0], [3, 1], [3, 2]`
-Graph:
-```
-      0
-     / \
-    1   2
-     \ /
-      3
-```
-Order: `0, 1, 2, 3` or `0, 2, 1, 3`. Both are valid!
-
-### Example 3 (Cycle)
-`[1, 0], [0, 1]`
-Graph: `0 -> 1 -> 0`
-Order: Impossible.
+### 2.2 The "Indegree" Intuition
+How do you know which course to take first?
+Simple: Take the one with **zero prerequisites**.
+-   If Course 0 has no prerequisites (Indegree = 0), take it.
+-   Once taken, Course 0 is "done". Now, any course that *only* needed Course 0 might now have its prerequisites satisfied.
+-   We effectively "remove" Course 0 and its outgoing edges from the graph.
+-   Repeat until empty.
 
 ---
 
-## 3. The Algorithm: Kahn's Algorithm (BFS)
+## 3. Approach 1: DFS (Cycle Detection)
 
-There are two main ways to solve this: DFS and BFS (Kahn's Algorithm). Kahn's is often more intuitive for "ordering" problems.
+We can process each node with DFS.
+-   States: `Unvisited` (0), `Visiting` (1), `Visited` (2).
+-   If we encounter a node marked `Visiting`, we found a back-edge -> **Cycle**.
 
-### 3.1 The Concept: In-Degrees
-The **In-Degree** of a node is the number of incoming edges (prerequisites).
-- If In-Degree is `0`: This course has **no prerequisites**. You can take it right now!
-
-### 3.2 The Steps
-
-1. **Calculate In-Degrees**: Count prerequisites for every course.
-2. **Find Starters**: Put all courses with `In-Degree == 0` into a Queue.
-3. **Process Queue**:
-   - Pop a course `curr` (Take the course).
-   - Add it to our `sorted_order` list.
-   - **"Remove" the course**: Go to all its neighbors (courses that required `curr`). Decrease their In-Degree by 1.
-   - **Check for new Starters**: If a neighbor's In-Degree becomes 0, add it to the Queue!
-4. **Conclusion**:
-   - If `len(sorted_order) == num_courses`, we succeeded!
-   - If `len(sorted_order) < num_courses`, there is a cycle (some courses never reached degree 0).
+**Pros**: Easy to write.
+**Cons**: Harder to generate the actual sort order (requires reversing the post-order). Large recursion depth.
 
 ---
 
-## 4. Visual Walkthrough
+## 4. Approach 2: Kahn's Algorithm (BFS) -- The Standard
 
-Dependency: `[[1,0], [2,0], [3,1], [3,2]]` (Courses: 0, 1, 2, 3)
+This approach directly simulates the "peeling onion" strategy.
 
-**Step 1: Init**
-- In-Degrees: `{0: 0, 1: 1, 2: 1, 3: 2}`
-- Adjacency List: `{0: [1, 2], 1: [3], 2: [3], 3: []}`
-- Queue: `[0]` (Only 0 has in-degree 0)
-
-**Step 2: Processing**
-- **Pop 0**. Order: `[0]`.
-  - Neighbors of 0 are `1` and `2`.
-  - Decrement 1: In-Degree becomes `0`. **Add 1 to Queue**.
-  - Decrement 2: In-Degree becomes `0`. **Add 2 to Queue**.
-- Queue: `[1, 2]`
-
-- **Pop 1**. Order: `[0, 1]`.
-  - Neighbors of 1 is `3`.
-  - Decrement 3: In-Degree becomes `1`. (Not 0 yet!)
-- Queue: `[2]`
-
-- **Pop 2**. Order: `[0, 1, 2]`.
-  - Neighbor of 2 is `3`.
-  - Decrement 3: In-Degree becomes `0`. **Add 3 to Queue**.
-- Queue: `[3]`
-
-- **Pop 3**. Order: `[0, 1, 2, 3]`.
-  - No neighbors.
-- Queue: `[]`. Done.
-
-Count is 4. Total courses 4. **Success!**
+### Algorithm
+1.  **Build Graph**: Adjacency list + Indegree array.
+    -   `Adj[u] = [v1, v2]`
+    -   `Indegree[v1]++`, `Indegree[v2]++`
+2.  **Initialize Queue**: Add all nodes with `Indegree == 0` to Queue.
+3.  **Process**:
+    -   While Queue is not empty:
+        -   Pop `u`. Add to list of `taken_courses`.
+        -   For each child `v` of `u`:
+            -   `Indegree[v]--` (We satisfied one prerequisite).
+            -   If `Indegree[v] == 0`, push `v` to Queue.
+4.  **Check**: If `count(taken_courses) == numCourses`, return True. Else, False (Cycle detected, some nodes never reached Indegree 0).
 
 ---
 
-## 5. Implementation (Python)
+## 5. Implementation: Kahn's Algorithm
 
 ```python
 from collections import deque
 
 class Solution:
-    def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
-        # 1. Build Graph and Indegree array
-        # graph[A] contains list of courses that depend on A
-        graph = {i: [] for i in range(numCourses)}
+    def canFinish(self, numCourses: int, prerequisites: list[list[int]]) -> bool:
+        # 1. Initialize Graph
+        adj = [[] for _ in range(numCourses)]
         indegree = [0] * numCourses
         
+        # 2. Build Graph (Time: O(E), Space: O(E))
         for dest, src in prerequisites:
-            graph[src].append(dest)
+            # src -> dest (take src first)
+            adj[src].append(dest)
             indegree[dest] += 1
             
-        # 2. Init Queue with courses having no prereqs
+        # 3. Add seeds (Time: O(V))
         queue = deque()
         for i in range(numCourses):
             if indegree[i] == 0:
                 queue.append(i)
+                
+        processed_count = 0
         
-        # 3. Process BFS
-        taken_courses = 0
+        # 4. BFS Traversal (Time: O(V + E))
         while queue:
-            course = queue.popleft()
-            taken_courses += 1
+            node = queue.popleft()
+            processed_count += 1
             
-            # "Complete" this course, notifying dependents
-            for neighbor in graph[course]:
+            for neighbor in adj[node]:
                 indegree[neighbor] -= 1
-                # If all prereqs for neighbor are done, it's ready
                 if indegree[neighbor] == 0:
                     queue.append(neighbor)
-        
-        # 4. Check results
-        return taken_courses == numCourses
+                    
+        # 5. Final check
+        return processed_count == numCourses
+
+# Example Usage
+sol = Solution()
+print(sol.canFinish(2, [[1,0]])) # True
+print(sol.canFinish(2, [[1,0], [0,1]])) # False
 ```
 
 ---
 
-## 6. Time & Space Complexity
+## 6. Testing Strategy
 
-- **Time**: `O(V + E)`
-  - `V` (Vertices): Number of courses.
-  - `E` (Edges): Number of dependencies.
-  - We look at every node once and every dependency once.
-  
-- **Space**: `O(V + E)`
-  - We store the graph (Adjacency list) and the Indegree array.
+### Test Case 1: Disconnected Components
+`0 -> 1` and `2 -> 3`.
+-   Queue starts with `{0, 2}`.
+-   Pop 0 -> Add 1 to Queue.
+-   Pop 2 -> Add 3 to Queue.
+-   All processed. **Valid**.
 
----
-
-## 7. Extensions: Topological Sort Applications
-
-Understanding this algorithm unlocks solutions to many other problems:
-
-1. **Build Systems**: Determining compilation order (Makefile targets).
-2. **Spreadsheet Evaluation**: Order of cell formula calculation.
-3. **Data Pipelines**: ETL jobs (Extract before Transform before Load).
-4. **React `useEffect`**: Determining the execution order of side effects.
-
-The concept is universal: **Dependencies define a Directed Acyclic Graph (DAG)**. If it's not acyclic (has a cycle), the system deadlocks. If it is acyclic, there is a valid linear ordering.
+### Test Case 2: Deadlock (Cycle)
+`0 -> 1 -> 0`.
+-   Indegree: `[1, 1]`.
+-   Queue starts Empty.
+-   Processed Count = 0.
+-   Returns **False**.
 
 ---
 
-**Originally published at:** [arunbaby.com/dsa/0049-course-schedule](https://www.arunbaby.com/dsa/0049-course-schedule)
+## 7. Complexity Analysis
+
+-   **Time**: $O(V + E)$.
+    -   $V$: Initializing lists.
+    -   $E$: Building graph edges.
+    -   BFS loop visits every node ($V$) and every edge ($E$) exactly once.
+-   **Space**: $O(V + E)$.
+    -   To store the Adjacency List.
+
+This is asymptotically optimal.
+
+---
+
+## 8. Production Considerations
+
+This algorithm is the backbone of **Build Systems** (Make, Maven, Bazel).
+-   **Parallel Dependencies**:
+    The Queue length represents the level of **parallelism**.
+    If Queue has 5 items, it means 5 tasks are ready to run *simultaneously* on 5 worker threads.
+    This is how `make -j8` works!
+
+---
+
+## 9. Connections to ML Systems
+
+This directly maps to **DAG Pipeline Orchestration** (ML System Design).
+-   **Airflow / Kubeflow**: These tools literally execute Kahn's Algorithm.
+    -   Nodes = ETL Tasks (Load Data, Train Model).
+    -   Edges = Data dependencies.
+    -   The Scheduler puts tasks with `Indegree 0` into the worker pool.
+
+---
+
+## 10. Interview Strategy
+
+1.  **Identify Graph**: Start by saying "This is a dependency problem, which can be modeled as a Graph."
+2.  **Define Edge Direction**: Be careful! "Prerequisite `[a, b]` means `b -> a`". Getting this backward ruins the code.
+3.  **Mention Cycle**: Explicitly mention "If there's a cycle, we can't finish."
+4.  **Compare DFS vs BFS**: "I prefer Kahn's (BFS) because it's iterative (no stack overflow) and easy to extend to parallel execution logic."
+
+---
+
+## 11. Key Takeaways
+
+1.  **Indegree is Key**: It represents "Unsatisfied Constraints".
+2.  **Topological Sort order is not unique**: If queue has `[A, B]`, `AB` and `BA` are both valid sorts.
+3.  **Cycle Detection**: If `processed < total`, the remaining nodes are locked in a cycle.
+
+---
+
+**Originally published at:** [arunbaby.com/dsa/0049-course-schedule](https://www.arunbaby.com/dsa/0049-course-schedule/)
 
 *If you found this helpful, consider sharing it with others who might benefit.*

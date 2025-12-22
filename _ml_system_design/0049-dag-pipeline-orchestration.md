@@ -5,149 +5,200 @@ collection: ml_system_design
 categories:
   - ml-system-design
 tags:
-  - mlops
-  - dag
   - airflow
   - kubeflow
-  - pipelines
-difficulty: Medium
-subdomain: "MLOps & Infrastructure"
-tech_stack: Apache Airflow, Kubeflow Pipelines, Argo
-scale: "Thousands of dependencies, distributed execution"
-companies: Airbnb, Netflix, Uber, Spotify
+  - mlops
+  - dag
+  - orchestration
+difficulty: Hard
+subdomain: "MLOps Architecture"
+tech_stack: Apache Airflow, Kubeflow, Argo Workflows
+scale: "Orchestrating 10,000 tasks daily"
+companies: Airbnb (Airflow), Google (Kubeflow), Lyft (Flyte)
 related_dsa_day: 49
+related_ml_day: 49
 related_speech_day: 49
 related_agents_day: 49
 ---
 
-**"Cron jobs are fine for scripts. Pipelines need Orchestrators."**
+**"Cron is not an orchestrator. A script is not a pipeline."**
 
-## 1. Introduction: The "Cron" Trap
+## 1. Problem Statement
 
-When a data scientist starts a project, they write a script: `train.py`.
-To run it daily, they add a cron job: `0 0 * * * python train.py`.
+Standard software runs via `Request -> Response`.
+ML software runs as a **Pipeline**.
+-   Step 1: Ingest Data (Wait for Hive partition).
+-   Step 2: Clean Data (Requires Step 1).
+-   Step 3: Distributed Training (Requires Step 2, Requires GPU cluster).
+-   Step 4: Validation (Requires Step 3).
+-   Step 5: Deploy.
 
-This works for a week. Then things get complicated:
-1. "Wait, we need to run `clean_data.py` before `train.py`."
-2. "But `clean_data.py` needs the `warehouse_export` job to finish first."
-3. "And if `train.py` succeeds, we should trigger `deploy.py` only if accuracy > 90%."
-4. "Oh, and `warehouse_export` failed today. Can we retry just that part?"
-
-Suddenly, your `crontab` is a mess of timing guesses ("Let's wait 30 mins between jobs and hope it finished"). This is fragile.
-You need an **Orchestrator**.
+**The Problem**: How do you manage this dependency graph reliably, handling retries, backfills, and distributed execution, without writing spaghetti bash scripts?
 
 ---
 
-## 2. The DAG: Directed Acyclic Graph
+## 2. Understanding the Requirements
 
-In MLOps, we view the entire ML lifecycle as a **DAG**.
-- **Nodes**: Units of work (Operators).
-- **Edges**: Execution dependencies.
+### 2.1 Why `cron` fails
+`0 2 * * * train_model.sh`.
+1.  **Dependency Hell**: What if the Data Ingest job (scheduled at 1:00 AM) is delayed? `train_model.sh` runs on empty data.
+2.  **No State**: If Step 3 fails, `cron` doesn't know. It won't retry just Step 3. You have to re-run the whole thing.
+3.  **No Scaling**: `cron` runs on one machine. We need to run Step 3 on a Kubernetes GPU cluster.
 
-```mermaid
-graph LR
-    A[Data Ingestion] --> B[Data Validation]
-    B --> C[Feature Engineering]
-    C --> D[Model Training]
-    D --> E[Model Evaluation]
-    E -->|Pass| F[Deployment]
-    E -->|Fail| G[Alert]
+### 2.2 The Solution: The DAG
+We represent the workflow as a **Directed Acyclic Graph (DAG)**.
+-   **Directed**: Data flows `A -> B`.
+-   **Acyclic**: B cannot feed back into A (infinite loop).
+-   **Graph**: Nodes are tasks, Edges are data/control dependencies.
+
+---
+
+## 3. High-Level Architecture
+
+An MLOps Orchestrator (like Airflow or Kubeflow Pipelines) consists of:
+
+```
+[Scheduler (The Brain)]
+   |  (Polls DAGs, Checks Time, Checks Dependencies)
+   |
+   +---> [Queue (Redis/RabbitMQ)]
+            |
+            v
+   [Workers (The Brawn)]
+      | Worker 1: [Task A: Data Prep]
+      | Worker 2: [Task B: Training (GPU)]
+      | Worker 3: [Task C: Evaluation]
 ```
 
-Notice the similarity to **Course Schedule** (Day 49 DSA)?
-Just like you can't take Calculus II before Calculus I, you can't Train before you Ingest. The Orchestrator is the Registrar ensuring prerequisites are met.
+### Key Components
+1.  **Metastore (Postgres)**: "Task B failed at 2:03 PM".
+2.  **Executor**: "Launch this task on Kubernetes" vs "Launch this task in a local process".
 
 ---
 
-## 3. Why Not Just a Script?
+## 4. Component Deep-Dives
 
-Why do we need complex tools like Airflow or Kubeflow? Why not one big `main.py` that calls functions in order?
+### 4.1 Airflow (The Scheduler King)
+-   **Python as Config**: You define DAGs in Python code.
+-   **Operators**: `PostgresOperator`, `PythonOperator`, `BashOperator`.
+-   **Sensors**: Special tasks that "wait" for something (e.g., `S3KeySensor` waits for a file to appear).
+-   **Best For**: Data Engineering, Scheduled jobs.
 
-### 3.1 Resilience & Retries
-If the "Training" step fails after running for 10 hours, a script crashes. Rerunning `main.py` starts from zero (Data Ingestion).
-An Orchestrator knows "Ingestion" passed. It restarts *only* the "Training" node, potentially on a different machine.
-
-### 3.2 Parallelism
-If you are training 5 models for 5 different regions (US, EU, ASIA...), a script runs them sequentially.
-A DAG defines them as independent branches. The Orchestrator spins up 5 workers to run them in parallel.
-
-### 3.3 Heterogeneous Compute
-- **Ingestion**: Needs High I/O (RAM).
-- **Training**: Needs GPUs.
-- **Evaluation**: Needs simple CPU.
-An Orchestrator like Kubeflow can execute Step 1 on a CPU Pod and Step 2 on a GPU Pod, optimizing cloud costs.
+### 4.2 Kubeflow Pipelines (The ML Specialist)
+-   **Container Native**: Every task is a Docker container.
+-   **Artifact Tracking**: Automatically logs "Task A produced `dataset.csv` (hash: xyz)".
+-   **Best For**: Deep Learning workflows where reproducibility (Docker) is critical.
 
 ---
 
-## 4. Key Orchestration Tools
+## 5. Data Flow: The Backfill
 
-### 4.1 Apache Airflow
-The industry standard. Born at Airbnb.
-- **Definition**: Python code (`dag.py`).
-- **Strengths**: Huge community, rich integrations (S3, Postgres, Slack).
-- **Weakness**: Originally designed for Data Engineering (ETL), not specifically ML (passing large tensors between tasks is hard).
+A unique feature of Orchestrators is **Backfilling**.
+Imagine you change your Feature Engineering logic today (Day 50).
+You want to re-train the model on data from Day 1 to Day 49 using the *new* logic.
 
-### 4.2 Kubeflow Pipelines (KFP)
-Native to Kubernetes. Born at Google.
-- **Definition**: Python DSL compiles to YAML.
-- **Strengths**: Each step is a Docker container. Perfect for ML reproducibility.
-- **Weakness**: Heavy infrastructure (requires K8s).
+With `cron`, this is a nightmare.
+With Airflow:
+1.  Clear the state of "FeatureEng Task" for `dates=[Day 1...Day 49]`.
+2.  The Scheduler sees these tasks as "Null state".
+3.  Since they have no dependencies blocking them (historical data exists), it schedules them all in parallel (up to `max_active_runs`).
 
-### 4.3 Prefect / Dagster
-Modern challengers focusing on developer experience and "data awareness".
+This turns "Historical Reprocessing" into a one-click operation.
 
 ---
 
-## 5. Designing a Robust ML Pipeline
+## 6. Scaling Strategies
 
-When designing your DAG, follow these principles:
+### 6.1 The Kubernetes Executor
+Instead of having a fixed pool of workers (which sit idle or get overwhelmed), use the **KubernetesExecutor**.
+-   Scheduler: "Task A needs to run."
+-   K8s: Spin up a Pod just for Task A.
+-   Task A: Runs.
+-   K8s: Kill Pod.
+**Pros**: Infinite scale. Zero cost when idle. Perfect isolation (Task A uses PyTorch 1.9, Task B uses PyTorch 2.0).
 
-### 5.1 Idempotency
-**Rule**: Running a task twice should have the same effect as running it once.
-- **Bad**: `INSERT INTO table ...` (Running twice duplicates data).
-- **Good**: `DELETE WHERE date=today; INSERT ...` (Safe to retry).
-
-### 5.2 Atomic Tasks
-Break huge steps into smaller ones.
-- **Bad**: `do_everything()` function.
-- **Good**: `download`, `validate`, `preprocess`, `train`.
-If `preprocess` fails, you don't need to re-download.
-
-### 5.3 Data Validation (The "Circuit Breaker")
-Always insert a "Validation" node between Ingestion and Training.
-If today's data is empty or corrupted, **fail fast**. Don't waste $500 of GPU time training on garbage.
-- Tools: Great Expectations, Pandera.
+### 6.2 Caching (Memoization)
+If Task A takes 5 hours to generate `clean_data.csv`, and Task B fails...
+When we retry, we *don't* want to re-run Task A.
+Kubeflow natively checks inputs. If `Hash(Inputs, Code)` matches a previous run, it reuses the cached output.
 
 ---
 
-## 6. Architecture: The Control Plane
+## 7. Implementation: defining a DAG (Airflow)
 
-How does the Orchestrator actually work?
+```python
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from airflow.sensors.s3 import S3KeySensor
+from datetime import datetime
 
-1. **Scheduler**: The heartbeat. It checks the DAGs and the clock. "Is it time to run DAG X? Are dependencies for Task Y met?"
-2. **Metadata DB**: State storage. "Task A status: SUCCESS. Task B status: RUNNING."
-3. **Executor**: The worker manager. Kubernetes Executor, Celery Executor, Local Executor.
-4. **Web UI**: For humans to debug. "Why is my graph red?"
+def train_model(**context):
+    # ML Logic here
+    print("Training...")
+
+with DAG("ml_pipeline_v1", 
+         start_date=datetime(2023, 1, 1), 
+         schedule_interval="@daily",
+         catchup=False) as dag:
+
+    # 1. Wait for data to arrive in S3
+    wait_for_data = S3KeySensor(
+        task_id="wait_for_input",
+        bucket_key="s3://data/incoming/{{ ds }}/data.csv"
+    )
+
+    # 2. Train logic
+    train = PythonOperator(
+        task_id="train_model",
+        python_callable=train_model
+    )
+
+    # 3. Dependency Definition
+    wait_for_data >> train
+```
 
 ---
 
-## 7. Connection to DSA
+## 8. Monitoring & Metrics
 
-The Scheduler uses **Topological Sort** (Kahn's Algorithm) every tick!
-1. It looks at all tasks in the DAG.
-2. It filters for tasks where `Status != COMPLETED`.
-3. It checks In-Degrees (Are upstream parents COMPLETED?).
-4. If In-Degree is effectively 0 (all prerequisites met), it adds the task to the Execution Queue.
-
-Without the topological sort algorithm, MLOps capability would not exist.
+1.  **DAG Parse Time**: If your Python DAG file is slow to parse (e.g., connects to DB at top level), the Scheduler hangs. Anti-pattern!
+2.  **Task Latency**: Track `Input_Size` vs `Duration`. If data grew 2x but time grew 10x, you have a non-linear scaling bug.
 
 ---
 
-## 8. Summary
+## 9. Failure Modes
 
-As systems mature, **Orchestration** becomes more important than the Model itself. A mediocre model that updates reliably every day is better than a state-of-the-art model that is manually retrained on a laptop once a month.
+1.  **Thundering Herd**: You backfill 1 year of data. 365 jobs launch instantly. Your Database crashes.
+    -   *Fix*: Set `concurrency=10` at the DAG level.
+2.  **Deadlock**: Task A waits for Task B. Task B waits for connection slot held by Task A.
+3.  **Zombies**: The Scheduler thinks Task A is running. Task A's pod died OOM. The state stays "Running" forever.
+    -   *Fix*: Frequent "Heartbeat" checks by the Scheduler.
 
-Use DAGs to turn your ML experiments into ML products.
+---
+
+## 10. Real-World Case Study: Lyft Flyte
+
+Lyft built **Flyte** because Airflow wasn't strict enough about data types.
+Flyte enforces **Type Safety** between tasks.
+-   Task A output: `dataframe_schema[age: int]`
+-   Task B input: `dataframe_schema[age: String]`
+-   Flyte catches this mismatch at *Compile Link Time*, preventing runtime failures 5 hours into the pipeline.
+
+---
+
+## 11. Cost Analysis
+
+-   **Spot Instances**: Since ML pipelines are fault-tolerant (auto-retry), use Spot Instances for the Heavy Workers. Savings: 70%.
+-   **Idle Clusters**: Using K8s Executor prevents paying for idle workers at night.
+
+---
+
+## 12. Key Takeaways
+
+1.  **Dependency Management**: This is the core value prop. "Run B only after A succeeds."
+2.  **Idempotency**: Every task must be idempotent. If run twice, it should produce the same result (or overwrite safely).
+3.  **Infrastructure as Code**: The Pipeline *is* code. Version control your DAGs.
+4.  **Static vs Dynamic**: Airflow is Static (DAG defined upfront). Prefect/Metaflow allow Dynamic (DAG defined at runtime).
 
 ---
 

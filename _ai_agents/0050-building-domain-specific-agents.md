@@ -18,95 +18,172 @@ companies: Harvey.ai (Legal), Hippocratic AI (Medical), GitHub (Coding)
 related_dsa_day: 50
 related_ml_day: 50
 related_speech_day: 50
+related_agent_day: 50
 ---
 
 **"Don't build a generalist. Build a specialist."**
 
-## 1. Introduction: The Era of "Vertical AI"
+## 1. Introduction
 
-In 2023, the world was amazed that ChatGPT could write a poem and check Python code in the same session.
-In 2024, businesses realized that generalists make up facts.
-If you are a lawyer, you don't want a "creative" AI. You want a boring, rigorous, exact AI that knows the difference between "Precedent" and "Statute".
+Generic agents (ChatGPT) are "Jack of all trades, master of none".
+-   Ask them to write a poem? Great.
+-   Ask them to audit a Series A Term Sheet for "Liquidation Preference"? Dangerously vague.
 
-**Domain-Specific Agents** are the new gold rush.
-- **Harvey.ai**: Law.
-- **GitHub Copilot**: Coding.
-- **Hippocratic AI**: Healthcare.
-
-How do we build one? It's not just "Prompt Engineering".
+**Domain-Specific Agents** are the future of SaaS. These agents are constrained to a "Vertical" (Law, Medicine, Finance, Coding).
+They trade **Breadth** for **Depth** and **Reliability**.
 
 ---
 
-## 2. The 4 Layers of Specialization
+## 2. Core Concepts: The Vertical Stack
 
-### 2.1 Layer 1: Knowledge Injection (RAG)
-The generic model was trained on the whole internet (up to a cutoff date). It doesn't know your firm's private case files from last week.
-**Action**:
-- Index your 50,000 PDF documents into a **Vector Database** (Day 43).
-- Agent retrieves exact paragraphs to answer questions.
-- **Result**: "According to the contract signed on Jan 12..."
+To build a "Harvey.ai" (Legal Agent) or "Devin" (Coding Agent), you need 4 layers of specialization:
 
-### 2.2 Layer 2: Tool Specialization
-A general agent has `Google Search`.
-A specialized agent has `Search_Case_Law_Database`, `Check_Drug_Interaction_API`, or `Run_Unit_Tests`.
-**Action**:
-- Build custom API wrappers for domain tools.
-- Teach the agent *when* to use them.
-
-### 2.3 Layer 3: Contextual Definitions (System Prompt)
-Words mean different things in different fields.
-- "Discovery" (General): Finding something new.
-- "Discovery" (Legal): The pre-trial phase of revealing evidence.
-**Action**:
-- Write a massive System Prompt defining the "Persona".
-- "You are a Senior Litigation Partner. 'Discovery' always refers to the legal process..."
-
-### 2.4 Layer 4: Fine-Tuning (The "Alien Dictionary" approach)
-Sometimes, the model just doesn't get the "Vibe" or the syntax.
-- Medical notes are terse: "Pt. c/o chest pain."
-- General models write: "The patient is complaining of..."
-**Action**:
-- Fine-tune a model (like Llama 3) on 10,000 examples of *actual medical notes*.
-- It learns the "accent" of the domain.
+1.  **Data Layer (RAG)**: Access to proprietary, non-public documents (e.g., 10k Court Cases).
+2.  **Tool Layer**: Access to specialized APIs (e.g., Westlaw Search, Terminal Access).
+3.  **Model Layer (Fine-Tuning)**: Knowing the syntax and "vibe" of the domain.
+4.  **Guardrail Layer**: Strict rules ("Never give financial advice").
 
 ---
 
-## 3. Architecture: The "Medical Scribe" Agent
+## 3. Architecture Patterns: RAG vs Fine-Tuning
 
-Let's design a real agent for Doctors.
+The biggest debate is: **"Do I fine-tune Llama-3 or just use RAG?"**
 
-1. **Input**: Audio recording of a patient visit.
-2. **ASR Node**: **Contextual ASR** (Day 50 Speech) tuned for drug names.
-3. **Drafting Agent**:
-   - **Role**: "Listen to the transcript. Extract: Chief Complaint, History, Vitals."
-   - **Tools**: `Search_ICD10_Codes` (Standardized Billing Codes).
-   - **Knowledge**: Access to Patient History (RAG).
-4. **Critique Agent**:
-   - **Role**: "Review the draft. Does the Billing Code match the Diagnosis?"
-   - **Output**: "Warning: You coded 'Chest Pain' but transcribed 'Stomach Pain'. Verify."
-5. **Output**: Formatted EMR (Electronic Medical Record) entry.
+| Feature | RAG (Retrieval) | Fine-Tuning (Training) | Hybrid (Best) |
+|---------|-----------------|------------------------|---------------|
+| **Knowledge Source** | Dynamic (DB lookup) | Static (Weights) | Both |
+| **Hallucination** | Low (Groundable) | Medium | Lowest |
+| **Adaptability** | Instant (Update DB) | Slow (Retrain) | Mixed |
+| **Style/Tone** | Weak | Strong | Strong |
 
----
-
-## 4. Challenges
-
-1. **Hallucination Risk**: In creative writing, hallucination is a "feature". In medicine, it is malpractice.
-   - **Fix**: **Citation Agent**. Every claim must cite a source document ID.
-2. **Data Privacy**: You can't send patient names to public OpenAI APIs.
-   - **Fix**: Use HIPAA-compliant endpoints or locally hosted models (Llama 3 on-premise).
-3. **Liability**: Who is responsible if the Agent misses a diagnosis?
-   - **Fix**: Human-in-the-loop. The Agent never "submits". It "Drafts for Review".
+**Design Choice**:
+-   Use **RAG** for *Facts* ("What is the termination clause?").
+-   Use **Fine-Tuning** for *Format/Behavior* ("Write a memo in the style of a Senior Partner").
 
 ---
 
-## 5. Summary
+## 4. Implementation Approaches
 
-Building a Domain-Specific Agent is about **constraining** the AI, not unleashing it.
-We strip away its ability to write poems about pirates.
-We force it to focus on a narrow ontology (set of rules and words).
-We give it laser-focused tools.
+### 4.1 The Medical Scribe Pattern
+1.  **Input**: Doctor-Patient Audio.
+2.  **Specialized ASR**: (Day 50 Speech).
+3.  **Extraction Agent**: Extracts "Symptoms", "Meds".
+4.  **Coding Agent**: Maps Symptoms -> ICD-10 Codes.
+    -   *Tool*: `lookup_icd10(query)`.
+    -   *Validation*: "Is 'Chest Pain' valid for a 5yo?"
+5.  **Output**: EMR Entry.
 
-This transforms the AI from a "Chatbot" into a "Colleague".
+---
+
+## 5. Code Examples: The Hybrid Agent
+
+A simplified implementation using LangChain with a specialized tool and system prompt.
+
+```python
+from langchain.chat_models import ChatOpenAI
+from langchain.agents import initialize_agent, Tool
+from langchain.prompts import SystemMessagePromptTemplate
+
+# 1. Specialized Tool (The "Hands")
+def search_case_law(query):
+    """Searches the LexisNexis database for precedent."""
+    # Mock return
+    return "Case 12-404: Smith v. Jones established that..."
+
+tools = [
+    Tool(
+        name="CaseLawSearch",
+        func=search_case_law,
+        description="Useful for finding legal precedents."
+    )
+]
+
+# 2. Specialized Persona (The "Brain")
+# This is where "Prompt Engineering" meets "Domain Expertise"
+legal_prompt = """
+You remain in character as a Senior Litigation Associate.
+- Never invent cases.
+- Always cite the Case ID.
+- Use 'IRAC' format (Issue, Rule, Application, Conclusion).
+- If uncertain, state "Further research required".
+"""
+
+# 3. The Agent
+llm = ChatOpenAI(model="gpt-4", temperature=0) # Temp 0 for rigor
+agent = initialize_agent(
+    tools, 
+    llm, 
+    agent="zero-shot-react-description",
+    agent_kwargs={
+        "system_message": SystemMessagePromptTemplate.from_template(legal_prompt)
+    }
+)
+
+# 4. Execution
+agent.run("My landlord evicted me without notice. What are my rights in NY?")
+```
+
+---
+
+## 6. Production Considerations
+
+### 6.1 Evaluation (The "Bar Exam")
+You cannot eval a Legal Agent with "Vibe Check".
+You need a **Golden Dataset**:
+-   100 real legal questions.
+-   100 answers written by human lawyers.
+-   **Metric**: "Fact Recall", "Citation Accuracy".
+-   **Auto-Eval**: Use GPT-4 to grade the Agent's answer against the Human answer.
+
+### 6.2 Liability Firewall
+The Agent output should never go directly to the client.
+It goes to a **Human in the Loop**.
+UI Pattern: "Draft generated. **[Approve]** / **[Edit]**".
+
+---
+
+## 7. Common Pitfalls
+
+1.  **Over-retrieval**: Feeding the agent 50 pages of irrelevant case law confuses it.
+    -   *Fix*: Ranking/Reranking in RAG pipeline.
+2.  **Tone mismatch**: A medical agent sounding "excited" about a diagnosis.
+    -   *Fix*: Fine-tuning on medical datasets reduces the "Customer Service Voice" of base models.
+
+---
+
+## 8. Best Practices
+
+1.  **Ontology First**: Define the domain vocabulary. What exactly does "Churn" mean for *this* company?
+2.  **Few-Shot Prompting**: Include 5 examples of "Perfect Answers" in the prompt. This guides the style better than instructions.
+
+---
+
+## 9. Connections to Other Topics
+
+This connects to **Alien Dictionary** (DSA Day 50).
+-   To build a specialized agent, you must first learn the "Alien language" (Jargon) of the domain.
+-   You build the "Graph" of knowledge (Ontology) before you can traverse it.
+
+---
+
+## 10. Real-World Examples
+
+-   **GitHub Copilot**: Fine-tuned on code. It knows that `def` is likely followed by a function name. It formats indentation perfectly.
+-   **Harvey.ai**: Partnered with OpenAI to build a custom model trained on legal corpuses, specifically for Big Law firms.
+
+---
+
+## 11. Future Directions
+
+-   **Self-Improving Verticals**: The agent drafts a contract. The lawyer edits it. The edit is saved. The model is fine-tuned on the edit. The agent gets smarter every day (Data Flywheel).
+
+---
+
+## 12. Key Takeaways
+
+1.  **Depth over Breadth**: A tool that does one thing perfectly is valuable. A tool that does everything okay is a toy.
+2.  **Hybrid Architecture**: RAG + Fine-Tuning + Tools. You usually need all three.
+3.  **Eval is hard**: Building the "Bar Exam" for your agent is as hard as building the agent itself.
 
 ---
 

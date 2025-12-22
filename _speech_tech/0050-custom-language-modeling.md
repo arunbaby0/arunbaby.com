@@ -17,97 +17,161 @@ scale: "Adapting generic models to specific domains"
 companies: Nuance, Google Cloud, Amazon Transcribe
 related_dsa_day: 50
 related_ml_day: 50
+related_speech_day: 50
 related_agents_day: 50
 ---
 
 **"The model knows 'Apple' the fruit. It needs to learn 'Apple' the stock ticker."**
 
-## 1. Introduction: The "Unique Name" Problem
+## 1. Problem Statement
 
-You deploy a generic ASR model for a medical clinic.
-Doctor says: "Patient needs 50mg of **Xarelto**."
-ASR output: "Patient needs 50mg of **the rel toe**."
+Generic ASR models (Whisper, Google Speech) are trained on general internet data. They perform poorly on **Jargon**.
+-   **Medical**: "Administer 50mg of Xarelto." -> "The real toe."
+-   **Legal**: "Habeas Corpus." -> "Happy its corpse."
+-   **Corporate**: "Met me at the K8s sync." -> "Kate's sink."
 
-The model isn't "bad". It just mapped the sounds to the most probable English words it knows. "Xarelto" is rare. "The rel toe" is common.
-To fix this without retraining the massive acoustic model ($1M cost), we use **Custom Language Models** (CLM) or **Contextual Biasing**.
-
----
-
-## 2. How ASR Works (Simplified)
-
-ASR is mathematically: `P(Text | Audio)`.
-Using Bayes theorem, this splits into:
-`P(Audio | Text) * P(Text)`
-
-1. **Acoustic Model `P(Audio | Text)`**: "Does this sound match these phonemes?"
-2. **Language Model `P(Text)`**: "Is this a valid sequence of words?"
-
-The generic LM says `P("the rel toe") >> P("Xarelto")`.
-We need to hack the LM to say: "In *this* clinic, `P("Xarelto")` is very high."
+**The Problem**: How do we teach a pre-trained ASR model new vocabulary *without* retraining the massive acoustic model?
 
 ---
 
-## 3. Techniques for Customization
+## 2. Fundamentals: The Noisy Channel Model
 
-### 3.1 Vocabulary Expansion (The "Word List")
-The simplest customization. You upload a list of 500 domain-specific terms (Product names, employee names).
-The ASR engine compiles a small, dynamic graph of these words and "boosts" their probability scores during the beam search decoding.
+Recall the ASR equation:
+$$P(Text | Audio) \propto P(Audio | Text) \times P(Text)$$
 
-**Pros**: Fast, easy API update.
-**Cons**: Can over-trigger. If you add "Cash", the model might hear "Cash" every time someone says "Catch".
+-   **Acoustic Model ($P(Audio | Text)$)**: "Does this sound like 'Xarelto'?" (Maybe).
+-   **Language Model ($P(Text)$)**: "Is 'Xarelto' a word?" (Generic LM says No. Prob = 0.000001).
 
-### 3.2 Corpus Fine-Tuning
-You upload 10,000 text documents (Medical Journals, Legal Briefs) from your domain.
-You train a *text-only* Language Model (unsupervised) on this data.
-You **interpolate** this small, specific LM with the huge, generic LM.
-`Final_Score = 0.8 * Generic_LM + 0.2 * Custom_LM`.
-
-**Pros**: Captures grammar and context ("Patient presents with..."), not just names.
-**Cons**: Slower to deploy.
-
-### 3.3 Contextual ASR (Real-Time hints)
-This is the cutting edge (used by Siri/Alexa).
-When you open your "Contacts" app, the phone sends your contact list to the ASR engine *for that session only*.
-The ASR temporarily boosts `P("Arun")` because "Arun" is in your contacts.
-Five minutes later, if you say "Arun" while in the Maps app, it might fail if it's not a common location.
-
-This "Contextual Biasing" is dynamic and fleeting.
+Since the LM probability is near zero, the total score is low. The decoder chooses "The real toe" because `P("The real toe")` is high.
+**Solution**: We hack $P(Text)$.
 
 ---
 
-## 4. Architecture Implementation
+## 3. Architecture: Shallow vs Deep Fusion
 
-How do we actually implement this with modern tools like **Whisper**?
-Whisper is an "End-to-End" model (Acoustic + LM combined). It's hard to inject an external LM.
+How do we inject the new words?
 
-**Option A: Prompt Engineering**
-Whisper accepts a `prompt` string.
-If we pass `prompt="Xarelto, Ibuprofen, Tylenol"`, the Transformer's attention mechanism attends to those words.
-When it hears ambiguity, it "copies" from the prompt.
-*This works surprisingly well!*
+### 3.1 Shallow Fusion (The Standard)
+We train a small, domain-specific LM (n-gram) on the client's text documents.
+During decoding (Beam Search), we interpolate the scores:
+$$Score = \log P_{AM} + \alpha \log P_{GenericLM} + \beta \log P_{CustomLM}$$
 
-**Option B: Shallow Fusion**
-We run an external n-gram LM alongside Whisper's beam search.
-At every decoding step, we check the external LM.
-`Score = Whisper_Logit + Beta * External_LM_Logit`.
+If $\beta$ is high, the custom model boosts "Xarelto".
+
+### 3.2 Deep Fusion
+We inject a specialized neural network layer *inside* the ASR network that attends to a list of custom words. This is harder to implement but more robust.
 
 ---
 
-## 5. Metrics: WER isn't enough
+## 4. Implementation Approaches
 
-If you just measure standard Word Error Rate (WER) on "The cat sat on the mat", your medical model looks fine.
-We need **Entity-WER**.
-- Accuracy on specific "entities" (Drug names, Locations).
-- Finding "Xarelto" correctly is worth 100x more than missing "the".
+### 4.1 Class-Based LMs
+Instead of hardcoding "John Smith", we train the LM with a placeholder tag: `@NAME`.
+-   Training sentence: "Call `@NAME` at 5pm."
+-   Runtime: We provide a map `{@NAME: ["John", "Sarah", "Mike"]}`.
+The FST (Finite State Transducer) dynamically expands the `@NAME` node into arcs for John, Sarah, Mike.
+
+### 4.2 Contextual Biasing (Attention)
+In Transformer ASR (Whisper), we can pass a list of "Hint Strings" in the prompt.
+`prompt="Xarelto, Ibuprofen, Tylenol"`
+The model's cross-attention mechanism attends to these tokens, increasing their likelihood.
 
 ---
 
-## 6. Summary
+## 5. Implementation: Contextual Biasing with Whisper
 
-Custom Language Modeling is the bridge between a "Demo" and a "Product".
-A Demo works on generic YouTube videos.
-A Product works for *your* users, speaking *your* jargon, in *your* noise conditions.
-It allows us to "teach" the AI new vocabulary instantly, without the massive cost of teaching it new sounds.
+```python
+import whisper
+
+model = whisper.load_model("base")
+
+# 1. Standard Inference
+audio = "audio_xarelto.mp3"
+result_bad = model.transcribe(audio)
+print(result_bad["text"]) 
+# Output: "Patient needs the real toe."
+
+# 2. Contextual Prompting
+# We prepend the keywords to the decoder's context window.
+# It acts like the model "just said" these words, priming it to say them again.
+initial_prompt = "Medical Logic: Xarelto, Warfarin, Apixaban."
+
+result_good = model.transcribe(audio, initial_prompt=initial_prompt)
+print(result_good["text"])
+# Output: "Patient needs Xarelto."
+```
+
+---
+
+## 6. Training Considerations
+
+### 6.1 Text Data Augmentation
+To train the Custom LM, you need text.
+-   **Source**: Technical manuals, past transcripts, email logs.
+-   **Normalization**: You must convert "50mg" to "fifty milligrams" to match ASR output space.
+
+### 6.2 Pruning
+A custom LM with 1 million words is slow.
+Prune the n-grams. Keep only unique jargon. Trust the Generic LM for "the", "cat", "is".
+
+---
+
+## 7. Production Deployment: Dynamic Loading
+
+In a SaaS ASR (like Otter.ai):
+1.  User enters a meeting ("Project Apollo Sync").
+2.  System loads "Project Apollo" word list (Entities: "Apollo", "Saturn", "Launch").
+3.  System compiles a tiny FST on-the-fly (ms).
+4.  Decoder graph = `Generic_Graph` composed with `Dynamic_FST`.
+
+This allows **Per-User** customization.
+
+---
+
+## 8. Performance Metrics
+
+**Entity-WER**.
+-   Global WER might be 5% with or without customization.
+-   But if the 5% error is the *Patient's Name*, the transcript is useless.
+-   Measure accuracy specifically on the **Boosted List**.
+
+---
+
+## 9. Failure Modes
+
+1.  **Over-Biasing**:
+    -   Boost list: `["Call"]`.
+    -   User says: "Tall building".
+    -   ASR hears: "Call building".
+    -   *Fix*: Tunable parameter `biasing_weight`.
+2.  **Phonetic Confusion**:
+    -   Boost: `["Resume"]` (Noun).
+    -   User: "Resume" (Verb).
+    -   ASR gets it right, but downstream NLP gets confused by the tag.
+
+---
+
+## 10. Real-World Case Study: Smart Speakers
+
+**Alexa Contact List**.
+When you say "Call Mom", Alexa biased the ASR towards your contacts.
+It didn't boost "Mom" for everyone. It boosted "Mom", "Dad", "Arun" for *you*.
+This uses **Personalized Language Models (PLM)**.
+
+---
+
+## 11. State-of-the-Art: Neural Biasing
+
+Recent research (Google) uses **GNNs (Graph Neural Networks)** to encode the relationship between entities in the bias list, handling thousands of entities (e.g., a massive Song Library) without degrading latency.
+
+---
+
+## 12. Key Takeaways
+
+1.  **Generic is not enough**: Production ASR requires customization.
+2.  **Shallow Fusion is cheap**: No GPU retraining needed. Just text statistical counting.
+3.  **Prompt Engineering works for ASR**: Whisper's prompt feature allows 0-shot adaptation.
+4.  **Metric Validity**: Optimize for Entity-WER, not just WER.
 
 ---
 

@@ -9,12 +9,13 @@ tags:
   - backtracking
   - dfs
   - matrix
-  - string-search
+  - hard
 difficulty: Hard
 subdomain: "String & Trie"
 tech_stack: Python
-scale: "O(M*N * 4^L) worst case, highly optimized"
+scale: "Searching 10k words in 100x100 grid"
 companies: Microsoft, Uber, Airbnb, Pinterest
+related_dsa_day: 48
 related_ml_day: 48
 related_speech_day: 48
 related_agents_day: 48
@@ -22,18 +23,17 @@ related_agents_day: 48
 
 **"Don't look for one needle in a haystack. Magnetize the hay to find all needles at once."**
 
-## 1. The Problem: Boggle on Steroids
+## 1. Problem Statement
 
-Imagine you are playing the game Boggle. You have a grid of letters and a possibly huge list of valid words (a dictionary). Your task is to find **all** the words from the list that can be formed in the grid by connecting adjacent letters (horizontally or vertically).
+This is the "Boss Level" of grid-based search problems.
+Given an `m x n` board of characters and a list of strings `words`, return all words on the board.
 
-**The Rules:**
-- You can move up, down, left, or right.
-- You cannot use the same cell twice in a single word path.
-- Input: An `m x n` board of characters and a list of strings `words`.
-- Output: All words from the list that exist in the board.
+**Rules:**
+1.  Each word must be constructed from letters of sequentially adjacent cells (horizontally or vertically neighboring).
+2.  The same letter cell may not be used more than once in a word.
+3.  The output should contain all unique words found.
 
 **Example:**
-
 ```
 Board:
 [
@@ -42,100 +42,67 @@ Board:
   ['i','h','k','r'],
   ['i','f','l','v']
 ]
-
-Words: ["oath", "pea", "eat", "rain"]
-
-Output: ["eat", "oath"]
+Words: ["oath","pea","eat","rain"]
+Output: ["eat","oath"]
 ```
-
-("pea" is not there; "rain" is distinct.)
+Note: "pea" is not present. "rain" is not present.
 
 ---
 
-## 2. Approach 1: The Naive Solution (Repeated Search)
+## 2. Understanding the Problem
 
-If you've solved "Word Search I" (where you look for a *single* word), your instinct might be: "I'll just run that algorithm for every word in the dictionary!"
+### 2.1 The Native vs. Optimized Mindset
+-   **Word Search I**: Find *one* word. We iterate the grid and run DFS for that word.
+-   **Word Search II**: Find *K* words ($K$ can be 30,000).
 
-**The Algorithm:**
-1. Iterate through every word in the `words` list.
-2. For each word, scan the entire grid to find a starting character.
-3. If found, run DFS (Depth-First Search) to try and match the rest of the word.
+If we define $M, N$ as grid dimensions and $L$ as max word length:
+-   **Naive Approach**: For each word, scan grid. Total Time: $K \times (M \times N \times 4^L)$.
+-   This is horribly inefficient. We are visiting the same cells `(0,0)` 'o' -> `(0,1)` 'a' thousands of times, once for "oath", once for "oats", once for "oatmeal"...
 
-**Why this fails at scale:**
-Let's say the board is `50x50` and you have `10,000` words.
-If many words start with widely used prefixes (like "react", "reason", "real", "read"), you end up traversing the exact same path on the board ("r" -> "e" -> "a") thousands of times—once for each word.
+### 2.2 The Inversion of Control
+Instead of "For each word, search the grid", we flip it:
+"For each path in the grid, does it form *any* word?"
 
-This redundancy is killer. We need a way to group words that share prefixes so we traverse the common paths only once.
-
----
-
-## 3. The Optimized Solution: Backtracking with a Trie
-
-### 3.1 What is a Trie?
-
-A **Trie** (pronounced "try" or "tree") is a tree data structure specialized for strings. Instead of storing whole strings in nodes, we store characters on edges (or nodes). Paths from the root down to a node represent prefixes.
-
-**Visualizing the Trie:**
-If our dictionary is `["oath", "pea", "eat", "rain"]`:
-
-```
-        (root)
-       /   |   \
-      o    p    e
-     /     |     \
-    a      e      a
-   /       |       \
-  t        a        t (*)
- /
-h (*)
-```
-*(*) marks the end of a valid word.*
-
-Notice how `"eat"` and `"eating"` (if we had it) would share the `e-a-t` path.
-
-### 3.2 The Key Strategy
-
-Instead of iterating through the *words*, we iterate through the **grid**.
-We start a DFS from every cell in the grid, and simultaneously traverse the Trie.
-
-1. **Synchronized Traversal**:
-   - If we are at cell `(r, c)` with letter `'o'`, we check if the Trie root has a child `'o'`.
-   - If yes, we move to that Trie node and move to a neighbor on the grid.
-2. **Instant Validation**:
-   - If the current Trie node marks the "end of a word", we found one! Add it to results.
-   - If the Trie node has no children matching any grid neighbor, we stop immediately. We don't waste time exploring deeper.
-
-### 3.3 Optimization: Pruning the Trie
-
-This is the "pro tip" for this problem.
-Once we find a word like `"oath"`, we add it to our result list. **We don't need to find it again.**
-If we leave `"oath"` in the Trie, our DFS usually continues searching or re-finds it from other paths.
-
-**Pruning:** When we find a word, we can theoretically remove it from the Trie. If a leaf node is removed and its parent has no other children, the parent can be removed too. This progressively shrinks the search space as we find words, making the algorithm faster the longer it runs!
+To support this query ("Does this prefix exist in my list?"), we need a **Trie** (Prefix Tree).
 
 ---
 
-## 4. Design & Implementation
+## 3. Approach 1: Naive (Repeated DFS) -- Don't do this
+Run the solution for "Word Search I" inside a loop.
+Most interviewers will fail you immediately for this because it ignores the shared structure of the dictionary words.
 
-Let's build this step by step.
+---
 
-### 4.1 The Trie Node
+## 4. Approach 2: Backtracking with Trie
 
-To keep things efficient, we'll store the actual word at the endpoint node. This saves us from having to reconstruct the string during DFS.
+We build a Trie from the dictionary words. Then we start DFS from every cell in the grid.
+As we traverse the grid (e.g., `o -> a -> t`), we move a pointer down the Trie.
+
+### Key Logic
+1.  **Build Trie**: Insert all `words` into Trie. Mark leaf nodes with the actual `word`.
+2.  **Grid DFS**:
+    -   Start at `(r, c)`.
+    -   Check if `board[r][c]` is a child of `Current_Trie_Node`.
+    -   If Yes: Move to child. Mark visited. Recurse.
+    -   If No: Stop (Pruning).
+3.  **Optimization (Leaf Pruning)**:
+    -   Once we find a word like "oath", we add it to results.
+    -   **Crucial**: We should *remove* "oath" from the Trie (or mark it found) so we don't find it again via a different path.
+    -   Even better: If a node has no children after finding a word, delete the node. This progressively shrinks the search space!
+
+---
+
+## 5. Implementation
 
 ```python
 class TrieNode:
     def __init__(self):
-        self.children = {}  # Map char -> TrieNode
-        self.word = None    # Stores the word if this node is an end
-```
+        self.children = {}
+        self.word = None # Stores the word at the leaf node
 
-### 4.2 The Main Algorithm class
-
-```python
 class Solution:
     def findWords(self, board, words):
-        # Step 1: Build the Trie
+        # 1. Build the Trie
         root = TrieNode()
         for w in words:
             node = root
@@ -143,118 +110,106 @@ class Solution:
                 if char not in node.children:
                     node.children[char] = TrieNode()
                 node = node.children[char]
-            node.word = w  # Mark end of word
-
-        self.matches = []
+            node.word = w # End of word
+            
+        self.res = []
         rows, cols = len(board), len(board[0])
         
-        # Step 2: DFS function
-        def dfs(r, c, node):
+        def dfs(r, c, parent_node):
             letter = board[r][c]
-            curr_node = node.children[letter]
+            curr_node = parent_node.children[letter]
             
-            # Check if we found a word
+            # Check for match
             if curr_node.word:
-                self.matches.append(curr_node.word)
-                curr_node.word = None  # Avoid duplicates!
+                self.res.append(curr_node.word)
+                curr_node.word = None # De-duplicate: Ensure we don't add it again
             
-            # Mark path as visited for current recursion stack
-            board[r][c] = '#' 
+            # DFS Traversal logic
+            board[r][c] = '#' # Mark visited
             
-            # Explore neighbors
             for dr, dc in [(0,1), (0,-1), (1,0), (-1,0)]:
-                nr, nc = r + dr, c + dc
-                if (0 <= nr < rows and 0 <= nc < cols and 
-                    board[nr][nc] in curr_node.children):
-                    dfs(nr, nc, curr_node)
+                nr, nc = r+dr, c+dc
+                if 0 <= nr < rows and 0 <= nc < cols:
+                    if board[nr][nc] in curr_node.children:
+                        dfs(nr, nc, curr_node)
             
-            # Backtrack: Unmark path
-            board[r][c] = letter
+            board[r][c] = letter # Backtrack
             
-            # Optimization: Leaf pruning
-            # If current node has no children (and word is consumed),
-            # we can prune it from parent to optimize future searches.
+            # 3. Optimization: Incremental Pruning
+            # If leaf node and no word, prune it to optimize future searches
             if not curr_node.children:
-                del node.children[letter]
+                del parent_node.children[letter]
 
-        # Step 3: Trigger DFS from every cell
+        # Trigger DFS
         for r in range(rows):
             for c in range(cols):
                 if board[r][c] in root.children:
                     dfs(r, c, root)
                     
-        return self.matches
+        return self.res
 ```
 
 ---
 
-## 5. Walkthrough: How it Runs
+## 6. Testing Strategy
 
-Consider the board:
-```
-o  a
-t  h
-```
-Words: `["oath", "oat"]`
+### Test Case 1: Prefix shared
+Words: `["oath", "oat"]`.
+Board: Contains `o -> a -> t -> h`.
+-   DFS reaches 't'. Finds "oat". Adds to result. Removes `word` marker.
+-   DFS continues to 'h'. Finds "oath". Adds to result.
+-   Backtrack.
 
-1. **Trie Build**:
-   `root -> o -> a -> t (end "oat") -> h (end "oath")`
-
-2. **Scan Grid**:
-   - Start at `(0,0)` which is `'o'`. It exists in `root.children`.
-   - **DFS('o')**:
-     - Move to Trie node `o`.
-     - Valid neighbors of `(0,0)`: `(0,1)` is `'a'`, `(1,0)` is `'t'`.
-     - Trie node `o` has child `a`? Yes.
-   - **DFS('a')** (at `0,1`):
-     - Trie node `a` has child `t`? Yes. neighbor `(1,0)` is `t`.
-   - **DFS('t')** (at `1,0`):
-     - **Found word!** `curr_node.word` is `"oat"`. Add to list. Set `curr_node.word = None`.
-     - Trie node `t` has child `h`? Yes. neighbor `(1,1)` is `h`.
-   - **DFS('h')** (at `1,1`):
-     - **Found word!** `curr_node.word` is `"oath"`. Add to list.
-     - `curr_node` (path o-a-t-h) has no children.
-     - **Pruning**: Remove `h` from parent `t`'s children.
-   - Backtrack to `t`:
-     - Since we removed `h`, and `t` has no other children, we remove `t` from parent `a`.
-   - Backtrack to `a`:
-     - Remove `a`... and so on.
-
-The pruning effectively "eats" the Trie branches as we solve the puzzle, making the board emptier of possibilities as we go.
-
----
-
-## 6. Common Pitfalls
-
-1. **Not handling duplicates**: The problem asks for unique words. If the board has two "eat" formations, you shouldn't return "eat" twice.
-   - *Fix*: Set `node.word = None` immediately after adding it to results.
-   
-2. **Revisiting cells**: You cannot use the same cell `(r,c)` twice in one word.
-   - *Fix*: Use a `visited` set or temporarily mutate the board (e.g., change `'a'` to `'#'`) during DFS.
-
-3. **Time Limit Exceeded (TLE)**: Without Trie pruning, standard Trie DFS can still be slow on massive test cases where almost every path is a valid prefix. Pruning is often required for the fastest solution.
+### Test Case 2: No match
+Words: `["abcd"]`. Board: `['a', 'b', 'x', 'd']`.
+-   DFS matches `a -> b`.
+-   Next neighbor `x` is not in Trie child of `b`.
+-   Stop immediately. (This shows the power of Trie pruning vs Naive).
 
 ---
 
 ## 7. Complexity Analysis
 
-- **Time Complexity**: `O(M * N * 3^L)` worst case.
-  - `M * N`: We start a search from every cell.
-  - `3^L`: In the DFS, we have at most 4 directions, but we came from 1, so we look at 3 neighbors. `L` is the max length of a word.
-  - In practice, the Trie limits this drastically.
-  
-- **Space Complexity**: `O(K)` where `K` is the total number of characters in the dictionary (to build the Trie). The recursion stack takes `O(L)`.
+-   **Time**: $O(M \times N \times 4^L)$.
+    -   In worst case, we might traverse depth $L$ for every cell.
+    -   The Trie makes this much faster on average because branches are pruned early.
+-   **Space**: $O(K \times L)$ for Trie storage ($K$ words, length $L$).
 
 ---
 
-## 8. Real World Connections
+## 8. Production Considerations
 
-This isn't just a puzzle game algorithm. This pattern—**traversing a data structure guided by a state machine (Trie)**—appears in:
+1.  **Thread Safety**: In a real "Boggle Solver" server, building the Trie is a one-time startup cost. The DFS is per-request. The Trie must be read-only during requests.
+2.  **Memory**: If dictionary is huge (Oxford Dictionary), Trie can take GBs. We might use a **DAWG (Directed Acyclic Word Graph)** to compress shared suffixes (e.g., "-ing").
 
-1. **Boggle Solvers**: Obviously.
-2. **Spell Checkers**: To quickly validate if a typed sequence is a valid prefix.
-3. **T9 Text Prediction**: Finding valid words from number sequences on old phones.
-4. **DNA Sequencing**: Searching for multiple genetic markers (sequences) in a long DNA strand.
+---
+
+## 9. Connections to ML Systems
+
+This is the exact algorithm used in **Typeahead Systems** (ML System Design Track).
+-   **Problem**: User typed "Am".
+-   **Grid**: The keyboard/input.
+-   **Trie**: The database of all Amazon Products.
+-   **Task**: Find the most likely completion.
+This DSA problem is the *Search* component of that system.
+
+Also relates to **Phonetic Search** (Speech Tech) where we search Tries by sound.
+
+---
+
+## 10. Interview Strategy
+
+1.  **Start with Naive**: Briefly mention "I could just run DFS for each word", then immediately pivot. "But that's inefficient because..."
+2.  **Draw the Trie**: Show how "ant" and "and" share the "an" node.
+3.  **Explain Pruning**: This is the differentiator. "If I remove the leaf node after finding a word, the Trie gets smaller." This shows senior-level optimization thinking.
+
+---
+
+## 11. Key Takeaways
+
+1.  **State Machines**: A Trie acts as a State Machine for the DFS. "Am I allowed to step on 'X'?" depends on my current Trie node.
+2.  **Preprocessing wins**: Spend $O(K)$ time building a Trie to save exponential time during search.
+3.  **Backtracking Template**: `Mark -> Explore -> Unmark` is the universal pattern.
 
 ---
 

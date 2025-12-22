@@ -7,190 +7,200 @@ categories:
 tags:
   - graph
   - topological-sort
-  - string-processing
-  - directed-graph
+  - bfs
   - hard
+  - string
 difficulty: Hard
-subdomain: "Graph & Strings"
+subdomain: "Graph Construction"
 tech_stack: Python
-scale: "O(C) where C is total characters in input"
+scale: "Reconstructing alphabet from dictionary"
 companies: Facebook, Google, Airbnb, Amazon
+related_dsa_day: 50
 related_ml_day: 50
 related_speech_day: 50
 related_agents_day: 50
 ---
 
-**"If 'apple' comes before 'banana' but 'bat' comes before 'arc', what is the alphabet?"**
+**"Language is just a graph of symbols. If you know the order, you know the language."**
 
-## 1. Introduction: The Decryption Problem
+## 1. Problem Statement
 
-You have fond a list of words from an Alien Language. You don't know their alphabet order. However, you know the list of words is **sorted lexicographically** (alphabetically) according to their rules.
+This is a legendary Facebook interview question. It combines String processing with Graph Theory.
 
-**Input**:
-`["wrt", "wrf", "er", "ett", "rftt"]`
+There is a new alien language that uses the English alphabet. However, the order among the letters is unknown to you.
+You are given a list of strings `words` from the alien language's dictionary, where the strings in `words` are **sorted lexicographically** by the rules of this new language.
 
-**Output**: `"wertf"`
+Return a string of the unique letters in the new alien language sorted in lexicographically increasing order by the new language's rules. If there is no solution, return `""`.
 
-Why?
-- `wrt` comes before `wrf` -> `t` comes before `f`.
-- `wrf` comes before `er` -> `w` comes before `e`.
-- `er` comes before `ett` -> `r` comes before `t`.
-- `ett` comes before `rftt` -> `e` comes before `r`.
-
-Combining these clues: `w -> e -> r -> t -> f`.
-
-This is the **Alien Dictionary** problem. It is a fantastic test of your ability to model a problem. It combines **String Processing** (extracting rules) with **Graph Theory** (ordering dependencies).
-
----
-
-## 2. Breaking it Down
-
-This is a 2-step problem.
-
-### Step 1: Build the Graph (Extract Dependencies)
-We need to turn the word list into a dependency graph.
-Dependency Rule: "Letter A comes before Letter B" is an edge `A -> B`.
-
-**How to find an edge?**
-Compare **adjacent words** in the list.
-1. Compare `wrt` and `wrf`.
-   - `w` == `w` (skip)
-   - `r` == `r` (skip)
-   - `t` != `f`. Since `wrt` is first, `t` must be smaller than `f`.
-   - **Edge**: `t -> f`.
-   - *Stop comparison for this pair*. (Characters after the first difference don't matter for sorting).
-
-2. Compare `wrf` and `er`.
-   - `w` != `e`.
-   - **Edge**: `w -> e`.
-   - Stop.
-
-**Crucial Edge Case**: Prefix ordering.
-If words are `["apple", "app"]`, this is **Invalid**. In a valid dictionary, the shorter prefix (`app`) must always come before the longer word (`apple`). If we see this, return `""`.
-
-### Step 2: Topological Sort
-Once we have the graph, finding the alphabet is just finding a **Topological Sort** (Order where parents come before children).
-
-We can use **Kahn's Algorithm** (BFS) just like in Course Schedule (Day 49).
+**Example 1:**
+-   Input: `words = ["wrt","wrf","er","ett","rftt"]`
+-   Output: `"wertf"`
+-   Explanation:
+    -   `wrt` vs `wrf`: `t` comes before `f`. (`t -> f`)
+    -   `wrf` vs `er`: `w` comes before `e`. (`w -> e`)
+    -   `er` vs `ett`: `r` comes before `t`. (`r -> t`)
+    -   `ett` vs `rftt`: `e` comes before `r`. (`e -> r`)
+    -   Combined: `w -> e -> r -> t -> f`.
 
 ---
 
-## 3. The Algorithm
+## 2. Understanding the Problem
 
-1. **Initialize**: Map `graph` using a Set (to avoid duplicates) and `indegree` map for *every unique character* found in words.
-2. **Build Graph**: Zip adjacent words together. Find first diff. update graph and indegrees.
-3. **BFS**:
-   - Queue = chars with 0 in-degree.
-   - Result = string buffer.
-   - While Queue not empty:
-     - Pop char `C`. Append to Result.
-     - For neighbor `N` in `graph[C]`:
-       - `indegree[N] -= 1`
-       - If `indegree[N] == 0`, push `N` to Queue.
-4. **Validation**:
-   - If `len(result) < num_unique_chars`, there is a cycle (e.g., A < B and B < A). Return `""`.
+### 2.1 The Lexicographical Comparison
+In a sorted dictionary (English):
+-   "Apple" comes before "Approve".
+-   Why? First mismatch. `l` vs `r`. `l` < `r`.
+-   The characters *after* the first mismatch don't matter!
 
----
+**Algorithm**: To find the rules, we only need to compare **adjacent words** in the list.
+Comparing `word[0]` vs `word[1]` gives us one rule.
+Comparing `word[0]` vs `word[99]` gives us redundant info (transitive property).
 
-## 4. Visualizing the Example
-
-Input: `["z", "x", "z"]` (Wait, `z` before `x` then `x` before `z`?)
-1. Pair (`z`, `x`) -> Edge `z -> x`.
-2. Pair (`x`, `z`) -> Edge `x -> z`.
-Graph: `z <-> x` (Cycle).
-Result: `""`.
-
-Input: `["wrt", "wrf", "er", "ett", "rftt"]`
-1. `wrt, wrf` -> `t -> f`.
-2. `wrf, er` -> `w -> e`.
-3. `er, ett` -> `r -> t`.
-4. `ett, rftt` -> `e -> r`.
-
-Graph:
-`w -> e`
-`e -> r`
-`r -> t`
-`t -> f`
-In-degrees: `w:0, e:1, r:1, t:1, f:1`.
-
-Queue: `[w]`
-- Pop `w`. Result: "w". Reduce `e`. Queue: `[e]`
-- Pop `e`. Result: "we". Reduce `r`. Queue: `[r]`
-- Pop `r`. Result: "wer". Reduce `t`. Queue: `[t]`
-- Pop `t`. Result: "wert". Reduce `f`. Queue: `[f]`
-- Pop `f`. Result: "wertf".
+### 2.2 Graph Representation
+-   Nodes: Unique characters in the list.
+-   Edges: `u -> v` means `u` comes before `v` in the alphabet.
+-   Task: Find a Topological Sort of this graph.
 
 ---
 
-## 5. Implementation
+## 3. Approach 1: Graph Construction + Kahn's Algo
+
+We break this into three phases.
+
+### Phase 1: Initialize
+Scan every word to find all unique characters. Initialize `Indegree = {c: 0}` and `Adj = {c: []}`.
+
+### Phase 2: Build Edges
+Iterate `words` from `0` to `N-1`.
+Compare `w1` and `w2`.
+-   Find first index `j` where `w1[j] != w2[j]`.
+-   Add edge `w1[j] -> w2[j]`.
+-   Increment Indegree of `w2[j]`.
+-   **Break**. (Don't check further characters).
+
+*Edge Case*: "Prefix Problem".
+If `w1 = "abc"` and `w2 = "ab"`.
+In a valid dictionary, prefix ("ab") must come BEFORE "abc".
+If "abc" comes before "ab", the input is invalid. Return `""`.
+
+### Phase 3: Topological Sort
+Run Kahn's Algorithm (BFS) (Day 49).
+If result length < num unique chars, there is a cycle (Invalid).
+
+---
+
+## 4. Implementation
 
 ```python
 from collections import deque, defaultdict
 
 class Solution:
-    def alienOrder(self, words: List[str]) -> str:
-        # 0. Initialize Data Structures
+    def alienOrder(self, words: list[str]) -> str:
+        # 1. Initialize data structures
         adj = defaultdict(set)
-        in_degree = {c: 0 for word in words for c in word}
+        in_degree = {c: 0 for w in words for c in w}
         
-        # 1. Build Graph
+        # 2. Build Graph
         for i in range(len(words) - 1):
             w1, w2 = words[i], words[i+1]
             min_len = min(len(w1), len(w2))
             
-            # Check for invalid prefix case ("apple", "app")
+            # Check for prefix error ("abc" before "ab")
             if len(w1) > len(w2) and w1[:min_len] == w2[:min_len]:
                 return ""
-                
+            
             for j in range(min_len):
                 if w1[j] != w2[j]:
                     if w2[j] not in adj[w1[j]]:
                         adj[w1[j]].add(w2[j])
                         in_degree[w2[j]] += 1
-                    break # Only the first difference matters!
+                    break # Only the first mismatch matters
                     
-        # 2. Topological Sort (Kahn's)
+        # 3. Topological Sort (Kahn's)
         queue = deque([c for c in in_degree if in_degree[c] == 0])
         result = []
         
         while queue:
-            c = queue.popleft()
-            result.append(c)
+            char = queue.popleft()
+            result.append(char)
             
-            for neighbor in adj[c]:
+            for neighbor in adj[char]:
                 in_degree[neighbor] -= 1
                 if in_degree[neighbor] == 0:
                     queue.append(neighbor)
                     
-        # 3. Check for cycles
+        # 4. Cycle Check
         if len(result) < len(in_degree):
-            return ""
+            return "" # Cycle detected
             
         return "".join(result)
 ```
 
 ---
 
-## 6. Time & Space Complexity
+## 5. Testing Strategy
 
-- **Time**: `O(C)`
-  - C is the total number of characters in all words.
-  - We iterate through the word list once to build the graph.
-  - The graph has at most 26 nodes (lowercase English letters). BFS on a small graph is constant time relative to the input C.
-  
-- **Space**: `O(1)` or `O(U)`
-  - U is unique characters (max 26). The graph is tiny.
-  - Adjacency list size is bounded by 26*26.
+### Test Case 1: Simple Line
+Input: `["z", "x"]`.
+-   `z` vs `x`. Edge `z -> x`.
+-   Queue: `[z]`. Result `zx`.
+
+### Test Case 2: Cycle
+Input: `["z", "x", "z"]`.
+-   `z -> x`.
+-   `x -> z`.
+-   Cycle. Queue empties early. Result length < 3. Return `""`.
+
+### Test Case 3: Multiple Components
+Input: `["a", "b", "c", "d"]` (where `a->b` and `c->d`, but no link between systems).
+-   Result order between disconnected components doesn't matter (e.g., `ab cd` or `acbd`).
+-   Any valid topo sort is accepted.
 
 ---
 
-## 7. Real World Connection
+## 6. Complexity Analysis
 
-This isn't just about Aliens.
-This logic is used in **Data Reconciliation**.
-If you have two different sorted lists of data (e.g., versions of a file), and you want to deduce the implicit sorting rule (Order by Date? Order by Size?), you can use this differential analysis.
+Let $C$ be total length of all words (total characters).
+Let $U$ be number of unique characters (at most 26).
 
-It is also similar to how **LLMs learn implicit rules** from sequence data. They see `A` mostly followed by `B`, and learn the structure. Here, we deterministically extract the rigid structure.
+-   **Time**: $O(C)$.
+    -   We scan the words list. Comparing two words takes $O(L)$. Total edge building is $O(C)$.
+    -   Topo sort takes $O(U + E)$. Since $U \le 26$, this is constant time relative to input size!
+    -   Dominant term is scanning the input.
+-   **Space**: $O(1)$ or $O(U + E)$. Since $U$ is fixed at 26, the graph is tiny.
+
+---
+
+## 7. Production Considerations
+
+This logic is used in **Versioning Systems** (SemVer).
+"Determine if v1.10.2 > v1.2.9".
+It parses the string into segments and performs the exact same "First Mismatch" logic used here.
+
+---
+
+## 8. Connections to ML Systems
+
+This relates to **Character-Level LMs** (ML Day 50).
+-   In Alien Dictionary, we **infer** the rules of the language from raw data.
+-   In Char-RNN, the model **infers** the probability $P(char_t | char_{t-1})$.
+-   Both are "Language Modeling" problems at the atomic level.
+
+---
+
+## 9. Interview Strategy
+
+1.  **Don't skip the Prefix Check**: This is the most common reason to fail. Mention `abc` vs `ab` explicitly.
+2.  **Explain "Set" for Edges**: Using `list` for adjacency can lead to duplicate edges if the same rule appears twice (`wrt, wrf` and later `art, arf`). Use a `Set` or check before adding.
+3.  **Variable Names**: Use `adj` and `in_degree`. Clear naming helps debugging.
+
+---
+
+## 10. Key Takeaways
+
+1.  **Information Theory**: You only get information from the *first difference*. Everything after is noise.
+2.  **Graph Construction**: Sometimes the graph isn't given; you have to build it by observing constraints.
+3.  **Cycles**: Order means "No Cycles". Always cycle check.
 
 ---
 

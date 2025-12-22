@@ -16,126 +16,187 @@ tech_stack: PyTorch, Andrej Karpathy's minGPT
 scale: "Learning language one letter at a time"
 companies: OpenAI, DeepMind, Google
 related_dsa_day: 50
+related_ml_day: 50
 related_speech_day: 50
 related_agents_day: 50
 ---
 
 **"Before machines could write essays, they had to learn to spell."**
 
-## 1. Introduction: The Atomic Unit of Language
+## 1. Problem Statement
 
-When you read, do you read L-E-T-T-E-R-S or do you read *Words*? Probably words.
-Modern LLMs (like GPT-4) read chunks called **Tokens** (roughly syllables).
-But the simplest, most elegant way to model language is **Character by Character**.
+Modern LLMs (GPT-4) operate on **tokens** (sub-words).
+But to understand *why*, we must study the alternatives.
+**Character-Level Modeling** is the task of predicting the next character in a sequence.
+-   Input: `['h', 'e', 'l', 'l']`
+-   Target: `'o'`
 
-A **Character-Level Language Model** (Char-LM) predicts the next character in a sequence.
-Input: `"hell"` -> Output: `"o"`.
-
-Why study this?
-1. **No Out-of-Vocabulary (OOV) Problems**: You never encounter a "word" you don't know. You can generate "supercalifragilistic..." even if you've never seen it, just by knowing phonetic patterns.
-2. **Robustness**: It handles typos (`"hrello"`) and new slang (`"rizz"`) gracefully.
-3. **Simplicity**: The "Vocabulary" is just 26 letters + punctuation (~100 items), not 50,000 tokens.
+Why build a Char-LM?
+1.  **Infinite Vocabulary**: No "Unknown Token" `<UNK>` issues. It can generate any word.
+2.  **Robustness**: Handles typos (`"helo"`) and biological sequences (`"ACTG"`) natively.
+3.  **Simplicity**: Vocab size is 100 (ASCII), not 50,000 (GPT-2 BPE).
 
 ---
 
-## 2. Architecture: RNNs and LSTMs
+## 2. Understanding the Requirements
 
-Before Transformers took over, **Recurrent Neural Networks (RNNs)** were the kings of Char-LMs.
-Many junior engineers haven't built an RNN, but it's crucial for understanding "State".
+### 2.1 The Context Problem
+Prediction depends on long-range dependencies.
+-   "The cat sat on the **m**..." -> **a** -> **t**. (Local context).
+-   "I grew up in France... I speak fluent **F**..." -> **r** -> **e**... (Global context).
 
-### 2.1 The Recurrent Loop
-Regular Feed-Forward networks map `Input -> Output`.
-RNNs map `Input + Past_State -> Output + New_State`.
+A Char-LM must remember history that is 5x longer than a Word-LM (since avg word length is 5 chars).
+If a sentence is 20 words, the Char-LM sees 100 steps.
+
+### 2.2 Sparsity vs Density
+-   **One-Hot Encoding**: Characters are dense. `a` is always vector `[1, 0, ...]`.
+-   **Embedding**: We still learn a dense vector for 'a', capturing nuances like "vowels cluster together".
+
+---
+
+## 3. High-Level Architecture
+
+We compare **RNN** (Recurrent) vs **Transformer** (Attention).
+
+**RNN Style (The Classic)**:
+```
+[h] -> [e] -> [l] -> [l]
+ |      |      |      |
+ v      v      v      v
+(S0)-> (S1)-> (S2)-> (S3) -> Predict 'o'
+```
+State `S3` must verify "We are in the word 'hello'".
+
+**Transformer Style (Modern)**:
+Input: `[h, e, l, l]`
+Attention: `l` attends to `h`, `e`, `l`.
+Output: `Prob(o)`
+
+---
+
+## 4. Component Deep-Dives
+
+### 4.1 Tokenization Trade-offs
+
+| Strategy | Vocab Size | Sequence Length (for 1000 words) | OOV Risk |
+|----------|------------|----------------------------------|----------|
+| **Character** | ~100 | ~5000 chars | None |
+| **Word** | ~1M | 1000 words | High (Rare names) |
+| **Subword (BPE)** | ~50k | ~1300 tokens | Low |
+
+**Why BPE won**: It balances the trade-off. It keeps sequence length manageable (for Transformer $O(N^2)$ attention) while handling rare words via characters.
+
+### 4.2 The Softmax Bottleneck
+Predicting 1 out of 100 chars is cheap.
+Predicting 1 out of 50,000 tokens is expensive (large Matrix Mul at the end).
+Char-LMs are incredibly fast at the *final layer*, but incredibly slow at the *layers/inference* (requiring more steps).
+
+---
+
+## 5. Data Flow: Training Pipeline
+
+1.  **Raw Text**: "Hello world"
+2.  **Vectorizer**: `[H, e, l, l, o, _, w, o, r, l, d]` -> `[8, 5, 12, 12, 15, 0, ...]`
+3.  **Windowing**: Create pairs `(Input, Target)`.
+    -   `[8, 5, 12]` -> `12` ("Hel" -> "l")
+    -   `[5, 12, 12]` -> `15` ("ell" -> "o")
+4.  **Loss Calculation**: Cross Entropy Loss on the prediction.
+
+---
+
+## 6. Implementation: RNN Char-LM
 
 ```python
-# Pseudo-code for a Char-RNN Step
-def rnn_step(char_input, hidden_state):
-    # Combine input and history
-    combined = linear(char_input + hidden_state)
+import torch
+import torch.nn as nn
+
+class CharRNN(nn.Module):
+    def __init__(self, vocab_size, hidden_size, n_layers=1):
+        super().__init__()
+        self.embedding = nn.Embedding(vocab_size, hidden_size)
+        self.rnn = nn.LSTM(hidden_size, hidden_size, n_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, vocab_size)
     
-    # Update memory
-    new_hidden_state = tanh(combined)
-    
-    # Predict next char
-    prediction = softmax(linear(new_hidden_state))
-    
-    return prediction, new_hidden_state
+    def forward(self, x, hidden=None):
+        # x: [Batch, Seq_Len] (e.g., indices of chars)
+        embeds = self.embedding(x)
+        
+        # rnn_out: [Batch, Seq_Len, Hidden]
+        rnn_out, hidden = self.rnn(embeds, hidden)
+        
+        # Predict next char for EVERY step in sequence
+        logits = self.fc(rnn_out)
+        return logits, hidden
+
+    def generate(self, start_char, max_len=100):
+        # Inference Loop
+        curr_char = torch.tensor([[char_to_ix[start_char]]])
+        hidden = None
+        out = start_char
+        
+        for _ in range(max_len):
+            logits, hidden = self.forward(curr_char, hidden)
+            probs = nn.functional.softmax(logits[0, -1], dim=0)
+            next_ix = torch.multinomial(probs, 1).item()
+            
+            out += ix_to_char[next_ix]
+            curr_char = torch.tensor([[next_ix]])
+            
+        return out
 ```
 
-If we feed `"h"`, it updates its hidden state to "remembering 'h'".
-Feed `"e"`, it remembers "'h', 'e'".
-Feed `"l"`, it remembers "'h', 'e', 'l'".
-Now it strongly predicts `"l"` (for "hell") or `"p"` (for "help").
+---
 
-### 2.2 The "Vanishing Gradient" Problem
-Simple RNNs forget things quickly. If the sentence is "The clouds in the sky are [?]", the RNN sees "sky" and predicts "blue".
-If the sentence is "I grew up in France... (1000 words later) ... I speak fluent [?]", the RNN forgets "France". It guesses "English".
+## 7. Scaling Strategies
 
-This led to **LSTMs (Long Short-Term Memory)**, which have specific "gates" to keep information for thousands of steps.
+### 7.1 Truncated Backpropagation through Time (TBPTT)
+You cannot backpropagate through a book with 1 million characters. Gradients vanish or explode.
+We process chunks of 100 characters.
+**Crucial**: We pass the `hidden` state from Chunk 1 to Chunk 2, but we *detach* the gradient history. The model remembers the context, but doesn't try to learn across the boundary.
 
 ---
 
-## 3. Tokenization Trade-offs
+## 8. Failure Modes
 
-Why don't we use Character Models for everything?
-
-| Feature | Character-Level | Word-Level | Subword (BPE/Tokenizer) |
-|---------|-----------------|------------|-------------------------|
-| **Vocab Size** | Small (~100) | Huge (1M+) | Balanced (50k) |
-| **Context Length** | Very Long (1000 steps = 2 sentences) | Short (20 steps = 2 sentences) | Medium |
-| **Compute Cost** | Expensive (Many small steps) | Cheap (Few big steps) | Optimal |
-| **Meaning** | Hard (Letters have no meaning) | Easy (Words have meaning) | Mix |
-
-**Char-Level is computationally inefficient.**
-To process 1,000 words, a Char-LM takes ~5,000 steps. A Token-LM takes ~700 steps. Transformers simply cannot handle sequences that long (Self-Attention is `O(N^2)`).
-This is why GPT uses **BPE (Byte Pair Encoding)**, finding a middle ground.
+1.  **Hallucinated Words**: "The quxijumped over..."
+    -   Since it spells letter-by-letter, it can invent non-existent words that "sound" pronounceable.
+2.  **Incoherent Grammar**: It closes parentheses `)` that were never opened `(`.
+    -   LSTMs struggled with this (counting). Transformers fixed it.
 
 ---
 
-## 4. Modern Applications of Char-LMs
+## 9. Real-World Case Study: Andrej Karpathy's minGPT
 
-Despite the dominance of Token-LMs, Char-LMs are still critical in:
-
-### 4.1 Code Generation
-Code has strict syntax. `}` must close `{`.
-Char-LMs are surprisingly good at learning syntax (indentation, brackets) because they see every single keystroke.
-
-### 4.2 Language Identification
-To guess if text is "French" or "Spanish", you don't need words. You need character patterns.
-- Sequence of `eau` -> French.
-- Sequence of `ñ` -> Spanish.
-FastText (by Facebook) uses character n-grams for this.
-
-### 4.3 Handling "Alien" Languages (Bioinformatics)
-DNA sequences (`ACTG`) are essentially char-level languages. There are no "words" in DNA.
-Models like **GenomicLM** are Char-LMs.
+The famous blog post "The Unreasonable Effectiveness of Recurrent Neural Networks" trained a Char-RNN on:
+-   **Shakespeare**: Resulted in fake plays.
+-   **Linux Kernel Code**: Resulted in C code that *almost* compiled (including comments and indentation).
+This proved that neural nets learn **Syntactic Structure** just from statistical co-occurrence.
 
 ---
 
-## 5. Training your own "MiniGPT"
+## 10. Connections to ML Systems
 
-Today, you can train a Char-level GPT on your laptop in 10 minutes (thanks to Andrej Karpathy's `nanoGPT`).
-
-1. **Data**: Text file (Shakespeare).
-2. **Tokenizer**: `list(set(text))` (Result: `a, b, c...`).
-3. **Model**: Small Transformer (Embedding size 64, 4 layers).
-4. **Train**: Predict next char.
-
-**Result**:
-`"The kyng hath sayd, that thou shalt die!"`
-It invents fake Old English words! It learns spelling, grammar, and punctuation purely from examples.
+This connects to **Custom Language Modeling in Speech** (Speech Day 50).
+-   ASR systems use Char-LMs to correct spelling in noisy transcripts.
+-   If ASR hears "Helo", the Char-LM says "l followed by o is unlikely after He, it should be 'll'".
 
 ---
 
-## 6. Summary
+## 11. Cost Analysis
 
-Understanding Character-Level models removes the "magic" of AI.
-It's just statistics.
-- "t" is likely followed by "h".
-- "th" is likely followed by "e".
-- "the" is likely followed by " ".
+**Training**: Cheap. A Char-RNN trains on a laptop CPU in minutes.
+**Inference**: Expensive.
+-   To generate a 1000-word essay (5000 chars), you run the model 5000 times (serial).
+-   A Token-LM runs 700 times.
+-   This 7x latency penalty is why Char-LMs are not used for Chatbots.
 
-If you scale this simple pattern matching up to 1 Trillion parameters, you get ChatGPT. But at its core, it's just predicting the next symbol.
+---
+
+## 12. Key Takeaways
+
+1.  **Granularity Matters**: Breaking text down to atoms (chars) simplifies vocabulary but complicates structure learning.
+2.  **Embeddings**: Even characters need embeddings. 'A' and 'a' should be close vectors.
+3.  **Subword Dominance**: BPE won because it is the "Goldilocks" zone—short sequences, manageable vocab.
 
 ---
 

@@ -7,450 +7,321 @@ categories:
 tags:
   - binary-tree
   - dynamic-programming
-  - tree-dp
   - recursion
   - dfs
-  - path-finding
   - hard
 difficulty: Hard
-subdomain: "Trees & Dynamic Programming"
+subdomain: "Trees & DP"
 tech_stack: Python
-scale: "O(N) time, O(H) space where H is tree height"
+scale: "O(N) time, O(H) space"
 companies: Google, Meta, Amazon, Microsoft, Apple
+related_dsa_day: 46
 related_ml_day: 46
 related_speech_day: 46
 related_agents_day: 46
 ---
 
-**"Every path has a peak—find the one with the maximum sum."**
+**"Find the path to success—even if you have to start from the bottom, go up, and come back down."**
 
-## 1. Introduction: Why This Problem Matters
+## 1. Problem Statement
 
-Imagine you're analyzing a network of servers, where each server has a "value" representing its processing capacity (positive) or its overhead cost (negative). You want to find the most valuable path through this network—a sequence of connected servers that maximizes the total value.
+The **Binary Tree Maximum Path Sum** problem is a classic hard interview question that tests your mastery of tree traversal and recursion state management.
 
-This is exactly what the **Binary Tree Maximum Path Sum** problem asks us to solve. It's a classic interview question at top tech companies because it tests your understanding of:
+Given the `root` of a binary tree, return the *maximum path sum* of any non-empty path.
 
-- **Tree traversal and recursion**: How to think about problems in terms of subproblems
-- **Dynamic programming on trees**: How to carry information up and down a tree
-- **The distinction between "contribution" and "completion"**: A subtle but crucial concept
+**Constraints & Definitions:**
+- A **path** in a binary tree is a sequence of nodes where each pair of adjacent nodes in the sequence has an edge connecting them.
+- A node can only appear in the sequence **at most once**.
+- The path does **not** need to pass through the root.
+- The path must contain at least one node.
+- Node values can be **negative**, positive, or zero.
 
-What makes this problem tricky is that the maximum path doesn't have to go through the root. It can start and end anywhere in the tree. This seemingly small detail completely changes how we need to approach the problem.
+**Example 1:**
+```
+    1
+   / \
+  2   3
+```
+Output: `6` (Path: `2 -> 1 -> 3`)
+
+**Example 2:**
+```
+   -10
+   /  \
+  9   20
+     /  \
+    15   7
+```
+Output: `42` (Path: `15 -> 20 -> 7`)
+
+This problem is famous because the intuitive "top-down" approach fails. You cannot simply decide at the root which way to go, because the optimal path might exist entirely within a subtree (as seen in Example 2, where the root `-10` is excluded).
 
 ---
 
 ## 2. Understanding the Problem
 
-### 2.1 What is a "Path" in a Binary Tree?
+### 2.1 The "Path" Concept
+In most tree problems, a "path" usually means "root to leaf". In this problem, a path is strictly defined by graph connectivity. It can be:
+1.  **Child -> Node -> Parent**: Going up.
+2.  **Parent -> Node -> Child**: Going down.
+3.  **Left Child -> Node -> Right Child**: A "bridge" or "arch".
 
-Before we dive into the solution, let's make sure we understand exactly what we're looking for.
+However, there is a strict limitation: **No branching**. You cannot go `Parent -> Node` AND `Node -> Left` AND `Node -> Right` simultaneously. That would form a "Y" shape, not a path.
 
-A **path** in a binary tree is:
-- A sequence of nodes where each consecutive pair is connected by an edge
-- The path can start at any node and end at any node
-- **Crucially**: The path cannot branch. Once you go down a path, you can't split and go both left and right.
+### 2.2 The "Arc" Visualization
+Every valid path in this problem has a unique "highest node" (closest to the root). We call this the **Peak** or **Anchor** of the path.
+- From the Peak, the path goes down the left side (optional).
+- From the Peak, the path goes down the right side (optional).
 
-Let me illustrate this with a visual:
+Therefore, any path can be mathematically described as:
+`Path(Peak) = Value(Peak) + MaxChain(Left Child) + MaxChain(Right Child)`
 
-```
-Valid paths:        Invalid path (branches):
-    
-    1                      1
-   / \                    /|\
-  2   3                  2 1 3   ← Can't go both ways!
-     / \                    
-    4   5              
-    
-Paths: [2,1,3], [4,3,5], [1,3,4], etc.
-```
+Where `MaxChain` is a path starting at a child and going *only* downwards.
 
-### 2.2 The Problem Statement
+### 2.3 The Core Conflict
+This definition creates a conflict:
+- To calculate the global maximum path, we want to connect `Left + Node + Right`.
+- But to hold up our end of the bargain for our *Parent*, we can only offer `Node + max(Left, Right)`. We cannot offer both, because that would force the path to split at our node (coming from parent, going to both children).
 
-Given a binary tree, find the **maximum path sum**. The path:
-- Must contain at least one node
-- Can start and end at any nodes
-- Follows parent-child connections (no jumping)
-
-**Example 1: Simple case**
-```
-    1
-   / \
-  2   3
-
-Maximum path sum: 6 (path: 2 → 1 → 3)
-```
-
-**Example 2: With negative values**
-```
-       -10
-       /  \
-      9   20
-         /  \
-        15   7
-
-Maximum path sum: 42 (path: 15 → 20 → 7)
-```
-
-Notice in Example 2 that the maximum path doesn't include the root (-10) because including it would reduce the sum!
-
-### 2.3 Why This Problem is Tricky
-
-At first glance, you might think: "Just find the path from any node to any other node with the maximum sum." But there are **exponentially many paths** in a tree! For a tree with N nodes, checking all possible paths would take O(N²) or worse.
-
-The key insight is that we need to think about this problem differently—not as "finding paths" but as "computing values at each node that help us track the global maximum."
+This distinction—**"What I calculate for myself"** vs. **"What I return to my parent"**—is the heart of the solution.
 
 ---
 
-## 3. Building Intuition: The Arc Concept
+## 3. Approach 1: Brute Force
 
-### 3.1 Every Path is an "Arc" with a Peak
+A naive approach might be to treat every single node as a potential "Peak".
 
-Here's the mental model that unlocks this problem: **every path in a tree forms an arc with exactly one highest point** (we'll call it the "peak" or "turning point").
+### Algorithm
+1.  Traverse the tree (e.g., Pre-order).
+2.  For every node `N`:
+    -   Calculate the max path starting at `N.left` and going down.
+    -   Calculate the max path starting at `N.right` and going down.
+    -   Total Sum = `N.val + LeftSum + RightSum`.
+    -   Update global max.
+3.  This requires a helper function `getMaxDownPath(node)` which does its own traversal.
 
-```
-        Peak
-       /    \
-      ↗      ↘
-    Left    Right
-   branch   branch
-```
+### Complexity
+-   **Time**: $O(N^2)$. For every node, we traverse its entire subtree. In skewed trees (linked list), this is quadratic.
+-   **Space**: $O(H)$ for recursion stack.
 
-At any node in the tree, a path passing through that node can:
-1. Come up from the left subtree
-2. Pass through this node (the peak)
-3. Go down into the right subtree
-
-Or it could only go left, or only go right, or just be the node itself.
-
-### 3.2 Two Different Questions at Each Node
-
-This leads us to ask **two different questions** at each node:
-
-**Question 1: What's the maximum path that "peaks" at this node?**
-This is a path that might use both left and right children. This value helps us update our global maximum.
-
-**Question 2: What's the maximum contribution this subtree can make to a path that peaks higher up?**
-This is the value we return to the parent. It can only go in ONE direction (left or right, not both), because the path can't branch.
-
-Let me illustrate:
-
-```
-        A  ← Parent asking: "What can child B contribute to me?"
-       /
-      B  ← B can contribute: B.val + max(left_contribution, right_contribution)
-     / \           BUT NOT: B.val + left + right (that would branch!)
-    L   R
-```
-
-This distinction between "complete path at this node" and "contribution to parent" is the crux of the solution.
+This is acceptable for small trees ($N < 1000$), but fails for large datasets. We need a single-pass solution.
 
 ---
 
-## 4. The Algorithm: Step by Step
+## 4. Approach 2: Optimal Recursive Solution (One Pass)
 
-### 4.1 High-Level Approach
+We can solve this in $O(N)$ by using a **Post-order Traversal** (Bottom-Up).
+The recursion will return the "Contribution" value to the parent, while simultaneously updating the "Global Maximum" using the "Arc" value.
 
-We'll use **post-order traversal** (process children before parent) with a clever twist:
-
-1. At each node, compute the maximum contribution this subtree can offer to its parent
-2. While doing this, also compute the maximum complete path that peaks at this node
-3. Keep track of the global maximum path sum across all nodes
-
-### 4.2 Handling Negative Contributions
-
-What if a child's contribution is negative? Should we include it?
-
-**No!** If a subtree contributes a negative value, we're better off not including it at all. We use `max(0, child_contribution)` to handle this elegantly.
-
-For example:
-```
-      5
-     / \
-   -3   2
-
-Left contribution: max(0, -3) = 0  (ignore the left child)
-Right contribution: max(0, 2) = 2  (include the right child)
-
-Maximum path at node 5: 5 + 0 + 2 = 7
-Contribution to parent: 5 + max(0, 2) = 7
-```
-
-### 4.3 The Key Formulas
-
-At each node, we compute:
-
-**1. Gain from left child:**
-```
-left_gain = max(0, left_child_contribution)
-```
-
-**2. Gain from right child:**
-```
-right_gain = max(0, right_child_contribution)
-```
-
-**3. Maximum complete path peaking at this node:**
-```
-peak_path_sum = node.val + left_gain + right_gain
-```
-This is a complete path that uses both children (if beneficial).
-
-**4. Contribution to parent:**
-```
-contribution_to_parent = node.val + max(left_gain, right_gain)
-```
-This can only go in ONE direction to avoid branching.
-
-### 4.4 Visual Walkthrough
-
-Let's trace through Example 2:
-
-```
-       -10
-       /  \
-      9   20
-         /  \
-        15   7
-```
-
-**Processing order** (post-order): 9, 15, 7, 20, -10
-
-**Step 1: Process node 9 (leaf)**
-- Left gain: 0 (no left child)
-- Right gain: 0 (no right child)
-- Peak path sum: 9 + 0 + 0 = 9
-- Global max so far: 9
-- Contribution to parent: 9 + max(0, 0) = 9
-
-**Step 2: Process node 15 (leaf)**
-- Left gain: 0
-- Right gain: 0
-- Peak path sum: 15
-- Global max so far: max(9, 15) = 15
-- Contribution to parent: 15
-
-**Step 3: Process node 7 (leaf)**
-- Left gain: 0
-- Right gain: 0
-- Peak path sum: 7
-- Global max so far: max(15, 7) = 15
-- Contribution to parent: 7
-
-**Step 4: Process node 20**
-- Left gain: max(0, 15) = 15
-- Right gain: max(0, 7) = 7
-- Peak path sum: 20 + 15 + 7 = **42** ✨
-- Global max so far: max(15, 42) = 42
-- Contribution to parent: 20 + max(15, 7) = 35
-
-**Step 5: Process node -10 (root)**
-- Left gain: max(0, 9) = 9
-- Right gain: max(0, 35) = 35
-- Peak path sum: -10 + 9 + 35 = 34
-- Global max so far: max(42, 34) = **42** (unchanged)
-- Contribution to parent: N/A (this is the root)
-
-**Final answer: 42** (the path 15 → 20 → 7)
+### Key Logic
+At every node `root`, asking for `dfs(root)`:
+1.  Recursively get `left_gain = dfs(root.left)`.
+2.  Recursively get `right_gain = dfs(root.right)`.
+3.  **Crucial Check**: If a child's gain is negative, ignore it! A negative path reduces our sum. We are better off not including that branch. `left_gain = max(left_gain, 0)`.
+4.  **Local Arc Sum**: `current_node_max = root.val + left_gain + right_gain`.
+    -   Update the global maximum if this is the best we've seen.
+5.  **Return Value**: `root.val + max(left_gain, right_gain)`.
+    -   We can only ascend one branch to the parent.
 
 ---
 
-## 5. The Solution
+## 5. Implementation
 
-Now that we understand the algorithm, let's look at the implementation. Notice how concise it is—the complexity is in the thinking, not the code!
+Here is the robust, production-ready implementation.
 
 ```python
+import math
+
+# Definition for a binary tree node.
 class TreeNode:
     def __init__(self, val=0, left=None, right=None):
         self.val = val
         self.left = left
         self.right = right
 
+class Solution:
+    def maxPathSum(self, root: TreeNode) -> int:
+        """
+        Calculates the maximum path sum in a binary tree.
+        
+        Args:
+            root: The root node of the binary tree.
+            
+        Returns:
+            int: The maximum path sum found.
+        """
+        # Initialize global max with absolute minimum
+        # Using a list allows us to update it within the nested function scope
+        self.global_max = -math.inf
+        
+        def get_max_gain(node):
+            """
+            Recursive function that returns the maximum contribution a node 
+            can make to its parent's path.
+            
+            Side effect: Updates self.global_max with the best 'arch' path 
+            peaking at this node.
+            """
+            if not node:
+                return 0
+            
+            # Recursive step: get gains from left and right subtrees
+            # If a subtree returns a negative gain, we treat it as 0
+            # (i.e., we choose not to include that path segment).
+            left_gain = max(get_max_gain(node.left), 0)
+            right_gain = max(get_max_gain(node.right), 0)
+            
+            # Case 1: The path curves at this node (Left -> Node -> Right)
+            # This path CANNOT be extended to the parent, but it might be the global max.
+            price_of_new_path = node.val + left_gain + right_gain
+            
+            # Update the global result if this curve is better than anything seen so far
+            self.global_max = max(self.global_max, price_of_new_path)
+            
+            # Case 2: The path continues upward (Node -> Parent)
+            # We must choose the heavier branch (Left or Right) to extend.
+            return node.val + max(left_gain, right_gain)
+            
+        get_max_gain(root)
+        
+        return self.global_max
 
-def maxPathSum(root: TreeNode) -> int:
-    """
-    Find the maximum path sum in a binary tree.
-    
-    The key insight is distinguishing between:
-    1. The max path "peaking" at each node (for global max)
-    2. The max "contribution" to parent (for recursion)
-    """
-    # We use a list to allow modification in nested function
-    max_sum = [float('-inf')]
-    
-    def compute_max_contribution(node):
-        """
-        Returns the maximum contribution this subtree can make
-        to a path that extends upward to the parent.
-        
-        Side effect: Updates max_sum if we find a better path.
-        """
-        if not node:
-            return 0
-        
-        # Recursively get contributions from children
-        # Use max(0, ...) to ignore negative contributions
-        left_gain = max(0, compute_max_contribution(node.left))
-        right_gain = max(0, compute_max_contribution(node.right))
-        
-        # The best complete path through this node
-        peak_path_sum = node.val + left_gain + right_gain
-        
-        # Update global maximum
-        max_sum[0] = max(max_sum[0], peak_path_sum)
-        
-        # Return contribution to parent (can only go one direction)
-        return node.val + max(left_gain, right_gain)
-    
-    compute_max_contribution(root)
-    return max_sum[0]
+# Example Helper to build simple tree
+def run_example():
+    # Tree: [1, 2, 3]
+    root = TreeNode(1)
+    root.left = TreeNode(2)
+    root.right = TreeNode(3)
+    sol = Solution()
+    print(f"Max Path Sum: {sol.maxPathSum(root)}") # Expected: 6
+
+if __name__ == "__main__":
+    run_example()
 ```
 
-### 5.1 Why Use a List for max_sum?
-
-You might wonder why we use `max_sum = [float('-inf')]` instead of just `max_sum = float('-inf')`. 
-
-In Python, when you assign a new value to a variable inside a nested function, Python treats it as a new local variable. Using a list (or `nonlocal` keyword) lets us modify the outer variable.
-
-```python
-# This doesn't work:
-max_sum = float('-inf')
-def inner():
-    max_sum = 10  # Creates a NEW local variable!
-
-# This works:
-max_sum = [float('-inf')]
-def inner():
-    max_sum[0] = 10  # Modifies the existing list
-```
+### Why use a class variable?
+In the recursive function, we encounter two different values of interest:
+1.  The value to **pass up** (recursion return).
+2.  The value to **record** (global max).
+Using `self.global_max` decouples these two concerns cleanly.
 
 ---
 
-## 6. Common Mistakes and Edge Cases
+## 6. Testing Strategy
 
-### 6.1 Mistake: Including Negative Paths
+When testing recursive tree algorithms, "visual" coverage is key.
 
-**Wrong thinking**: "I should include all children in the path."
-
-**Correct thinking**: Use `max(0, child_contribution)` to exclude negative contributions.
-
-### 6.2 Mistake: Returning the Complete Path Instead of Contribution
-
-**Wrong thinking**: "Return `node.val + left + right` to the parent."
-
-**Correct thinking**: Return `node.val + max(left, right)` because paths can't branch.
-
-### 6.3 Edge Case: All Negative Values
-
-What if every node has a negative value?
-
+### Test Case 1: The "Tent" (Simple curve)
 ```
-      -3
-     /  \
-   -2   -1
+    1
+   / \
+  2   3
 ```
+- Left gain: 2
+- Right gain: 3
+- Arc: 1 + 2 + 3 = 6. Return: 1 + 3 = 4.
+- **Max: 6**.
 
-The answer should be **-1** (just the node with the largest value, since we must include at least one node).
-
-Our algorithm handles this correctly because:
-- `max_sum` starts at negative infinity
-- We always update it with `peak_path_sum` which includes at least the node's value
-- The maximum single node (-1) becomes our answer
-
-### 6.4 Edge Case: Single Node
-
+### Test Case 2: Negative Root (Disconnected Subtrees)
 ```
-    5
-
-Answer: 5
+    -10
+    /  \
+   9    20
+       /  \
+      15   7
 ```
+- Node 9: Returns 9. Max so far: 9.
+- Node 15: Returns 15. Max so far: 15.
+- Node 7: Returns 7. Max so far: 15.
+- Node 20:
+  - Left gain: 15.
+  - Right gain: 7.
+  - Arc: 20 + 15 + 7 = 42. Max so far: 42.
+  - Return: 20 + 15 = 35.
+- Node -10:
+  - Left gain: 9.
+  - Right gain: 35.
+  - Arc: -10 + 9 + 35 = 34.
+  - Return: -10 + 35 = 25.
+- **Result: 42**. Note that the root -10 was examined but the "Arc" through it (34) was inferior to the subtree arc (42).
 
-Our algorithm handles this: left_gain = 0, right_gain = 0, peak_path_sum = 5.
+### Test Case 3: All Negative
+```
+    -3
+```
+- Recursive base case returns 0? NO.
+- `left_gain = max(0, 0) = 0`.
+- Arc: -3 + 0 + 0 = -3.
+- **Result: -3**.
+*Edge Case Warning*: If your code initializes `global_max = 0`, you will fail this case (returning 0 instead of -3). Always initialize with `-infinity`.
 
 ---
 
 ## 7. Complexity Analysis
 
-### Time Complexity: O(N)
+### Time Complexity: $O(N)$
+-   We touch every node exactly once.
+-   At each node, we perform constant time operations ($+, \max$).
+-   Therefore, time scales linearly with the number of nodes $N$.
 
-We visit each node exactly once during the post-order traversal. At each node, we do O(1) work (a few comparisons and additions).
-
-### Space Complexity: O(H) where H is the tree height
-
-The space is used by the recursion stack. In the worst case (a completely skewed tree), H = N, so space is O(N). For a balanced tree, H = log(N), so space is O(log N).
-
-```
-Skewed tree (H = N):     Balanced tree (H = log N):
-    1                           4
-     \                        /   \
-      2                      2     6
-       \                    / \   / \
-        3                  1   3 5   7
-```
+### Space Complexity: $O(H)$
+-   $H$ is the height of the tree.
+-   This is the cost of the implicit recursion stack.
+-   **Best Case (Balanced Tree):** $H = \log N$.
+-   **Worst Case (Skewed Tree):** $H = N$.
 
 ---
 
-## 8. Why This Pattern Matters: Connection to Transfer Learning
+## 8. Production Considerations
 
-This problem teaches a pattern that appears throughout computer science and machine learning: **the distinction between local computation and global tracking**.
+In a real-world system (like a network routing table or organizational hierarchy analyzer), how does this perform?
 
-In the context of **Transfer Learning** (Day 46 ML topic):
+### 8.1 Stack Overflow Risk
+For extremely deep trees ($N > 10,000$ in a line), standard Python recursion limit (1000) will be hit.
+**Solution:**
+-   Increase recursion limit: `sys.setrecursionlimit(20000)`.
+-   **Better:** Iterative DFS using an explicit stack is preferred for production stability, though significantly harder to implement for post-order logic.
 
-| Binary Tree Max Path Sum | Transfer Learning |
-|--------------------------|-------------------|
-| Local contribution to parent | Layer-specific features |
-| Global maximum path | End-to-end model performance |
-| Choosing max(left, right) | Selecting which features to transfer |
-| Ignoring negative contributions | Filtering out harmful knowledge transfer |
-
-Just as we track a global maximum while computing local contributions, transfer learning tracks global model performance while deciding which layer-specific knowledge to reuse.
-
----
-
-## 9. Interview Tips
-
-### 9.1 How to Approach This in an Interview
-
-1. **Start with examples**: Draw a small tree and manually trace through what paths exist
-2. **Identify the insight**: Explain the distinction between "peak path" and "contribution"
-3. **State the recurrence**: Write out the formulas before coding
-4. **Handle edge cases**: Mention negative values and single nodes
-5. **Analyze complexity**: Time O(N), Space O(H)
-
-### 9.2 Common Follow-Up Questions
-
-**Q: What if we need to return the actual path, not just the sum?**
-A: Track the nodes as we traverse. When we update the global max, also store the path.
-
-**Q: What if we want the k largest path sums?**
-A: Use a min-heap of size k. Push each peak_path_sum and maintain heap size.
-
-**Q: Can you solve this iteratively?**
-A: Yes, using a stack for post-order traversal, but it's more complex and less intuitive.
+### 8.2 Parallelism
+Can we calculate this in parallel?
+-   Subtrees are independent.
+-   If the tree is distributed (e.g., a DOM tree or a distributed database index), we can send `get_max_gain` queries to `Node.left` and `Node.right` workers in parallel (MapReduce style).
 
 ---
 
-## 10. Practice Problems
+## 9. Connections to ML Systems
 
-Once you understand this pattern, try these related problems:
+This algorithm is conceptually identical to **Backpropagation through Time (BPTT)** or recursive neural networks (RvNNs, distinct from RNNs).
 
-1. **Binary Tree Diameter** - Similar concept, but counting edges instead of summing values
-2. **Path Sum III** - Count paths that sum to a target (uses prefix sums)
-3. **Longest Univalue Path** - Same pattern, different condition for extension
+### 9.1 Socher's Recursive Neural Networks (Tree-LSTMs)
+In Sentiment Analysis, we often parse sentences into syntax trees.
+-   "The movie was [not [good]]".
+-   We need to compute the "sentiment vector" of `"not good"` based on its children `"not"` and `"good"`.
+-   This is exactly the bottom-up traversal we just wrote!
+-   Instead of `val + left + right` (scalar sum), ML systems use `Op(val, W_L * left_vec, W_R * right_vec)` (tensor operations).
+
+### 9.2 Transfer Learning Theme
+The theme for this section of the blog is **Transfer Learning**. In this algorithm, information "transfers" strictly from child to parent. The parent cannot solve its problem without the "pre-trained knowledge" (max path) of its children. This mirrors how a pre-trained ResNet feature extractor feeds into a new classifier head.
 
 ---
 
-## 11. Summary
+## 10. Interview Strategy
 
-The Binary Tree Maximum Path Sum problem teaches us a powerful pattern:
+If asked this in an interview:
 
-1. **Think in terms of "contribution" vs "completion"**: What value do we pass up to the parent vs. what value completes a path at this node?
+1.  **Don't Rush Code**: Draw the "Arc" vs "Branch" distinction on the whiteboard first. This shows you understand the edge cases.
+2.  **Highlight the "Negative" Case**: ask "Are node values negative?". This is the main trap.
+3.  **Global vs Local**: Explicitly mention why you need a global variable. Interviewers love asking "Can you do this without a global variable?" (Yes, return a distinct Tuple `(max_branch, max_arc)` from search step).
+4.  **Iterative Follow-up**: If they ask for iterative, suggest using a `visited` set to mimic post-order traversal with a stack, though admit it makes the code much messier.
 
-2. **Use post-order traversal for tree DP**: Process children first, then use their results to compute the parent's values.
+---
 
-3. **Track global state while computing local values**: The recursion computes contributions, but we update a global variable for the answer.
+## 11. Key Takeaways
 
-4. **Handle negative values gracefully**: Using `max(0, child)` elegantly handles the case where including a subtree would hurt our sum.
-
-This pattern—computing local values while tracking a global optimum—appears in many contexts: network routing, game theory, and yes, transfer learning in machine learning.
+1.  **Tree DP Pattern**: This fits the "Tree Dynamic Programming" pattern: `Res(Node) = F(Node, Res(Left), Res(Right))`.
+2.  **Path != Traverse**: A path has structural constraints (no branching).
+3.  **Max(0, x)**: A powerful idiom for "optional inclusion".
+4.  **Separation of Concerns**: The value you *return* (recursion contract) is often different from the value you *calculate* (business logic).
 
 ---
 
