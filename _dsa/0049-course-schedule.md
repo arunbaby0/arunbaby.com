@@ -5,352 +5,197 @@ collection: dsa
 categories:
   - dsa
 tags:
-  - graphs
+  - graph
   - topological-sort
-  - dfs
   - bfs
+  - dfs
   - cycle-detection
-  - dag
 difficulty: Medium
-subdomain: "Graphs"
+subdomain: "Graph Algorithms"
 tech_stack: Python
-scale: "O(V + E) time and space"
-companies: Google, Meta, Amazon, Microsoft, Uber
+scale: "O(V + E)"
+companies: Amazon, Google, Uber, Coursera
 related_ml_day: 49
 related_speech_day: 49
 related_agents_day: 49
 ---
 
-**"To take course B, first complete course A—dependency ordering at its core."**
+**"Putting on socks before shoes is a dependency. Topological sort is just the math of getting dressed."**
 
-## 1. Problem Statement
+## 1. Introduction: The Prerequisite Problem
 
-There are `numCourses` courses labeled `0` to `numCourses-1`. You're given an array `prerequisites` where `prerequisites[i] = [a, b]` indicates you must take course `b` before course `a`.
+Imagine you are a university student planning your major.
+- You want to take **Advanced AI (Course A)**.
+- But A requires **Machine Learning (Course B)**.
+- And B requires **Calculus (Course C)**.
+- And C requires **A**.
 
-Return `true` if you can finish all courses, otherwise return `false`.
+Wait. If C requires A, and A requires C... you can never graduate! This is a **Cycle**.
 
-**Example 1:**
-```
-numCourses = 2
-prerequisites = [[1, 0]]
-Output: true
-Explanation: Take course 0, then course 1.
-```
+The **Course Schedule** problem asks two fundamental questions:
+1. **Feasibility**: Given a set of courses and prerequisites, is it even *possible* to finish all of them? (i.e., Is there a cycle?)
+2. **Ordering**: If it is possible, in what order should I take them?
 
-**Example 2:**
-```
-numCourses = 2
-prerequisites = [[1, 0], [0, 1]]
-Output: false
-Explanation: Circular dependency—impossible!
-```
+This is not just about college. This is how:
+- `pip install` resolves package dependencies.
+- `make` determines which files to compile first.
+- `Task scheduling` systems decide which jobs to run.
 
-## 2. Understanding the Problem
+---
 
-This is **cycle detection in a directed graph**. If there's a cycle, some courses can't be completed (they depend on each other circularly).
+## 2. Modeling the Problem: The Graph
 
-```
-Course Schedule I: Can you finish? (cycle detection)
-Course Schedule II: In what order? (topological sort)
-```
+We can model this as a **Directed Graph**:
+- **Nodes (V)**: Courses (0, 1, 2...).
+- **Edges (E)**: Prerequisites. An edge `B -> A` means "Take B before A".
 
-### Graph Representation
+### Example 1 (Linear)
+`[1, 0]` means "To take 1, you must first take 0".
+Graph: `0 -> 1`
+Order: `0, 1`. Valid!
 
-```
-prerequisites = [[1,0], [2,0], [3,1], [3,2]]
-
+### Example 2 (Branching)
+`[1, 0], [2, 0], [3, 1], [3, 2]`
 Graph:
-0 → 1 → 3
- ↘ 2 ↗
-
-Topological order: 0, 1, 2, 3 (or 0, 2, 1, 3)
 ```
-
-## 3. Approach 1: DFS with Cycle Detection
-
-```python
-from typing import List
-from collections import defaultdict
-
-class Solution:
-    def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
-        """
-        Detect if graph has a cycle using DFS.
-        
-        State tracking:
-        - 0: unvisited
-        - 1: visiting (in current DFS path)
-        - 2: visited (completed)
-        
-        Cycle exists if we reach a node that's currently being visited.
-        
-        Time: O(V + E)
-        Space: O(V + E)
-        """
-        # Build adjacency list
-        graph = defaultdict(list)
-        for course, prereq in prerequisites:
-            graph[prereq].append(course)
-        
-        # 0: unvisited, 1: visiting, 2: visited
-        state = [0] * numCourses
-        
-        def has_cycle(course):
-            if state[course] == 1:
-                return True  # Back edge = cycle
-            if state[course] == 2:
-                return False  # Already processed
-            
-            state[course] = 1  # Mark as visiting
-            
-            for next_course in graph[course]:
-                if has_cycle(next_course):
-                    return True
-            
-            state[course] = 2  # Mark as visited
-            return False
-        
-        # Check all courses (graph may be disconnected)
-        for course in range(numCourses):
-            if has_cycle(course):
-                return False
-        
-        return True
+      0
+     / \
+    1   2
+     \ /
+      3
 ```
+Order: `0, 1, 2, 3` or `0, 2, 1, 3`. Both are valid!
 
-## 4. Approach 2: Kahn's Algorithm (BFS)
+### Example 3 (Cycle)
+`[1, 0], [0, 1]`
+Graph: `0 -> 1 -> 0`
+Order: Impossible.
+
+---
+
+## 3. The Algorithm: Kahn's Algorithm (BFS)
+
+There are two main ways to solve this: DFS and BFS (Kahn's Algorithm). Kahn's is often more intuitive for "ordering" problems.
+
+### 3.1 The Concept: In-Degrees
+The **In-Degree** of a node is the number of incoming edges (prerequisites).
+- If In-Degree is `0`: This course has **no prerequisites**. You can take it right now!
+
+### 3.2 The Steps
+
+1. **Calculate In-Degrees**: Count prerequisites for every course.
+2. **Find Starters**: Put all courses with `In-Degree == 0` into a Queue.
+3. **Process Queue**:
+   - Pop a course `curr` (Take the course).
+   - Add it to our `sorted_order` list.
+   - **"Remove" the course**: Go to all its neighbors (courses that required `curr`). Decrease their In-Degree by 1.
+   - **Check for new Starters**: If a neighbor's In-Degree becomes 0, add it to the Queue!
+4. **Conclusion**:
+   - If `len(sorted_order) == num_courses`, we succeeded!
+   - If `len(sorted_order) < num_courses`, there is a cycle (some courses never reached degree 0).
+
+---
+
+## 4. Visual Walkthrough
+
+Dependency: `[[1,0], [2,0], [3,1], [3,2]]` (Courses: 0, 1, 2, 3)
+
+**Step 1: Init**
+- In-Degrees: `{0: 0, 1: 1, 2: 1, 3: 2}`
+- Adjacency List: `{0: [1, 2], 1: [3], 2: [3], 3: []}`
+- Queue: `[0]` (Only 0 has in-degree 0)
+
+**Step 2: Processing**
+- **Pop 0**. Order: `[0]`.
+  - Neighbors of 0 are `1` and `2`.
+  - Decrement 1: In-Degree becomes `0`. **Add 1 to Queue**.
+  - Decrement 2: In-Degree becomes `0`. **Add 2 to Queue**.
+- Queue: `[1, 2]`
+
+- **Pop 1**. Order: `[0, 1]`.
+  - Neighbors of 1 is `3`.
+  - Decrement 3: In-Degree becomes `1`. (Not 0 yet!)
+- Queue: `[2]`
+
+- **Pop 2**. Order: `[0, 1, 2]`.
+  - Neighbor of 2 is `3`.
+  - Decrement 3: In-Degree becomes `0`. **Add 3 to Queue**.
+- Queue: `[3]`
+
+- **Pop 3**. Order: `[0, 1, 2, 3]`.
+  - No neighbors.
+- Queue: `[]`. Done.
+
+Count is 4. Total courses 4. **Success!**
+
+---
+
+## 5. Implementation (Python)
 
 ```python
 from collections import deque
 
 class Solution:
-    def canFinish_bfs(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
-        """
-        Kahn's algorithm: BFS-based topological sort.
+    def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
+        # 1. Build Graph and Indegree array
+        # graph[A] contains list of courses that depend on A
+        graph = {i: [] for i in range(numCourses)}
+        indegree = [0] * numCourses
         
-        1. Count in-degrees for each node
-        2. Start with nodes having in-degree 0
-        3. Process each node, reduce neighbors' in-degrees
-        4. If all nodes processed, no cycle
-        
-        Time: O(V + E)
-        Space: O(V + E)
-        """
-        # Build graph and in-degree count
-        graph = defaultdict(list)
-        in_degree = [0] * numCourses
-        
-        for course, prereq in prerequisites:
-            graph[prereq].append(course)
-            in_degree[course] += 1
-        
-        # Start with courses having no prerequisites
+        for dest, src in prerequisites:
+            graph[src].append(dest)
+            indegree[dest] += 1
+            
+        # 2. Init Queue with courses having no prereqs
         queue = deque()
-        for course in range(numCourses):
-            if in_degree[course] == 0:
-                queue.append(course)
+        for i in range(numCourses):
+            if indegree[i] == 0:
+                queue.append(i)
         
-        completed = 0
-        
+        # 3. Process BFS
+        taken_courses = 0
         while queue:
             course = queue.popleft()
-            completed += 1
+            taken_courses += 1
             
-            for next_course in graph[course]:
-                in_degree[next_course] -= 1
-                if in_degree[next_course] == 0:
-                    queue.append(next_course)
+            # "Complete" this course, notifying dependents
+            for neighbor in graph[course]:
+                indegree[neighbor] -= 1
+                # If all prereqs for neighbor are done, it's ready
+                if indegree[neighbor] == 0:
+                    queue.append(neighbor)
         
-        # If we completed all courses, no cycle
-        return completed == numCourses
+        # 4. Check results
+        return taken_courses == numCourses
 ```
-
-## 5. Course Schedule II (Full Topological Sort)
-
-```python
-def findOrder(numCourses: int, prerequisites: List[List[int]]) -> List[int]:
-    """
-    Return a valid course order, or [] if impossible.
-    """
-    graph = defaultdict(list)
-    in_degree = [0] * numCourses
-    
-    for course, prereq in prerequisites:
-        graph[prereq].append(course)
-        in_degree[course] += 1
-    
-    queue = deque([c for c in range(numCourses) if in_degree[c] == 0])
-    order = []
-    
-    while queue:
-        course = queue.popleft()
-        order.append(course)
-        
-        for next_course in graph[course]:
-            in_degree[next_course] -= 1
-            if in_degree[next_course] == 0:
-                queue.append(next_course)
-    
-    return order if len(order) == numCourses else []
-```
-
-## 6. Why Two Approaches?
-
-| Aspect | DFS | Kahn's (BFS) |
-|--------|-----|--------------|
-| Cycle detection | State coloring | Count mismatch |
-| Order output | Reverse post-order | Direct |
-| Stack usage | Recursion stack | Queue |
-| Implementation | Slightly complex | Simpler |
-
-Both are O(V + E), choose based on preference or constraints.
-
-## 7. Visualizing the DFS States
-
-```
-Course graph: 0 → 1 → 2
-                ↘ 3
-
-DFS from 0:
-- Visit 0: state[0] = 1 (visiting)
-  - Visit 1: state[1] = 1
-    - Visit 2: state[2] = 1
-    - No neighbors, state[2] = 2 (done)
-  - state[1] = 2
-  - Visit 3: state[3] = 1
-  - No neighbors, state[3] = 2
-- state[0] = 2
-
-All nodes visited, no back edges → No cycle!
-
-With cycle: 0 → 1 → 2 → 0
-DFS from 0:
-- Visit 0: state[0] = 1
-  - Visit 1: state[1] = 1
-    - Visit 2: state[2] = 1
-      - Visit 0: state[0] = 1 (already visiting!)
-      → Cycle detected!
-```
-
-## 8. Common Variations
-
-### 8.1 Parallel Course Completion
-
-```python
-def minimumSemesters(n: int, relations: List[List[int]]) -> int:
-    """
-    Minimum semesters to complete all courses.
-    (Take max parallel courses each semester)
-    """
-    graph = defaultdict(list)
-    in_degree = [0] * (n + 1)
-    
-    for prereq, course in relations:
-        graph[prereq].append(course)
-        in_degree[course] += 1
-    
-    queue = deque([c for c in range(1, n+1) if in_degree[c] == 0])
-    semesters = 0
-    completed = 0
-    
-    while queue:
-        semesters += 1
-        # Take all available courses this semester
-        for _ in range(len(queue)):
-            course = queue.popleft()
-            completed += 1
-            
-            for next_course in graph[course]:
-                in_degree[next_course] -= 1
-                if in_degree[next_course] == 0:
-                    queue.append(next_course)
-    
-    return semesters if completed == n else -1
-```
-
-### 8.2 All Topological Orders
-
-```python
-def allTopologicalOrders(n: int, edges: List[List[int]]) -> List[List[int]]:
-    """
-    Generate all valid topological orderings.
-    (Backtracking)
-    """
-    graph = defaultdict(list)
-    in_degree = [0] * n
-    
-    for u, v in edges:
-        graph[u].append(v)
-        in_degree[v] += 1
-    
-    result = []
-    current = []
-    visited = [False] * n
-    
-    def backtrack():
-        if len(current) == n:
-            result.append(current[:])
-            return
-        
-        for node in range(n):
-            if not visited[node] and in_degree[node] == 0:
-                # Choose
-                visited[node] = True
-                current.append(node)
-                for neighbor in graph[node]:
-                    in_degree[neighbor] -= 1
-                
-                backtrack()
-                
-                # Unchoose
-                visited[node] = False
-                current.pop()
-                for neighbor in graph[node]:
-                    in_degree[neighbor] += 1
-    
-    backtrack()
-    return result
-```
-
-## 9. Testing
-
-```python
-def test_course_schedule():
-    s = Solution()
-    
-    # Basic - can finish
-    assert s.canFinish(2, [[1, 0]]) == True
-    
-    # Cycle
-    assert s.canFinish(2, [[1, 0], [0, 1]]) == False
-    
-    # Longer chain
-    assert s.canFinish(4, [[1,0], [2,1], [3,2]]) == True
-    
-    # Disconnected - all independent  
-    assert s.canFinish(3, []) == True
-    
-    # Self-loop
-    assert s.canFinish(1, [[0, 0]]) == False
-    
-    print("All tests passed!")
-```
-
-## 10. Connection to DAG Pipeline Orchestration
-
-Course Schedule is the algorithmic core of **pipeline orchestration**:
-
-| Course Schedule | ML Pipeline |
-|----------------|-------------|
-| Course | Task/Step |
-| Prerequisite | Dependency |
-| Cycle = Impossible | Deadlock |
-| Topological order | Execution order |
-
-When you run an ML pipeline, the orchestrator performs exactly this algorithm to determine task execution order.
 
 ---
 
-**Originally published at:** [arunbaby.com/dsa/0049-course-schedule](https://www.arunbaby.com/dsa/0049-course-schedule/)
+## 6. Time & Space Complexity
+
+- **Time**: `O(V + E)`
+  - `V` (Vertices): Number of courses.
+  - `E` (Edges): Number of dependencies.
+  - We look at every node once and every dependency once.
+  
+- **Space**: `O(V + E)`
+  - We store the graph (Adjacency list) and the Indegree array.
+
+---
+
+## 7. Extensions: Topological Sort Applications
+
+Understanding this algorithm unlocks solutions to many other problems:
+
+1. **Build Systems**: Determining compilation order (Makefile targets).
+2. **Spreadsheet Evaluation**: Order of cell formula calculation.
+3. **Data Pipelines**: ETL jobs (Extract before Transform before Load).
+4. **React `useEffect`**: Determining the execution order of side effects.
+
+The concept is universal: **Dependencies define a Directed Acyclic Graph (DAG)**. If it's not acyclic (has a cycle), the system deadlocks. If it is acyclic, there is a valid linear ordering.
+
+---
+
+**Originally published at:** [arunbaby.com/dsa/0049-course-schedule](https://www.arunbaby.com/dsa/0049-course-schedule)
 
 *If you found this helpful, consider sharing it with others who might benefit.*

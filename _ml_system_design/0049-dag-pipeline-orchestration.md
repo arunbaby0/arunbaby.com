@@ -1,476 +1,153 @@
 ---
-title: "DAG-based Pipeline Orchestration"
+title: "DAG Pipeline Orchestration"
 day: 49
 collection: ml_system_design
 categories:
   - ml-system-design
 tags:
-  - dag
-  - pipeline-orchestration
-  - workflow
-  - airflow
   - mlops
-  - dependency-management
-difficulty: Hard
-subdomain: "MLOps"
-tech_stack: Python, Airflow, Prefect, Dagster
-scale: "1000s of tasks, complex dependencies"
-companies: Airbnb, Spotify, Uber, Netflix
+  - dag
+  - airflow
+  - kubeflow
+  - pipelines
+difficulty: Medium
+subdomain: "MLOps & Infrastructure"
+tech_stack: Apache Airflow, Kubeflow Pipelines, Argo
+scale: "Thousands of dependencies, distributed execution"
+companies: Airbnb, Netflix, Uber, Spotify
 related_dsa_day: 49
 related_speech_day: 49
 related_agents_day: 49
 ---
 
-**"Every ML pipeline is a DAG—order matters when data flows."**
+**"Cron jobs are fine for scripts. Pipelines need Orchestrators."**
 
-## 1. Problem Statement
+## 1. Introduction: The "Cron" Trap
 
-Design a **DAG-based pipeline orchestration system** that:
-1. Defines tasks with dependencies
-2. Executes tasks in correct order
-3. Handles failures and retries
-4. Supports parallel execution
-5. Provides monitoring and observability
+When a data scientist starts a project, they write a script: `train.py`.
+To run it daily, they add a cron job: `0 0 * * * python train.py`.
 
-## 2. Core Concepts
+This works for a week. Then things get complicated:
+1. "Wait, we need to run `clean_data.py` before `train.py`."
+2. "But `clean_data.py` needs the `warehouse_export` job to finish first."
+3. "And if `train.py` succeeds, we should trigger `deploy.py` only if accuracy > 90%."
+4. "Oh, and `warehouse_export` failed today. Can we retry just that part?"
 
-### Why DAG?
+Suddenly, your `crontab` is a mess of timing guesses ("Let's wait 30 mins between jobs and hope it finished"). This is fragile.
+You need an **Orchestrator**.
 
-```
-ML Pipeline:
-┌──────────┐    ┌──────────┐    ┌──────────┐
-│  Ingest  │───►│ Process  │───►│  Train   │
-└──────────┘    └──────────┘    └────┬─────┘
-                                     │
-                ┌──────────┐         │
-                │ Validate │◄────────┘
-                └────┬─────┘
-                     │
-                ┌────▼─────┐
-                │  Deploy  │
-                └──────────┘
+---
 
-DAG ensures:
-- No circular dependencies
-- Clear execution order
-- Parallel where possible
-```
+## 2. The DAG: Directed Acyclic Graph
 
-## 3. Task and DAG Definition
+In MLOps, we view the entire ML lifecycle as a **DAG**.
+- **Nodes**: Units of work (Operators).
+- **Edges**: Execution dependencies.
 
-```python
-from dataclasses import dataclass, field
-from typing import List, Dict, Callable, Any, Set
-from enum import Enum
-from datetime import datetime
-import asyncio
-
-class TaskStatus(Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    SUCCESS = "success"
-    FAILED = "failed"
-    SKIPPED = "skipped"
-
-
-@dataclass
-class Task:
-    """A single unit of work in the pipeline."""
-    name: str
-    func: Callable
-    dependencies: List[str] = field(default_factory=list)
-    retries: int = 3
-    retry_delay: int = 60
-    timeout: int = 3600
-    
-    # Runtime state
-    status: TaskStatus = TaskStatus.PENDING
-    result: Any = None
-    error: str = None
-    start_time: datetime = None
-    end_time: datetime = None
-    
-    def __hash__(self):
-        return hash(self.name)
-
-
-class DAG:
-    """Directed Acyclic Graph of tasks."""
-    
-    def __init__(self, name: str):
-        self.name = name
-        self.tasks: Dict[str, Task] = {}
-        self._validated = False
-    
-    def add_task(self, task: Task):
-        """Add a task to the DAG."""
-        self.tasks[task.name] = task
-        self._validated = False
-    
-    def task(self, dependencies: List[str] = None, **kwargs):
-        """Decorator to create tasks."""
-        def decorator(func):
-            task = Task(
-                name=func.__name__,
-                func=func,
-                dependencies=dependencies or [],
-                **kwargs
-            )
-            self.add_task(task)
-            return func
-        return decorator
-    
-    def validate(self) -> bool:
-        """
-        Validate DAG has no cycles.
-        
-        Uses DFS with coloring (exactly like Course Schedule!).
-        """
-        WHITE, GRAY, BLACK = 0, 1, 2
-        colors = {name: WHITE for name in self.tasks}
-        
-        def has_cycle(task_name):
-            if colors[task_name] == GRAY:
-                return True  # Cycle!
-            if colors[task_name] == BLACK:
-                return False
-            
-            colors[task_name] = GRAY
-            
-            for dep in self.tasks[task_name].dependencies:
-                if dep not in self.tasks:
-                    raise ValueError(f"Unknown dependency: {dep}")
-                if has_cycle(dep):
-                    return True
-            
-            colors[task_name] = BLACK
-            return False
-        
-        for task_name in self.tasks:
-            if has_cycle(task_name):
-                return False
-        
-        self._validated = True
-        return True
-    
-    def get_execution_order(self) -> List[str]:
-        """
-        Get topological order for execution.
-        
-        Uses Kahn's algorithm.
-        """
-        if not self._validated:
-            self.validate()
-        
-        # Calculate in-degrees
-        in_degree = {name: 0 for name in self.tasks}
-        for task in self.tasks.values():
-            for dep in task.dependencies:
-                # dep must complete before task
-                pass
-        
-        # Count how many tasks depend on each task
-        dependents = {name: [] for name in self.tasks}
-        for task in self.tasks.values():
-            for dep in task.dependencies:
-                dependents[dep].append(task.name)
-                in_degree[task.name] += 1
-        
-        # Start with tasks having no dependencies
-        queue = [name for name, deg in in_degree.items() if deg == 0]
-        order = []
-        
-        while queue:
-            current = queue.pop(0)
-            order.append(current)
-            
-            for dependent in dependents[current]:
-                in_degree[dependent] -= 1
-                if in_degree[dependent] == 0:
-                    queue.append(dependent)
-        
-        return order
-    
-    def get_ready_tasks(self, completed: Set[str]) -> List[str]:
-        """Get tasks ready to run (all deps completed)."""
-        ready = []
-        for name, task in self.tasks.items():
-            if task.status == TaskStatus.PENDING:
-                if all(dep in completed for dep in task.dependencies):
-                    ready.append(name)
-        return ready
+```mermaid
+graph LR
+    A[Data Ingestion] --> B[Data Validation]
+    B --> C[Feature Engineering]
+    C --> D[Model Training]
+    D --> E[Model Evaluation]
+    E -->|Pass| F[Deployment]
+    E -->|Fail| G[Alert]
 ```
 
-## 4. Executor
+Notice the similarity to **Course Schedule** (Day 49 DSA)?
+Just like you can't take Calculus II before Calculus I, you can't Train before you Ingest. The Orchestrator is the Registrar ensuring prerequisites are met.
 
-```python
-class DAGExecutor:
-    """Execute DAG with parallel task support."""
-    
-    def __init__(self, dag: DAG, max_parallel: int = 4):
-        self.dag = dag
-        self.max_parallel = max_parallel
-        self.completed: Set[str] = set()
-        self.failed: Set[str] = set()
-    
-    async def run(self) -> bool:
-        """
-        Execute the DAG.
-        
-        Returns True if all tasks succeeded.
-        """
-        if not self.dag.validate():
-            raise ValueError("DAG has cycles!")
-        
-        while True:
-            # Get tasks ready to run
-            ready = self.dag.get_ready_tasks(self.completed)
-            
-            if not ready:
-                # Check if we're done or stuck
-                if len(self.completed) + len(self.failed) == len(self.dag.tasks):
-                    break
-                if self.failed:
-                    # Some tasks failed, can't proceed
-                    break
-            
-            # Run ready tasks in parallel (up to limit)
-            batch = ready[:self.max_parallel]
-            results = await asyncio.gather(
-                *[self._run_task(name) for name in batch],
-                return_exceptions=True
-            )
-            
-            for name, result in zip(batch, results):
-                if isinstance(result, Exception):
-                    self.failed.add(name)
-                else:
-                    self.completed.add(name)
-        
-        return len(self.failed) == 0
-    
-    async def _run_task(self, name: str):
-        """Run a single task with retries."""
-        task = self.dag.tasks[name]
-        task.status = TaskStatus.RUNNING
-        task.start_time = datetime.now()
-        
-        for attempt in range(task.retries):
-            try:
-                # Get inputs from dependencies
-                inputs = {
-                    dep: self.dag.tasks[dep].result
-                    for dep in task.dependencies
-                }
-                
-                # Run with timeout
-                task.result = await asyncio.wait_for(
-                    self._execute(task, inputs),
-                    timeout=task.timeout
-                )
-                
-                task.status = TaskStatus.SUCCESS
-                task.end_time = datetime.now()
-                return task.result
-                
-            except Exception as e:
-                task.error = str(e)
-                if attempt < task.retries - 1:
-                    await asyncio.sleep(task.retry_delay)
-        
-        task.status = TaskStatus.FAILED
-        task.end_time = datetime.now()
-        raise Exception(f"Task {name} failed after {task.retries} attempts")
-    
-    async def _execute(self, task: Task, inputs: Dict):
-        """Execute task function."""
-        if asyncio.iscoroutinefunction(task.func):
-            return await task.func(**inputs)
-        else:
-            return task.func(**inputs)
-```
+---
 
-## 5. ML Pipeline Example
+## 3. Why Not Just a Script?
 
-```python
-# Define ML training pipeline
-pipeline = DAG("ml_training")
+Why do we need complex tools like Airflow or Kubeflow? Why not one big `main.py` that calls functions in order?
 
-@pipeline.task()
-def load_data():
-    """Load raw data from storage."""
-    return {"data": "raw_data", "rows": 10000}
+### 3.1 Resilience & Retries
+If the "Training" step fails after running for 10 hours, a script crashes. Rerunning `main.py` starts from zero (Data Ingestion).
+An Orchestrator knows "Ingestion" passed. It restarts *only* the "Training" node, potentially on a different machine.
 
-@pipeline.task(dependencies=["load_data"])
-def preprocess(load_data):
-    """Clean and transform data."""
-    return {"data": "processed", "rows": load_data["rows"]}
+### 3.2 Parallelism
+If you are training 5 models for 5 different regions (US, EU, ASIA...), a script runs them sequentially.
+A DAG defines them as independent branches. The Orchestrator spins up 5 workers to run them in parallel.
 
-@pipeline.task(dependencies=["preprocess"])
-def split_data(preprocess):
-    """Split into train/val/test."""
-    return {
-        "train": "train_data",
-        "val": "val_data",
-        "test": "test_data"
-    }
+### 3.3 Heterogeneous Compute
+- **Ingestion**: Needs High I/O (RAM).
+- **Training**: Needs GPUs.
+- **Evaluation**: Needs simple CPU.
+An Orchestrator like Kubeflow can execute Step 1 on a CPU Pod and Step 2 on a GPU Pod, optimizing cloud costs.
 
-@pipeline.task(dependencies=["split_data"])
-def train_model(split_data):
-    """Train the model."""
-    return {"model": "trained_model", "metrics": {"accuracy": 0.95}}
+---
 
-@pipeline.task(dependencies=["train_model", "split_data"])
-def evaluate(train_model, split_data):
-    """Evaluate on test set."""
-    return {"test_accuracy": 0.93}
+## 4. Key Orchestration Tools
 
-@pipeline.task(dependencies=["evaluate"])
-def deploy(evaluate):
-    """Deploy if metrics pass threshold."""
-    if evaluate["test_accuracy"] > 0.9:
-        return {"status": "deployed"}
-    return {"status": "rejected"}
+### 4.1 Apache Airflow
+The industry standard. Born at Airbnb.
+- **Definition**: Python code (`dag.py`).
+- **Strengths**: Huge community, rich integrations (S3, Postgres, Slack).
+- **Weakness**: Originally designed for Data Engineering (ETL), not specifically ML (passing large tensors between tasks is hard).
 
+### 4.2 Kubeflow Pipelines (KFP)
+Native to Kubernetes. Born at Google.
+- **Definition**: Python DSL compiles to YAML.
+- **Strengths**: Each step is a Docker container. Perfect for ML reproducibility.
+- **Weakness**: Heavy infrastructure (requires K8s).
 
-# Run pipeline
-async def main():
-    executor = DAGExecutor(pipeline, max_parallel=2)
-    success = await executor.run()
-    
-    for name, task in pipeline.tasks.items():
-        print(f"{name}: {task.status.value}")
-        if task.result:
-            print(f"  Result: {task.result}")
+### 4.3 Prefect / Dagster
+Modern challengers focusing on developer experience and "data awareness".
 
-asyncio.run(main())
-```
+---
 
-## 6. Scheduling and Triggers
+## 5. Designing a Robust ML Pipeline
 
-```python
-from datetime import timedelta
+When designing your DAG, follow these principles:
 
-class ScheduledDAG(DAG):
-    """DAG with scheduling support."""
-    
-    def __init__(
-        self,
-        name: str,
-        schedule: str = None,  # Cron expression
-        start_date: datetime = None,
-        catchup: bool = False
-    ):
-        super().__init__(name)
-        self.schedule = schedule
-        self.start_date = start_date
-        self.catchup = catchup
-    
-    def should_run(self, execution_date: datetime) -> bool:
-        """Check if DAG should run for given date."""
-        # Parse cron and check
-        pass
+### 5.1 Idempotency
+**Rule**: Running a task twice should have the same effect as running it once.
+- **Bad**: `INSERT INTO table ...` (Running twice duplicates data).
+- **Good**: `DELETE WHERE date=today; INSERT ...` (Safe to retry).
 
+### 5.2 Atomic Tasks
+Break huge steps into smaller ones.
+- **Bad**: `do_everything()` function.
+- **Good**: `download`, `validate`, `preprocess`, `train`.
+If `preprocess` fails, you don't need to re-download.
 
-class Scheduler:
-    """Schedule and trigger DAG runs."""
-    
-    def __init__(self):
-        self.dags: Dict[str, ScheduledDAG] = {}
-        self.running: Dict[str, DAGExecutor] = {}
-    
-    def register(self, dag: ScheduledDAG):
-        self.dags[dag.name] = dag
-    
-    async def tick(self):
-        """Check for DAGs to run."""
-        now = datetime.now()
-        
-        for name, dag in self.dags.items():
-            if name not in self.running:
-                if dag.should_run(now):
-                    executor = DAGExecutor(dag)
-                    self.running[name] = executor
-                    asyncio.create_task(self._run_dag(name, executor))
-    
-    async def _run_dag(self, name: str, executor: DAGExecutor):
-        try:
-            await executor.run()
-        finally:
-            del self.running[name]
-```
+### 5.3 Data Validation (The "Circuit Breaker")
+Always insert a "Validation" node between Ingestion and Training.
+If today's data is empty or corrupted, **fail fast**. Don't waste $500 of GPU time training on garbage.
+- Tools: Great Expectations, Pandera.
 
-## 7. Monitoring and Observability
+---
 
-```python
-from dataclasses import asdict
-import json
+## 6. Architecture: The Control Plane
 
-class DAGMonitor:
-    """Monitor DAG execution."""
-    
-    def __init__(self, dag: DAG):
-        self.dag = dag
-        self.events = []
-    
-    def log_event(self, event_type: str, task_name: str, data: dict):
-        self.events.append({
-            "timestamp": datetime.now().isoformat(),
-            "type": event_type,
-            "task": task_name,
-            "data": data
-        })
-    
-    def get_status(self) -> dict:
-        """Get current DAG status."""
-        return {
-            "dag_name": self.dag.name,
-            "tasks": {
-                name: {
-                    "status": task.status.value,
-                    "start_time": task.start_time.isoformat() if task.start_time else None,
-                    "end_time": task.end_time.isoformat() if task.end_time else None,
-                    "error": task.error
-                }
-                for name, task in self.dag.tasks.items()
-            },
-            "progress": f"{len([t for t in self.dag.tasks.values() if t.status == TaskStatus.SUCCESS])}/{len(self.dag.tasks)}"
-        }
-    
-    def get_gantt_data(self) -> list:
-        """Get data for Gantt chart visualization."""
-        return [
-            {
-                "task": name,
-                "start": task.start_time.timestamp() if task.start_time else 0,
-                "end": task.end_time.timestamp() if task.end_time else 0,
-                "status": task.status.value
-            }
-            for name, task in self.dag.tasks.items()
-        ]
-```
+How does the Orchestrator actually work?
 
-## 8. Connection to Course Schedule
+1. **Scheduler**: The heartbeat. It checks the DAGs and the clock. "Is it time to run DAG X? Are dependencies for Task Y met?"
+2. **Metadata DB**: State storage. "Task A status: SUCCESS. Task B status: RUNNING."
+3. **Executor**: The worker manager. Kubernetes Executor, Celery Executor, Local Executor.
+4. **Web UI**: For humans to debug. "Why is my graph red?"
 
-DAG orchestration is Course Schedule in production:
+---
 
-| Course Schedule | Pipeline Orchestration |
-|----------------|----------------------|
-| Course | Task |
-| Prerequisite | Dependency |
-| Can finish? | Is DAG valid? |
-| Topological order | Execution order |
-| Cycle detection | Deadlock prevention |
+## 7. Connection to DSA
 
-The algorithms are identical—same problem, different domain.
+The Scheduler uses **Topological Sort** (Kahn's Algorithm) every tick!
+1. It looks at all tasks in the DAG.
+2. It filters for tasks where `Status != COMPLETED`.
+3. It checks In-Degrees (Are upstream parents COMPLETED?).
+4. If In-Degree is effectively 0 (all prerequisites met), it adds the task to the Execution Queue.
 
-## 9. Key Takeaways
+Without the topological sort algorithm, MLOps capability would not exist.
 
-1. **DAG = No cycles** = deterministic execution order
-2. **Topological sort** determines task order
-3. **Parallel execution** for independent tasks
-4. **Retry logic** handles transient failures
-5. **Monitoring** essential for debugging pipelines
+---
+
+## 8. Summary
+
+As systems mature, **Orchestration** becomes more important than the Model itself. A mediocre model that updates reliably every day is better than a state-of-the-art model that is manually retrained on a laptop once a month.
+
+Use DAGs to turn your ML experiments into ML products.
 
 ---
 

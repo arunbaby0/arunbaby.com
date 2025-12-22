@@ -1,376 +1,177 @@
 ---
-title: "Trie-based Search Systems"
+title: "Trie-Based Search Systems (Typeahead)"
 day: 48
 collection: ml_system_design
 categories:
   - ml-system-design
 tags:
   - trie
-  - prefix-search
+  - search
   - autocomplete
-  - search-systems
-  - data-structures
+  - system-design
+  - ranking
 difficulty: Hard
-subdomain: "Search Systems"
-tech_stack: Python, Redis, Elasticsearch
-scale: "Millions of entries, sub-10ms latency"
-companies: Google, Microsoft, Amazon, LinkedIn
+subdomain: "Search & Retrieval"
+tech_stack: Redis, Apache Solr, Elasticsearch, Custom C++
+scale: "Billions of daily queries, <20ms latency"
+companies: Google, Amazon, Algolia, Facebook
 related_dsa_day: 48
 related_speech_day: 48
 related_agents_day: 48
 ---
 
-**"Every keystroke triggers a prefix lookup—Tries make it instant."**
+**"The best interfaces read your mind. Or at least, they complete your sentences."**
 
-## 1. Problem Statement
+## 1. Introduction: The Magic of "Type..."
 
-Design a **trie-based search system** for autocomplete, spell-check, and prefix matching at scale. Support millions of entries with sub-10ms response times.
+When you type "bey" into Google, it suggests "Beyoncé" instantly. When you type "sys" into your IDE, it suggests `System.out.println`. This is **Typeahead** (or Autocomplete).
 
-### Requirements
+It feels simple—just looking up strings—but implementing it at scale is one of the classic "hard" system design problems. Why?
 
-- **Prefix search**: Find all entries matching a prefix
-- **Ranked results**: Return top-K by relevance/popularity
-- **Real-time updates**: Add/remove entries dynamically
-- **Fuzzy matching**: Handle typos and variations
+1. **Velocity**: It happens on *every keystroke*. The query volume is 5-10x higher than regular search.
+2. **Latency**: The suggestions must appear instantly (< 50ms) effectively "beating" the user's typing speed.
+3. **Data Volume**: Google sees billions of unique queries. You can't just store a discrete list.
+4. **Ranking**: "Java" could mean the island, the coffee, or the language. The system must pick the most relevant one based on popularity or context.
 
-## 2. Core Trie Implementation
+Today, we'll design a robust Typeahead system using the data structure we mastered in DSA: the **Trie**.
 
-```python
-from typing import List, Dict, Optional
-from dataclasses import dataclass
-from heapq import nlargest
+---
 
-@dataclass
-class TrieNode:
-    children: Dict[str, 'TrieNode'] = None
-    is_end: bool = False
-    value: str = ""
-    weight: float = 0.0  # For ranking
-    count: int = 0  # Frequency
-    
-    def __post_init__(self):
-        if self.children is None:
-            self.children = {}
+## 2. The Core Data Structure: The Weighted Trie
 
+### 2.1 Why a Trie?
 
-class Trie:
-    """Production-ready Trie with ranking support."""
-    
-    def __init__(self):
-        self.root = TrieNode()
-        self.size = 0
-    
-    def insert(self, word: str, weight: float = 1.0):
-        """Insert word with weight for ranking."""
-        node = self.root
-        for char in word.lower():
-            if char not in node.children:
-                node.children[char] = TrieNode()
-            node = node.children[char]
-        
-        if not node.is_end:
-            self.size += 1
-        
-        node.is_end = True
-        node.value = word
-        node.weight = max(node.weight, weight)
-        node.count += 1
-    
-    def search_prefix(self, prefix: str, limit: int = 10) -> List[tuple]:
-        """
-        Find top-K matches for prefix.
-        
-        Returns: [(word, weight), ...]
-        """
-        node = self._find_node(prefix)
-        if not node:
-            return []
-        
-        # Collect all words under this prefix
-        candidates = []
-        self._collect_words(node, candidates)
-        
-        # Return top K by weight
-        return nlargest(limit, candidates, key=lambda x: x[1])
-    
-    def _find_node(self, prefix: str) -> Optional[TrieNode]:
-        """Navigate to node for prefix."""
-        node = self.root
-        for char in prefix.lower():
-            if char not in node.children:
-                return None
-            node = node.children[char]
-        return node
-    
-    def _collect_words(self, node: TrieNode, results: List):
-        """DFS to collect all words under node."""
-        if node.is_end:
-            results.append((node.value, node.weight))
-        
-        for child in node.children.values():
-            self._collect_words(child, results)
-    
-    def delete(self, word: str) -> bool:
-        """Remove word from Trie."""
-        def _delete(node, word, depth):
-            if depth == len(word):
-                if not node.is_end:
-                    return False
-                node.is_end = False
-                self.size -= 1
-                return len(node.children) == 0
-            
-            char = word[depth]
-            if char not in node.children:
-                return False
-            
-            should_delete = _delete(node.children[char], word, depth + 1)
-            
-            if should_delete:
-                del node.children[char]
-                return len(node.children) == 0 and not node.is_end
-            
-            return False
-        
-        return _delete(self.root, word.lower(), 0)
+If you just stored all possible queries in a database table:
+`SELECT * FROM queries WHERE text LIKE 'sys%' ORDER BY popularity DESC LIMIT 5`
+This is an `O(N)` scan (or `O(log N)` with loops) that is painfully slow for millions of rows.
+
+A **Trie** is perfect because:
+1. **Prefix-based lookup**: Finding all words starting with "sys" requires traversing just 3 nodes (`s` -> `y` -> `s`).
+2. **Compactness**: The prefixes "sys", "system", "systolic" share the same initial path, saving memory.
+
+### 2.2 Adding "Weights" for Ranking
+
+We don't just want valid completions; we want the *best* ones. We augment our Trie nodes to store **Top K** popular completions.
+
+**Standard Trie Node:**
+```
+Node 'a':
+  - children: {'b': Node, 'c': Node}
 ```
 
-## 3. Autocomplete System
-
-```python
-from collections import OrderedDict
-import time
-
-class AutocompleteSystem:
-    """Production autocomplete with caching and ranking."""
-    
-    def __init__(self, initial_data: List[tuple] = None):
-        self.trie = Trie()
-        self.cache = LRUCache(1000)
-        
-        if initial_data:
-            for word, weight in initial_data:
-                self.trie.insert(word, weight)
-    
-    def suggest(self, prefix: str, limit: int = 10) -> List[str]:
-        """Get autocomplete suggestions."""
-        prefix = prefix.lower().strip()
-        
-        if not prefix:
-            return []
-        
-        # Check cache
-        cache_key = f"{prefix}:{limit}"
-        if cache_key in self.cache:
-            return self.cache[cache_key]
-        
-        # Query Trie
-        results = self.trie.search_prefix(prefix, limit)
-        suggestions = [word for word, _ in results]
-        
-        # Cache result
-        self.cache[cache_key] = suggestions
-        
-        return suggestions
-    
-    def record_selection(self, query: str, selected: str):
-        """Boost weight when user selects a suggestion."""
-        # Increase weight for learning
-        node = self.trie._find_node(selected.lower())
-        if node and node.is_end:
-            node.weight *= 1.1
-            node.count += 1
-        
-        # Invalidate cache
-        self.cache.invalidate_prefix(query)
-
-
-class LRUCache:
-    """LRU cache for autocomplete results."""
-    
-    def __init__(self, capacity: int):
-        self.capacity = capacity
-        self.cache = OrderedDict()
-    
-    def __contains__(self, key):
-        return key in self.cache
-    
-    def __getitem__(self, key):
-        self.cache.move_to_end(key)
-        return self.cache[key]
-    
-    def __setitem__(self, key, value):
-        if key in self.cache:
-            self.cache.move_to_end(key)
-        self.cache[key] = value
-        if len(self.cache) > self.capacity:
-            self.cache.popitem(last=False)
-    
-    def invalidate_prefix(self, prefix: str):
-        """Remove all cached entries starting with prefix."""
-        to_remove = [k for k in self.cache if k.startswith(prefix)]
-        for k in to_remove:
-            del self.cache[k]
+**Typeahead Trie Node:**
+```
+Node 'a':
+  - children: {'b': Node, 'c': Node}
+  - top_completions: [("amazon", 99), ("amazing", 50), ("apple", 45)]
 ```
 
-## 4. Fuzzy Matching with Edit Distance
+By pre-calculating the top K results at *every* node, the runtime logic becomes trivial: "Go to node for the prefix 'a', and return the cached `top_completions` list." O(1) lookup time!
 
-```python
-class FuzzyTrie(Trie):
-    """Trie with fuzzy matching support."""
-    
-    def fuzzy_search(
-        self, 
-        query: str, 
-        max_distance: int = 2,
-        limit: int = 10
-    ) -> List[tuple]:
-        """
-        Find words within edit distance of query.
-        
-        Uses bounded DFS with pruning.
-        """
-        query = query.lower()
-        results = []
-        
-        def dfs(node, remaining, distance, path):
-            # Pruning: exceeded distance budget
-            if distance > max_distance:
-                return
-            
-            if node.is_end:
-                # Extra chars in word cost deletions
-                total_distance = distance + len(remaining)
-                if total_distance <= max_distance:
-                    results.append((node.value, node.weight, total_distance))
-            
-            if not remaining:
-                # Just deletions from now
-                for char, child in node.children.items():
-                    dfs(child, "", distance + 1, path + char)
-                return
-            
-            current = remaining[0]
-            rest = remaining[1:]
-            
-            for char, child in node.children.items():
-                if char == current:
-                    # Match - no cost
-                    dfs(child, rest, distance, path + char)
-                else:
-                    # Substitution
-                    dfs(child, rest, distance + 1, path + char)
-                    # Insertion (skip this char in word)
-                    dfs(child, remaining, distance + 1, path + char)
-            
-            # Deletion (skip this char in query)
-            dfs(node, rest, distance + 1, path)
-        
-        dfs(self.root, query, 0, "")
-        
-        # Sort by distance, then weight
-        results.sort(key=lambda x: (x[2], -x[1]))
-        return [(word, weight) for word, weight, _ in results[:limit]]
+---
+
+## 3. Optimizing for Scale
+
+### 3.1 The Data Size Problem
+
+A complete Trie of all Google searches would not fit in the RAM of a single machine.
+- English words: ~200k.
+- Proper nouns, locations, rare queries: ~Billions.
+
+**Solution: Sharding**
+We need to split the Trie across multiple servers.
+
+1. **Range Sharding**:
+   - Server A: Words starting with 'a' - 'c'
+   - Server B: Words starting with 'd' - 'f'
+   - *Problem*: 's' (system, school, star wars) is way more popular than 'x' (xylophone). Server 's' melts down.
+
+2. **Hash Sharding (Better)**:
+   - `Shard_ID = Hash(prefix) % Num_Servers`
+   - *However*, we can only hash the *fixed-size prefix* (e.g., first 2 letters). `Hash("ap")` goes to Server 3.
+   - All queries `ap...` ("apple", "application") are stored on Server 3.
+
+### 3.2 Offline vs. Online Updates
+
+**Offline Building (The MapReduce Approach):**
+Most search terms don't change popularity instantly. "Facebook" is popular every day.
+1. Aggregate logs weekly.
+2. Build the entire specific Trie shards efficiently.
+3. Push the new Trie files to the fleet.
+
+**Online Updates (The Trending Problem):**
+What about breaking news? "Earthquake in Japan" happens now.
+We need a **Hybrid System**:
+- **Static Trie**: Built weekly, immutable, highly optimized for read speed.
+- **Dynamic Trie**: Small, in-memory Trie that updates in real-time (via Kafka stream of searches).
+- **Result**: Merge results from Static + Dynamic at query time.
+
+---
+
+## 4. Sampling & Probabilistic Data Structures
+
+Storing every single query ever typed is wasteful. "fawekjlfw" was typed once by a cat walking on a keyboard. We don't want to suggest that.
+
+**Sampling**: Only index queries that have appeared > `N` times.
+Using a **Count-Min Sketch** (a probabilistic counter) allows us to count frequency of billions of strings with very little memory. If the count exceeds a threshold, *then* we add it to our main Trie.
+
+---
+
+## 5. Client-Side Optimization
+
+The fastest query is the one you strictly don't make.
+
+1. **Debouncing**: Don't send a request for 'h', then 'he', then 'hel', then 'hell', then 'hello' in 100ms. Wait for a 50ms pause in typing before sending.
+2. **Caching**:
+   - Usage: User types "star", response is ["star wars", "star trek", "starbucks"].
+   - User types "star w": The browser already knows "star wars" was a candidate. It can filter the *cached* list locally while waiting for the server.
+
+---
+
+## 6. Architecture Diagram
+
+```
+[User Browser]
+      |
+      | (GET /suggest?q=sys)
+      v
+[Load Balancer]
+      |
+      v
+[Typeahead Service] <--- (Reads/Writes) ---> [Redis / Memcached (Hot Queries)]
+      |
+      | (Cache Miss)
+      v
+[Trie Service (Read-Only Replicas)]
+      |
+      | (Loads Trie Data)
+      v
+[S3 / Blob Storage] <--- (Writes Trie Files) --- [Offline Worker (Spark/MapReduce)]
+                                                      ^
+                                                      |
+                                                 [Search Logs]
 ```
 
-## 5. Distributed Trie
+---
 
-```python
-import hashlib
+## 7. Comparison: Database vs. Trie
 
-class DistributedTrie:
-    """Shard Trie across multiple nodes."""
-    
-    def __init__(self, num_shards: int = 16):
-        self.num_shards = num_shards
-        self.shards = [Trie() for _ in range(num_shards)]
-    
-    def _get_shard(self, word: str) -> int:
-        """Determine shard by first character hash."""
-        first_char = word[0].lower() if word else 'a'
-        return ord(first_char) % self.num_shards
-    
-    def insert(self, word: str, weight: float = 1.0):
-        shard_id = self._get_shard(word)
-        self.shards[shard_id].insert(word, weight)
-    
-    def search_prefix(self, prefix: str, limit: int = 10):
-        """Search relevant shards."""
-        if prefix:
-            # Single shard for specific prefix
-            shard_id = self._get_shard(prefix)
-            return self.shards[shard_id].search_prefix(prefix, limit)
-        else:
-            # Search all shards for empty prefix
-            results = []
-            for shard in self.shards:
-                results.extend(shard.search_prefix(prefix, limit))
-            return nlargest(limit, results, key=lambda x: x[1])
-```
+| Feature | SQL Database (`LIKE 'pre%'`) | Trie-Based System |
+|---------|------------------------------|-------------------|
+| **Latency** | High (Index scan) | Low (Pointer traversal) |
+| **Prefix Matching** | Good with index | Native / Excellent |
+| **Ranking** | Expensive sort at runtime | Pre-computed |
+| **Updates** | Easy (INSERT) | Hard (Rebuilds needed) |
+| **Memory** | High overhead | Compact (Shared prefixes) |
 
-## 6. Integration with ML Ranking
+---
 
-```python
-class MLRankedAutocomplete:
-    """Combine Trie retrieval with ML ranking."""
-    
-    def __init__(self, trie: Trie, ranker):
-        self.trie = trie
-        self.ranker = ranker  # ML model
-    
-    def suggest(self, prefix: str, context: Dict, limit: int = 10):
-        """
-        1. Retrieve candidates from Trie
-        2. Rank with ML model
-        """
-        # Get more candidates than needed
-        candidates = self.trie.search_prefix(prefix, limit * 5)
-        
-        if not candidates:
-            return []
-        
-        # Extract features
-        features = self._extract_features(candidates, context)
-        
-        # Score with ML model
-        scores = self.ranker.predict(features)
-        
-        # Combine Trie weight with ML score
-        ranked = [
-            (word, 0.3 * trie_weight + 0.7 * ml_score)
-            for (word, trie_weight), ml_score in zip(candidates, scores)
-        ]
-        
-        ranked.sort(key=lambda x: x[1], reverse=True)
-        return [word for word, _ in ranked[:limit]]
-    
-    def _extract_features(self, candidates, context):
-        """Extract features for ML ranking."""
-        features = []
-        for word, trie_weight in candidates:
-            features.append({
-                'trie_weight': trie_weight,
-                'word_length': len(word),
-                'context_match': self._context_similarity(word, context),
-                'recency': context.get('recency_scores', {}).get(word, 0)
-            })
-        return features
-```
+## 8. Summary & Takeaways
 
-## 7. Connection to Word Search II
-
-Both Word Search II and production Trie systems use the same core insight:
-- **Prefix structure enables pruning**
-- **Build once, query many times**
-- **Early termination when prefix doesn't match**
-
-## 8. Key Takeaways
-
-1. **Trie = O(L) prefix lookup** regardless of dictionary size
-2. **Weight/ranking transform** retrieval into recommendation
-3. **Fuzzy matching** handles real-world typos
-4. **Sharding** scales to billions of entries
-5. **ML ranking** combines structure with learned relevance
+1. **Data Structures Matter**: The Trie isn't just a LeetCode problem; it's the industry standard for prefix search.
+2. **Pre-computation is King**: Don't rank results while the user is waiting. Rank them offline and store the top 5 at the node.
+3. **Shard Carefully**: Distributing data alphabeticallly creates "hot spots". Hashing is usually safer.
+4. **Latency Budget**: With <50ms budgets, every millisecond counts. In-memory structures (Tries) generally beat disk-based databases here.
 
 ---
 

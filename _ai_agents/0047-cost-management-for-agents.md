@@ -7,486 +7,472 @@ categories:
 tags:
   - cost-management
   - llm-costs
+  - monitoring
+  - budgeting
   - optimization
-  - token-budgeting
-  - agent-economics
-  - production-agents
 difficulty: Hard
 subdomain: "Agent Operations"
-tech_stack: Python, OpenAI API, Anthropic API
-scale: "Millions of requests, $10K-$1M monthly budgets"
-companies: OpenAI, Anthropic, Google, Microsoft, Stripe
+tech_stack: Python, OpenAI, Anthropic
+scale: "Enterprise-level cost control"
+companies: Scale AI, Anthropic, OpenAI, enterprises
 related_dsa_day: 47
 related_ml_day: 47
 related_speech_day: 47
 ---
 
-**"An agent that's too expensive to run is an agent that won't run."**
+**"If you can't measure it, you can't manage it—and LLM costs can spiral fast."**
 
-## 1. Introduction
+## 1. Introduction: The Cost Reality of AI Agents
 
-AI agents can be expensive—a poorly optimized agent processing 1M requests/day can cost $100K+/month. Cost management transforms agents from demos to sustainable production systems.
+AI agents are powerful. They can reason, use tools, handle complex workflows, and automate tasks that previously required human intervention. But this power comes at a cost—literally.
 
-### The Cost Challenge
+Unlike traditional software where compute costs are relatively fixed, LLM-based agents have costs that scale with:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Agent Cost Breakdown                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  LLM API Costs (60-80%)                                         │
-│  ├── Input tokens: $0.01-0.06 per 1K                           │
-│  ├── Output tokens: $0.03-0.12 per 1K                          │
-│  └── Reasoning models: $0.06-0.60 per 1K                       │
-│                                                                 │
-│  Tool Execution (10-20%)                                        │
-│  ├── API calls to external services                            │
-│  ├── Database queries                                          │
-│  └── Compute for code execution                                │
-│                                                                 │
-│  Infrastructure (10-20%)                                        │
-│  ├── Hosting, storage, networking                              │
-│  └── Monitoring and logging                                    │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
+- **Usage volume**: More requests = more cost (linear or worse)
+- **Request complexity**: Longer conversations cost more
+- **Model choice**: GPT-4 costs 10-60x more than GPT-3.5
+- **Failed attempts**: Retries and errors still cost money
 
-## 2. Cost Tracking System
+A company that pilots an agent with 100 queries/day might find costs manageable. When that pilot scales to 100,000 queries/day, the same architecture could cost $50,000-$500,000 per month. This is where many organizations get surprised.
 
-```python
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Dict, List, Optional
-import json
+Cost management isn't just a finance problem—it's an engineering problem. The decisions you make about architecture, prompts, model selection, and error handling directly impact the bottom line.
 
-@dataclass
-class CostEvent:
-    """Record a cost-incurring event."""
-    timestamp: datetime
-    event_type: str  # 'llm_call', 'tool_call', 'embedding'
-    model: str
-    input_tokens: int = 0
-    output_tokens: int = 0
-    cost_usd: float = 0.0
-    request_id: str = ""
-    metadata: Dict = field(default_factory=dict)
+---
 
+## 2. Understanding LLM Cost Structure
 
-class CostTracker:
-    """Track and analyze agent costs."""
-    
-    # Pricing per 1K tokens (as of 2024)
-    PRICING = {
-        'gpt-4': {'input': 0.03, 'output': 0.06},
-        'gpt-4-turbo': {'input': 0.01, 'output': 0.03},
-        'gpt-3.5-turbo': {'input': 0.0005, 'output': 0.0015},
-        'claude-3-opus': {'input': 0.015, 'output': 0.075},
-        'claude-3-sonnet': {'input': 0.003, 'output': 0.015},
-        'claude-3-haiku': {'input': 0.00025, 'output': 0.00125},
-    }
-    
-    def __init__(self):
-        self.events: List[CostEvent] = []
-        self.budgets: Dict[str, float] = {}
-    
-    def record_llm_call(
-        self,
-        model: str,
-        input_tokens: int,
-        output_tokens: int,
-        request_id: str = ""
-    ) -> CostEvent:
-        """Record an LLM API call."""
-        pricing = self.PRICING.get(model, {'input': 0.01, 'output': 0.03})
-        
-        cost = (
-            (input_tokens / 1000) * pricing['input'] +
-            (output_tokens / 1000) * pricing['output']
-        )
-        
-        event = CostEvent(
-            timestamp=datetime.now(),
-            event_type='llm_call',
-            model=model,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
-            cost_usd=cost,
-            request_id=request_id
-        )
-        
-        self.events.append(event)
-        self._check_budget(cost)
-        
-        return event
-    
-    def set_budget(self, period: str, amount: float):
-        """Set budget limit."""
-        self.budgets[period] = amount
-    
-    def get_usage(self, hours: int = 24) -> Dict:
-        """Get usage statistics."""
-        cutoff = datetime.now().timestamp() - hours * 3600
-        recent = [e for e in self.events if e.timestamp.timestamp() > cutoff]
-        
-        return {
-            'total_cost': sum(e.cost_usd for e in recent),
-            'total_input_tokens': sum(e.input_tokens for e in recent),
-            'total_output_tokens': sum(e.output_tokens for e in recent),
-            'request_count': len(recent),
-            'by_model': self._group_by_model(recent)
-        }
-    
-    def _group_by_model(self, events):
-        result = {}
-        for e in events:
-            if e.model not in result:
-                result[e.model] = {'cost': 0, 'calls': 0}
-            result[e.model]['cost'] += e.cost_usd
-            result[e.model]['calls'] += 1
-        return result
-    
-    def _check_budget(self, cost):
-        usage = self.get_usage(24)
-        if 'daily' in self.budgets:
-            if usage['total_cost'] > self.budgets['daily']:
-                raise BudgetExceededError(
-                    f"Daily budget exceeded: ${usage['total_cost']:.2f} > ${self.budgets['daily']:.2f}"
-                )
+### 2.1 The Token Economy
 
+LLMs charge by the token. Understanding tokens is foundational:
 
-class BudgetExceededError(Exception):
-    pass
-```
+**What is a token?**
+- Roughly 4 characters in English text
+- "Hello world" ≈ 2 tokens
+- 1,000 tokens ≈ 750 words
 
-## 3. Cost Optimization Strategies
+**Pricing example (as of 2024):**
 
-### 3.1 Model Selection
+| Model | Input (per 1M tokens) | Output (per 1M tokens) |
+|-------|----------------------|----------------------|
+| GPT-4 Turbo | $10 | $30 |
+| GPT-4o | $5 | $15 |
+| GPT-3.5 Turbo | $0.50 | $1.50 |
+| Claude 3 Opus | $15 | $75 |
+| Claude 3 Sonnet | $3 | $15 |
+| Claude 3 Haiku | $0.25 | $1.25 |
 
-```python
-class ModelRouter:
-    """Route to appropriate model based on task complexity."""
-    
-    def __init__(self, cost_tracker: CostTracker):
-        self.tracker = cost_tracker
-    
-    def select_model(self, query: str, context: Dict = None) -> str:
-        """Choose model based on query complexity."""
-        complexity = self._estimate_complexity(query, context)
-        
-        if complexity < 0.3:
-            return 'gpt-3.5-turbo'  # Simple queries: $0.002/1K
-        elif complexity < 0.7:
-            return 'claude-3-sonnet'  # Medium: $0.009/1K
-        else:
-            return 'gpt-4-turbo'  # Complex: $0.02/1K
-    
-    def _estimate_complexity(self, query: str, context: Dict) -> float:
-        """Estimate query complexity 0-1."""
-        score = 0.0
-        
-        # Length-based
-        if len(query) > 500:
-            score += 0.2
-        
-        # Keyword-based
-        complex_keywords = ['analyze', 'compare', 'explain why', 'code', 'debug']
-        if any(kw in query.lower() for kw in complex_keywords):
-            score += 0.3
-        
-        # Context-based
-        if context and context.get('requires_reasoning'):
-            score += 0.3
-        
-        return min(score, 1.0)
-    
-    def estimate_savings(self, queries: List[str]) -> Dict:
-        """Estimate savings from routing vs always using GPT-4."""
-        baseline_cost = 0
-        routed_cost = 0
-        
-        for query in queries:
-            # Baseline: always GPT-4
-            baseline_cost += 0.02  # Rough per-query cost
-            
-            # Routed
-            model = self.select_model(query)
-            if model == 'gpt-3.5-turbo':
-                routed_cost += 0.002
-            elif model == 'claude-3-sonnet':
-                routed_cost += 0.009
-            else:
-                routed_cost += 0.02
-        
-        return {
-            'baseline': baseline_cost,
-            'routed': routed_cost,
-            'savings': baseline_cost - routed_cost,
-            'savings_pct': (baseline_cost - routed_cost) / baseline_cost * 100
-        }
-```
+**Key insight:** Output tokens cost 2-5x more than input tokens. This is because generation is more compute-intensive than processing.
 
-### 3.2 Caching
+### 2.2 Agent Cost Multipliers
 
-```python
-import hashlib
-from typing import Optional, Tuple
+Traditional chatbots have simple cost structures: one request in, one response out. Agents are different:
 
-class ResponseCache:
-    """Cache LLM responses to avoid redundant calls."""
-    
-    def __init__(self, max_size: int = 10000, ttl_seconds: int = 3600):
-        self.cache: Dict[str, Tuple[str, float, int]] = {}
-        self.max_size = max_size
-        self.ttl = ttl_seconds
-        self.hits = 0
-        self.misses = 0
-    
-    def get(self, query: str, context: str = "") -> Optional[str]:
-        """Get cached response if available."""
-        key = self._make_key(query, context)
-        
-        if key in self.cache:
-            response, timestamp, _ = self.cache[key]
-            if datetime.now().timestamp() - timestamp < self.ttl:
-                self.hits += 1
-                return response
-            else:
-                del self.cache[key]
-        
-        self.misses += 1
-        return None
-    
-    def put(self, query: str, context: str, response: str, tokens_saved: int):
-        """Cache a response."""
-        if len(self.cache) >= self.max_size:
-            self._evict()
-        
-        key = self._make_key(query, context)
-        self.cache[key] = (response, datetime.now().timestamp(), tokens_saved)
-    
-    def _make_key(self, query: str, context: str) -> str:
-        content = f"{query}|{context}"
-        return hashlib.md5(content.encode()).hexdigest()
-    
-    def _evict(self):
-        # Remove oldest 10%
-        sorted_items = sorted(
-            self.cache.items(),
-            key=lambda x: x[1][1]
-        )
-        for key, _ in sorted_items[:len(sorted_items)//10]:
-            del self.cache[key]
-    
-    def get_stats(self) -> Dict:
-        total = self.hits + self.misses
-        tokens_saved = sum(v[2] for v in self.cache.values() if v[2])
-        
-        return {
-            'hit_rate': self.hits / total if total else 0,
-            'cache_size': len(self.cache),
-            'estimated_tokens_saved': tokens_saved * self.hits
-        }
-```
+**Multi-turn conversations:**
+With each turn, you typically resend the entire conversation history. Turn 10 includes tokens from turns 1-9.
 
-### 3.3 Request Batching
+**Tool use:**
+When agents use tools:
+1. Model decides which tool to call (generation cost)
+2. Tool result is added to context (input cost on next call)
+3. Model processes result and continues (more generation)
 
-```python
-import asyncio
-from typing import List, Callable
+A single user query might trigger 5-10 LLM calls internally.
 
-class RequestBatcher:
-    """Batch similar requests for efficiency."""
-    
-    def __init__(self, batch_size: int = 10, wait_ms: int = 100):
-        self.batch_size = batch_size
-        self.wait_ms = wait_ms
-        self.pending: List[Tuple[str, asyncio.Future]] = []
-        self.lock = asyncio.Lock()
-    
-    async def add_request(self, prompt: str) -> str:
-        """Add request to batch, return result when processed."""
-        future = asyncio.Future()
-        
-        async with self.lock:
-            self.pending.append((prompt, future))
-            
-            if len(self.pending) >= self.batch_size:
-                await self._process_batch()
-        
-        # Wait for result
-        return await future
-    
-    async def _process_batch(self):
-        """Process accumulated requests as a batch."""
-        if not self.pending:
-            return
-        
-        batch = self.pending[:self.batch_size]
-        self.pending = self.pending[self.batch_size:]
-        
-        # Combine prompts
-        prompts = [p for p, _ in batch]
-        combined = "\n---\n".join(
-            f"Request {i+1}: {p}" for i, p in enumerate(prompts)
-        )
-        
-        # Single LLM call for batch
-        # Cost: 1 call instead of N calls
-        response = await self._call_llm(combined)
-        
-        # Parse and distribute results
-        results = self._parse_batch_response(response, len(batch))
-        for (_, future), result in zip(batch, results):
-            future.set_result(result)
-    
-    async def _call_llm(self, prompt: str) -> str:
-        # Actual LLM call
-        pass
-    
-    def _parse_batch_response(self, response: str, count: int) -> List[str]:
-        # Parse batched response into individual results
-        pass
-```
+**Retry and error handling:**
+If a tool fails or output is malformed, agents often retry. Each retry costs additional tokens.
 
-## 4. Budget Enforcement
+**System prompts and context:**
+Large system prompts (instructions, tool definitions) are sent with every request. A 2,000 token system prompt across 1 million requests = 2 billion input tokens.
 
-```python
-class BudgetEnforcer:
-    """Enforce cost limits and quotas."""
-    
-    def __init__(self, tracker: CostTracker):
-        self.tracker = tracker
-        self.limits = {}
-        self.alerts = []
-    
-    def set_limits(
-        self,
-        daily_limit: float = None,
-        per_request_limit: float = None,
-        hourly_limit: float = None
-    ):
-        """Set spending limits."""
-        if daily_limit:
-            self.limits['daily'] = daily_limit
-        if per_request_limit:
-            self.limits['per_request'] = per_request_limit
-        if hourly_limit:
-            self.limits['hourly'] = hourly_limit
-    
-    def check_before_request(self, estimated_cost: float) -> bool:
-        """Check if request should proceed."""
-        # Per-request limit
-        if 'per_request' in self.limits:
-            if estimated_cost > self.limits['per_request']:
-                return False
-        
-        # Hourly limit
-        if 'hourly' in self.limits:
-            usage = self.tracker.get_usage(1)
-            if usage['total_cost'] + estimated_cost > self.limits['hourly']:
-                return False
-        
-        # Daily limit
-        if 'daily' in self.limits:
-            usage = self.tracker.get_usage(24)
-            if usage['total_cost'] + estimated_cost > self.limits['daily']:
-                return False
-        
-        return True
-    
-    def get_remaining_budget(self) -> Dict:
-        """Get remaining budget for each period."""
-        usage_hourly = self.tracker.get_usage(1)
-        usage_daily = self.tracker.get_usage(24)
-        
-        return {
-            'hourly': self.limits.get('hourly', float('inf')) - usage_hourly['total_cost'],
-            'daily': self.limits.get('daily', float('inf')) - usage_daily['total_cost']
-        }
-    
-    def downgrade_strategy(self) -> str:
-        """Suggest model downgrade when approaching limits."""
-        remaining = self.get_remaining_budget()
-        
-        if remaining['daily'] < 10:
-            return 'gpt-3.5-turbo'  # Cheapest
-        elif remaining['daily'] < 50:
-            return 'claude-3-haiku'  # Very cheap
-        elif remaining['daily'] < 100:
-            return 'claude-3-sonnet'  # Moderate
-        else:
-            return 'gpt-4-turbo'  # Full power
-```
+### 2.3 Example: Agent Cost Breakdown
 
-## 5. Cost Reporting
+Let's trace a realistic agent interaction:
 
-```python
-class CostReporter:
-    """Generate cost reports and insights."""
-    
-    def __init__(self, tracker: CostTracker):
-        self.tracker = tracker
-    
-    def daily_report(self) -> str:
-        """Generate daily cost report."""
-        usage = self.tracker.get_usage(24)
-        
-        report = f"""
-╔══════════════════════════════════════════════════════╗
-║              Daily Cost Report                        ║
-╠══════════════════════════════════════════════════════╣
-║ Total Cost:        ${usage['total_cost']:>10.2f}              ║
-║ Total Requests:    {usage['request_count']:>10,}              ║
-║ Input Tokens:      {usage['total_input_tokens']:>10,}              ║
-║ Output Tokens:     {usage['total_output_tokens']:>10,}              ║
-╠══════════════════════════════════════════════════════╣
-║ Cost by Model:                                       ║"""
-        
-        for model, data in usage['by_model'].items():
-            report += f"\n║   {model:20} ${data['cost']:>8.2f} ({data['calls']} calls)"
-        
-        report += "\n╚══════════════════════════════════════════════════════╝"
-        
-        return report
-    
-    def optimization_recommendations(self) -> List[str]:
-        """Generate cost optimization recommendations."""
-        usage = self.tracker.get_usage(24)
-        recommendations = []
-        
-        # Check model usage
-        by_model = usage['by_model']
-        if 'gpt-4' in by_model and by_model['gpt-4']['calls'] > 100:
-            recommendations.append(
-                "Consider routing simple queries to GPT-3.5 to save ~90% on those calls"
-            )
-        
-        # Check token efficiency
-        avg_tokens = (usage['total_input_tokens'] + usage['total_output_tokens']) / max(usage['request_count'], 1)
-        if avg_tokens > 5000:
-            recommendations.append(
-                f"Average {avg_tokens:.0f} tokens/request is high. Consider prompt compression."
-            )
-        
-        return recommendations
-```
+**User query:** "Find the best hotel in Paris under $200/night for next weekend"
 
-## 6. Connection to Model Serialization
+**Agent execution:**
+1. System prompt + history + query: 3,000 input tokens
+2. Agent decides to use search tool: 50 output tokens
+3. Search result added: 1,500 more input tokens
+4. Agent analyzes results: 300 output tokens
+5. Agent decides to check availability: 50 output tokens
+6. Availability result added: 500 more input tokens
+7. Final response: 200 output tokens
 
-Cost management relates to model serialization in key ways:
-- **Smaller models = lower costs** (quantized models use less compute)
-- **Edge deployment** reduces API costs entirely
-- **Caching serialized responses** avoids recomputation
+**Total:** ~5,000 input tokens + ~600 output tokens
 
-Both focus on **efficiency** at different levels of the stack.
+**Cost (GPT-4 Turbo):**
+- Input: 5,000 × $0.01/1K = $0.05
+- Output: 600 × $0.03/1K = $0.018
+- **Total: ~$0.07 per query**
 
-## 7. Key Takeaways
+At 100,000 queries/day: **$7,000/day = $210,000/month**
 
-1. **Track everything**: Every token, every call, every dollar
-2. **Route intelligently**: Use expensive models only when needed
-3. **Cache aggressively**: Similar queries shouldn't cost twice
-4. **Set hard limits**: Budget enforcement prevents runaway costs
-5. **Report and optimize**: Continuous monitoring reveals savings opportunities
+This is one query type. Complex workflows with multiple tool chains cost more.
+
+---
+
+## 3. The Cost Management Framework
+
+### 3.1 The Four Pillars of Cost Management
+
+Effective cost management rests on four pillars:
+
+**1. Visibility:** You can't optimize what you can't see. Track costs at granular levels—per request, per user, per feature.
+
+**2. Attribution:** Understand where costs come from. Which features are expensive? Which users drive costs?
+
+**3. Optimization:** Reduce costs through technical means—caching, model routing, prompt compression.
+
+**4. Controls:** Enforce limits to prevent runaway costs—budgets, rate limits, alerts.
+
+### 3.2 Building Cost Visibility
+
+Track costs at multiple levels:
+
+**Per-request metrics:**
+- Input tokens
+- Output tokens
+- Model used
+- Cost (computed from token counts and pricing)
+- Request type (classification helps with attribution)
+
+**Aggregated metrics:**
+- Cost per hour/day/week
+- Cost per user/customer
+- Cost per feature/flow
+- Cost per successful outcome (not just per request)
+
+**Comparative metrics:**
+- Cost trend over time
+- Cost vs. baseline
+- Cost efficiency (outcomes per dollar)
+
+### 3.3 Attribution: Who and What Drives Costs?
+
+Attribution answers critical questions:
+
+**Which features are most expensive?**
+Maybe your "research assistant" mode costs 10x more than "simple Q&A" mode. Is that value reflected in pricing or usage?
+
+**Which users are most expensive?**
+Power users might drive 80% of costs. Is that appropriate? Can you tier pricing?
+
+**What drives cost variation?**
+Long conversations? Complex queries? Particular domains? Understanding variation helps focus optimization.
+
+---
+
+## 4. Cost Optimization Strategies
+
+### 4.1 Model Selection and Routing
+
+As discussed in Day 46, using the right model for each task is the highest-leverage optimization.
+
+**Tiered model strategy:**
+
+**Tier 1 - Simple queries (60-70% of traffic):**
+- "What's your refund policy?"
+- "How do I reset my password?"
+- Route to: GPT-3.5 Turbo or Claude Haiku
+- Cost: ~$0.002 per query
+
+**Tier 2 - Complex queries (25-35% of traffic):**
+- "Compare these three products for my needs..."
+- "Help me debug this code..."
+- Route to: GPT-4o or Claude Sonnet
+- Cost: ~$0.02 per query
+
+**Tier 3 - High-stakes queries (5-10% of traffic):**
+- Legal document analysis
+- Critical business decisions
+- Route to: GPT-4 or Claude Opus
+- Cost: ~$0.10 per query
+
+**Blended cost:** Dramatically lower than routing everything to Tier 3.
+
+### 4.2 Caching
+
+Caching avoids redundant LLM calls entirely.
+
+**Exact match caching:**
+Store responses keyed by exact query. Works for FAQs and common requests.
+
+**Semantic caching:**
+Store responses keyed by query embedding. Match semantically similar queries to cached responses.
+
+**Partial caching:**
+Cache intermediate results. If the same context is used repeatedly, cache summarized versions.
+
+**Cache hit rates vary by use case:**
+- Customer support: 30-50% hit rate (many common questions)
+- Creative writing: 5-10% hit rate (unique outputs expected)
+- Code generation: 10-20% hit rate (depends on patterns)
+
+Even 20% cache hit rate means 20% cost savings.
+
+### 4.3 Prompt and Context Optimization
+
+We covered this in Day 46, but it's worth emphasizing for costs:
+
+**System prompt compression:**
+A 2,000 token system prompt across 1M requests = $20,000 in input costs (GPT-4 Turbo).
+Compress to 1,000 tokens = $10,000 savings.
+
+**Dynamic context:**
+Don't include all tools, all history, all instructions in every request. Load what's needed for each specific query.
+
+**Conversation summarization:**
+After 5-10 turns, summarize earlier history. Dramatically reduces token growth in long conversations.
+
+### 4.4 Output Length Control
+
+Output tokens cost more. Control them:
+
+**Set appropriate max_tokens:**
+Don't default to max. Set based on expected response type.
+
+**Prompt for conciseness:**
+"Respond concisely" or "Maximum 3 sentences" in your instructions.
+
+**Structured output:**
+JSON responses are often more compact than prose explanations.
+
+---
+
+## 5. Cost Controls and Guardrails
+
+### 5.1 Budget Limits
+
+Set spending limits at multiple levels:
+
+**Per-request limits:**
+Reject or warn if a single request would exceed threshold (e.g., $1).
+
+**Per-user limits:**
+Prevent individual users from spending beyond their allocation.
+
+**Per-day/week/month limits:**
+Global caps to prevent runaway spending.
+
+**Per-feature limits:**
+If a new feature is unexpectedly expensive, limit its exposure.
+
+### 5.2 Rate Limiting
+
+Limit request rates to control peak costs:
+
+**Requests per minute (RPM):**
+Smooth out traffic spikes.
+
+**Tokens per minute (TPM):**
+More granular—limits actual consumption, not just request count.
+
+**Concurrent requests:**
+Limit parallel processing to control instantaneous spend.
+
+### 5.3 Alerting
+
+Set up alerts before problems become crises:
+
+**Cost velocity alerts:**
+"Cost rate exceeded 150% of normal for past hour."
+
+**Budget threshold alerts:**
+"70% of monthly budget consumed with 10 days remaining."
+
+**Anomaly detection:**
+Unusual patterns—sudden spikes, new expensive query types.
+
+### 5.4 Circuit Breakers
+
+When costs spiral, stop the bleeding:
+
+**Graceful degradation:**
+Switch to cheaper models when approaching budget limits.
+
+**Feature flags:**
+Disable expensive features if costs exceed thresholds.
+
+**Queue deferral:**
+Queue non-urgent requests during cost spikes instead of processing immediately.
+
+---
+
+## 6. Cost Allocation and Chargeback
+
+### 6.1 Who Pays?
+
+In organizations, cost allocation matters for accountability:
+
+**Departmental chargeback:**
+Charge costs to the team whose feature/users incurred them.
+
+**Product cost attribution:**
+Include AI costs in product margin calculations.
+
+**Customer cost pass-through:**
+For B2B, understanding per-customer costs enables usage-based pricing.
+
+### 6.2 Building a Cost Allocation System
+
+Key requirements:
+
+**Tagging infrastructure:**
+Every request should carry metadata: user_id, team_id, feature_id, etc.
+
+**Cost computation:**
+Calculate cost from token counts and pricing (handle pricing changes over time).
+
+**Aggregation and reporting:**
+Roll up costs by dimensions. Provide dashboards and exports.
+
+**Billing integration:**
+For usage-based pricing, integrate with billing systems.
+
+---
+
+## 7. Cost Monitoring Dashboard
+
+### 7.1 Essential Metrics
+
+A cost dashboard should show:
+
+**Real-time:**
+- Current spend rate ($/hour)
+- Requests per minute
+- Token consumption rate
+
+**Daily:**
+- Total cost
+- Breakdown by model
+- Breakdown by feature/user segment
+- Cost per successful outcome
+
+**Trending:**
+- Week-over-week cost change
+- Cost per request trending
+- Efficiency improvements
+
+### 7.2 Drill-Down Capability
+
+Enable investigation:
+- From "high cost today" → which hours were expensive
+- From expensive hour → which users drove it
+- From expensive user → which requests were costly
+
+Without drill-down, you see problems but can't diagnose them.
+
+### 7.3 Comparison Views
+
+Show context:
+- Today vs. same day last week
+- This feature vs. that feature
+- Before optimization vs. after
+
+---
+
+## 8. The Economics of Build vs. Buy
+
+### 8.1 Managed Services vs. Self-Hosted
+
+You can run open-source models yourself or use managed API services.
+
+**Managed API (OpenAI, Anthropic):**
+- Simple, predictable per-token pricing
+- No infrastructure management
+- Automatic scaling
+- Higher per-token cost
+
+**Self-hosted (open models on your infrastructure):**
+- Fixed infrastructure cost (regardless of usage)
+- More efficient at scale
+- Requires ML ops expertise
+- Lower per-token cost at volume
+
+**Crossover point:** Often around $50,000-$100,000/month. Below that, managed APIs are simpler. Above that, self-hosting may save money.
+
+### 8.2 Hybrid Approaches
+
+Use both strategically:
+
+**Development and low-volume:** Managed APIs (no infrastructure overhead)
+**High-volume production:** Self-hosted for predictable workloads
+**Spike handling:** Managed APIs for overflow
+
+---
+
+## 9. Connection to Model Serialization (ML Day 47)
+
+There's a cost angle to serialization:
+
+**Efficient model storage:** Smaller serialized models = lower storage costs
+**Faster loading:** Better serialization = lower cold start compute costs
+**Format matters:** Optimized formats (quantized, pruned) = lower inference costs
+
+And today's tree serialization theme:
+
+| Concept | Tree Serialization | Agent Costs |
+|---------|-------------------|-------------|
+| Storage | String representation | Token consumption |
+| Efficiency | Compact encoding | Token optimization |
+| Trade-offs | Size vs. human-readability | Cost vs. capability |
+| Measurement | Character/line count | Token count |
+
+Both involve measuring, optimizing, and managing the "size" of information.
+
+---
+
+## 10. Real-World Case Study
+
+### 10.1 A Customer Support Agent
+
+**Before optimization:**
+- 100,000 queries/day
+- Average 4,000 tokens/query
+- All on GPT-4 Turbo
+- Monthly cost: ~$300,000
+
+**Optimization steps:**
+
+1. **Model routing:** 70% of queries (simple FAQs, status checks) routed to GPT-3.5 Turbo
+   - Savings: ~$180,000/month
+
+2. **Caching:** Semantic caching for common questions (35% hit rate)
+   - Savings: ~$40,000/month
+
+3. **Prompt compression:** System prompt reduced from 3,000 to 1,200 tokens
+   - Savings: ~$25,000/month
+
+4. **Conversation management:** Summarization after 5 turns
+   - Savings: ~$15,000/month
+
+**After optimization:**
+- Monthly cost: ~$40,000
+- **87% cost reduction**
+- Quality metrics (resolution rate, customer satisfaction) maintained
+
+This is not hypothetical—organizations regularly achieve 70-90% reductions through systematic optimization.
+
+---
+
+## 11. Key Takeaways
+
+1. **LLM costs compound.** Multi-turn, multi-tool, multi-retry interactions multiply base costs. Plan for this.
+
+2. **Visibility first.** You can't optimize what you can't measure. Instrument thoroughly.
+
+3. **Attribution matters.** Knowing what drives costs enables targeted optimization.
+
+4. **Model routing is highest leverage.** Using cheap models for cheap tasks saves the most money.
+
+5. **Caching is free (almost).** Every cached response is a free query. Invest in caching infrastructure.
+
+6. **Controls prevent disasters.** Budget limits, rate limits, and alerts prevent $1M surprises.
+
+7. **80-90% savings are achievable.** Most systems are dramatically over-spending initially. Optimization pays off.
+
+Cost management isn't about being cheap—it's about being sustainable. An agent that costs too much to run at scale is an agent that never scales. By building cost awareness into your architecture from the start, you ensure your agents can grow with your business.
 
 ---
 
