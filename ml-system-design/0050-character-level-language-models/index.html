@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-22T11:01:30+05:30">
+  <meta property="article:published_time" content="2025-12-22T11:38:01+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Character-Level Language Models">
     <meta itemprop="description" content="“Before machines could write essays, they had to learn to spell.”">
-    <meta itemprop="datePublished" content="2025-12-22T11:01:30+05:30">
+    <meta itemprop="datePublished" content="2025-12-22T11:38:01+05:30">
     
 
     <div class="page__inner-wrap">
@@ -231,7 +231,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          4 minute read
+          5 minute read
         
       </span>
     
@@ -246,163 +246,238 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#1-introduction-the-atomic-unit-of-language">1. Introduction: The Atomic Unit of Language</a></li><li><a href="#2-architecture-rnns-and-lstms">2. Architecture: RNNs and LSTMs</a><ul><li><a href="#21-the-recurrent-loop">2.1 The Recurrent Loop</a></li><li><a href="#22-the-vanishing-gradient-problem">2.2 The “Vanishing Gradient” Problem</a></li></ul></li><li><a href="#3-tokenization-trade-offs">3. Tokenization Trade-offs</a></li><li><a href="#4-modern-applications-of-char-lms">4. Modern Applications of Char-LMs</a><ul><li><a href="#41-code-generation">4.1 Code Generation</a></li><li><a href="#42-language-identification">4.2 Language Identification</a></li><li><a href="#43-handling-alien-languages-bioinformatics">4.3 Handling “Alien” Languages (Bioinformatics)</a></li></ul></li><li><a href="#5-training-your-own-minigpt">5. Training your own “MiniGPT”</a></li><li><a href="#6-summary">6. Summary</a></li></ul>
+              <ul class="toc__menu"><li><a href="#1-problem-statement">1. Problem Statement</a></li><li><a href="#2-understanding-the-requirements">2. Understanding the Requirements</a><ul><li><a href="#21-the-context-problem">2.1 The Context Problem</a></li><li><a href="#22-sparsity-vs-density">2.2 Sparsity vs Density</a></li></ul></li><li><a href="#3-high-level-architecture">3. High-Level Architecture</a></li><li><a href="#4-component-deep-dives">4. Component Deep-Dives</a><ul><li><a href="#41-tokenization-trade-offs">4.1 Tokenization Trade-offs</a></li><li><a href="#42-the-softmax-bottleneck">4.2 The Softmax Bottleneck</a></li></ul></li><li><a href="#5-data-flow-training-pipeline">5. Data Flow: Training Pipeline</a></li><li><a href="#6-implementation-rnn-char-lm">6. Implementation: RNN Char-LM</a></li><li><a href="#7-scaling-strategies">7. Scaling Strategies</a><ul><li><a href="#71-truncated-backpropagation-through-time-tbptt">7.1 Truncated Backpropagation through Time (TBPTT)</a></li></ul></li><li><a href="#8-failure-modes">8. Failure Modes</a></li><li><a href="#9-real-world-case-study-andrej-karpathys-mingpt">9. Real-World Case Study: Andrej Karpathy’s minGPT</a></li><li><a href="#10-connections-to-ml-systems">10. Connections to ML Systems</a></li><li><a href="#11-cost-analysis">11. Cost Analysis</a></li><li><a href="#12-key-takeaways">12. Key Takeaways</a></li></ul>
             </nav>
           </aside>
         
         <p><strong>“Before machines could write essays, they had to learn to spell.”</strong></p>
 
-<h2 id="1-introduction-the-atomic-unit-of-language">1. Introduction: The Atomic Unit of Language</h2>
+<h2 id="1-problem-statement">1. Problem Statement</h2>
 
-<p>When you read, do you read L-E-T-T-E-R-S or do you read <em>Words</em>? Probably words.
-Modern LLMs (like GPT-4) read chunks called <strong>Tokens</strong> (roughly syllables).
-But the simplest, most elegant way to model language is <strong>Character by Character</strong>.</p>
+<p>Modern LLMs (GPT-4) operate on <strong>tokens</strong> (sub-words).
+But to understand <em>why</em>, we must study the alternatives.
+<strong>Character-Level Modeling</strong> is the task of predicting the next character in a sequence.</p>
+<ul>
+  <li>Input: <code class="language-plaintext highlighter-rouge">['h', 'e', 'l', 'l']</code></li>
+  <li>Target: <code class="language-plaintext highlighter-rouge">'o'</code></li>
+</ul>
 
-<p>A <strong>Character-Level Language Model</strong> (Char-LM) predicts the next character in a sequence.
-Input: <code class="language-plaintext highlighter-rouge">"hell"</code> -&gt; Output: <code class="language-plaintext highlighter-rouge">"o"</code>.</p>
-
-<p>Why study this?</p>
+<p>Why build a Char-LM?</p>
 <ol>
-  <li><strong>No Out-of-Vocabulary (OOV) Problems</strong>: You never encounter a “word” you don’t know. You can generate “supercalifragilistic…” even if you’ve never seen it, just by knowing phonetic patterns.</li>
-  <li><strong>Robustness</strong>: It handles typos (<code class="language-plaintext highlighter-rouge">"hrello"</code>) and new slang (<code class="language-plaintext highlighter-rouge">"rizz"</code>) gracefully.</li>
-  <li><strong>Simplicity</strong>: The “Vocabulary” is just 26 letters + punctuation (~100 items), not 50,000 tokens.</li>
+  <li><strong>Infinite Vocabulary</strong>: No “Unknown Token” <code class="language-plaintext highlighter-rouge">&lt;UNK&gt;</code> issues. It can generate any word.</li>
+  <li><strong>Robustness</strong>: Handles typos (<code class="language-plaintext highlighter-rouge">"helo"</code>) and biological sequences (<code class="language-plaintext highlighter-rouge">"ACTG"</code>) natively.</li>
+  <li><strong>Simplicity</strong>: Vocab size is 100 (ASCII), not 50,000 (GPT-2 BPE).</li>
 </ol>
 
 <hr />
 
-<h2 id="2-architecture-rnns-and-lstms">2. Architecture: RNNs and LSTMs</h2>
+<h2 id="2-understanding-the-requirements">2. Understanding the Requirements</h2>
 
-<p>Before Transformers took over, <strong>Recurrent Neural Networks (RNNs)</strong> were the kings of Char-LMs.
-Many junior engineers haven’t built an RNN, but it’s crucial for understanding “State”.</p>
+<h3 id="21-the-context-problem">2.1 The Context Problem</h3>
+<p>Prediction depends on long-range dependencies.</p>
+<ul>
+  <li>“The cat sat on the <strong>m</strong>…” -&gt; <strong>a</strong> -&gt; <strong>t</strong>. (Local context).</li>
+  <li>“I grew up in France… I speak fluent <strong>F</strong>…” -&gt; <strong>r</strong> -&gt; <strong>e</strong>… (Global context).</li>
+</ul>
 
-<h3 id="21-the-recurrent-loop">2.1 The Recurrent Loop</h3>
-<p>Regular Feed-Forward networks map <code class="language-plaintext highlighter-rouge">Input -&gt; Output</code>.
-RNNs map <code class="language-plaintext highlighter-rouge">Input + Past_State -&gt; Output + New_State</code>.</p>
+<p>A Char-LM must remember history that is 5x longer than a Word-LM (since avg word length is 5 chars).
+If a sentence is 20 words, the Char-LM sees 100 steps.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Pseudo-code for a Char-RNN Step
-</span><span class="k">def</span> <span class="nf">rnn_step</span><span class="p">(</span><span class="n">char_input</span><span class="p">,</span> <span class="n">hidden_state</span><span class="p">):</span>
-    <span class="c1"># Combine input and history
-</span>    <span class="n">combined</span> <span class="o">=</span> <span class="nf">linear</span><span class="p">(</span><span class="n">char_input</span> <span class="o">+</span> <span class="n">hidden_state</span><span class="p">)</span>
-    
-    <span class="c1"># Update memory
-</span>    <span class="n">new_hidden_state</span> <span class="o">=</span> <span class="nf">tanh</span><span class="p">(</span><span class="n">combined</span><span class="p">)</span>
-    
-    <span class="c1"># Predict next char
-</span>    <span class="n">prediction</span> <span class="o">=</span> <span class="nf">softmax</span><span class="p">(</span><span class="nf">linear</span><span class="p">(</span><span class="n">new_hidden_state</span><span class="p">))</span>
-    
-    <span class="k">return</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">new_hidden_state</span>
-</code></pre></div></div>
-
-<p>If we feed <code class="language-plaintext highlighter-rouge">"h"</code>, it updates its hidden state to “remembering ‘h’”.
-Feed <code class="language-plaintext highlighter-rouge">"e"</code>, it remembers “‘h’, ‘e’”.
-Feed <code class="language-plaintext highlighter-rouge">"l"</code>, it remembers “‘h’, ‘e’, ‘l’”.
-Now it strongly predicts <code class="language-plaintext highlighter-rouge">"l"</code> (for “hell”) or <code class="language-plaintext highlighter-rouge">"p"</code> (for “help”).</p>
-
-<h3 id="22-the-vanishing-gradient-problem">2.2 The “Vanishing Gradient” Problem</h3>
-<p>Simple RNNs forget things quickly. If the sentence is “The clouds in the sky are [?]”, the RNN sees “sky” and predicts “blue”.
-If the sentence is “I grew up in France… (1000 words later) … I speak fluent [?]”, the RNN forgets “France”. It guesses “English”.</p>
-
-<p>This led to <strong>LSTMs (Long Short-Term Memory)</strong>, which have specific “gates” to keep information for thousands of steps.</p>
+<h3 id="22-sparsity-vs-density">2.2 Sparsity vs Density</h3>
+<ul>
+  <li><strong>One-Hot Encoding</strong>: Characters are dense. <code class="language-plaintext highlighter-rouge">a</code> is always vector <code class="language-plaintext highlighter-rouge">[1, 0, ...]</code>.</li>
+  <li><strong>Embedding</strong>: We still learn a dense vector for ‘a’, capturing nuances like “vowels cluster together”.</li>
+</ul>
 
 <hr />
 
-<h2 id="3-tokenization-trade-offs">3. Tokenization Trade-offs</h2>
+<h2 id="3-high-level-architecture">3. High-Level Architecture</h2>
 
-<p>Why don’t we use Character Models for everything?</p>
+<p>We compare <strong>RNN</strong> (Recurrent) vs <strong>Transformer</strong> (Attention).</p>
+
+<p><strong>RNN Style (The Classic)</strong>:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[h] -&gt; [e] -&gt; [l] -&gt; [l]
+ |      |      |      |
+ v      v      v      v
+(S0)-&gt; (S1)-&gt; (S2)-&gt; (S3) -&gt; Predict 'o'
+</code></pre></div></div>
+<p>State <code class="language-plaintext highlighter-rouge">S3</code> must verify “We are in the word ‘hello’”.</p>
+
+<p><strong>Transformer Style (Modern)</strong>:
+Input: <code class="language-plaintext highlighter-rouge">[h, e, l, l]</code>
+Attention: <code class="language-plaintext highlighter-rouge">l</code> attends to <code class="language-plaintext highlighter-rouge">h</code>, <code class="language-plaintext highlighter-rouge">e</code>, <code class="language-plaintext highlighter-rouge">l</code>.
+Output: <code class="language-plaintext highlighter-rouge">Prob(o)</code></p>
+
+<hr />
+
+<h2 id="4-component-deep-dives">4. Component Deep-Dives</h2>
+
+<h3 id="41-tokenization-trade-offs">4.1 Tokenization Trade-offs</h3>
 
 <table>
   <thead>
     <tr>
-      <th>Feature</th>
-      <th>Character-Level</th>
-      <th>Word-Level</th>
-      <th>Subword (BPE/Tokenizer)</th>
+      <th>Strategy</th>
+      <th>Vocab Size</th>
+      <th>Sequence Length (for 1000 words)</th>
+      <th>OOV Risk</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td><strong>Vocab Size</strong></td>
-      <td>Small (~100)</td>
-      <td>Huge (1M+)</td>
-      <td>Balanced (50k)</td>
+      <td><strong>Character</strong></td>
+      <td>~100</td>
+      <td>~5000 chars</td>
+      <td>None</td>
     </tr>
     <tr>
-      <td><strong>Context Length</strong></td>
-      <td>Very Long (1000 steps = 2 sentences)</td>
-      <td>Short (20 steps = 2 sentences)</td>
-      <td>Medium</td>
+      <td><strong>Word</strong></td>
+      <td>~1M</td>
+      <td>1000 words</td>
+      <td>High (Rare names)</td>
     </tr>
     <tr>
-      <td><strong>Compute Cost</strong></td>
-      <td>Expensive (Many small steps)</td>
-      <td>Cheap (Few big steps)</td>
-      <td>Optimal</td>
-    </tr>
-    <tr>
-      <td><strong>Meaning</strong></td>
-      <td>Hard (Letters have no meaning)</td>
-      <td>Easy (Words have meaning)</td>
-      <td>Mix</td>
+      <td><strong>Subword (BPE)</strong></td>
+      <td>~50k</td>
+      <td>~1300 tokens</td>
+      <td>Low</td>
     </tr>
   </tbody>
 </table>
 
-<p><strong>Char-Level is computationally inefficient.</strong>
-To process 1,000 words, a Char-LM takes ~5,000 steps. A Token-LM takes ~700 steps. Transformers simply cannot handle sequences that long (Self-Attention is <code class="language-plaintext highlighter-rouge">O(N^2)</code>).
-This is why GPT uses <strong>BPE (Byte Pair Encoding)</strong>, finding a middle ground.</p>
+<p><strong>Why BPE won</strong>: It balances the trade-off. It keeps sequence length manageable (for Transformer $O(N^2)$ attention) while handling rare words via characters.</p>
+
+<h3 id="42-the-softmax-bottleneck">4.2 The Softmax Bottleneck</h3>
+<p>Predicting 1 out of 100 chars is cheap.
+Predicting 1 out of 50,000 tokens is expensive (large Matrix Mul at the end).
+Char-LMs are incredibly fast at the <em>final layer</em>, but incredibly slow at the <em>layers/inference</em> (requiring more steps).</p>
 
 <hr />
 
-<h2 id="4-modern-applications-of-char-lms">4. Modern Applications of Char-LMs</h2>
-
-<p>Despite the dominance of Token-LMs, Char-LMs are still critical in:</p>
-
-<h3 id="41-code-generation">4.1 Code Generation</h3>
-<p>Code has strict syntax. <code class="language-plaintext highlighter-rouge">}</code> must close <code class="language-plaintext highlighter-rouge">{</code>.
-Char-LMs are surprisingly good at learning syntax (indentation, brackets) because they see every single keystroke.</p>
-
-<h3 id="42-language-identification">4.2 Language Identification</h3>
-<p>To guess if text is “French” or “Spanish”, you don’t need words. You need character patterns.</p>
-<ul>
-  <li>Sequence of <code class="language-plaintext highlighter-rouge">eau</code> -&gt; French.</li>
-  <li>Sequence of <code class="language-plaintext highlighter-rouge">ñ</code> -&gt; Spanish.
-FastText (by Facebook) uses character n-grams for this.</li>
-</ul>
-
-<h3 id="43-handling-alien-languages-bioinformatics">4.3 Handling “Alien” Languages (Bioinformatics)</h3>
-<p>DNA sequences (<code class="language-plaintext highlighter-rouge">ACTG</code>) are essentially char-level languages. There are no “words” in DNA.
-Models like <strong>GenomicLM</strong> are Char-LMs.</p>
-
-<hr />
-
-<h2 id="5-training-your-own-minigpt">5. Training your own “MiniGPT”</h2>
-
-<p>Today, you can train a Char-level GPT on your laptop in 10 minutes (thanks to Andrej Karpathy’s <code class="language-plaintext highlighter-rouge">nanoGPT</code>).</p>
+<h2 id="5-data-flow-training-pipeline">5. Data Flow: Training Pipeline</h2>
 
 <ol>
-  <li><strong>Data</strong>: Text file (Shakespeare).</li>
-  <li><strong>Tokenizer</strong>: <code class="language-plaintext highlighter-rouge">list(set(text))</code> (Result: <code class="language-plaintext highlighter-rouge">a, b, c...</code>).</li>
-  <li><strong>Model</strong>: Small Transformer (Embedding size 64, 4 layers).</li>
-  <li><strong>Train</strong>: Predict next char.</li>
+  <li><strong>Raw Text</strong>: “Hello world”</li>
+  <li><strong>Vectorizer</strong>: <code class="language-plaintext highlighter-rouge">[H, e, l, l, o, _, w, o, r, l, d]</code> -&gt; <code class="language-plaintext highlighter-rouge">[8, 5, 12, 12, 15, 0, ...]</code></li>
+  <li><strong>Windowing</strong>: Create pairs <code class="language-plaintext highlighter-rouge">(Input, Target)</code>.
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">[8, 5, 12]</code> -&gt; <code class="language-plaintext highlighter-rouge">12</code> (“Hel” -&gt; “l”)</li>
+      <li><code class="language-plaintext highlighter-rouge">[5, 12, 12]</code> -&gt; <code class="language-plaintext highlighter-rouge">15</code> (“ell” -&gt; “o”)</li>
+    </ul>
+  </li>
+  <li><strong>Loss Calculation</strong>: Cross Entropy Loss on the prediction.</li>
 </ol>
-
-<p><strong>Result</strong>:
-<code class="language-plaintext highlighter-rouge">"The kyng hath sayd, that thou shalt die!"</code>
-It invents fake Old English words! It learns spelling, grammar, and punctuation purely from examples.</p>
 
 <hr />
 
-<h2 id="6-summary">6. Summary</h2>
+<h2 id="6-implementation-rnn-char-lm">6. Implementation: RNN Char-LM</h2>
 
-<p>Understanding Character-Level models removes the “magic” of AI.
-It’s just statistics.</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
+<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+
+<span class="k">class</span> <span class="nc">CharRNN</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">n_layers</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Embedding</span><span class="p">(</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">rnn</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTM</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">hidden</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="c1"># x: [Batch, Seq_Len] (e.g., indices of chars)
+</span>        <span class="n">embeds</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">embedding</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        
+        <span class="c1"># rnn_out: [Batch, Seq_Len, Hidden]
+</span>        <span class="n">rnn_out</span><span class="p">,</span> <span class="n">hidden</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">rnn</span><span class="p">(</span><span class="n">embeds</span><span class="p">,</span> <span class="n">hidden</span><span class="p">)</span>
+        
+        <span class="c1"># Predict next char for EVERY step in sequence
+</span>        <span class="n">logits</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">fc</span><span class="p">(</span><span class="n">rnn_out</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">logits</span><span class="p">,</span> <span class="n">hidden</span>
+
+    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">start_char</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+        <span class="c1"># Inference Loop
+</span>        <span class="n">curr_char</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([[</span><span class="n">char_to_ix</span><span class="p">[</span><span class="n">start_char</span><span class="p">]]])</span>
+        <span class="n">hidden</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">start_char</span>
+        
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">max_len</span><span class="p">):</span>
+            <span class="n">logits</span><span class="p">,</span> <span class="n">hidden</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">forward</span><span class="p">(</span><span class="n">curr_char</span><span class="p">,</span> <span class="n">hidden</span><span class="p">)</span>
+            <span class="n">probs</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">next_ix</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">multinomial</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="mi">1</span><span class="p">).</span><span class="nf">item</span><span class="p">()</span>
+            
+            <span class="n">out</span> <span class="o">+=</span> <span class="n">ix_to_char</span><span class="p">[</span><span class="n">next_ix</span><span class="p">]</span>
+            <span class="n">curr_char</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([[</span><span class="n">next_ix</span><span class="p">]])</span>
+            
+        <span class="k">return</span> <span class="n">out</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="7-scaling-strategies">7. Scaling Strategies</h2>
+
+<h3 id="71-truncated-backpropagation-through-time-tbptt">7.1 Truncated Backpropagation through Time (TBPTT)</h3>
+<p>You cannot backpropagate through a book with 1 million characters. Gradients vanish or explode.
+We process chunks of 100 characters.
+<strong>Crucial</strong>: We pass the <code class="language-plaintext highlighter-rouge">hidden</code> state from Chunk 1 to Chunk 2, but we <em>detach</em> the gradient history. The model remembers the context, but doesn’t try to learn across the boundary.</p>
+
+<hr />
+
+<h2 id="8-failure-modes">8. Failure Modes</h2>
+
+<ol>
+  <li><strong>Hallucinated Words</strong>: “The quxijumped over…”
+    <ul>
+      <li>Since it spells letter-by-letter, it can invent non-existent words that “sound” pronounceable.</li>
+    </ul>
+  </li>
+  <li><strong>Incoherent Grammar</strong>: It closes parentheses <code class="language-plaintext highlighter-rouge">)</code> that were never opened <code class="language-plaintext highlighter-rouge">(</code>.
+    <ul>
+      <li>LSTMs struggled with this (counting). Transformers fixed it.</li>
+    </ul>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="9-real-world-case-study-andrej-karpathys-mingpt">9. Real-World Case Study: Andrej Karpathy’s minGPT</h2>
+
+<p>The famous blog post “The Unreasonable Effectiveness of Recurrent Neural Networks” trained a Char-RNN on:</p>
 <ul>
-  <li>“t” is likely followed by “h”.</li>
-  <li>“th” is likely followed by “e”.</li>
-  <li>“the” is likely followed by “ “.</li>
+  <li><strong>Shakespeare</strong>: Resulted in fake plays.</li>
+  <li><strong>Linux Kernel Code</strong>: Resulted in C code that <em>almost</em> compiled (including comments and indentation).
+This proved that neural nets learn <strong>Syntactic Structure</strong> just from statistical co-occurrence.</li>
 </ul>
 
-<p>If you scale this simple pattern matching up to 1 Trillion parameters, you get ChatGPT. But at its core, it’s just predicting the next symbol.</p>
+<hr />
+
+<h2 id="10-connections-to-ml-systems">10. Connections to ML Systems</h2>
+
+<p>This connects to <strong>Custom Language Modeling in Speech</strong> (Speech Day 50).</p>
+<ul>
+  <li>ASR systems use Char-LMs to correct spelling in noisy transcripts.</li>
+  <li>If ASR hears “Helo”, the Char-LM says “l followed by o is unlikely after He, it should be ‘ll’”.</li>
+</ul>
+
+<hr />
+
+<h2 id="11-cost-analysis">11. Cost Analysis</h2>
+
+<p><strong>Training</strong>: Cheap. A Char-RNN trains on a laptop CPU in minutes.
+<strong>Inference</strong>: Expensive.</p>
+<ul>
+  <li>To generate a 1000-word essay (5000 chars), you run the model 5000 times (serial).</li>
+  <li>A Token-LM runs 700 times.</li>
+  <li>This 7x latency penalty is why Char-LMs are not used for Chatbots.</li>
+</ul>
+
+<hr />
+
+<h2 id="12-key-takeaways">12. Key Takeaways</h2>
+
+<ol>
+  <li><strong>Granularity Matters</strong>: Breaking text down to atoms (chars) simplifies vocabulary but complicates structure learning.</li>
+  <li><strong>Embeddings</strong>: Even characters need embeddings. ‘A’ and ‘a’ should be close vectors.</li>
+  <li><strong>Subword Dominance</strong>: BPE won because it is the “Goldilocks” zone—short sequences, manageable vocab.</li>
+</ol>
 
 <hr />
 
@@ -504,7 +579,45 @@ It’s just statistics.</p>
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“If ‘apple’ comes before ‘banana’ but ‘bat’ comes before ‘arc’, what is the alphabet?”
+    <p class="archive__item-excerpt" itemprop="description">“Language is just a graph of symbols. If you know the order, you know the language.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ml-system-design/0050-character-level-language-models/" rel="permalink">Character-Level Language Models
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Before machines could write essays, they had to learn to spell.”
 </p>
   </article>
 </div>
@@ -535,7 +648,7 @@ It’s just statistics.</p>
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          3 minute read
+          4 minute read
         
       </span>
     
@@ -573,7 +686,7 @@ It’s just statistics.</p>
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          3 minute read
+          5 minute read
         
       </span>
     

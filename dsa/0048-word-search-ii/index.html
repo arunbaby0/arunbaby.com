@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-22T11:01:30+05:30">
+  <meta property="article:published_time" content="2025-12-22T11:38:01+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Word Search II">
     <meta itemprop="description" content="“Don’t look for one needle in a haystack. Magnetize the hay to find all needles at once.”">
-    <meta itemprop="datePublished" content="2025-12-22T11:01:30+05:30">
+    <meta itemprop="datePublished" content="2025-12-22T11:38:01+05:30">
     
 
     <div class="page__inner-wrap">
@@ -231,7 +231,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          8 minute read
+          6 minute read
         
       </span>
     
@@ -246,26 +246,25 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#1-the-problem-boggle-on-steroids">1. The Problem: Boggle on Steroids</a></li><li><a href="#2-approach-1-the-naive-solution-repeated-search">2. Approach 1: The Naive Solution (Repeated Search)</a></li><li><a href="#3-the-optimized-solution-backtracking-with-a-trie">3. The Optimized Solution: Backtracking with a Trie</a><ul><li><a href="#31-what-is-a-trie">3.1 What is a Trie?</a></li><li><a href="#32-the-key-strategy">3.2 The Key Strategy</a></li><li><a href="#33-optimization-pruning-the-trie">3.3 Optimization: Pruning the Trie</a></li></ul></li><li><a href="#4-design--implementation">4. Design &amp; Implementation</a><ul><li><a href="#41-the-trie-node">4.1 The Trie Node</a></li><li><a href="#42-the-main-algorithm-class">4.2 The Main Algorithm class</a></li></ul></li><li><a href="#5-walkthrough-how-it-runs">5. Walkthrough: How it Runs</a></li><li><a href="#6-common-pitfalls">6. Common Pitfalls</a></li><li><a href="#7-complexity-analysis">7. Complexity Analysis</a></li><li><a href="#8-real-world-connections">8. Real World Connections</a></li></ul>
+              <ul class="toc__menu"><li><a href="#1-problem-statement">1. Problem Statement</a></li><li><a href="#2-understanding-the-problem">2. Understanding the Problem</a><ul><li><a href="#21-the-native-vs-optimized-mindset">2.1 The Native vs. Optimized Mindset</a></li><li><a href="#22-the-inversion-of-control">2.2 The Inversion of Control</a></li></ul></li><li><a href="#3-approach-1-naive-repeated-dfs--dont-do-this">3. Approach 1: Naive (Repeated DFS) – Don’t do this</a></li><li><a href="#4-approach-2-backtracking-with-trie">4. Approach 2: Backtracking with Trie</a><ul><li><a href="#key-logic">Key Logic</a></li></ul></li><li><a href="#5-implementation">5. Implementation</a></li><li><a href="#6-testing-strategy">6. Testing Strategy</a><ul><li><a href="#test-case-1-prefix-shared">Test Case 1: Prefix shared</a></li><li><a href="#test-case-2-no-match">Test Case 2: No match</a></li></ul></li><li><a href="#7-complexity-analysis">7. Complexity Analysis</a></li><li><a href="#8-production-considerations">8. Production Considerations</a></li><li><a href="#9-connections-to-ml-systems">9. Connections to ML Systems</a></li><li><a href="#10-interview-strategy">10. Interview Strategy</a></li><li><a href="#11-key-takeaways">11. Key Takeaways</a></li></ul>
             </nav>
           </aside>
         
         <p><strong>“Don’t look for one needle in a haystack. Magnetize the hay to find all needles at once.”</strong></p>
 
-<h2 id="1-the-problem-boggle-on-steroids">1. The Problem: Boggle on Steroids</h2>
+<h2 id="1-problem-statement">1. Problem Statement</h2>
 
-<p>Imagine you are playing the game Boggle. You have a grid of letters and a possibly huge list of valid words (a dictionary). Your task is to find <strong>all</strong> the words from the list that can be formed in the grid by connecting adjacent letters (horizontally or vertically).</p>
+<p>This is the “Boss Level” of grid-based search problems.
+Given an <code class="language-plaintext highlighter-rouge">m x n</code> board of characters and a list of strings <code class="language-plaintext highlighter-rouge">words</code>, return all words on the board.</p>
 
-<p><strong>The Rules:</strong></p>
-<ul>
-  <li>You can move up, down, left, or right.</li>
-  <li>You cannot use the same cell twice in a single word path.</li>
-  <li>Input: An <code class="language-plaintext highlighter-rouge">m x n</code> board of characters and a list of strings <code class="language-plaintext highlighter-rouge">words</code>.</li>
-  <li>Output: All words from the list that exist in the board.</li>
-</ul>
+<p><strong>Rules:</strong></p>
+<ol>
+  <li>Each word must be constructed from letters of sequentially adjacent cells (horizontally or vertically neighboring).</li>
+  <li>The same letter cell may not be used more than once in a word.</li>
+  <li>The output should contain all unique words found.</li>
+</ol>
 
 <p><strong>Example:</strong></p>
-
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Board:
 [
   ['o','a','a','n'],
@@ -273,107 +272,78 @@
   ['i','h','k','r'],
   ['i','f','l','v']
 ]
-
-Words: ["oath", "pea", "eat", "rain"]
-
-Output: ["eat", "oath"]
+Words: ["oath","pea","eat","rain"]
+Output: ["eat","oath"]
 </code></pre></div></div>
-
-<p>(“pea” is not there; “rain” is distinct.)</p>
+<p>Note: “pea” is not present. “rain” is not present.</p>
 
 <hr />
 
-<h2 id="2-approach-1-the-naive-solution-repeated-search">2. Approach 1: The Naive Solution (Repeated Search)</h2>
+<h2 id="2-understanding-the-problem">2. Understanding the Problem</h2>
 
-<p>If you’ve solved “Word Search I” (where you look for a <em>single</em> word), your instinct might be: “I’ll just run that algorithm for every word in the dictionary!”</p>
+<h3 id="21-the-native-vs-optimized-mindset">2.1 The Native vs. Optimized Mindset</h3>
+<ul>
+  <li><strong>Word Search I</strong>: Find <em>one</em> word. We iterate the grid and run DFS for that word.</li>
+  <li><strong>Word Search II</strong>: Find <em>K</em> words ($K$ can be 30,000).</li>
+</ul>
 
-<p><strong>The Algorithm:</strong></p>
-<ol>
-  <li>Iterate through every word in the <code class="language-plaintext highlighter-rouge">words</code> list.</li>
-  <li>For each word, scan the entire grid to find a starting character.</li>
-  <li>If found, run DFS (Depth-First Search) to try and match the rest of the word.</li>
-</ol>
+<p>If we define $M, N$ as grid dimensions and $L$ as max word length:</p>
+<ul>
+  <li><strong>Naive Approach</strong>: For each word, scan grid. Total Time: $K \times (M \times N \times 4^L)$.</li>
+  <li>This is horribly inefficient. We are visiting the same cells <code class="language-plaintext highlighter-rouge">(0,0)</code> ‘o’ -&gt; <code class="language-plaintext highlighter-rouge">(0,1)</code> ‘a’ thousands of times, once for “oath”, once for “oats”, once for “oatmeal”…</li>
+</ul>
 
-<p><strong>Why this fails at scale:</strong>
-Let’s say the board is <code class="language-plaintext highlighter-rouge">50x50</code> and you have <code class="language-plaintext highlighter-rouge">10,000</code> words.
-If many words start with widely used prefixes (like “react”, “reason”, “real”, “read”), you end up traversing the exact same path on the board (“r” -&gt; “e” -&gt; “a”) thousands of times—once for each word.</p>
+<h3 id="22-the-inversion-of-control">2.2 The Inversion of Control</h3>
+<p>Instead of “For each word, search the grid”, we flip it:
+“For each path in the grid, does it form <em>any</em> word?”</p>
 
-<p>This redundancy is killer. We need a way to group words that share prefixes so we traverse the common paths only once.</p>
+<p>To support this query (“Does this prefix exist in my list?”), we need a <strong>Trie</strong> (Prefix Tree).</p>
 
 <hr />
 
-<h2 id="3-the-optimized-solution-backtracking-with-a-trie">3. The Optimized Solution: Backtracking with a Trie</h2>
+<h2 id="3-approach-1-naive-repeated-dfs--dont-do-this">3. Approach 1: Naive (Repeated DFS) – Don’t do this</h2>
+<p>Run the solution for “Word Search I” inside a loop.
+Most interviewers will fail you immediately for this because it ignores the shared structure of the dictionary words.</p>
 
-<h3 id="31-what-is-a-trie">3.1 What is a Trie?</h3>
+<hr />
 
-<p>A <strong>Trie</strong> (pronounced “try” or “tree”) is a tree data structure specialized for strings. Instead of storing whole strings in nodes, we store characters on edges (or nodes). Paths from the root down to a node represent prefixes.</p>
+<h2 id="4-approach-2-backtracking-with-trie">4. Approach 2: Backtracking with Trie</h2>
 
-<p><strong>Visualizing the Trie:</strong>
-If our dictionary is <code class="language-plaintext highlighter-rouge">["oath", "pea", "eat", "rain"]</code>:</p>
+<p>We build a Trie from the dictionary words. Then we start DFS from every cell in the grid.
+As we traverse the grid (e.g., <code class="language-plaintext highlighter-rouge">o -&gt; a -&gt; t</code>), we move a pointer down the Trie.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        (root)
-       /   |   \
-      o    p    e
-     /     |     \
-    a      e      a
-   /       |       \
-  t        a        t (*)
- /
-h (*)
-</code></pre></div></div>
-<p><em>(</em>) marks the end of a valid word.*</p>
-
-<p>Notice how <code class="language-plaintext highlighter-rouge">"eat"</code> and <code class="language-plaintext highlighter-rouge">"eating"</code> (if we had it) would share the <code class="language-plaintext highlighter-rouge">e-a-t</code> path.</p>
-
-<h3 id="32-the-key-strategy">3.2 The Key Strategy</h3>
-
-<p>Instead of iterating through the <em>words</em>, we iterate through the <strong>grid</strong>.
-We start a DFS from every cell in the grid, and simultaneously traverse the Trie.</p>
-
+<h3 id="key-logic">Key Logic</h3>
 <ol>
-  <li><strong>Synchronized Traversal</strong>:
+  <li><strong>Build Trie</strong>: Insert all <code class="language-plaintext highlighter-rouge">words</code> into Trie. Mark leaf nodes with the actual <code class="language-plaintext highlighter-rouge">word</code>.</li>
+  <li><strong>Grid DFS</strong>:
     <ul>
-      <li>If we are at cell <code class="language-plaintext highlighter-rouge">(r, c)</code> with letter <code class="language-plaintext highlighter-rouge">'o'</code>, we check if the Trie root has a child <code class="language-plaintext highlighter-rouge">'o'</code>.</li>
-      <li>If yes, we move to that Trie node and move to a neighbor on the grid.</li>
+      <li>Start at <code class="language-plaintext highlighter-rouge">(r, c)</code>.</li>
+      <li>Check if <code class="language-plaintext highlighter-rouge">board[r][c]</code> is a child of <code class="language-plaintext highlighter-rouge">Current_Trie_Node</code>.</li>
+      <li>If Yes: Move to child. Mark visited. Recurse.</li>
+      <li>If No: Stop (Pruning).</li>
     </ul>
   </li>
-  <li><strong>Instant Validation</strong>:
+  <li><strong>Optimization (Leaf Pruning)</strong>:
     <ul>
-      <li>If the current Trie node marks the “end of a word”, we found one! Add it to results.</li>
-      <li>If the Trie node has no children matching any grid neighbor, we stop immediately. We don’t waste time exploring deeper.</li>
+      <li>Once we find a word like “oath”, we add it to results.</li>
+      <li><strong>Crucial</strong>: We should <em>remove</em> “oath” from the Trie (or mark it found) so we don’t find it again via a different path.</li>
+      <li>Even better: If a node has no children after finding a word, delete the node. This progressively shrinks the search space!</li>
     </ul>
   </li>
 </ol>
 
-<h3 id="33-optimization-pruning-the-trie">3.3 Optimization: Pruning the Trie</h3>
-
-<p>This is the “pro tip” for this problem.
-Once we find a word like <code class="language-plaintext highlighter-rouge">"oath"</code>, we add it to our result list. <strong>We don’t need to find it again.</strong>
-If we leave <code class="language-plaintext highlighter-rouge">"oath"</code> in the Trie, our DFS usually continues searching or re-finds it from other paths.</p>
-
-<p><strong>Pruning:</strong> When we find a word, we can theoretically remove it from the Trie. If a leaf node is removed and its parent has no other children, the parent can be removed too. This progressively shrinks the search space as we find words, making the algorithm faster the longer it runs!</p>
-
 <hr />
 
-<h2 id="4-design--implementation">4. Design &amp; Implementation</h2>
-
-<p>Let’s build this step by step.</p>
-
-<h3 id="41-the-trie-node">4.1 The Trie Node</h3>
-
-<p>To keep things efficient, we’ll store the actual word at the endpoint node. This saves us from having to reconstruct the string during DFS.</p>
+<h2 id="5-implementation">5. Implementation</h2>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">TrieNode</span><span class="p">:</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">children</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Map char -&gt; TrieNode
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">word</span> <span class="o">=</span> <span class="bp">None</span>    <span class="c1"># Stores the word if this node is an end
-</span></code></pre></div></div>
-
-<h3 id="42-the-main-algorithm-class">4.2 The Main Algorithm class</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Solution</span><span class="p">:</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">children</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">word</span> <span class="o">=</span> <span class="bp">None</span> <span class="c1"># Stores the word at the leaf node
+</span>
+<span class="k">class</span> <span class="nc">Solution</span><span class="p">:</span>
     <span class="k">def</span> <span class="nf">findWords</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">board</span><span class="p">,</span> <span class="n">words</span><span class="p">):</span>
-        <span class="c1"># Step 1: Build the Trie
+        <span class="c1"># 1. Build the Trie
 </span>        <span class="n">root</span> <span class="o">=</span> <span class="nc">TrieNode</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">words</span><span class="p">:</span>
             <span class="n">node</span> <span class="o">=</span> <span class="n">root</span>
@@ -381,153 +351,122 @@ If we leave <code class="language-plaintext highlighter-rouge">"oath"</code> in 
                 <span class="k">if</span> <span class="n">char</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">:</span>
                     <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">[</span><span class="n">char</span><span class="p">]</span> <span class="o">=</span> <span class="nc">TrieNode</span><span class="p">()</span>
                 <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">[</span><span class="n">char</span><span class="p">]</span>
-            <span class="n">node</span><span class="p">.</span><span class="n">word</span> <span class="o">=</span> <span class="n">w</span>  <span class="c1"># Mark end of word
-</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">matches</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">node</span><span class="p">.</span><span class="n">word</span> <span class="o">=</span> <span class="n">w</span> <span class="c1"># End of word
+</span>            
+        <span class="n">self</span><span class="p">.</span><span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">board</span><span class="p">),</span> <span class="nf">len</span><span class="p">(</span><span class="n">board</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         
-        <span class="c1"># Step 2: DFS function
-</span>        <span class="k">def</span> <span class="nf">dfs</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">dfs</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">parent_node</span><span class="p">):</span>
             <span class="n">letter</span> <span class="o">=</span> <span class="n">board</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">c</span><span class="p">]</span>
-            <span class="n">curr_node</span> <span class="o">=</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">[</span><span class="n">letter</span><span class="p">]</span>
+            <span class="n">curr_node</span> <span class="o">=</span> <span class="n">parent_node</span><span class="p">.</span><span class="n">children</span><span class="p">[</span><span class="n">letter</span><span class="p">]</span>
             
-            <span class="c1"># Check if we found a word
+            <span class="c1"># Check for match
 </span>            <span class="k">if</span> <span class="n">curr_node</span><span class="p">.</span><span class="n">word</span><span class="p">:</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">matches</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">curr_node</span><span class="p">.</span><span class="n">word</span><span class="p">)</span>
-                <span class="n">curr_node</span><span class="p">.</span><span class="n">word</span> <span class="o">=</span> <span class="bp">None</span>  <span class="c1"># Avoid duplicates!
+                <span class="n">self</span><span class="p">.</span><span class="n">res</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">curr_node</span><span class="p">.</span><span class="n">word</span><span class="p">)</span>
+                <span class="n">curr_node</span><span class="p">.</span><span class="n">word</span> <span class="o">=</span> <span class="bp">None</span> <span class="c1"># De-duplicate: Ensure we don't add it again
 </span>            
-            <span class="c1"># Mark path as visited for current recursion stack
-</span>            <span class="n">board</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="sh">'</span><span class="s">#</span><span class="sh">'</span> 
+            <span class="c1"># DFS Traversal logic
+</span>            <span class="n">board</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="sh">'</span><span class="s">#</span><span class="sh">'</span> <span class="c1"># Mark visited
+</span>            
+            <span class="k">for</span> <span class="n">dr</span><span class="p">,</span> <span class="n">dc</span> <span class="ow">in</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">)]:</span>
+                <span class="n">nr</span><span class="p">,</span> <span class="n">nc</span> <span class="o">=</span> <span class="n">r</span><span class="o">+</span><span class="n">dr</span><span class="p">,</span> <span class="n">c</span><span class="o">+</span><span class="n">dc</span>
+                <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">nr</span> <span class="o">&lt;</span> <span class="n">rows</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">nc</span> <span class="o">&lt;</span> <span class="n">cols</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">board</span><span class="p">[</span><span class="n">nr</span><span class="p">][</span><span class="n">nc</span><span class="p">]</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="p">.</span><span class="n">children</span><span class="p">:</span>
+                        <span class="nf">dfs</span><span class="p">(</span><span class="n">nr</span><span class="p">,</span> <span class="n">nc</span><span class="p">,</span> <span class="n">curr_node</span><span class="p">)</span>
             
-            <span class="c1"># Explore neighbors
-</span>            <span class="k">for</span> <span class="n">dr</span><span class="p">,</span> <span class="n">dc</span> <span class="ow">in</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">)]:</span>
-                <span class="n">nr</span><span class="p">,</span> <span class="n">nc</span> <span class="o">=</span> <span class="n">r</span> <span class="o">+</span> <span class="n">dr</span><span class="p">,</span> <span class="n">c</span> <span class="o">+</span> <span class="n">dc</span>
-                <span class="nf">if </span><span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">nr</span> <span class="o">&lt;</span> <span class="n">rows</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">nc</span> <span class="o">&lt;</span> <span class="n">cols</span> <span class="ow">and</span> 
-                    <span class="n">board</span><span class="p">[</span><span class="n">nr</span><span class="p">][</span><span class="n">nc</span><span class="p">]</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="p">.</span><span class="n">children</span><span class="p">):</span>
-                    <span class="nf">dfs</span><span class="p">(</span><span class="n">nr</span><span class="p">,</span> <span class="n">nc</span><span class="p">,</span> <span class="n">curr_node</span><span class="p">)</span>
-            
-            <span class="c1"># Backtrack: Unmark path
-</span>            <span class="n">board</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">letter</span>
-            
-            <span class="c1"># Optimization: Leaf pruning
-</span>            <span class="c1"># If current node has no children (and word is consumed),
-</span>            <span class="c1"># we can prune it from parent to optimize future searches.
+            <span class="n">board</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">letter</span> <span class="c1"># Backtrack
+</span>            
+            <span class="c1"># 3. Optimization: Incremental Pruning
+</span>            <span class="c1"># If leaf node and no word, prune it to optimize future searches
 </span>            <span class="k">if</span> <span class="ow">not</span> <span class="n">curr_node</span><span class="p">.</span><span class="n">children</span><span class="p">:</span>
-                <span class="k">del</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">[</span><span class="n">letter</span><span class="p">]</span>
+                <span class="k">del</span> <span class="n">parent_node</span><span class="p">.</span><span class="n">children</span><span class="p">[</span><span class="n">letter</span><span class="p">]</span>
 
-        <span class="c1"># Step 3: Trigger DFS from every cell
+        <span class="c1"># Trigger DFS
 </span>        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">cols</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">board</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="ow">in</span> <span class="n">root</span><span class="p">.</span><span class="n">children</span><span class="p">:</span>
                     <span class="nf">dfs</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
                     
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">matches</span>
+        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">res</span>
 </code></pre></div></div>
 
 <hr />
 
-<h2 id="5-walkthrough-how-it-runs">5. Walkthrough: How it Runs</h2>
+<h2 id="6-testing-strategy">6. Testing Strategy</h2>
 
-<p>Consider the board:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>o  a
-t  h
-</code></pre></div></div>
-<p>Words: <code class="language-plaintext highlighter-rouge">["oath", "oat"]</code></p>
+<h3 id="test-case-1-prefix-shared">Test Case 1: Prefix shared</h3>
+<p>Words: <code class="language-plaintext highlighter-rouge">["oath", "oat"]</code>.
+Board: Contains <code class="language-plaintext highlighter-rouge">o -&gt; a -&gt; t -&gt; h</code>.</p>
+<ul>
+  <li>DFS reaches ‘t’. Finds “oat”. Adds to result. Removes <code class="language-plaintext highlighter-rouge">word</code> marker.</li>
+  <li>DFS continues to ‘h’. Finds “oath”. Adds to result.</li>
+  <li>Backtrack.</li>
+</ul>
 
-<ol>
-  <li>
-    <p><strong>Trie Build</strong>:
-<code class="language-plaintext highlighter-rouge">root -&gt; o -&gt; a -&gt; t (end "oat") -&gt; h (end "oath")</code></p>
-  </li>
-  <li>
-    <p><strong>Scan Grid</strong>:</p>
-    <ul>
-      <li>Start at <code class="language-plaintext highlighter-rouge">(0,0)</code> which is <code class="language-plaintext highlighter-rouge">'o'</code>. It exists in <code class="language-plaintext highlighter-rouge">root.children</code>.</li>
-      <li><strong>DFS(‘o’)</strong>:
-        <ul>
-          <li>Move to Trie node <code class="language-plaintext highlighter-rouge">o</code>.</li>
-          <li>Valid neighbors of <code class="language-plaintext highlighter-rouge">(0,0)</code>: <code class="language-plaintext highlighter-rouge">(0,1)</code> is <code class="language-plaintext highlighter-rouge">'a'</code>, <code class="language-plaintext highlighter-rouge">(1,0)</code> is <code class="language-plaintext highlighter-rouge">'t'</code>.</li>
-          <li>Trie node <code class="language-plaintext highlighter-rouge">o</code> has child <code class="language-plaintext highlighter-rouge">a</code>? Yes.</li>
-        </ul>
-      </li>
-      <li><strong>DFS(‘a’)</strong> (at <code class="language-plaintext highlighter-rouge">0,1</code>):
-        <ul>
-          <li>Trie node <code class="language-plaintext highlighter-rouge">a</code> has child <code class="language-plaintext highlighter-rouge">t</code>? Yes. neighbor <code class="language-plaintext highlighter-rouge">(1,0)</code> is <code class="language-plaintext highlighter-rouge">t</code>.</li>
-        </ul>
-      </li>
-      <li><strong>DFS(‘t’)</strong> (at <code class="language-plaintext highlighter-rouge">1,0</code>):
-        <ul>
-          <li><strong>Found word!</strong> <code class="language-plaintext highlighter-rouge">curr_node.word</code> is <code class="language-plaintext highlighter-rouge">"oat"</code>. Add to list. Set <code class="language-plaintext highlighter-rouge">curr_node.word = None</code>.</li>
-          <li>Trie node <code class="language-plaintext highlighter-rouge">t</code> has child <code class="language-plaintext highlighter-rouge">h</code>? Yes. neighbor <code class="language-plaintext highlighter-rouge">(1,1)</code> is <code class="language-plaintext highlighter-rouge">h</code>.</li>
-        </ul>
-      </li>
-      <li><strong>DFS(‘h’)</strong> (at <code class="language-plaintext highlighter-rouge">1,1</code>):
-        <ul>
-          <li><strong>Found word!</strong> <code class="language-plaintext highlighter-rouge">curr_node.word</code> is <code class="language-plaintext highlighter-rouge">"oath"</code>. Add to list.</li>
-          <li><code class="language-plaintext highlighter-rouge">curr_node</code> (path o-a-t-h) has no children.</li>
-          <li><strong>Pruning</strong>: Remove <code class="language-plaintext highlighter-rouge">h</code> from parent <code class="language-plaintext highlighter-rouge">t</code>’s children.</li>
-        </ul>
-      </li>
-      <li>Backtrack to <code class="language-plaintext highlighter-rouge">t</code>:
-        <ul>
-          <li>Since we removed <code class="language-plaintext highlighter-rouge">h</code>, and <code class="language-plaintext highlighter-rouge">t</code> has no other children, we remove <code class="language-plaintext highlighter-rouge">t</code> from parent <code class="language-plaintext highlighter-rouge">a</code>.</li>
-        </ul>
-      </li>
-      <li>Backtrack to <code class="language-plaintext highlighter-rouge">a</code>:
-        <ul>
-          <li>Remove <code class="language-plaintext highlighter-rouge">a</code>… and so on.</li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-</ol>
-
-<p>The pruning effectively “eats” the Trie branches as we solve the puzzle, making the board emptier of possibilities as we go.</p>
-
-<hr />
-
-<h2 id="6-common-pitfalls">6. Common Pitfalls</h2>
-
-<ol>
-  <li><strong>Not handling duplicates</strong>: The problem asks for unique words. If the board has two “eat” formations, you shouldn’t return “eat” twice.
-    <ul>
-      <li><em>Fix</em>: Set <code class="language-plaintext highlighter-rouge">node.word = None</code> immediately after adding it to results.</li>
-    </ul>
-  </li>
-  <li><strong>Revisiting cells</strong>: You cannot use the same cell <code class="language-plaintext highlighter-rouge">(r,c)</code> twice in one word.
-    <ul>
-      <li><em>Fix</em>: Use a <code class="language-plaintext highlighter-rouge">visited</code> set or temporarily mutate the board (e.g., change <code class="language-plaintext highlighter-rouge">'a'</code> to <code class="language-plaintext highlighter-rouge">'#'</code>) during DFS.</li>
-    </ul>
-  </li>
-  <li><strong>Time Limit Exceeded (TLE)</strong>: Without Trie pruning, standard Trie DFS can still be slow on massive test cases where almost every path is a valid prefix. Pruning is often required for the fastest solution.</li>
-</ol>
+<h3 id="test-case-2-no-match">Test Case 2: No match</h3>
+<p>Words: <code class="language-plaintext highlighter-rouge">["abcd"]</code>. Board: <code class="language-plaintext highlighter-rouge">['a', 'b', 'x', 'd']</code>.</p>
+<ul>
+  <li>DFS matches <code class="language-plaintext highlighter-rouge">a -&gt; b</code>.</li>
+  <li>Next neighbor <code class="language-plaintext highlighter-rouge">x</code> is not in Trie child of <code class="language-plaintext highlighter-rouge">b</code>.</li>
+  <li>Stop immediately. (This shows the power of Trie pruning vs Naive).</li>
+</ul>
 
 <hr />
 
 <h2 id="7-complexity-analysis">7. Complexity Analysis</h2>
 
 <ul>
-  <li><strong>Time Complexity</strong>: <code class="language-plaintext highlighter-rouge">O(M * N * 3^L)</code> worst case.
+  <li><strong>Time</strong>: $O(M \times N \times 4^L)$.
     <ul>
-      <li><code class="language-plaintext highlighter-rouge">M * N</code>: We start a search from every cell.</li>
-      <li><code class="language-plaintext highlighter-rouge">3^L</code>: In the DFS, we have at most 4 directions, but we came from 1, so we look at 3 neighbors. <code class="language-plaintext highlighter-rouge">L</code> is the max length of a word.</li>
-      <li>In practice, the Trie limits this drastically.</li>
+      <li>In worst case, we might traverse depth $L$ for every cell.</li>
+      <li>The Trie makes this much faster on average because branches are pruned early.</li>
     </ul>
   </li>
-  <li><strong>Space Complexity</strong>: <code class="language-plaintext highlighter-rouge">O(K)</code> where <code class="language-plaintext highlighter-rouge">K</code> is the total number of characters in the dictionary (to build the Trie). The recursion stack takes <code class="language-plaintext highlighter-rouge">O(L)</code>.</li>
+  <li><strong>Space</strong>: $O(K \times L)$ for Trie storage ($K$ words, length $L$).</li>
 </ul>
 
 <hr />
 
-<h2 id="8-real-world-connections">8. Real World Connections</h2>
-
-<p>This isn’t just a puzzle game algorithm. This pattern—<strong>traversing a data structure guided by a state machine (Trie)</strong>—appears in:</p>
+<h2 id="8-production-considerations">8. Production Considerations</h2>
 
 <ol>
-  <li><strong>Boggle Solvers</strong>: Obviously.</li>
-  <li><strong>Spell Checkers</strong>: To quickly validate if a typed sequence is a valid prefix.</li>
-  <li><strong>T9 Text Prediction</strong>: Finding valid words from number sequences on old phones.</li>
-  <li><strong>DNA Sequencing</strong>: Searching for multiple genetic markers (sequences) in a long DNA strand.</li>
+  <li><strong>Thread Safety</strong>: In a real “Boggle Solver” server, building the Trie is a one-time startup cost. The DFS is per-request. The Trie must be read-only during requests.</li>
+  <li><strong>Memory</strong>: If dictionary is huge (Oxford Dictionary), Trie can take GBs. We might use a <strong>DAWG (Directed Acyclic Word Graph)</strong> to compress shared suffixes (e.g., “-ing”).</li>
+</ol>
+
+<hr />
+
+<h2 id="9-connections-to-ml-systems">9. Connections to ML Systems</h2>
+
+<p>This is the exact algorithm used in <strong>Typeahead Systems</strong> (ML System Design Track).</p>
+<ul>
+  <li><strong>Problem</strong>: User typed “Am”.</li>
+  <li><strong>Grid</strong>: The keyboard/input.</li>
+  <li><strong>Trie</strong>: The database of all Amazon Products.</li>
+  <li><strong>Task</strong>: Find the most likely completion.
+This DSA problem is the <em>Search</em> component of that system.</li>
+</ul>
+
+<p>Also relates to <strong>Phonetic Search</strong> (Speech Tech) where we search Tries by sound.</p>
+
+<hr />
+
+<h2 id="10-interview-strategy">10. Interview Strategy</h2>
+
+<ol>
+  <li><strong>Start with Naive</strong>: Briefly mention “I could just run DFS for each word”, then immediately pivot. “But that’s inefficient because…”</li>
+  <li><strong>Draw the Trie</strong>: Show how “ant” and “and” share the “an” node.</li>
+  <li><strong>Explain Pruning</strong>: This is the differentiator. “If I remove the leaf node after finding a word, the Trie gets smaller.” This shows senior-level optimization thinking.</li>
+</ol>
+
+<hr />
+
+<h2 id="11-key-takeaways">11. Key Takeaways</h2>
+
+<ol>
+  <li><strong>State Machines</strong>: A Trie acts as a State Machine for the DFS. “Am I allowed to step on ‘X’?” depends on my current Trie node.</li>
+  <li><strong>Preprocessing wins</strong>: Spend $O(K)$ time building a Trie to save exponential time during search.</li>
+  <li><strong>Backtracking Template</strong>: <code class="language-plaintext highlighter-rouge">Mark -&gt; Explore -&gt; Unmark</code> is the universal pattern.</li>
 </ol>
 
 <hr />
@@ -555,9 +494,9 @@ t  h
     
       <a href="/tags/#dfs" class="page__taxonomy-item p-category" rel="tag">dfs</a><span class="sep">, </span>
     
-      <a href="/tags/#matrix" class="page__taxonomy-item p-category" rel="tag">matrix</a><span class="sep">, </span>
+      <a href="/tags/#hard" class="page__taxonomy-item p-category" rel="tag">hard</a><span class="sep">, </span>
     
-      <a href="/tags/#string-search" class="page__taxonomy-item p-category" rel="tag">string-search</a><span class="sep">, </span>
+      <a href="/tags/#matrix" class="page__taxonomy-item p-category" rel="tag">matrix</a><span class="sep">, </span>
     
       <a href="/tags/#trie" class="page__taxonomy-item p-category" rel="tag">trie</a>
     
@@ -605,6 +544,44 @@ t  h
     
     <h2 class="archive__item-title no_toc" itemprop="headline">
       
+        <a href="/dsa/0048-word-search-ii/" rel="permalink">Word Search II
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Don’t look for one needle in a haystack. Magnetize the hay to find all needles at once.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
         <a href="/ml-system-design/0048-trie-based-search/" rel="permalink">Trie-Based Search Systems (Typeahead)
 </a>
       
@@ -623,14 +600,14 @@ t  h
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          5 minute read
+          4 minute read
         
       </span>
     
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“The best interfaces read your mind. Or at least, they complete your sentences.”
+    <p class="archive__item-excerpt" itemprop="description">“The user knows what they want. Your job is to tell them before they finish typing.”
 </p>
   </article>
 </div>
@@ -661,14 +638,14 @@ t  h
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          5 minute read
+          4 minute read
         
       </span>
     
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“Spelling is optional. Sound is non-negotiable.”
+    <p class="archive__item-excerpt" itemprop="description">“Spelling is irrelevant. Sound is everything.”
 </p>
   </article>
 </div>
@@ -699,14 +676,14 @@ t  h
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          4 minute read
+          5 minute read
         
       </span>
     
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“Waiting is the hardest part. So don’t make them wait.”
+    <p class="archive__item-excerpt" itemprop="description">“Waiting 10 seconds for a thoughtful answer is okay. Waiting 10 seconds for a blank screen is broken.”
 </p>
   </article>
 </div>

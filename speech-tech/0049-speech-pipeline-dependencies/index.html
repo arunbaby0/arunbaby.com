@@ -11,7 +11,7 @@
     <meta charset="utf-8">
 
 <!-- begin _includes/seo.html --><title>Speech Pipeline Dependencies - Arun Baby</title>
-<meta name="description" content="“Speech isn’t just ASR. It’s a symphony of models playing in order.”">
+<meta name="description" content="“Garbage in, Garbage out. Silence in, Hallucination out.”">
 
 
   <meta name="author" content="Arun Baby">
@@ -27,7 +27,7 @@
 <meta property="og:url" content="https://www.arunbaby.com/speech-tech/0049-speech-pipeline-dependencies/">
 
 
-  <meta property="og:description" content="“Speech isn’t just ASR. It’s a symphony of models playing in order.”">
+  <meta property="og:description" content="“Garbage in, Garbage out. Silence in, Hallucination out.”">
 
 
 
@@ -37,7 +37,7 @@
 
   <meta name="twitter:site" content="@arunbaby0">
   <meta name="twitter:title" content="Speech Pipeline Dependencies">
-  <meta name="twitter:description" content="“Speech isn’t just ASR. It’s a symphony of models playing in order.”">
+  <meta name="twitter:description" content="“Garbage in, Garbage out. Silence in, Hallucination out.”">
   <meta name="twitter:url" content="https://www.arunbaby.com/speech-tech/0049-speech-pipeline-dependencies/">
 
   
@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-22T11:01:30+05:30">
+  <meta property="article:published_time" content="2025-12-22T11:38:01+05:30">
 
 
 
@@ -206,8 +206,8 @@
 
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Speech Pipeline Dependencies">
-    <meta itemprop="description" content="“Speech isn’t just ASR. It’s a symphony of models playing in order.”">
-    <meta itemprop="datePublished" content="2025-12-22T11:01:30+05:30">
+    <meta itemprop="description" content="“Garbage in, Garbage out. Silence in, Hallucination out.”">
+    <meta itemprop="datePublished" content="2025-12-22T11:38:01+05:30">
     
 
     <div class="page__inner-wrap">
@@ -246,162 +246,221 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#1-introduction-the-complexity-of-listening">1. Introduction: The Complexity of “Listening”</a></li><li><a href="#2-the-standard-speech-pipeline-the-dag">2. The Standard Speech Pipeline (The DAG)</a><ul><li><a href="#21-component-breakdown">2.1 Component breakdown</a></li></ul></li><li><a href="#3-dependency-challenges">3. Dependency Challenges</a><ul><li><a href="#31-error-propagation-the-cascade-failure">3.1 Error Propagation (The Cascade Failure)</a></li><li><a href="#32-latency-addition">3.2 Latency Addition</a></li></ul></li><li><a href="#4-advanced-parallelizing-the-dag">4. Advanced: Parallelizing the DAG</a></li><li><a href="#5-end-to-end-vs-pipeline">5. End-to-End vs. Pipeline</a></li><li><a href="#6-real-world-example-hey-siri">6. Real World Example: “Hey Siri”</a></li><li><a href="#7-summary">7. Summary</a></li></ul>
+              <ul class="toc__menu"><li><a href="#1-problem-statement">1. Problem Statement</a></li><li><a href="#2-fundamentals-the-tightly-coupled-chain">2. Fundamentals: The Tightly Coupled Chain</a></li><li><a href="#3-high-level-architecture">3. High-Level Architecture</a></li><li><a href="#4-component-deep-dives">4. Component Deep-Dives</a><ul><li><a href="#41-voice-activity-detection-vad">4.1 Voice Activity Detection (VAD)</a></li><li><a href="#42-speaker-diarization">4.2 Speaker Diarization</a></li><li><a href="#43-asr">4.3 ASR</a></li></ul></li><li><a href="#5-data-flow-the-turn-concept">5. Data Flow: The “Turn” Concept</a></li><li><a href="#6-model-selection--trade-offs">6. Model Selection &amp; Trade-offs</a></li><li><a href="#7-implementation-the-pipeline-class">7. Implementation: The Pipeline Class</a></li><li><a href="#8-streaming-implications">8. Streaming Implications</a></li><li><a href="#9-quality-metrics">9. Quality Metrics</a></li><li><a href="#10-common-failure-modes">10. Common Failure Modes</a></li><li><a href="#11-state-of-the-art">11. State-of-the-Art</a></li><li><a href="#12-key-takeaways">12. Key Takeaways</a></li></ul>
             </nav>
           </aside>
         
-        <p><strong>“Speech isn’t just ASR. It’s a symphony of models playing in order.”</strong></p>
+        <p><strong>“Garbage in, Garbage out. Silence in, Hallucination out.”</strong></p>
 
-<h2 id="1-introduction-the-complexity-of-listening">1. Introduction: The Complexity of “Listening”</h2>
+<h2 id="1-problem-statement">1. Problem Statement</h2>
 
-<p>When you use a tool like <strong>Otter.ai</strong> or <strong>Zoom Transcriptions</strong>, it feels like one magic AI.
-Realistically, it is a complex DAG of 5-10 different models executing in a precise order.</p>
+<p>A modern “Voice Assistant” is not one model. It is a <strong>Cascade of Models</strong>.</p>
+<ol>
+  <li><strong>VAD</strong>: Is someone speaking?</li>
+  <li><strong>Diarization</strong>: Who is speaking?</li>
+  <li><strong>ASR</strong>: What did they say?</li>
+  <li><strong>NLP/Entity</strong>: What does it mean?</li>
+</ol>
 
-<p>If we just ran a massive ASR model on a 1-hour recording, it would fail. It would transcribe silence. It would confuse Speakers A and B. It would hallucinate during noise.
-To build a production system, we must decompose the problem into a <strong>Pipeline</strong>.</p>
+<p><strong>The Problem</strong>: These models depend on each other. If VAD cuts off the first 50ms of a word, ASR fails. If ASR makes a typo, NLP fails. How do we orchestrate this pipeline efficiently?</p>
 
 <hr />
 
-<h2 id="2-the-standard-speech-pipeline-the-dag">2. The Standard Speech Pipeline (The DAG)</h2>
+<h2 id="2-fundamentals-the-tightly-coupled-chain">2. Fundamentals: The Tightly Coupled Chain</h2>
 
-<p>Let’s look at the dependencies for a meeting transcription bot.</p>
+<p>Unlike generic microservices where Service A calls Service B via HTTP, Speech pipelines share <strong>Time Alignment</strong>.</p>
+<ul>
+  <li>VAD output: <code class="language-plaintext highlighter-rouge">User spoke [0.5s - 2.5s]</code>.</li>
+  <li>Diarization output: <code class="language-plaintext highlighter-rouge">Speaker A at [0.4s - 2.6s]</code>.</li>
+  <li>The timestamps must match perfectly.</li>
+  <li><strong>Error Propagation</strong>: A 10% error in VAD can cause a 50% error in Diarization (if it misses the speaker change).</li>
+</ul>
 
-<pre><code class="language-mermaid">graph TD
-    Audio[Raw Audio Stream] --&gt; VAD[Voice Activity Detection]
-    VAD --&gt;|Speech Segments| Diar[Speaker Diarization]
-    VAD --&gt;|Speech Segments| ASR[Speech Recognition]
-    Diar --&gt;|Speaker Labels| Merge[Alignment &amp; Merge]
-    ASR --&gt;|Text| Merge
-    Merge --&gt;|Transcript w/ Speakers| NLP[Punctuation &amp; Sentiment]
-    NLP --&gt; UI[User Interface]
+<hr />
+
+<h2 id="3-high-level-architecture">3. High-Level Architecture</h2>
+
+<p>We can view this as a <strong>Stream Processing DAG</strong>.</p>
+
+<pre><code class="language-mermaid">graph LR
+    A[Microphone Stream] --&gt; B{VAD}
+    B -- Silence --&gt; C[Discard / Noise Profile Update]
+    B -- Speech --&gt; D[Buffer]
+    D --&gt; E[Speaker ID (Embedding)]
+    D --&gt; F[ASR (Transcription)]
+    E --&gt; G[Meeting Transcript Builder]
+    F --&gt; G
 </code></pre>
 
-<h3 id="21-component-breakdown">2.1 Component breakdown</h3>
+<hr />
 
+<h2 id="4-component-deep-dives">4. Component Deep-Dives</h2>
+
+<h3 id="41-voice-activity-detection-vad">4.1 Voice Activity Detection (VAD)</h3>
+<p>The Gatekeeper.</p>
+<ul>
+  <li><strong>Role</strong>: Save compute by ignoring silence. Prevent ASR from hallucinating on noise.</li>
+  <li><strong>Latency</strong>: Must be &lt; 10ms.</li>
+  <li><strong>Models</strong>: Silero VAD (RNN), WebRTC VAD (GMM).</li>
+</ul>
+
+<h3 id="42-speaker-diarization">4.2 Speaker Diarization</h3>
+<p>The labeler.</p>
+<ul>
+  <li><strong>Role</strong>: Assign “Speaker 1” vs “Speaker 2”.</li>
+  <li><strong>Complexity</strong>: $O(N^2)$ (Clustering). Hard to do streaming.</li>
+  <li><strong>Solution</strong>: “Online Diarization” keeps a centroid for active speakers and assigns new frames to nearest centroid.</li>
+</ul>
+
+<h3 id="43-asr">4.3 ASR</h3>
+<p>The Heavy Lifter.</p>
+<ul>
+  <li>Takes the buffered audio from VAD.</li>
+  <li>Returns text + timestamps.</li>
+</ul>
+
+<hr />
+
+<h2 id="5-data-flow-the-turn-concept">5. Data Flow: The “Turn” Concept</h2>
+
+<p>Processing audio byte-by-byte is inefficient for ASR. We group audio into <strong>Turns</strong> (Utterances).</p>
 <ol>
-  <li><strong>VAD (Gatekeeper)</strong>:
-    <ul>
-      <li><em>Input</em>: Audio Frame (30ms).</li>
-      <li><em>Output</em>: Probability of Speech.</li>
-      <li><em>Why</em>: Dependency for everything. Don’t send silence to the expensive ASR model. It saves 50% compute.</li>
-    </ul>
-  </li>
-  <li><strong>Diarization (Who?)</strong>:
-    <ul>
-      <li><em>Input</em>: Speech Segment.</li>
-      <li><em>Output</em>: “Speaker 1”, “Speaker 2”.</li>
-      <li><em>Why</em>: “I hate this” means something very different if said by the Buyer vs. the Seller.</li>
-    </ul>
-  </li>
-  <li><strong>ASR (What?)</strong>:
-    <ul>
-      <li><em>Input</em>: Speech Segment.</li>
-      <li><em>Output</em>: “hello world”.</li>
-    </ul>
-  </li>
-  <li><strong>Alignment (Sync)</strong>:
-    <ul>
-      <li><em>Challenge</em>: Diarization says “Speaker A spoke from 0:00 to 0:05”. ASR gives text “Hello world”.</li>
-      <li>We must merge these streams accurately.</li>
-    </ul>
-  </li>
+  <li>VAD detects <code class="language-plaintext highlighter-rouge">Speech Start</code>.</li>
+  <li>Pipeline starts Accumulating audio into RAM.</li>
+  <li>VAD detects <code class="language-plaintext highlighter-rouge">Speech End</code> (trailing silence &gt; 500ms).</li>
+  <li><strong>Trigger</strong>: Send accumulated buffer to Diarization and ASR in parallel.</li>
+  <li><strong>Merge</strong>: Combine <code class="language-plaintext highlighter-rouge">Speaker=John</code> and <code class="language-plaintext highlighter-rouge">Text="Hello"</code>.</li>
 </ol>
 
 <hr />
 
-<h2 id="3-dependency-challenges">3. Dependency Challenges</h2>
+<h2 id="6-model-selection--trade-offs">6. Model Selection &amp; Trade-offs</h2>
 
-<h3 id="31-error-propagation-the-cascade-failure">3.1 Error Propagation (The Cascade Failure)</h3>
-<p>In a DAG, errors flow downstream.</p>
-<ul>
-  <li><strong>Fail 1</strong>: VAD misses a quiet whisper.</li>
-  <li><strong>Result</strong>: ASR never sees the audio. The sentence is lost forever.</li>
-  <li><strong>Fail 2</strong>: Diarization thinks two people are one person.</li>
-  <li><strong>Result</strong>: The transcript attributes the “No” (from Speaker B) to Speaker A. Legal disaster.</li>
-</ul>
-
-<p>This makes debugging hard. Is the ASR bad, or did the VAD just cut the first word?</p>
-
-<h3 id="32-latency-addition">3.2 Latency Addition</h3>
-<p>In a serial pipeline (A -&gt; B -&gt; C), Latency = Latency(A) + Latency(B) + Latency(C).</p>
-<ul>
-  <li>VAD: 30ms</li>
-  <li>ASR: 200ms</li>
-  <li>NLP: 50ms</li>
-  <li><strong>Total</strong>: 280ms.
-Optimization must happen at the bottleneck (usually ASR).</li>
-</ul>
+<table>
+  <thead>
+    <tr>
+      <th>Stage</th>
+      <th>Model Option A (Fast)</th>
+      <th>Model Option B (Accurate)</th>
+      <th>Selection Logic</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>VAD</td>
+      <td>WebRTC (CPU)</td>
+      <td>Silero (NN)</td>
+      <td>Use Silero. Accuracy is vital. Cost is low.</td>
+    </tr>
+    <tr>
+      <td>Diarization</td>
+      <td>Speaker Embedding (ResNet)</td>
+      <td>End-to-End (EEND)</td>
+      <td>Use Embedding. EEND is too slow for real-time.</td>
+    </tr>
+    <tr>
+      <td>ASR</td>
+      <td>Whisper-Tiny</td>
+      <td>Whisper-Large</td>
+      <td>Use Tiny for streaming, Large for final correction.</td>
+    </tr>
+  </tbody>
+</table>
 
 <hr />
 
-<h2 id="4-advanced-parallelizing-the-dag">4. Advanced: Parallelizing the DAG</h2>
+<h2 id="7-implementation-the-pipeline-class">7. Implementation: The Pipeline Class</h2>
 
-<p>Notice in our graph that <strong>ASR</strong> and <strong>Diarization</strong> both depend on VAD, but <em>not on each other</em>.
-This is a critical insight from our Topological Sort (DSA Day 49).</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
 
-<p>We can run ASR and Diarization <strong>in parallel</strong>.</p>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">async</span> <span class="k">def</span> <span class="nf">process_segment</span><span class="p">(</span><span class="n">audio_segment</span><span class="p">):</span>
-    <span class="c1"># 1. Start both tasks concurrently
-</span>    <span class="n">task_asr</span> <span class="o">=</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">create_task</span><span class="p">(</span><span class="nf">run_asr</span><span class="p">(</span><span class="n">audio_segment</span><span class="p">))</span>
-    <span class="n">task_diar</span> <span class="o">=</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">create_task</span><span class="p">(</span><span class="nf">run_diarization</span><span class="p">(</span><span class="n">audio_segment</span><span class="p">))</span>
-    
-    <span class="c1"># 2. Wait for both
-</span>    <span class="n">text</span> <span class="o">=</span> <span class="k">await</span> <span class="n">task_asr</span>
-    <span class="n">speaker</span> <span class="o">=</span> <span class="k">await</span> <span class="n">task_diar</span>
-    
-    <span class="c1"># 3. Merge results
-</span>    <span class="k">return</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">speaker</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="sh">"</span>
+<span class="k">class</span> <span class="nc">SpeechPipeline</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">vad_model</span> <span class="o">=</span> <span class="nf">load_silero_vad</span><span class="p">()</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">asr_model</span> <span class="o">=</span> <span class="nf">load_whisper</span><span class="p">()</span>
+        <span class="n">self</span><span class="p">.</span><span class="nb">buffer</span> <span class="o">=</span> <span class="p">[]</span>
+        
+    <span class="k">def</span> <span class="nf">process_frame</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_chunk</span><span class="p">):</span>
+        <span class="c1"># 1. Filter Silence
+</span>        <span class="n">speech_prob</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">vad_model</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">,</span> <span class="mi">16000</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">speech_prob</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
+            <span class="n">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
+            
+        <span class="k">elif</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Trailing silence detected -&gt; End of Turn
+</span>            <span class="n">full_audio</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">)</span>
+            <span class="n">self</span><span class="p">.</span><span class="nb">buffer</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># Reset
+</span>            
+            <span class="c1"># 2. Trigger ASR (The Dependency)
+</span>            <span class="n">text</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">asr_model</span><span class="p">.</span><span class="nf">transcribe</span><span class="p">(</span><span class="n">full_audio</span><span class="p">)</span>
+            
+            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Turn Complete: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
 </code></pre></div></div>
 
-<p>This reduces the latency to <code class="language-plaintext highlighter-rouge">max(ASR, Diarization)</code> instead of <code class="language-plaintext highlighter-rouge">sum(ASR + Diarization)</code>.</p>
-
 <hr />
 
-<h2 id="5-end-to-end-vs-pipeline">5. End-to-End vs. Pipeline</h2>
+<h2 id="8-streaming-implications">8. Streaming Implications</h2>
 
-<p>Recent research (like <strong>Listen, Attend, and Spell</strong> or <strong>Whisper</strong>) tries to collapse the DAG into a single node.</p>
-<ul>
-  <li>Input: Audio.</li>
-  <li>Output: “Speaker A: Hello. Speaker B: Hi.”</li>
-</ul>
-
-<p><strong>Pros</strong>:</p>
-<ul>
-  <li>Simpler deployment (one model file).</li>
-  <li>Joint optimization: The model uses text context to help identify speaker changes.</li>
-</ul>
-
-<p><strong>Cons</strong>:</p>
-<ul>
-  <li>Inflexible. You can’t just “upgrade VAD” without retraining the whole monster.</li>
-  <li>High compute. You run the monster model even for silence.</li>
-</ul>
-
-<p>For now, industry “Meeting Bots” still prefer the Pipeline approach for modularity and cost control (VAD is cheap!).</p>
-
-<hr />
-
-<h2 id="6-real-world-example-hey-siri">6. Real World Example: “Hey Siri”</h2>
-
-<p>The pipeline on your phone is extremely strict about dependencies to save battery.</p>
-
+<p>In a true streaming pipeline, we cannot wait for “End of Turn”.
+We use <strong>Speculative Execution</strong>.</p>
 <ol>
-  <li><strong>Stage 1 (Low Power DSP)</strong>: Always listening buffer. Dependencies: None. Detection: “Is there energy?”</li>
-  <li><strong>Stage 2 (Small Neural Net)</strong>: Wake Word Detector. Dependency: Stage 1 Energy &gt; Threshold. Detection: “Is it ‘Siri’?”</li>
-  <li><strong>Stage 3 (Main ASR)</strong>: Cloud/On-Device Large Model. Dependency: Stage 2 Confidence &gt; Threshold. Action: “Process Command.”</li>
+  <li>ASR runs continuously on partial buffer: <code class="language-plaintext highlighter-rouge">H -&gt; He -&gt; Hel -&gt; Hello</code>.</li>
+  <li>Diarization runs every 1 second: <code class="language-plaintext highlighter-rouge">Speaker A</code>.</li>
+  <li><strong>Correction</strong>: If Diarization changes its mind (<code class="language-plaintext highlighter-rouge">Speaker A</code> -&gt; <code class="language-plaintext highlighter-rouge">Speaker B</code>), we send a “Correction Event” to the UI to overwrite the previous line.</li>
 </ol>
 
-<p>If Stage 3 ran constantly, your battery would die in 1 hour. The DAG saves your battery.</p>
+<hr />
+
+<h2 id="9-quality-metrics">9. Quality Metrics</h2>
+
+<ul>
+  <li><strong>DER (Diarization Error Rate)</strong>: <code class="language-plaintext highlighter-rouge">False Alarm + Missed Detection + Confusion</code>.</li>
+  <li><strong>CpWER (Concatenated Person WER)</strong>: WER calculated per speaker. Finding out if the model is biased against Speaker B.</li>
+</ul>
 
 <hr />
 
-<h2 id="7-summary">7. Summary</h2>
+<h2 id="10-common-failure-modes">10. Common Failure Modes</h2>
 
-<p>Building a speech product is an exercise in <strong>Systems Integration</strong>.
-You are the architect of a graph where audio flows in, passes through gates (VAD), splits into parallel branches (ASR/Diarization), and recombines into a structured transcript.</p>
+<ol>
+  <li><strong>The “Schrodinger’s Word”</strong>: A word at the boundary of a VAD cut.
+    <ul>
+      <li>User: “Important.”</li>
+      <li>VAD cuts at 0.1s.</li>
+      <li>Audio: “…portant.”</li>
+      <li>ASR: “Portent.”</li>
+      <li><em>Fix</em>: <strong>Padding</strong>. Always keep 200ms of history before the VAD trigger.</li>
+    </ul>
+  </li>
+  <li><strong>Overlapping Speech</strong>: Two people talk at once.
+    <ul>
+      <li>Standard ASR fails.</li>
+      <li>Standard Diarization fails.</li>
+      <li><em>Fix</em>: Source Separation models (rarely used in production due to cost).</li>
+    </ul>
+  </li>
+</ol>
 
-<p>Understanding the dependencies allows you to optimize for <strong>Cost</strong> (filter early) and <strong>Latency</strong> (parallelize independent branches).</p>
+<hr />
+
+<h2 id="11-state-of-the-art">11. State-of-the-Art</h2>
+
+<p><strong>Joint Models (Transducers)</strong>.
+Instead of <code class="language-plaintext highlighter-rouge">VAD -&gt; ASR -&gt; NLP</code>, train one massive Transformer:
+Input: Audio.
+Output: <code class="language-plaintext highlighter-rouge">&lt;speaker:1&gt; Hello &lt;speaker:2&gt; Hi there &lt;sentiment:pos&gt;</code>.
+This removes the pipeline latency but makes modular upgrades impossible.</p>
+
+<hr />
+
+<h2 id="12-key-takeaways">12. Key Takeaways</h2>
+
+<ol>
+  <li><strong>VAD is critical</strong>: It is the “Trigger” for the whole DAG. If it’s flawed, the system is flawed.</li>
+  <li><strong>Padding saves lives</strong>: Never feed exact VAD boundaries to ASR. Add context.</li>
+  <li><strong>Latency Budget</strong>: If Total Latency limit is 500ms, and ASR takes 400ms, VAD+Diarization must happen in 100ms.</li>
+  <li><strong>Async Design</strong>: Run ASR and Diarization in parallel threads, not sequential, to minimize wall-clock time.</li>
+</ol>
 
 <hr />
 
@@ -426,11 +485,11 @@ You are the architect of a graph where audio flows in, passes through gates (VAD
     
       <a href="/tags/#asr" class="page__taxonomy-item p-category" rel="tag">asr</a><span class="sep">, </span>
     
-      <a href="/tags/#diarization" class="page__taxonomy-item p-category" rel="tag">diarization</a><span class="sep">, </span>
+      <a href="/tags/#latency" class="page__taxonomy-item p-category" rel="tag">latency</a><span class="sep">, </span>
     
       <a href="/tags/#pipeline" class="page__taxonomy-item p-category" rel="tag">pipeline</a><span class="sep">, </span>
     
-      <a href="/tags/#production" class="page__taxonomy-item p-category" rel="tag">production</a><span class="sep">, </span>
+      <a href="/tags/#speaker-diarization" class="page__taxonomy-item p-category" rel="tag">speaker-diarization</a><span class="sep">, </span>
     
       <a href="/tags/#vad" class="page__taxonomy-item p-category" rel="tag">vad</a>
     
@@ -496,14 +555,14 @@ You are the architect of a graph where audio flows in, passes through gates (VAD
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          4 minute read
+          5 minute read
         
       </span>
     
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“Putting on socks before shoes is a dependency. Topological sort is just the math of getting dressed.”
+    <p class="archive__item-excerpt" itemprop="description">“You can’t build the roof before you pour the foundation.”
 </p>
   </article>
 </div>
@@ -534,6 +593,44 @@ You are the architect of a graph where audio flows in, passes through gates (VAD
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Cron is not an orchestrator. A script is not a pipeline.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/speech-tech/0049-speech-pipeline-dependencies/" rel="permalink">Speech Pipeline Dependencies
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
           4 minute read
         
       </span>
@@ -541,7 +638,7 @@ You are the architect of a graph where audio flows in, passes through gates (VAD
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“Cron jobs are fine for scripts. Pipelines need Orchestrators.”
+    <p class="archive__item-excerpt" itemprop="description">“Garbage in, Garbage out. Silence in, Hallucination out.”
 </p>
   </article>
 </div>
@@ -572,14 +669,14 @@ You are the architect of a graph where audio flows in, passes through gates (VAD
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          3 minute read
+          2 minute read
         
       </span>
     
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“Agents don’t just follow instructions. They plan. And a plan is just a dependency graph.”
+    <p class="archive__item-excerpt" itemprop="description">“An Agent without a Plan is just a stochastic parrot reacting to noise.”
 </p>
   </article>
 </div>

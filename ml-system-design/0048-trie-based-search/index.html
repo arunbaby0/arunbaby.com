@@ -11,7 +11,7 @@
     <meta charset="utf-8">
 
 <!-- begin _includes/seo.html --><title>Trie-Based Search Systems (Typeahead) - Arun Baby</title>
-<meta name="description" content="“The best interfaces read your mind. Or at least, they complete your sentences.”">
+<meta name="description" content="“The user knows what they want. Your job is to tell them before they finish typing.”">
 
 
   <meta name="author" content="Arun Baby">
@@ -27,7 +27,7 @@
 <meta property="og:url" content="https://www.arunbaby.com/ml-system-design/0048-trie-based-search/">
 
 
-  <meta property="og:description" content="“The best interfaces read your mind. Or at least, they complete your sentences.”">
+  <meta property="og:description" content="“The user knows what they want. Your job is to tell them before they finish typing.”">
 
 
 
@@ -37,7 +37,7 @@
 
   <meta name="twitter:site" content="@arunbaby0">
   <meta name="twitter:title" content="Trie-Based Search Systems (Typeahead)">
-  <meta name="twitter:description" content="“The best interfaces read your mind. Or at least, they complete your sentences.”">
+  <meta name="twitter:description" content="“The user knows what they want. Your job is to tell them before they finish typing.”">
   <meta name="twitter:url" content="https://www.arunbaby.com/ml-system-design/0048-trie-based-search/">
 
   
@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-22T11:01:30+05:30">
+  <meta property="article:published_time" content="2025-12-22T11:38:01+05:30">
 
 
 
@@ -206,8 +206,8 @@
 
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Trie-Based Search Systems (Typeahead)">
-    <meta itemprop="description" content="“The best interfaces read your mind. Or at least, they complete your sentences.”">
-    <meta itemprop="datePublished" content="2025-12-22T11:01:30+05:30">
+    <meta itemprop="description" content="“The user knows what they want. Your job is to tell them before they finish typing.”">
+    <meta itemprop="datePublished" content="2025-12-22T11:38:01+05:30">
     
 
     <div class="page__inner-wrap">
@@ -246,211 +246,249 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#1-introduction-the-magic-of-type">1. Introduction: The Magic of “Type…”</a></li><li><a href="#2-the-core-data-structure-the-weighted-trie">2. The Core Data Structure: The Weighted Trie</a><ul><li><a href="#21-why-a-trie">2.1 Why a Trie?</a></li><li><a href="#22-adding-weights-for-ranking">2.2 Adding “Weights” for Ranking</a></li></ul></li><li><a href="#3-optimizing-for-scale">3. Optimizing for Scale</a><ul><li><a href="#31-the-data-size-problem">3.1 The Data Size Problem</a></li><li><a href="#32-offline-vs-online-updates">3.2 Offline vs. Online Updates</a></li></ul></li><li><a href="#4-sampling--probabilistic-data-structures">4. Sampling &amp; Probabilistic Data Structures</a></li><li><a href="#5-client-side-optimization">5. Client-Side Optimization</a></li><li><a href="#6-architecture-diagram">6. Architecture Diagram</a></li><li><a href="#7-comparison-database-vs-trie">7. Comparison: Database vs. Trie</a></li><li><a href="#8-summary--takeaways">8. Summary &amp; Takeaways</a></li></ul>
+              <ul class="toc__menu"><li><a href="#1-problem-statement">1. Problem Statement</a></li><li><a href="#2-understanding-the-requirements">2. Understanding the Requirements</a><ul><li><a href="#21-the-scale">2.1 The Scale</a></li><li><a href="#22-the-ranking-problem">2.2 The Ranking Problem</a></li></ul></li><li><a href="#3-high-level-architecture">3. High-Level Architecture</a></li><li><a href="#4-component-deep-dives">4. Component Deep-Dives</a><ul><li><a href="#41-the-data-structure-the-weighted-trie">4.1 The Data Structure: The Weighted Trie</a></li><li><a href="#42-data-sharding">4.2 Data Sharding</a></li></ul></li><li><a href="#5-data-flow-the-log-processing-pipeline">5. Data Flow: The Log Processing Pipeline</a></li><li><a href="#6-scaling-strategies">6. Scaling Strategies</a><ul><li><a href="#61-the-trending-problem-real-time">6.1 The “Trending” Problem (Real-time)</a></li><li><a href="#62-sampling">6.2 Sampling</a></li></ul></li><li><a href="#7-implementation-a-basic-typeahead-class">7. Implementation: A Basic Typeahead Class</a></li><li><a href="#8-monitoring--metrics">8. Monitoring &amp; Metrics</a></li><li><a href="#9-failure-modes">9. Failure Modes</a></li><li><a href="#10-real-world-case-study-facebook-search">10. Real-World Case Study: Facebook Search</a></li><li><a href="#11-cost-analysis">11. Cost Analysis</a></li><li><a href="#12-key-takeaways">12. Key Takeaways</a></li></ul>
             </nav>
           </aside>
         
-        <p><strong>“The best interfaces read your mind. Or at least, they complete your sentences.”</strong></p>
+        <p><strong>“The user knows what they want. Your job is to tell them before they finish typing.”</strong></p>
 
-<h2 id="1-introduction-the-magic-of-type">1. Introduction: The Magic of “Type…”</h2>
+<h2 id="1-problem-statement">1. Problem Statement</h2>
 
-<p>When you type “bey” into Google, it suggests “Beyoncé” instantly. When you type “sys” into your IDE, it suggests <code class="language-plaintext highlighter-rouge">System.out.println</code>. This is <strong>Typeahead</strong> (or Autocomplete).</p>
-
-<p>It feels simple—just looking up strings—but implementing it at scale is one of the classic “hard” system design problems. Why?</p>
-
-<ol>
-  <li><strong>Velocity</strong>: It happens on <em>every keystroke</em>. The query volume is 5-10x higher than regular search.</li>
-  <li><strong>Latency</strong>: The suggestions must appear instantly (&lt; 50ms) effectively “beating” the user’s typing speed.</li>
-  <li><strong>Data Volume</strong>: Google sees billions of unique queries. You can’t just store a discrete list.</li>
-  <li><strong>Ranking</strong>: “Java” could mean the island, the coffee, or the language. The system must pick the most relevant one based on popularity or context.</li>
-</ol>
-
-<p>Today, we’ll design a robust Typeahead system using the data structure we mastered in DSA: the <strong>Trie</strong>.</p>
-
-<hr />
-
-<h2 id="2-the-core-data-structure-the-weighted-trie">2. The Core Data Structure: The Weighted Trie</h2>
-
-<h3 id="21-why-a-trie">2.1 Why a Trie?</h3>
-
-<p>If you just stored all possible queries in a database table:
-<code class="language-plaintext highlighter-rouge">SELECT * FROM queries WHERE text LIKE 'sys%' ORDER BY popularity DESC LIMIT 5</code>
-This is an <code class="language-plaintext highlighter-rouge">O(N)</code> scan (or <code class="language-plaintext highlighter-rouge">O(log N)</code> with loops) that is painfully slow for millions of rows.</p>
-
-<p>A <strong>Trie</strong> is perfect because:</p>
-<ol>
-  <li><strong>Prefix-based lookup</strong>: Finding all words starting with “sys” requires traversing just 3 nodes (<code class="language-plaintext highlighter-rouge">s</code> -&gt; <code class="language-plaintext highlighter-rouge">y</code> -&gt; <code class="language-plaintext highlighter-rouge">s</code>).</li>
-  <li><strong>Compactness</strong>: The prefixes “sys”, “system”, “systolic” share the same initial path, saving memory.</li>
-</ol>
-
-<h3 id="22-adding-weights-for-ranking">2.2 Adding “Weights” for Ranking</h3>
-
-<p>We don’t just want valid completions; we want the <em>best</em> ones. We augment our Trie nodes to store <strong>Top K</strong> popular completions.</p>
-
-<p><strong>Standard Trie Node:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Node 'a':
-  - children: {'b': Node, 'c': Node}
-</code></pre></div></div>
-
-<p><strong>Typeahead Trie Node:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Node 'a':
-  - children: {'b': Node, 'c': Node}
-  - top_completions: [("amazon", 99), ("amazing", 50), ("apple", 45)]
-</code></pre></div></div>
-
-<p>By pre-calculating the top K results at <em>every</em> node, the runtime logic becomes trivial: “Go to node for the prefix ‘a’, and return the cached <code class="language-plaintext highlighter-rouge">top_completions</code> list.” O(1) lookup time!</p>
-
-<hr />
-
-<h2 id="3-optimizing-for-scale">3. Optimizing for Scale</h2>
-
-<h3 id="31-the-data-size-problem">3.1 The Data Size Problem</h3>
-
-<p>A complete Trie of all Google searches would not fit in the RAM of a single machine.</p>
+<p>Typeahead (or Autocomplete) is the most heavily used feature on the internet.</p>
 <ul>
-  <li>English words: ~200k.</li>
-  <li>Proper nouns, locations, rare queries: ~Billions.</li>
+  <li><strong>Volume</strong>: Every keystroke triggers a query. If a user types “iphone case”, that’s 11 requests.</li>
+  <li><strong>Latency</strong>: Must be &lt; 50ms (Human perception of “instant”).</li>
+  <li><strong>Freshness</strong>: If “Earthquake in Japan” happens, it must appear in suggestions within minutes.</li>
 </ul>
 
-<p><strong>Solution: Sharding</strong>
-We need to split the Trie across multiple servers.</p>
+<p><strong>The System Design</strong>: Build a backend for a Google-style search bar that suggests top 10 completions based on prefix.</p>
 
-<ol>
-  <li><strong>Range Sharding</strong>:
-    <ul>
-      <li>Server A: Words starting with ‘a’ - ‘c’</li>
-      <li>Server B: Words starting with ‘d’ - ‘f’</li>
-      <li><em>Problem</em>: ‘s’ (system, school, star wars) is way more popular than ‘x’ (xylophone). Server ‘s’ melts down.</li>
-    </ul>
-  </li>
-  <li><strong>Hash Sharding (Better)</strong>:
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">Shard_ID = Hash(prefix) % Num_Servers</code></li>
-      <li><em>However</em>, we can only hash the <em>fixed-size prefix</em> (e.g., first 2 letters). <code class="language-plaintext highlighter-rouge">Hash("ap")</code> goes to Server 3.</li>
-      <li>All queries <code class="language-plaintext highlighter-rouge">ap...</code> (“apple”, “application”) are stored on Server 3.</li>
-    </ul>
-  </li>
-</ol>
+<hr />
 
-<h3 id="32-offline-vs-online-updates">3.2 Offline vs. Online Updates</h3>
+<h2 id="2-understanding-the-requirements">2. Understanding the Requirements</h2>
 
-<p><strong>Offline Building (The MapReduce Approach):</strong>
-Most search terms don’t change popularity instantly. “Facebook” is popular every day.</p>
-<ol>
-  <li>Aggregate logs weekly.</li>
-  <li>Build the entire specific Trie shards efficiently.</li>
-  <li>Push the new Trie files to the fleet.</li>
-</ol>
-
-<p><strong>Online Updates (The Trending Problem):</strong>
-What about breaking news? “Earthquake in Japan” happens now.
-We need a <strong>Hybrid System</strong>:</p>
+<h3 id="21-the-scale">2.1 The Scale</h3>
 <ul>
-  <li><strong>Static Trie</strong>: Built weekly, immutable, highly optimized for read speed.</li>
-  <li><strong>Dynamic Trie</strong>: Small, in-memory Trie that updates in real-time (via Kafka stream of searches).</li>
-  <li><strong>Result</strong>: Merge results from Static + Dynamic at query time.</li>
+  <li><strong>DAU</strong>: 500 Million.</li>
+  <li><strong>Queries</strong>: 5 billion searches / day.</li>
+  <li><strong>Keystrokes</strong>: ~50 billion typeahead requests / day.</li>
+  <li><strong>QPS</strong>: Peak 1 million QPS. (This requires massive horizontal scaling).</li>
+</ul>
+
+<h3 id="22-the-ranking-problem">2.2 The Ranking Problem</h3>
+<p>We don’t just want matching strings.</p>
+<ul>
+  <li>Prefix: “ja”</li>
+  <li>Candidates: “java”, “japan”, “javascript”, “jacket”.</li>
+  <li>We need to return top 5 sorted by <code class="language-plaintext highlighter-rouge">Score</code>.
+<code class="language-plaintext highlighter-rouge">Score = Transformation(Frequency, User_History, Location, Freshness)</code></li>
 </ul>
 
 <hr />
 
-<h2 id="4-sampling--probabilistic-data-structures">4. Sampling &amp; Probabilistic Data Structures</h2>
+<h2 id="3-high-level-architecture">3. High-Level Architecture</h2>
 
-<p>Storing every single query ever typed is wasteful. “fawekjlfw” was typed once by a cat walking on a keyboard. We don’t want to suggest that.</p>
+<p>We need a dedicated <strong>Typeahead Service</strong> separate from the main Search Service.</p>
 
-<p><strong>Sampling</strong>: Only index queries that have appeared &gt; <code class="language-plaintext highlighter-rouge">N</code> times.
-Using a <strong>Count-Min Sketch</strong> (a probabilistic counter) allows us to count frequency of billions of strings with very little memory. If the count exceeds a threshold, <em>then</em> we add it to our main Trie.</p>
-
-<hr />
-
-<h2 id="5-client-side-optimization">5. Client-Side Optimization</h2>
-
-<p>The fastest query is the one you strictly don’t make.</p>
-
-<ol>
-  <li><strong>Debouncing</strong>: Don’t send a request for ‘h’, then ‘he’, then ‘hel’, then ‘hell’, then ‘hello’ in 100ms. Wait for a 50ms pause in typing before sending.</li>
-  <li><strong>Caching</strong>:
-    <ul>
-      <li>Usage: User types “star”, response is [“star wars”, “star trek”, “starbucks”].</li>
-      <li>User types “star w”: The browser already knows “star wars” was a candidate. It can filter the <em>cached</em> list locally while waiting for the server.</li>
-    </ul>
-  </li>
-</ol>
-
-<hr />
-
-<h2 id="6-architecture-diagram">6. Architecture Diagram</h2>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[User Browser]
-      |
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[Browser]
       | (GET /suggest?q=sys)
       v
-[Load Balancer]
+[Load Balancer] --&gt; [CDN (Caches popular: "fa"-&gt;"facebook")]
       |
       v
-[Typeahead Service] &lt;--- (Reads/Writes) ---&gt; [Redis / Memcached (Hot Queries)]
+[Typeahead Aggregator]
       |
-      | (Cache Miss)
-      v
-[Trie Service (Read-Only Replicas)]
-      |
-      | (Loads Trie Data)
-      v
-[S3 / Blob Storage] &lt;--- (Writes Trie Files) --- [Offline Worker (Spark/MapReduce)]
-                                                      ^
-                                                      |
-                                                 [Search Logs]
+      +---&gt; [Service Node 1 (A-C)]
+      +---&gt; [Service Node 2 (D-F)]
+      +---&gt; [Personalization Service (Reranking)]
 </code></pre></div></div>
 
 <hr />
 
-<h2 id="7-comparison-database-vs-trie">7. Comparison: Database vs. Trie</h2>
+<h2 id="4-component-deep-dives">4. Component Deep-Dives</h2>
 
-<table>
-  <thead>
-    <tr>
-      <th>Feature</th>
-      <th>SQL Database (<code class="language-plaintext highlighter-rouge">LIKE 'pre%'</code>)</th>
-      <th>Trie-Based System</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Latency</strong></td>
-      <td>High (Index scan)</td>
-      <td>Low (Pointer traversal)</td>
-    </tr>
-    <tr>
-      <td><strong>Prefix Matching</strong></td>
-      <td>Good with index</td>
-      <td>Native / Excellent</td>
-    </tr>
-    <tr>
-      <td><strong>Ranking</strong></td>
-      <td>Expensive sort at runtime</td>
-      <td>Pre-computed</td>
-    </tr>
-    <tr>
-      <td><strong>Updates</strong></td>
-      <td>Easy (INSERT)</td>
-      <td>Hard (Rebuilds needed)</td>
-    </tr>
-    <tr>
-      <td><strong>Memory</strong></td>
-      <td>High overhead</td>
-      <td>Compact (Shared prefixes)</td>
-    </tr>
-  </tbody>
-</table>
+<h3 id="41-the-data-structure-the-weighted-trie">4.1 The Data Structure: The Weighted Trie</h3>
+<p>In RAM, we store a specialized Trie.
+Each Node contains:</p>
+<ol>
+  <li><strong>Children Pointers</strong>: <code class="language-plaintext highlighter-rouge">{'a': Node, 'b': Node}</code>.</li>
+  <li><strong>Top-K Cache</strong>: A pre-sorted list of the top 10 most popular completed queries that pass through this node.</li>
+</ol>
+
+<p><strong>Why Pre-compute Top-K?</strong>
+If we wait until runtime to traverse the whole subtree of “sys” to find “system”, “systolic”… it’s too slow.
+We aggregate scores offline. At node “s-y-s”, we store <code class="language-plaintext highlighter-rouge">["system", "sysadmin"]</code> directly.
+Time Complexity: $O(1)$ (Pointer chase + Return list).</p>
+
+<h3 id="42-data-sharding">4.2 Data Sharding</h3>
+<p>The Dictionary is too big for one machine.</p>
+<ul>
+  <li><strong>Option A: Range Partitioning (A-C, D-F)</strong>
+    <ul>
+      <li><em>Risk</em>: Hotspots. ‘S’ is popular. ‘X’ is quiet.</li>
+    </ul>
+  </li>
+  <li><strong>Option B: Hash Partitioning</strong>
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">ShardID = Hash(prefix) % 100</code>.</li>
+      <li><em>Risk</em>: We can only hash the <em>prefix</em>. If user types “s”, do we query all shards? No. Usually we shard by the first 2-3 characters.</li>
+    </ul>
+  </li>
+</ul>
 
 <hr />
 
-<h2 id="8-summary--takeaways">8. Summary &amp; Takeaways</h2>
+<h2 id="5-data-flow-the-log-processing-pipeline">5. Data Flow: The Log Processing Pipeline</h2>
+
+<p>How do queries get into the Trie?</p>
 
 <ol>
-  <li><strong>Data Structures Matter</strong>: The Trie isn’t just a LeetCode problem; it’s the industry standard for prefix search.</li>
-  <li><strong>Pre-computation is King</strong>: Don’t rank results while the user is waiting. Rank them offline and store the top 5 at the node.</li>
-  <li><strong>Shard Carefully</strong>: Distributing data alphabeticallly creates “hot spots”. Hashing is usually safer.</li>
-  <li><strong>Latency Budget</strong>: With &lt;50ms budgets, every millisecond counts. In-memory structures (Tries) generally beat disk-based databases here.</li>
+  <li><strong>Log Collection</strong>: Browser emits “User searched: java” -&gt; Kafka.</li>
+  <li><strong>Aggregation (Spark/MapReduce)</strong>:
+    <ul>
+      <li>Window: Last 7 days.</li>
+      <li>Group By <code class="language-plaintext highlighter-rouge">Query</code>. Count <code class="language-plaintext highlighter-rouge">Frequency</code>.</li>
+    </ul>
+  </li>
+  <li><strong>Trie Building (Offline)</strong>:
+    <ul>
+      <li>Worker reads aggregated list.</li>
+      <li>Builds the Weighted Trie.</li>
+      <li>Serializes to file (<code class="language-plaintext highlighter-rouge">trie_snapshot_v100.bin</code>).</li>
+    </ul>
+  </li>
+  <li><strong>Deployment</strong>:
+    <ul>
+      <li>Push file to S3.</li>
+      <li>Typeahead Servers download and hot-swap memory.</li>
+    </ul>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="6-scaling-strategies">6. Scaling Strategies</h2>
+
+<h3 id="61-the-trending-problem-real-time">6.1 The “Trending” Problem (Real-time)</h3>
+<p>Offline builds happen weekly. But “Breaking News” needs to appear now.
+<strong>Hybrid Architecture</strong>:</p>
+<ul>
+  <li><strong>Result = Merge(Static_Trie, Dynamic_Trie)</strong>.</li>
+  <li><strong>Dynamic Trie</strong>: Size limited (e.g., 200MB). Stores only high-velocity queries from the last 15 mins (via a Storm/Flink stream).</li>
+</ul>
+
+<h3 id="62-sampling">6.2 Sampling</h3>
+<p>We don’t log every keystroke. We log the <em>final submission</em>.
+Or we sample 1% of traffic for analytics.</p>
+
+<hr />
+
+<h2 id="7-implementation-a-basic-typeahead-class">7. Implementation: A Basic Typeahead Class</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">TrieNode</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">children</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">top_candidates</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># Stores top 5 tuples (score, text)
+</span>
+    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">word</span><span class="p">,</span> <span class="n">score</span><span class="p">):</span>
+        <span class="c1"># Insert into cache if score is high enough
+</span>        <span class="n">self</span><span class="p">.</span><span class="n">top_candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">score</span><span class="p">,</span> <span class="n">word</span><span class="p">))</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">top_candidates</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">top_candidates</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">top_candidates</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span>
+
+<span class="k">class</span> <span class="nc">TypeaheadSystem</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">root</span> <span class="o">=</span> <span class="nc">TrieNode</span><span class="p">()</span>
+        
+    <span class="k">def</span> <span class="nf">add_query</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">score</span><span class="p">):</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">root</span>
+        <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">query</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">char</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">:</span>
+                <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">[</span><span class="n">char</span><span class="p">]</span> <span class="o">=</span> <span class="nc">TrieNode</span><span class="p">()</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">[</span><span class="n">char</span><span class="p">]</span>
+            <span class="c1"># Crucial: Update the pre-computed top-k at every step
+</span>            <span class="n">node</span><span class="p">.</span><span class="nf">insert</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span>
+            
+    <span class="k">def</span> <span class="nf">suggest</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">):</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">root</span>
+        <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">prefix</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">char</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">[]</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">[</span><span class="n">char</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">text</span> <span class="k">for</span> <span class="n">score</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">node</span><span class="p">.</span><span class="n">top_candidates</span><span class="p">]</span>
+
+<span class="c1"># Usage
+</span><span class="n">ta</span> <span class="o">=</span> <span class="nc">TypeaheadSystem</span><span class="p">()</span>
+<span class="n">ta</span><span class="p">.</span><span class="nf">add_query</span><span class="p">(</span><span class="sh">"</span><span class="s">amazon</span><span class="sh">"</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">ta</span><span class="p">.</span><span class="nf">add_query</span><span class="p">(</span><span class="sh">"</span><span class="s">amazing</span><span class="sh">"</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+<span class="n">ta</span><span class="p">.</span><span class="nf">add_query</span><span class="p">(</span><span class="sh">"</span><span class="s">am</span><span class="sh">"</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="n">ta</span><span class="p">.</span><span class="nf">suggest</span><span class="p">(</span><span class="sh">"</span><span class="s">am</span><span class="sh">"</span><span class="p">))</span> 
+<span class="c1"># Returns ['amazon', 'amazing', 'am'] sorted by score (because we sorted on insert)
+</span></code></pre></div></div>
+
+<hr />
+
+<h2 id="8-monitoring--metrics">8. Monitoring &amp; Metrics</h2>
+
+<ol>
+  <li><strong>Zero Results Rate</strong>: % of prefixes that yield no suggestions.</li>
+  <li><strong>Keystroke Latency</strong>: p99 latency (must be &lt; 50ms).</li>
+  <li><strong>Selection Rate</strong>: How often users click suggestion #3 vs completing the typing.
+    <ul>
+      <li>High click rate on #1 = Good Ranking.</li>
+    </ul>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="9-failure-modes">9. Failure Modes</h2>
+
+<ol>
+  <li><strong>The “Dirty Words” Problem</strong>: The algorithm is unbiased. If users search for hate speech, the Trie suggests it.
+    <ul>
+      <li>*Mitigation**: Strict “Blacklist” filter applied during the Offline Build phase.</li>
+    </ul>
+  </li>
+  <li><strong>Shard Failure</strong>: If ‘S’ shard goes down, nobody can search ‘System’.
+    <ul>
+      <li>*Mitigation**: Replica sets (3 replicas per shard).</li>
+    </ul>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="10-real-world-case-study-facebook-search">10. Real-World Case Study: Facebook Search</h2>
+
+<p>Facebook uses a system called <strong>Unicorn</strong>.
+It’s a graph-based search engine.
+When you type “John”, it doesn’t just look for string “John”.
+It looks for: <code class="language-plaintext highlighter-rouge">Friends named John</code> &gt; <code class="language-plaintext highlighter-rouge">Friends of Friends</code> &gt; <code class="language-plaintext highlighter-rouge">Celebrities</code>.
+They use <strong>Social Graph Context</strong> as a ranking signal, not just global frequency.</p>
+
+<hr />
+
+<h2 id="11-cost-analysis">11. Cost Analysis</h2>
+
+<p>Storing 1 Billion queries in a naive Trie is RAM heavy.
+<strong>Optimization: Ternary Search Trees (TST)</strong> or <strong>Radix Trees</strong>.
+These compress the storage.</p>
+<ul>
+  <li>Nodes with single child are merged (<code class="language-plaintext highlighter-rouge">sys</code> -&gt; <code class="language-plaintext highlighter-rouge">tem</code>).</li>
+  <li>Reduces RAM/Pointer overhead by 60%.</li>
+</ul>
+
+<hr />
+
+<h2 id="12-key-takeaways">12. Key Takeaways</h2>
+
+<ol>
+  <li><strong>Pre-computation</strong>: Never sort at query time. Sort at write time.</li>
+  <li><strong>Prefix Sharding</strong>: Hashing is messy for ranges. Use prefix-based sharding with careful heat-balancing.</li>
+  <li><strong>Browser Caching</strong>: The fastest query is the one served from <code class="language-plaintext highlighter-rouge">localStorage</code>.</li>
+  <li><strong>Privacy</strong>: Typeahead leaks intent. Encrypt the channel (HTTPS) and anonymize the logs.</li>
 </ol>
 
 <hr />
@@ -476,13 +514,13 @@ Using a <strong>Count-Min Sketch</strong> (a probabilistic counter) allows us to
     
       <a href="/tags/#autocomplete" class="page__taxonomy-item p-category" rel="tag">autocomplete</a><span class="sep">, </span>
     
-      <a href="/tags/#ranking" class="page__taxonomy-item p-category" rel="tag">ranking</a><span class="sep">, </span>
+      <a href="/tags/#distributed-systems" class="page__taxonomy-item p-category" rel="tag">distributed-systems</a><span class="sep">, </span>
     
       <a href="/tags/#search" class="page__taxonomy-item p-category" rel="tag">search</a><span class="sep">, </span>
     
-      <a href="/tags/#system-design" class="page__taxonomy-item p-category" rel="tag">system-design</a><span class="sep">, </span>
+      <a href="/tags/#trie" class="page__taxonomy-item p-category" rel="tag">trie</a><span class="sep">, </span>
     
-      <a href="/tags/#trie" class="page__taxonomy-item p-category" rel="tag">trie</a>
+      <a href="/tags/#typeahead" class="page__taxonomy-item p-category" rel="tag">typeahead</a>
     
     </span>
   </p>
@@ -546,7 +584,7 @@ Using a <strong>Count-Min Sketch</strong> (a probabilistic counter) allows us to
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          8 minute read
+          6 minute read
         
       </span>
     
@@ -554,6 +592,44 @@ Using a <strong>Count-Min Sketch</strong> (a probabilistic counter) allows us to
 
 
     <p class="archive__item-excerpt" itemprop="description">“Don’t look for one needle in a haystack. Magnetize the hay to find all needles at once.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ml-system-design/0048-trie-based-search/" rel="permalink">Trie-Based Search Systems (Typeahead)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“The user knows what they want. Your job is to tell them before they finish typing.”
 </p>
   </article>
 </div>
@@ -584,14 +660,14 @@ Using a <strong>Count-Min Sketch</strong> (a probabilistic counter) allows us to
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          5 minute read
+          4 minute read
         
       </span>
     
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“Spelling is optional. Sound is non-negotiable.”
+    <p class="archive__item-excerpt" itemprop="description">“Spelling is irrelevant. Sound is everything.”
 </p>
   </article>
 </div>
@@ -622,14 +698,14 @@ Using a <strong>Count-Min Sketch</strong> (a probabilistic counter) allows us to
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          4 minute read
+          5 minute read
         
       </span>
     
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“Waiting is the hardest part. So don’t make them wait.”
+    <p class="archive__item-excerpt" itemprop="description">“Waiting 10 seconds for a thoughtful answer is okay. Waiting 10 seconds for a blank screen is broken.”
 </p>
   </article>
 </div>

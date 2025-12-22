@@ -11,7 +11,7 @@
     <meta charset="utf-8">
 
 <!-- begin _includes/seo.html --><title>Streaming Real-Time Agents - Arun Baby</title>
-<meta name="description" content="“Waiting is the hardest part. So don’t make them wait.”">
+<meta name="description" content="“Waiting 10 seconds for a thoughtful answer is okay. Waiting 10 seconds for a blank screen is broken.”">
 
 
   <meta name="author" content="Arun Baby">
@@ -27,7 +27,7 @@
 <meta property="og:url" content="https://www.arunbaby.com/ai-agents/0048-streaming-real-time-agents/">
 
 
-  <meta property="og:description" content="“Waiting is the hardest part. So don’t make them wait.”">
+  <meta property="og:description" content="“Waiting 10 seconds for a thoughtful answer is okay. Waiting 10 seconds for a blank screen is broken.”">
 
 
 
@@ -37,7 +37,7 @@
 
   <meta name="twitter:site" content="@arunbaby0">
   <meta name="twitter:title" content="Streaming Real-Time Agents">
-  <meta name="twitter:description" content="“Waiting is the hardest part. So don’t make them wait.”">
+  <meta name="twitter:description" content="“Waiting 10 seconds for a thoughtful answer is okay. Waiting 10 seconds for a blank screen is broken.”">
   <meta name="twitter:url" content="https://www.arunbaby.com/ai-agents/0048-streaming-real-time-agents/">
 
   
@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-22T11:01:30+05:30">
+  <meta property="article:published_time" content="2025-12-22T11:38:01+05:30">
 
 
 
@@ -206,8 +206,8 @@
 
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Streaming Real-Time Agents">
-    <meta itemprop="description" content="“Waiting is the hardest part. So don’t make them wait.”">
-    <meta itemprop="datePublished" content="2025-12-22T11:01:30+05:30">
+    <meta itemprop="description" content="“Waiting 10 seconds for a thoughtful answer is okay. Waiting 10 seconds for a blank screen is broken.”">
+    <meta itemprop="datePublished" content="2025-12-22T11:38:01+05:30">
     
 
     <div class="page__inner-wrap">
@@ -231,7 +231,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          4 minute read
+          5 minute read
         
       </span>
     
@@ -246,158 +246,232 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#1-introduction-the-10-second-stare">1. Introduction: The 10-Second Stare</a></li><li><a href="#2-theoretical-foundation-http-vs-streaming">2. Theoretical Foundation: HTTP vs. Streaming</a><ul><li><a href="#21-the-traditional-requestresponse-cycle">2.1 The Traditional Request/Response Cycle</a></li><li><a href="#22-server-sent-events-sse--websockets">2.2 Server-Sent Events (SSE) &amp; WebSockets</a></li></ul></li><li><a href="#3-streaming-thoughts-vs-tokens">3. Streaming “Thoughts” vs. “Tokens”</a></li><li><a href="#4-architecture-implementation">4. Architecture Implementation</a><ul><li><a href="#41-the-generator-pattern-python">4.1 The Generator Pattern (Python)</a></li><li><a href="#42-handling-backpressure">4.2 Handling “Backpressure”</a></li></ul></li><li><a href="#5-user-experience-ux-patterns-for-streaming">5. User Experience (UX) Patterns for Streaming</a></li><li><a href="#6-connection-to-other-days">6. Connection to Other Days</a></li><li><a href="#7-summary">7. Summary</a></li></ul>
+              <ul class="toc__menu"><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-core-concepts-protocols">2. Core Concepts: Protocols</a></li><li><a href="#3-architecture-patterns-the-stream-transformer">3. Architecture Patterns: The Stream Transformer</a></li><li><a href="#4-implementation-approaches">4. Implementation Approaches</a><ul><li><a href="#41-the-generator-pattern-python">4.1 The Generator Pattern (Python)</a></li><li><a href="#42-the-client-consumer-react">4.2 The Client Consumer (React)</a></li></ul></li><li><a href="#5-code-examples-fastapi-with-sse">5. Code Examples: FastAPI with SSE</a></li><li><a href="#6-production-considerations">6. Production Considerations</a><ul><li><a href="#61-buffering-at-the-edge">6.1 Buffering at the Edge</a></li><li><a href="#62-timeouts">6.2 Timeouts</a></li></ul></li><li><a href="#7-common-pitfalls">7. Common Pitfalls</a></li><li><a href="#8-best-practices-skeleton-loaders-for-thoughts">8. Best Practices: “Skeleton Loaders” for Thoughts</a></li><li><a href="#9-connections-to-other-topics">9. Connections to Other Topics</a></li><li><a href="#10-real-world-examples">10. Real-World Examples</a></li><li><a href="#11-future-directions">11. Future Directions</a></li><li><a href="#12-key-takeaways">12. Key Takeaways</a></li></ul>
             </nav>
           </aside>
         
-        <p><strong>“Waiting is the hardest part. So don’t make them wait.”</strong></p>
+        <p><strong>“Waiting 10 seconds for a thoughtful answer is okay. Waiting 10 seconds for a blank screen is broken.”</strong></p>
 
-<h2 id="1-introduction-the-10-second-stare">1. Introduction: The 10-Second Stare</h2>
+<h2 id="1-introduction">1. Introduction</h2>
 
-<p>You ask an advanced AI Agent: “Plan a travel itinerary for Tokyo, find hotels under $200, and book a reservation at a sushi place.”
-The agent goes to work.</p>
+<p>Human conversation is streamed. We start processing the first word of a sentence before the speaker finishes the paragraph.
+Early LLM applications waited for the full generation (Stop Token) to complete before sending a JSON response.</p>
 <ul>
-  <li>It searches for flights. (2 seconds)</li>
-  <li>It reads 5 hotel reviews. (4 seconds)</li>
-  <li>It checks restaurant availability. (3 seconds)</li>
-  <li>It generates the final response. (3 seconds)</li>
+  <li><strong>Old Way</strong>: Request -&gt; Wait 15s -&gt; Show 500 words. (User thinks app crashed).</li>
+  <li><strong>New Way</strong>: Request -&gt; Wait 0.5s -&gt; Show “The”… “quick”… “brown”…</li>
 </ul>
 
-<p><strong>Total time: 12 seconds.</strong>
-In the world of web UX, 12 seconds is an eternity. Users will think the app crashed and close the tab.</p>
-
-<p><strong>The Solution: Streaming.</strong>
-Instead of waiting for the <em>final</em> answer, the agent should stream its “thoughts” and partial progress immediately.
-0.1s: “Searching for flights…”
-2.5s: “Found 3 flights. Now checking hotels…”
-6.0s: “Hotel reviews analyzed. Looking for sushi…”</p>
-
-<p>This transforms a “broken” experience into an engaging, magical one.</p>
+<p>For <strong>AI Agents</strong>, streaming is harder because they have “Thought Steps” (internal monologues) that the user shouldn’t see, interspersed with “Final Answers”.</p>
 
 <hr />
 
-<h2 id="2-theoretical-foundation-http-vs-streaming">2. Theoretical Foundation: HTTP vs. Streaming</h2>
+<h2 id="2-core-concepts-protocols">2. Core Concepts: Protocols</h2>
 
-<h3 id="21-the-traditional-requestresponse-cycle">2.1 The Traditional Request/Response Cycle</h3>
-<p>Standard HTTP is <strong>transactional</strong>.</p>
-<ol>
-  <li>Client sends Request.</li>
-  <li>Server computes… (silence)…</li>
-  <li>Server sends Response (all at once).</li>
-</ol>
-
-<p>This blocks the UI. The user sees a spinning loader.</p>
-
-<h3 id="22-server-sent-events-sse--websockets">2.2 Server-Sent Events (SSE) &amp; WebSockets</h3>
-<p>For agents, we need <strong>continuous</strong> communication.</p>
-<ul>
-  <li><strong>WebSockets</strong>: Bi-directional. Overkill if the user just listens, but good for interruptions.</li>
-  <li><strong>Server-Sent Events (SSE)</strong>: Uni-directional (Server -&gt; Client). Perfect for LLM streaming. Standard HTTP connection kept open.</li>
-</ul>
-
-<hr />
-
-<h2 id="3-streaming-thoughts-vs-tokens">3. Streaming “Thoughts” vs. “Tokens”</h2>
-
-<p>For a simple chatbot (like ChatGPT), you just stream the text tokens of the final answer.
-<code class="language-plaintext highlighter-rouge">H</code>… <code class="language-plaintext highlighter-rouge">He</code>… <code class="language-plaintext highlighter-rouge">Hel</code>… <code class="language-plaintext highlighter-rouge">Hello</code>…</p>
-
-<p>For an <strong>Agent</strong>, the stream is more complex. It contains different <em>types</em> of events:</p>
+<p>How do we push data to the browser?</p>
 
 <ol>
-  <li><strong>Thought Events</strong>: “I need to use the Search Tool.”</li>
-  <li><strong>Tool Input Events</strong>: “Calling Google Search with query ‘Tokyo Hotels’.”</li>
-  <li><strong>Tool Output Events</strong>: “Google returned: [Park Hyatt, APA Hotel…]”</li>
-  <li><strong>Final Answer Tokens</strong>: “Based on my search, I recommend…”</li>
+  <li><strong>Short Polling</strong>: Client asks “Done?” every 1s. (Inefficient).</li>
+  <li><strong>WebSockets</strong>: Bi-directional, full-duplex TCP. Good for real-time gaming, overkill for chat. Hard to load balance (stateful connections).</li>
+  <li><strong>Server-Sent Events (SSE)</strong>: The standard for LLMs.
+    <ul>
+      <li>One-way HTTP connection.</li>
+      <li>Server keeps socket open and pushes <code class="language-plaintext highlighter-rouge">data: ...</code> chunks.</li>
+      <li>Simple to implement with standard Load Balancers.</li>
+    </ul>
+  </li>
 </ol>
-
-<p>If you only stream the final answer, the user sits in silence during steps 1-3.
-If you stream everything as raw text, the user sees ugly distinct JSON or debug logs.</p>
-
-<p><strong>The Solution: Structured Streaming Protocol</strong>
-We need to invent a mini-protocol for our stream.</p>
-
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">event:</span><span class="w"> </span><span class="s2">"status"</span><span class="w">
-</span><span class="err">data:</span><span class="w"> </span><span class="p">{</span><span class="nl">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Reading documents..."</span><span class="p">,</span><span class="w"> </span><span class="nl">"icon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"📖"</span><span class="p">}</span><span class="w">
-
-</span><span class="err">event:</span><span class="w"> </span><span class="s2">"thought"</span><span class="w">
-</span><span class="err">data:</span><span class="w"> </span><span class="p">{</span><span class="nl">"text"</span><span class="p">:</span><span class="w"> </span><span class="s2">"The user wants a cheap hotel, I should filter by price."</span><span class="p">}</span><span class="w">
-
-</span><span class="err">event:</span><span class="w"> </span><span class="s2">"token"</span><span class="w">
-</span><span class="err">data:</span><span class="w"> </span><span class="s2">"Based"</span><span class="w">
-
-</span><span class="err">event:</span><span class="w"> </span><span class="s2">"token"</span><span class="w">
-</span><span class="err">data:</span><span class="w"> </span><span class="s2">" on"</span><span class="w">
-</span></code></pre></div></div>
-
-<p>The Frontend UI parses these events:</p>
-<ul>
-  <li><strong>Status events</strong> update a small “Thinking…” indicator.</li>
-  <li><strong>Token events</strong> are appended to the main chat bubble.</li>
-</ul>
 
 <hr />
 
-<h2 id="4-architecture-implementation">4. Architecture Implementation</h2>
+<h2 id="3-architecture-patterns-the-stream-transformer">3. Architecture Patterns: The Stream Transformer</h2>
 
-<h3 id="41-the-generator-pattern-python">4.1 The Generator Pattern (Python)</h3>
-<p>In Python (FastAPI/Flask), we use <strong>generators</strong> (<code class="language-plaintext highlighter-rouge">yield</code>) to push data without closing the connection.</p>
+<p>We need an architecture that transforms raw LLM tokens into structured Agent Events.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Conceptual implementation
-</span><span class="k">async</span> <span class="k">def</span> <span class="nf">stream_agent_execution</span><span class="p">(</span><span class="n">user_query</span><span class="p">):</span>
-    <span class="c1"># 1. Thought phase
-</span>    <span class="k">yield</span> <span class="nf">format_event</span><span class="p">(</span><span class="sh">"</span><span class="s">status</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Planning tasks...</span><span class="sh">"</span><span class="p">)</span>
-    <span class="n">plan</span> <span class="o">=</span> <span class="k">await</span> <span class="n">planner_llm</span><span class="p">.</span><span class="nf">plan</span><span class="p">(</span><span class="n">user_query</span><span class="p">)</span>
-    
-    <span class="c1"># 2. Tool Execution phase
-</span>    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">plan</span><span class="p">:</span>
-        <span class="k">yield</span> <span class="nf">format_event</span><span class="p">(</span><span class="sh">"</span><span class="s">status</span><span class="sh">"</span><span class="p">,</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Executing: </span><span class="si">{</span><span class="n">step</span><span class="p">.</span><span class="n">tool_name</span><span class="si">}</span><span class="s">...</span><span class="sh">"</span><span class="p">)</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">tools</span><span class="p">.</span><span class="nf">execute</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="nf">format_event</span><span class="p">(</span><span class="sh">"</span><span class="s">log</span><span class="sh">"</span><span class="p">,</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Tool output: </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s"> bytes</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="c1"># 3. Final Answer phase
-</span>    <span class="k">yield</span> <span class="nf">format_event</span><span class="p">(</span><span class="sh">"</span><span class="s">status</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Writing response...</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">async</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">response_llm</span><span class="p">.</span><span class="nf">stream</span><span class="p">(</span><span class="n">context</span><span class="p">):</span>
-        <span class="k">yield</span> <span class="nf">format_event</span><span class="p">(</span><span class="sh">"</span><span class="s">token</span><span class="sh">"</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[LLM (OpenAI)]
+    | (Stream of Tokens)
+    v
+[Agent Parser Parsers logic]
+    | Detects: "Action: Search" -&gt; WAIT
+    | Detects: "Observation: 42" -&gt; WAIT
+    | Detects: "Final Answer: The..." -&gt; STREAM
+    v
+[Frontend (React)]
 </code></pre></div></div>
 
-<h3 id="42-handling-backpressure">4.2 Handling “Backpressure”</h3>
-<p>Common Pitfall: The LLM generates tokens faster than the user’s internet can download them (rare), or—more likely—the <em>Tool</em> is slow, causing the connection to time out.</p>
-<ul>
-  <li><strong>Keep-Alive</strong>: Send a “ping” event every few seconds if the Agent is waiting for a slow tool (like a 30s scraper). This prevents the browser or load balancer (Nginx/AWS LB) from killing the connection due to inactivity.</li>
-</ul>
+<p>The key challenge: <strong>Leakage</strong>. We don’t want to stream the raw JSON braces of a tool call to the user. We only want to stream the “final_answer”.</p>
 
 <hr />
 
-<h2 id="5-user-experience-ux-patterns-for-streaming">5. User Experience (UX) Patterns for Streaming</h2>
+<h2 id="4-implementation-approaches">4. Implementation Approaches</h2>
+
+<h3 id="41-the-generator-pattern-python">4.1 The Generator Pattern (Python)</h3>
+<p>Python <code class="language-plaintext highlighter-rouge">yield</code> is perfect for this.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">async</span> <span class="k">def</span> <span class="nf">agent_stream</span><span class="p">(</span><span class="n">prompt</span><span class="p">):</span>
+    <span class="c1"># 1. Start LLM Stream
+</span>    <span class="n">stream</span> <span class="o">=</span> <span class="k">await</span> <span class="n">openai</span><span class="p">.</span><span class="n">ChatCompletion</span><span class="p">.</span><span class="nf">create</span><span class="p">(...,</span> <span class="n">stream</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    
+    <span class="nb">buffer</span> <span class="o">=</span> <span class="sh">""</span>
+    <span class="n">in_tool_mode</span> <span class="o">=</span> <span class="bp">False</span>
+    
+    <span class="k">async</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="n">chunk</span><span class="p">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">delta</span><span class="p">.</span><span class="n">content</span>
+        <span class="nb">buffer</span> <span class="o">+=</span> <span class="n">token</span>
+        
+        <span class="c1"># 2. Logic to detect Tool Usage
+</span>        <span class="k">if</span> <span class="sh">"</span><span class="s">&lt;tool&gt;</span><span class="sh">"</span> <span class="ow">in</span> <span class="nb">buffer</span><span class="p">:</span>
+            <span class="n">in_tool_mode</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">yield</span> <span class="nf">event</span><span class="p">(</span><span class="sh">"</span><span class="s">status</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Thinking...</span><span class="sh">"</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">in_tool_mode</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="nf">event</span><span class="p">(</span><span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="42-the-client-consumer-react">4.2 The Client Consumer (React)</h3>
+<p>Using <code class="language-plaintext highlighter-rouge">fetch</code> with a <code class="language-plaintext highlighter-rouge">ReadableStream</code>.</p>
+
+<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">response</span> <span class="o">=</span> <span class="k">await</span> <span class="nf">fetch</span><span class="p">(</span><span class="dl">'</span><span class="s1">/api/agent</span><span class="dl">'</span><span class="p">);</span>
+<span class="kd">const</span> <span class="nx">reader</span> <span class="o">=</span> <span class="nx">response</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nf">getReader</span><span class="p">();</span>
+<span class="kd">const</span> <span class="nx">decoder</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">TextDecoder</span><span class="p">();</span>
+
+<span class="k">while </span><span class="p">(</span><span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">const</span> <span class="p">{</span> <span class="nx">done</span><span class="p">,</span> <span class="nx">value</span> <span class="p">}</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">reader</span><span class="p">.</span><span class="nf">read</span><span class="p">();</span>
+  <span class="k">if </span><span class="p">(</span><span class="nx">done</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
+  <span class="kd">const</span> <span class="nx">chunk</span> <span class="o">=</span> <span class="nx">decoder</span><span class="p">.</span><span class="nf">decode</span><span class="p">(</span><span class="nx">value</span><span class="p">);</span>
+  <span class="c1">// Parse "event: text\ndata: hello"</span>
+  <span class="nf">handleSSE</span><span class="p">(</span><span class="nx">chunk</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="5-code-examples-fastapi-with-sse">5. Code Examples: FastAPI with SSE</h2>
+
+<p>Here is a robust backend implementation using <code class="language-plaintext highlighter-rouge">ssep</code> format.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span>
+<span class="kn">from</span> <span class="n">fastapi.responses</span> <span class="kn">import</span> <span class="n">StreamingResponse</span>
+<span class="kn">import</span> <span class="n">json</span>
+<span class="kn">import</span> <span class="n">asyncio</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="nc">FastAPI</span><span class="p">()</span>
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">event_generator</span><span class="p">():</span>
+    <span class="sh">"""</span><span class="s">
+    Yields data in strict SSE format:
+    data: {</span><span class="sh">"</span><span class="s">key</span><span class="sh">"</span><span class="s">: </span><span class="sh">"</span><span class="s">value</span><span class="sh">"</span><span class="s">}</span><span class="se">\n\n</span><span class="s">
+    </span><span class="sh">"""</span>
+    <span class="c1"># Phase 1: Planning
+</span>    <span class="k">yield</span> <span class="sa">f</span><span class="sh">"</span><span class="s">data: </span><span class="si">{</span><span class="n">json</span><span class="p">.</span><span class="n">dumps</span><span class="p">(</span><span class="si">{</span><span class="sh">'</span><span class="s">type</span><span class="sh">'</span><span class="si">:</span> <span class="sh">'</span><span class="s">status</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">content</span><span class="sh">'</span><span class="si">:</span> <span class="sh">'</span><span class="s">Searching Google...</span><span class="sh">'</span><span class="si">}</span><span class="p">)</span><span class="si">}</span><span class="se">\n\n</span><span class="sh">"</span>
+    <span class="k">await</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># Fake tool latency
+</span>    
+    <span class="c1"># Phase 2: Streaming Answer
+</span>    <span class="n">sentence</span> <span class="o">=</span> <span class="sh">"</span><span class="s">The speed of light is 299,792 km/s.</span><span class="sh">"</span>
+    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">sentence</span><span class="p">.</span><span class="nf">split</span><span class="p">():</span>
+        <span class="k">yield</span> <span class="sa">f</span><span class="sh">"</span><span class="s">data: </span><span class="si">{</span><span class="n">json</span><span class="p">.</span><span class="n">dumps</span><span class="p">(</span><span class="si">{</span><span class="sh">'</span><span class="s">type</span><span class="sh">'</span><span class="si">:</span> <span class="sh">'</span><span class="s">token</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">content</span><span class="sh">'</span><span class="si">:</span> <span class="n">word</span> <span class="o">+</span> <span class="sh">'</span><span class="s"> </span><span class="sh">'</span><span class="si">}</span><span class="p">)</span><span class="si">}</span><span class="se">\n\n</span><span class="sh">"</span>
+        <span class="k">await</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+
+    <span class="c1"># Phase 3: Done
+</span>    <span class="k">yield</span> <span class="sh">"</span><span class="s">data: [DONE]</span><span class="se">\n\n</span><span class="sh">"</span>
+
+<span class="nd">@app.get</span><span class="p">(</span><span class="sh">"</span><span class="s">/stream</span><span class="sh">"</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">stream_endpoint</span><span class="p">():</span>
+    <span class="k">return</span> <span class="nc">StreamingResponse</span><span class="p">(</span><span class="nf">event_generator</span><span class="p">(),</span> <span class="n">media_type</span><span class="o">=</span><span class="sh">"</span><span class="s">text/event-stream</span><span class="sh">"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="6-production-considerations">6. Production Considerations</h2>
+
+<h3 id="61-buffering-at-the-edge">6.1 Buffering at the Edge</h3>
+<p>Nginx, Cloudflare, and AWS ALB love to “Buffer” responses to optimize compression (gzip).
+They might wait until 1KB of data is accumulated before sending it to the user.
+<strong>Fix</strong>:</p>
+<ul>
+  <li>Set header <code class="language-plaintext highlighter-rouge">X-Accel-Buffering: no</code> (Nginx).</li>
+  <li>Set header <code class="language-plaintext highlighter-rouge">Cache-Control: no-cache</code>.</li>
+  <li>Disable Gzip for <code class="language-plaintext highlighter-rouge">/stream</code> endpoints.</li>
+</ul>
+
+<h3 id="62-timeouts">6.2 Timeouts</h3>
+<p>Standard HTTP requests time out after 60s. An agent might take 2 minutes.
+<strong>Fix</strong>: Configure your Load Balancer’s <code class="language-plaintext highlighter-rouge">idle_timeout</code> to 300s+ for streaming paths.</p>
+
+<hr />
+
+<h2 id="7-common-pitfalls">7. Common Pitfalls</h2>
 
 <ol>
-  <li><strong>The “Skeleton” Loader</strong>: Before the first token arrives, show a pulsing layout structure.</li>
-  <li><strong>The “Thinking” Accordion</strong>: Show a collapsed sections called “View Steps”. Curious users can expand it to see the tool logs (“Searched Google”, “Read PDF”). Casual users just see “Thinking…” and then the answer.</li>
-  <li><strong>Optimistic UI</strong>: If the user asks “Draft an email”, show the email editor opening <em>while</em> the agent is still generating the subject line.</li>
+  <li><strong>JSON Truncation</strong>: Trying to parse a JSON object via <code class="language-plaintext highlighter-rouge">json.loads()</code> while it’s still streaming (incomplete).
+    <ul>
+      <li><em>Fix</em>: Use a streaming JSON parser (like <code class="language-plaintext highlighter-rouge">json-stream</code> library) or only parse line-delimited chunks.</li>
+    </ul>
+  </li>
+  <li><strong>Flash of Unstyled Content</strong>: Streaming tokens causes the layout to shift violently (Cumulative Layout Shift).
+    <ul>
+      <li><em>Fix</em>: Set a minimum height for the chat container.</li>
+    </ul>
+  </li>
 </ol>
 
 <hr />
 
-<h2 id="6-connection-to-other-days">6. Connection to Other Days</h2>
+<h2 id="8-best-practices-skeleton-loaders-for-thoughts">8. Best Practices: “Skeleton Loaders” for Thoughts</h2>
 
+<p>Don’t just stream text. Stream <strong>Status Updates</strong>.
+Users love to see the “Brain”:</p>
 <ul>
-  <li><strong>DSA (Word Search)</strong>: Searching the agent’s memory or tools list is a search problem.</li>
-  <li><strong>ML System Design (Typeahead)</strong>: Typeahead <em>is</em> a streaming interface. You stream characters, it streams suggestions. The latency constraints are similar (&lt;100ms).</li>
+  <li><code class="language-plaintext highlighter-rouge">[Status: Reading PDF...]</code></li>
+  <li><code class="language-plaintext highlighter-rouge">[Status: calculating...]</code></li>
+  <li><code class="language-plaintext highlighter-rouge">[Text: The answer is 42]</code></li>
+</ul>
+
+<p>This “Transparency” reduces perceived latency.</p>
+
+<hr />
+
+<h2 id="9-connections-to-other-topics">9. Connections to Other Topics</h2>
+
+<p>This connects to <strong>Speech Model Export</strong> (Day 47 Speech).</p>
+<ul>
+  <li>Both deal with <strong>Streaming Latency</strong>.</li>
+  <li>In Speech, we show partial words (<code class="language-plaintext highlighter-rouge">he</code> -&gt; <code class="language-plaintext highlighter-rouge">hel</code> -&gt; <code class="language-plaintext highlighter-rouge">hello</code>).</li>
+  <li>In Agents, we show partial thoughts.</li>
+  <li>The UX challenge is identical: “Stability vs Speed”.</li>
 </ul>
 
 <hr />
 
-<h2 id="7-summary">7. Summary</h2>
+<h2 id="10-real-world-examples">10. Real-World Examples</h2>
 
-<p>Real-time streaming is what separates “demo” agents from “production” agents.
-It is an illusion of speed. The total time to complete the task might be the same, but the <strong>Perceived Performance</strong> is drastically better because the user sees progress immediately.</p>
+<ul>
+  <li><strong>Perplexity.ai</strong>: The gold standard. They show the “Sources” appearing one by one, then the answer streams.</li>
+  <li><strong>Vercel AI SDK</strong>: A library that standardizes the “Stream Data Protocol”, making it easy to hook Next.js to OpenAI streams.</li>
+</ul>
 
-<p>When building agents:</p>
+<hr />
+
+<h2 id="11-future-directions">11. Future Directions</h2>
+
+<ul>
+  <li><strong>Generative UI</strong>: Streaming not just text, but React Components.
+    <ul>
+      <li>Agent streams: <code class="language-plaintext highlighter-rouge">&lt;WeatherWidget temp="72" /&gt;</code>.</li>
+      <li>Browser renders the widget instantly.</li>
+    </ul>
+  </li>
+  <li><strong>Duplex Speech</strong>: Streaming Audio In -&gt; Streaming Audio Out (OpenAI GPT-4o). No text intermediate.</li>
+</ul>
+
+<hr />
+
+<h2 id="12-key-takeaways">12. Key Takeaways</h2>
+
 <ol>
-  <li>Don’t just <code class="language-plaintext highlighter-rouge">return response</code>. <code class="language-plaintext highlighter-rouge">yield events</code>.</li>
-  <li>Define a clear protocol for your events (Status vs. Token).</li>
-  <li>Handle the silence gap while tools runs (Keep-Alives).</li>
+  <li><strong>SSE &gt; WebSockets</strong>: For 99% of Chat Agents, SSE is simpler and friendlier to firewalls.</li>
+  <li><strong>Edge Buffering is the Enemy</strong>: If streaming isn’t working, check your Nginx config.</li>
+  <li><strong>Visual Latency</strong>: Aim for &lt; 200ms TTFT (Time To First Token).</li>
+  <li><strong>Leakage Control</strong>: Build a state machine to hide raw “Tool Calls” from the end user.</li>
 </ol>
 
 <hr />
@@ -421,7 +495,7 @@ It is an illusion of speed. The total time to complete the task might be the sam
     <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
     <span itemprop="keywords">
     
-      <a href="/tags/#real-time" class="page__taxonomy-item p-category" rel="tag">real-time</a><span class="sep">, </span>
+      <a href="/tags/#latency" class="page__taxonomy-item p-category" rel="tag">latency</a><span class="sep">, </span>
     
       <a href="/tags/#sse" class="page__taxonomy-item p-category" rel="tag">sse</a><span class="sep">, </span>
     
@@ -493,7 +567,7 @@ It is an illusion of speed. The total time to complete the task might be the sam
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          8 minute read
+          6 minute read
         
       </span>
     
@@ -538,7 +612,7 @@ It is an illusion of speed. The total time to complete the task might be the sam
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“The best interfaces read your mind. Or at least, they complete your sentences.”
+    <p class="archive__item-excerpt" itemprop="description">“The user knows what they want. Your job is to tell them before they finish typing.”
 </p>
   </article>
 </div>
@@ -576,7 +650,45 @@ It is an illusion of speed. The total time to complete the task might be the sam
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“Spelling is optional. Sound is non-negotiable.”
+    <p class="archive__item-excerpt" itemprop="description">“Spelling is irrelevant. Sound is everything.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ai-agents/0048-streaming-real-time-agents/" rel="permalink">Streaming Real-Time Agents
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Waiting 10 seconds for a thoughtful answer is okay. Waiting 10 seconds for a blank screen is broken.”
 </p>
   </article>
 </div>
@@ -598,7 +710,7 @@ It is an illusion of speed. The total time to complete the task might be the sam
       
   <nav class="pagination">
     
-      <a href="/ai-agents/0047-cost-management-for-agents/" class="pagination--pager" title="Cost Management for AI Agents">Previous</a>
+      <a href="/ai-agents/0047-cost-management-for-agents/" class="pagination--pager" title="Cost Management for Agents">Previous</a>
     
     
       <a href="/ai-agents/0049-dependency-graphs-for-agents/" class="pagination--pager" title="Dependency Graphs for Agents">Next</a>

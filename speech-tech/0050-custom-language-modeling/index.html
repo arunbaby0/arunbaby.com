@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-22T11:01:30+05:30">
+  <meta property="article:published_time" content="2025-12-22T11:38:01+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Custom Language Modeling">
     <meta itemprop="description" content="“The model knows ‘Apple’ the fruit. It needs to learn ‘Apple’ the stock ticker.”">
-    <meta itemprop="datePublished" content="2025-12-22T11:01:30+05:30">
+    <meta itemprop="datePublished" content="2025-12-22T11:38:01+05:30">
     
 
     <div class="page__inner-wrap">
@@ -231,7 +231,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          3 minute read
+          4 minute read
         
       </span>
     
@@ -246,102 +246,191 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#1-introduction-the-unique-name-problem">1. Introduction: The “Unique Name” Problem</a></li><li><a href="#2-how-asr-works-simplified">2. How ASR Works (Simplified)</a></li><li><a href="#3-techniques-for-customization">3. Techniques for Customization</a><ul><li><a href="#31-vocabulary-expansion-the-word-list">3.1 Vocabulary Expansion (The “Word List”)</a></li><li><a href="#32-corpus-fine-tuning">3.2 Corpus Fine-Tuning</a></li><li><a href="#33-contextual-asr-real-time-hints">3.3 Contextual ASR (Real-Time hints)</a></li></ul></li><li><a href="#4-architecture-implementation">4. Architecture Implementation</a></li><li><a href="#5-metrics-wer-isnt-enough">5. Metrics: WER isn’t enough</a></li><li><a href="#6-summary">6. Summary</a></li></ul>
+              <ul class="toc__menu"><li><a href="#1-problem-statement">1. Problem Statement</a></li><li><a href="#2-fundamentals-the-noisy-channel-model">2. Fundamentals: The Noisy Channel Model</a></li><li><a href="#3-architecture-shallow-vs-deep-fusion">3. Architecture: Shallow vs Deep Fusion</a><ul><li><a href="#31-shallow-fusion-the-standard">3.1 Shallow Fusion (The Standard)</a></li><li><a href="#32-deep-fusion">3.2 Deep Fusion</a></li></ul></li><li><a href="#4-implementation-approaches">4. Implementation Approaches</a><ul><li><a href="#41-class-based-lms">4.1 Class-Based LMs</a></li><li><a href="#42-contextual-biasing-attention">4.2 Contextual Biasing (Attention)</a></li></ul></li><li><a href="#5-implementation-contextual-biasing-with-whisper">5. Implementation: Contextual Biasing with Whisper</a></li><li><a href="#6-training-considerations">6. Training Considerations</a><ul><li><a href="#61-text-data-augmentation">6.1 Text Data Augmentation</a></li><li><a href="#62-pruning">6.2 Pruning</a></li></ul></li><li><a href="#7-production-deployment-dynamic-loading">7. Production Deployment: Dynamic Loading</a></li><li><a href="#8-performance-metrics">8. Performance Metrics</a></li><li><a href="#9-failure-modes">9. Failure Modes</a></li><li><a href="#10-real-world-case-study-smart-speakers">10. Real-World Case Study: Smart Speakers</a></li><li><a href="#11-state-of-the-art-neural-biasing">11. State-of-the-Art: Neural Biasing</a></li><li><a href="#12-key-takeaways">12. Key Takeaways</a></li></ul>
             </nav>
           </aside>
         
         <p><strong>“The model knows ‘Apple’ the fruit. It needs to learn ‘Apple’ the stock ticker.”</strong></p>
 
-<h2 id="1-introduction-the-unique-name-problem">1. Introduction: The “Unique Name” Problem</h2>
+<h2 id="1-problem-statement">1. Problem Statement</h2>
 
-<p>You deploy a generic ASR model for a medical clinic.
-Doctor says: “Patient needs 50mg of <strong>Xarelto</strong>.”
-ASR output: “Patient needs 50mg of <strong>the rel toe</strong>.”</p>
+<p>Generic ASR models (Whisper, Google Speech) are trained on general internet data. They perform poorly on <strong>Jargon</strong>.</p>
+<ul>
+  <li><strong>Medical</strong>: “Administer 50mg of Xarelto.” -&gt; “The real toe.”</li>
+  <li><strong>Legal</strong>: “Habeas Corpus.” -&gt; “Happy its corpse.”</li>
+  <li><strong>Corporate</strong>: “Met me at the K8s sync.” -&gt; “Kate’s sink.”</li>
+</ul>
 
-<p>The model isn’t “bad”. It just mapped the sounds to the most probable English words it knows. “Xarelto” is rare. “The rel toe” is common.
-To fix this without retraining the massive acoustic model ($1M cost), we use <strong>Custom Language Models</strong> (CLM) or <strong>Contextual Biasing</strong>.</p>
+<p><strong>The Problem</strong>: How do we teach a pre-trained ASR model new vocabulary <em>without</em> retraining the massive acoustic model?</p>
 
 <hr />
 
-<h2 id="2-how-asr-works-simplified">2. How ASR Works (Simplified)</h2>
+<h2 id="2-fundamentals-the-noisy-channel-model">2. Fundamentals: The Noisy Channel Model</h2>
 
-<p>ASR is mathematically: <code class="language-plaintext highlighter-rouge">P(Text | Audio)</code>.
-Using Bayes theorem, this splits into:
-<code class="language-plaintext highlighter-rouge">P(Audio | Text) * P(Text)</code></p>
+<p>Recall the ASR equation:
+\(P(Text | Audio) \propto P(Audio | Text) \times P(Text)\)</p>
 
+<ul>
+  <li>
+    <table>
+      <tbody>
+        <tr>
+          <td>**Acoustic Model ($P(Audio</td>
+          <td>Text)$)**: “Does this sound like ‘Xarelto’?” (Maybe).</td>
+        </tr>
+      </tbody>
+    </table>
+  </li>
+  <li><strong>Language Model ($P(Text)$)</strong>: “Is ‘Xarelto’ a word?” (Generic LM says No. Prob = 0.000001).</li>
+</ul>
+
+<p>Since the LM probability is near zero, the total score is low. The decoder chooses “The real toe” because <code class="language-plaintext highlighter-rouge">P("The real toe")</code> is high.
+<strong>Solution</strong>: We hack $P(Text)$.</p>
+
+<hr />
+
+<h2 id="3-architecture-shallow-vs-deep-fusion">3. Architecture: Shallow vs Deep Fusion</h2>
+
+<p>How do we inject the new words?</p>
+
+<h3 id="31-shallow-fusion-the-standard">3.1 Shallow Fusion (The Standard)</h3>
+<p>We train a small, domain-specific LM (n-gram) on the client’s text documents.
+During decoding (Beam Search), we interpolate the scores:
+\(Score = \log P_{AM} + \alpha \log P_{GenericLM} + \beta \log P_{CustomLM}\)</p>
+
+<p>If $\beta$ is high, the custom model boosts “Xarelto”.</p>
+
+<h3 id="32-deep-fusion">3.2 Deep Fusion</h3>
+<p>We inject a specialized neural network layer <em>inside</em> the ASR network that attends to a list of custom words. This is harder to implement but more robust.</p>
+
+<hr />
+
+<h2 id="4-implementation-approaches">4. Implementation Approaches</h2>
+
+<h3 id="41-class-based-lms">4.1 Class-Based LMs</h3>
+<p>Instead of hardcoding “John Smith”, we train the LM with a placeholder tag: <code class="language-plaintext highlighter-rouge">@NAME</code>.</p>
+<ul>
+  <li>Training sentence: “Call <code class="language-plaintext highlighter-rouge">@NAME</code> at 5pm.”</li>
+  <li>Runtime: We provide a map <code class="language-plaintext highlighter-rouge">{@NAME: ["John", "Sarah", "Mike"]}</code>.
+The FST (Finite State Transducer) dynamically expands the <code class="language-plaintext highlighter-rouge">@NAME</code> node into arcs for John, Sarah, Mike.</li>
+</ul>
+
+<h3 id="42-contextual-biasing-attention">4.2 Contextual Biasing (Attention)</h3>
+<p>In Transformer ASR (Whisper), we can pass a list of “Hint Strings” in the prompt.
+<code class="language-plaintext highlighter-rouge">prompt="Xarelto, Ibuprofen, Tylenol"</code>
+The model’s cross-attention mechanism attends to these tokens, increasing their likelihood.</p>
+
+<hr />
+
+<h2 id="5-implementation-contextual-biasing-with-whisper">5. Implementation: Contextual Biasing with Whisper</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">whisper</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">whisper</span><span class="p">.</span><span class="nf">load_model</span><span class="p">(</span><span class="sh">"</span><span class="s">base</span><span class="sh">"</span><span class="p">)</span>
+
+<span class="c1"># 1. Standard Inference
+</span><span class="n">audio</span> <span class="o">=</span> <span class="sh">"</span><span class="s">audio_xarelto.mp3</span><span class="sh">"</span>
+<span class="n">result_bad</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">transcribe</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">result_bad</span><span class="p">[</span><span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">])</span> 
+<span class="c1"># Output: "Patient needs the real toe."
+</span>
+<span class="c1"># 2. Contextual Prompting
+# We prepend the keywords to the decoder's context window.
+# It acts like the model "just said" these words, priming it to say them again.
+</span><span class="n">initial_prompt</span> <span class="o">=</span> <span class="sh">"</span><span class="s">Medical Logic: Xarelto, Warfarin, Apixaban.</span><span class="sh">"</span>
+
+<span class="n">result_good</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">transcribe</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">initial_prompt</span><span class="o">=</span><span class="n">initial_prompt</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">result_good</span><span class="p">[</span><span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">])</span>
+<span class="c1"># Output: "Patient needs Xarelto."
+</span></code></pre></div></div>
+
+<hr />
+
+<h2 id="6-training-considerations">6. Training Considerations</h2>
+
+<h3 id="61-text-data-augmentation">6.1 Text Data Augmentation</h3>
+<p>To train the Custom LM, you need text.</p>
+<ul>
+  <li><strong>Source</strong>: Technical manuals, past transcripts, email logs.</li>
+  <li><strong>Normalization</strong>: You must convert “50mg” to “fifty milligrams” to match ASR output space.</li>
+</ul>
+
+<h3 id="62-pruning">6.2 Pruning</h3>
+<p>A custom LM with 1 million words is slow.
+Prune the n-grams. Keep only unique jargon. Trust the Generic LM for “the”, “cat”, “is”.</p>
+
+<hr />
+
+<h2 id="7-production-deployment-dynamic-loading">7. Production Deployment: Dynamic Loading</h2>
+
+<p>In a SaaS ASR (like Otter.ai):</p>
 <ol>
-  <li><strong>Acoustic Model <code class="language-plaintext highlighter-rouge">P(Audio | Text)</code></strong>: “Does this sound match these phonemes?”</li>
-  <li><strong>Language Model <code class="language-plaintext highlighter-rouge">P(Text)</code></strong>: “Is this a valid sequence of words?”</li>
+  <li>User enters a meeting (“Project Apollo Sync”).</li>
+  <li>System loads “Project Apollo” word list (Entities: “Apollo”, “Saturn”, “Launch”).</li>
+  <li>System compiles a tiny FST on-the-fly (ms).</li>
+  <li>Decoder graph = <code class="language-plaintext highlighter-rouge">Generic_Graph</code> composed with <code class="language-plaintext highlighter-rouge">Dynamic_FST</code>.</li>
 </ol>
 
-<p>The generic LM says <code class="language-plaintext highlighter-rouge">P("the rel toe") &gt;&gt; P("Xarelto")</code>.
-We need to hack the LM to say: “In <em>this</em> clinic, <code class="language-plaintext highlighter-rouge">P("Xarelto")</code> is very high.”</p>
+<p>This allows <strong>Per-User</strong> customization.</p>
 
 <hr />
 
-<h2 id="3-techniques-for-customization">3. Techniques for Customization</h2>
+<h2 id="8-performance-metrics">8. Performance Metrics</h2>
 
-<h3 id="31-vocabulary-expansion-the-word-list">3.1 Vocabulary Expansion (The “Word List”)</h3>
-<p>The simplest customization. You upload a list of 500 domain-specific terms (Product names, employee names).
-The ASR engine compiles a small, dynamic graph of these words and “boosts” their probability scores during the beam search decoding.</p>
-
-<p><strong>Pros</strong>: Fast, easy API update.
-<strong>Cons</strong>: Can over-trigger. If you add “Cash”, the model might hear “Cash” every time someone says “Catch”.</p>
-
-<h3 id="32-corpus-fine-tuning">3.2 Corpus Fine-Tuning</h3>
-<p>You upload 10,000 text documents (Medical Journals, Legal Briefs) from your domain.
-You train a <em>text-only</em> Language Model (unsupervised) on this data.
-You <strong>interpolate</strong> this small, specific LM with the huge, generic LM.
-<code class="language-plaintext highlighter-rouge">Final_Score = 0.8 * Generic_LM + 0.2 * Custom_LM</code>.</p>
-
-<p><strong>Pros</strong>: Captures grammar and context (“Patient presents with…”), not just names.
-<strong>Cons</strong>: Slower to deploy.</p>
-
-<h3 id="33-contextual-asr-real-time-hints">3.3 Contextual ASR (Real-Time hints)</h3>
-<p>This is the cutting edge (used by Siri/Alexa).
-When you open your “Contacts” app, the phone sends your contact list to the ASR engine <em>for that session only</em>.
-The ASR temporarily boosts <code class="language-plaintext highlighter-rouge">P("Arun")</code> because “Arun” is in your contacts.
-Five minutes later, if you say “Arun” while in the Maps app, it might fail if it’s not a common location.</p>
-
-<p>This “Contextual Biasing” is dynamic and fleeting.</p>
-
-<hr />
-
-<h2 id="4-architecture-implementation">4. Architecture Implementation</h2>
-
-<p>How do we actually implement this with modern tools like <strong>Whisper</strong>?
-Whisper is an “End-to-End” model (Acoustic + LM combined). It’s hard to inject an external LM.</p>
-
-<p><strong>Option A: Prompt Engineering</strong>
-Whisper accepts a <code class="language-plaintext highlighter-rouge">prompt</code> string.
-If we pass <code class="language-plaintext highlighter-rouge">prompt="Xarelto, Ibuprofen, Tylenol"</code>, the Transformer’s attention mechanism attends to those words.
-When it hears ambiguity, it “copies” from the prompt.
-<em>This works surprisingly well!</em></p>
-
-<p><strong>Option B: Shallow Fusion</strong>
-We run an external n-gram LM alongside Whisper’s beam search.
-At every decoding step, we check the external LM.
-<code class="language-plaintext highlighter-rouge">Score = Whisper_Logit + Beta * External_LM_Logit</code>.</p>
-
-<hr />
-
-<h2 id="5-metrics-wer-isnt-enough">5. Metrics: WER isn’t enough</h2>
-
-<p>If you just measure standard Word Error Rate (WER) on “The cat sat on the mat”, your medical model looks fine.
-We need <strong>Entity-WER</strong>.</p>
+<p><strong>Entity-WER</strong>.</p>
 <ul>
-  <li>Accuracy on specific “entities” (Drug names, Locations).</li>
-  <li>Finding “Xarelto” correctly is worth 100x more than missing “the”.</li>
+  <li>Global WER might be 5% with or without customization.</li>
+  <li>But if the 5% error is the <em>Patient’s Name</em>, the transcript is useless.</li>
+  <li>Measure accuracy specifically on the <strong>Boosted List</strong>.</li>
 </ul>
 
 <hr />
 
-<h2 id="6-summary">6. Summary</h2>
+<h2 id="9-failure-modes">9. Failure Modes</h2>
 
-<p>Custom Language Modeling is the bridge between a “Demo” and a “Product”.
-A Demo works on generic YouTube videos.
-A Product works for <em>your</em> users, speaking <em>your</em> jargon, in <em>your</em> noise conditions.
-It allows us to “teach” the AI new vocabulary instantly, without the massive cost of teaching it new sounds.</p>
+<ol>
+  <li><strong>Over-Biasing</strong>:
+    <ul>
+      <li>Boost list: <code class="language-plaintext highlighter-rouge">["Call"]</code>.</li>
+      <li>User says: “Tall building”.</li>
+      <li>ASR hears: “Call building”.</li>
+      <li><em>Fix</em>: Tunable parameter <code class="language-plaintext highlighter-rouge">biasing_weight</code>.</li>
+    </ul>
+  </li>
+  <li><strong>Phonetic Confusion</strong>:
+    <ul>
+      <li>Boost: <code class="language-plaintext highlighter-rouge">["Resume"]</code> (Noun).</li>
+      <li>User: “Resume” (Verb).</li>
+      <li>ASR gets it right, but downstream NLP gets confused by the tag.</li>
+    </ul>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="10-real-world-case-study-smart-speakers">10. Real-World Case Study: Smart Speakers</h2>
+
+<p><strong>Alexa Contact List</strong>.
+When you say “Call Mom”, Alexa biased the ASR towards your contacts.
+It didn’t boost “Mom” for everyone. It boosted “Mom”, “Dad”, “Arun” for <em>you</em>.
+This uses <strong>Personalized Language Models (PLM)</strong>.</p>
+
+<hr />
+
+<h2 id="11-state-of-the-art-neural-biasing">11. State-of-the-Art: Neural Biasing</h2>
+
+<p>Recent research (Google) uses <strong>GNNs (Graph Neural Networks)</strong> to encode the relationship between entities in the bias list, handling thousands of entities (e.g., a massive Song Library) without degrading latency.</p>
+
+<hr />
+
+<h2 id="12-key-takeaways">12. Key Takeaways</h2>
+
+<ol>
+  <li><strong>Generic is not enough</strong>: Production ASR requires customization.</li>
+  <li><strong>Shallow Fusion is cheap</strong>: No GPU retraining needed. Just text statistical counting.</li>
+  <li><strong>Prompt Engineering works for ASR</strong>: Whisper’s prompt feature allows 0-shot adaptation.</li>
+  <li><strong>Metric Validity</strong>: Optimize for Entity-WER, not just WER.</li>
+</ol>
 
 <hr />
 
@@ -443,7 +532,7 @@ It allows us to “teach” the AI new vocabulary instantly, without the massive
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“If ‘apple’ comes before ‘banana’ but ‘bat’ comes before ‘arc’, what is the alphabet?”
+    <p class="archive__item-excerpt" itemprop="description">“Language is just a graph of symbols. If you know the order, you know the language.”
 </p>
   </article>
 </div>
@@ -474,7 +563,7 @@ It allows us to “teach” the AI new vocabulary instantly, without the massive
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          4 minute read
+          5 minute read
         
       </span>
     
@@ -482,6 +571,44 @@ It allows us to “teach” the AI new vocabulary instantly, without the massive
 
 
     <p class="archive__item-excerpt" itemprop="description">“Before machines could write essays, they had to learn to spell.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/speech-tech/0050-custom-language-modeling/" rel="permalink">Custom Language Modeling
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“The model knows ‘Apple’ the fruit. It needs to learn ‘Apple’ the stock ticker.”
 </p>
   </article>
 </div>
@@ -512,7 +639,7 @@ It allows us to “teach” the AI new vocabulary instantly, without the massive
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          3 minute read
+          5 minute read
         
       </span>
     

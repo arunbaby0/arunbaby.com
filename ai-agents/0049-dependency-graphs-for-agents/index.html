@@ -11,7 +11,7 @@
     <meta charset="utf-8">
 
 <!-- begin _includes/seo.html --><title>Dependency Graphs for Agents - Arun Baby</title>
-<meta name="description" content="“Agents don’t just follow instructions. They plan. And a plan is just a dependency graph.”">
+<meta name="description" content="“An Agent without a Plan is just a stochastic parrot reacting to noise.”">
 
 
   <meta name="author" content="Arun Baby">
@@ -27,7 +27,7 @@
 <meta property="og:url" content="https://www.arunbaby.com/ai-agents/0049-dependency-graphs-for-agents/">
 
 
-  <meta property="og:description" content="“Agents don’t just follow instructions. They plan. And a plan is just a dependency graph.”">
+  <meta property="og:description" content="“An Agent without a Plan is just a stochastic parrot reacting to noise.”">
 
 
 
@@ -37,7 +37,7 @@
 
   <meta name="twitter:site" content="@arunbaby0">
   <meta name="twitter:title" content="Dependency Graphs for Agents">
-  <meta name="twitter:description" content="“Agents don’t just follow instructions. They plan. And a plan is just a dependency graph.”">
+  <meta name="twitter:description" content="“An Agent without a Plan is just a stochastic parrot reacting to noise.”">
   <meta name="twitter:url" content="https://www.arunbaby.com/ai-agents/0049-dependency-graphs-for-agents/">
 
   
@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-22T11:01:30+05:30">
+  <meta property="article:published_time" content="2025-12-22T11:38:01+05:30">
 
 
 
@@ -206,8 +206,8 @@
 
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Dependency Graphs for Agents">
-    <meta itemprop="description" content="“Agents don’t just follow instructions. They plan. And a plan is just a dependency graph.”">
-    <meta itemprop="datePublished" content="2025-12-22T11:01:30+05:30">
+    <meta itemprop="description" content="“An Agent without a Plan is just a stochastic parrot reacting to noise.”">
+    <meta itemprop="datePublished" content="2025-12-22T11:38:01+05:30">
     
 
     <div class="page__inner-wrap">
@@ -231,7 +231,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          3 minute read
+          4 minute read
         
       </span>
     
@@ -246,131 +246,223 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#1-introduction-the-planner-agent">1. Introduction: The “Planner” Agent</a></li><li><a href="#2-generating-the-graph-the-architecture-prompt">2. Generating the Graph (The “Architecture” Prompt)</a></li><li><a href="#3-execution-the-topological-walker">3. Execution: The Topological Walker</a></li><li><a href="#4-why-langgraph">4. Why LangGraph?</a></li><li><a href="#5-challenges-in-dynamic-graphs">5. Challenges in Dynamic Graphs</a><ul><li><a href="#51-the-forever-loop">5.1 The “Forever Loop”</a></li><li><a href="#52-context-window-explosion">5.2 Context Window Explosion</a></li></ul></li><li><a href="#6-summary">6. Summary</a></li></ul>
+              <ul class="toc__menu"><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-core-concepts-the-plan-and-solve-pattern">2. Core Concepts: The Plan-and-Solve Pattern</a></li><li><a href="#3-architecture-patterns-graphs-vs-chains">3. Architecture Patterns: Graphs vs. Chains</a></li><li><a href="#4-implementation-approaches">4. Implementation Approaches</a><ul><li><a href="#41-static-graph">4.1 Static Graph</a></li><li><a href="#42-dynamic-graph-ai-driven">4.2 Dynamic Graph (AI-Driven)</a></li></ul></li><li><a href="#5-code-examples-the-task-graph-executor">5. Code Examples: The Task Graph Executor</a></li><li><a href="#6-production-considerations">6. Production Considerations</a><ul><li><a href="#61-state-management">6.1 State Management</a></li><li><a href="#62-human-in-the-loop">6.2 Human-in-the-Loop</a></li></ul></li><li><a href="#7-common-pitfalls">7. Common Pitfalls</a></li><li><a href="#8-best-practices">8. Best Practices</a></li><li><a href="#9-connections-to-other-topics">9. Connections to Other Topics</a></li><li><a href="#10-real-world-examples">10. Real-World Examples</a></li><li><a href="#11-future-directions">11. Future Directions</a></li><li><a href="#12-key-takeaways">12. Key Takeaways</a></li></ul>
             </nav>
           </aside>
         
-        <p><strong>“Agents don’t just follow instructions. They plan. And a plan is just a dependency graph.”</strong></p>
+        <p><strong>“An Agent without a Plan is just a stochastic parrot reacting to noise.”</strong></p>
 
-<h2 id="1-introduction-the-planner-agent">1. Introduction: The “Planner” Agent</h2>
+<h2 id="1-introduction">1. Introduction</h2>
 
-<p>Simple agents are loops: <code class="language-plaintext highlighter-rouge">while True: think() -&gt; act()</code>.
-This works for “Search Google”. It fails for “Research the history of Rome, compare it to the US, and write an essay”.</p>
-
-<p>If a simple agent tries this, it gets lost. It searches Rome. It forgets about the US. It writes a bad essay.
-Advanced agents use a <strong>Planning Step</strong>. They break a high-level goal into a <strong>Task Graph</strong>.</p>
-
+<p>The simpler agents (ReAct) operate in a loop: <code class="language-plaintext highlighter-rouge">Though -&gt; Action -&gt; Observation</code>. This is sequential.
+But complex tasks require parallel planning.
+<strong>Task</strong>: “Research 3 companies (A, B, C) and write a comparison report.”</p>
 <ul>
-  <li>Task A: Research Rome.</li>
-  <li>Task B: Research US.</li>
-  <li>Task C: Compare A &amp; B. (Dependencies: A, B)</li>
-  <li>Task D: Write Essay. (Dependencies: C)</li>
+  <li><strong>Sequential Agent</strong>: Research A (wait), Research B (wait), Research C (wait), Write. Total: 30s.</li>
+  <li><strong>DAG Agent</strong>: Research A, B, C in parallel. Join results. Write. Total: 10s.</li>
 </ul>
 
-<p>Unlike MLOps pipelines which are static (defined by engineers), Agent DAGs are <strong>dynamic</strong> (generated by the LLM itself).</p>
+<p>We need to treat Agent Actions not as a “Loop” but as a <strong>Dependency Graph</strong>.</p>
 
 <hr />
 
-<h2 id="2-generating-the-graph-the-architecture-prompt">2. Generating the Graph (The “Architecture” Prompt)</h2>
+<h2 id="2-core-concepts-the-plan-and-solve-pattern">2. Core Concepts: The Plan-and-Solve Pattern</h2>
 
-<p>How do we get an LLM to output a DAG? We ask for it in JSON.</p>
-
-<p><strong>System Prompt:</strong>
-“You are a Project Manager. Break the user query into atomic tasks. For each task, list its <code class="language-plaintext highlighter-rouge">dependencies</code> (IDs of tasks that must finish first).”</p>
-
-<p><strong>User:</strong> “Compare the battery life of iPhone 15 and Pixel 8.”</p>
-
-<p><strong>Agent Output:</strong></p>
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"tasks"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
-    </span><span class="p">{</span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nl">"task"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Search iPhone 15 battery specs"</span><span class="p">,</span><span class="w"> </span><span class="nl">"dependencies"</span><span class="p">:</span><span class="w"> </span><span class="p">[]},</span><span class="w">
-    </span><span class="p">{</span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="nl">"task"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Search Pixel 8 battery specs"</span><span class="p">,</span><span class="w"> </span><span class="nl">"dependencies"</span><span class="p">:</span><span class="w"> </span><span class="p">[]},</span><span class="w">
-    </span><span class="p">{</span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="nl">"task"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Compare specs and summarize"</span><span class="p">,</span><span class="w"> </span><span class="nl">"dependencies"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">]}</span><span class="w">
-  </span><span class="p">]</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
-
-<p>This JSON <em>is</em> our Graph. The Agent Runtime parses this and executes it.</p>
+<p>This pattern separates <strong>Reasoning</strong> from <strong>Execution</strong>.</p>
+<ol>
+  <li><strong>Planner</strong>: The LLM generates a DAG.
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">Task 1</code>: Google “Apple stock”.</li>
+      <li><code class="language-plaintext highlighter-rouge">Task 2</code>: Google “Microsoft stock”.</li>
+      <li><code class="language-plaintext highlighter-rouge">Task 3</code>: Compare (Dep: 1, 2).</li>
+    </ul>
+  </li>
+  <li><strong>Executor</strong>: A runtime (like Kahn’s Algorithm!) executes tasks.</li>
+  <li><strong>Replanner</strong>: If Task 1 fails, the Planner updates the graph.</li>
+</ol>
 
 <hr />
 
-<h2 id="3-execution-the-topological-walker">3. Execution: The Topological Walker</h2>
+<h2 id="3-architecture-patterns-graphs-vs-chains">3. Architecture Patterns: Graphs vs. Chains</h2>
 
-<p>Once we have the plan, we need an <strong>Executor</strong>. The Executor logic is identical to <strong>Kahn’s Algorithm</strong> (Day 49 DSA).</p>
+<ul>
+  <li><strong>Chain</strong>: Linear. <code class="language-plaintext highlighter-rouge">A -&gt; B -&gt; C</code>. (LangChain Classic).</li>
+  <li><strong>DAG</strong>: Directed, No Cycles. <code class="language-plaintext highlighter-rouge">A -&gt; B, A -&gt; C, D(B, C)</code>. (Parallel Execution).</li>
+  <li><strong>Cyclic Graph</strong>: <code class="language-plaintext highlighter-rouge">A -&gt; B -&gt; A</code>. (Iterative Refinement).</li>
+</ul>
+
+<p><strong>LangGraph</strong> is a library designed specifically to define these state machines as graphs.</p>
+
+<pre><code class="language-mermaid">graph TD
+    Start --&gt; Planner
+    Planner --&gt; |Review| Critic
+    Critic -- "Bad" --&gt; Planner
+    Critic -- "Good" --&gt; Executor
+    Executor --&gt; End
+</code></pre>
+
+<hr />
+
+<h2 id="4-implementation-approaches">4. Implementation Approaches</h2>
+
+<h3 id="41-static-graph">4.1 Static Graph</h3>
+<p>The developer defines the graph.</p>
+<ul>
+  <li>“Always research, then summarize.”</li>
+  <li>Reliable, rigid.</li>
+</ul>
+
+<h3 id="42-dynamic-graph-ai-driven">4.2 Dynamic Graph (AI-Driven)</h3>
+<p>The LLM writes the graph.</p>
+<ul>
+  <li>Prompt: “Break this down into subtasks with dependencies.”</li>
+  <li>Output: JSON List of Edges.</li>
+  <li>Flexible, fragile.</li>
+</ul>
+
+<hr />
+
+<h2 id="5-code-examples-the-task-graph-executor">5. Code Examples: The Task Graph Executor</h2>
+
+<p>A simplified implementation of a DAG runner for agents in Python.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">concurrent.futures</span>
+
+<span class="k">class</span> <span class="nc">Task</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">prompt</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="n">self</span><span class="p">.</span><span class="nb">id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">deps</span> <span class="o">=</span> <span class="n">deps</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="k">def</span> <span class="nf">execute_dag</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">llm_function</span><span class="p">):</span>
+    <span class="sh">"""</span><span class="s">
+    Executes tasks in topological order, running independent tasks in parallel.
+    Uses a ThreadPool.
+    </span><span class="sh">"""</span>
+    <span class="n">completed</span> <span class="o">=</span> <span class="nf">set</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">concurrent</span><span class="p">.</span><span class="n">futures</span><span class="p">.</span><span class="nc">ThreadPoolExecutor</span><span class="p">()</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+        <span class="n">futures</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="k">while</span> <span class="nf">len</span><span class="p">(</span><span class="n">completed</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nf">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">):</span>
+            <span class="c1"># 1. Find runnable tasks
+</span>            <span class="n">runnable</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">t</span><span class="p">.</span><span class="nb">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">completed</span> <span class="ow">and</span> <span class="n">t</span><span class="p">.</span><span class="nb">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">futures</span><span class="p">:</span>
+                    <span class="c1"># Check dependencies
+</span>                    <span class="k">if</span> <span class="nf">all</span><span class="p">(</span><span class="n">d</span> <span class="ow">in</span> <span class="n">completed</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">t</span><span class="p">.</span><span class="n">deps</span><span class="p">):</span>
+                        <span class="n">runnable</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+            
+            <span class="c1"># 2. Submit to workers
+</span>            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">runnable</span><span class="p">:</span>
+                <span class="c1"># Inject dependency results into context
+</span>                <span class="n">context</span> <span class="o">=</span> <span class="sh">"</span><span class="se">\n</span><span class="sh">"</span><span class="p">.</span><span class="nf">join</span><span class="p">([</span><span class="n">tasks</span><span class="p">[</span><span class="n">d</span><span class="p">].</span><span class="n">result</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">t</span><span class="p">.</span><span class="n">deps</span><span class="p">])</span>
+                <span class="n">full_prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Context: </span><span class="si">{</span><span class="n">context</span><span class="si">}</span><span class="se">\n</span><span class="s">Task: </span><span class="si">{</span><span class="n">t</span><span class="p">.</span><span class="n">prompt</span><span class="si">}</span><span class="sh">"</span>
+                <span class="n">futures</span><span class="p">[</span><span class="n">t</span><span class="p">.</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">executor</span><span class="p">.</span><span class="nf">submit</span><span class="p">(</span><span class="n">llm_function</span><span class="p">,</span> <span class="n">full_prompt</span><span class="p">)</span>
+            
+            <span class="c1"># 3. Wait for at least one to finish
+</span>            <span class="c1"># (In production, use as_completed)
+</span>            <span class="c1"># ... logic to harvest results and add to 'completed' set ...
+</span>            
+    <span class="k">return</span> <span class="n">tasks</span>
+</code></pre></div></div>
+
+<p>This is fundamentally <strong>Kahn’s Algorithm</strong> (Day 49 DSA) applied to LLM calls.</p>
+
+<hr />
+
+<h2 id="6-production-considerations">6. Production Considerations</h2>
+
+<h3 id="61-state-management">6.1 State Management</h3>
+<p>In a DAG, “State” is shared.
+If Task A and Task B run in parallel, and both try to update <code class="language-plaintext highlighter-rouge">memory.txt</code>, you have a race condition.
+<strong>LangGraph</strong> solves this by passing a <strong>State Object</strong> (<code class="language-plaintext highlighter-rouge">TypedDict</code>) through the edges. The state is immutable-ish (Postgres check-pointed).</p>
+
+<h3 id="62-human-in-the-loop">6.2 Human-in-the-Loop</h3>
+<p>You might want a human to verify <code class="language-plaintext highlighter-rouge">Task 1</code> before <code class="language-plaintext highlighter-rouge">Task 2</code> starts.
+The Graph Executor must support <strong>Pause/Resume</strong>. This requires serializing the graph state (Day 47 Agents!) to a DB.</p>
+
+<hr />
+
+<h2 id="7-common-pitfalls">7. Common Pitfalls</h2>
 
 <ol>
-  <li><strong>Loop</strong>:</li>
-  <li>Find all tasks where <code class="language-plaintext highlighter-rouge">status == PENDING</code> and <code class="language-plaintext highlighter-rouge">dependencies</code> are all <code class="language-plaintext highlighter-rouge">COMPLETED</code>.
+  <li><strong>Hallucinated Cycles</strong>: The LLM plans <code class="language-plaintext highlighter-rouge">Task A</code> needs <code class="language-plaintext highlighter-rouge">Task B</code>, and <code class="language-plaintext highlighter-rouge">Task B</code> needs <code class="language-plaintext highlighter-rouge">Task A</code>. The executor deadlocks.
     <ul>
-      <li>In our example: Task 1 and Task 2 are ready immediately.</li>
+      <li><em>Fix</em>: Validate the JSON dependency list for cycles using DFS before execution.</li>
     </ul>
   </li>
-  <li><strong>Execute</strong>:
+  <li><strong>Context Overflow</strong>: Merging results from 10 parallel tasks into the prompt for Task 11 blows up the context window.
     <ul>
-      <li>Run Task 1 (Search) and Task 2 (Search) <strong>in parallel</strong>.</li>
-      <li>This makes the agent 2x faster than a sequential agent!</li>
-    </ul>
-  </li>
-  <li><strong>Update</strong>:
-    <ul>
-      <li>Mark 1 and 2 as COMPLETED. Store their results in a shared state.</li>
-    </ul>
-  </li>
-  <li><strong>Loop</strong>:
-    <ul>
-      <li>Now Task 3’s dependencies are met. Run Task 3.</li>
+      <li><em>Fix</em>: Summarize intermediate results (Map-Reduce).</li>
     </ul>
   </li>
 </ol>
 
 <hr />
 
-<h2 id="4-why-langgraph">4. Why LangGraph?</h2>
+<h2 id="8-best-practices">8. Best Practices</h2>
 
-<p>Standard graphs are DAGs (Directed Acyclic Graphs).
-But Agents often need <strong>Cycles</strong>.</p>
-
-<ul>
-  <li><strong>Example</strong>: “Write code. Test it. If error, Fix code. Test again.”</li>
-  <li>This is a loop: <code class="language-plaintext highlighter-rouge">Code -&gt; Test -&gt; (if fail) Code</code>.</li>
-</ul>
-
-<p><strong>LangGraph</strong> is a library specifically designed to model these <strong>State Machines</strong>.
-It allows us to define:</p>
-<ul>
-  <li><strong>Nodes</strong>: Agent functions (Writer, Tester).</li>
-  <li><strong>Edges</strong>: Deterministic transitions (<code class="language-plaintext highlighter-rouge">Writer -&gt; Tester</code>).</li>
-  <li><strong>Conditional Edge</strong>: <code class="language-plaintext highlighter-rouge">Tester -&gt; (success ? End : Writer)</code>.</li>
-</ul>
-
-<p>This cyclic capability is what separates “Task Pipelines” (Airflow) from “Agent Cognitive Architectures” (LangGraph).</p>
-
-<hr />
-
-<h2 id="5-challenges-in-dynamic-graphs">5. Challenges in Dynamic Graphs</h2>
-
-<h3 id="51-the-forever-loop">5.1 The “Forever Loop”</h3>
-<p>If the Agent gets stuck in a cycle (“Fix code” -&gt; “Test” -&gt; “Still broken” -&gt; “Fix code”…), it can burn infinite money.
-<strong>Solution</strong>: Maximum recursion depth (e.g., max 5 retries).</p>
-
-<h3 id="52-context-window-explosion">5.2 Context Window Explosion</h3>
-<p>Task 1 generates 5 pages of text. Task 2 generates 5 pages.
-Task 3 (Compare) receives 10 pages of input context.
-This can crash the context window or confuse the model.
-<strong>Solution</strong>: Add a “Summarizer” step to the graph edges to compress information passing between nodes.</p>
-
-<hr />
-
-<h2 id="6-summary">6. Summary</h2>
-
-<p>The most powerful agents today (like <strong>Devin</strong> or <strong>AutoGPT</strong>) are not single LLM calls. They are engines that:</p>
 <ol>
-  <li><strong>Plan</strong>: Generate a graph of tasks.</li>
-  <li><strong>Execute</strong>: Traverse the graph (often correctly handling dependencies).</li>
-  <li><strong>Reflect</strong>: Modify the graph at runtime if a task fails.</li>
+  <li><strong>Map-Reduce Pattern</strong>:
+    <ul>
+      <li><strong>Map</strong>: “Generate 5 ideas.” (Run 5 LLM calls in parallel).</li>
+      <li><strong>Reduce</strong>: “Select the best idea.” (Run 1 LLM call).</li>
+    </ul>
+  </li>
+  <li><strong>Visual Debugging</strong>: Use tools like <strong>LangSmith</strong> to visualize the graph execution. Debugging a 50-step async agent via print logs is impossible.</li>
 </ol>
 
-<p>By explicitly modeling dependencies, we enable parallelism, error handling, and complex multi-step reasoning that single-shot prompts can never achieve.</p>
+<hr />
+
+<h2 id="9-connections-to-other-topics">9. Connections to Other Topics</h2>
+
+<p>This connects to <strong>Course Schedule</strong> (DSA Day 49).</p>
+<ul>
+  <li>The Agent <em>is</em> the student taking courses.</li>
+  <li>The “Prerequisites” are the information dependencies.</li>
+  <li>“You cannot write the Summary (Course 101) until you read the Book (Course 100).”</li>
+</ul>
+
+<hr />
+
+<h2 id="10-real-world-examples">10. Real-World Examples</h2>
+
+<ul>
+  <li><strong>GPT-Researcher</strong>: A popular open-source agent.
+    <ul>
+      <li>Generates 5 research questions.</li>
+      <li>Scrapes 5 websites in parallel.</li>
+      <li>Aggregates into one report.</li>
+    </ul>
+  </li>
+  <li><strong>OpenAI Deep Research</strong>: Uses heavy iterative branching to explore topics depth-first vs breadth-first.</li>
+</ul>
+
+<hr />
+
+<h2 id="11-future-directions">11. Future Directions</h2>
+
+<ul>
+  <li><strong>Multi-Agent Graphs</strong>:
+    <ul>
+      <li>Node A is “Coder Agent”.</li>
+      <li>Node B is “Reviewer Agent”.</li>
+      <li>The graph defines the “Company Org Chart”.</li>
+    </ul>
+  </li>
+  <li><strong>Self-Modifying Graphs</strong>: The Agent realizes the plan is bad halfway through and re-writes the remaining graph nodes (Runtime Graph Modification).</li>
+</ul>
+
+<hr />
+
+<h2 id="12-key-takeaways">12. Key Takeaways</h2>
+
+<ol>
+  <li><strong>Parallelism = Speed</strong>: Agents are slow. Parallelizing sub-tasks is the easiest performance win.</li>
+  <li><strong>Graph &gt; Chain</strong>: Real world workflows are non-linear.</li>
+  <li><strong>State is King</strong>: The edges of the graph transport State. Managing that schema is the hard part of Agent engineering.</li>
+</ol>
 
 <hr />
 
@@ -393,15 +485,15 @@ This can crash the context window or confuse the model.
     <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
     <span itemprop="keywords">
     
-      <a href="/tags/#agent-architecture" class="page__taxonomy-item p-category" rel="tag">agent-architecture</a><span class="sep">, </span>
+      <a href="/tags/#architecture" class="page__taxonomy-item p-category" rel="tag">architecture</a><span class="sep">, </span>
     
       <a href="/tags/#dag" class="page__taxonomy-item p-category" rel="tag">dag</a><span class="sep">, </span>
     
+      <a href="/tags/#dependencies" class="page__taxonomy-item p-category" rel="tag">dependencies</a><span class="sep">, </span>
+    
       <a href="/tags/#langgraph" class="page__taxonomy-item p-category" rel="tag">langgraph</a><span class="sep">, </span>
     
-      <a href="/tags/#planning" class="page__taxonomy-item p-category" rel="tag">planning</a><span class="sep">, </span>
-    
-      <a href="/tags/#task-decomposition" class="page__taxonomy-item p-category" rel="tag">task-decomposition</a>
+      <a href="/tags/#planning" class="page__taxonomy-item p-category" rel="tag">planning</a>
     
     </span>
   </p>
@@ -465,14 +557,14 @@ This can crash the context window or confuse the model.
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          4 minute read
+          5 minute read
         
       </span>
     
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“Putting on socks before shoes is a dependency. Topological sort is just the math of getting dressed.”
+    <p class="archive__item-excerpt" itemprop="description">“You can’t build the roof before you pour the foundation.”
 </p>
   </article>
 </div>
@@ -503,14 +595,14 @@ This can crash the context window or confuse the model.
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          4 minute read
+          5 minute read
         
       </span>
     
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“Cron jobs are fine for scripts. Pipelines need Orchestrators.”
+    <p class="archive__item-excerpt" itemprop="description">“Cron is not an orchestrator. A script is not a pipeline.”
 </p>
   </article>
 </div>
@@ -548,7 +640,45 @@ This can crash the context window or confuse the model.
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“Speech isn’t just ASR. It’s a symphony of models playing in order.”
+    <p class="archive__item-excerpt" itemprop="description">“Garbage in, Garbage out. Silence in, Hallucination out.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ai-agents/0049-dependency-graphs-for-agents/" rel="permalink">Dependency Graphs for Agents
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“An Agent without a Plan is just a stochastic parrot reacting to noise.”
 </p>
   </article>
 </div>
