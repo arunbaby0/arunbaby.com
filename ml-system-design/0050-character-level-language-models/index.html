@@ -11,7 +11,7 @@
     <meta charset="utf-8">
 
 <!-- begin _includes/seo.html --><title>Character-Level Language Models - Arun Baby</title>
-<meta name="description" content="“No vocabulary needed—predict one character at a time.”">
+<meta name="description" content="“Before machines could write essays, they had to learn to spell.”">
 
 
   <meta name="author" content="Arun Baby">
@@ -27,7 +27,7 @@
 <meta property="og:url" content="https://www.arunbaby.com/ml-system-design/0050-character-level-language-models/">
 
 
-  <meta property="og:description" content="“No vocabulary needed—predict one character at a time.”">
+  <meta property="og:description" content="“Before machines could write essays, they had to learn to spell.”">
 
 
 
@@ -37,7 +37,7 @@
 
   <meta name="twitter:site" content="@arunbaby0">
   <meta name="twitter:title" content="Character-Level Language Models">
-  <meta name="twitter:description" content="“No vocabulary needed—predict one character at a time.”">
+  <meta name="twitter:description" content="“Before machines could write essays, they had to learn to spell.”">
   <meta name="twitter:url" content="https://www.arunbaby.com/ml-system-design/0050-character-level-language-models/">
 
   
@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-21T22:46:31+05:30">
+  <meta property="article:published_time" content="2025-12-22T11:01:30+05:30">
 
 
 
@@ -206,8 +206,8 @@
 
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Character-Level Language Models">
-    <meta itemprop="description" content="“No vocabulary needed—predict one character at a time.”">
-    <meta itemprop="datePublished" content="2025-12-21T22:46:31+05:30">
+    <meta itemprop="description" content="“Before machines could write essays, they had to learn to spell.”">
+    <meta itemprop="datePublished" content="2025-12-22T11:01:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -231,7 +231,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          6 minute read
+          4 minute read
         
       </span>
     
@@ -246,416 +246,163 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#1-problem-statement">1. Problem Statement</a><ul><li><a href="#why-character-level">Why Character-Level?</a></li></ul></li><li><a href="#2-model-architecture">2. Model Architecture</a></li><li><a href="#3-training">3. Training</a></li><li><a href="#4-text-generation">4. Text Generation</a></li><li><a href="#5-use-cases">5. Use Cases</a><ul><li><a href="#51-spelling-correction">5.1 Spelling Correction</a></li><li><a href="#52-text-completion">5.2 Text Completion</a></li><li><a href="#53-domain-specific-generation">5.3 Domain-Specific Generation</a></li></ul></li><li><a href="#6-comparison-with-token-level">6. Comparison with Token-Level</a></li><li><a href="#7-connection-to-alien-dictionary">7. Connection to Alien Dictionary</a></li><li><a href="#8-key-takeaways">8. Key Takeaways</a></li></ul>
+              <ul class="toc__menu"><li><a href="#1-introduction-the-atomic-unit-of-language">1. Introduction: The Atomic Unit of Language</a></li><li><a href="#2-architecture-rnns-and-lstms">2. Architecture: RNNs and LSTMs</a><ul><li><a href="#21-the-recurrent-loop">2.1 The Recurrent Loop</a></li><li><a href="#22-the-vanishing-gradient-problem">2.2 The “Vanishing Gradient” Problem</a></li></ul></li><li><a href="#3-tokenization-trade-offs">3. Tokenization Trade-offs</a></li><li><a href="#4-modern-applications-of-char-lms">4. Modern Applications of Char-LMs</a><ul><li><a href="#41-code-generation">4.1 Code Generation</a></li><li><a href="#42-language-identification">4.2 Language Identification</a></li><li><a href="#43-handling-alien-languages-bioinformatics">4.3 Handling “Alien” Languages (Bioinformatics)</a></li></ul></li><li><a href="#5-training-your-own-minigpt">5. Training your own “MiniGPT”</a></li><li><a href="#6-summary">6. Summary</a></li></ul>
             </nav>
           </aside>
         
-        <p><strong>“No vocabulary needed—predict one character at a time.”</strong></p>
+        <p><strong>“Before machines could write essays, they had to learn to spell.”</strong></p>
 
-<h2 id="1-problem-statement">1. Problem Statement</h2>
+<h2 id="1-introduction-the-atomic-unit-of-language">1. Introduction: The Atomic Unit of Language</h2>
 
-<p>Design a <strong>character-level language model</strong> system that:</p>
+<p>When you read, do you read L-E-T-T-E-R-S or do you read <em>Words</em>? Probably words.
+Modern LLMs (like GPT-4) read chunks called <strong>Tokens</strong> (roughly syllables).
+But the simplest, most elegant way to model language is <strong>Character by Character</strong>.</p>
+
+<p>A <strong>Character-Level Language Model</strong> (Char-LM) predicts the next character in a sequence.
+Input: <code class="language-plaintext highlighter-rouge">"hell"</code> -&gt; Output: <code class="language-plaintext highlighter-rouge">"o"</code>.</p>
+
+<p>Why study this?</p>
 <ol>
-  <li>Generates text character by character</li>
-  <li>Handles any language without tokenization</li>
-  <li>Supports domain-specific fine-tuning</li>
-  <li>Enables spelling correction and completion</li>
+  <li><strong>No Out-of-Vocabulary (OOV) Problems</strong>: You never encounter a “word” you don’t know. You can generate “supercalifragilistic…” even if you’ve never seen it, just by knowing phonetic patterns.</li>
+  <li><strong>Robustness</strong>: It handles typos (<code class="language-plaintext highlighter-rouge">"hrello"</code>) and new slang (<code class="language-plaintext highlighter-rouge">"rizz"</code>) gracefully.</li>
+  <li><strong>Simplicity</strong>: The “Vocabulary” is just 26 letters + punctuation (~100 items), not 50,000 tokens.</li>
 </ol>
 
-<h3 id="why-character-level">Why Character-Level?</h3>
+<hr />
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Token-level LM:
-- Fixed vocabulary (50K-100K tokens)
-- OOV words → [UNK]
-- Language-specific tokenizers
+<h2 id="2-architecture-rnns-and-lstms">2. Architecture: RNNs and LSTMs</h2>
 
-Character-level LM:
-- ~100-200 characters (all Unicode)
-- No OOV—any word can be formed
-- Language-agnostic
-- Understands morphology naturally
+<p>Before Transformers took over, <strong>Recurrent Neural Networks (RNNs)</strong> were the kings of Char-LMs.
+Many junior engineers haven’t built an RNN, but it’s crucial for understanding “State”.</p>
+
+<h3 id="21-the-recurrent-loop">2.1 The Recurrent Loop</h3>
+<p>Regular Feed-Forward networks map <code class="language-plaintext highlighter-rouge">Input -&gt; Output</code>.
+RNNs map <code class="language-plaintext highlighter-rouge">Input + Past_State -&gt; Output + New_State</code>.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Pseudo-code for a Char-RNN Step
+</span><span class="k">def</span> <span class="nf">rnn_step</span><span class="p">(</span><span class="n">char_input</span><span class="p">,</span> <span class="n">hidden_state</span><span class="p">):</span>
+    <span class="c1"># Combine input and history
+</span>    <span class="n">combined</span> <span class="o">=</span> <span class="nf">linear</span><span class="p">(</span><span class="n">char_input</span> <span class="o">+</span> <span class="n">hidden_state</span><span class="p">)</span>
+    
+    <span class="c1"># Update memory
+</span>    <span class="n">new_hidden_state</span> <span class="o">=</span> <span class="nf">tanh</span><span class="p">(</span><span class="n">combined</span><span class="p">)</span>
+    
+    <span class="c1"># Predict next char
+</span>    <span class="n">prediction</span> <span class="o">=</span> <span class="nf">softmax</span><span class="p">(</span><span class="nf">linear</span><span class="p">(</span><span class="n">new_hidden_state</span><span class="p">))</span>
+    
+    <span class="k">return</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">new_hidden_state</span>
 </code></pre></div></div>
 
-<h2 id="2-model-architecture">2. Model Architecture</h2>
+<p>If we feed <code class="language-plaintext highlighter-rouge">"h"</code>, it updates its hidden state to “remembering ‘h’”.
+Feed <code class="language-plaintext highlighter-rouge">"e"</code>, it remembers “‘h’, ‘e’”.
+Feed <code class="language-plaintext highlighter-rouge">"l"</code>, it remembers “‘h’, ‘e’, ‘l’”.
+Now it strongly predicts <code class="language-plaintext highlighter-rouge">"l"</code> (for “hell”) or <code class="language-plaintext highlighter-rouge">"p"</code> (for “help”).</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
-<span class="kn">import</span> <span class="n">torch.nn.functional</span> <span class="k">as</span> <span class="n">F</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+<h3 id="22-the-vanishing-gradient-problem">2.2 The “Vanishing Gradient” Problem</h3>
+<p>Simple RNNs forget things quickly. If the sentence is “The clouds in the sky are [?]”, the RNN sees “sky” and predicts “blue”.
+If the sentence is “I grew up in France… (1000 words later) … I speak fluent [?]”, the RNN forgets “France”. It guesses “English”.</p>
 
-<span class="k">class</span> <span class="nc">CharVocab</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Character vocabulary with special tokens.</span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">chars</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">pad_token</span> <span class="o">=</span> <span class="sh">'</span><span class="s">&lt;PAD&gt;</span><span class="sh">'</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">unk_token</span> <span class="o">=</span> <span class="sh">'</span><span class="s">&lt;UNK&gt;</span><span class="sh">'</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">bos_token</span> <span class="o">=</span> <span class="sh">'</span><span class="s">&lt;BOS&gt;</span><span class="sh">'</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">eos_token</span> <span class="o">=</span> <span class="sh">'</span><span class="s">&lt;EOS&gt;</span><span class="sh">'</span>
-        
-        <span class="n">special</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">pad_token</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">unk_token</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">bos_token</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">eos_token</span><span class="p">]</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">chars</span> <span class="o">=</span> <span class="n">special</span> <span class="o">+</span> <span class="nf">list</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">char_to_idx</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">chars</span><span class="p">)}</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">idx_to_char</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">char_to_idx</span><span class="p">.</span><span class="nf">items</span><span class="p">()}</span>
-    
-    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">chars</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">char_to_idx</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">char_to_idx</span><span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">unk_token</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">text</span><span class="p">]</span>
-    
-    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sh">''</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">idx_to_char</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">unk_token</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">)</span>
+<p>This led to <strong>LSTMs (Long Short-Term Memory)</strong>, which have specific “gates” to keep information for thousands of steps.</p>
 
+<hr />
 
-<span class="k">class</span> <span class="nc">CharLSTM</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">LSTM-based character language model.</span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">vocab_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">embed_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
-        <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
-        <span class="n">num_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-        <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span>
-    <span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Embedding</span><span class="p">(</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">lstm</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTM</span><span class="p">(</span>
-            <span class="n">embed_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">,</span>
-            <span class="n">num_layers</span><span class="o">=</span><span class="n">num_layers</span><span class="p">,</span>
-            <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">,</span>
-            <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span>
-        <span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">hidden_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">num_layers</span> <span class="o">=</span> <span class="n">num_layers</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">hidden</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        x: (batch, seq_len) character indices
-        Returns: logits (batch, seq_len, vocab_size), hidden
-        </span><span class="sh">"""</span>
-        <span class="n">embed</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">embedding</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># (batch, seq, embed)
-</span>        <span class="n">output</span><span class="p">,</span> <span class="n">hidden</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">lstm</span><span class="p">(</span><span class="n">embed</span><span class="p">,</span> <span class="n">hidden</span><span class="p">)</span>  <span class="c1"># (batch, seq, hidden)
-</span>        <span class="n">logits</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">fc</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>  <span class="c1"># (batch, seq, vocab)
-</span>        <span class="k">return</span> <span class="n">logits</span><span class="p">,</span> <span class="n">hidden</span>
-    
-    <span class="k">def</span> <span class="nf">init_hidden</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">'</span><span class="s">cpu</span><span class="sh">'</span><span class="p">):</span>
-        <span class="nf">return </span><span class="p">(</span>
-            <span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">num_layers</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span>
-            <span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">num_layers</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
-        <span class="p">)</span>
+<h2 id="3-tokenization-trade-offs">3. Tokenization Trade-offs</h2>
 
-
-<span class="k">class</span> <span class="nc">CharTransformer</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Transformer-based character language model.</span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">vocab_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">embed_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
-        <span class="n">num_heads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
-        <span class="n">num_layers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
-        <span class="n">ff_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span>
-        <span class="n">max_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
-        <span class="n">dropout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>
-    <span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Embedding</span><span class="p">(</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">pos_embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Embedding</span><span class="p">(</span><span class="n">max_len</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">)</span>
-        
-        <span class="n">encoder_layer</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">TransformerEncoderLayer</span><span class="p">(</span>
-            <span class="n">d_model</span><span class="o">=</span><span class="n">embed_dim</span><span class="p">,</span>
-            <span class="n">nhead</span><span class="o">=</span><span class="n">num_heads</span><span class="p">,</span>
-            <span class="n">dim_feedforward</span><span class="o">=</span><span class="n">ff_dim</span><span class="p">,</span>
-            <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">,</span>
-            <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span>
-        <span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">transformer</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">TransformerEncoder</span><span class="p">(</span><span class="n">encoder_layer</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">embed_dim</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">max_len</span> <span class="o">=</span> <span class="n">max_len</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        x: (batch, seq_len) character indices
-        Returns: logits (batch, seq_len, vocab_size)
-        </span><span class="sh">"""</span>
-        <span class="n">seq_len</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">positions</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">arange</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="p">.</span><span class="n">device</span><span class="p">).</span><span class="nf">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        
-        <span class="n">embed</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">embedding</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="nf">pos_embedding</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
-        
-        <span class="c1"># Causal mask for language modeling
-</span>        <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">mask</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Transformer</span><span class="p">.</span><span class="nf">generate_square_subsequent_mask</span><span class="p">(</span><span class="n">seq_len</span><span class="p">).</span><span class="nf">to</span><span class="p">(</span><span class="n">x</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
-        
-        <span class="n">output</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">transformer</span><span class="p">(</span><span class="n">embed</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
-        <span class="n">logits</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">fc</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">logits</span>
-</code></pre></div></div>
-
-<h2 id="3-training">3. Training</h2>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">CharLMTrainer</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Train character language models.</span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">vocab</span><span class="p">:</span> <span class="n">CharVocab</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">'</span><span class="s">cuda</span><span class="sh">'</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vocab</span> <span class="o">=</span> <span class="n">vocab</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">CrossEntropyLoss</span><span class="p">(</span><span class="n">ignore_index</span><span class="o">=</span><span class="n">vocab</span><span class="p">.</span><span class="n">char_to_idx</span><span class="p">[</span><span class="sh">'</span><span class="s">&lt;PAD&gt;</span><span class="sh">'</span><span class="p">])</span>
-    
-    <span class="k">def</span> <span class="nf">train_epoch</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">train</span><span class="p">()</span>
-        <span class="n">total_loss</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">dataloader</span><span class="p">:</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">input</span><span class="sh">'</span><span class="p">].</span><span class="nf">to</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">target</span><span class="sh">'</span><span class="p">].</span><span class="nf">to</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
-            
-            <span class="n">optimizer</span><span class="p">.</span><span class="nf">zero_grad</span><span class="p">()</span>
-            
-            <span class="n">logits</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-            <span class="n">loss</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">criterion</span><span class="p">(</span><span class="n">logits</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">vocab</span><span class="p">)),</span> <span class="n">y</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-            
-            <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
-            <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">utils</span><span class="p">.</span><span class="nf">clip_grad_norm_</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">parameters</span><span class="p">(),</span> <span class="mf">1.0</span><span class="p">)</span>
-            <span class="n">optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
-            
-            <span class="n">total_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="p">.</span><span class="nf">item</span><span class="p">()</span>
-        
-        <span class="k">return</span> <span class="n">total_loss</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">dataloader</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
-        <span class="n">total_loss</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">dataloader</span><span class="p">:</span>
-                <span class="n">x</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">input</span><span class="sh">'</span><span class="p">].</span><span class="nf">to</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
-                <span class="n">y</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">target</span><span class="sh">'</span><span class="p">].</span><span class="nf">to</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
-                
-                <span class="n">logits</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-                <span class="n">loss</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">criterion</span><span class="p">(</span><span class="n">logits</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">vocab</span><span class="p">)),</span> <span class="n">y</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-                <span class="n">total_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="p">.</span><span class="nf">item</span><span class="p">()</span>
-        
-        <span class="k">return</span> <span class="n">total_loss</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">dataloader</span><span class="p">)</span>
-</code></pre></div></div>
-
-<h2 id="4-text-generation">4. Text Generation</h2>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">CharLMGenerator</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Generate text from character LM.</span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">vocab</span><span class="p">:</span> <span class="n">CharVocab</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">'</span><span class="s">cuda</span><span class="sh">'</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vocab</span> <span class="o">=</span> <span class="n">vocab</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">""</span><span class="p">,</span>
-        <span class="n">max_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
-        <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="n">top_p</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Generate text continuation.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">prompt</span><span class="p">:</span>
-            <span class="n">prompt</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">vocab</span><span class="p">.</span><span class="n">bos_token</span>
-        
-        <span class="n">input_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([</span><span class="n">self</span><span class="p">.</span><span class="n">vocab</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="n">prompt</span><span class="p">)],</span> <span class="n">device</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
-        
-        <span class="n">generated</span> <span class="o">=</span> <span class="nf">list</span><span class="p">(</span><span class="n">input_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nf">cpu</span><span class="p">().</span><span class="nf">numpy</span><span class="p">())</span>
-        <span class="n">hidden</span> <span class="o">=</span> <span class="bp">None</span>
-        
-        <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">max_length</span><span class="p">):</span>
-                <span class="n">logits</span><span class="p">,</span> <span class="n">hidden</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">model</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">hidden</span><span class="p">)</span>
-                <span class="n">logits</span> <span class="o">=</span> <span class="n">logits</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">/</span> <span class="n">temperature</span>
-                
-                <span class="c1"># Apply top-k filtering
-</span>                <span class="k">if</span> <span class="n">top_k</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">indices_to_remove</span> <span class="o">=</span> <span class="n">logits</span> <span class="o">&lt;</span> <span class="n">torch</span><span class="p">.</span><span class="nf">topk</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">top_k</span><span class="p">)[</span><span class="mi">0</span><span class="p">][...,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span>
-                    <span class="n">logits</span><span class="p">[</span><span class="n">indices_to_remove</span><span class="p">]</span> <span class="o">=</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">)</span>
-                
-                <span class="c1"># Apply top-p (nucleus) filtering
-</span>                <span class="k">if</span> <span class="n">top_p</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
-                    <span class="n">sorted_logits</span><span class="p">,</span> <span class="n">sorted_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-                    <span class="n">cumulative_probs</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cumsum</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">sorted_logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-                    
-                    <span class="n">sorted_indices_to_remove</span> <span class="o">=</span> <span class="n">cumulative_probs</span> <span class="o">&gt;</span> <span class="n">top_p</span>
-                    <span class="n">sorted_indices_to_remove</span><span class="p">[...,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">sorted_indices_to_remove</span><span class="p">[...,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="nf">clone</span><span class="p">()</span>
-                    <span class="n">sorted_indices_to_remove</span><span class="p">[...,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-                    
-                    <span class="n">indices_to_remove</span> <span class="o">=</span> <span class="n">sorted_indices_to_remove</span><span class="p">.</span><span class="nf">scatter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">sorted_indices</span><span class="p">,</span> <span class="n">sorted_indices_to_remove</span><span class="p">)</span>
-                    <span class="n">logits</span><span class="p">[</span><span class="n">indices_to_remove</span><span class="p">]</span> <span class="o">=</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">)</span>
-                
-                <span class="n">probs</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-                <span class="n">next_token</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">multinomial</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                
-                <span class="n">generated</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">next_token</span><span class="p">.</span><span class="nf">item</span><span class="p">())</span>
-                
-                <span class="k">if</span> <span class="n">next_token</span><span class="p">.</span><span class="nf">item</span><span class="p">()</span> <span class="o">==</span> <span class="n">self</span><span class="p">.</span><span class="n">vocab</span><span class="p">.</span><span class="n">char_to_idx</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">vocab</span><span class="p">.</span><span class="n">eos_token</span><span class="p">):</span>
-                    <span class="k">break</span>
-                
-                <span class="n">input_ids</span> <span class="o">=</span> <span class="n">next_token</span>
-        
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">vocab</span><span class="p">.</span><span class="nf">decode</span><span class="p">(</span><span class="n">generated</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">complete</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">num_chars</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Complete a word/phrase.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="n">num_chars</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">spell_correct</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">word</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Score candidates and return best.</span><span class="sh">"""</span>
-        <span class="n">scores</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
-            <span class="n">score</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_score_sequence</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
-            <span class="n">scores</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">candidate</span><span class="p">,</span> <span class="n">score</span><span class="p">))</span>
-        <span class="k">return</span> <span class="nf">max</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
-    
-    <span class="k">def</span> <span class="nf">_score_sequence</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Compute log probability of sequence.</span><span class="sh">"""</span>
-        <span class="n">input_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([</span><span class="n">self</span><span class="p">.</span><span class="n">vocab</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="n">text</span><span class="p">)],</span> <span class="n">device</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
-        
-        <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
-            <span class="n">logits</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">model</span><span class="p">(</span><span class="n">input_ids</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-            <span class="n">log_probs</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">log_softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-            
-            <span class="n">target_ids</span> <span class="o">=</span> <span class="n">input_ids</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span>
-            <span class="n">sequence_log_prob</span> <span class="o">=</span> <span class="n">log_probs</span><span class="p">.</span><span class="nf">gather</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">target_ids</span><span class="p">.</span><span class="nf">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)).</span><span class="nf">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-            
-            <span class="k">return</span> <span class="n">sequence_log_prob</span><span class="p">.</span><span class="nf">sum</span><span class="p">().</span><span class="nf">item</span><span class="p">()</span>
-</code></pre></div></div>
-
-<h2 id="5-use-cases">5. Use Cases</h2>
-
-<h3 id="51-spelling-correction">5.1 Spelling Correction</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">spell_correction_demo</span><span class="p">(</span><span class="n">generator</span><span class="p">:</span> <span class="n">CharLMGenerator</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Use char LM for spelling correction.</span><span class="sh">"""</span>
-    <span class="n">misspelled</span> <span class="o">=</span> <span class="sh">"</span><span class="s">recieve</span><span class="sh">"</span>
-    <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="sh">"</span><span class="s">receive</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">recieve</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">retrieve</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">relieve</span><span class="sh">"</span><span class="p">]</span>
-    
-    <span class="n">corrected</span> <span class="o">=</span> <span class="n">generator</span><span class="p">.</span><span class="nf">spell_correct</span><span class="p">(</span><span class="n">misspelled</span><span class="p">,</span> <span class="n">candidates</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Corrected: </span><span class="si">{</span><span class="n">misspelled</span><span class="si">}</span><span class="s"> → </span><span class="si">{</span><span class="n">corrected</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
-
-<h3 id="52-text-completion">5.2 Text Completion</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">completion_demo</span><span class="p">(</span><span class="n">generator</span><span class="p">:</span> <span class="n">CharLMGenerator</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Autocomplete demonstration.</span><span class="sh">"""</span>
-    <span class="n">prefix</span> <span class="o">=</span> <span class="sh">"</span><span class="s">The quick brown fox ju</span><span class="sh">"</span>
-    <span class="n">completion</span> <span class="o">=</span> <span class="n">generator</span><span class="p">.</span><span class="nf">complete</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">num_chars</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Completed: </span><span class="si">{</span><span class="n">completion</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
-
-<h3 id="53-domain-specific-generation">5.3 Domain-Specific Generation</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">domain_finetuning</span><span class="p">():</span>
-    <span class="sh">"""</span><span class="s">Fine-tune on domain-specific text.</span><span class="sh">"""</span>
-    <span class="c1"># Load base model
-</span>    <span class="n">model</span> <span class="o">=</span> <span class="nc">CharTransformer</span><span class="p">(</span><span class="n">vocab_size</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-    <span class="n">model</span><span class="p">.</span><span class="nf">load_state_dict</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sh">'</span><span class="s">base_model.pt</span><span class="sh">'</span><span class="p">))</span>
-    
-    <span class="c1"># Fine-tune on medical text
-</span>    <span class="n">medical_data</span> <span class="o">=</span> <span class="nf">load_medical_corpus</span><span class="p">()</span>
-    <span class="n">trainer</span> <span class="o">=</span> <span class="nc">CharLMTrainer</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">vocab</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
-        <span class="n">loss</span> <span class="o">=</span> <span class="n">trainer</span><span class="p">.</span><span class="nf">train_epoch</span><span class="p">(</span><span class="n">medical_data</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="si">}</span><span class="s">: Loss = </span><span class="si">{</span><span class="n">loss</span><span class="si">:</span><span class="p">.</span><span class="mi">4</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="c1"># Now generates medical-style text
-</span>    <span class="n">generator</span> <span class="o">=</span> <span class="nc">CharLMGenerator</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">vocab</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="n">generator</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span><span class="sh">"</span><span class="s">Patient presents with</span><span class="sh">"</span><span class="p">))</span>
-</code></pre></div></div>
-
-<h2 id="6-comparison-with-token-level">6. Comparison with Token-Level</h2>
+<p>Why don’t we use Character Models for everything?</p>
 
 <table>
   <thead>
     <tr>
-      <th>Aspect</th>
+      <th>Feature</th>
       <th>Character-Level</th>
-      <th>Token-Level</th>
+      <th>Word-Level</th>
+      <th>Subword (BPE/Tokenizer)</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>Vocabulary</td>
-      <td>~100-200</td>
-      <td>50K-100K</td>
+      <td><strong>Vocab Size</strong></td>
+      <td>Small (~100)</td>
+      <td>Huge (1M+)</td>
+      <td>Balanced (50k)</td>
     </tr>
     <tr>
-      <td>OOV handling</td>
-      <td>Never OOV</td>
-      <td>UNK token</td>
+      <td><strong>Context Length</strong></td>
+      <td>Very Long (1000 steps = 2 sentences)</td>
+      <td>Short (20 steps = 2 sentences)</td>
+      <td>Medium</td>
     </tr>
     <tr>
-      <td>Sequence length</td>
-      <td>5x longer</td>
-      <td>Shorter</td>
+      <td><strong>Compute Cost</strong></td>
+      <td>Expensive (Many small steps)</td>
+      <td>Cheap (Few big steps)</td>
+      <td>Optimal</td>
     </tr>
     <tr>
-      <td>Morphology</td>
-      <td>Natural</td>
-      <td>Learned</td>
-    </tr>
-    <tr>
-      <td>Training</td>
-      <td>Slower</td>
-      <td>Faster</td>
-    </tr>
-    <tr>
-      <td>Memory</td>
-      <td>Less parameters</td>
-      <td>More parameters</td>
+      <td><strong>Meaning</strong></td>
+      <td>Hard (Letters have no meaning)</td>
+      <td>Easy (Words have meaning)</td>
+      <td>Mix</td>
     </tr>
   </tbody>
 </table>
 
-<h2 id="7-connection-to-alien-dictionary">7. Connection to Alien Dictionary</h2>
+<p><strong>Char-Level is computationally inefficient.</strong>
+To process 1,000 words, a Char-LM takes ~5,000 steps. A Token-LM takes ~700 steps. Transformers simply cannot handle sequences that long (Self-Attention is <code class="language-plaintext highlighter-rouge">O(N^2)</code>).
+This is why GPT uses <strong>BPE (Byte Pair Encoding)</strong>, finding a middle ground.</p>
 
-<p>Both involve extracting ordering from sequences:</p>
+<hr />
 
-<table>
-  <thead>
-    <tr>
-      <th>Alien Dictionary</th>
-      <th>Character LM</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Word order → Char order</td>
-      <td>Text → Next char</td>
-    </tr>
-    <tr>
-      <td>Explicit constraints</td>
-      <td>Learned probabilities</td>
-    </tr>
-    <tr>
-      <td>Deterministic</td>
-      <td>Probabilistic</td>
-    </tr>
-  </tbody>
-</table>
+<h2 id="4-modern-applications-of-char-lms">4. Modern Applications of Char-LMs</h2>
 
-<p>Alien Dictionary = explicit constraint extraction<br />
-Character LM = learned probability distribution</p>
+<p>Despite the dominance of Token-LMs, Char-LMs are still critical in:</p>
 
-<h2 id="8-key-takeaways">8. Key Takeaways</h2>
+<h3 id="41-code-generation">4.1 Code Generation</h3>
+<p>Code has strict syntax. <code class="language-plaintext highlighter-rouge">}</code> must close <code class="language-plaintext highlighter-rouge">{</code>.
+Char-LMs are surprisingly good at learning syntax (indentation, brackets) because they see every single keystroke.</p>
+
+<h3 id="42-language-identification">4.2 Language Identification</h3>
+<p>To guess if text is “French” or “Spanish”, you don’t need words. You need character patterns.</p>
+<ul>
+  <li>Sequence of <code class="language-plaintext highlighter-rouge">eau</code> -&gt; French.</li>
+  <li>Sequence of <code class="language-plaintext highlighter-rouge">ñ</code> -&gt; Spanish.
+FastText (by Facebook) uses character n-grams for this.</li>
+</ul>
+
+<h3 id="43-handling-alien-languages-bioinformatics">4.3 Handling “Alien” Languages (Bioinformatics)</h3>
+<p>DNA sequences (<code class="language-plaintext highlighter-rouge">ACTG</code>) are essentially char-level languages. There are no “words” in DNA.
+Models like <strong>GenomicLM</strong> are Char-LMs.</p>
+
+<hr />
+
+<h2 id="5-training-your-own-minigpt">5. Training your own “MiniGPT”</h2>
+
+<p>Today, you can train a Char-level GPT on your laptop in 10 minutes (thanks to Andrej Karpathy’s <code class="language-plaintext highlighter-rouge">nanoGPT</code>).</p>
 
 <ol>
-  <li><strong>Character-level = Vocabulary-free</strong> - any word possible</li>
-  <li><strong>Better morphology understanding</strong> - sees word structure</li>
-  <li><strong>Longer sequences</strong> - need efficient architectures</li>
-  <li><strong>Use cases</strong>: spelling, completion, generation</li>
-  <li><strong>Trade-off</strong>: flexibility vs training efficiency</li>
+  <li><strong>Data</strong>: Text file (Shakespeare).</li>
+  <li><strong>Tokenizer</strong>: <code class="language-plaintext highlighter-rouge">list(set(text))</code> (Result: <code class="language-plaintext highlighter-rouge">a, b, c...</code>).</li>
+  <li><strong>Model</strong>: Small Transformer (Embedding size 64, 4 layers).</li>
+  <li><strong>Train</strong>: Predict next char.</li>
 </ol>
+
+<p><strong>Result</strong>:
+<code class="language-plaintext highlighter-rouge">"The kyng hath sayd, that thou shalt die!"</code>
+It invents fake Old English words! It learns spelling, grammar, and punctuation purely from examples.</p>
+
+<hr />
+
+<h2 id="6-summary">6. Summary</h2>
+
+<p>Understanding Character-Level models removes the “magic” of AI.
+It’s just statistics.</p>
+<ul>
+  <li>“t” is likely followed by “h”.</li>
+  <li>“th” is likely followed by “e”.</li>
+  <li>“the” is likely followed by “ “.</li>
+</ul>
+
+<p>If you scale this simple pattern matching up to 1 Trillion parameters, you get ChatGPT. But at its core, it’s just predicting the next symbol.</p>
 
 <hr />
 
@@ -678,17 +425,15 @@ Character LM = learned probability distribution</p>
     <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
     <span itemprop="keywords">
     
-      <a href="/tags/#character-level" class="page__taxonomy-item p-category" rel="tag">character-level</a><span class="sep">, </span>
-    
-      <a href="/tags/#language-models" class="page__taxonomy-item p-category" rel="tag">language-models</a><span class="sep">, </span>
+      <a href="/tags/#lstm" class="page__taxonomy-item p-category" rel="tag">lstm</a><span class="sep">, </span>
     
       <a href="/tags/#nlp" class="page__taxonomy-item p-category" rel="tag">nlp</a><span class="sep">, </span>
     
       <a href="/tags/#rnn" class="page__taxonomy-item p-category" rel="tag">rnn</a><span class="sep">, </span>
     
-      <a href="/tags/#text-generation" class="page__taxonomy-item p-category" rel="tag">text-generation</a><span class="sep">, </span>
+      <a href="/tags/#sequence-modeling" class="page__taxonomy-item p-category" rel="tag">sequence-modeling</a><span class="sep">, </span>
     
-      <a href="/tags/#transformer" class="page__taxonomy-item p-category" rel="tag">transformer</a>
+      <a href="/tags/#tokenization" class="page__taxonomy-item p-category" rel="tag">tokenization</a>
     
     </span>
   </p>
@@ -752,14 +497,14 @@ Character LM = learned probability distribution</p>
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          6 minute read
+          5 minute read
         
       </span>
     
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“Given sorted words in an alien language, deduce the alphabet order.”
+    <p class="archive__item-excerpt" itemprop="description">“If ‘apple’ comes before ‘banana’ but ‘bat’ comes before ‘arc’, what is the alphabet?”
 </p>
   </article>
 </div>
@@ -772,7 +517,7 @@ Character LM = learned probability distribution</p>
     
     <h2 class="archive__item-title no_toc" itemprop="headline">
       
-        <a href="/speech-tech/0050-custom-language-modeling/" rel="permalink">Custom Language Modeling for ASR
+        <a href="/speech-tech/0050-custom-language-modeling/" rel="permalink">Custom Language Modeling
 </a>
       
     </h2>
@@ -790,14 +535,14 @@ Character LM = learned probability distribution</p>
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          7 minute read
+          3 minute read
         
       </span>
     
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“The right language model makes your ASR understand your domain.”
+    <p class="archive__item-excerpt" itemprop="description">“The model knows ‘Apple’ the fruit. It needs to learn ‘Apple’ the stock ticker.”
 </p>
   </article>
 </div>
@@ -828,14 +573,14 @@ Character LM = learned probability distribution</p>
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          8 minute read
+          3 minute read
         
       </span>
     
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“Generic agents are jacks of all trades—domain agents are masters of one.”
+    <p class="archive__item-excerpt" itemprop="description">“Don’t build a generalist. Build a specialist.”
 </p>
   </article>
 </div>
@@ -857,7 +602,7 @@ Character LM = learned probability distribution</p>
       
   <nav class="pagination">
     
-      <a href="/ml-system-design/0049-dag-pipeline-orchestration/" class="pagination--pager" title="DAG-based Pipeline Orchestration">Previous</a>
+      <a href="/ml-system-design/0049-dag-pipeline-orchestration/" class="pagination--pager" title="DAG Pipeline Orchestration">Previous</a>
     
     
       <a href="#" class="pagination--pager disabled">Next</a>

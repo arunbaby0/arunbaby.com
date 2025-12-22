@@ -11,7 +11,7 @@
     <meta charset="utf-8">
 
 <!-- begin _includes/seo.html --><title>Alien Dictionary - Arun Baby</title>
-<meta name="description" content="“Given sorted words in an alien language, deduce the alphabet order.”">
+<meta name="description" content="“If ‘apple’ comes before ‘banana’ but ‘bat’ comes before ‘arc’, what is the alphabet?”">
 
 
   <meta name="author" content="Arun Baby">
@@ -27,7 +27,7 @@
 <meta property="og:url" content="https://www.arunbaby.com/dsa/0050-alien-dictionary/">
 
 
-  <meta property="og:description" content="“Given sorted words in an alien language, deduce the alphabet order.”">
+  <meta property="og:description" content="“If ‘apple’ comes before ‘banana’ but ‘bat’ comes before ‘arc’, what is the alphabet?”">
 
 
 
@@ -37,7 +37,7 @@
 
   <meta name="twitter:site" content="@arunbaby0">
   <meta name="twitter:title" content="Alien Dictionary">
-  <meta name="twitter:description" content="“Given sorted words in an alien language, deduce the alphabet order.”">
+  <meta name="twitter:description" content="“If ‘apple’ comes before ‘banana’ but ‘bat’ comes before ‘arc’, what is the alphabet?”">
   <meta name="twitter:url" content="https://www.arunbaby.com/dsa/0050-alien-dictionary/">
 
   
@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-21T22:46:31+05:30">
+  <meta property="article:published_time" content="2025-12-22T11:01:30+05:30">
 
 
 
@@ -206,8 +206,8 @@
 
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Alien Dictionary">
-    <meta itemprop="description" content="“Given sorted words in an alien language, deduce the alphabet order.”">
-    <meta itemprop="datePublished" content="2025-12-21T22:46:31+05:30">
+    <meta itemprop="description" content="“If ‘apple’ comes before ‘banana’ but ‘bat’ comes before ‘arc’, what is the alphabet?”">
+    <meta itemprop="datePublished" content="2025-12-22T11:01:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -231,7 +231,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          6 minute read
+          5 minute read
         
       </span>
     
@@ -246,316 +246,216 @@
           <aside class="sidebar__right sticky">
             <nav class="toc">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#1-problem-statement">1. Problem Statement</a></li><li><a href="#2-understanding-the-problem">2. Understanding the Problem</a><ul><li><a href="#key-insight-adjacent-word-comparison">Key Insight: Adjacent Word Comparison</a></li></ul></li><li><a href="#3-solution">3. Solution</a></li><li><a href="#4-dfs-alternative">4. DFS Alternative</a></li><li><a href="#5-walkthrough">5. Walkthrough</a></li><li><a href="#6-edge-cases">6. Edge Cases</a><ul><li><a href="#invalid-prefix-comes-after-full-word">Invalid: Prefix comes after full word</a></li><li><a href="#cycle-detection">Cycle detection</a></li><li><a href="#single-word">Single word</a></li><li><a href="#multiple-valid-orderings">Multiple valid orderings</a></li></ul></li><li><a href="#7-testing">7. Testing</a></li><li><a href="#8-complexity-analysis">8. Complexity Analysis</a></li><li><a href="#9-common-mistakes">9. Common Mistakes</a></li><li><a href="#10-connection-to-language-models">10. Connection to Language Models</a></li></ul>
+              <ul class="toc__menu"><li><a href="#1-introduction-the-decryption-problem">1. Introduction: The Decryption Problem</a></li><li><a href="#2-breaking-it-down">2. Breaking it Down</a><ul><li><a href="#step-1-build-the-graph-extract-dependencies">Step 1: Build the Graph (Extract Dependencies)</a></li><li><a href="#step-2-topological-sort">Step 2: Topological Sort</a></li></ul></li><li><a href="#3-the-algorithm">3. The Algorithm</a></li><li><a href="#4-visualizing-the-example">4. Visualizing the Example</a></li><li><a href="#5-implementation">5. Implementation</a></li><li><a href="#6-time--space-complexity">6. Time &amp; Space Complexity</a></li><li><a href="#7-real-world-connection">7. Real World Connection</a></li></ul>
             </nav>
           </aside>
         
-        <p><strong>“Given sorted words in an alien language, deduce the alphabet order.”</strong></p>
+        <p><strong>“If ‘apple’ comes before ‘banana’ but ‘bat’ comes before ‘arc’, what is the alphabet?”</strong></p>
 
-<h2 id="1-problem-statement">1. Problem Statement</h2>
+<h2 id="1-introduction-the-decryption-problem">1. Introduction: The Decryption Problem</h2>
 
-<p>There is a new alien language that uses the English alphabet. The order of letters is unknown. You’re given a list of strings <code class="language-plaintext highlighter-rouge">words</code> from the dictionary, where the strings are <strong>sorted lexicographically</strong> by the rules of this new language.</p>
+<p>You have fond a list of words from an Alien Language. You don’t know their alphabet order. However, you know the list of words is <strong>sorted lexicographically</strong> (alphabetically) according to their rules.</p>
 
-<p>Derive the order of letters in this language. If invalid, return <code class="language-plaintext highlighter-rouge">""</code>. If multiple valid orderings exist, return any one.</p>
+<p><strong>Input</strong>:
+<code class="language-plaintext highlighter-rouge">["wrt", "wrf", "er", "ett", "rftt"]</code></p>
 
-<p><strong>Example 1:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>words = ["wrt", "wrf", "er", "ett", "rftt"]
-Output: "wertf"
+<p><strong>Output</strong>: <code class="language-plaintext highlighter-rouge">"wertf"</code></p>
 
-Explanation:
-- "wrt" &lt; "wrf" → 't' &lt; 'f'
-- "wrt" &lt; "er" → 'w' &lt; 'e'  
-- "er" &lt; "ett" → 'r' &lt; 't'
-- "ett" &lt; "rftt" → 'e' &lt; 'r'
+<p>Why?</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">wrt</code> comes before <code class="language-plaintext highlighter-rouge">wrf</code> -&gt; <code class="language-plaintext highlighter-rouge">t</code> comes before <code class="language-plaintext highlighter-rouge">f</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">wrf</code> comes before <code class="language-plaintext highlighter-rouge">er</code> -&gt; <code class="language-plaintext highlighter-rouge">w</code> comes before <code class="language-plaintext highlighter-rouge">e</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">er</code> comes before <code class="language-plaintext highlighter-rouge">ett</code> -&gt; <code class="language-plaintext highlighter-rouge">r</code> comes before <code class="language-plaintext highlighter-rouge">t</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">ett</code> comes before <code class="language-plaintext highlighter-rouge">rftt</code> -&gt; <code class="language-plaintext highlighter-rouge">e</code> comes before <code class="language-plaintext highlighter-rouge">r</code>.</li>
+</ul>
 
-Order: w → e → r → t → f
-</code></pre></div></div>
+<p>Combining these clues: <code class="language-plaintext highlighter-rouge">w -&gt; e -&gt; r -&gt; t -&gt; f</code>.</p>
 
-<p><strong>Example 2:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>words = ["z", "x"]
-Output: "zx"
-</code></pre></div></div>
+<p>This is the <strong>Alien Dictionary</strong> problem. It is a fantastic test of your ability to model a problem. It combines <strong>String Processing</strong> (extracting rules) with <strong>Graph Theory</strong> (ordering dependencies).</p>
 
-<p><strong>Example 3:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>words = ["z", "x", "z"]
-Output: "" (invalid: z can't be both before and after x)
-</code></pre></div></div>
+<hr />
 
-<h2 id="2-understanding-the-problem">2. Understanding the Problem</h2>
+<h2 id="2-breaking-it-down">2. Breaking it Down</h2>
 
-<p>This is topological sort with edge extraction from sorted words:</p>
+<p>This is a 2-step problem.</p>
 
+<h3 id="step-1-build-the-graph-extract-dependencies">Step 1: Build the Graph (Extract Dependencies)</h3>
+<p>We need to turn the word list into a dependency graph.
+Dependency Rule: “Letter A comes before Letter B” is an edge <code class="language-plaintext highlighter-rouge">A -&gt; B</code>.</p>
+
+<p><strong>How to find an edge?</strong>
+Compare <strong>adjacent words</strong> in the list.</p>
 <ol>
-  <li><strong>Extract ordering constraints</strong> by comparing adjacent words</li>
-  <li><strong>Build a directed graph</strong> where edge (a, b) means a &lt; b</li>
-  <li><strong>Topological sort</strong> to get valid character ordering</li>
-  <li><strong>Detect cycles</strong> = invalid input</li>
+  <li>Compare <code class="language-plaintext highlighter-rouge">wrt</code> and <code class="language-plaintext highlighter-rouge">wrf</code>.
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">w</code> == <code class="language-plaintext highlighter-rouge">w</code> (skip)</li>
+      <li><code class="language-plaintext highlighter-rouge">r</code> == <code class="language-plaintext highlighter-rouge">r</code> (skip)</li>
+      <li><code class="language-plaintext highlighter-rouge">t</code> != <code class="language-plaintext highlighter-rouge">f</code>. Since <code class="language-plaintext highlighter-rouge">wrt</code> is first, <code class="language-plaintext highlighter-rouge">t</code> must be smaller than <code class="language-plaintext highlighter-rouge">f</code>.</li>
+      <li><strong>Edge</strong>: <code class="language-plaintext highlighter-rouge">t -&gt; f</code>.</li>
+      <li><em>Stop comparison for this pair</em>. (Characters after the first difference don’t matter for sorting).</li>
+    </ul>
+  </li>
+  <li>Compare <code class="language-plaintext highlighter-rouge">wrf</code> and <code class="language-plaintext highlighter-rouge">er</code>.
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">w</code> != <code class="language-plaintext highlighter-rouge">e</code>.</li>
+      <li><strong>Edge</strong>: <code class="language-plaintext highlighter-rouge">w -&gt; e</code>.</li>
+      <li>Stop.</li>
+    </ul>
+  </li>
 </ol>
 
-<h3 id="key-insight-adjacent-word-comparison">Key Insight: Adjacent Word Comparison</h3>
+<p><strong>Crucial Edge Case</strong>: Prefix ordering.
+If words are <code class="language-plaintext highlighter-rouge">["apple", "app"]</code>, this is <strong>Invalid</strong>. In a valid dictionary, the shorter prefix (<code class="language-plaintext highlighter-rouge">app</code>) must always come before the longer word (<code class="language-plaintext highlighter-rouge">apple</code>). If we see this, return <code class="language-plaintext highlighter-rouge">""</code>.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"wrt" vs "wrf":
-w == w (continue)
-r == r (continue)
-t != f → t comes before f
+<h3 id="step-2-topological-sort">Step 2: Topological Sort</h3>
+<p>Once we have the graph, finding the alphabet is just finding a <strong>Topological Sort</strong> (Order where parents come before children).</p>
 
-Only the FIRST different character tells us ordering!
-</code></pre></div></div>
+<p>We can use <strong>Kahn’s Algorithm</strong> (BFS) just like in Course Schedule (Day 49).</p>
 
-<h2 id="3-solution">3. Solution</h2>
+<hr />
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span>
-<span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">deque</span>
+<h2 id="3-the-algorithm">3. The Algorithm</h2>
+
+<ol>
+  <li><strong>Initialize</strong>: Map <code class="language-plaintext highlighter-rouge">graph</code> using a Set (to avoid duplicates) and <code class="language-plaintext highlighter-rouge">indegree</code> map for <em>every unique character</em> found in words.</li>
+  <li><strong>Build Graph</strong>: Zip adjacent words together. Find first diff. update graph and indegrees.</li>
+  <li><strong>BFS</strong>:
+    <ul>
+      <li>Queue = chars with 0 in-degree.</li>
+      <li>Result = string buffer.</li>
+      <li>While Queue not empty:
+        <ul>
+          <li>Pop char <code class="language-plaintext highlighter-rouge">C</code>. Append to Result.</li>
+          <li>For neighbor <code class="language-plaintext highlighter-rouge">N</code> in <code class="language-plaintext highlighter-rouge">graph[C]</code>:
+            <ul>
+              <li><code class="language-plaintext highlighter-rouge">indegree[N] -= 1</code></li>
+              <li>If <code class="language-plaintext highlighter-rouge">indegree[N] == 0</code>, push <code class="language-plaintext highlighter-rouge">N</code> to Queue.</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><strong>Validation</strong>:
+    <ul>
+      <li>If <code class="language-plaintext highlighter-rouge">len(result) &lt; num_unique_chars</code>, there is a cycle (e.g., A &lt; B and B &lt; A). Return <code class="language-plaintext highlighter-rouge">""</code>.</li>
+    </ul>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="4-visualizing-the-example">4. Visualizing the Example</h2>
+
+<p>Input: <code class="language-plaintext highlighter-rouge">["z", "x", "z"]</code> (Wait, <code class="language-plaintext highlighter-rouge">z</code> before <code class="language-plaintext highlighter-rouge">x</code> then <code class="language-plaintext highlighter-rouge">x</code> before <code class="language-plaintext highlighter-rouge">z</code>?)</p>
+<ol>
+  <li>Pair (<code class="language-plaintext highlighter-rouge">z</code>, <code class="language-plaintext highlighter-rouge">x</code>) -&gt; Edge <code class="language-plaintext highlighter-rouge">z -&gt; x</code>.</li>
+  <li>Pair (<code class="language-plaintext highlighter-rouge">x</code>, <code class="language-plaintext highlighter-rouge">z</code>) -&gt; Edge <code class="language-plaintext highlighter-rouge">x -&gt; z</code>.
+Graph: <code class="language-plaintext highlighter-rouge">z &lt;-&gt; x</code> (Cycle).
+Result: <code class="language-plaintext highlighter-rouge">""</code>.</li>
+</ol>
+
+<p>Input: <code class="language-plaintext highlighter-rouge">["wrt", "wrf", "er", "ett", "rftt"]</code></p>
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">wrt, wrf</code> -&gt; <code class="language-plaintext highlighter-rouge">t -&gt; f</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">wrf, er</code> -&gt; <code class="language-plaintext highlighter-rouge">w -&gt; e</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">er, ett</code> -&gt; <code class="language-plaintext highlighter-rouge">r -&gt; t</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">ett, rftt</code> -&gt; <code class="language-plaintext highlighter-rouge">e -&gt; r</code>.</li>
+</ol>
+
+<p>Graph:
+<code class="language-plaintext highlighter-rouge">w -&gt; e</code>
+<code class="language-plaintext highlighter-rouge">e -&gt; r</code>
+<code class="language-plaintext highlighter-rouge">r -&gt; t</code>
+<code class="language-plaintext highlighter-rouge">t -&gt; f</code>
+In-degrees: <code class="language-plaintext highlighter-rouge">w:0, e:1, r:1, t:1, f:1</code>.</p>
+
+<p>Queue: <code class="language-plaintext highlighter-rouge">[w]</code></p>
+<ul>
+  <li>Pop <code class="language-plaintext highlighter-rouge">w</code>. Result: “w”. Reduce <code class="language-plaintext highlighter-rouge">e</code>. Queue: <code class="language-plaintext highlighter-rouge">[e]</code></li>
+  <li>Pop <code class="language-plaintext highlighter-rouge">e</code>. Result: “we”. Reduce <code class="language-plaintext highlighter-rouge">r</code>. Queue: <code class="language-plaintext highlighter-rouge">[r]</code></li>
+  <li>Pop <code class="language-plaintext highlighter-rouge">r</code>. Result: “wer”. Reduce <code class="language-plaintext highlighter-rouge">t</code>. Queue: <code class="language-plaintext highlighter-rouge">[t]</code></li>
+  <li>Pop <code class="language-plaintext highlighter-rouge">t</code>. Result: “wert”. Reduce <code class="language-plaintext highlighter-rouge">f</code>. Queue: <code class="language-plaintext highlighter-rouge">[f]</code></li>
+  <li>Pop <code class="language-plaintext highlighter-rouge">f</code>. Result: “wertf”.</li>
+</ul>
+
+<hr />
+
+<h2 id="5-implementation">5. Implementation</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">deque</span><span class="p">,</span> <span class="n">defaultdict</span>
 
 <span class="k">class</span> <span class="nc">Solution</span><span class="p">:</span>
     <span class="k">def</span> <span class="nf">alienOrder</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">words</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Derive alien alphabet order from sorted words.
+        <span class="c1"># 0. Initialize Data Structures
+</span>        <span class="n">adj</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+        <span class="n">in_degree</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">words</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">word</span><span class="p">}</span>
         
-        Steps:
-        1. Build graph from adjacent word comparisons
-        2. Topological sort with cycle detection
-        
-        Time: O(C) where C = total chars in all words
-        Space: O(1) since alphabet size is fixed (26)
-        </span><span class="sh">"""</span>
-        <span class="c1"># Initialize graph with all unique characters
-</span>        <span class="n">graph</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>  <span class="c1"># char -&gt; set of chars that come after
-</span>        <span class="n">in_degree</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">words</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">word</span><span class="p">}</span>
-        
-        <span class="c1"># Build graph by comparing adjacent words
+        <span class="c1"># 1. Build Graph
 </span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="n">word1</span><span class="p">,</span> <span class="n">word2</span> <span class="o">=</span> <span class="n">words</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">words</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span> <span class="o">=</span> <span class="n">words</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">words</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">min_len</span> <span class="o">=</span> <span class="nf">min</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">w1</span><span class="p">),</span> <span class="nf">len</span><span class="p">(</span><span class="n">w2</span><span class="p">))</span>
             
-            <span class="c1"># Check for invalid case: "abc" before "ab"
-</span>            <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">word1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nf">len</span><span class="p">(</span><span class="n">word2</span><span class="p">)</span> <span class="ow">and</span> <span class="n">word1</span><span class="p">[:</span><span class="nf">len</span><span class="p">(</span><span class="n">word2</span><span class="p">)]</span> <span class="o">==</span> <span class="n">word2</span><span class="p">:</span>
+            <span class="c1"># Check for invalid prefix case ("apple", "app")
+</span>            <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">w1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nf">len</span><span class="p">(</span><span class="n">w2</span><span class="p">)</span> <span class="ow">and</span> <span class="n">w1</span><span class="p">[:</span><span class="n">min_len</span><span class="p">]</span> <span class="o">==</span> <span class="n">w2</span><span class="p">[:</span><span class="n">min_len</span><span class="p">]:</span>
                 <span class="k">return</span> <span class="sh">""</span>
-            
-            <span class="c1"># Find first different character
-</span>            <span class="k">for</span> <span class="n">c1</span><span class="p">,</span> <span class="n">c2</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">word1</span><span class="p">,</span> <span class="n">word2</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">c1</span> <span class="o">!=</span> <span class="n">c2</span><span class="p">:</span>
-                    <span class="c1"># c1 comes before c2
-</span>                    <span class="k">if</span> <span class="n">c2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="n">c1</span><span class="p">]:</span>
-                        <span class="n">graph</span><span class="p">[</span><span class="n">c1</span><span class="p">].</span><span class="nf">add</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span>
-                        <span class="n">in_degree</span><span class="p">[</span><span class="n">c2</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="k">break</span>  <span class="c1"># Only first difference matters!
-</span>        
-        <span class="c1"># Kahn's algorithm for topological sort
+                
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">min_len</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">w1</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">!=</span> <span class="n">w2</span><span class="p">[</span><span class="n">j</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">w2</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">adj</span><span class="p">[</span><span class="n">w1</span><span class="p">[</span><span class="n">j</span><span class="p">]]:</span>
+                        <span class="n">adj</span><span class="p">[</span><span class="n">w1</span><span class="p">[</span><span class="n">j</span><span class="p">]].</span><span class="nf">add</span><span class="p">(</span><span class="n">w2</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+                        <span class="n">in_degree</span><span class="p">[</span><span class="n">w2</span><span class="p">[</span><span class="n">j</span><span class="p">]]</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">break</span> <span class="c1"># Only the first difference matters!
+</span>                    
+        <span class="c1"># 2. Topological Sort (Kahn's)
 </span>        <span class="n">queue</span> <span class="o">=</span> <span class="nf">deque</span><span class="p">([</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">in_degree</span> <span class="k">if</span> <span class="n">in_degree</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">])</span>
         <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
         
         <span class="k">while</span> <span class="n">queue</span><span class="p">:</span>
-            <span class="n">char</span> <span class="o">=</span> <span class="n">queue</span><span class="p">.</span><span class="nf">popleft</span><span class="p">()</span>
-            <span class="n">result</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">char</span><span class="p">)</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">queue</span><span class="p">.</span><span class="nf">popleft</span><span class="p">()</span>
+            <span class="n">result</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
             
-            <span class="k">for</span> <span class="n">next_char</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="n">char</span><span class="p">]:</span>
-                <span class="n">in_degree</span><span class="p">[</span><span class="n">next_char</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
-                <span class="k">if</span> <span class="n">in_degree</span><span class="p">[</span><span class="n">next_char</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">queue</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">next_char</span><span class="p">)</span>
-        
-        <span class="c1"># Check for cycle
-</span>        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">!=</span> <span class="nf">len</span><span class="p">(</span><span class="n">in_degree</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">neighbor</span> <span class="ow">in</span> <span class="n">adj</span><span class="p">[</span><span class="n">c</span><span class="p">]:</span>
+                <span class="n">in_degree</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">in_degree</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">queue</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">neighbor</span><span class="p">)</span>
+                    
+        <span class="c1"># 3. Check for cycles
+</span>        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nf">len</span><span class="p">(</span><span class="n">in_degree</span><span class="p">):</span>
             <span class="k">return</span> <span class="sh">""</span>
-        
+            
         <span class="k">return</span> <span class="sh">""</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 </code></pre></div></div>
 
-<h2 id="4-dfs-alternative">4. DFS Alternative</h2>
+<hr />
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">alienOrder_dfs</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">words</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">DFS-based topological sort with cycle detection.</span><span class="sh">"""</span>
-    <span class="c1"># Build graph
-</span>    <span class="n">graph</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
-    <span class="n">chars</span> <span class="o">=</span> <span class="nf">set</span><span class="p">(</span><span class="n">c</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">words</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">word</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span> <span class="o">=</span> <span class="n">words</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">words</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
-        
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">w1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nf">len</span><span class="p">(</span><span class="n">w2</span><span class="p">)</span> <span class="ow">and</span> <span class="n">w1</span><span class="p">[:</span><span class="nf">len</span><span class="p">(</span><span class="n">w2</span><span class="p">)]</span> <span class="o">==</span> <span class="n">w2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sh">""</span>
-        
-        <span class="k">for</span> <span class="n">c1</span><span class="p">,</span> <span class="n">c2</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">w1</span><span class="p">,</span> <span class="n">w2</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">c1</span> <span class="o">!=</span> <span class="n">c2</span><span class="p">:</span>
-                <span class="n">graph</span><span class="p">[</span><span class="n">c1</span><span class="p">].</span><span class="nf">add</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span>
-                <span class="k">break</span>
-    
-    <span class="c1"># DFS with cycle detection
-</span>    <span class="c1"># 0: unvisited, 1: visiting, 2: visited
-</span>    <span class="n">state</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">chars</span><span class="p">}</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">def</span> <span class="nf">dfs</span><span class="p">(</span><span class="n">char</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">state</span><span class="p">[</span><span class="n">char</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">False</span>  <span class="c1"># Cycle!
-</span>        <span class="k">if</span> <span class="n">state</span><span class="p">[</span><span class="n">char</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">True</span>
-        
-        <span class="n">state</span><span class="p">[</span><span class="n">char</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="k">for</span> <span class="n">next_char</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="n">char</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nf">dfs</span><span class="p">(</span><span class="n">next_char</span><span class="p">):</span>
-                <span class="k">return</span> <span class="bp">False</span>
-        
-        <span class="n">state</span><span class="p">[</span><span class="n">char</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
-        <span class="n">result</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">char</span><span class="p">)</span>  <span class="c1"># Add in reverse post-order
-</span>        <span class="k">return</span> <span class="bp">True</span>
-    
-    <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">chars</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nf">dfs</span><span class="p">(</span><span class="n">char</span><span class="p">):</span>
-            <span class="k">return</span> <span class="sh">""</span>
-    
-    <span class="k">return</span> <span class="sh">""</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="nf">reversed</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
-</code></pre></div></div>
+<h2 id="6-time--space-complexity">6. Time &amp; Space Complexity</h2>
 
-<h2 id="5-walkthrough">5. Walkthrough</h2>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>words = ["wrt", "wrf", "er", "ett", "rftt"]
-
-Step 1: Extract edges
-- "wrt" vs "wrf": t → f
-- "wrf" vs "er": w → e
-- "er" vs "ett": r → t
-- "ett" vs "rftt": e → r
-
-Step 2: Build graph
-w → [e]
-e → [r]
-r → [t]
-t → [f]
-f → []
-
-Step 3: In-degrees
-w: 0, e: 1, r: 1, t: 1, f: 1
-
-Step 4: Kahn's algorithm
-Queue: [w]
-- Pop w, result = [w], reduce e to 0
-Queue: [e]
-- Pop e, result = [w,e], reduce r to 0
-Queue: [r]
-- Pop r, result = [w,e,r], reduce t to 0
-Queue: [t]
-- Pop t, result = [w,e,r,t], reduce f to 0
-Queue: [f]
-- Pop f, result = [w,e,r,t,f]
-
-Output: "wertf"
-</code></pre></div></div>
-
-<h2 id="6-edge-cases">6. Edge Cases</h2>
-
-<h3 id="invalid-prefix-comes-after-full-word">Invalid: Prefix comes after full word</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="sh">"</span><span class="s">abc</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">ab</span><span class="sh">"</span><span class="p">]</span>
-<span class="c1"># Invalid! "abc" cannot come before "ab" in ANY ordering
-# (a prefix can't come after its extension)
-</span></code></pre></div></div>
-
-<h3 id="cycle-detection">Cycle detection</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="sh">"</span><span class="s">z</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">x</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">z</span><span class="sh">"</span><span class="p">]</span>
-<span class="c1"># z → x (from ["z", "x"])
-# x → z (from ["x", "z"])
-# Cycle! Return ""
-</span></code></pre></div></div>
-
-<h3 id="single-word">Single word</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="sh">"</span><span class="s">abc</span><span class="sh">"</span><span class="p">]</span>
-<span class="c1"># Output: "abc" or "bca" or "cab" (any order with a, b, c)
-# Multiple valid answers since no constraints
-</span></code></pre></div></div>
-
-<h3 id="multiple-valid-orderings">Multiple valid orderings</h3>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="sh">"</span><span class="s">ab</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">cd</span><span class="sh">"</span><span class="p">]</span>
-<span class="c1"># a → nothing, b → nothing
-# c → nothing, d → nothing
-# Only constraint: a before b (implied by "ab")
-# Valid: "abcd", "acbd", "cabd", etc.
-</span></code></pre></div></div>
-
-<h2 id="7-testing">7. Testing</h2>
-
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">test_alien_dictionary</span><span class="p">():</span>
-    <span class="n">s</span> <span class="o">=</span> <span class="nc">Solution</span><span class="p">()</span>
-    
-    <span class="c1"># Basic
-</span>    <span class="k">assert</span> <span class="n">s</span><span class="p">.</span><span class="nf">alienOrder</span><span class="p">([</span><span class="sh">"</span><span class="s">wrt</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">wrf</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">er</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">ett</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">rftt</span><span class="sh">"</span><span class="p">])</span> <span class="o">==</span> <span class="sh">"</span><span class="s">wertf</span><span class="sh">"</span>
-    
-    <span class="c1"># Simple
-</span>    <span class="k">assert</span> <span class="n">s</span><span class="p">.</span><span class="nf">alienOrder</span><span class="p">([</span><span class="sh">"</span><span class="s">z</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">x</span><span class="sh">"</span><span class="p">])</span> <span class="o">==</span> <span class="sh">"</span><span class="s">zx</span><span class="sh">"</span>
-    
-    <span class="c1"># Invalid order
-</span>    <span class="k">assert</span> <span class="n">s</span><span class="p">.</span><span class="nf">alienOrder</span><span class="p">([</span><span class="sh">"</span><span class="s">z</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">x</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">z</span><span class="sh">"</span><span class="p">])</span> <span class="o">==</span> <span class="sh">""</span>
-    
-    <span class="c1"># Invalid prefix
-</span>    <span class="k">assert</span> <span class="n">s</span><span class="p">.</span><span class="nf">alienOrder</span><span class="p">([</span><span class="sh">"</span><span class="s">abc</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">ab</span><span class="sh">"</span><span class="p">])</span> <span class="o">==</span> <span class="sh">""</span>
-    
-    <span class="c1"># Single letter
-</span>    <span class="k">assert</span> <span class="n">s</span><span class="p">.</span><span class="nf">alienOrder</span><span class="p">([</span><span class="sh">"</span><span class="s">z</span><span class="sh">"</span><span class="p">])</span> <span class="o">==</span> <span class="sh">"</span><span class="s">z</span><span class="sh">"</span>
-    
-    <span class="c1"># All same
-</span>    <span class="k">assert</span> <span class="n">s</span><span class="p">.</span><span class="nf">alienOrder</span><span class="p">([</span><span class="sh">"</span><span class="s">a</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">a</span><span class="sh">"</span><span class="p">])</span> <span class="o">==</span> <span class="sh">"</span><span class="s">a</span><span class="sh">"</span>
-    
-    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">All tests passed!</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
-
-<h2 id="8-complexity-analysis">8. Complexity Analysis</h2>
-
-<p><strong>Time:</strong> O(C)</p>
 <ul>
-  <li>C = total characters across all words</li>
-  <li>Each character pair compared once</li>
-  <li>Topological sort is O(V + E) where V ≤ 26, E ≤ 26²</li>
+  <li><strong>Time</strong>: <code class="language-plaintext highlighter-rouge">O(C)</code>
+    <ul>
+      <li>C is the total number of characters in all words.</li>
+      <li>We iterate through the word list once to build the graph.</li>
+      <li>The graph has at most 26 nodes (lowercase English letters). BFS on a small graph is constant time relative to the input C.</li>
+    </ul>
+  </li>
+  <li><strong>Space</strong>: <code class="language-plaintext highlighter-rouge">O(1)</code> or <code class="language-plaintext highlighter-rouge">O(U)</code>
+    <ul>
+      <li>U is unique characters (max 26). The graph is tiny.</li>
+      <li>Adjacency list size is bounded by 26*26.</li>
+    </ul>
+  </li>
 </ul>
 
-<p><strong>Space:</strong> O(1) or O(26²)</p>
-<ul>
-  <li>Graph has at most 26 nodes and 26² edges</li>
-  <li>Constant if we consider alphabet size fixed</li>
-</ul>
+<hr />
 
-<h2 id="9-common-mistakes">9. Common Mistakes</h2>
+<h2 id="7-real-world-connection">7. Real World Connection</h2>
 
-<ol>
-  <li><strong>Only using first word pair</strong>: Must compare ALL adjacent pairs</li>
-  <li><strong>Not handling prefix case</strong>: “abc” before “ab” is invalid</li>
-  <li><strong>Missing characters</strong>: Include ALL characters, not just those in edges</li>
-  <li><strong>Stopping after first difference</strong>: Correct—only first diff matters</li>
-</ol>
+<p>This isn’t just about Aliens.
+This logic is used in <strong>Data Reconciliation</strong>.
+If you have two different sorted lists of data (e.g., versions of a file), and you want to deduce the implicit sorting rule (Order by Date? Order by Size?), you can use this differential analysis.</p>
 
-<h2 id="10-connection-to-language-models">10. Connection to Language Models</h2>
-
-<p>Alien Dictionary is about <strong>inferring structure from examples</strong>—exactly what language models do:</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Alien Dictionary</th>
-      <th>Language Modeling</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Word order → Char order</td>
-      <td>Text → Probability distribution</td>
-    </tr>
-    <tr>
-      <td>Constraints</td>
-      <td>Training data</td>
-    </tr>
-    <tr>
-      <td>Topological sort</td>
-      <td>Learning algorithm</td>
-    </tr>
-    <tr>
-      <td>Invalid (cycle)</td>
-      <td>Contradictory data</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>Both extract <strong>hidden rules</strong> from observed sequences.</p>
+<p>It is also similar to how <strong>LLMs learn implicit rules</strong> from sequence data. They see <code class="language-plaintext highlighter-rouge">A</code> mostly followed by <code class="language-plaintext highlighter-rouge">B</code>, and learn the structure. Here, we deterministically extract the rigid structure.</p>
 
 <hr />
 
@@ -578,15 +478,13 @@ Output: "wertf"
     <strong><i class="fas fa-fw fa-tags" aria-hidden="true"></i> Tags: </strong>
     <span itemprop="keywords">
     
-      <a href="/tags/#bfs" class="page__taxonomy-item p-category" rel="tag">bfs</a><span class="sep">, </span>
+      <a href="/tags/#directed-graph" class="page__taxonomy-item p-category" rel="tag">directed-graph</a><span class="sep">, </span>
     
-      <a href="/tags/#dfs" class="page__taxonomy-item p-category" rel="tag">dfs</a><span class="sep">, </span>
+      <a href="/tags/#graph" class="page__taxonomy-item p-category" rel="tag">graph</a><span class="sep">, </span>
     
-      <a href="/tags/#graphs" class="page__taxonomy-item p-category" rel="tag">graphs</a><span class="sep">, </span>
+      <a href="/tags/#hard" class="page__taxonomy-item p-category" rel="tag">hard</a><span class="sep">, </span>
     
-      <a href="/tags/#ordering" class="page__taxonomy-item p-category" rel="tag">ordering</a><span class="sep">, </span>
-    
-      <a href="/tags/#string" class="page__taxonomy-item p-category" rel="tag">string</a><span class="sep">, </span>
+      <a href="/tags/#string-processing" class="page__taxonomy-item p-category" rel="tag">string-processing</a><span class="sep">, </span>
     
       <a href="/tags/#topological-sort" class="page__taxonomy-item p-category" rel="tag">topological-sort</a>
     
@@ -652,14 +550,14 @@ Output: "wertf"
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          6 minute read
+          4 minute read
         
       </span>
     
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“No vocabulary needed—predict one character at a time.”
+    <p class="archive__item-excerpt" itemprop="description">“Before machines could write essays, they had to learn to spell.”
 </p>
   </article>
 </div>
@@ -672,7 +570,7 @@ Output: "wertf"
     
     <h2 class="archive__item-title no_toc" itemprop="headline">
       
-        <a href="/speech-tech/0050-custom-language-modeling/" rel="permalink">Custom Language Modeling for ASR
+        <a href="/speech-tech/0050-custom-language-modeling/" rel="permalink">Custom Language Modeling
 </a>
       
     </h2>
@@ -690,14 +588,14 @@ Output: "wertf"
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          7 minute read
+          3 minute read
         
       </span>
     
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“The right language model makes your ASR understand your domain.”
+    <p class="archive__item-excerpt" itemprop="description">“The model knows ‘Apple’ the fruit. It needs to learn ‘Apple’ the stock ticker.”
 </p>
   </article>
 </div>
@@ -728,14 +626,14 @@ Output: "wertf"
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          8 minute read
+          3 minute read
         
       </span>
     
   </p>
 
 
-    <p class="archive__item-excerpt" itemprop="description">“Generic agents are jacks of all trades—domain agents are masters of one.”
+    <p class="archive__item-excerpt" itemprop="description">“Don’t build a generalist. Build a specialist.”
 </p>
   </article>
 </div>
