@@ -150,7 +150,7 @@ There is a "Pareto Frontiers" of optimization.
 
 ### 6.2 Caching (The Semantic Cache)
 We discussed caching in ML System Design. For Agents, **Semantic Caching** saves 100% of tokens.
-Ref: `[Cost Management](../ai-agents/0047-cost-management-for-agents)` (Post 47).
+Ref: [Cost Management](../ai-agents/0047-cost-management-for-agents).
 If `User: "Hello"` is cached, we send 0 tokens to LLM.
 
 ---
