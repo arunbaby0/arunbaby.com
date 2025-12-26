@@ -55,6 +55,9 @@ Each topic includes:
 - [Token Efficiency Optimization](/ai-agents/0046-token-efficiency-optimization/)
 - [Cost Management for AI Agents](/ai-agents/0047-cost-management-for-agents/)
 
+**Knowledge & Reasoning:**
+- [Knowledge Graphs for Agents](/ai-agents/0051-knowledge-graphs-for-agents/)
+
 **Real-Time & Streaming:**
 - [Streaming and Real-Time Agents](/ai-agents/0048-streaming-real-time-agents/)
 

@@ -29,6 +29,9 @@ Each post includes:
 **Speech Classification:**
 - [Speech Command Classification](/speech-tech/0002-speech-classification/)
 
+**Privacy & On-Device:**
+- [Privacy-preserving Speech](/speech-tech/0051-privacy-preserving-speech/)
+
 **Audio Processing:**
 - [Audio Feature Extraction](/speech-tech/0003-audio-feature-extraction/)
 - [Voice Activity Detection](/speech-tech/0004-voice-activity-detection/)

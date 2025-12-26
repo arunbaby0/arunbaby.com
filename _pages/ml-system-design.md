@@ -49,6 +49,7 @@ Each design includes:
 **Model Training:**
 - [Online Learning Systems](/ml-system-design/0009-online-learning-systems/)
 - [Distributed Training](/ml-system-design/0025-distributed-training/)
+- [Federated Learning](/ml-system-design/0051-federated-learning/)
 - [Model Architecture Design](/ml-system-design/0027-model-architecture-design/)
 - [Ranking Systems at Scale](/ml-system-design/0028-ranking-systems-at-scale/)
 - [Hierarchical Classification](/ml-system-design/0029-hierarchical-classification/)

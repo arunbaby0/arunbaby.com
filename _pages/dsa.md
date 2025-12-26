@@ -70,6 +70,7 @@ Each problem includes:
 
 **Sorting & Searching:**
 - [Binary Search](/dsa/0009-binary-search/)
+- [Median of Two Sorted Arrays](/dsa/0051-median-of-two-sorted-arrays/)
 
 **Two Pointers & Greedy:**
 - [Container With Most Water](/dsa/0013-container-with-most-water/)
