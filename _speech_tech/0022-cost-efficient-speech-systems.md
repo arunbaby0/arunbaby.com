@@ -1,22 +1,22 @@
 ---
 title: "Cost-efficient Speech Systems"
 day: 22
+related_dsa_day: 22
+related_ml_day: 22
+related_agents_day: 22
 collection: speech_tech
 categories:
-  - speech-tech
+ - speech-tech
 tags:
-  - asr
-  - optimization
-  - quantization
-  - edge-computing
-  - rtos
+ - asr
+ - optimization
+ - quantization
+ - edge-computing
+ - rtos
 subdomain: "Embedded Speech & Edge AI"
 tech_stack: [C++, TensorFlow Lite, WebRTC]
 scale: "Edge/Device-level optimization"
 companies: [Apple, Amazon (Alexa), Sonos, Garmin]
-related_dsa_day: 22
-related_ml_day: 22
-related_agents_day: 22
 ---
 
 **Strategies for building profitable speech recognition systems by optimizing the entire pipeline from signal processing to hardware.**
@@ -55,32 +55,32 @@ Using 44.1kHz (CD quality) for speech is wasteful. It triples your data size (st
 
 Where does the money go?
 
-1.  **Decoder Search (Beam Search):** The ASR model outputs probabilities for each character/token at each time step. Finding the most likely sentence requires searching through a massive tree of possibilities. This "Beam Search" is CPU-intensive.
-2.  **Model Depth (FLOPs):** Modern models like Conformer or Whisper have hundreds of millions of parameters. Every millisecond of audio requires billions of floating-point operations.
-3.  **Memory Bandwidth:** Audio features are large. Moving them from RAM to GPU memory is often the bottleneck, not the compute itself.
-4.  **Streaming vs. Batch:** Streaming (real-time) is inherently inefficient because you cannot batch requests effectively. You are forced to process small chunks, which kills hardware utilization.
+1. **Decoder Search (Beam Search):** The ASR model outputs probabilities for each character/token at each time step. Finding the most likely sentence requires searching through a massive tree of possibilities. This "Beam Search" is CPU-intensive.
+2. **Model Depth (FLOPs):** Modern models like Conformer or Whisper have hundreds of millions of parameters. Every millisecond of audio requires billions of floating-point operations.
+3. **Memory Bandwidth:** Audio features are large. Moving them from RAM to GPU memory is often the bottleneck, not the compute itself.
+4. **Streaming vs. Batch:** Streaming (real-time) is inherently inefficient because you cannot batch requests effectively. You are forced to process small chunks, which kills hardware utilization.
 
 ## Signal Processing 101: The Hidden Costs
 
 Before the model even sees the data, we process it.
 - **Feature Extraction:** We convert raw waves into Spectrograms or MFCCs (Mel-Frequency Cepstral Coefficients).
-    - **Math:** This involves Fourier Transforms (FFT). While fast (`O(N log N)`), doing this for thousands of streams adds up.
-    - **Optimization:** Use GPU-accelerated feature extraction (like `torchaudio` or `Kaldi` on GPU) instead of CPU-based `librosa`.
+ - **Math:** This involves Fourier Transforms (FFT). While fast (O(N log N)), doing this for thousands of streams adds up.
+ - **Optimization:** Use GPU-accelerated feature extraction (like `torchaudio` or `Kaldi` on GPU) instead of CPU-based `librosa`.
 
 ## High-Level Architecture: The Efficient Pipeline
 
-```ascii
-+-----------+    +-------------+    +-------------+    +-------------+
-| Raw Audio | -> | VAD Filter  | -> | Feature Ext | -> |  ASR Model  |
-+-----------+    +-------------+    +-------------+    +-------------+
-                      |                    |                  |
-                 (Silence?)           (MFCCs/Spec)       (Transducer)
-                      |                    |                  |
-                      v                    v                  v
-                 +---------+        +-------------+    +-------------+
-                 | Discard |        | GPU/DSP Acc |    | Text Output |
-                 +---------+        +-------------+    +-------------+
-```
+``ascii
++-----------+ +-------------+ +-------------+ +-------------+
+| Raw Audio | -> | VAD Filter | -> | Feature Ext | -> | ASR Model |
++-----------+ +-------------+ +-------------+ +-------------+
+ | | |
+ (Silence?) (MFCCs/Spec) (Transducer)
+ | | |
+ v v v
+ +---------+ +-------------+ +-------------+
+ | Discard | | GPU/DSP Acc | | Text Output |
+ +---------+ +-------------+ +-------------+
+``
 
 ## Strategy 1: The Gatekeeper (Voice Activity Detection)
 
@@ -107,9 +107,9 @@ In a typical phone call, one person speaks only 40-50% of the time. The rest is 
 
 **Implementation Strategy:**
 Use a **Cascade**.
-1.  Run Energy VAD. If Silent -> Discard.
-2.  If Energy > Threshold, run Neural VAD. If Silent -> Discard.
-3.  If Speech -> Send to ASR.
+1. Run Energy VAD. If Silent -> Discard.
+2. If Energy > Threshold, run Neural VAD. If Silent -> Discard.
+3. If Speech -> Send to ASR.
 
 ## Strategy 2: Efficient Architectures
 
@@ -165,8 +165,8 @@ Formula: `Q = round(S * (R - Z))`
 - `Q`: Quantized value (INT8)
 
 **Why does this save money?**
-1.  **Memory:** 4x smaller model = 4x less RAM. You can fit a larger model on a cheaper GPU.
-2.  **Compute:** Integer math is much faster than Floating Point math on modern CPUs.
+1. **Memory:** 4x smaller model = 4x less RAM. You can fit a larger model on a cheaper GPU.
+2. **Compute:** Integer math is much faster than Floating Point math on modern CPUs.
 
 ## Detailed Case Study: The Call Center
 
@@ -174,7 +174,7 @@ Formula: `Q = round(S * (R - Z))`
 A call center records 10,000 hours of calls per day. They need to transcribe them for compliance and sentiment analysis.
 - **Requirement:** Transcription must be available within 1 hour of the call ending.
 - **Current State:** Using a cloud API (Google/AWS) at $0.024 per minute.
-- **Daily Cost:** 10,000 hours * 60 mins * $0.024 = **$14,400 / day** ($432k/month). Ouch.
+- **Daily Cost:** 10,000 hours * 60 mins * `0.024 = **`14,400 / day** ($432k/month). Ouch.
 
 **The Optimization Plan:**
 
@@ -195,7 +195,7 @@ Since the requirement is "within 1 hour" (not real-time), you can batch.
 - Total processing time needed: 6,000 hours.
 - With 40x speedup, you need 150 GPU-hours.
 - Cost of T4 Spot Instance: $0.20/hr.
-- **Daily Compute Cost:** 150 * $0.20 = **$30**.
+- **Daily Compute Cost:** 150 * `0.20 = **`30**.
 
 **Step 4: Storage & Overhead**
 Add storage, data transfer, and management node costs. Let's say **$100/day**.
@@ -210,43 +210,43 @@ Add storage, data transfer, and management node costs. Let's say **$100/day**.
 
 Here is a Python snippet showing how to use `webrtcvad` to filter audio before sending it to an ASR system.
 
-```python
+``python
 import webrtcvad
 import collections
 import sys
 
 class VADFilter:
-    def __init__(self, aggressiveness=3):
-        self.vad = webrtcvad.Vad(aggressiveness)
-        self.sample_rate = 16000
-        self.frame_duration_ms = 30 # Must be 10, 20, or 30
+ def __init__(self, aggressiveness=3):
+ self.vad = webrtcvad.Vad(aggressiveness)
+ self.sample_rate = 16000
+ self.frame_duration_ms = 30 # Must be 10, 20, or 30
 
-    def read_frames(self, audio_bytes):
-        """Generator that yields 30ms frames"""
-        n = int(self.sample_rate * (self.frame_duration_ms / 1000.0) * 2) # 2 bytes per sample
-        offset = 0
-        while offset + n < len(audio_bytes):
-            yield audio_bytes[offset:offset + n]
-            offset += n
+ def read_frames(self, audio_bytes):
+ """Generator that yields 30ms frames"""
+ n = int(self.sample_rate * (self.frame_duration_ms / 1000.0) * 2) # 2 bytes per sample
+ offset = 0
+ while offset + n < len(audio_bytes):
+ yield audio_bytes[offset:offset + n]
+ offset += n
 
-    def filter_audio(self, audio_bytes):
-        """Returns only the speech segments"""
-        frames = self.read_frames(audio_bytes)
-        speech_frames = []
-        
-        for frame in frames:
-            is_speech = self.vad.is_speech(frame, self.sample_rate)
-            if is_speech:
-                speech_frames.append(frame)
-        
-        return b''.join(speech_frames)
+ def filter_audio(self, audio_bytes):
+ """Returns only the speech segments"""
+ frames = self.read_frames(audio_bytes)
+ speech_frames = []
+ 
+ for frame in frames:
+ is_speech = self.vad.is_speech(frame, self.sample_rate)
+ if is_speech:
+ speech_frames.append(frame)
+ 
+ return b''.join(speech_frames)
 
 # Usage
 # raw_audio = load_wav("call_center_recording.wav")
 # vad = VADFilter()
 # clean_audio = vad.filter_audio(raw_audio)
 # asr_model.transcribe(clean_audio)
-```
+``
 
 ## Tutorial: Deploying Speech on Raspberry Pi
 
@@ -257,21 +257,21 @@ Let's get hands-on. We will deploy a keyword spotter on a Raspberry Pi 4.
 - USB Microphone
 
 **Step 1: Install Dependencies**
-```bash
+``bash
 sudo apt-get update
 sudo apt-get install python3-pip libatlas-base-dev
 pip3 install tensorflow-aarch64
-```
+``
 
 **Step 2: Download a TFLite Model**
 We will use a pre-trained model for "Yes/No".
-```bash
+``bash
 wget https://storage.googleapis.com/download.tensorflow.org/models/tflite/conv_actions_tflite.zip
 unzip conv_actions_tflite.zip
-```
+``
 
 **Step 3: Run Inference Script**
-```python
+``python
 import tensorflow as tf
 import numpy as np
 
@@ -284,18 +284,18 @@ input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
 # ... (Audio capture code using PyAudio) ...
-```
+``
 
 **Result:** You now have a voice-controlled switch running locally for $35 one-time cost. No cloud bills!
 
 ## Checklist for Cost-Efficient Speech
 
-1.  [ ] **VAD:** Are you processing silence? Stop it.
-2.  [ ] **Sample Rate:** Are you using 44.1kHz? Downsample to 16kHz. Speech doesn't need high fidelity.
-3.  [ ] **Model Size:** Do you need Whisper-Large? Try Tiny or Base first.
-4.  [ ] **Quantization:** Are you using INT8?
-5.  [ ] **Batching:** If it's not live, batch it.
-6.  [ ] **Mono vs Stereo:** If speakers are on separate channels, process them separately (and apply VAD to each).
+1. [ ] **VAD:** Are you processing silence? Stop it.
+2. [ ] **Sample Rate:** Are you using 44.1kHz? Downsample to 16kHz. Speech doesn't need high fidelity.
+3. [ ] **Model Size:** Do you need Whisper-Large? Try Tiny or Base first.
+4. [ ] **Quantization:** Are you using INT8?
+5. [ ] **Batching:** If it's not live, batch it.
+6. [ ] **Mono vs Stereo:** If speakers are on separate channels, process them separately (and apply VAD to each).
 
 ## Appendix A: The Mathematics of Sound (Fourier Transform)
 
@@ -310,42 +310,42 @@ Where:
 - `e^(-i...)` is Euler's formula, representing rotation in the complex plane.
 
 **Why it matters for cost:**
-Calculating this naively is `O(N^2)`. The Fast Fourier Transform (FFT) algorithm (Cooley-Tukey) does it in `O(N log N)`. Without FFT, real-time speech recognition would be impossible on standard hardware.
+Calculating this naively is O(N^2). The Fast Fourier Transform (FFT) algorithm (Cooley-Tukey) does it in O(N log N). Without FFT, real-time speech recognition would be impossible on standard hardware.
 
 ## Appendix B: Python Code for Simple ASR
 
 Here is a conceptual implementation of a simple "Template Matching" ASR system using Dynamic Time Warping (DTW). This was the state-of-the-art in the 1980s!
 
-```python
+``python
 import numpy as np
 from scipy.spatial.distance import cdist
 
 def dtw(x, y):
-    """
-    Computes Dynamic Time Warping distance between two sequences.
-    This is essentially the 'Minimum Path Sum' problem!
-    """
-    n, m = len(x), len(y)
-    dtw_matrix = np.zeros((n+1, m+1))
-    dtw_matrix[0, 1:] = np.inf
-    dtw_matrix[1:, 0] = np.inf
-    
-    for i in range(1, n+1):
-        for j in range(1, m+1):
-            cost = abs(x[i-1] - y[j-1])
-            # Take min of (match, insertion, deletion)
-            dtw_matrix[i, j] = cost + min(dtw_matrix[i-1, j],    # Insertion
-                                          dtw_matrix[i, j-1],    # Deletion
-                                          dtw_matrix[i-1, j-1])  # Match
-                                          
-    return dtw_matrix[n, m]
+ """
+ Computes Dynamic Time Warping distance between two sequences.
+ This is essentially the 'Minimum Path Sum' problem!
+ """
+ n, m = len(x), len(y)
+ dtw_matrix = np.zeros((n+1, m+1))
+ dtw_matrix[0, 1:] = np.inf
+ dtw_matrix[1:, 0] = np.inf
+ 
+ for i in range(1, n+1):
+ for j in range(1, m+1):
+ cost = abs(x[i-1] - y[j-1])
+ # Take min of (match, insertion, deletion)
+ dtw_matrix[i, j] = cost + min(dtw_matrix[i-1, j], # Insertion
+ dtw_matrix[i, j-1], # Deletion
+ dtw_matrix[i-1, j-1]) # Match
+ 
+ return dtw_matrix[n, m]
 
 # Usage
 # template = load_features("hello_template.wav")
 # input_audio = load_features("user_input.wav")
 # distance = dtw(template, input_audio)
 # if distance < threshold: print("Detected 'Hello'")
-```
+``
 
 ## Conclusion
 

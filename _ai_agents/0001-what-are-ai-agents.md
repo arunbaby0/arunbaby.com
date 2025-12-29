@@ -3,14 +3,14 @@ title: "What are AI Agents?"
 day: 1
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - foundations
-  - concepts
-  - ai-agents
-  - architecture
-  - philosophy
-  - history
+ - foundations
+ - concepts
+ - ai-agents
+ - architecture
+ - philosophy
+ - history
 difficulty: Easy
 related_dsa_day: 1
 related_ml_day: 1
@@ -177,7 +177,7 @@ An agent designed to play Minecraft.
 ### 5.3 Generative Agents: The Simulation
 Researchers filled a virtual "Smallville" with 25 agents (John, Alice, Bob...).
 * **The Life:** They woke up, cooked breakfast, went to work, and gossiped.
-* **The Emergence:** Users saw emergent behavior. One agent planned a Valentine's Day party. It told another agent. That agent passed the invite on. On the day of the party, 5 agents showed up. **No one programmed the party.** It happened organically through the agents' memory and planning interactions.
+* **The Emergence:** Users saw emergent behavior. One agent planned a Valentine's party. It told another agent. That agent passed the invite on. On the day of the party, 5 agents showed up. **No one programmed the party.** It happened organically through the agents' memory and planning interactions.
 
 ### 5.4 Devin: The Software Engineer
 In 2024, Cognition Labs released Devin.
@@ -190,7 +190,7 @@ In 2024, Cognition Labs released Devin.
 
 To demystify the magic, let's build a functional ReAct agent in Python. This is a simplified version of what frameworks like LangChain do under the hood.
 
-```python
+``python
 import json
 import re
 
@@ -278,7 +278,7 @@ agent = Agent(
 
 result = agent.run("What is 20 * 15?")
 print(f"Result: {result}")
-```
+``
 
 ### Analysis of the Code
 1. **The Loop:** The `while` loop is the heartbeat. It keeps the agent alive until a terminal condition is met.
@@ -294,7 +294,7 @@ If agents are so powerful, why aren't they doing all our work yet? The field fac
 
 ### 7.1 Reliability (The 95% Problem)
 This is the math problem of agency.
-If an agent has to perform 10 sequential steps, and each step has a 95% success rate (which is very high for an LLM), the probability of the *entire* workflow succeeding is $0.95^{10} \approx 59\%$.
+If an agent has to perform 10 sequential steps, and each step has a 95% success rate (which is very high for an LLM), the probability of the *entire* workflow succeeding is `0.95^{10} \approx 59\%`.
 Agents are fragile. A small hallucination in Step 2 ("I think the file is named `data.txt`") becomes a catastrophic failure in Step 10 ("File not found. Crash."). Reliability engineering—adding retry logic, validation steps, and oversight—is 80% of the work in building agents.
 
 ### 7.2 Infinite Loops

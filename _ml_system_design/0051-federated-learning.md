@@ -1,24 +1,24 @@
 ---
 title: "Federated Learning"
 day: 51
+related_dsa_day: 51
+related_speech_day: 51
+related_agents_day: 51
 collection: ml_system_design
 categories:
-  - ml-system-design
+ - ml-system-design
 tags:
-  - federated-learning
-  - distributed-training
-  - privacy
-  - secure-aggregation
-  - on-device-ml
-  - mlops
+ - federated-learning
+ - distributed-training
+ - privacy
+ - secure-aggregation
+ - on-device-ml
+ - mlops
 difficulty: Hard
 subdomain: "Distributed Training"
 tech_stack: PyTorch, TensorFlow Federated, gRPC, Kubernetes
 scale: "10M+ devices, intermittent connectivity, privacy constraints"
 companies: Google, Apple, Meta, Samsung
-related_dsa_day: 51
-related_speech_day: 51
-related_agents_day: 51
 ---
 
 **"If data can’t move, move the model—and design the system so the server never sees what matters."**
@@ -57,9 +57,9 @@ Federated learning is a distributed optimization algorithm under strict constrai
 - Train a global model over many client datasets without centralizing raw data.
 - Periodically produce a new model version for serving (on-device or server-side).
 - Support multiple model types:
-  - logistic regression / small neural nets
-  - large embeddings
-  - speech models (acoustic / personalization heads)
+ - logistic regression / small neural nets
+ - large embeddings
+ - speech models (acoustic / personalization heads)
 - Support experimentation: A/B testing between FL variants (FedAvg vs FedProx, compression choices, DP).
 
 ### 2.2 Non-functional requirements (the real difficulty)
@@ -88,40 +88,40 @@ At a high level, an FL system runs repeated **rounds**:
 
 ### 3.1 Architecture diagram (control + data plane)
 
-```
-                    +----------------------------------+
-                    |        FL Orchestrator           |
-                    | (round scheduler + policy engine)|
-                    +-------------------+--------------+
-                                        |
-                     (model + plan)     |    (eligibility + sampling)
-                                        v
-  +----------------------+     +----------------------+     +----------------------+
-  | Model Registry       |     | Client Selector      |     | Privacy / Security   |
-  | (versions, metadata) |     | (sampling, quotas)   |     | (DP params, SA keys) |
-  +----------+-----------+     +----------+-----------+     +----------+-----------+
-             |                                |                          |
-             |                                |                          |
-             v                                v                          v
-    +-------------------+           +-------------------+        +-------------------+
-    | Broadcast Service |---------> |  Devices (clients)|------> | Secure Aggregator |
-    | (CDN / gRPC)      |  model+   | local train,      | updates| (no raw updates)  |
-    +-------------------+  plan     | clip/noise,       |        +---------+---------+
-                                     | upload partials   |                  |
-                                     +---------+---------+                  |
-                                               |                            |
-                                               v                            v
-                                       +-------------------+      +-------------------+
-                                       | Telemetry         |      | Server Optimizer  |
-                                       | (metrics only)    |      | (FedAvg/FedOpt)   |
-                                       +-------------------+      +---------+---------+
-                                                                         |
-                                                                         v
-                                                                 +-------------------+
-                                                                 | Eval + Promotion  |
-                                                                 | (holdout + guard) |
-                                                                 +-------------------+
-```
+``
+ +----------------------------------+
+ | FL Orchestrator |
+ | (round scheduler + policy engine)|
+ +-------------------+--------------+
+ |
+ (model + plan) | (eligibility + sampling)
+ v
+ +----------------------+ +----------------------+ +----------------------+
+ | Model Registry | | Client Selector | | Privacy / Security |
+ | (versions, metadata) | | (sampling, quotas) | | (DP params, SA keys) |
+ +----------+-----------+ +----------+-----------+ +----------+-----------+
+ | | |
+ | | |
+ v v v
+ +-------------------+ +-------------------+ +-------------------+
+ | Broadcast Service |---------> | Devices (clients)|------> | Secure Aggregator |
+ | (CDN / gRPC) | model+ | local train, | updates| (no raw updates) |
+ +-------------------+ plan | clip/noise, | +---------+---------+
+ | upload partials | |
+ +---------+---------+ |
+ | |
+ v v
+ +-------------------+ +-------------------+
+ | Telemetry | | Server Optimizer |
+ | (metrics only) | | (FedAvg/FedOpt) |
+ +-------------------+ +---------+---------+
+ |
+ v
+ +-------------------+
+ | Eval + Promotion |
+ | (holdout + guard) |
+ +-------------------+
+``
 
 ### 3.2 Key responsibilities
 
@@ -219,19 +219,19 @@ in practice you often **tune the clipping norm** by searching for a value that p
 Secure aggregation sounds like a single box (“the secure aggregator”), but it’s usually a multi-step protocol. A simplified view:
 
 1. **Key agreement / setup**
-   - Clients establish pairwise secrets (or receive public keys) for masking.
+ - Clients establish pairwise secrets (or receive public keys) for masking.
 
 2. **Masking**
-   - Each client creates a random mask vector \(r_k\).
-   - Client sends *shares* of masks such that masks can be reconstructed only if enough clients finish.
-   - The client uploads masked update: \(u_k + r_k\).
+ - Each client creates a random mask vector \(r_k\).
+ - Client sends *shares* of masks such that masks can be reconstructed only if enough clients finish.
+ - The client uploads masked update: \(u_k + r_k\).
 
 3. **Dropout handling**
-   - Some clients drop out mid-round.
-   - The protocol reconstructs masks for missing clients (or cancels their masks) so the final sum unmasks correctly.
+ - Some clients drop out mid-round.
+ - The protocol reconstructs masks for missing clients (or cancels their masks) so the final sum unmasks correctly.
 
 4. **Aggregation**
-   - Server ends with \(\sum_k u_k\) (or weighted sum), but never sees any individual \(u_k\).
+ - Server ends with \(\sum_k u_k\) (or weighted sum), but never sees any individual \(u_k\).
 
 Design implications:
 - You need a **threshold** (e.g., 1k clients) to reduce privacy leakage and to make SA feasible.
@@ -280,37 +280,37 @@ Good answer:
 ### 5.1 Step-by-step
 
 1. **Round start**
-   - Orchestrator decides: model `v123`, plan `p77`, cohort: “English-US”, target: 50k clients.
+ - Orchestrator decides: model `v123`, plan `p77`, cohort: “English-US”, target: 50k clients.
 
 2. **Client selection**
-   - Selector samples from eligible clients, respecting quotas.
+ - Selector samples from eligible clients, respecting quotas.
 
 3. **Broadcast**
-   - Devices fetch:
-     - model weights (CDN)
-     - training plan (gRPC / config service)
+ - Devices fetch:
+ - model weights (CDN)
+ - training plan (gRPC / config service)
 
 4. **Local training**
-   - Device trains for a small number of steps/epochs.
-   - Applies clipping and optional noise.
+ - Device trains for a small number of steps/epochs.
+ - Applies clipping and optional noise.
 
 5. **Upload**
-   - Device uploads masked update shares for SA (or direct update if SA disabled).
+ - Device uploads masked update shares for SA (or direct update if SA disabled).
 
 6. **Secure aggregation**
-   - Aggregator reconstructs only the sum/average update once threshold reached.
+ - Aggregator reconstructs only the sum/average update once threshold reached.
 
 7. **Server update**
-   - Server optimizer applies aggregated update to produce new model candidate `v124-candidate`.
+ - Server optimizer applies aggregated update to produce new model candidate `v124-candidate`.
 
 8. **Evaluation**
-   - Evaluate on:
-     - server-side public/curated datasets
-     - privacy-safe on-device eval (clients compute metrics and aggregate)
+ - Evaluate on:
+ - server-side public/curated datasets
+ - privacy-safe on-device eval (clients compute metrics and aggregate)
 
 9. **Promotion**
-   - If guardrails pass (quality + privacy + regressions), promote to `v124`.
-   - Otherwise rollback, adjust plan, or reduce cohort.
+ - If guardrails pass (quality + privacy + regressions), promote to `v124`.
+ - Otherwise rollback, adjust plan, or reduce cohort.
 
 ### 5.2 What makes FL “different”
 In centralized training, you can log:
@@ -380,7 +380,7 @@ Trade-off:
 
 This is a simplified simulation of FedAvg. In production, the core is the same conceptually, but wrapped in client runtimes, orchestration, and secure aggregation.
 
-```python
+``python
 from dataclasses import dataclass
 from typing import List, Tuple
 import numpy as np
@@ -388,50 +388,50 @@ import numpy as np
 
 @dataclass
 class ClientUpdate:
-    n_examples: int
-    delta: np.ndarray  # flattened weights delta
+ n_examples: int
+ delta: np.ndarray # flattened weights delta
 
 
 def clip_update(delta: np.ndarray, clip_norm: float) -> np.ndarray:
-    """L2 clip to bound sensitivity and reduce outliers."""
-    norm = np.linalg.norm(delta)
-    if norm <= clip_norm or norm == 0.0:
-        return delta
-    return delta * (clip_norm / norm)
+ """L2 clip to bound sensitivity and reduce outliers."""
+ norm = np.linalg.norm(delta)
+ if norm <= clip_norm or norm == 0.0:
+ return delta
+ return delta * (clip_norm / norm)
 
 
 def client_train_step(w: np.ndarray, data: Tuple[np.ndarray, np.ndarray]) -> ClientUpdate:
-    """
-    Toy local training:
-    - pretend we run a couple of SGD steps and return a model delta
-    """
-    x, y = data
-    # Fake gradient: (this is placeholder logic for illustration)
-    grad = x.T @ (x @ w - y) / max(1, len(y))
-    lr = 0.1
-    w_new = w - lr * grad
-    delta = w_new - w
-    return ClientUpdate(n_examples=len(y), delta=delta)
+ """
+ Toy local training:
+ - pretend we run a couple of SGD steps and return a model delta
+ """
+ x, y = data
+ # Fake gradient: (this is placeholder logic for illustration)
+ grad = x.T @ (x @ w - y) / max(1, len(y))
+ lr = 0.1
+ w_new = w - lr * grad
+ delta = w_new - w
+ return ClientUpdate(n_examples=len(y), delta=delta)
 
 
 def fedavg_aggregate(updates: List[ClientUpdate]) -> np.ndarray:
-    """Weighted average of deltas."""
-    total = sum(u.n_examples for u in updates)
-    if total == 0:
-        raise ValueError("No examples aggregated")
-    return sum((u.n_examples / total) * u.delta for u in updates)
+ """Weighted average of deltas."""
+ total = sum(u.n_examples for u in updates)
+ if total == 0:
+ raise ValueError("No examples aggregated")
+ return sum((u.n_examples / total) * u.delta for u in updates)
 
 
 def federated_round(w: np.ndarray, client_datas: List[Tuple[np.ndarray, np.ndarray]], clip_norm: float) -> np.ndarray:
-    """One round: local train -> clip -> aggregate."""
-    updates = []
-    for data in client_datas:
-        upd = client_train_step(w, data)
-        upd.delta = clip_update(upd.delta, clip_norm)
-        updates.append(upd)
-    agg_delta = fedavg_aggregate(updates)
-    return w + agg_delta
-```
+ """One round: local train -> clip -> aggregate."""
+ updates = []
+ for data in client_datas:
+ upd = client_train_step(w, data)
+ upd.delta = clip_update(upd.delta, clip_norm)
+ updates.append(upd)
+ agg_delta = fedavg_aggregate(updates)
+ return w + agg_delta
+``
 
 What’s missing (intentionally) compared to real FL:
 - secure aggregation (so the server never sees `upd.delta`)
@@ -483,24 +483,24 @@ When a centralized model regresses, you can often:
 In FL, the playbook is different. A practical incident response flow:
 
 1. **Check participation first**
-   - Did eligible devices drop (OS update, policy bug, backend outage)?
-   - Did completion rate change (network conditions, app crash)?
+ - Did eligible devices drop (OS update, policy bug, backend outage)?
+ - Did completion rate change (network conditions, app crash)?
 
 2. **Check update health**
-   - Did aggregate update norm spike or collapse?
-   - Did clipping rate jump (indicating outliers or plan misconfiguration)?
+ - Did aggregate update norm spike or collapse?
+ - Did clipping rate jump (indicating outliers or plan misconfiguration)?
 
 3. **Check segment shifts**
-   - Did the sampling distribution change (more low-end devices, different geos)?
-   - Are regressions concentrated in one locale/device segment?
+ - Did the sampling distribution change (more low-end devices, different geos)?
+ - Are regressions concentrated in one locale/device segment?
 
 4. **Check plan drift**
-   - Did someone change local epochs / learning rate / batch size?
-   - Did the DP policy change (more noise, smaller cohorts)?
+ - Did someone change local epochs / learning rate / batch size?
+ - Did the DP policy change (more noise, smaller cohorts)?
 
 5. **Roll back safely**
-   - FL systems should support rollback to last-known-good model + plan.
-   - Never “debug in production” by shipping risky plans to all devices.
+ - FL systems should support rollback to last-known-good model + plan.
+ - Never “debug in production” by shipping risky plans to all devices.
 
 This is why model registry metadata and orchestration policies are first-class engineering.
 
@@ -723,23 +723,23 @@ In interviews, a crisp way to say it:
 If you’re reviewing a federated learning design, ask:
 
 - **Client policy**
-  - How do we decide eligibility (Wi‑Fi, charging, opt-in)?
-  - What is the target sampling distribution (and how do we audit it)?
+ - How do we decide eligibility (Wi‑Fi, charging, opt-in)?
+ - What is the target sampling distribution (and how do we audit it)?
 
 - **Privacy**
-  - Is secure aggregation enabled for sensitive models?
-  - Do we clip updates? Where is the DP budget accounted and enforced?
-  - What is the minimum cohort size per segment?
+ - Is secure aggregation enabled for sensitive models?
+ - Do we clip updates? Where is the DP budget accounted and enforced?
+ - What is the minimum cohort size per segment?
 
 - **Robustness**
-  - What aggregator do we use (FedAvg vs robust variants)?
-  - How do we handle dropouts and stragglers?
-  - What anti-poisoning mitigations exist?
+ - What aggregator do we use (FedAvg vs robust variants)?
+ - How do we handle dropouts and stragglers?
+ - What anti-poisoning mitigations exist?
 
 - **MLOps**
-  - Are plans versioned and validated before execution?
-  - Can we canary/roll back both model and plan quickly?
-  - What metrics exist without inspecting raw client data?
+ - Are plans versioned and validated before execution?
+ - Can we canary/roll back both model and plan quickly?
+ - What metrics exist without inspecting raw client data?
 
 If these questions have crisp answers, you’re operating FL like a real distributed system instead of a research prototype.
 

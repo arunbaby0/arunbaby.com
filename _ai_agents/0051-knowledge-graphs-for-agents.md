@@ -1,24 +1,24 @@
 ---
 title: "Knowledge Graphs for Agents"
 day: 51
+related_dsa_day: 51
+related_ml_day: 51
+related_speech_day: 51
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - knowledge-graphs
-  - rag
-  - entity-linking
-  - graph-databases
-  - reasoning
-  - retrieval
+ - knowledge-graphs
+ - rag
+ - entity-linking
+ - graph-databases
+ - reasoning
+ - retrieval
 difficulty: Hard
 subdomain: "Structured Knowledge"
 tech_stack: Neo4j, Amazon Neptune, NetworkX, Python
 scale: "1B+ edges, low-latency retrieval, continuous updates"
 companies: Google, Meta, Amazon, Microsoft
-related_dsa_day: 51
-related_ml_day: 51
-related_speech_day: 51
 ---
 
 **"RAG gives you documents. A knowledge graph gives you *facts with structure*—and agents need structure to act reliably."**
@@ -297,7 +297,7 @@ If you skip it, you’ll get “demo magic” that fails under load.
 
 This example builds a tiny KG in-memory and shows how an agent might use it as a tool.
 
-```python
+``python
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Set
@@ -305,49 +305,49 @@ from typing import Dict, List, Tuple, Set
 
 @dataclass(frozen=True)
 class Edge:
-    src: str
-    rel: str
-    dst: str
+ src: str
+ rel: str
+ dst: str
 
 
 class SimpleKG:
-    def __init__(self) -> None:
-        self.adj: Dict[str, List[Tuple[str, str]]] = defaultdict(list)  # node -> [(rel, neighbor)]
-        self.edges: Set[Edge] = set()
+ def __init__(self) -> None:
+ self.adj: Dict[str, List[Tuple[str, str]]] = defaultdict(list) # node -> [(rel, neighbor)]
+ self.edges: Set[Edge] = set()
 
-    def add_edge(self, src: str, rel: str, dst: str) -> None:
-        e = Edge(src, rel, dst)
-        if e in self.edges:
-            return
-        self.edges.add(e)
-        self.adj[src].append((rel, dst))
+ def add_edge(self, src: str, rel: str, dst: str) -> None:
+ e = Edge(src, rel, dst)
+ if e in self.edges:
+ return
+ self.edges.add(e)
+ self.adj[src].append((rel, dst))
 
-    def neighbors(self, node: str, rel: str | None = None) -> List[str]:
-        out = []
-        for r, dst in self.adj.get(node, []):
-            if rel is None or rel == r:
-                out.append(dst)
-        return out
+ def neighbors(self, node: str, rel: str | None = None) -> List[str]:
+ out = []
+ for r, dst in self.adj.get(node, []):
+ if rel is None or rel == r:
+ out.append(dst)
+ return out
 
-    def bfs_paths(self, start: str, goal: str, max_hops: int = 4) -> List[List[str]]:
-        """
-        Find paths from start to goal up to max_hops.
-        In production, you'd limit expansions, enforce schemas, and add caching.
-        """
-        paths = []
-        q = deque([(start, [start])])
-        while q:
-            node, path = q.popleft()
-            if len(path) - 1 > max_hops:
-                continue
-            if node == goal:
-                paths.append(path)
-                continue
-            for _, nxt in self.adj.get(node, []):
-                if nxt in path:
-                    continue  # avoid cycles
-                q.append((nxt, path + [nxt]))
-        return paths
+ def bfs_paths(self, start: str, goal: str, max_hops: int = 4) -> List[List[str]]:
+ """
+ Find paths from start to goal up to max_hops.
+ In production, you'd limit expansions, enforce schemas, and add caching.
+ """
+ paths = []
+ q = deque([(start, [start])])
+ while q:
+ node, path = q.popleft()
+ if len(path) - 1 > max_hops:
+ continue
+ if node == goal:
+ paths.append(path)
+ continue
+ for _, nxt in self.adj.get(node, []):
+ if nxt in path:
+ continue # avoid cycles
+ q.append((nxt, path + [nxt]))
+ return paths
 
 
 # Example KG: services and ownership
@@ -359,33 +359,33 @@ kg.add_edge("ServiceC", "OWNED_BY", "TeamInfra")
 
 
 def tool_get_owner(service: str) -> str | None:
-    owners = kg.neighbors(service, rel="OWNED_BY")
-    return owners[0] if owners else None
+ owners = kg.neighbors(service, rel="OWNED_BY")
+ return owners[0] if owners else None
 
 
 def tool_dependency_owners(service: str, max_hops: int = 3) -> List[Tuple[str, str]]:
-    """
-    Returns (dependency_service, owner) pairs for all reachable dependencies.
-    """
-    seen = set([service])
-    q = deque([(service, 0)])
-    out = []
-    while q:
-        node, depth = q.popleft()
-        if depth == max_hops:
-            continue
-        for dep in kg.neighbors(node, rel="DEPENDS_ON"):
-            if dep in seen:
-                continue
-            seen.add(dep)
-            out.append((dep, tool_get_owner(dep) or "UNKNOWN"))
-            q.append((dep, depth + 1))
-    return out
+ """
+ Returns (dependency_service, owner) pairs for all reachable dependencies.
+ """
+ seen = set([service])
+ q = deque([(service, 0)])
+ out = []
+ while q:
+ node, depth = q.popleft()
+ if depth == max_hops:
+ continue
+ for dep in kg.neighbors(node, rel="DEPENDS_ON"):
+ if dep in seen:
+ continue
+ seen.add(dep)
+ out.append((dep, tool_get_owner(dep) or "UNKNOWN"))
+ q.append((dep, depth + 1))
+ return out
 
 
 print(tool_dependency_owners("ServiceA"))
 # [('ServiceB', 'TeamPayments'), ('ServiceC', 'TeamInfra')]
-```
+``
 
 Why this example matters:
 - agents want **bounded traversal** (max hops, no cycles)
@@ -480,15 +480,15 @@ If you only store the latest state, the agent will silently answer with *today�
 Two common designs:
 
 - **Temporal edges**
-  - store `valid_from` / `valid_to` on edges
-  - query with a `timestamp` filter
-  - pros: compact storage, fine-grained history
-  - cons: queries require more indexing discipline
+ - store `valid_from` / `valid_to` on edges
+ - query with a `timestamp` filter
+ - pros: compact storage, fine-grained history
+ - cons: queries require more indexing discipline
 
 - **Versioned snapshots**
-  - store periodic snapshots (daily/weekly)
-  - pros: simple “point-in-time” queries
-  - cons: storage-heavy at scale
+ - store periodic snapshots (daily/weekly)
+ - pros: simple “point-in-time” queries
+ - cons: storage-heavy at scale
 
 For agent reliability, temporal modeling is not a “nice to have”; it prevents confident but wrong answers in incident analysis and compliance workflows.
 
@@ -510,8 +510,8 @@ Define a deterministic policy:
 - rank sources by trust tier (system-of-record wins)
 - prefer newer facts within the same trust tier
 - if conflict persists, return a structured “conflict” response:
-  - list candidates + their provenance
-  - ask a clarifying question or route to a human owner
+ - list candidates + their provenance
+ - ask a clarifying question or route to a human owner
 
 This is a major advantage of KGs over pure RAG: disagreements can be made explicit and handled systematically.
 
@@ -525,16 +525,16 @@ You can build a KG on many backends. The right choice depends on:
 Common options:
 
 - **Neo4j (property graph)**
-  - strengths: developer ergonomics (Cypher), traversal performance, mature tooling
-  - trade-offs: operational scaling requires expertise; licensing considerations depending on edition
+ - strengths: developer ergonomics (Cypher), traversal performance, mature tooling
+ - trade-offs: operational scaling requires expertise; licensing considerations depending on edition
 
 - **Amazon Neptune (managed graph DB)**
-  - strengths: managed operations, integrates with AWS ecosystem
-  - trade-offs: query latency patterns depend on access paths; careful modeling required
+ - strengths: managed operations, integrates with AWS ecosystem
+ - trade-offs: query latency patterns depend on access paths; careful modeling required
 
 - **“Graph in Postgres”**
-  - strengths: cheap, familiar, transactional
-  - trade-offs: traversal queries can get slow; you’ll end up building indexes/caches anyway
+ - strengths: cheap, familiar, transactional
+ - trade-offs: traversal queries can get slow; you’ll end up building indexes/caches anyway
 
 For agents, a pragmatic path is:
 1. start with a small, high-quality slice in a familiar store
@@ -612,26 +612,26 @@ Without access control, a KG can become a “structured data leak” amplifier.
 If you want to build something like an internal “SRE Copilot”, a robust architecture is:
 
 1. **KG layer (facts and constraints)**
-   - service ownership
-   - dependencies and critical paths
-   - SLAs and escalation policies
-   - approved vendors / compliance constraints
+ - service ownership
+ - dependencies and critical paths
+ - SLAs and escalation policies
+ - approved vendors / compliance constraints
 
 2. **RAG layer (procedures and narrative)**
-   - runbooks
-   - incident retros
-   - design docs
+ - runbooks
+ - incident retros
+ - design docs
 
 3. **Tool layer (actions)**
-   - create ticket
-   - page on-call
-   - fetch dashboards
-   - run safe diagnostics
+ - create ticket
+ - page on-call
+ - fetch dashboards
+ - run safe diagnostics
 
 4. **Policy layer**
-   - enforce least privilege
-   - block dangerous actions (e.g., “restart prod database”)
-   - require human approval for high-risk changes
+ - enforce least privilege
+ - block dangerous actions (e.g., “restart prod database”)
+ - require human approval for high-risk changes
 
 The agent’s job is then predictable:
 - KG answers “what is true”
@@ -729,13 +729,13 @@ If you’re starting from scratch, don’t try to model the universe.
 Build the smallest KG that makes your agent meaningfully better:
 
 - **Entities**
-  - `Service`, `Team`, `OnCallRotation`, `Runbook`, `Dashboard`, `SLA`
+ - `Service`, `Team`, `OnCallRotation`, `Runbook`, `Dashboard`, `SLA`
 - **Relations**
-  - `OWNED_BY(Service -> Team)`
-  - `DEPENDS_ON(Service -> Service)`
-  - `HAS_RUNBOOK(Service -> Runbook)`
-  - `HAS_DASHBOARD(Service -> Dashboard)`
-  - `HAS_SLA(Service -> SLA)`
+ - `OWNED_BY(Service -> Team)`
+ - `DEPENDS_ON(Service -> Service)`
+ - `HAS_RUNBOOK(Service -> Runbook)`
+ - `HAS_DASHBOARD(Service -> Dashboard)`
+ - `HAS_SLA(Service -> SLA)`
 
 Then add:
 - provenance for each relation

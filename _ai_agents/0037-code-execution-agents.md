@@ -1,21 +1,21 @@
 ---
 title: "Code Execution Agents"
 day: 37
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - code-execution
-  - sandboxing
-  - security
-  - containers
-  - evals
-  - tool-use
-  - deterministic
-difficulty: Medium-Hard
 related_dsa_day: 37
 related_ml_day: 37
 related_speech_day: 37
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - code-execution
+ - sandboxing
+ - security
+ - containers
+ - evals
+ - tool-use
+ - deterministic
+difficulty: Medium-Hard
 ---
 
 **"Let agents run code safely: sandbox execution, cap damage, and verify outputs like a production system."**
@@ -49,24 +49,24 @@ So the main engineering goal is:
 
 The most reliable pattern is a loop with explicit stages:
 
-```text
+``text
 User Request
-  |
-  v
-Planner (LLM)  -> decides if execution is needed
-  |
-  v
-Coder (LLM)    -> writes minimal code to answer the question
-  |
-  v
+ |
+ v
+Planner (LLM) -> decides if execution is needed
+ |
+ v
+Coder (LLM) -> writes minimal code to answer the question
+ |
+ v
 Sandbox Runner -> runs code in a restricted environment
-  |
-  v
-Verifier       -> checks outputs, edge cases, and correctness signals
-  |
-  v
-Answer Writer  -> returns result + evidence (outputs, logs)
-```
+ |
+ v
+Verifier -> checks outputs, edge cases, and correctness signals
+ |
+ v
+Answer Writer -> returns result + evidence (outputs, logs)
+``
 
 ### Why split roles?
 
@@ -458,8 +458,8 @@ This reduces the surface area for failures.
 ### 11.2 “Pure function” interface
 Encourage code shaped like:
 
-```python
-def solve(input_data):\n    ...\n    return output\n```
+``python
+def solve(input_data):\n ...\n return output\n``
 
 Then your runner can pass inputs and capture outputs consistently.
 
@@ -523,13 +523,13 @@ Reliable approach:
 2. Generate a minimal script
 3. Run it in a sandbox with the CSV mounted read-only
 4. Validate:
-   - duplicates reduced (or not) with counts
-   - date parse success rate
-   - schema stability
+ - duplicates reduced (or not) with counts
+ - date parse success rate
+ - schema stability
 5. Return:
-   - cleaned CSV artifact
-   - summary of changes
-   - warnings for rows that failed parsing
+ - cleaned CSV artifact
+ - summary of changes
+ - warnings for rows that failed parsing
 
 ---
 

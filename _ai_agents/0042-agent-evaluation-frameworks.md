@@ -1,21 +1,21 @@
 ---
 title: "Agent Evaluation Frameworks"
 day: 42
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - agent-evaluation
-  - evals
-  - benchmarks
-  - reliability
-  - observability
-  - regression-testing
-  - metrics
-difficulty: Medium-Hard
 related_dsa_day: 42
 related_ml_day: 42
 related_speech_day: 42
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - agent-evaluation
+ - evals
+ - benchmarks
+ - reliability
+ - observability
+ - regression-testing
+ - metrics
+difficulty: Medium-Hard
 ---
 
 **"If you can’t measure an agent, you can’t improve it: build evals for success, safety, cost, and regressions."**
@@ -62,15 +62,15 @@ When an agent supports multiple intents, define one eval contract per intent. Th
 
 Example contract (conceptual):
 
-```json
+``json
 {
-  "intent": "browsing_answer_with_citations",
-  "requirements": ["contains_citations", "claims_supported_by_quotes"],
-  "constraints": ["no_unsafe_tools", "no_secret_leakage"],
-  "budgets": {"max_steps": 8, "max_tool_calls": 8},
-  "evidence": {"min_sources": 2, "quote_required": true}
+ "intent": "browsing_answer_with_citations",
+ "requirements": ["contains_citations", "claims_supported_by_quotes"],
+ "constraints": ["no_unsafe_tools", "no_secret_leakage"],
+ "budgets": {"max_steps": 8, "max_tool_calls": 8},
+ "evidence": {"min_sources": 2, "quote_required": true}
 }
-```
+``
 
 This makes evaluation consistent and debuggable: when an eval fails, you can point to the contract field that was violated.
 
@@ -168,23 +168,23 @@ Metrics:
 
 To keep evals consistent across tasks, use a common score object:
 
-```json
+``json
 {
-  "overall": 0.0,
-  "scores": {
-    "correctness": 0.0,
-    "safety": 0.0,
-    "efficiency": 0.0,
-    "robustness": 0.0
-  },
-  "violations": [],
-  "notes": [],
-  "artifacts": {
-    "citations_ok": null,
-    "tests_passed": null
-  }
+ "overall": 0.0,
+ "scores": {
+ "correctness": 0.0,
+ "safety": 0.0,
+ "efficiency": 0.0,
+ "robustness": 0.0
+ },
+ "violations": [],
+ "notes": [],
+ "artifacts": {
+ "citations_ok": null,
+ "tests_passed": null
+ }
 }
-```
+``
 
 Practical rule: **any high-severity safety violation forces overall to 0**, even if the answer is correct. This matches real production priorities: “correct but unsafe” is not acceptable.
 
@@ -275,11 +275,11 @@ Calibrate judges with a small “golden set”:
 
 1. Create 30–50 examples with human-labeled scores (PASS/FAIL + reasons).
 2. Run the judge and measure:
-   - false positives (judge passes bad outputs)
-   - false negatives (judge fails good outputs)
+ - false positives (judge passes bad outputs)
+ - false negatives (judge fails good outputs)
 3. Tighten rubric:
-   - define hard claims vs soft claims
-   - define what counts as evidence
+ - define hard claims vs soft claims
+ - define what counts as evidence
 4. Version your judge prompt and pin it in eval runs.
 
 If you can’t afford human labels, start with a smaller set (even 10) and grow over time.
@@ -459,26 +459,26 @@ These are high-signal because they fail loudly and have real-world consequences.
 
 ## 10. Implementation sketch: a minimal eval runner (pseudocode)
 
-```python
+``python
 def run_eval_suite(agent, dataset):
-    results = []
-    for test in dataset:
-        trace = agent.run(test["input"])
-        score = evaluate_trace(trace, test["rubric"])
-        results.append({"id": test["id"], "score": score, "trace": trace.summary()})
-    return aggregate(results)
+ results = []
+ for test in dataset:
+ trace = agent.run(test["input"])
+ score = evaluate_trace(trace, test["rubric"])
+ results.append({"id": test["id"], "score": score, "trace": trace.summary()})
+ return aggregate(results)
 
 def evaluate_trace(trace, rubric):
-    checks = []
-    checks.append(schema_check(trace))
-    checks.append(safety_check(trace))
-    checks.append(cost_check(trace))
-    if rubric.get("requires_citations"):
-        checks.append(citation_check(trace))
-    if rubric.get("requires_tests"):
-        checks.append(test_check(trace))
-    return combine(checks)
-```
+ checks = []
+ checks.append(schema_check(trace))
+ checks.append(safety_check(trace))
+ checks.append(cost_check(trace))
+ if rubric.get("requires_citations"):
+ checks.append(citation_check(trace))
+ if rubric.get("requires_tests"):
+ checks.append(test_check(trace))
+ return combine(checks)
+``
 
 The key idea: evaluation reads traces (actions + outputs) and produces structured scores.
 
@@ -510,11 +510,11 @@ If eval outputs are just console logs, you’ll never use them. Treat eval resul
 
 - **Row per test case per run**
 - Fields:
-  - agent version
-  - judge version (if any)
-  - scores and violations
-  - cost and latency metrics
-  - pointers to traces/artifacts
+ - agent version
+ - judge version (if any)
+ - scores and violations
+ - cost and latency metrics
+ - pointers to traces/artifacts
 
 This lets you answer questions like:
 

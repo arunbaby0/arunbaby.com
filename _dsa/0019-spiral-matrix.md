@@ -1,23 +1,23 @@
 ---
 title: "Spiral Matrix"
 day: 19
+related_ml_day: 19
+related_speech_day: 19
+related_agents_day: 19
 collection: dsa
 categories:
-  - dsa
+ - dsa
 tags:
-  - matrix
-  - array
-  - simulation
-  - iteration
-  - traversal
-  - medium
+ - matrix
+ - array
+ - simulation
+ - iteration
+ - traversal
+ - medium
 subdomain: "Matrix & 2D Array Algorithms"
 tech_stack: [Python]
 scale: "O(M×N) time, O(1) extra space"
 companies: [Google, Meta, Amazon, Microsoft, Apple, Bloomberg]
-related_ml_day: 19
-related_speech_day: 19
-related_agents_day: 19
 ---
 
 **Master systematic matrix traversal—the same pattern used for tracking experiments, processing logs, and managing state in ML systems.**
@@ -30,38 +30,38 @@ Given an `m x n` matrix, return all elements of the matrix in **spiral order**.
 
 **Example 1:**
 
-```
+``
 Input: matrix = [[1,2,3],[4,5,6],[7,8,9]]
 Output: [1,2,3,6,9,8,7,4,5]
 
 Visualization:
 1 → 2 → 3
-        ↓
-4 → 5   6
-↑       ↓
+ ↓
+4 → 5 6
+↑ ↓
 7 ← 8 ← 9
-```
+``
 
 **Example 2:**
 
-```
+``
 Input: matrix = [[1,2,3,4],[5,6,7,8],[9,10,11,12]]
 Output: [1,2,3,4,8,12,11,10,9,5,6,7]
 
 Visualization:
-1 →  2 →  3 →  4
-              ↓
-5 →  6 →  7   8
-↑             ↓
+1 → 2 → 3 → 4
+ ↓
+5 → 6 → 7 8
+↑ ↓
 9 ← 10 ← 11 ← 12
-```
+``
 
 **Example 3:**
 
-```
+``
 Input: matrix = [[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]]
 Output: [1,2,3,4,8,12,16,15,14,13,9,5,6,7,11,10]
-```
+``
 
 ### Constraints
 
@@ -111,95 +111,95 @@ For each layer, we traverse:
 
 ### Implementation
 
-```python
+``python
 from typing import List
 
 def spiralOrder(matrix: List[List[int]]) -> List[int]:
-    """
-    Traverse matrix in spiral order using boundary shrinking.
-    
-    Time: O(M × N) - visit each element once
-    Space: O(1) extra - only output list (required)
-    
-    Strategy:
-    - Maintain four boundaries: top, bottom, left, right
-    - Traverse each side of the current layer
-    - Shrink boundaries after each side
-    - Stop when boundaries cross
-    """
-    if not matrix or not matrix[0]:
-        return []
-    
-    result = []
-    m, n = len(matrix), len(matrix[0])
-    
-    # Initialize boundaries
-    top, bottom = 0, m - 1
-    left, right = 0, n - 1
-    
-    while top <= bottom and left <= right:
-        # Traverse top row (left to right)
-        for col in range(left, right + 1):
-            result.append(matrix[top][col])
-        top += 1  # Shrink top boundary
-        
-        # Traverse right column (top to bottom)
-        for row in range(top, bottom + 1):
-            result.append(matrix[row][right])
-        right -= 1  # Shrink right boundary
-        
-        # Traverse bottom row (right to left), if it exists
-        if top <= bottom:
-            for col in range(right, left - 1, -1):
-                result.append(matrix[bottom][col])
-            bottom -= 1  # Shrink bottom boundary
-        
-        # Traverse left column (bottom to top), if it exists
-        if left <= right:
-            for row in range(bottom, top - 1, -1):
-                result.append(matrix[row][left])
-            left += 1  # Shrink left boundary
-    
-    return result
-```
+ """
+ Traverse matrix in spiral order using boundary shrinking.
+ 
+ Time: O(M × N) - visit each element once
+ Space: O(1) extra - only output list (required)
+ 
+ Strategy:
+ - Maintain four boundaries: top, bottom, left, right
+ - Traverse each side of the current layer
+ - Shrink boundaries after each side
+ - Stop when boundaries cross
+ """
+ if not matrix or not matrix[0]:
+ return []
+ 
+ result = []
+ m, n = len(matrix), len(matrix[0])
+ 
+ # Initialize boundaries
+ top, bottom = 0, m - 1
+ left, right = 0, n - 1
+ 
+ while top <= bottom and left <= right:
+ # Traverse top row (left to right)
+ for col in range(left, right + 1):
+ result.append(matrix[top][col])
+ top += 1 # Shrink top boundary
+ 
+ # Traverse right column (top to bottom)
+ for row in range(top, bottom + 1):
+ result.append(matrix[row][right])
+ right -= 1 # Shrink right boundary
+ 
+ # Traverse bottom row (right to left), if it exists
+ if top <= bottom:
+ for col in range(right, left - 1, -1):
+ result.append(matrix[bottom][col])
+ bottom -= 1 # Shrink bottom boundary
+ 
+ # Traverse left column (bottom to top), if it exists
+ if left <= right:
+ for row in range(bottom, top - 1, -1):
+ result.append(matrix[row][left])
+ left += 1 # Shrink left boundary
+ 
+ return result
+``
 
 ### Walkthrough Example
 
 **Input:** `matrix = [[1,2,3],[4,5,6],[7,8,9]]`
 
-```
+``
 Initial state:
 top=0, bottom=2, left=0, right=2
 
 Layer 1:
 - Top row (row 0, col 0→2): [1, 2, 3]
-  top → 1
+ top → 1
 - Right column (col 2, row 1→2): [6, 9]
-  right → 1
+ right → 1
 - Bottom row (row 2, col 1→0): [8, 7]
-  bottom → 1
+ bottom → 1
 - Left column (col 0, row 1→1): [4]
-  left → 1
+ left → 1
 
 Layer 2:
 - Top row (row 1, col 1→1): [5]
-  top → 2
-  (top > bottom, stop)
+ top → 2
+ (top > bottom, stop)
 
 Result: [1, 2, 3, 6, 9, 8, 7, 4, 5]
-```
+``
 
 ### Key Details
 
 1. **Boundary checks before bottom and left traversals:**
-   - After traversing top and right, boundaries may have crossed.
-   - We need `if top <= bottom` before traversing bottom row.
-   - We need `if left <= right` before traversing left column.
+ - After traversing top and right, boundaries may have crossed.
+ - We need `if top <= bottom` before traversing bottom row.
+ - We need `if left <= right` before traversing left column.
 
 2. **Edge cases handled:**
-   - Single row: Only top traversal executes.
-   - Single column: Top and right traversals execute, left/bottom skipped.
-   - 1×1 matrix: Only top traversal for one element.
+ - Single row: Only top traversal executes.
+ - Single column: Top and right traversals execute, left/bottom skipped.
+ - 1×1 matrix: Only top traversal for one element.
 
 ## Approach 2: Direction Vectors (Alternative)
 
@@ -207,48 +207,48 @@ Result: [1, 2, 3, 6, 9, 8, 7, 4, 5]
 
 Use **direction vectors** and track visited cells explicitly. Change direction when hitting a boundary or visited cell.
 
-```python
+``python
 def spiralOrder_directional(matrix: List[List[int]]) -> List[int]:
-    """
-    Use direction vectors: right, down, left, up.
-    
-    Time: O(M × N)
-    Space: O(M × N) for visited set
-    """
-    if not matrix or not matrix[0]:
-        return []
-    
-    m, n = len(matrix), len(matrix[0])
-    result = []
-    visited = set()
-    
-    # Direction vectors: right, down, left, up
-    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-    dir_idx = 0
-    
-    row, col = 0, 0
-    
-    for _ in range(m * n):
-        result.append(matrix[row][col])
-        visited.add((row, col))
-        
-        # Try to continue in current direction
-        dr, dc = directions[dir_idx]
-        next_row, next_col = row + dr, col + dc
-        
-        # Check if we need to change direction
-        if (next_row < 0 or next_row >= m or 
-            next_col < 0 or next_col >= n or 
-            (next_row, next_col) in visited):
-            # Change direction (turn right)
-            dir_idx = (dir_idx + 1) % 4
-            dr, dc = directions[dir_idx]
-            next_row, next_col = row + dr, col + dc
-        
-        row, col = next_row, next_col
-    
-    return result
-```
+ """
+ Use direction vectors: right, down, left, up.
+ 
+ Time: O(M × N)
+ Space: O(M × N) for visited set
+ """
+ if not matrix or not matrix[0]:
+ return []
+ 
+ m, n = len(matrix), len(matrix[0])
+ result = []
+ visited = set()
+ 
+ # Direction vectors: right, down, left, up
+ directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+ dir_idx = 0
+ 
+ row, col = 0, 0
+ 
+ for _ in range(m * n):
+ result.append(matrix[row][col])
+ visited.add((row, col))
+ 
+ # Try to continue in current direction
+ dr, dc = directions[dir_idx]
+ next_row, next_col = row + dr, col + dc
+ 
+ # Check if we need to change direction
+ if (next_row < 0 or next_row >= m or 
+ next_col < 0 or next_col >= n or 
+ (next_row, next_col) in visited):
+ # Change direction (turn right)
+ dir_idx = (dir_idx + 1) % 4
+ dr, dc = directions[dir_idx]
+ next_row, next_col = row + dr, col + dc
+ 
+ row, col = next_row, next_col
+ 
+ return result
+``
 
 ### Comparison
 
@@ -261,30 +261,30 @@ def spiralOrder_directional(matrix: List[List[int]]) -> List[int]:
 
 ## Implementation: Tests and Edge Cases
 
-```python
+``python
 def test_spiral_order():
-    """Comprehensive test cases for spiral matrix."""
-    tests = [
-        # (matrix, expected)
-        ([[1,2,3],[4,5,6],[7,8,9]], [1,2,3,6,9,8,7,4,5]),
-        ([[1,2,3,4],[5,6,7,8],[9,10,11,12]], [1,2,3,4,8,12,11,10,9,5,6,7]),
-        ([[1]], [1]),
-        ([[1,2,3]], [1,2,3]),
-        ([[1],[2],[3]], [1,2,3]),
-        ([[1,2],[3,4]], [1,2,4,3]),
-        ([[1,2,3],[4,5,6]], [1,2,3,6,5,4]),
-    ]
-    
-    for i, (matrix, expected) in enumerate(tests, 1):
-        result = spiralOrder(matrix)
-        assert result == expected, f"Test {i} failed: got {result}, expected {expected}"
-    
-    print("All spiral order tests passed.")
+ """Comprehensive test cases for spiral matrix."""
+ tests = [
+ # (matrix, expected)
+ ([[1,2,3],[4,5,6],[7,8,9]], [1,2,3,6,9,8,7,4,5]),
+ ([[1,2,3,4],[5,6,7,8],[9,10,11,12]], [1,2,3,4,8,12,11,10,9,5,6,7]),
+ ([[1]], [1]),
+ ([[1,2,3]], [1,2,3]),
+ ([[1],[2],[3]], [1,2,3]),
+ ([[1,2],[3,4]], [1,2,4,3]),
+ ([[1,2,3],[4,5,6]], [1,2,3,6,5,4]),
+ ]
+ 
+ for i, (matrix, expected) in enumerate(tests, 1):
+ result = spiralOrder(matrix)
+ assert result == expected, f"Test {i} failed: got {result}, expected {expected}"
+ 
+ print("All spiral order tests passed.")
 
 
 if __name__ == "__main__":
-    test_spiral_order()
-```
+ test_spiral_order()
+``
 
 ## Complexity Analysis
 
@@ -301,13 +301,13 @@ Let:
 ### Space Complexity
 
 - **Layer-by-layer approach:**
-  - Only a few integer variables for boundaries.
-  - Output list: \(O(M \times N)\) (required, not counted as extra).
-  - Extra space: \(\boxed{O(1)}\).
+ - Only a few integer variables for boundaries.
+ - Output list: \(O(M \times N)\) (required, not counted as extra).
+ - Extra space: \(\boxed{O(1)}\).
 
 - **Direction vectors approach:**
-  - Visited set: \(O(M \times N)\).
-  - Extra space: \(\boxed{O(M \times N)}\).
+ - Visited set: \(O(M \times N)\).
+ - Extra space: \(\boxed{O(M \times N)}\).
 
 ## Production Considerations
 
@@ -318,9 +318,9 @@ For very large matrices that don't fit in memory:
 - Process in **chunks** (tiles).
 - Track state (current layer, position) across chunks.
 - This is common in:
-  - Image processing pipelines (satellite imagery),
-  - Tensor sharding in distributed training,
-  - Log file processing (nested batches).
+ - Image processing pipelines (satellite imagery),
+ - Tensor sharding in distributed training,
+ - Log file processing (nested batches).
 
 ### 2. Generalization: Other Traversal Patterns
 
@@ -344,13 +344,13 @@ In ML experiment tracking systems (like MLflow, Weights & Biases), you often ite
 
 The **spiral-like pattern** of systematic, boundary-aware iteration is directly applicable:
 
-```python
+``python
 # Pseudo-code: Iterate through experiment grid
 for layer in range(num_layers):
-    for config in get_configs_at_layer(layer):
-        experiment_id = launch_experiment(config)
-        track_state(experiment_id, layer, config)
-```
+ for config in get_configs_at_layer(layer):
+ experiment_id = launch_experiment(config)
+ track_state(experiment_id, layer, config)
+``
 
 ### 4. Error Handling & Validation
 
@@ -359,13 +359,13 @@ In production, always:
 - Validate matrix dimensions (non-empty, rectangular).
 - Handle edge cases (1×1, single row/column).
 - Log traversal state for debugging:
-  - Current boundaries,
-  - Number of elements processed,
-  - Expected vs actual element count.
+ - Current boundaries,
+ - Number of elements processed,
+ - Expected vs actual element count.
 
 ## Connections to ML Systems
 
-The thematic link for Day 19 is **systematic iteration and state tracking**, which is central to:
+The thematic link foris **systematic iteration and state tracking**, which is central to:
 
 ### 1. Experiment Tracking Systems
 
@@ -373,23 +373,23 @@ The thematic link for Day 19 is **systematic iteration and state tracking**, whi
 
 - Hyperparameters × metrics × time × model versions.
 - Systematic traversal (like spiral order) ensures:
-  - No duplicate runs,
-  - Efficient exploration of the search space,
-  - Clear state persistence across crashes/restarts.
+ - No duplicate runs,
+ - Efficient exploration of the search space,
+ - Clear state persistence across crashes/restarts.
 
 ### 2. Speech Experiment Management
 
 In speech research:
 
 - You iterate over:
-  - Model architectures,
-  - Training data configurations,
-  - Augmentation policies,
-  - Inference hyperparameters (beam width, LM weight).
+ - Model architectures,
+ - Training data configurations,
+ - Augmentation policies,
+ - Inference hyperparameters (beam width, LM weight).
 - **Stateful iteration** helps:
-  - Track which configurations have been tried,
-  - Resume experiments from checkpoints,
-  - Visualize progress in multi-dimensional grids.
+ - Track which configurations have been tried,
+ - Resume experiments from checkpoints,
+ - Visualize progress in multi-dimensional grids.
 
 ### 3. Checkpoint Management
 
@@ -397,9 +397,9 @@ During training, you save checkpoints periodically:
 
 - Organized by: epoch × step × metric.
 - When resuming, you need to:
-  - Find the latest valid checkpoint,
-  - Restore optimizer state,
-  - Continue from the correct training step.
+ - Find the latest valid checkpoint,
+ - Restore optimizer state,
+ - Continue from the correct training step.
 
 This is a form of **stateful iteration** through nested structures, akin to spiral traversal through layers.
 
@@ -438,27 +438,27 @@ This is a form of **stateful iteration** through nested structures, akin to spir
 ### Common Pitfalls
 
 1. **Forgetting boundary checks:**
-   - After traversing top and right, the boundary may have collapsed.
-   - Always check `if top <= bottom` before bottom row.
-   - Always check `if left <= right` before left column.
+ - After traversing top and right, the boundary may have collapsed.
+ - Always check `if top <= bottom` before bottom row.
+ - Always check `if left <= right` before left column.
 
 2. **Off-by-one errors:**
-   - Ensure correct range boundaries (`range(left, right + 1)` vs `range(left, right)`).
+ - Ensure correct range boundaries (`range(left, right + 1)` vs `range(left, right)`).
 
 3. **Not handling single row/column:**
-   - Test explicitly with `[[1,2,3]]` and `[[1],[2],[3]]`.
+ - Test explicitly with `[[1,2,3]]` and `[[1],[2],[3]]`.
 
 ### Follow-up Questions
 
 1. **Spiral Matrix II (generate spiral):**
-   - Given `n`, generate an `n × n` spiral matrix filled with 1 to n².
-   - Use the same boundary-shrinking logic, but write instead of read.
+ - Given `n`, generate an `n × n` spiral matrix filled with 1 to n².
+ - Use the same boundary-shrinking logic, but write instead of read.
 
 2. **Diagonal traversal:**
-   - Traverse matrix diagonally (e.g., for DP problems).
+ - Traverse matrix diagonally (e.g., for DP problems).
 
 3. **3D spiral:**
-   - Extend to 3D matrices (tensors).
+ - Extend to 3D matrices (tensors).
 
 ## Additional Practice & Variants
 
@@ -466,78 +466,78 @@ This is a form of **stateful iteration** through nested structures, akin to spir
 
 **Problem:** Given `n`, generate an `n × n` matrix filled with elements from 1 to n² in spiral order.
 
-```python
+``python
 def generateMatrix(n: int) -> List[List[int]]:
-    """Generate n×n matrix in spiral order."""
-    matrix = [[0] * n for _ in range(n)]
-    top, bottom, left, right = 0, n - 1, 0, n - 1
-    num = 1
-    
-    while top <= bottom and left <= right:
-        for col in range(left, right + 1):
-            matrix[top][col] = num
-            num += 1
-        top += 1
-        
-        for row in range(top, bottom + 1):
-            matrix[row][right] = num
-            num += 1
-        right -= 1
-        
-        if top <= bottom:
-            for col in range(right, left - 1, -1):
-                matrix[bottom][col] = num
-                num += 1
-            bottom -= 1
-        
-        if left <= right:
-            for row in range(bottom, top - 1, -1):
-                matrix[row][left] = num
-                num += 1
-            left += 1
-    
-    return matrix
-```
+ """Generate n×n matrix in spiral order."""
+ matrix = [[0] * n for _ in range(n)]
+ top, bottom, left, right = 0, n - 1, 0, n - 1
+ num = 1
+ 
+ while top <= bottom and left <= right:
+ for col in range(left, right + 1):
+ matrix[top][col] = num
+ num += 1
+ top += 1
+ 
+ for row in range(top, bottom + 1):
+ matrix[row][right] = num
+ num += 1
+ right -= 1
+ 
+ if top <= bottom:
+ for col in range(right, left - 1, -1):
+ matrix[bottom][col] = num
+ num += 1
+ bottom -= 1
+ 
+ if left <= right:
+ for row in range(bottom, top - 1, -1):
+ matrix[row][left] = num
+ num += 1
+ left += 1
+ 
+ return matrix
+``
 
 ### 2. Print Matrix in Diagonal Order (LeetCode 498)
 
 **Problem:** Given an `m × n` matrix, return all elements in diagonal order.
 
-```python
+``python
 def findDiagonalOrder(matrix: List[List[int]]) -> List[int]:
-    """
-    Traverse diagonals alternating up-right and down-left.
-    
-    Key: Group by diagonal index (r + c).
-    Even diagonals go bottom-left to top-right.
-    Odd diagonals go top-right to bottom-left.
-    """
-    if not matrix or not matrix[0]:
-        return []
-    
-    m, n = len(matrix), len(matrix[0])
-    result = []
-    
-    # Group cells by diagonal (r + c)
-    diagonals = {}
-    for r in range(m):
-        for c in range(n):
-            diag_idx = r + c
-            if diag_idx not in diagonals:
-                diagonals[diag_idx] = []
-            diagonals[diag_idx].append(matrix[r][c])
-    
-    # Traverse diagonals in order, alternating direction
-    for diag_idx in range(m + n - 1):
-        if diag_idx % 2 == 0:
-            # Even: reverse (go up-right)
-            result.extend(reversed(diagonals[diag_idx]))
-        else:
-            # Odd: normal (go down-left)
-            result.extend(diagonals[diag_idx])
-    
-    return result
-```
+ """
+ Traverse diagonals alternating up-right and down-left.
+ 
+ Key: Group by diagonal index (r + c).
+ Even diagonals go bottom-left to top-right.
+ Odd diagonals go top-right to bottom-left.
+ """
+ if not matrix or not matrix[0]:
+ return []
+ 
+ m, n = len(matrix), len(matrix[0])
+ result = []
+ 
+ # Group cells by diagonal (r + c)
+ diagonals = {}
+ for r in range(m):
+ for c in range(n):
+ diag_idx = r + c
+ if diag_idx not in diagonals:
+ diagonals[diag_idx] = []
+ diagonals[diag_idx].append(matrix[r][c])
+ 
+ # Traverse diagonals in order, alternating direction
+ for diag_idx in range(m + n - 1):
+ if diag_idx % 2 == 0:
+ # Even: reverse (go up-right)
+ result.extend(reversed(diagonals[diag_idx]))
+ else:
+ # Odd: normal (go down-left)
+ result.extend(diagonals[diag_idx])
+ 
+ return result
+``
 
 ### 3. Spiral Matrix III (LeetCode 885)
 
@@ -567,7 +567,7 @@ This extends the spiral pattern to handle:
 
 ### Connection to Thematic Link: Systematic Iteration and State Tracking
 
-All three Day 19 topics share the core pattern of **systematic, stateful iteration**:
+All three topics share the core pattern of **systematic, stateful iteration**:
 
 **DSA (Spiral Matrix):**
 - Traverse 2D structure layer-by-layer with shrinking boundaries.

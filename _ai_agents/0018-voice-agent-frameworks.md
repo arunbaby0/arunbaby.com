@@ -3,7 +3,7 @@ title: "Voice Agent Frameworks: LiveKit & Pipecat"
 day: 18
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
   - livekit
   - pipecat
@@ -12,13 +12,13 @@ tags:
   - frameworks
   - sip
   - sfu
-related_dsa_day: 18
-related_ml_day: 18
-related_speech_day: 18
   - stun-turn
   - vapi
   - retell
 difficulty: Medium
+related_dsa_day: 18
+related_ml_day: 18
+related_speech_day: 18
 ---
 
 **"Don't build the phone network. Just build the app."**
@@ -78,18 +78,18 @@ Pipecat treats data as a stream of **Frames**.
 ### 3.2 The Pipeline
 You define a synchronous list of processors. Data flows through them conceptually like a pipe.
 
-```mermaid
+``mermaid
 graph LR
  Transport(WebRTC) --> VAD
  VAD --> Context(Aggregator)
  Context --> LLM(OpenAI)
  LLM --> TTS(ElevenLabs)
  TTS --> Transport(WebRTC)
-```
+``
 
 ### 3.3 Pipecat Code Walkthrough
 
-```python
+``python
 # A simple Pipecat Bot
 import asyncio
 from pipecat.pipeline.pipeline import Pipeline
@@ -137,7 +137,7 @@ async def main():
 
 if __name__ == "__main__":
  asyncio.run(main())
-```
+``
 
 **Key Magic:** The `Pipeline` class handles **Interruption**. If `stt` emits a `UserStartedSpeakingFrame`, the pipeline automatically cancels any pending tasks in `llm` and `tts` to stop the bot from talking.
 

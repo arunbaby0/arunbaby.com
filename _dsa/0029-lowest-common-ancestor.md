@@ -1,18 +1,18 @@
 ---
 title: "Lowest Common Ancestor of a Binary Tree"
 day: 29
-collection: dsa
-categories:
-  - dsa
-tags:
-  - binary tree
-  - recursion
-  - tree traversal
-  - dfs
-difficulty: Medium
 related_ml_day: 29
 related_speech_day: 29
 related_agents_day: 29
+collection: dsa
+categories:
+ - dsa
+tags:
+ - binary tree
+ - recursion
+ - tree traversal
+ - dfs
+difficulty: Medium
 ---
 
 **"Find the point where two paths in a tree first meet."**
@@ -24,15 +24,15 @@ Given a binary tree, find the **lowest common ancestor (LCA)** of two given node
 The lowest common ancestor is defined between two nodes `p` and `q` as the lowest node in T that has both `p` and `q` as descendants (where we allow **a node to be a descendant of itself**).
 
 **Example:**
-```
-        3
-       / \
-      5   1
-     / \ / \
-    6  2 0  8
-      / \
-     7   4
-```
+``
+ 3
+ / \
+ 5 1
+ / \ / \
+ 6 2 0 8
+ / \
+ 7 4
+``
 
 - LCA(5, 1) = 3
 - LCA(5, 4) = 5 (a node can be its own ancestor)
@@ -47,24 +47,24 @@ The lowest common ancestor is defined between two nodes `p` and `q` as the lowes
 - If both subtrees return non-NULL, current node is the LCA.
 - If only one subtree returns non-NULL, propagate it upward.
 
-```python
+``python
 class Solution:
-    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
-        # Base case: reached NULL or found one of the targets
-        if not root or root == p or root == q:
-            return root
-        
-        # Search in left and right subtrees
-        left = self.lowestCommonAncestor(root.left, p, q)
-        right = self.lowestCommonAncestor(root.right, p, q)
-        
-        # If both sides found something, current node is LCA
-        if left and right:
-            return root
-        
-        # Otherwise, return whichever side found something
-        return left if left else right
-```
+ def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
+ # Base case: reached NULL or found one of the targets
+ if not root or root == p or root == q:
+ return root
+ 
+ # Search in left and right subtrees
+ left = self.lowestCommonAncestor(root.left, p, q)
+ right = self.lowestCommonAncestor(root.right, p, q)
+ 
+ # If both sides found something, current node is LCA
+ if left and right:
+ return root
+ 
+ # Otherwise, return whichever side found something
+ return left if left else right
+``
 
 **Time Complexity:** \\(O(N)\\) where N is the number of nodes (we visit each node once).
 **Space Complexity:** \\(O(H)\\) for recursion stack, where H is the height (\\(O(\log N)\\) for balanced, \\(O(N)\\) for skewed).
@@ -73,37 +73,37 @@ class Solution:
 
 **Idea:** Find the path from root to `p` and root to `q`, then find the last common node.
 
-```python
+``python
 class Solution:
-    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
-        def find_path(root, target, path):
-            if not root:
-                return False
-            
-            path.append(root)
-            
-            if root == target:
-                return True
-            
-            if find_path(root.left, target, path) or find_path(root.right, target, path):
-                return True
-            
-            path.pop()
-            return False
-        
-        path_p, path_q = [], []
-        find_path(root, p, path_p)
-        find_path(root, q, path_q)
-        
-        lca = None
-        for i in range(min(len(path_p), len(path_q))):
-            if path_p[i] == path_q[i]:
-                lca = path_p[i]
-            else:
-                break
-        
-        return lca
-```
+ def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
+ def find_path(root, target, path):
+ if not root:
+ return False
+ 
+ path.append(root)
+ 
+ if root == target:
+ return True
+ 
+ if find_path(root.left, target, path) or find_path(root.right, target, path):
+ return True
+ 
+ path.pop()
+ return False
+ 
+ path_p, path_q = [], []
+ find_path(root, p, path_p)
+ find_path(root, q, path_q)
+ 
+ lca = None
+ for i in range(min(len(path_p), len(path_q))):
+ if path_p[i] == path_q[i]:
+ lca = path_p[i]
+ else:
+ break
+ 
+ return lca
+``
 
 **Time Complexity:** \\(O(N)\\) (two DFS traversals).
 **Space Complexity:** \\(O(N)\\) (storing paths).
@@ -112,78 +112,78 @@ class Solution:
 
 **Idea:** Use a parent map to track each node's parent, then trace back from `p` and `q` to find the first common ancestor.
 
-```python
+``python
 from collections import deque
 
 class Solution:
-    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
-        # Build parent pointers using BFS
-        parent = {root: None}
-        queue = deque([root])
-        
-        while p not in parent or q not in parent:
-            node = queue.popleft()
-            if node.left:
-                parent[node.left] = node
-                queue.append(node.left)
-            if node.right:
-                parent[node.right] = node
-                queue.append(node.right)
-        
-        # Collect all ancestors of p
-        ancestors = set()
-        while p:
-            ancestors.add(p)
-            p = parent[p]
-        
-        # Find first ancestor of q that's also an ancestor of p
-        while q not in ancestors:
-            q = parent[q]
-        
-        return q
-```
+ def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
+ # Build parent pointers using BFS
+ parent = {root: None}
+ queue = deque([root])
+ 
+ while p not in parent or q not in parent:
+ node = queue.popleft()
+ if node.left:
+ parent[node.left] = node
+ queue.append(node.left)
+ if node.right:
+ parent[node.right] = node
+ queue.append(node.right)
+ 
+ # Collect all ancestors of p
+ ancestors = set()
+ while p:
+ ancestors.add(p)
+ p = parent[p]
+ 
+ # Find first ancestor of q that's also an ancestor of p
+ while q not in ancestors:
+ q = parent[q]
+ 
+ return q
+``
 
 **Time Complexity:** \\(O(N)\\).
 **Space Complexity:** \\(O(N)\\) (parent map and ancestor set).
 
 ## 5. Edge Cases
 
-```python
+``python
 # Test cases
 def test_lca():
-    # Case 1: One node is ancestor of the other
-    # LCA(5, 4) = 5
-    
-    # Case 2: Nodes in different subtrees
-    # LCA(6, 0) = 3
-    
-    # Case 3: One node is root
-    # LCA(3, 4) = 3
-    
-    # Case 4: Both nodes are same
-    # LCA(5, 5) = 5
-```
+ # Case 1: One node is ancestor of the other
+ # LCA(5, 4) = 5
+ 
+ # Case 2: Nodes in different subtrees
+ # LCA(6, 0) = 3
+ 
+ # Case 3: One node is root
+ # LCA(3, 4) = 3
+ 
+ # Case 4: Both nodes are same
+ # LCA(5, 5) = 5
+``
 
 ## Deep Dive: Why the Recursive Solution Works
 
 The key insight is the **bottom-up propagation**:
 
 **Case 1: `p` and `q` are in different subtrees**
-```
-      LCA
-      / \
-     p   q
-```
+``
+ LCA
+ / \
+ p q
+``
 - Left subtree returns `p`.
 - Right subtree returns `q`.
 - Since both are non-NULL, LCA is the current node.
 
 **Case 2: `p` is ancestor of `q`**
-```
-      p
-       \
-        q
-```
+``
+ p
+ \
+ q
+``
 - When we hit `p`, we return `p` immediately.
 - The subtree containing `q` also eventually returns `p` (propagated up).
 - Since only one side returns non-NULL, we return `p`.
@@ -197,23 +197,23 @@ Define \\( \\text{LCA}(p, q) \\) as the deepest node \\( n \\) such that \\( p \
 **Proof by Induction:**
 - **Base:** If \\( n = p \\) or \\( n = q \\) or \\( n = \\text{NULL} \\), return \\( n \\). Correct.
 - **Inductive Step:** 
-  - If \\( \\text{left} \\neq \\text{NULL} \\) and \\( \\text{right} \\neq \\text{NULL} \\), then \\( p \\) and \\( q \\) are in different subtrees. Thus, \\( n \\) is the LCA.
-  - If only \\( \\text{left} \\neq \\text{NULL} \\), both \\( p \\) and \\( q \\) are in the left subtree, so we propagate the LCA from the left subtree.
+ - If \\( \\text{left} \\neq \\text{NULL} \\) and \\( \\text{right} \\neq \\text{NULL} \\), then \\( p \\) and \\( q \\) are in different subtrees. Thus, \\( n \\) is the LCA.
+ - If only \\( \\text{left} \\neq \\text{NULL} \\), both \\( p \\) and \\( q \\) are in the left subtree, so we propagate the LCA from the left subtree.
 
 ## Deep Dive: LCA in a Binary Search Tree (BST)
 
 If the tree is a BST, we can optimize using the BST property.
 
-```python
+``python
 def lowestCommonAncestor_BST(root, p, q):
-    while root:
-        if p.val < root.val and q.val < root.val:
-            root = root.left
-        elif p.val > root.val and q.val > root.val:
-            root = root.right
-        else:
-            return root
-```
+ while root:
+ if p.val < root.val and q.val < root.val:
+ root = root.left
+ elif p.val > root.val and q.val > root.val:
+ root = root.right
+ else:
+ return root
+``
 
 **Time Complexity:** \\(O(H)\\) where H is height.
 **Space Complexity:** \\(O(1)\\) (iterative, no recursion).
@@ -244,22 +244,22 @@ There's a deep connection: **LCA can be reduced to RMQ**.
 3. LCA(p, q) = Node with minimum depth in the Euler tour between first[p] and first[q].
 
 **Example:**
-```
-Tree:      1
-          / \
-         2   3
-        / \
-       4   5
+``
+Tree: 1
+ / \
+ 2 3
+ / \
+ 4 5
 
 Euler Tour: [1, 2, 4, 2, 5, 2, 1, 3, 1]
-Depths:     [0, 1, 2, 1, 2, 1, 0, 1, 0]
+Depths: [0, 1, 2, 1, 2, 1, 0, 1, 0]
 First occurrence: 1->0, 2->1, 3->7, 4->2, 5->4
 
 LCA(4, 5):
-  first[4] = 2, first[5] = 4
-  Min depth in range [2, 4] is at index 3 (depth 1, node 2)
-  LCA = 2
-```
+ first[4] = 2, first[5] = 4
+ Min depth in range [2, 4] is at index 3 (depth 1, node 2)
+ LCA = 2
+``
 
 **With RMQ Preprocessing:**
 - Preprocess the depth array with Sparse Table or Segment Tree.
@@ -270,43 +270,43 @@ LCA(4, 5):
 If we have many LCA queries offline (all queries known in advance), **Tarjan's algorithm** uses **Disjoint Set Union (DSU)**.
 
 **Algorithm:**
-```python
+``python
 def tarjan_lca(root, queries):
-    parent = {}
-    ancestor = {}
-    color = {}  # 0: white, 1: gray, 2: black
-    result = {}
-    
-    def find(x):
-        if parent[x] != x:
-            parent[x] = find(parent[x])
-        return parent[x]
-    
-    def union(x, y):
-        parent[find(x)] = find(y)
-    
-    def dfs(node):
-        parent[node] = node
-        ancestor[node] = node
-        color[node] = 1  # gray
-        
-        for child in [node.left, node.right]:
-            if child:
-                dfs(child)
-                union(child, node)
-                ancestor[find(node)] = node
-        
-        color[node] = 2  # black
-        
-        for (u, v) in queries:
-            if u == node and color.get(v) == 2:
-                result[(u, v)] = ancestor[find(v)]
-            if v == node and color.get(u) == 2:
-                result[(u, v)] = ancestor[find(u)]
-    
-    dfs(root)
-    return result
-```
+ parent = {}
+ ancestor = {}
+ color = {} # 0: white, 1: gray, 2: black
+ result = {}
+ 
+ def find(x):
+ if parent[x] != x:
+ parent[x] = find(parent[x])
+ return parent[x]
+ 
+ def union(x, y):
+ parent[find(x)] = find(y)
+ 
+ def dfs(node):
+ parent[node] = node
+ ancestor[node] = node
+ color[node] = 1 # gray
+ 
+ for child in [node.left, node.right]:
+ if child:
+ dfs(child)
+ union(child, node)
+ ancestor[find(node)] = node
+ 
+ color[node] = 2 # black
+ 
+ for (u, v) in queries:
+ if u == node and color.get(v) == 2:
+ result[(u, v)] = ancestor[find(v)]
+ if v == node and color.get(u) == 2:
+ result[(u, v)] = ancestor[find(u)]
+ 
+ dfs(root)
+ return result
+``
 
 **Time Complexity:** \\(O((N + Q) \cdot \alpha(N))\\) where Q is number of queries and \\(\alpha\\) is the inverse Ackermann function (nearly constant).
 
@@ -315,38 +315,38 @@ def tarjan_lca(root, queries):
 **Problem:** Find the LCA of K nodes \\( \{p_1, p_2, \ldots, p_k\} \\).
 
 **Approach 1: Iterative LCA**
-```python
+``python
 def lca_of_k_nodes(root, nodes):
-    lca = nodes[0]
-    for i in range(1, len(nodes)):
-        lca = lowestCommonAncestor(root, lca, nodes[i])
-    return lca
-```
+ lca = nodes[0]
+ for i in range(1, len(nodes)):
+ lca = lowestCommonAncestor(root, lca, nodes[i])
+ return lca
+``
 **Time Complexity:** \\(O(K \cdot N)\\) in worst case.
 
 **Approach 2: DFS with Counter**
-```python
+``python
 def lca_of_k_nodes_optimized(root, nodes):
-    node_set = set(nodes)
-    
-    def dfs(node):
-        if not node:
-            return 0, None
-        
-        count = 1 if node in node_set else 0
-        left_count, left_lca = dfs(node.left)
-        right_count, right_lca = dfs(node.right)
-        
-        total_count = count + left_count + right_count
-        
-        if total_count == len(node_set) and not hasattr(dfs, 'lca'):
-            dfs.lca = node
-        
-        return total_count, dfs.lca if hasattr(dfs, 'lca') else None
-    
-    _, lca = dfs(root)
-    return lca
-```
+ node_set = set(nodes)
+ 
+ def dfs(node):
+ if not node:
+ return 0, None
+ 
+ count = 1 if node in node_set else 0
+ left_count, left_lca = dfs(node.left)
+ right_count, right_lca = dfs(node.right)
+ 
+ total_count = count + left_count + right_count
+ 
+ if total_count == len(node_set) and not hasattr(dfs, 'lca'):
+ dfs.lca = node
+ 
+ return total_count, dfs.lca if hasattr(dfs, 'lca') else None
+ 
+ _, lca = dfs(root)
+ return lca
+``
 **Time Complexity:** \\(O(N)\\) single pass.
 
 ## Deep Dive: LCA with Node Values (Not References)
@@ -355,21 +355,21 @@ def lca_of_k_nodes_optimized(root, nodes):
 
 **Challenge:** We need to search for the nodes first.
 
-```python
+``python
 def lca_by_values(root, val1, val2):
-    def find_lca(node):
-        if not node or node.val == val1 or node.val == val2:
-            return node
-        
-        left = find_lca(node.left)
-        right = find_lca(node.right)
-        
-        if left and right:
-            return node
-        return left if left else right
-    
-    return find_lca(root)
-```
+ def find_lca(node):
+ if not node or node.val == val1 or node.val == val2:
+ return node
+ 
+ left = find_lca(node.left)
+ right = find_lca(node.right)
+ 
+ if left and right:
+ return node
+ return left if left else right
+ 
+ return find_lca(root)
+``
 
 **Caveat:** What if one value doesn't exist?
 - The above code would return the other node as LCA (incorrect).
@@ -379,34 +379,34 @@ def lca_by_values(root, val1, val2):
 
 If each node has a `parent` pointer, the problem becomes **finding the intersection of two linked lists**.
 
-```python
+``python
 def lca_with_parent_pointers(p, q):
-    def get_depth(node):
-        depth = 0
-        while node:
-            depth += 1
-            node = node.parent
-        return depth
-    
-    depth_p = get_depth(p)
-    depth_q = get_depth(q)
-    
-    # Move the deeper node up to the same level
-    while depth_p > depth_q:
-        p = p.parent
-        depth_p -= 1
-    
-    while depth_q > depth_p:
-        q = q.parent
-        depth_q -= 1
-    
-    # Move both up until they meet
-    while p != q:
-        p = p.parent
-        q = q.parent
-    
-    return p
-```
+ def get_depth(node):
+ depth = 0
+ while node:
+ depth += 1
+ node = node.parent
+ return depth
+ 
+ depth_p = get_depth(p)
+ depth_q = get_depth(q)
+ 
+ # Move the deeper node up to the same level
+ while depth_p > depth_q:
+ p = p.parent
+ depth_p -= 1
+ 
+ while depth_q > depth_p:
+ q = q.parent
+ depth_q -= 1
+ 
+ # Move both up until they meet
+ while p != q:
+ p = p.parent
+ q = q.parent
+ 
+ return p
+``
 
 **Time Complexity:** \\(O(H)\\).
 **Space Complexity:** \\(O(1)\\).
@@ -425,35 +425,35 @@ def lca_with_parent_pointers(p, q):
 ## Implementation in Other Languages
 
 **C++:**
-```cpp
+``cpp
 class Solution {
 public:
-    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
-        if (!root || root == p || root == q) return root;
-        
-        TreeNode* left = lowestCommonAncestor(root->left, p, q);
-        TreeNode* right = lowestCommonAncestor(root->right, p, q);
-        
-        if (left && right) return root;
-        return left ? left : right;
-    }
+ TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+ if (!root || root == p || root == q) return root;
+ 
+ TreeNode* left = lowestCommonAncestor(root->left, p, q);
+ TreeNode* right = lowestCommonAncestor(root->right, p, q);
+ 
+ if (left && right) return root;
+ return left ? left : right;
+ }
 };
-```
+``
 
 **Java:**
-```java
+``java
 class Solution {
-    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
-        if (root == null || root == p || root == q) return root;
-        
-        TreeNode left = lowestCommonAncestor(root.left, p, q);
-        TreeNode right = lowestCommonAncestor(root.right, p, q);
-        
-        if (left != null && right != null) return root;
-        return left != null ? left : right;
-    }
+ public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+ if (root == null || root == p || root == q) return root;
+ 
+ TreeNode left = lowestCommonAncestor(root.left, p, q);
+ TreeNode right = lowestCommonAncestor(root.right, p, q);
+ 
+ if (left != null && right != null) return root;
+ return left != null ? left : right;
+ }
 }
-```
+``
 
 ## Top Interview Questions
 

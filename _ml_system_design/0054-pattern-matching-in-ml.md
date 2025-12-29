@@ -1,32 +1,32 @@
 ---
 title: "Pattern Matching in ML"
 day: 54
-collection: ml_system_design
-categories:
-  - ml-system-design
-tags:
-  - pattern-matching
-  - rules
-  - weak-supervision
-  - data-quality
-  - feature-engineering
-  - mlops
-difficulty: Hard
-subdomain: "Data Processing"
-tech_stack:
-  - Python
-  - Spark
-  - RE2
-  - Great Expectations
-scale: "10B events/day, low-latency rule evaluation"
-companies:
-  - Google
-  - Meta
-  - Netflix
-  - Amazon
 related_dsa_day: 54
 related_speech_day: 54
 related_agents_day: 54
+collection: ml_system_design
+categories:
+ - ml-system-design
+tags:
+ - pattern-matching
+ - rules
+ - weak-supervision
+ - data-quality
+ - feature-engineering
+ - mlops
+difficulty: Hard
+subdomain: "Data Processing"
+tech_stack:
+ - Python
+ - Spark
+ - RE2
+ - Great Expectations
+scale: "10B events/day, low-latency rule evaluation"
+companies:
+ - Google
+ - Meta
+ - Netflix
+ - Amazon
 ---
 
 **"Most ML pipelines are quietly powered by pattern matching—rules, validators, and weak labels before the model ever trains."**
@@ -88,18 +88,18 @@ Once you see matching as “compiled states + bounded execution”, you can desi
 
 ### 2.1 Functional requirements
 - Support multiple pattern types:
-  - literals and wildcards
-  - regex
-  - dictionary/allowlist rules
-  - structured templates (e.g., URL patterns)
+ - literals and wildcards
+ - regex
+ - dictionary/allowlist rules
+ - structured templates (e.g., URL patterns)
 - Provide match outputs:
-  - boolean match
-  - captured groups (when needed)
-  - match reason codes (rule IDs)
+ - boolean match
+ - captured groups (when needed)
+ - match reason codes (rule IDs)
 - Provide governance:
-  - rule versioning
-  - rollout and rollback
-  - ownership and approvals
+ - rule versioning
+ - rollout and rollback
+ - ownership and approvals
 
 ### 2.2 Non-functional requirements
 - Low latency evaluation
@@ -111,16 +111,16 @@ Once you see matching as “compiled states + bounded execution”, you can desi
 Different use cases imply different budgets:
 
 - **Streaming inference features**
-  - p95 rule evaluation: single-digit milliseconds
-  - strict tail latency: avoid worst-case patterns
+ - p95 rule evaluation: single-digit milliseconds
+ - strict tail latency: avoid worst-case patterns
 
 - **Log processing / batch ETL**
-  - throughput dominates (TB/day)
-  - latency per record can be higher, but total CPU cost matters
+ - throughput dominates (TB/day)
+ - latency per record can be higher, but total CPU cost matters
 
 - **Safety / PII filters**
-  - false negatives are expensive (compliance risk)
-  - explainability and audit logs matter as much as latency
+ - false negatives are expensive (compliance risk)
+ - explainability and audit logs matter as much as latency
 
 At 10B events/day, you’re roughly in the regime where:
 - you must avoid per-event heavyweight parsing
@@ -141,45 +141,45 @@ This is what makes downstream debugging possible: “which rule caused this row 
 
 ## 3. High-Level Architecture
 
-```
-            +-------------------+
-            | Rule Authoring    |
-            | (Git, UI, PRs)    |
-            +---------+---------+
-                      |
-                      v
-            +-------------------+
-            | Rule Compiler     |
-            | (regex → automata |
-            |  wildcard → DP)   |
-            +---------+---------+
-                      |
-                      v
-            +-------------------+      +-------------------+
-            | Rule Registry     | ---> | Runtime Evaluator |
-            | (versions, ACLs)  |      | (stream + batch)  |
-            +---------+---------+      +---------+---------+
-                      |                          |
-                      v                          v
-            +-------------------+      +-------------------+
-            | Observability     |      | Downstream        |
-            | (matches, stats)  |      | (labels, filters) |
-            +-------------------+      +-------------------+
-```
+``
+ +-------------------+
+ | Rule Authoring |
+ | (Git, UI, PRs) |
+ +---------+---------+
+ |
+ v
+ +-------------------+
+ | Rule Compiler |
+ | (regex → automata |
+ | wildcard → DP) |
+ +---------+---------+
+ |
+ v
+ +-------------------+ +-------------------+
+ | Rule Registry | ---> | Runtime Evaluator |
+ | (versions, ACLs) | | (stream + batch) |
+ +---------+---------+ +---------+---------+
+ | |
+ v v
+ +-------------------+ +-------------------+
+ | Observability | | Downstream |
+ | (matches, stats) | | (labels, filters) |
+ +-------------------+ +-------------------+
+``
 
 ### 3.1 Control plane vs data plane (the operability split)
 Pattern matching systems typically split into:
 
 - **Control plane**
-  - rule authoring UX + approvals
-  - compilation and validation (linting, safety checks)
-  - versioning, rollout, rollback
-  - ownership and audit logs
+ - rule authoring UX + approvals
+ - compilation and validation (linting, safety checks)
+ - versioning, rollout, rollback
+ - ownership and audit logs
 
 - **Data plane**
-  - low-latency evaluator (streaming and/or serving)
-  - batch evaluator (Spark/Flink jobs)
-  - caching and rate limiting
+ - low-latency evaluator (streaming and/or serving)
+ - batch evaluator (Spark/Flink jobs)
+ - caching and rate limiting
 
 This split is important because it lets you:
 - make the data plane boring and fast
@@ -228,14 +228,14 @@ You almost never want to “interpret” patterns per record.
 You want to compile patterns into runtime artifacts:
 
 - **Wildcards**
-  - compile to automata where possible
-  - or use a safe matching algorithm (DP or greedy) with bounded runtime
+ - compile to automata where possible
+ - or use a safe matching algorithm (DP or greedy) with bounded runtime
 
 - **Multiple literal patterns**
-  - compile into a trie / Aho-Corasick automaton (multi-pattern substring matching)
+ - compile into a trie / Aho-Corasick automaton (multi-pattern substring matching)
 
 - **Regex**
-  - compile into NFA/DFA-like machines (or use a guaranteed-linear engine like RE2)
+ - compile into NFA/DFA-like machines (or use a guaranteed-linear engine like RE2)
 
 This is the same conceptual move as the DSA “Wildcard Matching” problem:
 matching is a state machine; compilation turns “text patterns” into “states + transitions”.
@@ -326,16 +326,16 @@ Rules are executable logic.
 So they need the same testing stack you expect for production code:
 
 - **Golden tests**
-  - small curated examples with expected match outputs
-  - should include edge cases and “near misses”
+ - small curated examples with expected match outputs
+ - should include edge cases and “near misses”
 
 - **Property-based tests**
-  - fuzz around boundaries (e.g., URL templates, Unicode, whitespace)
-  - catch unexpected over-matching
+ - fuzz around boundaries (e.g., URL templates, Unicode, whitespace)
+ - catch unexpected over-matching
 
 - **Replay tests**
-  - run against sampled production logs (privacy-safe)
-  - diff match rates and top rule matches by segment
+ - run against sampled production logs (privacy-safe)
+ - diff match rates and top rule matches by segment
 
 ### 4.6 Explainability UX (what teams actually want)
 Engineers don’t want to read raw regex.
@@ -385,27 +385,27 @@ shadow → canary → ramp → rollback.
 
 Here’s an example of wildcard matching used inside a data pipeline (conceptual):
 
-```python
+``python
 def wildcard_match(s: str, p: str) -> bool:
-    # Same DP idea as the DSA wildcard problem; simplified for illustration.
-    m, n = len(s), len(p)
-    dp = [False] * (n + 1)
-    dp[0] = True
-    for j in range(1, n + 1):
-        dp[j] = dp[j - 1] if p[j - 1] == "*" else False
+ # Same DP idea as the DSA wildcard problem; simplified for illustration.
+ m, n = len(s), len(p)
+ dp = [False] * (n + 1)
+ dp[0] = True
+ for j in range(1, n + 1):
+ dp[j] = dp[j - 1] if p[j - 1] == "*" else False
 
-    for i in range(1, m + 1):
-        prev_diag = dp[0]
-        dp[0] = False
-        for j in range(1, n + 1):
-            tmp = dp[j]
-            if p[j - 1] == "*":
-                dp[j] = dp[j] or dp[j - 1]
-            else:
-                dp[j] = prev_diag and (p[j - 1] == "?" or p[j - 1] == s[i - 1])
-            prev_diag = tmp
-    return dp[n]
-```
+ for i in range(1, m + 1):
+ prev_diag = dp[0]
+ dp[0] = False
+ for j in range(1, n + 1):
+ tmp = dp[j]
+ if p[j - 1] == "*":
+ dp[j] = dp[j] or dp[j - 1]
+ else:
+ dp[j] = prev_diag and (p[j - 1] == "?" or p[j - 1] == s[i - 1])
+ prev_diag = tmp
+ return dp[n]
+``
 
 In production, you’d compile wildcard patterns once and run them many times, rather than DP per event.
 
@@ -538,9 +538,9 @@ If you want the system to improve, design a feedback loop:
 - allow downstream teams to label matches as correct/incorrect
 - store those judgments with rule_id + version
 - use them to drive:
-  - rule updates (narrow/broaden)
-  - training data for learned verifiers
-  - regression tests (golden cases)
+ - rule updates (narrow/broaden)
+ - training data for learned verifiers
+ - regression tests (golden cases)
 
 This is why the system needs stable IDs and versioning: feedback is meaningless if rules can’t be referenced precisely.
 
@@ -695,20 +695,20 @@ you’re thinking like an ML systems engineer (not just “someone who knows reg
 If you’re asked to “design pattern matching for ML pipelines”, a crisp structure is:
 
 1. **Start with semantics**
-   - what patterns exist (wildcard/regex/dict/template)?
-   - full match vs substring match?
-   - what outputs are needed (bool vs spans vs captures)?
+ - what patterns exist (wildcard/regex/dict/template)?
+ - full match vs substring match?
+ - what outputs are needed (bool vs spans vs captures)?
 
 2. **Split control plane vs data plane**
-   - authoring + approvals + compilation + versioning
-   - fast evaluator for streaming/batch
+ - authoring + approvals + compilation + versioning
+ - fast evaluator for streaming/batch
 
 3. **Make safety explicit**
-   - RE2 / bounded engines
-   - budgets + canaries + rollback
+ - RE2 / bounded engines
+ - budgets + canaries + rollback
 
 4. **Make observability explicit**
-   - rule IDs, match rates, segment dashboards, replay diffs
+ - rule IDs, match rates, segment dashboards, replay diffs
 
 This stands out because it’s operational and practical: it sounds like someone who has paged on a rule regression before.
 

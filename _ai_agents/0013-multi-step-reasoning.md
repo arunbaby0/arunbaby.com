@@ -3,14 +3,14 @@ title: "Multi-Step Reasoning"
 day: 13
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - reasoning
-  - chain-of-thought
-  - tot
-  - self-consistency
-  - o1
-  - pal
+ - reasoning
+ - chain-of-thought
+ - tot
+ - self-consistency
+ - o1
+ - pal
 difficulty: Medium-Easy
 related_dsa_day: 13
 related_ml_day: 13
@@ -114,13 +114,13 @@ For math and logic, LLMs are bad calculators. Even with CoT, they fail `3284 * 1
 
 * **Prompt:** "Roger has 5 balls..."
 * **PAL Output:**
- ```python
+ ``python
  balls_initial = 5
  cans = 2
  balls_per_can = 3
  total = balls_initial + (cans * balls_per_can)
  print(total)
- ```
+ ``
 * **Execution:** The runtime executes the Python code.
 * **Result:** Exact precision.
 * **Agent Takeaway:** Always offload deterministic logic (Math, Date handling, String manipulation) to **Tools/Code**, never rely on the LLM's weights.
@@ -138,7 +138,7 @@ Instead of the user prompting "Let's think step by step," the model is trained v
 * Only when it is confident does it emit the visible "Answer Tokens."
 
 ### 6.2 The Paradigm Shift
-* **Inference-Time Compute:** We used to think inference was constant cost ($O(N)$). Now, we treat inference like search. We can spend more time (and money) to get a better answer.
+* **Inference-Time Compute:** We used to think inference was constant cost (O(N)). Now, we treat inference like search. We can spend more time (and money) to get a better answer.
 * **The "Thinking" Placeholder:** While o1 is processing, it shows "Thinking...". This is actually the model generating hidden tokens.
 * **Implication:** We are moving from "Prompt Engineering Reason" to "Buying Reason." We pay for the compute time of the model's reflection.
 
@@ -148,7 +148,7 @@ Instead of the user prompting "Let's think step by step," the model is trained v
 
 A robust Python pattern to perform voting on reasoning chains.
 
-```python
+``python
 from collections import Counter
 import re
 import openai
@@ -202,7 +202,7 @@ print(f"Consensus Answer: {result['final_answer']}")
 print(f"Confidence: {result['confidence']*100}%")
 # Output: 22 (Confidence 100%)
 # Logic: 3 + 24 - 5 = 22.
-```
+``
 
 ---
 

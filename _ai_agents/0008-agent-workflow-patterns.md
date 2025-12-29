@@ -3,14 +3,14 @@ title: "Agent Workflow Patterns"
 day: 8
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - architecture
-  - patterns
-  - reflection
-  - planning
-  - andrew-ng
-  - multi-agent
+ - architecture
+ - patterns
+ - reflection
+ - planning
+ - andrew-ng
+ - multi-agent
 difficulty: Medium-Easy
 related_dsa_day: 8
 related_ml_day: 8
@@ -47,7 +47,7 @@ On the HumanEval benchmark (Python coding problems):
 * *Mechanism:* The model knows how to catch its own mistakes if you ask it to look specifically for mistakes. It cannot do "Generation" and "Verification" in the same forward pass because generation is autoregressive (left-to-right). It hasn't seen the end of the line before it writes the start. Reflection provides a second pass.
 
 ### 2.3 Pseudo-Code Implementation
-```python
+``python
 def reflection_loop(goal):
  # Pass 1: Generation
  draft = llm.generate(goal)
@@ -61,7 +61,7 @@ def reflection_loop(goal):
  else:
  final = llm.generate(f"Fix the code based on critique: {draft} \n Feedback: {critique}")
  return final
-```
+``
 
 ---
 

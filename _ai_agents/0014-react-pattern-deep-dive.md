@@ -3,7 +3,7 @@ title: "The ReAct Pattern Deep Dive"
 day: 14
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
   - react
   - reasoning
@@ -45,7 +45,7 @@ ReAct is not a software library; it is a protocol between the **Controller (LLM)
 ### 2.1 The Prompt Structure
 The System Prompt must enforce a rigid structure. The model is told to never output just an answer, but to output a thought process.
 
-```text
+``text
 You are a helpful assistant.
 To solve a problem, you interleave Thought, Action, and Observation.
 Use the following format:
@@ -57,7 +57,7 @@ Observation: the result of the action
 ... (this Thought/Action/Observation cycle can repeat N times)
 Thought: I now know the final answer
 Final Answer: the final answer to the original input question
-```
+``
 
 ### 2.2 The Execution Trace
 Let's watch a ReAct agent solve a multi-hop reasoning question: *"Who is the wife of the actor who played Matrix's Neo?"*
@@ -134,7 +134,7 @@ The prompt grows with every step.
 * Step 10: 8,000 tokens.
 * Step 20: Crash (Context Limit).
 * **Fix:** **Thought Summarization.**
- * When $N > 10$, take the first 5 steps and summarize them: *"Steps 1-5 involved searching for the actor and confirming his identity."*
+ * When `N > 10`, take the first 5 steps and summarize them: *"Steps 1-5 involved searching for the actor and confirming his identity."*
  * Replace the raw log with the summary.
 
 ---
@@ -164,7 +164,7 @@ ReAct relies on Prompt Engineering. **Toolformer** (Meta) relies on Fine-Tuning.
 
 A conceptual Python implementation of the `AgentExecutor`.
 
-```python
+``python
 import re
 
 MAX_STEPS = 10
@@ -212,7 +212,7 @@ def run_react_agent(question, llm, tools):
  history += observation
 
  return "Error: Max steps reached without final answer."
-```
+``
 
 ---
 

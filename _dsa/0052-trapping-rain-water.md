@@ -1,24 +1,24 @@
 ---
 title: "Trapping Rain Water"
 day: 52
+related_ml_day: 52
+related_speech_day: 52
+related_agents_day: 52
 collection: dsa
 categories:
-  - dsa
+ - dsa
 tags:
-  - two-pointers
-  - monotonic-stack
-  - arrays
-  - hard
-  - pattern-recognition
-  - prefix-max
+ - two-pointers
+ - monotonic-stack
+ - arrays
+ - hard
+ - pattern-recognition
+ - prefix-max
 difficulty: Hard
 subdomain: "Two Pointers & Invariants"
 tech_stack: Python
 scale: "O(N) time, O(1) space (two pointers)"
 companies: Google, Meta, Amazon, Microsoft
-related_ml_day: 52
-related_speech_day: 52
-related_agents_day: 52
 ---
 
 **"Water doesn’t care about every bar—only the highest walls to the left and right."**
@@ -72,13 +72,13 @@ A useful mental picture:
 - water collects only where there exists a higher wall on both sides
 - the amount depends on the *lower* of the two walls
 
-```
-heights:  3       3
-          |       |
-          |   1   |
-          | _ _ _ |
-index:    0 1 2 3 4
-```
+``
+heights: 3 3
+ | |
+ | 1 |
+ | _ _ _ |
+index: 0 1 2 3 4
+``
 
 At index 2:
 - left max = 3, right max = 3
@@ -119,24 +119,24 @@ But it’s too slow for large `N`.
 
 ### 3.4 Brute force implementation (for completeness)
 
-```python
+``python
 from typing import List
 
 
 class SolutionBrute:
-    def trap(self, height: List[int]) -> int:
-        n = len(height)
-        water = 0
-        for i in range(n):
-            left_max = 0
-            for l in range(i, -1, -1):
-                left_max = max(left_max, height[l])
-            right_max = 0
-            for r in range(i, n):
-                right_max = max(right_max, height[r])
-            water += max(0, min(left_max, right_max) - height[i])
-        return water
-```
+ def trap(self, height: List[int]) -> int:
+ n = len(height)
+ water = 0
+ for i in range(n):
+ left_max = 0
+ for l in range(i, -1, -1):
+ left_max = max(left_max, height[l])
+ right_max = 0
+ for r in range(i, n):
+ right_max = max(right_max, height[r])
+ water += max(0, min(left_max, right_max) - height[i])
+ return water
+``
 
 This is slow but “obviously correct”, which makes it valuable for validating optimized approaches.
 
@@ -157,32 +157,32 @@ Then compute trapped water using the formula from section 2.
 
 ### 4.3 Implementation (clear and interview-safe)
 
-```python
+``python
 from typing import List
 
 
 class SolutionDP:
-    def trap(self, height: List[int]) -> int:
-        n = len(height)
-        if n == 0:
-            return 0
+ def trap(self, height: List[int]) -> int:
+ n = len(height)
+ if n == 0:
+ return 0
 
-        left_max = [0] * n
-        right_max = [0] * n
+ left_max = [0] * n
+ right_max = [0] * n
 
-        left_max[0] = height[0]
-        for i in range(1, n):
-            left_max[i] = max(left_max[i - 1], height[i])
+ left_max[0] = height[0]
+ for i in range(1, n):
+ left_max[i] = max(left_max[i - 1], height[i])
 
-        right_max[n - 1] = height[n - 1]
-        for i in range(n - 2, -1, -1):
-            right_max[i] = max(right_max[i + 1], height[i])
+ right_max[n - 1] = height[n - 1]
+ for i in range(n - 2, -1, -1):
+ right_max[i] = max(right_max[i + 1], height[i])
 
-        water = 0
-        for i in range(n):
-            water += max(0, min(left_max[i], right_max[i]) - height[i])
-        return water
-```
+ water = 0
+ for i in range(n):
+ water += max(0, min(left_max[i], right_max[i]) - height[i])
+ return water
+``
 
 This solution is easy to reason about and is often acceptable if memory is not a concern.
 
@@ -204,9 +204,9 @@ As we move inward with two pointers (`l`, `r`), we maintain:
 
 Then:
 - If `left_max <= right_max`, water at `l` is fully determined by `left_max` (because the right side has a boundary at least as tall).
-  - Add `left_max - height[l]`, move `l`.
+ - Add `left_max - height[l]`, move `l`.
 - Else, water at `r` is determined by `right_max`.
-  - Add `right_max - height[r]`, move `r`.
+ - Add `right_max - height[r]`, move `r`.
 
 This is the crucial invariant:
 > The smaller boundary decides the water level for the pointer on that side.
@@ -274,38 +274,38 @@ This trace is a great interview sanity check because it shows the algorithm is �
 
 ### 5.7 Implementation (recommended)
 
-```python
+``python
 from typing import List
 
 
 class Solution:
-    def trap(self, height: List[int]) -> int:
-        n = len(height)
-        if n == 0:
-            return 0
+ def trap(self, height: List[int]) -> int:
+ n = len(height)
+ if n == 0:
+ return 0
 
-        l, r = 0, n - 1
-        left_max, right_max = 0, 0
-        water = 0
+ l, r = 0, n - 1
+ left_max, right_max = 0, 0
+ water = 0
 
-        while l < r:
-            if height[l] <= height[r]:
-                # Left side is the limiting boundary (or tied).
-                if height[l] >= left_max:
-                    left_max = height[l]
-                else:
-                    water += left_max - height[l]
-                l += 1
-            else:
-                # Right side is the limiting boundary.
-                if height[r] >= right_max:
-                    right_max = height[r]
-                else:
-                    water += right_max - height[r]
-                r -= 1
+ while l < r:
+ if height[l] <= height[r]:
+ # Left side is the limiting boundary (or tied).
+ if height[l] >= left_max:
+ left_max = height[l]
+ else:
+ water += left_max - height[l]
+ l += 1
+ else:
+ # Right side is the limiting boundary.
+ if height[r] >= right_max:
+ right_max = height[r]
+ else:
+ water += right_max - height[r]
+ r -= 1
 
-        return water
-```
+ return water
+``
 
 Note: some implementations compare `left_max` vs `right_max`; others compare `height[l]` vs `height[r]`. Both can be correct if invariants are maintained consistently.
 
@@ -331,10 +331,10 @@ Terminology in the code:
 
 Then:
 - **width** of trapped region is `i - left - 1`
-  - everything between `left` and `i` is inside the basin
+ - everything between `left` and `i` is inside the basin
 - **bounded height** is `min(height[left], height[i]) - height[bottom]`
-  - the water level is limited by the shorter boundary
-  - subtract the valley floor (`bottom`) height
+ - the water level is limited by the shorter boundary
+ - subtract the valley floor (`bottom`) height
 
 So trapped water for that basin segment:
 \[
@@ -351,36 +351,36 @@ Example: `[2,0,2]`
 - i=0, stack=[0]
 - i=1 (0), stack=[0,1]
 - i=2 (2), height[1] < 2 → pop bottom=1
-  - left=0, width=2-0-1=1
-  - bounded_height=min(2,2)-0=2
-  - water += 1*2 = 2
+ - left=0, width=2-0-1=1
+ - bounded_height=min(2,2)-0=2
+ - water += 1*2 = 2
 
 This is the same answer as two pointers, just computed via “closing basins” rather than “finalizing sides”.
 
 ### 6.2 Implementation (stack)
 
-```python
+``python
 from typing import List
 
 
 class SolutionStack:
-    def trap(self, height: List[int]) -> int:
-        stack = []
-        water = 0
+ def trap(self, height: List[int]) -> int:
+ stack = []
+ water = 0
 
-        for i, h in enumerate(height):
-            while stack and height[stack[-1]] < h:
-                bottom = stack.pop()
-                if not stack:
-                    break
-                left = stack[-1]
-                width = i - left - 1
-                bounded_height = min(height[left], h) - height[bottom]
-                water += width * bounded_height
-            stack.append(i)
+ for i, h in enumerate(height):
+ while stack and height[stack[-1]] < h:
+ bottom = stack.pop()
+ if not stack:
+ break
+ left = stack[-1]
+ width = i - left - 1
+ bounded_height = min(height[left], h) - height[bottom]
+ water += width * bounded_height
+ stack.append(i)
 
-        return water
-```
+ return water
+``
 
 ### 6.3 When to prefer stack vs two pointers
 
@@ -417,24 +417,24 @@ on randomized arrays.
 
 ### 7.6 Quick randomized differential test
 
-```python
+``python
 import random
 
 
 def randomized_test(trials: int = 200) -> None:
-    fast = Solution()
-    slow = SolutionDP()
-    for _ in range(trials):
-        n = random.randint(0, 50)
-        arr = [random.randint(0, 10) for _ in range(n)]
-        if fast.trap(arr) != slow.trap(arr):
-            raise AssertionError((arr, fast.trap(arr), slow.trap(arr)))
+ fast = Solution()
+ slow = SolutionDP()
+ for _ in range(trials):
+ n = random.randint(0, 50)
+ arr = [random.randint(0, 10) for _ in range(n)]
+ if fast.trap(arr) != slow.trap(arr):
+ raise AssertionError((arr, fast.trap(arr), slow.trap(arr)))
 
 
 if __name__ == "__main__":
-    randomized_test()
-    print("OK")
-```
+ randomized_test()
+ print("OK")
+``
 
 ---
 
@@ -494,7 +494,7 @@ The core change:
 - boundaries are not just left/right; they are in 4 directions
 - the right tool becomes a **min-heap (priority queue)** seeded with boundary cells
 - you expand inward like Dijkstra:
-  - the current boundary height determines how much water a neighbor can hold
+ - the current boundary height determines how much water a neighbor can hold
 
 The shared theme is still boundary invariants:
 - in 1D you maintain two boundary maxima
@@ -507,21 +507,21 @@ Mentioning this shows you understand the deeper principle, not just the 1D trick
 If this logic is in a production code path (analytics, simulation, or interview platform), review:
 
 - **Inputs**
-  - empty list returns 0
-  - non-negative heights (if negatives allowed, define behavior explicitly)
+ - empty list returns 0
+ - non-negative heights (if negatives allowed, define behavior explicitly)
 
 - **Invariants**
-  - `left_max` is updated before accumulating water at `l`
-  - `right_max` is updated before accumulating water at `r`
-  - pointer movement is consistent on ties
+ - `left_max` is updated before accumulating water at `l`
+ - `right_max` is updated before accumulating water at `r`
+ - pointer movement is consistent on ties
 
 - **Complexity**
-  - one pass only (no nested loops accidentally introduced)
-  - constant extra memory
+ - one pass only (no nested loops accidentally introduced)
+ - constant extra memory
 
 - **Correctness sanity**
-  - water is never negative
-  - output fits in 64-bit for worst-case constraints in typed languages
+ - water is never negative
+ - output fits in 64-bit for worst-case constraints in typed languages
 
 This is a good practice for any invariant-heavy algorithm: write down the invariants you rely on and ensure the code matches them.
 
@@ -576,11 +576,11 @@ This style of explanation is often what differentiates a correct solution from a
 ### 11.2 Common follow-ups
 
 - **“Can you do it in one pass without extra arrays?”**
-  - Yes: the two-pointer approach you implemented.
+ - Yes: the two-pointer approach you implemented.
 - **“How would you extend this to 2D?”**
-  - Use a min-heap seeded with boundary cells; expand inward (Dijkstra-like).
+ - Use a min-heap seeded with boundary cells; expand inward (Dijkstra-like).
 - **“What’s the relationship to monotonic stacks?”**
-  - Both find boundaries efficiently; the stack explicitly finds “basins”.
+ - Both find boundaries efficiently; the stack explicitly finds “basins”.
 
 ---
 
@@ -604,23 +604,23 @@ That’s the whole algorithm.
 If you want a quick “mental card” for this problem:
 
 - **Core formula**
-  - \(water[i] = \max(0, \min(maxLeft[i], maxRight[i]) - height[i])\)
+ - \(water[i] = \max(0, \min(maxLeft[i], maxRight[i]) - height[i])\)
 
 - **DP arrays**
-  - compute `left_max[]` prefix maxima
-  - compute `right_max[]` suffix maxima
-  - single pass to sum water
+ - compute `left_max[]` prefix maxima
+ - compute `right_max[]` suffix maxima
+ - single pass to sum water
 
 - **Two pointers**
-  - maintain `left_max`, `right_max`
-  - move the pointer on the side that is guaranteed to be bounded
-  - finalize water for that pointer immediately
+ - maintain `left_max`, `right_max`
+ - move the pointer on the side that is guaranteed to be bounded
+ - finalize water for that pointer immediately
 
 - **Monotonic stack**
-  - maintain decreasing stack of indices
-  - when you see a higher bar, pop “bottom” and compute:
-    - width = `i - left - 1`
-    - bounded_height = `min(height[left], height[i]) - height[bottom]`
+ - maintain decreasing stack of indices
+ - when you see a higher bar, pop “bottom” and compute:
+ - width = `i - left - 1`
+ - bounded_height = `min(height[left], height[i]) - height[bottom]`
 
 ### 12.3 Appendix: practice variants that reuse the same ideas
 
@@ -653,8 +653,8 @@ Instead, you treat the outer boundary as the initial “wall” and expand inwar
 2. Mark them visited.
 3. Pop the smallest boundary cell.
 4. For each neighbor not visited:
-   - if neighbor height is lower, it holds `boundary_height - neighbor_height` water
-   - push neighbor with effective height `max(neighbor_height, boundary_height)`
+ - if neighbor height is lower, it holds `boundary_height - neighbor_height` water
+ - push neighbor with effective height `max(neighbor_height, boundary_height)`
 5. Repeat until all cells are visited.
 
 Why it works:
@@ -677,20 +677,20 @@ In interviews:
 
 ### 12.7 Appendix: rapid-fire interview Q&A
 
-- **Q: Why is the time O(N) for the two-pointer method?**  
-  **A:** Each pointer moves inward at most `N` times total; no index is revisited.
+- **Q: Why is the time O(N) for the two-pointer method?** 
+ **A:** Each pointer moves inward at most `N` times total; no index is revisited.
 
-- **Q: Why do we only need the smaller boundary?**  
-  **A:** Water level is capped by the minimum of left and right boundaries; if one side is already the bottleneck, the other side’s exact future cannot reduce the computed water.
+- **Q: Why do we only need the smaller boundary?** 
+ **A:** Water level is capped by the minimum of left and right boundaries; if one side is already the bottleneck, the other side’s exact future cannot reduce the computed water.
 
-- **Q: What happens with flat plateaus?**  
-  **A:** Plateaus are fine. The algorithm treats equal heights consistently; choose a tie rule and stick to it.
+- **Q: What happens with flat plateaus?** 
+ **A:** Plateaus are fine. The algorithm treats equal heights consistently; choose a tie rule and stick to it.
 
-- **Q: Can heights be negative?**  
-  **A:** The classic problem assumes non-negative. If negatives are allowed, you must define semantics (negative bars imply “below ground”), and the formula still works, but test expectations must be clarified.
+- **Q: Can heights be negative?** 
+ **A:** The classic problem assumes non-negative. If negatives are allowed, you must define semantics (negative bars imply “below ground”), and the formula still works, but test expectations must be clarified.
 
-- **Q: When would you prefer DP arrays?**  
-  **A:** When code clarity matters more than memory (small `N`, or memory is cheap), or when you want explicit `left_max/right_max` arrays for debugging/visualization.
+- **Q: When would you prefer DP arrays?** 
+ **A:** When code clarity matters more than memory (small `N`, or memory is cheap), or when you want explicit `left_max/right_max` arrays for debugging/visualization.
 
 ### 12.8 Appendix: the one mistake to avoid
 

@@ -1,21 +1,21 @@
 ---
 title: "Semantic Search Systems"
 day: 32
+related_dsa_day: 32
+related_speech_day: 32
+related_agents_day: 32
 collection: ml_system_design
 categories:
-  - ml_system_design
+ - ml_system_design
 tags:
-  - search
-  - nlp
-  - embeddings
-  - vector-db
+ - search
+ - nlp
+ - embeddings
+ - vector-db
 subdomain: "Information Retrieval"
 tech_stack: [Elasticsearch, Milvus, Pinecone, BERT, Faiss]
 scale: "Billions of documents, <100ms latency"
 companies: [Google, Amazon, Spotify, Notion]
-related_dsa_day: 32
-related_speech_day: 32
-related_agents_day: 32
 ---
 
 **"Moving beyond keywords to understand the *meaning* of a query."**
@@ -39,46 +39,46 @@ Traditional search engines (like Lucene/Elasticsearch) rely on **Lexical Search*
 **Core Idea:** Use a Deep Learning model (Transformer) to convert text into a fixed-size vector (embedding).
 
 **Architecture:**
-```
+``
 Query "fix flat tire" → [BERT] → Vector Q (768-dim)
-                                      ↓
-                                   Similarity (Dot Product)
-                                      ↑
-Doc "repair wheel"    → [BERT] → Vector D (768-dim)
-```
+ ↓
+ Similarity (Dot Product)
+ ↑
+Doc "repair wheel" → [BERT] → Vector D (768-dim)
+``
 
 **Bi-Encoder (Siamese Network):**
 - Two identical BERT models (sharing weights).
 - Process Query and Document independently.
 - **Fast Retrieval:** Pre-compute all document vectors. At query time, only encode the query.
 
-```python
+``python
 from sentence_transformers import SentenceTransformer
 
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # 1. Indexing (Offline)
 docs = ["Guide to repairing a punctured wheel", "Best pizza in NY"]
-doc_embeddings = model.encode(docs)  # [2, 384]
+doc_embeddings = model.encode(docs) # [2, 384]
 
 # 2. Search (Online)
 query = "How to fix a flat tire"
-query_embedding = model.encode(query)  # [1, 384]
+query_embedding = model.encode(query) # [1, 384]
 
 # 3. Similarity
 import numpy as np
 scores = np.dot(doc_embeddings, query_embedding)
 # scores[0] will be high, scores[1] low
-```
+``
 
 ## 3. Vector Databases & ANN Search
 
-**Problem:** Calculating dot product against 1 Billion vectors is too slow ($O(N)$).
-- 1B vectors $\times$ 768 dims $\times$ 4 bytes $\approx$ 3 TB RAM.
+**Problem:** Calculating dot product against 1 Billion vectors is too slow (O(N)).
+- 1B vectors `\times` 768 dims `\times` 4 bytes `\approx` 3 TB RAM.
 - Brute force scan takes seconds/minutes.
 
 **Solution:** Approximate Nearest Neighbor (ANN) Search.
-- Trade-off: slightly lower recall (99% instead of 100%) for massive speedup ($O(\log N)$).
+- Trade-off: slightly lower recall (99% instead of 100%) for massive speedup (O(\log N)).
 
 ### HNSW (Hierarchical Navigable Small World)
 **Mechanism:**
@@ -98,7 +98,7 @@ scores = np.dot(doc_embeddings, query_embedding)
 
 ### Faiss (Facebook AI Similarity Search)
 **IVF (Inverted File):**
-- Cluster vectors into $K$ Voronoi cells (centroids).
+- Cluster vectors into `K` Voronoi cells (centroids).
 - Assign each vector to the nearest centroid.
 - **Search:** Find the closest centroid to the query, then scan only vectors in that cell (and neighbors).
 
@@ -106,13 +106,13 @@ scores = np.dot(doc_embeddings, query_embedding)
 - Compress vectors to save RAM.
 - Split 768-dim vector into 8 sub-vectors of 96 dims.
 - Quantize each sub-vector to 1 byte (256 centroids).
-- **Result:** 768 floats (3 KB) $\to$ 8 bytes. 300x compression!
+- **Result:** 768 floats (3 KB) `\to` 8 bytes. 300x compression!
 
-```python
+``python
 import faiss
 
-d = 384  # Dimension
-nlist = 100  # Number of clusters (Voronoi cells)
+d = 384 # Dimension
+nlist = 100 # Number of clusters (Voronoi cells)
 quantizer = faiss.IndexFlatL2(d)
 index = faiss.IndexIVFFlat(quantizer, d, nlist)
 
@@ -123,17 +123,17 @@ index.train(doc_embeddings)
 index.add(doc_embeddings)
 
 # Search
-D, I = index.search(query_embedding, k=5)  # Return top 5
-```
+D, I = index.search(query_embedding, k=5) # Return top 5
+``
 
 ## 4. Cross-Encoders (Re-Ranking)
 
 **Problem:** Bi-Encoders compress a whole document into one vector. Information is lost ("bottleneck").
 **Solution:** Cross-Encoders process Query and Document **together**.
 
-```
+``
 [CLS] Query [SEP] Document [SEP] → [BERT] → [Linear] → Score
-```
+``
 
 **Mechanism:**
 - The self-attention mechanism attends to every word in the query against every word in the document.
@@ -144,14 +144,14 @@ D, I = index.search(query_embedding, k=5)  # Return top 5
 
 **Cons:**
 - **Slow:** Must run BERT for every (Query, Doc) pair. Cannot pre-compute.
-- $O(N)$ inference at query time.
+- O(N) inference at query time.
 
 **Production Pattern: Retrieve & Re-Rank**
 1. **Retriever (Bi-Encoder/BM25):** Get top 100 candidates (Fast, High Recall).
 2. **Re-Ranker (Cross-Encoder):** Score top 100 candidates (Accurate, High Precision).
 3. **Return:** Top 10.
 
-```python
+``python
 from sentence_transformers import CrossEncoder
 
 cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
@@ -159,7 +159,7 @@ cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
 # Re-rank candidates
 candidates = [("How to fix a flat tire", "Guide to repairing a punctured wheel"), ...]
 scores = cross_encoder.predict(candidates)
-```
+``
 
 ## 5. Hybrid Search (Best of Both Worlds)
 
@@ -181,18 +181,18 @@ Instead of scores, use rank positions. Robust and parameter-free.
 \\[
 \text{RRF}(d) = \sum_{r \in \text{Rankers}} \frac{1}{k + \text{rank}_r(d)}
 \\]
-where $k$ is a constant (usually 60).
+where `k` is a constant (usually 60).
 
 **Example:**
-- Doc A: Rank 1 in Vector, Rank 10 in BM25. Score = $1/61 + 1/70$.
-- Doc B: Rank 5 in Vector, Rank 5 in BM25. Score = $1/65 + 1/65$.
+- Doc A: Rank 1 in Vector, Rank 10 in BM25. Score = `1/61 + 1/70`.
+- Doc B: Rank 5 in Vector, Rank 5 in BM25. Score = `1/65 + 1/65`.
 
 ## 6. Deep Dive: Training Embedding Models
 
 How do we train a model to put "car" and "auto" close together?
 
 **Contrastive Loss (InfoNCE):**
-- **Input:** A batch of $(Query, PositiveDoc)$ pairs.
+- **Input:** A batch of `(Query, PositiveDoc)` pairs.
 - **Goal:** Maximize similarity of positive pairs, minimize similarity with *all other docs in the batch* (In-batch Negatives).
 
 \\[
@@ -205,8 +205,8 @@ How do we train a model to put "car" and "auto" close together?
 - Training on hard negatives boosts performance significantly.
 
 **Matryoshka Representation Learning (MRL):**
-- Train embeddings such that the first $k$ dimensions alone are good.
-- Loss = $\sum_{k \in \{64, 128, 256, 768\}} \text{Loss}_k$.
+- Train embeddings such that the first `k` dimensions alone are good.
+- Loss = `\sum_{k \in \{64, 128, 256, 768\}} \text{Loss}_k`.
 - **Benefit:** Use 64 dims for fast initial filter (12x faster), 768 dims for re-ranking.
 
 ## 7. Deep Dive: Handling Long Documents
@@ -216,11 +216,11 @@ BERT has a 512-token limit. Real-world docs are longer.
 **Strategies:**
 1. **Truncation:** Just take the first 512 tokens. (Works surprisingly well as titles/abstracts contain most info).
 2. **Chunking:** Split doc into 200-word chunks with 50-word overlap.
-   - Index each chunk as a separate vector.
-   - **Retrieval:** Return the parent document of the matching chunk.
+ - Index each chunk as a separate vector.
+ - **Retrieval:** Return the parent document of the matching chunk.
 3. **Pooling:**
-   - **Max-Pooling:** Doc score = Max(Chunk scores). Good for finding specific passages.
-   - **Mean-Pooling:** Doc score = Average(Chunk scores). Good for overall topic match.
+ - **Max-Pooling:** Doc score = Max(Chunk scores). Good for finding specific passages.
+ - **Mean-Pooling:** Doc score = Average(Chunk scores). Good for overall topic match.
 
 ## 8. Deep Dive: Multilingual Semantic Search
 
@@ -238,10 +238,10 @@ BERT has a 512-token limit. Real-world docs are longer.
 **Problem:** Pre-trained models (on MS MARCO) fail on specialized domains (Medical, Legal).
 **Solution:** Generative Pseudo Labeling (GPL).
 
-1.  **Generate Queries:** Use T5 to generate synthetic queries for your domain documents.
-2.  **Mine Negatives:** Use BM25 to find hard negatives for these queries.
-3.  **Label:** Use a Cross-Encoder to score (Query, Doc) pairs (Teacher).
-4.  **Train:** Train the Bi-Encoder (Student) to mimic the Cross-Encoder scores.
+1. **Generate Queries:** Use T5 to generate synthetic queries for your domain documents.
+2. **Mine Negatives:** Use BM25 to find hard negatives for these queries.
+3. **Label:** Use a Cross-Encoder to score (Query, Doc) pairs (Teacher).
+4. **Train:** Train the Bi-Encoder (Student) to mimic the Cross-Encoder scores.
 
 **Result:** Adapts to your domain without human labels!
 
@@ -252,26 +252,26 @@ How do we measure success?
 **NDCG (Normalized Discounted Cumulative Gain):**
 Measures the quality of ranking. Highly relevant items should be at the top.
 
-```python
+``python
 import numpy as np
 
 def dcg_at_k(r, k):
-    r = np.asfarray(r)[:k]
-    if r.size:
-        return np.sum(r / np.log2(np.arange(2, r.size + 2)))
-    return 0.
+ r = np.asfarray(r)[:k]
+ if r.size:
+ return np.sum(r / np.log2(np.arange(2, r.size + 2)))
+ return 0.
 
 def ndcg_at_k(r, k):
-    dcg_max = dcg_at_k(sorted(r, reverse=True), k)
-    if not dcg_max:
-        return 0.
-    return dcg_at_k(r, k) / dcg_max
+ dcg_max = dcg_at_k(sorted(r, reverse=True), k)
+ if not dcg_max:
+ return 0.
+ return dcg_at_k(r, k) / dcg_max
 
 # Example: Relevance scores of retrieved items
 # 3 = Highly Relevant, 2 = Relevant, 1 = Somewhat, 0 = Irrelevant
 relevance = [3, 2, 3, 0, 1, 2]
 print(f"NDCG@5: {ndcg_at_k(relevance, 5)}")
-```
+``
 
 **MRR (Mean Reciprocal Rank):**
 Focuses on the *first* relevant item.
@@ -285,19 +285,19 @@ If the first relevant item is at rank 1, MRR=1. If at rank 2, MRR=0.5.
 Scaling Semantic Search is hard because ANN search is CPU/RAM intensive.
 
 **Architecture:**
-1.  **Query Service:** Stateless API. Encodes query using ONNX Runtime (faster than PyTorch).
-2.  **Caching Layer:** Redis/Memcached. Caches (Query Vector -> Result IDs).
-    -   *Semantic Caching:* If query B is very close to query A (cosine > 0.99), return cached result of A.
-3.  **Sharding:**
-    -   **Horizontal Sharding:** Split 1B vectors into 10 shards of 100M.
-    -   Query all 10 shards in parallel (Scatter-Gather).
-    -   Merge results.
-4.  **Replication:** Replicate each shard 3x for high availability and throughput.
-5.  **Quantization:** Use int8 quantization for the embedding model to speed up inference.
+1. **Query Service:** Stateless API. Encodes query using ONNX Runtime (faster than PyTorch).
+2. **Caching Layer:** Redis/Memcached. Caches (Query Vector -> Result IDs).
+ - *Semantic Caching:* If query B is very close to query A (cosine > 0.99), return cached result of A.
+3. **Sharding:**
+ - **Horizontal Sharding:** Split 1B vectors into 10 shards of 100M.
+ - Query all 10 shards in parallel (Scatter-Gather).
+ - Merge results.
+4. **Replication:** Replicate each shard 3x for high availability and throughput.
+5. **Quantization:** Use int8 quantization for the embedding model to speed up inference.
 
 ## Implementation: End-to-End Semantic Search API
 
-```python
+``python
 from fastapi import FastAPI
 from sentence_transformers import SentenceTransformer
 import faiss
@@ -311,10 +311,10 @@ model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Mock Database
 documents = [
-    {"id": 1, "text": "The quick brown fox jumps over the lazy dog."},
-    {"id": 2, "text": "A fast auburn canine leaps over a sleepy hound."},
-    {"id": 3, "text": "Python is a programming language."},
-    {"id": 4, "text": "Pythons are large constricting snakes."},
+ {"id": 1, "text": "The quick brown fox jumps over the lazy dog."},
+ {"id": 2, "text": "A fast auburn canine leaps over a sleepy hound."},
+ {"id": 3, "text": "Python is a programming language."},
+ {"id": 4, "text": "Pythons are large constricting snakes."},
 ]
 
 # Build Index
@@ -328,29 +328,29 @@ index.add(embeddings)
 
 @app.get("/search")
 def search(q: str, k: int = 2):
-    # Encode Query
-    q_emb = model.encode([q])
-    q_emb = q_emb.reshape(1, -1)
-    faiss.normalize_L2(q_emb)
-    
-    # Search
-    scores, indices = index.search(q_emb, k)
-    
-    results = []
-    for score, idx in zip(scores[0], indices[0]):
-        if idx == -1: continue
-        results.append({
-            "id": documents[idx]["id"],
-            "text": documents[idx]["text"],
-            "score": float(score)
-        })
-    
-    return results
+ # Encode Query
+ q_emb = model.encode([q])
+ q_emb = q_emb.reshape(1, -1)
+ faiss.normalize_L2(q_emb)
+ 
+ # Search
+ scores, indices = index.search(q_emb, k)
+ 
+ results = []
+ for score, idx in zip(scores[0], indices[0]):
+ if idx == -1: continue
+ results.append({
+ "id": documents[idx]["id"],
+ "text": documents[idx]["text"],
+ "score": float(score)
+ })
+ 
+ return results
 
 # Example Usage:
 # /search?q=coding -> Returns "Python is a programming language"
 # /search?q=reptile -> Returns "Pythons are large constricting snakes"
-```
+``
 
 ## Top Interview Questions
 
@@ -385,11 +385,11 @@ As dimensions increase, the distance between the nearest and farthest points bec
 
 ## Key Takeaways
 
-1.  **Bi-Encoders** enable fast retrieval by pre-computing document vectors.
-2.  **Cross-Encoders** provide high accuracy re-ranking but are computationally expensive.
-3.  **Vector DBs** (HNSW, IVF-PQ) are essential for scaling to millions/billions of documents.
-4.  **Hybrid Search** (Dense + Sparse) is the robust industry standard to handle both semantic and exact match queries.
-5.  **Hard Negatives** are crucial for training effective embedding models.
+1. **Bi-Encoders** enable fast retrieval by pre-computing document vectors.
+2. **Cross-Encoders** provide high accuracy re-ranking but are computationally expensive.
+3. **Vector DBs** (HNSW, IVF-PQ) are essential for scaling to millions/billions of documents.
+4. **Hybrid Search** (Dense + Sparse) is the robust industry standard to handle both semantic and exact match queries.
+5. **Hard Negatives** are crucial for training effective embedding models.
 
 ## Summary
 

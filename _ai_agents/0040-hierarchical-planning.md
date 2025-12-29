@@ -1,21 +1,21 @@
 ---
 title: "Hierarchical Planning"
 day: 40
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - hierarchical-planning
-  - planning
-  - decomposition
-  - execution
-  - verification
-  - budgets
-  - state
-difficulty: Medium-Hard
 related_dsa_day: 40
 related_ml_day: 40
 related_speech_day: 40
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - hierarchical-planning
+ - planning
+ - decomposition
+ - execution
+ - verification
+ - budgets
+ - state
+difficulty: Medium-Hard
 ---
 
 **"Make agents reliable at large tasks: plan at multiple levels, execute in small verified steps, and stop when budgets say so."**
@@ -79,27 +79,27 @@ This prevents a common failure mode where the action layer “changes strategy m
 
 Here’s a robust architecture for hierarchical planning:
 
-```text
+``text
 Objective + Constraints
-   |
-   v
+ |
+ v
 High-Level Planner (H-Plan)
-   |
-   v
+ |
+ v
 Task Graph / Outline (big chunks)
-   |
-   v
+ |
+ v
 Step Planner (per chunk)
-   |
-   v
+ |
+ v
 Executor (tools + actions)
-   |
-   v
+ |
+ v
 Verifier (checks + gates)
-   |
-   v
+ |
+ v
 State Update + Stop Check
-```
+``
 
 ### Key design choice: commit plans to state
 
@@ -119,22 +119,22 @@ This makes planning inspectable and debuggable.
 
 If you can only add one structured artifact to your agent system, make it a plan schema. Even a minimal schema helps:
 
-```json
+``json
 {
-  "goal": "…",
-  "constraints": ["…"],
-  "tasks": [
-    {
-      "id": "T1",
-      "title": "Collect evidence",
-      "status": "pending",
-      "done_definition": "Have ≥2 sources for key claims",
-      "budget": {"max_steps": 6, "max_tool_calls": 6},
-      "depends_on": []
-    }
-  ]
+ "goal": "…",
+ "constraints": ["…"],
+ "tasks": [
+ {
+ "id": "T1",
+ "title": "Collect evidence",
+ "status": "pending",
+ "done_definition": "Have ≥2 sources for key claims",
+ "budget": {"max_steps": 6, "max_tool_calls": 6},
+ "depends_on": []
+ }
+ ]
 }
-```
+``
 
 Why include `done_definition` and `budget`?
 
@@ -173,11 +173,11 @@ Best for:
 Example:
 
 - Section A: requirements
-  - A1: functional
-  - A2: non-functional
+ - A1: functional
+ - A2: non-functional
 - Section B: design
-  - B1: components
-  - B2: data flow
+ - B1: components
+ - B2: data flow
 
 ### 4.3 DAG plan (dependencies + parallelism)
 
@@ -402,10 +402,10 @@ Hierarchical planning is much more useful when tasks run long enough that you ca
 Practical pattern:
 
 - After each chunk completes (or fails), checkpoint:
-  - plan status
-  - evidence list
-  - budgets spent
-  - failures
+ - plan status
+ - evidence list
+ - budgets spent
+ - failures
 
 This gives you:
 
@@ -419,41 +419,41 @@ This gives you:
 
 ## 10. Implementation sketch (pseudocode)
 
-```python
+``python
 def hierarchical_agent(objective: str, constraints: list[str], state: dict) -> dict:
-    # 1) Ensure we have a high-level plan
-    if not state.get("high_plan"):
-        state["high_plan"] = llm.make_high_plan(objective, constraints)
-        state["high_plan"] = validate_plan_schema(state["high_plan"])
+ # 1) Ensure we have a high-level plan
+ if not state.get("high_plan"):
+ state["high_plan"] = llm.make_high_plan(objective, constraints)
+ state["high_plan"] = validate_plan_schema(state["high_plan"])
 
-    # 2) Pick next chunk
-    chunk = select_next_chunk(state["high_plan"])
-    if chunk is None:
-        return {"status": "SUCCESS", "state": state}
+ # 2) Pick next chunk
+ chunk = select_next_chunk(state["high_plan"])
+ if chunk is None:
+ return {"status": "SUCCESS", "state": state}
 
-    # 3) Refine chunk into steps (bounded)
-    steps = llm.refine_chunk(objective, constraints, chunk, state)
-    steps = validate_step_schema(steps)
+ # 3) Refine chunk into steps (bounded)
+ steps = llm.refine_chunk(objective, constraints, chunk, state)
+ steps = validate_step_schema(steps)
 
-    # 4) Execute steps with verification
-    for step in steps:
-        if budget_exceeded(state):
-            return {"status": "FAILURE", "reason": "BUDGET_EXCEEDED", "state": state}
+ # 4) Execute steps with verification
+ for step in steps:
+ if budget_exceeded(state):
+ return {"status": "FAILURE", "reason": "BUDGET_EXCEEDED", "state": state}
 
-        decision = verifier.precheck(step, constraints, state)
-        if decision["status"] == "BLOCK":
-            return {"status": "NEEDS_INPUT", "question": decision["question"], "state": state}
+ decision = verifier.precheck(step, constraints, state)
+ if decision["status"] == "BLOCK":
+ return {"status": "NEEDS_INPUT", "question": decision["question"], "state": state}
 
-        result = tools.run(step["tool"], step["args"])
-        state = update_state(state, step, result)
+ result = tools.run(step["tool"], step["args"])
+ state = update_state(state, step, result)
 
-        if repetition_detected(state):
-            return {"status": "FAILURE", "reason": "REPETITION_DETECTED", "state": state}
+ if repetition_detected(state):
+ return {"status": "FAILURE", "reason": "REPETITION_DETECTED", "state": state}
 
-    # 5) Mark chunk done and loop
-    mark_chunk_complete(state["high_plan"], chunk)
-    return hierarchical_agent(objective, constraints, state)
-```
+ # 5) Mark chunk done and loop
+ mark_chunk_complete(state["high_plan"], chunk)
+ return hierarchical_agent(objective, constraints, state)
+``
 
 The key idea: you only refine and execute a small piece at a time, and you validate each layer.
 

@@ -1,22 +1,22 @@
 ---
 title: "Multi-region Speech Deployment"
 day: 33
+related_dsa_day: 33
+related_ml_day: 33
+related_agents_day: 33
 collection: speech_tech
 categories:
-  - speech_tech
+ - speech_tech
 tags:
-  - deployment
-  - distributed-systems
-  - asr
-  - tts
-  - edge-computing
+ - deployment
+ - distributed-systems
+ - asr
+ - tts
+ - edge-computing
 subdomain: "Infrastructure"
 tech_stack: [Kubernetes, gRPC, WebRTC, CDN, S3]
 scale: "Global, multi-region, edge deployment"
 companies: [Google, Amazon, Apple, Microsoft]
-related_dsa_day: 33
-related_ml_day: 33
-related_agents_day: 33
 ---
 
 **"Deploying speech models close to users for low-latency voice experiences."**
@@ -35,18 +35,18 @@ Speech applications have **strict latency requirements**:
 ## 2. Multi-Region Architecture Overview
 
 **Architecture:**
-```
-        Global Load Balancer (AWS Route 53, Cloudflare)
-                    |
-    ---------------------------------
-    |               |               |
-  US-West         EU-West        Asia-Pacific
-  (Oregon)        (Frankfurt)     (Tokyo)
-    |               |               |
-  ASR Model       ASR Model       ASR Model
-  TTS Model       TTS Model       TTS Model
-  Speaker ID      Speaker ID      Speaker ID
-```
+``
+ Global Load Balancer (AWS Route 53, Cloudflare)
+ |
+ ---------------------------------
+ | | |
+ US-West EU-West Asia-Pacific
+ (Oregon) (Frankfurt) (Tokyo)
+ | | |
+ ASR Model ASR Model ASR Model
+ TTS Model TTS Model TTS Model
+ Speaker ID Speaker ID Speaker ID
+``
 
 **Key Components:**
 1. **Global Load Balancer:** Routes users to the nearest region (GeoDNS).
@@ -62,18 +62,18 @@ Speech applications have **strict latency requirements**:
 - **Cloudflare:** Automatic geo-routing via Anycast.
 
 **Example (Route 53):**
-```json
+``json
 {
-  "Name": "speech-api.example.com",
-  "Type": "A",
-  "GeoLocation": {
-    "ContinentCode": "NA"
-  },
-  "ResourceRecords": [
-    {"Value": "3.12.45.67"}  // US-West IP
-  ]
+ "Name": "speech-api.example.com",
+ "Type": "A",
+ "GeoLocation": {
+ "ContinentCode": "NA"
+ },
+ "ResourceRecords": [
+ {"Value": "3.12.45.67"} // US-West IP
+ ]
 }
-```
+``
 
 Users in North America get routed to `3.12.45.67` (US-West).
 Users in Europe get routed to EU-West.
@@ -94,26 +94,26 @@ For applications like voice calls or gaming, even 50ms is too much. Deploy model
 - Cloudflare has 300+ PoPs.
 
 **Architecture:**
-```
+``
 User in Berlin → Cloudflare PoP (Berlin) → ASR Model (Frankfurt)
-                       ↑
-                  Model cached at edge
-```
+ ↑
+ Model cached at edge
+``
 
 **Implementation (AWS Lambda@Edge):**
-```python
+``python
 import json
 
 def lambda_handler(event, context):
-    # Run lightweight ASR model at edge
-    audio_data = event['body']
-    transcript = edge_asr_model.predict(audio_data)
-    
-    return {
-        'statusCode': 200,
-        'body': json.dumps({'transcript': transcript})
-    }
-```
+ # Run lightweight ASR model at edge
+ audio_data = event['body']
+ transcript = edge_asr_model.predict(audio_data)
+ 
+ return {
+ 'statusCode': 200,
+ 'body': json.dumps({'transcript': transcript})
+ }
+``
 
 **Trade-offs:**
 - **Pros:** < 10ms latency.
@@ -132,22 +132,22 @@ A single S3 bucket (replicated globally) stores all model versions.
 3. Each regional cluster pulls the latest model.
 
 **AWS S3 Cross-Region Replication:**
-```json
+``json
 {
-  "Role": "arn:aws:iam::123456789:role/s3-replication",
-  "Rules": [
-    {
-      "Status": "Enabled",
-      "Priority": 1,
-      "Filter": {"Prefix": "models/"},
-      "Destination": {
-        "Bucket": "arn:aws:s3:::models-eu-west",
-        "ReplicationTime": {"Status": "Enabled", "Time": {"Minutes": 15}}
-      }
-    }
-  ]
+ "Role": "arn:aws:iam::123456789:role/s3-replication",
+ "Rules": [
+ {
+ "Status": "Enabled",
+ "Priority": 1,
+ "Filter": {"Prefix": "models/"},
+ "Destination": {
+ "Bucket": "arn:aws:s3:::models-eu-west",
+ "ReplicationTime": {"Status": "Enabled", "Time": {"Minutes": 15}}
+ }
+ }
+ ]
 }
-```
+``
 
 Models replicate within 15 minutes.
 
@@ -155,20 +155,20 @@ Models replicate within 15 minutes.
 Each region has its own S3 bucket. A deployment pipeline copies models to all buckets.
 
 **Terraform Script:**
-```hcl
+``hcl
 resource "aws_s3_bucket" "model_store" {
-  for_each = toset(["us-west-2", "eu-west-1", "ap-southeast-1"])
-  bucket   = "speech-models-${each.value}"
-  region   = each.value
+ for_each = toset(["us-west-2", "eu-west-1", "ap-southeast-1"])
+ bucket = "speech-models-${each.value}"
+ region = each.value
 }
 
 resource "aws_s3_bucket_object" "model" {
-  for_each = aws_s3_bucket.model_store
-  bucket   = each.value.id
-  key      = "asr-v100.pt"
-  source   = "models/asr-v100.pt"
+ for_each = aws_s3_bucket.model_store
+ bucket = each.value.id
+ key = "asr-v100.pt"
+ source = "models/asr-v100.pt"
 }
-```
+``
 
 **Pros:** Independent regions (failure in one doesn't affect others).
 **Cons:** Deployment latency (sequential uploads).
@@ -178,17 +178,17 @@ resource "aws_s3_bucket_object" "model" {
 **Problem:** EU regulations (GDPR) require that user audio data stays in the EU.
 
 **Architecture:**
-```
+``
 EU User → EU Load Balancer → EU ASR Model → EU Storage
-   ↓
+ ↓
 Audio NEVER leaves EU
-```
+``
 
 **Implementation:**
 - **Network Policies:** Block cross-region traffic from EU to US.
 - **IAM Roles:** EU instances can only access EU S3 buckets.
 
-```python
+``python
 # In EU region only
 AWS_REGION = "eu-west-1"
 s3_client = boto3.client('s3', region_name=AWS_REGION)
@@ -196,7 +196,7 @@ s3_client = boto3.client('s3', region_name=AWS_REGION)
 # This will fail if model is in US bucket
 model = s3_client.get_object(Bucket='models-us-west', Key='asr.pt')
 # Error: Access Denied
-```
+``
 
 **Separate Training Pipelines:**
 - **EU Model:** Trained only on EU user data.
@@ -214,71 +214,71 @@ model = s3_client.get_object(Bucket='models-us-west', Key='asr.pt')
 4. If still healthy, roll out to **EU-West**, then **Asia-Pacific**.
 
 **Kubernetes Deployment:**
-```yaml
+``yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tts-v2-canary
-  namespace: us-west
+ name: tts-v2-canary
+ namespace: us-west
 spec:
-  replicas: 1  # 1% of 100 total replicas
-  selector:
-    matchLabels:
-      app: tts
-      version: v2
-  template:
-    spec:
-      containers:
-      - name: tts
-        image: tts:v2
-```
+ replicas: 1 # 1% of 100 total replicas
+ selector:
+ matchLabels:
+ app: tts
+ version: v2
+ template:
+ spec:
+ containers:
+ - name: tts
+ image: tts:v2
+``
 
 **Traffic Split (Istio):**
-```yaml
+``yaml
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: tts-service
+ name: tts-service
 spec:
-  hosts:
-  - tts.example.com
-  http:
-  - match:
-    - headers:
-        canary:
-          exact: "true"
-    route:
-    - destination:
-        host: tts
-        subset: v2
-  - route:
-    - destination:
-        host: tts
-        subset: v1
-      weight: 99
-    - destination:
-        host: tts
-        subset: v2
-      weight: 1
-```
+ hosts:
+ - tts.example.com
+ http:
+ - match:
+ - headers:
+ canary:
+ exact: "true"
+ route:
+ - destination:
+ host: tts
+ subset: v2
+ - route:
+ - destination:
+ host: tts
+ subset: v1
+ weight: 99
+ - destination:
+ host: tts
+ subset: v2
+ weight: 1
+``
 
 ## 8. Deep Dive: Fallback and Disaster Recovery
 
 **Scenario:** The EU-West data center goes offline (power outage).
 
 ### Fallback Strategy 1: Route to Nearest Healthy Region
-```
+``
 EU User → (EU-West DOWN) → GeoDNS → US-East
-```
+``
 
 **Cons:** Increased latency (50ms → 150ms).
 
 ### Fallback Strategy 2: Multi-Region Active-Active
 Deploy to **2 regions per continent**.
 
-```
+``
 EU User → EU-West (Primary) + EU-Central (Backup)
-```
+``
 
 If EU-West fails, EU-Central takes over instantly.
 
@@ -290,33 +290,33 @@ Speech models are compute-intensive. Caching can reduce load.
 
 **What to Cache:**
 1. **TTS Output:** User says "What's the weather?" every morning.
-   - Cache the audio file for "It's 72°F and sunny" for that user.
+ - Cache the audio file for "It's 72°F and sunny" for that user.
 2. **Common Queries:** "Set a timer for 10 minutes" is a frequent request.
-   - Precompute ASR + NLU results.
+ - Precompute ASR + NLU results.
 
 **Redis Caching:**
-```python
+``python
 import redis
 import hashlib
 
 redis_client = redis.Redis()
 
 def tts_with_cache(text):
-    cache_key = hashlib.md5(text.encode()).hexdigest()
-    
-    # Check cache
-    cached_audio = redis_client.get(cache_key)
-    if cached_audio:
-        return cached_audio
-    
-    # Generate TTS
-    audio = tts_model.synthesize(text)
-    
-    # Store in cache (TTL = 1 hour)
-    redis_client.setex(cache_key, 3600, audio)
-    
-    return audio
-```
+ cache_key = hashlib.md5(text.encode()).hexdigest()
+ 
+ # Check cache
+ cached_audio = redis_client.get(cache_key)
+ if cached_audio:
+ return cached_audio
+ 
+ # Generate TTS
+ audio = tts_model.synthesize(text)
+ 
+ # Store in cache (TTL = 1 hour)
+ redis_client.setex(cache_key, 3600, audio)
+ 
+ return audio
+``
 
 **Pros:** Reduces TTS latency from 200ms to 5ms (cache hit).
 **Cons:** Stale data (if model updates, cache must be invalidated).
@@ -331,7 +331,7 @@ Edge devices (smartphones, smart speakers) have limited compute. Deploy **quanti
 - Inference speed: 2x faster.
 
 **PyTorch Quantization:**
-```python
+``python
 import torch
 
 # Load original model
@@ -339,12 +339,12 @@ model = torch.load('asr_fp32.pt')
 
 # Quantize to INT8
 quantized_model = torch.quantization.quantize_dynamic(
-    model, {torch.nn.Linear}, dtype=torch.qint8
+ model, {torch.nn.Linear}, dtype=torch.qint8
 )
 
 # Save
 torch.save(quantized_model, 'asr_int8.pt')
-```
+``
 
 **Accuracy Drop:** Typically < 1% WER increase.
 
@@ -357,7 +357,7 @@ torch.save(quantized_model, 'asr_int8.pt')
 4. **Traffic Distribution:** % of traffic per region.
 
 **Prometheus Metrics:**
-```python
+``python
 from prometheus_client import Counter, Histogram
 
 asr_requests = Counter('asr_requests_total', 'Total ASR requests', ['region', 'model_version'])
@@ -365,16 +365,16 @@ asr_latency = Histogram('asr_latency_seconds', 'ASR latency', ['region'])
 
 @app.post("/asr")
 def transcribe(audio: bytes):
-    region = get_region()
-    model_version = get_model_version()
-    
-    asr_requests.labels(region=region, model_version=model_version).inc()
-    
-    with asr_latency.labels(region=region).time():
-        transcript = asr_model.predict(audio)
-    
-    return {"transcript": transcript}
-```
+ region = get_region()
+ model_version = get_model_version()
+ 
+ asr_requests.labels(region=region, model_version=model_version).inc()
+ 
+ with asr_latency.labels(region=region).time():
+ transcript = asr_model.predict(audio)
+ 
+ return {"transcript": transcript}
+``
 
 **Grafana Dashboard:**
 - **Map View:** Show latency heatmap by region.
@@ -412,7 +412,7 @@ Zoom deploys ASR models in **17 AWS regions**.
 ## Implementation: Multi-Region Speech API
 
 **Step 1: Dockerize the ASR Model**
-```dockerfile
+``dockerfile
 FROM nvidia/cuda:11.8-runtime-ubuntu20.04
 WORKDIR /app
 COPY requirements.txt .
@@ -421,57 +421,57 @@ COPY asr_model.pt .
 COPY serve.py .
 EXPOSE 8000
 CMD ["python", "serve.py"]
-```
+``
 
 **Step 2: Deploy to Multi-Region Kubernetes**
-```yaml
+``yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: asr-us-west
-  namespace: us-west-2
+ name: asr-us-west
+ namespace: us-west-2
 spec:
-  replicas: 10
-  template:
-    spec:
-      containers:
-      - name: asr
-        image: my-registry/asr:v1
-        resources:
-          limits:
-            nvidia.com/gpu: 1
+ replicas: 10
+ template:
+ spec:
+ containers:
+ - name: asr
+ image: my-registry/asr:v1
+ resources:
+ limits:
+ nvidia.com/gpu: 1
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: asr-eu-west
-  namespace: eu-west-1
+ name: asr-eu-west
+ namespace: eu-west-1
 spec:
-  replicas: 10
-  template:
-    spec:
-      containers:
-      - name: asr
-        image: my-registry/asr:v1
-        resources:
-          limits:
-            nvidia.com/gpu: 1
-```
+ replicas: 10
+ template:
+ spec:
+ containers:
+ - name: asr
+ image: my-registry/asr:v1
+ resources:
+ limits:
+ nvidia.com/gpu: 1
+``
 
 **Step 3: Global Load Balancer (Cloudflare)**
-```bash
+``bash
 curl -X POST "https://api.cloudflare.com/client/v4/zones/{zone_id}/load_balancers" \
-  -H "Authorization: Bearer {api_token}" \
-  -d '{
-    "name": "speech-api.example.com",
-    "default_pools": ["us-west", "eu-west", "asia-pacific"],
-    "region_pools": {
-      "WNAM": ["us-west"],
-      "EEUR": ["eu-west"],
-      "SEAS": ["asia-pacific"]
-    }
-  }'
-```
+ -H "Authorization: Bearer {api_token}" \
+ -d '{
+ "name": "speech-api.example.com",
+ "default_pools": ["us-west", "eu-west", "asia-pacific"],
+ "region_pools": {
+ "WNAM": ["us-west"],
+ "EEUR": ["eu-west"],
+ "SEAS": ["asia-pacific"]
+ }
+ }'
+``
 
 ## Top Interview Questions
 
@@ -512,49 +512,49 @@ For real-time applications (video calls, live captioning), audio streams chunk-b
 **Challenge:** Each audio chunk arrives every 20ms. ASR must process faster than real-time.
 
 **Architecture:**
-```
+``
 User Microphone
-    ↓
+ ↓
 WebRTC Stream (20ms chunks)
-    ↓
+ ↓
 Regional ASR Server (Streaming Model)
-    ↓
+ ↓
 Transcript (partial results every 100ms)
-```
+``
 
 **Streaming ASR Implementation:**
-```python
+``python
 import grpc
 from google.cloud import speech_v1p1beta1 as speech
 
 def stream_transcribe():
-    client = speech.SpeechClient()
-    
-    config = speech.StreamingRecognitionConfig(
-        config=speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=16000,
-            language_code='en-US',
-        ),
-        interim_results=True,  # Get partial results
-    )
-    
-    # Generator for audio chunks
-    def audio_generator():
-        while True:
-            chunk = get_audio_chunk()  # 20ms of audio
-            yield speech.StreamingRecognizeRequest(audio_content=chunk)
-    
-    requests = audio_generator()
-    responses = client.streaming_recognize(config, requests)
-    
-    for response in responses:
-        for result in response.results:
-            if result.is_final:
-                print(f"Final: {result.alternatives[0].transcript}")
-            else:
-                print(f"Partial: {result.alternatives[0].transcript}")
-```
+ client = speech.SpeechClient()
+ 
+ config = speech.StreamingRecognitionConfig(
+ config=speech.RecognitionConfig(
+ encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+ sample_rate_hertz=16000,
+ language_code='en-US',
+ ),
+ interim_results=True, # Get partial results
+ )
+ 
+ # Generator for audio chunks
+ def audio_generator():
+ while True:
+ chunk = get_audio_chunk() # 20ms of audio
+ yield speech.StreamingRecognizeRequest(audio_content=chunk)
+ 
+ requests = audio_generator()
+ responses = client.streaming_recognize(config, requests)
+ 
+ for response in responses:
+ for result in response.results:
+ if result.is_final:
+ print(f"Final: {result.alternatives[0].transcript}")
+ else:
+ print(f"Partial: {result.alternatives[0].transcript}")
+``
 
 **Key Requirement:** Model must process in < 20ms to keep up with audio stream.
 
@@ -581,24 +581,24 @@ How do we measure if multi-region speech systems are working well?
 - Target for streaming: RTF < 0.5.
 
 **Automated Testing:**
-```python
+``python
 import time
 
 def measure_rtf(asr_model, audio_file):
-    audio_duration = get_audio_duration(audio_file)  # e.g., 10 seconds
-    
-    start = time.time()
-    transcript = asr_model.transcribe(audio_file)
-    processing_time = time.time() - start
-    
-    rtf = processing_time / audio_duration
-    print(f"RTF: {rtf:.2f}")
-    
-    if rtf > 1.0:
-        print("WARNING: Model is slower than real-time!")
-    
-    return rtf
-```
+ audio_duration = get_audio_duration(audio_file) # e.g., 10 seconds
+ 
+ start = time.time()
+ transcript = asr_model.transcribe(audio_file)
+ processing_time = time.time() - start
+ 
+ rtf = processing_time / audio_duration
+ print(f"RTF: {rtf:.2f}")
+ 
+ if rtf > 1.0:
+ print("WARNING: Model is slower than real-time!")
+ 
+ return rtf
+``
 
 ## 15. Deep Dive: Bandwidth Management
 
@@ -610,27 +610,27 @@ Streaming audio consumes significant bandwidth. Optimization is critical for mob
 - **Speex:** 8 kbps (ultra-low bitrate)
 
 **Implementation:**
-```python
+``python
 import pyaudio
 import opuslib
 
 def stream_compressed_audio():
-    p = pyaudio.PyAudio()
-    encoder = opuslib.Encoder(16000, 1, opuslib.APPLICATION_VOIP)
-    
-    stream = p.open(format=pyaudio.paInt16,
-                    channels=1,
-                    rate=16000,
-                    input=True,
-                    frames_per_buffer=320)  # 20ms chunks
-    
-    while True:
-        audio_chunk = stream.read(320)
-        compressed = encoder.encode(audio_chunk, 320)
-        
-        # Send compressed chunk to server
-        send_to_server(compressed)
-```
+ p = pyaudio.PyAudio()
+ encoder = opuslib.Encoder(16000, 1, opuslib.APPLICATION_VOIP)
+ 
+ stream = p.open(format=pyaudio.paInt16,
+ channels=1,
+ rate=16000,
+ input=True,
+ frames_per_buffer=320) # 20ms chunks
+ 
+ while True:
+ audio_chunk = stream.read(320)
+ compressed = encoder.encode(audio_chunk, 320)
+ 
+ # Send compressed chunk to server
+ send_to_server(compressed)
+``
 
 **Trade-off:** Lower bitrate = worse audio quality = higher WER.
 
@@ -641,12 +641,12 @@ Running GPU-based ASR globally is expensive. How do we reduce cost?
 **Strategy 1: CPU Inference with ONNX Runtime**
 Convert model from PyTorch to ONNX for optimized CPU inference.
 
-```python
+``python
 import torch
 import onnx
 
 # Export to ONNX
-dummy_input = torch.randn(1, 80, 100)  # Mel spectrogram
+dummy_input = torch.randn(1, 80, 100) # Mel spectrogram
 torch.onnx.export(asr_model, dummy_input, "asr.onnx")
 
 # Inference with ONNX Runtime (2-3x faster than PyTorch CPU)
@@ -654,7 +654,7 @@ import onnxruntime as ort
 
 session = ort.InferenceSession("asr.onnx")
 outputs = session.run(None, {"input": audio_features})
-```
+``
 
 **Result:** CPU instances are 5x cheaper than GPU instances.
 
@@ -667,40 +667,40 @@ Don't run 24/7 in all regions. Scale down at night.
 - **Asia-Pacific:** Peak at 2pm JST (1am EST).
 
 **Autoscaling Policy:**
-```yaml
+``yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: asr-us-west
+ name: asr-us-west
 spec:
-  scaleTargetRef:
-    kind: Deployment
-    name: asr-us-west
-  minReplicas: 2   # Night
-  maxReplicas: 50  # Day
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 60
-```
+ scaleTargetRef:
+ kind: Deployment
+ name: asr-us-west
+ minReplicas: 2 # Night
+ maxReplicas: 50 # Day
+ metrics:
+ - type: Resource
+ resource:
+ name: cpu
+ target:
+ type: Utilization
+ averageUtilization: 60
+``
 
 **Strategy 3: Spot Instances for Batch Transcription**
 For non-real-time workloads (podcast transcription), use spot instances.
 
-```python
+``python
 # Kubernetes Toleration for Spot Instances
 spec:
-  tolerations:
-  - key: "spot"
-    operator: "Equal"
-    value: "true"
-    effect: "NoSchedule"
-  nodeSelector:
-    instance-type: "spot"
-```
+ tolerations:
+ - key: "spot"
+ operator: "Equal"
+ value: "true"
+ effect: "NoSchedule"
+ nodeSelector:
+ instance-type: "spot"
+``
 
 ## 17. Deep Dive: Multi-Language Support
 
@@ -719,13 +719,13 @@ spec:
 **Hybrid Approach:**
 Deploy multilingual model globally. Deploy language-specific models in high-demand regions.
 
-```python
+``python
 def get_model(language_code, region):
-    if language_code == 'en' and region == 'us-west':
-        return load_model('asr-en-specialized')
-    else:
-        return load_model('asr-multilingual')
-```
+ if language_code == 'en' and region == 'us-west':
+ return load_model('asr-en-specialized')
+ else:
+ return load_model('asr-multilingual')
+``
 
 ## 18. Deep Dive: Failover Testing and Chaos Engineering
 
@@ -737,34 +737,34 @@ def get_model(language_code, region):
 3. **Measure:** What's the latency increase? Any errors?
 
 **Automated Failover Test:**
-```python
+``python
 import requests
 import time
 
 def test_failover():
-    # Baseline: All regions healthy
-    response = requests.get("https://speech-api.example.com/health")
-    assert response.json()['all_healthy'] == True
-    
-    # Simulate EU-West failure
-    kill_region('eu-west')
-    
-    time.sleep(10)  # Wait for DNS update
-    
-    # Test from EU client
-    start = time.time()
-    response = requests.post(
-        "https://speech-api.example.com/asr",
-        data=audio_data,
-        headers={"X-Client-Location": "EU"}
-    )
-    latency = time.time() - start
-    
-    assert response.status_code == 200
-    assert latency < 200  # Acceptable degraded latency
-    
-    print(f"Failover successful. Latency: {latency*1000:.0f}ms")
-```
+ # Baseline: All regions healthy
+ response = requests.get("https://speech-api.example.com/health")
+ assert response.json()['all_healthy'] == True
+ 
+ # Simulate EU-West failure
+ kill_region('eu-west')
+ 
+ time.sleep(10) # Wait for DNS update
+ 
+ # Test from EU client
+ start = time.time()
+ response = requests.post(
+ "https://speech-api.example.com/asr",
+ data=audio_data,
+ headers={"X-Client-Location": "EU"}
+ )
+ latency = time.time() - start
+ 
+ assert response.status_code == 200
+ assert latency < 200 # Acceptable degraded latency
+ 
+ print(f"Failover successful. Latency: {latency*1000:.0f}ms")
+``
 
 **Run Monthly:** Ensure team knows how to handle regional outages.
 
@@ -778,24 +778,24 @@ Before deploying a new ASR model to prod, validate it using shadow traffic.
 3. Serve old model's response to users.
 4. Log new model's response for comparison.
 
-```python
+``python
 import asyncio
 
 async def shadow_predict(audio):
-    # Primary prediction
-    primary_task = asyncio.create_task(model_v1.predict(audio))
-    
-    # Shadow prediction (async, non-blocking)
-    shadow_task = asyncio.create_task(model_v2.predict(audio))
-    
-    # Wait for primary
-    primary_result = await primary_task
-    
-    # Log shadow result (don't wait)
-    asyncio.create_task(log_shadow_result(shadow_task))
-    
-    return primary_result
-```
+ # Primary prediction
+ primary_task = asyncio.create_task(model_v1.predict(audio))
+ 
+ # Shadow prediction (async, non-blocking)
+ shadow_task = asyncio.create_task(model_v2.predict(audio))
+ 
+ # Wait for primary
+ primary_result = await primary_task
+ 
+ # Log shadow result (don't wait)
+ asyncio.create_task(log_shadow_result(shadow_task))
+ 
+ return primary_result
+``
 
 **Comparison Metrics:**
 - WER difference
@@ -826,60 +826,60 @@ Speech data requires significant bandwidth. Optimize network usage.
 **Optimization 1: WebSocket Connection Pooling**
 Reuse connections instead of creating new ones for each request.
 
-```python
+``python
 import websockets
 import asyncio
 
 class ConnectionPool:
-    def __init__(self, uri, pool_size=10):
-        self.uri = uri
-        self.pool = asyncio.Queue(maxsize=pool_size)
-        asyncio.create_task(self._fill_pool(pool_size))
-    
-    async def _fill_pool(self, size):
-        for _ in range(size):
-            conn = await websockets.connect(self.uri)
-            await self.pool.put(conn)
-    
-    async def get_connection(self):
-        return await self.pool.get()
-    
-    async def return_connection(self, conn):
-        await self.pool.put(conn)
+ def __init__(self, uri, pool_size=10):
+ self.uri = uri
+ self.pool = asyncio.Queue(maxsize=pool_size)
+ asyncio.create_task(self._fill_pool(pool_size))
+ 
+ async def _fill_pool(self, size):
+ for _ in range(size):
+ conn = await websockets.connect(self.uri)
+ await self.pool.put(conn)
+ 
+ async def get_connection(self):
+ return await self.pool.get()
+ 
+ async def return_connection(self, conn):
+ await self.pool.put(conn)
 
 # Usage
 pool = ConnectionPool('wss://speech-api.example.com')
 
 async def stream_audio(audio_data):
-    conn = await pool.get_connection()
-    try:
-        await conn.send(audio_data)
-        response = await conn.recv()
-        return response
-    finally:
-        await pool.return_connection(conn)
-```
+ conn = await pool.get_connection()
+ try:
+ await conn.send(audio_data)
+ response = await conn.recv()
+ return response
+ finally:
+ await pool.return_connection(conn)
+``
 
 **Optimization 2: gRPC Streaming with Multiplexing**
 gRPC multiplexes multiple streams over a single TCP connection.
 
-```python
+``python
 import grpc
 from concurrent import futures
 
 class SpeechService:
-    def StreamingRecognize(self, request_iterator, context):
-        for request in request_iterator:
-            audio_chunk = request.audio_content
-            transcript = asr_model.process_chunk(audio_chunk)
-            yield SpeechResponse(transcript=transcript)
+ def StreamingRecognize(self, request_iterator, context):
+ for request in request_iterator:
+ audio_chunk = request.audio_content
+ transcript = asr_model.process_chunk(audio_chunk)
+ yield SpeechResponse(transcript=transcript)
 
 # Server
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=100))
 add_SpeechServiceServicer_to_server(SpeechService(), server)
 server.add_insecure_port('[::]:50051')
 server.start()
-```
+``
 
 ## 22. Deep Dive: Latency SLAs and Penalties
 
@@ -898,50 +898,50 @@ Production systems often have strict latency SLAs.
 3. **Fallback:** Route to next-closest region if primary is overloaded.
 
 **Circuit Breaker Implementation:**
-```python
+``python
 from enum import Enum
 import time
 
 class CircuitState(Enum):
-    CLOSED = "closed"  # Normal operation
-    OPEN = "open"      # Circuit tripped
-    HALF_OPEN = "half_open"  # Testing recovery
+ CLOSED = "closed" # Normal operation
+ OPEN = "open" # Circuit tripped
+ HALF_OPEN = "half_open" # Testing recovery
 
 class CircuitBreaker:
-    def __init__(self, failure_threshold=5, timeout=60):
-        self.state = CircuitState.CLOSED
-        self.failure_count = 0
-        self.failure_threshold = failure_threshold
-        self.timeout = timeout
-        self.last_failure_time = 0
-    
-    def call(self, func, *args, **kwargs):
-        if self.state == CircuitState.OPEN:
-            if time.time() - self.last_failure_time > self.timeout:
-                self.state = CircuitState.HALF_OPEN
-            else:
-                raise Exception("Circuit breaker is OPEN")
-        
-        try:
-            result = func(*args, **kwargs)
-            if self.state == CircuitState.HALF_OPEN:
-                self.state = CircuitState.CLOSED
-                self.failure_count = 0
-            return result
-        except Exception as e:
-            self.failure_count += 1
-            self.last_failure_time = time.time()
-            
-            if self.failure_count >= self.failure_threshold:
-                self.state = CircuitState.OPEN
-            raise e
+ def __init__(self, failure_threshold=5, timeout=60):
+ self.state = CircuitState.CLOSED
+ self.failure_count = 0
+ self.failure_threshold = failure_threshold
+ self.timeout = timeout
+ self.last_failure_time = 0
+ 
+ def call(self, func, *args, **kwargs):
+ if self.state == CircuitState.OPEN:
+ if time.time() - self.last_failure_time > self.timeout:
+ self.state = CircuitState.HALF_OPEN
+ else:
+ raise Exception("Circuit breaker is OPEN")
+ 
+ try:
+ result = func(*args, **kwargs)
+ if self.state == CircuitState.HALF_OPEN:
+ self.state = CircuitState.CLOSED
+ self.failure_count = 0
+ return result
+ except Exception as e:
+ self.failure_count += 1
+ self.last_failure_time = time.time()
+ 
+ if self.failure_count >= self.failure_threshold:
+ self.state = CircuitState.OPEN
+ raise e
 
 # Usage
 breaker = CircuitBreaker()
 
 def call_asr_service(audio):
-    return breaker.call(asr_model.transcribe, audio)
-```
+ return breaker.call(asr_model.transcribe, audio)
+``
 
 ## 23. Production Deployment Checklist
 
@@ -958,38 +958,38 @@ Before deploying speech models to production, verify:
 - [ ] **Rollback Plan:** Can revert to previous model in < 5 minutes.
 
 **Load Testing Script:**
-```python
+``python
 import asyncio
 import aiohttp
 import time
 
 async def stress_test(url, audio_file, num_requests=10000):
-    async with aiohttp.ClientSession() as session:
-        tasks = []
-        start = time.time()
-        
-        for i in range(num_requests):
-            task = session.post(url, data=open(audio_file, 'rb'))
-            tasks.append(task)
-        
-        responses = await asyncio.gather(*tasks)
-        
-        duration = time.time() - start
-        rps = num_requests / duration
-        
-        latencies = [r.headers.get('X-Latency-Ms') for r in responses]
-        p99 = sorted([float(l) for l in latencies if l])[int(len(latencies) * 0.99)]
-        
-        print(f"RPS: {rps:.0f}")
-        print(f"P99 Latency: {p99:.0f}ms")
+ async with aiohttp.ClientSession() as session:
+ tasks = []
+ start = time.time()
+ 
+ for i in range(num_requests):
+ task = session.post(url, data=open(audio_file, 'rb'))
+ tasks.append(task)
+ 
+ responses = await asyncio.gather(*tasks)
+ 
+ duration = time.time() - start
+ rps = num_requests / duration
+ 
+ latencies = [r.headers.get('X-Latency-Ms') for r in responses]
+ p99 = sorted([float(l) for l in latencies if l])[int(len(latencies) * 0.99)]
+ 
+ print(f"RPS: {rps:.0f}")
+ print(f"P99 Latency: {p99:.0f}ms")
 
 # Run
 asyncio.run(stress_test(
-    'https://speech-api.example.com/asr',
-    'test_audio.wav',
-    num_requests=10000
+ 'https://speech-api.example.com/asr',
+ 'test_audio.wav',
+ num_requests=10000
 ))
-```
+``
 
 ## 24. Future Trends: Serverless Speech
 
@@ -1006,24 +1006,24 @@ asyncio.run(stress_test(
 **Workaround: Provisioned Concurrency**
 Keep N instances warm at all times.
 
-```yaml
+``yaml
 # AWS Lambda with Provisioned Concurrency
 Resources:
-  SpeechFunction:
-    Type: AWS::Lambda::Function
-    Properties:
-      Runtime: python3.9
-      Handler: app.handler
-      MemorySize: 10240  # 10 GB
-      Timeout: 60
-  
-  ProvisionedConcurrency:
-    Type: AWS::Lambda::Alias
-    Properties:
-      FunctionName: !Ref SpeechFunction
-      ProvisionedConcurrencyConfig:
-        ProvisionedConcurrentExecutions: 10  # Keep 10 warm
-```
+ SpeechFunction:
+ Type: AWS::Lambda::Function
+ Properties:
+ Runtime: python3.9
+ Handler: app.handler
+ MemorySize: 10240 # 10 GB
+ Timeout: 60
+ 
+ ProvisionedConcurrency:
+ Type: AWS::Lambda::Alias
+ Properties:
+ FunctionName: !Ref SpeechFunction
+ ProvisionedConcurrencyConfig:
+ ProvisionedConcurrentExecutions: 10 # Keep 10 warm
+``
 
 ## Key Takeaways
 

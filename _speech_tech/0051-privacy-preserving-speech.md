@@ -1,24 +1,24 @@
 ---
 title: "Privacy-preserving Speech"
 day: 51
+related_dsa_day: 51
+related_ml_day: 51
+related_agents_day: 51
 collection: speech_tech
 categories:
-  - speech-tech
+ - speech-tech
 tags:
-  - privacy
-  - federated-learning
-  - differential-privacy
-  - on-device
-  - secure-aggregation
-  - speech-personalization
+ - privacy
+ - federated-learning
+ - differential-privacy
+ - on-device
+ - secure-aggregation
+ - speech-personalization
 difficulty: Hard
 subdomain: "Privacy & On-Device Speech"
 tech_stack: PyTorch, TensorFlow Lite, Opus, Secure Aggregation
 scale: "On-device learning across 1M+ users with strict privacy guarantees"
 companies: Apple, Google, Meta, Amazon
-related_dsa_day: 51
-related_ml_day: 51
-related_agents_day: 51
 ---
 
 **"Speech is biometric. Treat every waveform like a password—design systems that learn without listening."**
@@ -125,33 +125,33 @@ The safest speech system is designed as “privacy-first” from day one.
 
 ### 3.1 Architecture diagram
 
-```
-                 +------------------------------+
-                 |  On-Device Speech Runtime    |
-                 | (ASR / KWS / Personalization)|
-                 +---------------+--------------+
-                                 |
-                                 | (local features / local gradients)
-                                 v
-       +-------------------+  +-------------------+  +-------------------+
-       | Local Storage     |  | Local Trainer     |  | Privacy Layer     |
-       | (encrypted)       |  | (few steps)       |  | (clip + noise)    |
-       +---------+---------+  +---------+---------+  +---------+---------+
-                 |                      |                      |
-                 |                      | masked update shares  |
-                 |                      v                      v
-                 |               +-------------------+  +-------------------+
-                 |               | Update Uploader   |  | Secure Aggregation|
-                 |               | (wifi+charging)   |  | (server sees sum) |
-                 |               +---------+---------+  +---------+---------+
-                 |                         \                    /
-                 |                          \                  /
-                 v                           v                v
-          +-------------------+       +----------------------------+
-          | Local Inference   |       | Server: Aggregator + MLOps |
-          | (low latency)     |       | eval, gating, rollout      |
-          +-------------------+       +----------------------------+
-```
+``
+ +------------------------------+
+ | On-Device Speech Runtime |
+ | (ASR / KWS / Personalization)|
+ +---------------+--------------+
+ |
+ | (local features / local gradients)
+ v
+ +-------------------+ +-------------------+ +-------------------+
+ | Local Storage | | Local Trainer | | Privacy Layer |
+ | (encrypted) | | (few steps) | | (clip + noise) |
+ +---------+---------+ +---------+---------+ +---------+---------+
+ | | |
+ | | masked update shares |
+ | v v
+ | +-------------------+ +-------------------+
+ | | Update Uploader | | Secure Aggregation|
+ | | (wifi+charging) | | (server sees sum) |
+ | +---------+---------+ +---------+---------+
+ | \ /
+ | \ /
+ v v v
+ +-------------------+ +----------------------------+
+ | Local Inference | | Server: Aggregator + MLOps |
+ | (low latency) | | eval, gating, rollout |
+ +-------------------+ +----------------------------+
+``
 
 ### 3.2 Key design principle
 
@@ -182,8 +182,8 @@ Harder because:
 Typical production compromise:
 - keep base ASR model fixed
 - personalize via:
-  - biasing list (contacts) locally
-  - lightweight adapters trained on device
+ - biasing list (contacts) locally
+ - lightweight adapters trained on device
 
 ### 4.3 Speaker recognition
 High risk:
@@ -269,11 +269,11 @@ Why this is valuable in speech:
 When you must export anything (even features), minimize sensitivity:
 
 - **PII redaction** (local):
-  - detect phone numbers, emails, addresses in transcripts
-  - replace with placeholders before any aggregation
+ - detect phone numbers, emails, addresses in transcripts
+ - replace with placeholders before any aggregation
 - **feature minimization**:
-  - avoid exporting speaker embeddings (biometric identifiers)
-  - prefer task-specific features that are harder to invert
+ - avoid exporting speaker embeddings (biometric identifiers)
+ - prefer task-specific features that are harder to invert
 
 Important reality:
 many “feature-only” exports are still invertible with enough model capacity.
@@ -308,34 +308,34 @@ The engineering work is choosing thresholds that meet both privacy and product g
 This code shows the conceptual mechanics: clip an update and add Gaussian noise.
 In real systems, you’d apply this to a structured parameter set (layer-wise, per-tensor) and coordinate with secure aggregation.
 
-```python
+``python
 import numpy as np
 
 
 def l2_clip(vec: np.ndarray, clip_norm: float) -> np.ndarray:
-    """Clip a vector to have L2 norm at most clip_norm."""
-    norm = np.linalg.norm(vec)
-    if norm == 0.0 or norm <= clip_norm:
-        return vec
-    return vec * (clip_norm / norm)
+ """Clip a vector to have L2 norm at most clip_norm."""
+ norm = np.linalg.norm(vec)
+ if norm == 0.0 or norm <= clip_norm:
+ return vec
+ return vec * (clip_norm / norm)
 
 
 def add_gaussian_noise(vec: np.ndarray, clip_norm: float, noise_multiplier: float, rng: np.random.Generator) -> np.ndarray:
-    """
-    Adds Gaussian noise for DP.
-    noise_multiplier (sigma) controls noise scale relative to clip_norm.
-    """
-    sigma = noise_multiplier * clip_norm
-    noise = rng.normal(loc=0.0, scale=sigma, size=vec.shape)
-    return vec + noise
+ """
+ Adds Gaussian noise for DP.
+ noise_multiplier (sigma) controls noise scale relative to clip_norm.
+ """
+ sigma = noise_multiplier * clip_norm
+ noise = rng.normal(loc=0.0, scale=sigma, size=vec.shape)
+ return vec + noise
 
 
 def privatize_client_update(delta: np.ndarray, clip_norm: float, noise_multiplier: float, seed: int = 0) -> np.ndarray:
-    rng = np.random.default_rng(seed)
-    clipped = l2_clip(delta, clip_norm)
-    noised = add_gaussian_noise(clipped, clip_norm, noise_multiplier, rng)
-    return noised
-```
+ rng = np.random.default_rng(seed)
+ clipped = l2_clip(delta, clip_norm)
+ noised = add_gaussian_noise(clipped, clip_norm, noise_multiplier, rng)
+ return noised
+``
 
 ### Why this matters
 The **clip norm** \(C\) is a boundary: too low and you destroy signal; too high and privacy degrades.
@@ -368,12 +368,12 @@ Privacy-first rule:
 
 Examples:
 - For wake word tuning, you might only need:
-  - false accept/false reject counts
-  - confidence score distributions
-  - coarse environment buckets (quiet/noisy) computed locally
+ - false accept/false reject counts
+ - confidence score distributions
+ - coarse environment buckets (quiet/noisy) computed locally
 - For command personalization, you might only need:
-  - aggregated confusion matrices (intent A mistaken for intent B)
-  - counts of “user corrected” events per intent
+ - aggregated confusion matrices (intent A mistaken for intent B)
+ - counts of “user corrected” events per intent
 
 The system design trick is to separate:
 - **learning signals** (what you need to improve)
@@ -662,22 +662,22 @@ This will make it easier to improve models without building “shadow datasets�
 If you’re reviewing a privacy-preserving speech system, ask:
 
 - **Data handling**
-  - Does raw audio ever leave the device by default? If yes, why?
-  - Is there a TTL and deletion path for stored audio/features?
-  - Are consent states enforced at ingestion time?
+ - Does raw audio ever leave the device by default? If yes, why?
+ - Is there a TTL and deletion path for stored audio/features?
+ - Are consent states enforced at ingestion time?
 
 - **Learning signals**
-  - Are updates protected by secure aggregation?
-  - Is there clipping + (when needed) DP noise?
-  - Are cohorts large enough to avoid “small crowd” leakage?
+ - Are updates protected by secure aggregation?
+ - Is there clipping + (when needed) DP noise?
+ - Are cohorts large enough to avoid “small crowd” leakage?
 
 - **Observability**
-  - Can we measure quality by segment without collecting transcripts?
-  - Do we have a federated evaluation plan mechanism?
+ - Can we measure quality by segment without collecting transcripts?
+ - Do we have a federated evaluation plan mechanism?
 
 - **Product safety**
-  - Are high-risk actions gated (unlock/confirm/human approval)?
-  - Can we roll back quickly if personalization regresses?
+ - Are high-risk actions gated (unlock/confirm/human approval)?
+ - Can we roll back quickly if personalization regresses?
 
 This checklist is the difference between “privacy-themed slide deck” and a production system.
 

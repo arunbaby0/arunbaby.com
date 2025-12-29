@@ -1,19 +1,19 @@
 ---
 title: "Multi-Agent Architectures: The Power of Coordination"
 day: 29
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - multi-agent-systems
-  - orchestration
-  - langgraph
-  - delegation
-  - workflow-design
-difficulty: Medium
 related_dsa_day: 29
 related_ml_day: 29
 related_speech_day: 29
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - multi-agent-systems
+ - orchestration
+ - langgraph
+ - delegation
+ - workflow-design
+difficulty: Medium
 ---
 
 **"If you want to go fast, go alone. If you want to go far, go together."**
@@ -64,7 +64,7 @@ These are specialized agents (e.g., Code Specialist, Web Searcher, QA Tester).
 ## 4. Conflict Resolution: When Agents Disagree
 
 In collaborative or hierarchical systems, two agents might produce conflicting results.
-* *Scenario:* The "Finance Agent" says the budget is $10k, but the "Sales Agent" says it's $15k.
+* *Scenario:* The "Finance Agent" says the budget is `10k, but the "Sales Agent" says it's `15k.
 
 **Patterns for Resolution:**
 1. **Highest Confidence Wins:** Every agent must output a `confidence_score` (0-1). The orchestrator picks the result with the highest score.

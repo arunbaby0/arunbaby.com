@@ -1,24 +1,24 @@
 ---
 title: "Agent Deployment Patterns"
 day: 53
+related_dsa_day: 53
+related_ml_day: 53
+related_speech_day: 53
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - deployment
-  - safety
-  - guardrails
-  - eval
-  - rollout
-  - reliability
+ - deployment
+ - safety
+ - guardrails
+ - eval
+ - rollout
+ - reliability
 difficulty: Hard
 subdomain: "Productionization"
 tech_stack: Python, Kubernetes, OpenTelemetry, Feature Flags
 scale: "10k req/s, multi-tenant, safe rollouts"
 companies: OpenAI, Anthropic, Google, Microsoft
-related_dsa_day: 53
-related_ml_day: 53
-related_speech_day: 53
 ---
 
 **"The hardest part of agents isn’t reasoning—it’s deploying them safely when the world is messy."**
@@ -68,22 +68,22 @@ The safest deployments make these transitions explicit and validated.
 Agent failures come in different classes:
 
 - **Safety failures**
-  - exfiltrate secrets via tool calls
-  - follow prompt injection from retrieved content
-  - take unsafe actions (send the wrong email, delete the wrong file)
+ - exfiltrate secrets via tool calls
+ - follow prompt injection from retrieved content
+ - take unsafe actions (send the wrong email, delete the wrong file)
 
 - **Reliability failures**
-  - tool timeouts cause loops and retries
-  - memory drift causes contradictory actions
-  - non-determinism causes inconsistent outputs for the same request
+ - tool timeouts cause loops and retries
+ - memory drift causes contradictory actions
+ - non-determinism causes inconsistent outputs for the same request
 
 - **Cost failures**
-  - runaway tool calls (search loop)
-  - prompt bloat and long-context costs
+ - runaway tool calls (search loop)
+ - prompt bloat and long-context costs
 
 - **Compliance failures**
-  - data access without RBAC
-  - missing audit logs
+ - data access without RBAC
+ - missing audit logs
 
 The deployment patterns in this post exist to reduce these failure modes systematically.
 
@@ -125,13 +125,13 @@ This mirrors progressive rollout patterns in infra.
 Two common production modes:
 
 - **Reactive loop** (ReAct-style)
-  - fast and flexible
-  - higher risk of tool spam and drift
+ - fast and flexible
+ - higher risk of tool spam and drift
 
 - **Plan-first**
-  - agent writes a plan and a tool-call budget
-  - executor runs the plan with validation and budgets
-  - safer and more debuggable
+ - agent writes a plan and a tool-call budget
+ - executor runs the plan with validation and budgets
+ - safer and more debuggable
 
 In high-stakes workflows (finance, production infra), plan-first patterns often dominate.
 
@@ -188,45 +188,45 @@ Without these, long-lived agents become unreliable because they build up stale f
 
 ## 5. Code Examples (Schema-Validated Tool Calls)
 
-```python
+``python
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 
 @dataclass
 class ToolSpec:
-    name: str
-    required_fields: Dict[str, type]
+ name: str
+ required_fields: Dict[str, type]
 
 
 def validate_tool_args(args: Dict[str, Any], spec: ToolSpec) -> List[str]:
-    errors = []
-    for field, t in spec.required_fields.items():
-        if field not in args:
-            errors.append(f"missing_field:{field}")
-            continue
-        if args[field] is None:
-            errors.append(f"null_field:{field}")
-            continue
-        if not isinstance(args[field], t):
-            errors.append(f"type_mismatch:{field}")
-    return errors
+ errors = []
+ for field, t in spec.required_fields.items():
+ if field not in args:
+ errors.append(f"missing_field:{field}")
+ continue
+ if args[field] is None:
+ errors.append(f"null_field:{field}")
+ continue
+ if not isinstance(args[field], t):
+ errors.append(f"type_mismatch:{field}")
+ return errors
 
 
 EMAIL_TOOL = ToolSpec(
-    name="send_email",
-    required_fields={"to": str, "subject": str, "body": str},
+ name="send_email",
+ required_fields={"to": str, "subject": str, "body": str},
 )
 
 
 def guarded_send_email(args: Dict[str, Any]) -> str:
-    errs = validate_tool_args(args, EMAIL_TOOL)
-    if errs:
-        raise ValueError(f"Tool args invalid: {errs}")
+ errs = validate_tool_args(args, EMAIL_TOOL)
+ if errs:
+ raise ValueError(f"Tool args invalid: {errs}")
 
-    # Policy checks would go here: allowlist recipients, rate limits, approval gates, etc.
-    return "ok"
-```
+ # Policy checks would go here: allowlist recipients, rate limits, approval gates, etc.
+ return "ok"
+``
 
 This is simplistic, but it demonstrates the core idea:
 **tools must be validated like APIs**, not treated as free-form text.
@@ -315,21 +315,21 @@ For agents, BLEU-style text metrics rarely matter.
 Production evaluation is about:
 
 - **Task success**
-  - did the agent complete the workflow end-to-end?
+ - did the agent complete the workflow end-to-end?
 
 - **Policy compliance**
-  - did it violate any constraints?
-  - did it attempt disallowed tools?
+ - did it violate any constraints?
+ - did it attempt disallowed tools?
 
 - **Tool correctness**
-  - were tool args valid?
-  - did it retry safely (idempotency)?
+ - were tool args valid?
+ - did it retry safely (idempotency)?
 
 - **Latency and cost**
-  - steps per request, tool calls per request, tokens per request
+ - steps per request, tool calls per request, tokens per request
 
 - **Stability**
-  - does a small prompt change cause large behavior drift?
+ - does a small prompt change cause large behavior drift?
 
 This is why evaluation suites should include:
 - long-horizon tasks
@@ -426,25 +426,25 @@ Mitigations:
 ### 8.1 A deployment checklist (what you want before GA)
 
 - **Versioning**
-  - prompt templates versioned
-  - tool schemas versioned
-  - policy rules versioned
+ - prompt templates versioned
+ - tool schemas versioned
+ - policy rules versioned
 
 - **Safety**
-  - tool allowlists and RBAC
-  - argument validation (schema)
-  - budgets for tool calls and retries
-  - HITL for high-risk actions
+ - tool allowlists and RBAC
+ - argument validation (schema)
+ - budgets for tool calls and retries
+ - HITL for high-risk actions
 
 - **Observability**
-  - traces for each step and tool call
-  - cost metrics (tokens, tool count)
-  - policy denials and violations tracked
+ - traces for each step and tool call
+ - cost metrics (tokens, tool count)
+ - policy denials and violations tracked
 
 - **Evaluation**
-  - golden dataset
-  - injection/red-team tests
-  - long-horizon consistency tests
+ - golden dataset
+ - injection/red-team tests
+ - long-horizon consistency tests
 
 If you don’t have these, you’re deploying a demo, not a product.
 
@@ -537,15 +537,15 @@ It’s the same evolution we saw in ML pipelines: from scripts to orchestrated D
 A production agent service usually splits into:
 
 - **Data plane**
-  - executes requests
-  - calls tools
-  - returns outputs
+ - executes requests
+ - calls tools
+ - returns outputs
 
 - **Control plane**
-  - manages prompt/tool/policy versions
-  - rollout and flags
-  - budgets and quotas
-  - audit logs and compliance reporting
+ - manages prompt/tool/policy versions
+ - rollout and flags
+ - budgets and quotas
+ - audit logs and compliance reporting
 
 If you only build the data plane (“call the model and tools”), you’ll struggle to operate safely at scale.
 
@@ -576,10 +576,10 @@ Result: “works in staging, breaks in prod” because the parts drift.
 
 A strong pattern is **bundled versioning**:
 - define an agent “bundle” that includes:
-  - prompt version
-  - tool schemas
-  - policy rules
-  - retrieval configuration (index + chunking + embedding version)
+ - prompt version
+ - tool schemas
+ - policy rules
+ - retrieval configuration (index + chunking + embedding version)
 - promote bundles through environments
 - enable rollbacks at the bundle level
 
@@ -598,7 +598,7 @@ Agents need the same release discipline to be operable.
 2. **Rollouts must be staged and observable**: agents can regress in surprising ways.
 3. **Safety requires deterministic enforcement**: prompts help, but policies and validators protect.
 
-### 12.1 Appendix: how this connects across Day 53
+### 12.1 Appendix: how this connects across 
 
 - DSA: restrict domain to `[1..n]` and handle duplicates explicitly
 - ML: restrict data to schema/range domain and gate pipelines
@@ -657,23 +657,23 @@ These are the agent equivalents of infrastructure SLOs.
 Before you ramp traffic, it helps to score the rollout explicitly:
 
 - **Safety score**
-  - policy denial rate stable
-  - no high-severity violations in canary
-  - injection tests passing
+ - policy denial rate stable
+ - no high-severity violations in canary
+ - injection tests passing
 
 - **Reliability score**
-  - tool error rate stable
-  - retry loops absent (step count bounded)
-  - idempotency enforced for writes
+ - tool error rate stable
+ - retry loops absent (step count bounded)
+ - idempotency enforced for writes
 
 - **Cost score**
-  - tokens/request within budget
-  - tool calls/request within budget
-  - tail latency under target
+ - tokens/request within budget
+ - tool calls/request within budget
+ - tail latency under target
 
 - **Quality score**
-  - golden tasks pass rate not regressing
-  - user escalations not increasing
+ - golden tasks pass rate not regressing
+ - user escalations not increasing
 
 If any score is “red”, don’t ramp—fix first. This makes rollout decisions repeatable and less political.
 
@@ -695,24 +695,24 @@ This framing is powerful because it shifts thinking away from “prompt magic”
 When an agent incident happens:
 
 1. **Stop harm**
-   - disable high-risk tools (kill switch)
-   - force degraded mode (draft-only / read-only)
+ - disable high-risk tools (kill switch)
+ - force degraded mode (draft-only / read-only)
 
 2. **Stabilize**
-   - roll back to last-known-good bundle version
-   - reduce traffic to canary cohort
+ - roll back to last-known-good bundle version
+ - reduce traffic to canary cohort
 
 3. **Diagnose**
-   - inspect traces: tool calls, policy denials, step counts
-   - correlate with recent changes (prompt/tool/policy/index)
+ - inspect traces: tool calls, policy denials, step counts
+ - correlate with recent changes (prompt/tool/policy/index)
 
 4. **Fix**
-   - add a validator/policy rule or a new test case
-   - re-run golden suite + injection suite
+ - add a validator/policy rule or a new test case
+ - re-run golden suite + injection suite
 
 5. **Prevent recurrence**
-   - postmortem → new tests
-   - tighten rollout gates or budgets
+ - postmortem → new tests
+ - tighten rollout gates or budgets
 
 The key is to treat agent behavior regressions like production incidents: respond quickly, then encode the learning into automation.
 
@@ -748,9 +748,9 @@ A practical rollback design:
 - treat these as a single **bundle** version
 - keep last-known-good bundle pinned and ready
 - implement a one-click rollback (feature flag) that:
-  - reverts to previous bundle
-  - disables high-risk tools temporarily
-  - forces read-only mode if needed
+ - reverts to previous bundle
+ - disables high-risk tools temporarily
+ - forces read-only mode if needed
 
 Rollback speed matters because:
 - agents can cause harm quickly via tools

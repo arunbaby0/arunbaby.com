@@ -3,14 +3,14 @@ title: "Planning and Decomposition"
 day: 15
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - planning
-  - plan-and-solve
-  - hierarchical-planning
-  - dag
-  - reasoning
-  - csp
+ - planning
+ - plan-and-solve
+ - hierarchical-planning
+ - dag
+ - reasoning
+ - csp
 difficulty: Medium-Easy
 related_dsa_day: 15
 related_ml_day: 15
@@ -126,7 +126,7 @@ Advanced planners don't just list steps; they solve constraints.
  1. Search flights.
  2. Filter results against constraints.
  3. If `results == 0`, **Relax Constraint**.
- 4. "No flights under $500. Searching under $600."
+ 4. "No flights under `500. Searching under `600."
 * This feedback loop is critical for travel/booking agents.
 
 ---
@@ -135,7 +135,7 @@ Advanced planners don't just list steps; they solve constraints.
 
 A conceptual implementation of a "Replanning Agent" that is self-healing.
 
-```python
+``python
 import json
 
 class PlannerAgent:
@@ -203,7 +203,7 @@ class PlannerAgent:
 # agent.generate_initial_plan()
 # while agent.plan:
 # agent.execute_next()
-```
+``
 
 ---
 

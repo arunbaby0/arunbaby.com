@@ -1,6 +1,9 @@
 ---
 title: "AutoML Systems"
 day: 55
+related_dsa_day: 55
+related_speech_day: 55
+related_agents_day: 55
 collection: ml-system-design
 categories:
   - ml-system-design
@@ -14,9 +17,6 @@ difficulty: Hard
 subdomain: "Automated Machine Learning"
 tech_stack: Python, Ray Tune, Optuna
 scale: "Searching through millions of configurations across distributed GPU clusters"
-related_dsa_day: 55
-related_speech_day: 55
-related_agents_day: 55
 ---
 
 **"The best algorithm is the one you didn't have to tune by hand. AutoML is about moving the engineer from 'writing code' to 'writing the objective function'."**
@@ -33,7 +33,7 @@ Automated Machine Learning (AutoML) is the process of automating the end-to-end 
 AutoML aims to take the raw data and the objective (e.g., "Minimize RMSE") and produce the best possible model without human intervention. This is not just about hyperparameter tuning; it encompasses the entire pipeline from data ingestion to model deployment.
 
 ### 1.2 The "Search" Analogy
-Just as the **N-Queens** problem (our DSA topic today) searches for a valid configuration of queens under constraints, AutoML searches for a valid "Machine Learning Pipeline" under constraints of time, memory, and budget. In N-Queens, we prune board positions that lead to attacks. In AutoML, we prune configurations that lead to poor performance or violate hardware constraints.
+Just as the **N-Queens** problem (the DSA topic) searches for a valid configuration of queens under constraints, AutoML searches for a valid "Machine Learning Pipeline" under constraints of time, memory, and budget. In N-Queens, we prune board positions that lead to attacks. In AutoML, we prune configurations that lead to poor performance or violate hardware constraints.
 
 ---
 
@@ -43,14 +43,14 @@ A modern AutoML system consists of three main search spaces:
 
 ### 2.1 Hyperparameter Optimization (HPO)
 This is the most common use case. We have fixed components (e.g., a ResNet-50) and we want to find the best settings.
-- **Continuous parameters**: Learning rate ($0.0001$ to $0.1$).
-- **Discrete parameters**: Batch size ($16, 32, 64$).
-- **Categorical parameters**: Optimizer ($Adam, SGD, RMSprop$).
+- **Continuous parameters**: Learning rate (`0.0001` to `0.1`).
+- **Discrete parameters**: Batch size (`16, 32, 64`).
+- **Categorical parameters**: Optimizer (`Adam, SGD, RMSprop`).
 
 ### 2.2 Neural Architecture Search (NAS)
 Instead of a fixed backbone, the system searches for the **topology** of the neural network.
 - Which layers should connect?
-- Should we use a $3 \times 3$ conv or a $5 \times 5$ conv?
+- Should we use a `3x3` conv or a `5x5` conv?
 - Where should the skip connections be?
 - **Operations**: Separable convolutions, dilated convolutions, attention heads.
 
@@ -71,10 +71,10 @@ Bayesian Optimization constructs a **surrogate model** (usually a **Gaussian Pro
 - It balances **Exploration** (trying unknown regions) and **Exploitation** (searching near known good results).
 
 ### 3.3 Tree-structured Parzen Estimator (TPE)
-While Gaussian Processes are the "gold standard" for continuous spaces, they scale poorly ($O(N^3)$) with the number of trials. **TPE** (used in Optuna and Hyperopt) is a non-parametric Bayesian method that:
-- Models the probability $P(x|y)$ of a configuration $x$ given a metric $y$.
+While Gaussian Processes are the "gold standard" for continuous spaces, they scale poorly (O(N^3)) with the number of trials. **TPE** (used in Optuna and Hyperopt) is a non-parametric Bayesian method that:
+- Models the probability `P(x|y)` of a configuration `x` given a metric `y`.
 - It splits observations into "good" and "bad" based on a quantile.
-- It calculates the ratio of the likelihoods and picks $x$ that maximizes this ratio.
+- It calculates the ratio of the likelihoods and picks `x` that maximizes this ratio.
 - **Why it's better**: It handles categorical and conditional parameters much more naturally than GP.
 
 ### 3.4 Multi-fidelity Optimization (Hyperband)
@@ -158,8 +158,8 @@ def objective(trial):
         # Early stopping based on Hyperband/MedianPruner
         if trial.should_prune():
             raise optuna.exceptions.TrialPruned()
-            
-    return accuracy
+        
+        return accuracy
 
 study = optuna.create_study(direction="maximize", pruner=optuna.pruners.HyperbandPruner())
 study.optimize(objective, n_trials=100)
@@ -200,13 +200,13 @@ Automating model selection can amplify hidden biases in the data.
 In the **N-Queens** problem, we use the "isSafe" check to prune board cells. In AutoML, we use the **Lower Confidence Bound (LCB)**. If the best possible performance a configuration could achieve (given its uncertainty) is lower than our current best, we prune the branch without ever training the model.
 
 ### 9.2 Resource Orchestration (Agent Link)
-Orchestrating an AutoML run across 500 GPUs is an **Agent Orchestration** problem (our AI Agents topic). You have "Search Agents" (Optimizer), "Training Agents" (Workers), and "Cleanup Agents." They must coordinate to ensure no GPU remains idle, satisfying the "Budget Constraint" and "Time Constraint."
+Orchestrating an AutoML run across 500 GPUs is an **Agent Orchestration** problem (the AI Agents topic). You have "Search Agents" (Optimizer), "Training Agents" (Workers), and "Cleanup Agents." They must coordinate to ensure no GPU remains idle, satisfying the "Budget Constraint" and "Time Constraint."
 
 ---
 
 ## 10. Interview Strategy for AutoML System Design
 
-1. **Ask about the Budget**: "Do we have \$500 or \$500,000?" This determines if you use Random Search or a massive NAS Supernet.
+1. **Ask about the Budget**: "Do we have 500 USD or 500,000 USD?" This determines if you use Random Search or a massive NAS Supernet.
 2. **Metric Selection**: Propose a "Validation Strategy" (e.g., Stratified K-Fold) to ensure the AutoML doesn't overfit.
 3. **The "Human in the Loop"**: Mention how you provide a "Dashboard" (like Weights & Biases or Tensorboard) for engineers to intervene. 
 4. **Data Drifting**: Ask how the system handles "Model Decay." Does the AutoML search re-trigger if live metrics drop?
@@ -260,7 +260,7 @@ In healthcare, AutoML is used to search for models that analyze MRI scans or gen
 The latest research (e.g., Google's "Large Language Models are Zero-Shot Optimizers") suggests that LLMs can replace standard Bayesian Searchers.
 - **The Concept**: Instead of a Gaussian Process, you feed the LLM a list of previous configurations and their scores: `{"lr": 0.1, "score": 0.8}, {"lr": 0.01, "score": 0.85}`.
 - You ask the LLM: "What should be the next learning rate to maximize the score?"
-- **Why it works**: LLMs have encoded the "Common Sense" of deep learning in their training data. They know that a learning rate of $100$ is likely bad, regardless of the dataset.
+- **Why it works**: LLMs have encoded the "Common Sense" of deep learning in their training data. They know that a learning rate of `100` is likely bad, regardless of the dataset.
 
 ## 17. Designing a Production AutoML System: A 7-Step Blueprint
 
@@ -275,14 +275,14 @@ For a Senior System Design interview, propose this architecture:
 
 ## 18. Hierarchical Search Spaces and Hypernetworks
 One of the most complex areas of AutoML is searching through **Conditional Spaces**.
-- For example: "If the optimizer is Adam, tune the $\beta_1$ and $\beta_2$ parameters. If the optimizer is SGD, tune the Momentum parameter."
+- For example: "If the optimizer is Adam, tune the `beta_1` and `beta_2` parameters. If the optimizer is SGD, tune the Momentum parameter."
 - **Hypernetworks**: A neural network that generates the weights for another neural network. Some NAS systems use a central Hypernetwork to predict the "optimal weights" for any proposed architecture in the search space, allowing for near-instantaneous evaluation without full training.
 
 ## 19. Post-Search Analysis: How to Debug an AutoML Pipeline
 When an AutoML run fails to find a good model, it's rarely because of the search algorithm. It's usually a "Meta-Problem":
 1. **Search Space Mismatch**: The range of hyperparameters was too narrow or too wide.
 2. **Metric Overfitting**: The model performed well on the validation set but fails on the test set. 
-   - **Solution**: Use **Nested Cross-Validation** to ensure the AutoML doesn't "leak" information.
+  - **Solution**: Use **Nested Cross-Validation** to ensure the AutoML doesn't "leak" information.
 3. **Data Leakage**: Features from the future were included in the training set. Even the best AutoML can't fix bad data engineering.
 
 ## 20. AutoML for Real-time and Streaming Systems

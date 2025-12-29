@@ -1,23 +1,23 @@
 ---
 title: "Data Augmentation Pipeline"
 day: 18
+related_dsa_day: 18
+related_speech_day: 18
+related_agents_day: 18
 collection: ml_system_design
 categories:
-  - ml-system-design
+ - ml-system-design
 tags:
-  - data-augmentation
-  - pipelines
-  - computer-vision
-  - feature-engineering
-  - real-time-processing
-  - distributed-systems
+ - data-augmentation
+ - pipelines
+ - computer-vision
+ - feature-engineering
+ - real-time-processing
+ - distributed-systems
 subdomain: "Training Infrastructure"
 tech_stack: [Python, PyTorch, TensorFlow, Kubernetes, Kafka, Redis, Ray]
 scale: "10M+ samples/day, multi-modal inputs, online & offline augmentation"
 companies: [Google, Meta, Amazon, Microsoft, Tesla, OpenAI]
-related_dsa_day: 18
-related_speech_day: 18
-related_agents_day: 18
 ---
 
 **Design a robust data augmentation pipeline that applies rich transformations to large-scale datasets without becoming the training bottleneck.**
@@ -35,21 +35,21 @@ Design a **Data Augmentation Pipeline** for ML training that:
 ### Functional Requirements
 
 1. **Transformations:**
-   - For images: flips, rotations, crops, color jitter, cutout, RandAugment
-   - For text: token dropout, synonym replacement, back-translation
-   - For audio: time/frequency masking, noise, speed/pitch changes
+ - For images: flips, rotations, crops, color jitter, cutout, RandAugment
+ - For text: token dropout, synonym replacement, back-translation
+ - For audio: time/frequency masking, noise, speed/pitch changes
 2. **Composability:**
-   - Define augmentation policies declaratively
-   - Compose transforms into pipelines and chains
+ - Define augmentation policies declaratively
+ - Compose transforms into pipelines and chains
 3. **Randomization:**
-   - Per-sample randomness (different augmentations each epoch)
-   - Seed control for reproducibility
+ - Per-sample randomness (different augmentations each epoch)
+ - Seed control for reproducibility
 4. **Performance:**
-   - Avoid data loader bottlenecks
-   - Pre-fetch and pre-transform data where possible
+ - Avoid data loader bottlenecks
+ - Pre-fetch and pre-transform data where possible
 5. **Monitoring & control:**
-   - Measure augmentation coverage and distribution
-   - Ability to enable/disable augmentations per experiment
+ - Measure augmentation coverage and distribution
+ - Ability to enable/disable augmentations per experiment
 
 ### Non-Functional Requirements
 
@@ -88,48 +88,48 @@ you the intuition and confidence to design larger, distributed augmentation syst
 
 ## High-Level Architecture
 
-```
+``
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Data Augmentation Pipeline                    │
+│ Data Augmentation Pipeline │
 └─────────────────────────────────────────────────────────────────┘
 
-                 Offline / Preprocessing Layer
-          ┌───────────────────────────────────────┐
-          │ - Raw data ingestion (images/audio)   │
-          │ - Heavy augmentations (slow)         │
-          │ - Caching to TFRecord/WebDataset     │
-          └───────────────┬──────────────────────┘
-                          │
-                 Online / Training-time Layer
-          ┌───────────────▼──────────────────────┐
-          │ - Light/random augmentations         │
-          │ - Batch-wise composition             │
-          │ - On-GPU augmentations (optional)    │
-          └───────────────┬──────────────────────┘
-                          │
-                   Training Loop (GPU)
-          ┌───────────────▼──────────────────────┐
-          │ - Model forward/backward             │
-          │ - Loss, optimizer                    │
-          │ - Metrics & logging                  │
-          └──────────────────────────────────────┘
-```
+ Offline / Preprocessing Layer
+ ┌───────────────────────────────────────┐
+ │ - Raw data ingestion (images/audio) │
+ │ - Heavy augmentations (slow) │
+ │ - Caching to TFRecord/WebDataset │
+ └───────────────┬──────────────────────┘
+ │
+ Online / Training-time Layer
+ ┌───────────────▼──────────────────────┐
+ │ - Light/random augmentations │
+ │ - Batch-wise composition │
+ │ - On-GPU augmentations (optional) │
+ └───────────────┬──────────────────────┘
+ │
+ Training Loop (GPU)
+ ┌───────────────▼──────────────────────┐
+ │ - Model forward/backward │
+ │ - Loss, optimizer │
+ │ - Metrics & logging │
+ └──────────────────────────────────────┘
+``
 
 ### Key Concepts
 
 1. **Offline augmentation:**
-   - Apply heavy, expensive transforms once.
-   - Save to disk (e.g., rotated/denoised images).
-   - Good when:
-     - Augmentations are deterministic,
-     - You have a well-defined dataset and lots of storage.
+ - Apply heavy, expensive transforms once.
+ - Save to disk (e.g., rotated/denoised images).
+ - Good when:
+ - Augmentations are deterministic,
+ - You have a well-defined dataset and lots of storage.
 
 2. **Online augmentation:**
-   - Lightweight, random transforms applied on-the-fly during training.
-   - Different per epoch / per sample.
-   - Good for:
-     - Infinite variation,
-     - Online learning/continuous training.
+ - Lightweight, random transforms applied on-the-fly during training.
+ - Different per epoch / per sample.
+ - Good for:
+ - Infinite variation,
+ - Online learning/continuous training.
 
 Most robust systems use a **hybrid** approach.
 
@@ -139,122 +139,122 @@ Most robust systems use a **hybrid** approach.
 
 Use a **declarative configuration** for augmentation policies:
 
-```yaml
+``yaml
 # config/augmentations/vision.yaml
 image_augmentations:
-  - type: RandomResizedCrop
-    params:
-      size: 224
-      scale: [0.8, 1.0]
-  - type: RandomHorizontalFlip
-    params:
-      p: 0.5
-  - type: ColorJitter
-    params:
-      brightness: 0.2
-      contrast: 0.2
-      saturation: 0.2
-  - type: RandAugment
-    params:
-      num_ops: 2
-      magnitude: 9
-```
+ - type: RandomResizedCrop
+ params:
+ size: 224
+ scale: [0.8, 1.0]
+ - type: RandomHorizontalFlip
+ params:
+ p: 0.5
+ - type: ColorJitter
+ params:
+ brightness: 0.2
+ contrast: 0.2
+ saturation: 0.2
+ - type: RandAugment
+ params:
+ num_ops: 2
+ magnitude: 9
+``
 
 Then build a **factory** in code:
 
-```python
+``python
 import torchvision.transforms as T
 import yaml
 
 
 def build_vision_augmentations(config_path: str):
-    with open(config_path, 'r') as f:
-        cfg = yaml.safe_load(f)
+ with open(config_path, 'r') as f:
+ cfg = yaml.safe_load(f)
 
-    ops = []
-    for aug in cfg['image_augmentations']:
-        t = aug['type']
-        params = aug.get('params', {})
+ ops = []
+ for aug in cfg['image_augmentations']:
+ t = aug['type']
+ params = aug.get('params', {})
 
-        if t == 'RandomResizedCrop':
-            ops.append(T.RandomResizedCrop(**params))
-        elif t == 'RandomHorizontalFlip':
-            ops.append(T.RandomHorizontalFlip(**params))
-        elif t == 'ColorJitter':
-            ops.append(T.ColorJitter(**params))
-        elif t == 'RandAugment':
-            ops.append(T.RandAugment(**params))
-        else:
-            raise ValueError(f\"Unknown augmentation: {t}\")
+ if t == 'RandomResizedCrop':
+ ops.append(T.RandomResizedCrop(**params))
+ elif t == 'RandomHorizontalFlip':
+ ops.append(T.RandomHorizontalFlip(**params))
+ elif t == 'ColorJitter':
+ ops.append(T.ColorJitter(**params))
+ elif t == 'RandAugment':
+ ops.append(T.RandAugment(**params))
+ else:
+ raise ValueError(f\"Unknown augmentation: {t}\")
 
-    return T.Compose(ops)
-```
+ return T.Compose(ops)
+``
 
 ### 2. Online Augmentation in the DataLoader
 
-```python
+``python
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 
 
 class ImageDataset(Dataset):
-    def __init__(self, image_paths, labels, transform=None):
-        self.image_paths = image_paths
-        self.labels = labels
-        self.transform = transform
+ def __init__(self, image_paths, labels, transform=None):
+ self.image_paths = image_paths
+ self.labels = labels
+ self.transform = transform
 
-    def __len__(self):
-        return len(self.image_paths)
+ def __len__(self):
+ return len(self.image_paths)
 
-    def __getitem__(self, idx):
-        path = self.image_paths[idx]
-        label = self.labels[idx]
+ def __getitem__(self, idx):
+ path = self.image_paths[idx]
+ label = self.labels[idx]
 
-        image = Image.open(path).convert(\"RGB\")
-        if self.transform:
-            image = self.transform(image)
+ image = Image.open(path).convert(\"RGB\")
+ if self.transform:
+ image = self.transform(image)
 
-        return image, label
+ return image, label
 
 
 def build_dataloader(image_paths, labels, batch_size, num_workers, aug_config):
-    transform = build_vision_augmentations(aug_config)
-    dataset = ImageDataset(image_paths, labels, transform=transform)
-    loader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=num_workers,
-        pin_memory=True,
-        prefetch_factor=2,
-    )
-    return loader
-```
+ transform = build_vision_augmentations(aug_config)
+ dataset = ImageDataset(image_paths, labels, transform=transform)
+ loader = DataLoader(
+ dataset,
+ batch_size=batch_size,
+ shuffle=True,
+ num_workers=num_workers,
+ pin_memory=True,
+ prefetch_factor=2,
+ )
+ return loader
+``
 
 ### 3. Offline Augmentation Pipeline (Batch Jobs)
 
 For heavy operations (e.g., expensive geometric warps, super-resolution, denoising):
 
-```python
+``python
 from multiprocessing import Pool
 from pathlib import Path
 
 
 def augment_and_save(args):
-    input_path, output_dir, ops = args
-    img = Image.open(input_path).convert(\"RGB\")
+ input_path, output_dir, ops = args
+ img = Image.open(input_path).convert(\"RGB\")
 
-    for i, op in enumerate(ops):
-        aug_img = op(img)
-        out_path = Path(output_dir) / f\"{input_path.stem}_aug{i}{input_path.suffix}\"
-        aug_img.save(out_path)
+ for i, op in enumerate(ops):
+ aug_img = op(img)
+ out_path = Path(output_dir) / f\"{input_path.stem}_aug{i}{input_path.suffix}\"
+ aug_img.save(out_path)
 
 
 def run_offline_augmentation(image_paths, output_dir, ops, num_workers=8):
-    args = [(p, output_dir, ops) for p in image_paths]
-    with Pool(num_workers) as pool:
-        pool.map(augment_and_save, args)
-```
+ args = [(p, output_dir, ops) for p in image_paths]
+ with Pool(num_workers) as pool:
+ pool.map(augment_and_save, args)
+``
 
 You can run this as:
 
@@ -286,29 +286,29 @@ For large clusters:
 - Ensure each worker gets a unique shard of data each epoch.
 - Avoid duplicated augmentations unless intentionally desired (e.g., strong augmentations in semi-supervised learning).
 
-```python
+``python
 from torch.utils.data.distributed import DistributedSampler
 
 def build_distributed_loader(dataset, batch_size, world_size, rank):
-    sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=True)
-    loader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        sampler=sampler,
-        num_workers=4,
-        pin_memory=True,
-    )
-    return loader
-```
+ sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=True)
+ loader = DataLoader(
+ dataset,
+ batch_size=batch_size,
+ sampler=sampler,
+ num_workers=4,
+ pin_memory=True,
+ )
+ return loader
+``
 
 ### 3. Caching & Reuse
 
 - Cache intermediate artifacts:
-  - Pre-resized images for fixed-size training (e.g., 224x224)
-  - Precomputed features if model backbone is frozen
+ - Pre-resized images for fixed-size training (e.g., 224x224)
+ - Precomputed features if model backbone is frozen
 - Use fast storage:
-  - Local SSDs on training machines
-  - Redis / memcached for hot subsets
+ - Local SSDs on training machines
+ - Redis / memcached for hot subsets
 
 ## Monitoring & Observability
 
@@ -318,30 +318,30 @@ def build_distributed_loader(dataset, batch_size, world_size, rank):
 - GPU utilization over time
 - Distribution of applied augmentations (e.g., how often rotations, color jitter)
 - Failure rates:
-  - Decoding errors,
-  - Corrupted images,
-  - Label mismatches
+ - Decoding errors,
+ - Corrupted images,
+ - Label mismatches
 
 ### Debugging Tools
 
 - Log or visualize **augmented samples**:
-  - Save a small batch of augmented images per experiment.
-  - Use a simple dashboard (e.g., Streamlit/Gradio) to inspect them.
+ - Save a small batch of augmented images per experiment.
+ - Use a simple dashboard (e.g., Streamlit/Gradio) to inspect them.
 - Add assertions in the pipeline:
-  - Check tensor shapes and ranges after each transform.
-  - Ensure labels remain consistent (e.g., bounding boxes after geometric transforms).
+ - Check tensor shapes and ranges after each transform.
+ - Ensure labels remain consistent (e.g., bounding boxes after geometric transforms).
 
 ## Real-World Case Study: ImageNet-Scale Training
 
 For large vision models (ResNet, ViT, etc.) trained on ImageNet-scale datasets:
 
 - Augmentations:
-  - RandomResizedCrop, random horizontal flip, color jitter, RandAugment
-  - MixUp, CutMix for regularization
+ - RandomResizedCrop, random horizontal flip, color jitter, RandAugment
+ - MixUp, CutMix for regularization
 - Infrastructure:
-  - 8–1024 GPUs
-  - Shared networked storage (e.g., NFS, S3 with caching)
-  - Highly tuned input pipelines (prefetching, caching, GPU-based transforms)
+ - 8–1024 GPUs
+ - Shared networked storage (e.g., NFS, S3 with caching)
+ - Highly tuned input pipelines (prefetching, caching, GPU-based transforms)
 
 Typical bottlenecks:
 
@@ -360,28 +360,28 @@ Solutions:
 ### 1. Policy Search for Augmentations
 
 - Systems like **AutoAugment**, **RandAugment**, **TrivialAugment**:
-  - Search over augmentation policies to find those that maximize validation accuracy.
-  - The pipeline must support:
-    - Easily swapping augmentation configs,
-    - Running automated experiments at scale.
+ - Search over augmentation policies to find those that maximize validation accuracy.
+ - The pipeline must support:
+ - Easily swapping augmentation configs,
+ - Running automated experiments at scale.
 
 ### 2. Task-Specific Augmentations
 
 - Detection/segmentation:
-  - Maintain alignment between images and labels (boxes, masks).
+ - Maintain alignment between images and labels (boxes, masks).
 - OCR:
-  - Blur, perspective warps, fake backgrounds.
+ - Blur, perspective warps, fake backgrounds.
 - Self-supervised learning:
-  - Strong augmentations to enforce invariance (SimCLR, BYOL).
+ - Strong augmentations to enforce invariance (SimCLR, BYOL).
 
 ### 3. Safety & Bias Considerations
 
 - Some augmentations may amplify biases or distort signals:
-  - Over-aggressive noise augmentation on low-resource languages,
-  - Crops that systematically remove certain content.
+ - Over-aggressive noise augmentation on low-resource languages,
+ - Crops that systematically remove certain content.
 - You should:
-  - Evaluate model behavior under different augmentations,
-  - Include domain experts where necessary (e.g., medical imaging).
+ - Evaluate model behavior under different augmentations,
+ - Include domain experts where necessary (e.g., medical imaging).
 
 ## Connection to Matrix Operations & Data Transformations
 
@@ -405,41 +405,41 @@ to detect because they don’t crash the system—they just slowly degrade model
 quality. Typical failure modes:
 
 - **Label–image misalignment**
-  - Geometric transforms are applied to images but not to labels:
-    - Bounding boxes not shifted/scaled,
-    - Segmentation masks not warped,
-    - Keypoints left in original coordinates.
-  - Safeguards:
-    - Treat image + labels as a single object in the pipeline.
-    - Write unit tests for transforms that take `(image, labels)` and assert invariants.
+ - Geometric transforms are applied to images but not to labels:
+ - Bounding boxes not shifted/scaled,
+ - Segmentation masks not warped,
+ - Keypoints left in original coordinates.
+ - Safeguards:
+ - Treat image + labels as a single object in the pipeline.
+ - Write unit tests for transforms that take `(image, labels)` and assert invariants.
 
 - **Domain-destructive augmentation**
-  - Augmentations that overly distort input:
-    - Extreme color jitter for medical images,
-    - Aggressive noise in low-resource speech settings,
-    - Random erasing that hides critical features.
-  - Safeguards:
-    - Visual inspection dashboards across many random seeds.
-    - Per-domain configs with different augmentation strengths.
+ - Augmentations that overly distort input:
+ - Extreme color jitter for medical images,
+ - Aggressive noise in low-resource speech settings,
+ - Random erasing that hides critical features.
+ - Safeguards:
+ - Visual inspection dashboards across many random seeds.
+ - Per-domain configs with different augmentation strengths.
 
 - **Data leakage**
-  - Using test augmentations or test data in training by mistake.
-  - Safeguards:
-    - Clear separation of train/val/test pipelines.
-    - Configuration linting to prevent mixing datasets.
+ - Using test augmentations or test data in training by mistake.
+ - Safeguards:
+ - Clear separation of train/val/test pipelines.
+ - Configuration linting to prevent mixing datasets.
 
 - **Non-determinism & reproducibility issues**
-  - Augmentations using global RNG without proper seeding.
-  - Different workers producing non-reproducible sequences for the same seed.
-  - Safeguards:
-    - Centralize RNG handling and seeding.
-    - Log seeds with experiment configs.
+ - Augmentations using global RNG without proper seeding.
+ - Different workers producing non-reproducible sequences for the same seed.
+ - Safeguards:
+ - Centralize RNG handling and seeding.
+ - Log seeds with experiment configs.
 
 - **Performance regressions**
-  - Adding a new augmentation that is unexpectedly expensive (e.g., Python loops over pixels).
-  - Safeguards:
-    - Performance tests as part of CI.
-    - Per-transform latency metrics and tracing.
+ - Adding a new augmentation that is unexpectedly expensive (e.g., Python loops over pixels).
+ - Safeguards:
+ - Performance tests as part of CI.
+ - Per-transform latency metrics and tracing.
 
 Design your pipeline so that **new augmentations are easy to add**, but every new
 op must declare:
@@ -454,50 +454,50 @@ When bringing up or iterating on an augmentation pipeline, working through a
 simple checklist is often more effective than any amount of abstract design:
 
 1. **Start with a “no-augmentation” baseline**
-   - Train a model with augmentations disabled.
-   - Record:
-     - Training/validation curves,
-     - Final accuracy/WER,
-     - Training throughput.
-   - This gives you a reference to judge whether augmentation is helping or hurting.
+ - Train a model with augmentations disabled.
+ - Record:
+ - Training/validation curves,
+ - Final accuracy/WER,
+ - Training throughput.
+ - This gives you a reference to judge whether augmentation is helping or hurting.
 
 2. **Introduce augmentations incrementally**
-   - Enable only a small subset (e.g., crops + flips).
-   - Compare:
-     - Validation metrics: did they improve?
-     - Throughput: did step time increase unacceptably?
-   - Add more transforms only after you understand the effect of the previous ones.
+ - Enable only a small subset (e.g., crops + flips).
+ - Compare:
+ - Validation metrics: did they improve?
+ - Throughput: did step time increase unacceptably?
+ - Add more transforms only after you understand the effect of the previous ones.
 
 3. **Visualize random batches per run**
-   - For every experiment:
-     - Save a small grid of augmented samples,
-     - Tag it with the experiment ID and augmentation config.
-   - Have a simple viewer (web UI or notebook) to flip through these grids quickly.
+ - For every experiment:
+ - Save a small grid of augmented samples,
+ - Tag it with the experiment ID and augmentation config.
+ - Have a simple viewer (web UI or notebook) to flip through these grids quickly.
 
 4. **Instrument pipeline performance**
-   - Log:
-     - Average data loader time per batch,
-     - GPU utilization,
-     - Queue depth between augmentation workers and training loop.
-   - Add alerts for:
-     - Data loader time > X% of step time,
-     - Utilization < Y% for sustained periods.
+ - Log:
+ - Average data loader time per batch,
+ - GPU utilization,
+ - Queue depth between augmentation workers and training loop.
+ - Add alerts for:
+ - Data loader time > X% of step time,
+ - Utilization < Y% for sustained periods.
 
 5. **Stress-test with extreme configs**
-   - Intentionally crank up augmentation strength:
-     - Very strong color jitter,
-     - Large random crops,
-     - Heavy masking.
-   - Ensure:
-     - Code doesn’t crash,
-     - Latency stays within an acceptable range,
-     - Model does not completely fail to train.
+ - Intentionally crank up augmentation strength:
+ - Very strong color jitter,
+ - Large random crops,
+ - Heavy masking.
+ - Ensure:
+ - Code doesn’t crash,
+ - Latency stays within an acceptable range,
+ - Model does not completely fail to train.
 
 6. **Keep augmentation and evaluation aligned**
-   - Ensure evaluation uses **realistic inputs**:
-     - No augmentations that don’t match production (e.g., training-time noise on clean eval data).
-   - For robustness testing:
-     - Add a separate “stress test” evaluation pipeline (e.g., with noisy images/audio).
+ - Ensure evaluation uses **realistic inputs**:
+ - No augmentations that don’t match production (e.g., training-time noise on clean eval data).
+ - For robustness testing:
+ - Add a separate “stress test” evaluation pipeline (e.g., with noisy images/audio).
 
 Working systematically through this list is often what turns a fragile,
 hand-tuned pipeline into a **stable, debuggable system** you can rely on for

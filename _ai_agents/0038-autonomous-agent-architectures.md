@@ -1,21 +1,21 @@
 ---
 title: "Autonomous Agent Architectures"
 day: 38
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - autonomous-agents
-  - orchestration
-  - planning
-  - tools
-  - safety
-  - memory
-  - supervision
-difficulty: Medium-Hard
 related_dsa_day: 38
 related_ml_day: 38
 related_speech_day: 38
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - autonomous-agents
+ - orchestration
+ - planning
+ - tools
+ - safety
+ - memory
+ - supervision
+difficulty: Medium-Hard
 ---
 
 **"Architecture beats prompting: build autonomous agents with clear state, strict tool boundaries, and measurable stop conditions."**
@@ -46,9 +46,9 @@ In production, the best autonomous agents are **bounded**: they’re highly capa
 
 Most autonomous agents can be modeled as a loop:
 
-```text
+``text
 Observe -> Decide -> Act -> Observe -> ...
-```
+``
 
 In practice, the loop looks like this:
 
@@ -66,21 +66,21 @@ This “agent loop” is why architecture matters: you’re building a tiny deci
 
 One of the most reliable architectures is to separate the agent into roles:
 
-```text
+``text
 User Request
-   |
-   v
-Planner  -> produces a plan + constraints + stop conditions
-   |
-   v
+ |
+ v
+Planner -> produces a plan + constraints + stop conditions
+ |
+ v
 Executor -> runs tools / performs actions per plan
-   |
-   v
+ |
+ v
 Verifier -> checks correctness, safety, and completeness
-   |
-   v
+ |
+ v
 Finalizer -> summarizes outcome + evidence + next actions (if any)
-```
+``
 
 ### Why this works
 
@@ -106,16 +106,16 @@ A production-grade agent usually needs structured state like:
 
 A simple state shape (conceptual) is:
 
-```json
+``json
 {
-  "objective": "...",
-  "constraints": ["..."],
-  "plan": [{"id": 1, "task": "...", "status": "pending"}],
-  "facts": [{"key": "...", "value": "...", "source": "..."}],
-  "attempts": [{"step_id": 2, "action": "...", "result": "failed", "why": "..."}],
-  "budget": {"max_steps": 10, "spent_steps": 3}
+ "objective": "...",
+ "constraints": ["..."],
+ "plan": [{"id": 1, "task": "...", "status": "pending"}],
+ "facts": [{"key": "...", "value": "...", "source": "..."}],
+ "attempts": [{"step_id": 2, "action": "...", "result": "failed", "why": "..."}],
+ "budget": {"max_steps": 10, "spent_steps": 3}
 }
-```
+``
 
 **Junior engineer tip:** your orchestration code should treat this state as the source of truth. The LLM should *read* it and propose updates, but your code should validate and persist it.
 
@@ -223,17 +223,17 @@ This is not optional; it’s how you prevent “autonomous” from turning into 
 
 The Planner–Executor–Verifier split works well inside a single “agent.” For bigger tasks, you often get better reliability by introducing a **Supervisor** that delegates to **workers** (specialists).
 
-```text
+``text
 Supervisor (goal + state owner)
-   |
-   +--> Research Worker (read-only tools)
-   |
-   +--> Execution Worker (sandboxed code)
-   |
-   +--> Writer Worker (formatting, docs)
-   |
-   +--> Verifier Worker (checks claims/tests)
-```
+ |
+ +--> Research Worker (read-only tools)
+ |
+ +--> Execution Worker (sandboxed code)
+ |
+ +--> Writer Worker (formatting, docs)
+ |
+ +--> Verifier Worker (checks claims/tests)
+``
 
 ### Why this helps
 
@@ -457,36 +457,36 @@ This is how you avoid: “we changed one line in a prompt and now the agent beha
 
 Below is a conceptual skeleton. The key is that the orchestrator (your code) owns the loop, budgets, and validation.
 
-```python
+``python
 def run_agent(objective: str, state: dict) -> dict:
-    for step_idx in range(state["budget"]["max_steps"]):
-        decision = llm.decide({
-            "objective": objective,
-            "state": state,
-            "policy": {
-                "no_unvalidated_writes": True,
-                "max_tool_calls_per_step": 1
-            }
-        })
+ for step_idx in range(state["budget"]["max_steps"]):
+ decision = llm.decide({
+ "objective": objective,
+ "state": state,
+ "policy": {
+ "no_unvalidated_writes": True,
+ "max_tool_calls_per_step": 1
+ }
+ })
 
-        if decision["type"] == "ASK_USER":
-            return {"status": "NEEDS_INPUT", "question": decision["question"], "state": state}
+ if decision["type"] == "ASK_USER":
+ return {"status": "NEEDS_INPUT", "question": decision["question"], "state": state}
 
-        if decision["type"] == "STOP":
-            return {"status": decision["status"], "state": state, "summary": decision.get("summary")}
+ if decision["type"] == "STOP":
+ return {"status": decision["status"], "state": state, "summary": decision.get("summary")}
 
-        if decision["type"] == "TOOL_CALL":
-            tool_name, args = decision["tool"], decision["args"]
+ if decision["type"] == "TOOL_CALL":
+ tool_name, args = decision["tool"], decision["args"]
 
-            validate_tool_call(tool_name, args, state)  # allowlists, budgets, schemas
-            result = tools.run(tool_name, args)
-            state = update_state_with_result(state, decision, result)
+ validate_tool_call(tool_name, args, state) # allowlists, budgets, schemas
+ result = tools.run(tool_name, args)
+ state = update_state_with_result(state, decision, result)
 
-            if is_repetition(state):
-                return {"status": "FAILURE", "reason": "REPETITION_DETECTED", "state": state}
+ if is_repetition(state):
+ return {"status": "FAILURE", "reason": "REPETITION_DETECTED", "state": state}
 
-    return {"status": "FAILURE", "reason": "STEP_BUDGET_EXCEEDED", "state": state}
-```
+ return {"status": "FAILURE", "reason": "STEP_BUDGET_EXCEEDED", "state": state}
+``
 
 This is intentionally strict. Autonomy in production is about **controlled freedom**.
 

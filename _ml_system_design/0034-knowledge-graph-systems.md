@@ -1,14 +1,17 @@
 ---
 title: "Knowledge Graph Systems"
 day: 34
+related_dsa_day: 34
+related_speech_day: 34
+related_agents_day: 34
 collection: ml_system_design
 categories:
-  - ml_system_design
+ - ml_system_design
 tags:
-  - knowledge-graph
-  - graph-neural-networks
-  - nlp
-  - database
+ - knowledge-graph
+ - graph-neural-networks
+ - nlp
+ - database
 subdomain: "Data Systems"
 tech_stack: [Neo4j, RDF, SPARQL, GraphQL, PyTorch Geometric]
 scale: "Billions of entities, Trillions of edges"
@@ -38,8 +41,8 @@ There are two main ways to model KGs:
 - **Standard:** W3C standard for semantic web.
 - **Structure:** Triples `(Subject, Predicate, Object)`.
 - **Example:**
-  - `(DaVinci, painted, MonaLisa)`
-  - `(MonaLisa, located_in, Louvre)`
+ - `(DaVinci, painted, MonaLisa)`
+ - `(MonaLisa, located_in, Louvre)`
 - **Query Language:** SPARQL.
 - **Pros:** Great for interoperability, public datasets (DBpedia, Wikidata).
 - **Cons:** Verbose, hard to attach properties to edges (requires reification).
@@ -47,9 +50,9 @@ There are two main ways to model KGs:
 ### 2. Labeled Property Graph (LPG)
 - **Structure:** Nodes and edges have internal key-value properties.
 - **Example:**
-  - Node: `Person {name: "DaVinci", born: 1452}`
-  - Edge: `PAINTED {year: 1503}`
-  - Node: `Artwork {title: "Mona Lisa"}`
+ - Node: `Person {name: "DaVinci", born: 1452}`
+ - Edge: `PAINTED {year: 1503}`
+ - Node: `Artwork {title: "Mona Lisa"}`
 - **Query Language:** Cypher (Neo4j), Gremlin.
 - **Pros:** Intuitive, efficient for traversal, flexible schema.
 - **Cons:** Less standardized than RDF.
@@ -90,7 +93,7 @@ How do we store billions of nodes and trillions of edges?
 
 ### 1. Native Graph Databases (Neo4j, Amazon Neptune)
 - **Storage:** Index-free adjacency. Each node physically stores pointers to its neighbors.
-- **Pros:** $O(1)$ traversal per hop. Fast for deep queries.
+- **Pros:** O(1) traversal per hop. Fast for deep queries.
 - **Cons:** Hard to shard (graph partitioning is NP-hard).
 
 ### 2. Relational Backends (Facebook TAO, LinkedIn Liquid)
@@ -116,7 +119,7 @@ Predict missing edges.
 
 ### 2. Knowledge Graph Embeddings (KGE)
 Map entities and relations to vector space.
-- **TransE:** $h + r \approx t$. The translation of head $h$ by relation $r$ should land near tail $t$.
+- **TransE:** `h + r \approx t`. The translation of head `h` by relation `r` should land near tail `t`.
 - **RotatE:** Models relations as rotations in complex space (handles symmetry/antisymmetry).
 - **DistMult:** Uses bilinear product.
 
@@ -192,18 +195,18 @@ Cutting a graph cuts edges. Queries that traverse cuts are slow (network calls).
 
 **API:**
 - GraphQL is perfect for hierarchical graph queries.
-```graphql
+``graphql
 query {
-  director(name: "Christopher Nolan") {
-    movies {
-      title
-      actors(name: "Leonardo DiCaprio") {
-        name
-      }
-    }
-  }
+ director(name: "Christopher Nolan") {
+ movies {
+ title
+ actors(name: "Leonardo DiCaprio") {
+ name
+ }
+ }
+ }
 }
-```
+``
 
 ## 10. Top Interview Questions
 
@@ -236,37 +239,37 @@ Traditional embeddings (TransE) are "shallow" — they learn a unique vector for
 - **Inductive:** Can generate embeddings for unseen nodes if we know their features and neighbors.
 
 **Algorithm:**
-1.  **Sample:** For each node, sample a fixed number of neighbors (e.g., 10).
-2.  **Aggregate:** Combine neighbor embeddings (Mean, LSTM, or Max Pooling).
-3.  **Update:** Concatenate self-embedding with aggregated neighbor embedding and pass through a Neural Network.
-4.  **Repeat:** Do this for $K$ layers (hops).
+1. **Sample:** For each node, sample a fixed number of neighbors (e.g., 10).
+2. **Aggregate:** Combine neighbor embeddings (Mean, LSTM, or Max Pooling).
+3. **Update:** Concatenate self-embedding with aggregated neighbor embedding and pass through a Neural Network.
+4. **Repeat:** Do this for `K` layers (hops).
 
 **Code Snippet (PyTorch Geometric):**
-```python
+``python
 import torch
 from torch_geometric.nn import SAGEConv
 
 class GraphSAGE(torch.nn.Module):
-    def __init__(self, in_channels, hidden_channels, out_channels):
-        super().__init__()
-        self.conv1 = SAGEConv(in_channels, hidden_channels)
-        self.conv2 = SAGEConv(hidden_channels, out_channels)
+ def __init__(self, in_channels, hidden_channels, out_channels):
+ super().__init__()
+ self.conv1 = SAGEConv(in_channels, hidden_channels)
+ self.conv2 = SAGEConv(hidden_channels, out_channels)
 
-    def forward(self, x, edge_index):
-        # x: Node feature matrix
-        # edge_index: Graph connectivity
-        
-        x = self.conv1(x, edge_index)
-        x = x.relu()
-        x = torch.nn.functional.dropout(x, p=0.5, training=self.training)
-        
-        x = self.conv2(x, edge_index)
-        return x
-```
+ def forward(self, x, edge_index):
+ # x: Node feature matrix
+ # edge_index: Graph connectivity
+ 
+ x = self.conv1(x, edge_index)
+ x = x.relu()
+ x = torch.nn.functional.dropout(x, p=0.5, training=self.training)
+ 
+ x = self.conv2(x, edge_index)
+ return x
+``
 
 **Graph Attention Networks (GAT):**
 - **Idea:** Not all neighbors are equal. Learn **attention weights** to prioritize important neighbors.
-- **Mechanism:** Compute attention coefficient $\alpha_{ij}$ for edge $i \to j$.
+- **Mechanism:** Compute attention coefficient `\alpha_{ij}` for edge `i \to j`.
 - **Benefit:** Better performance on noisy graphs.
 
 ## 13. Deep Dive: Knowledge Graph Embeddings (KGE) Math
@@ -274,18 +277,18 @@ class GraphSAGE(torch.nn.Module):
 Let's look at the math behind **TransE** and **RotatE**.
 
 **TransE (Translating Embeddings):**
-- **Score Function:** $f(h, r, t) = -||h + r - t||$
+- **Score Function:** `f(h, r, t) = -||h + r - t||`
 - **Objective:** Minimize margin-based ranking loss.
-  $$L = \sum_{(h,r,t) \in S} \sum_{(h',r,t') \in S'} [\gamma + f(h, r, t) - f(h', r, t')]_+$$
-- **Limitation:** Cannot model 1-to-N relations (e.g., `Teacher -> Student`). If $h+r \approx t_1$ and $h+r \approx t_2$, then $t_1 \approx t_2$, forcing all students to be identical.
+ `L = \sum_{(h,r,t) \in S} \sum_{(h',r,t') \in S'} [\gamma + f(h, r, t) - f(h', r, t')]_+`
+- **Limitation:** Cannot model 1-to-N relations (e.g., `Teacher -> Student`). If `h+r \approx t_1` and `h+r \approx t_2`, then `t_1 \approx t_2`, forcing all students to be identical.
 
 **RotatE (Rotation Embeddings):**
-- **Idea:** Map entities to the complex plane $\mathbb{C}$.
-- **Relation:** Rotation in complex space. $t = h \circ r$, where $|r_i| = 1$.
+- **Idea:** Map entities to the complex plane `\mathbb{C}`.
+- **Relation:** Rotation in complex space. `t = h \circ r`, where `|r_i| = 1`.
 - **Capability:** Can model:
-  - **Symmetry:** $r \circ r = 1$ (e.g., `spouse`).
-  - **Antisymmetry:** $r \circ r \neq 1$ (e.g., `parent`).
-  - **Inversion:** $r_2 = r_1^{-1}$ (e.g., `hypernym` vs `hyponym`).
+ - **Symmetry:** `r \circ r = 1` (e.g., `spouse`).
+ - **Antisymmetry:** `r \circ r \neq 1` (e.g., `parent`).
+ - **Inversion:** `r_2 = r_1^{-1}` (e.g., `hypernym` vs `hyponym`).
 
 ## 14. Deep Dive: Entity Linking at Scale
 
@@ -296,18 +299,18 @@ How do you link "MJ" to "Michael Jordan" (Basketball) vs "Michael Jackson" (Sing
 **Stage 1: Blocking / Candidate Generation (Recall)**
 - **Goal:** Retrieve top-K (e.g., 100) candidates quickly.
 - **Technique:**
-  - **Inverted Index:** Map surface forms ("MJ", "Mike") to Entity IDs.
-  - **Dense Retrieval:** Encode mention context and entity description into vectors. Use FAISS to find nearest neighbors.
+ - **Inverted Index:** Map surface forms ("MJ", "Mike") to Entity IDs.
+ - **Dense Retrieval:** Encode mention context and entity description into vectors. Use FAISS to find nearest neighbors.
 
 **Stage 2: Re-Ranking (Precision)**
 - **Goal:** Select the best match from candidates.
 - **Model:** Cross-Encoder (BERT).
-  - Input: `[CLS] Mention Context [SEP] Entity Description [SEP]`
-  - Output: Probability of match.
+ - Input: `[CLS] Mention Context [SEP] Entity Description [SEP]`
+ - Output: Probability of match.
 - **Features:**
-  - **String Similarity:** Edit distance.
-  - **Prior Probability:** $P(Entity)$. "Michael Jordan" usually means the basketball player.
-  - **Coherence:** Does this entity fit with other entities in the document? (e.g., "Chicago Bulls" is nearby).
+ - **String Similarity:** Edit distance.
+ - **Prior Probability:** `P(Entity)`. "Michael Jordan" usually means the basketball player.
+ - **Coherence:** Does this entity fit with other entities in the document? (e.g., "Chicago Bulls" is nearby).
 
 ## 15. Deep Dive: Graph RAG Implementation
 
@@ -320,19 +323,19 @@ How do you link "MJ" to "Michael Jordan" (Basketball) vs "Michael Jackson" (Sing
 - But it might miss the connection if they are in separate documents.
 
 **Graph RAG Success:**
-1.  **Entity Linking:** Extract "GitHub". Link to `GitHub (Company)`.
-2.  **Graph Traversal (1-hop):** `GitHub -[ACQUIRED_BY]-> Microsoft`.
-3.  **Graph Traversal (2-hop):** `Microsoft -[CEO_IS]-> Satya Nadella`.
-4.  **Context Construction:** "GitHub was acquired by Microsoft. Microsoft's CEO is Satya Nadella."
-5.  **LLM Answer:** "Satya Nadella."
+1. **Entity Linking:** Extract "GitHub". Link to `GitHub (Company)`.
+2. **Graph Traversal (1-hop):** `GitHub -[ACQUIRED_BY]-> Microsoft`.
+3. **Graph Traversal (2-hop):** `Microsoft -[CEO_IS]-> Satya Nadella`.
+4. **Context Construction:** "GitHub was acquired by Microsoft. Microsoft's CEO is Satya Nadella."
+5. **LLM Answer:** "Satya Nadella."
 
 **Implementation Steps:**
-1.  **Ingest:** Parse documents into triples `(Subject, Predicate, Object)`.
-2.  **Index:** Store triples in Neo4j.
-3.  **Query:**
-    - Use LLM to generate Cypher query.
-    - `MATCH (c:Company {name: "GitHub"})-[:ACQUIRED_BY]->(parent)-[:CEO]->(ceo) RETURN ceo.name`
-4.  **Generate:** Pass result to LLM for natural language response.
+1. **Ingest:** Parse documents into triples `(Subject, Predicate, Object)`.
+2. **Index:** Store triples in Neo4j.
+3. **Query:**
+ - Use LLM to generate Cypher query.
+ - `MATCH (c:Company {name: "GitHub"})-[:ACQUIRED_BY]->(parent)-[:CEO]->(ceo) RETURN ceo.name`
+4. **Generate:** Pass result to LLM for natural language response.
 
 ## 16. Deep Dive: Temporal Knowledge Graphs
 
@@ -340,11 +343,11 @@ Facts change over time.
 - `(Obama, role, President)` is true only for `[2009, 2017]`.
 
 **Modeling Time:**
-1.  **Reification:** Turn the edge into a node.
-    - `(Obama) -> [Term] -> (President)`
-    - `[Term]` has property `start: 2009`, `end: 2017`.
-2.  **Quadruples:** Store `(Subject, Predicate, Object, Timestamp)`.
-3.  **Temporal Embeddings:** $f(h, r, t, \tau)$. The embedding evolves over time.
+1. **Reification:** Turn the edge into a node.
+ - `(Obama) -> [Term] -> (President)`
+ - `[Term]` has property `start: 2009`, `end: 2017`.
+2. **Quadruples:** Store `(Subject, Predicate, Object, Timestamp)`.
+3. **Temporal Embeddings:** `f(h, r, t, \tau)`. The embedding evolves over time.
 
 ## 17. Deep Dive: Quality Assurance in KGs
 
@@ -383,15 +386,15 @@ Enterprises often have data silos.
 **Insight:** Fraudsters often share attributes (same phone, same IP, same device) forming "rings".
 
 **Design:**
-1.  **Ingestion:** Kafka stream of transactions.
-2.  **Graph Update:** Add node `Transaction`. Link to `User`, `Device`, `IP`.
-3.  **Feature Extraction (Real-time):**
-    - Count connected components size.
-    - Cycle detection (User A -> Card B -> User C -> Card A).
-    - PageRank (guilt by association).
-4.  **Inference:** Pass graph features to XGBoost model.
-5.  **Latency:** < 200ms.
-    - Use in-memory graph (RedisGraph or Neo4j Causal Cluster).
+1. **Ingestion:** Kafka stream of transactions.
+2. **Graph Update:** Add node `Transaction`. Link to `User`, `Device`, `IP`.
+3. **Feature Extraction (Real-time):**
+ - Count connected components size.
+ - Cycle detection (User A -> Card B -> User C -> Card A).
+ - PageRank (guilt by association).
+4. **Inference:** Pass graph features to XGBoost model.
+5. **Latency:** < 200ms.
+ - Use in-memory graph (RedisGraph or Neo4j Causal Cluster).
 
 ## 20. Advanced: Neuro-Symbolic AI
 
@@ -403,9 +406,9 @@ Combining the learning capability of Neural Networks with the reasoning of Symbo
 
 **Application:**
 - **Visual Question Answering (VQA):**
-  - Image: "A red cube on a blue cylinder."
-  - Neural: Detect objects (Cube, Cylinder) and attributes (Red, Blue).
-  - Symbolic: Build scene graph. Query `on(Cube, Cylinder)`.
+ - Image: "A red cube on a blue cylinder."
+ - Neural: Detect objects (Cube, Cylinder) and attributes (Red, Blue).
+ - Symbolic: Build scene graph. Query `on(Cube, Cylinder)`.
 
 ## 21. Summary
 
@@ -424,13 +427,13 @@ When should you use a Graph DB over Postgres?
 
 **Relational (SQL):**
 - **Data Model:** Tables, Rows, Foreign Keys.
-- **Join:** Computed at query time. $O(N \log N)$ or $O(N^2)$.
+- **Join:** Computed at query time. O(N \log N) or O(N^2).
 - **Use Case:** Structured data, transactions, aggregations.
 - **Query:** "Find all users who bought item X." (1 Join).
 
 **Graph (Neo4j):**
 - **Data Model:** Nodes, Edges.
-- **Join:** Pre-computed (edges are pointers). $O(1)$ per hop.
+- **Join:** Pre-computed (edges are pointers). O(1) per hop.
 - **Use Case:** Highly connected data, pathfinding.
 - **Query:** "Find all users who bought item X, and their friends who bought item Y." (Multi-hop).
 
@@ -444,42 +447,42 @@ For a 5-hop query on a social network:
 An **Ontology** is the schema of your Knowledge Graph.
 
 **Components:**
-1.  **Classes:** `Person`, `Company`, `City`.
-2.  **Properties:** `name` (string), `age` (int).
-3.  **Relationships:** `WORKS_AT` (Person -> Company).
-4.  **Inheritance:** `Employee` is a subclass of `Person`.
+1. **Classes:** `Person`, `Company`, `City`.
+2. **Properties:** `name` (string), `age` (int).
+3. **Relationships:** `WORKS_AT` (Person -> Company).
+4. **Inheritance:** `Employee` is a subclass of `Person`.
 
 **Design Patterns:**
 - **Reification:** Don't just link `Actor -> Movie`. Link `Actor -> Role -> Movie` to store "character name".
 - **Hierarchy:** Use `subClassOf` sparingly. Too deep hierarchies make inference slow.
 
 **Example (OWL/Turtle):**
-```turtle
+``turtle
 :Person a owl:Class .
 :Employee a owl:Class ;
-    rdfs:subClassOf :Person .
+ rdfs:subClassOf :Person .
 :worksAt a owl:ObjectProperty ;
-    rdfs:domain :Employee ;
-    rdfs:range :Company .
-```
+ rdfs:domain :Employee ;
+ rdfs:range :Company .
+``
 
 ## 24. Deep Dive: Reasoning Engines
 
 Reasoning allows inferring implicit facts.
 
 **Types of Reasoning:**
-1.  **RDFS Reasoning:**
-    - Rule: `Employee subClassOf Person`.
-    - Fact: `John is Employee`.
-    - Inference: `John is Person`.
-2.  **Transitive Reasoning:**
-    - Rule: `partOf` is transitive.
-    - Fact: `Finger partOf Hand`, `Hand partOf Arm`.
-    - Inference: `Finger partOf Arm`.
-3.  **Inverse Reasoning:**
-    - Rule: `parentOf` inverseOf `childOf`.
-    - Fact: `A parentOf B`.
-    - Inference: `B childOf A`.
+1. **RDFS Reasoning:**
+ - Rule: `Employee subClassOf Person`.
+ - Fact: `John is Employee`.
+ - Inference: `John is Person`.
+2. **Transitive Reasoning:**
+ - Rule: `partOf` is transitive.
+ - Fact: `Finger partOf Hand`, `Hand partOf Arm`.
+ - Inference: `Finger partOf Arm`.
+3. **Inverse Reasoning:**
+ - Rule: `parentOf` inverseOf `childOf`.
+ - Fact: `A parentOf B`.
+ - Inference: `B childOf A`.
 
 **Tools:**
 - **Jena Inference Engine** (Java).
@@ -490,10 +493,10 @@ Reasoning allows inferring implicit facts.
 Visualizing 1B nodes is impossible. We need tools to explore subgraphs.
 
 **Tools:**
-1.  **Gephi:** Desktop tool. Good for static analysis of medium graphs (100k nodes).
-2.  **Cytoscape:** Bio-informatics focus. Good for protein interaction networks.
-3.  **Neo4j Bloom:** Interactive exploration. "Show me the shortest path between X and Y."
-4.  **KeyLines / ReGraph:** JavaScript libraries for building web-based graph visualizers.
+1. **Gephi:** Desktop tool. Good for static analysis of medium graphs (100k nodes).
+2. **Cytoscape:** Bio-informatics focus. Good for protein interaction networks.
+3. **Neo4j Bloom:** Interactive exploration. "Show me the shortest path between X and Y."
+4. **KeyLines / ReGraph:** JavaScript libraries for building web-based graph visualizers.
 
 **Visualization Techniques:**
 - **Force-Directed Layout:** Simulates physics (nodes repel, edges attract).
@@ -504,33 +507,33 @@ Visualizing 1B nodes is impossible. We need tools to explore subgraphs.
 
 How to ingest data programmatically.
 
-```python
+``python
 from neo4j import GraphDatabase
 
 class KnowledgeGraphLoader:
-    def __init__(self, uri, user, password):
-        self.driver = GraphDatabase.driver(uri, auth=(user, password))
+ def __init__(self, uri, user, password):
+ self.driver = GraphDatabase.driver(uri, auth=(user, password))
 
-    def close(self):
-        self.driver.close()
+ def close(self):
+ self.driver.close()
 
-    def add_person(self, name, age):
-        with self.driver.session() as session:
-            session.run(
-                "MERGE (p:Person {name: $name}) SET p.age = $age",
-                name=name, age=age
-            )
+ def add_person(self, name, age):
+ with self.driver.session() as session:
+ session.run(
+ "MERGE (p:Person {name: `name}) SET p.age = `age",
+ name=name, age=age
+ )
 
-    def add_friendship(self, name1, name2):
-        with self.driver.session() as session:
-            session.run(
-                """
-                MATCH (a:Person {name: $name1})
-                MATCH (b:Person {name: $name2})
-                MERGE (a)-[:FRIEND]->(b)
-                """,
-                name1=name1, name2=name2
-            )
+ def add_friendship(self, name1, name2):
+ with self.driver.session() as session:
+ session.run(
+ """
+ MATCH (a:Person {name: $name1})
+ MATCH (b:Person {name: $name2})
+ MERGE (a)-[:FRIEND]->(b)
+ """,
+ name1=name1, name2=name2
+ )
 
 # Usage
 loader = KnowledgeGraphLoader("bolt://localhost:7687", "neo4j", "password")
@@ -538,7 +541,7 @@ loader.add_person("Alice", 30)
 loader.add_person("Bob", 32)
 loader.add_friendship("Alice", "Bob")
 loader.close()
-```
+``
 
 ## 27. Summary
 
@@ -566,10 +569,10 @@ To scale to billions of nodes, we must shard the graph.
 
 **Algorithm 2: Fennel (Streaming Partitioning)**
 - Assign nodes to shards as they arrive in a stream.
-- **Heuristic:** Place node $v$ in shard $i$ that maximizes:
-  $$Score(v, i) = |N(v) \cap S_i| - \alpha (|S_i|)^{\gamma}$$
-  - Term 1: Attraction (place where neighbors are).
-  - Term 2: Repulsion (load balancing).
+- **Heuristic:** Place node `v` in shard `i` that maximizes:
+ `Score(v, i) = |N(v) \cap S_i| - \alpha (|S_i|)^{\gamma}`
+ - Term 1: Attraction (place where neighbors are).
+ - Term 2: Repulsion (load balancing).
 - **Pros:** Fast, scalable, works for dynamic graphs.
 
 ## 29. Deep Dive: Graph Query Optimization
@@ -579,9 +582,9 @@ Just like SQL optimizers, Graph DBs need to plan queries.
 **Query:** `MATCH (p:Person)-[:LIVES_IN]->(c:City {name: 'London'})-[:HAS_RESTAURANT]->(r:Restaurant)`
 
 **Execution Plans:**
-1.  **Scan Person:** Find all people, check if they live in London... (Bad, 1B people).
-2.  **Index Scan City:** Find 'London' (1 node). Traverse out to `Person` (8M nodes). Traverse out to `Restaurant` (20k nodes).
-3.  **Bi-directional:** Start at 'London', traverse both ways.
+1. **Scan Person:** Find all people, check if they live in London... (Bad, 1B people).
+2. **Index Scan City:** Find 'London' (1 node). Traverse out to `Person` (8M nodes). Traverse out to `Restaurant` (20k nodes).
+3. **Bi-directional:** Start at 'London', traverse both ways.
 
 **Cost-Based Optimizer:**
 - Uses statistics (node counts, degree distribution).
@@ -595,7 +598,7 @@ Beyond simple queries, we run global algorithms.
 **1. PageRank:**
 - Measure node importance.
 - **Use Case:** Search ranking, finding influential Twitter users.
-- **Update Rule:** $PR(u) = (1-d) + d \sum_{v \in N_{in}(u)} \frac{PR(v)}{OutDegree(v)}$.
+- **Update Rule:** `PR(u) = (1-d) + d \sum_{v \in N_{in}(u)} \frac{PR(v)}{OutDegree(v)}`.
 
 **2. Louvain Modularity (Community Detection):**
 - Detect clusters of densely connected nodes.
@@ -643,14 +646,14 @@ Standard KGs are triples: `(Obama, President, USA)`.
 But reality is complex: `(Obama, President, USA, Start:2009, End:2017, Source:Wikipedia)`.
 
 **Modeling Qualifiers:**
-1.  **Star-Schema (LPG):** Add properties to the edge.
-2.  **N-ary Relations (RDF):** Create an intermediate node.
-    - `(Obama) -> [Presidency] -> (USA)`
-    - `[Presidency] -> (Start: 2009)`
+1. **Star-Schema (LPG):** Add properties to the edge.
+2. **N-ary Relations (RDF):** Create an intermediate node.
+ - `(Obama) -> [Presidency] -> (USA)`
+ - `[Presidency] -> (Start: 2009)`
 
 **StarE (Hyper-Relational Embedding):**
 - Extends TransE/RotatE to handle qualifiers.
-- Embedding depends on $(h, r, t)$ AND $(key_1, value_1), (key_2, value_2)$.
+- Embedding depends on `(h, r, t)` AND `(key_1, value_1), (key_2, value_2)`.
 - **Benefit:** Better link prediction accuracy by using context.
 
 ## 34. Deep Dive: Inductive vs. Transductive Learning
@@ -661,7 +664,7 @@ But reality is complex: `(Obama, President, USA, Start:2009, End:2017, Source:Wi
 
 **Inductive (GraphSAGE, GAT):**
 - Learn a **function** to generate embeddings from features.
-- $f(features, neighbors)$.
+- `f(features, neighbors)`.
 - **Benefit:** Can handle dynamic graphs (new nodes arriving constantly) without retraining.
 
 ## 35. Case Study: Amazon Product Graph
@@ -679,11 +682,11 @@ But reality is complex: `(Obama, President, USA, Start:2009, End:2017, Source:Wi
 ## 36. Future Trends: Large Knowledge Models (LKMs)
 
 **KG + LLM Convergence:**
-1.  **KG-Enhanced LLM:** RAG (Retrieval Augmented Generation).
-2.  **LLM-Enhanced KG:** Use LLM to clean, populate, and reason over KG.
-3.  **LKM (Large Knowledge Model):** A single transformer trained on both Text (Common Crawl) and Subgraphs (Wikidata).
-    - Can output text OR graph structures.
-    - "Draw the family tree of the Targaryens" -> Outputs JSON graph.
+1. **KG-Enhanced LLM:** RAG (Retrieval Augmented Generation).
+2. **LLM-Enhanced KG:** Use LLM to clean, populate, and reason over KG.
+3. **LKM (Large Knowledge Model):** A single transformer trained on both Text (Common Crawl) and Subgraphs (Wikidata).
+ - Can output text OR graph structures.
+ - "Draw the family tree of the Targaryens" -> Outputs JSON graph.
 
 - "Draw the family tree of the Targaryens" -> Outputs JSON graph.
 
@@ -707,11 +710,11 @@ But reality is complex: `(Obama, President, USA, Start:2009, End:2017, Source:Wi
 
 ## 38. Further Reading
 
-1.  **"Knowledge Graphs" (Hogan et al., 2021):** Comprehensive survey covering all aspects.
-2.  **"Translating Embeddings for Modeling Multi-relational Data" (Bordes et al., 2013):** The TransE paper.
-3.  **"Inductive Representation Learning on Large Graphs" (Hamilton et al., 2017):** The GraphSAGE paper.
-4.  **"Google's Knowledge Graph: Serving Billions of Queries" (Singhal, 2012):** The original blog post.
-5.  **"PinSage: Graph Convolutional Neural Networks for Web-Scale Recommender Systems" (Ying et al., 2018):** Pinterest's production GNN.
+1. **"Knowledge Graphs" (Hogan et al., 2021):** Comprehensive survey covering all aspects.
+2. **"Translating Embeddings for Modeling Multi-relational Data" (Bordes et al., 2013):** The TransE paper.
+3. **"Inductive Representation Learning on Large Graphs" (Hamilton et al., 2017):** The GraphSAGE paper.
+4. **"Google's Knowledge Graph: Serving Billions of Queries" (Singhal, 2012):** The original blog post.
+5. **"PinSage: Graph Convolutional Neural Networks for Web-Scale Recommender Systems" (Ying et al., 2018):** Pinterest's production GNN.
 
 - **"PinSage: Graph Convolutional Neural Networks for Web-Scale Recommender Systems" (Ying et al., 2018):** Pinterest's production GNN.
 

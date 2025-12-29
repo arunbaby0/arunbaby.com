@@ -1,19 +1,19 @@
 ---
 title: "UI Automation Agents"
 day: 23
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - ui-automation
-  - rpa
-  - screen-reading
-  - selenium
-  - playwright
-difficulty: Medium
 related_dsa_day: 23
 related_ml_day: 23
 related_speech_day: 23
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - ui-automation
+ - rpa
+ - screen-reading
+ - selenium
+ - playwright
+difficulty: Medium
 ---
 
 **"The ultimate API: The User Interface."**
@@ -45,7 +45,7 @@ We take a screenshot (JPEG). We send it to a Multimodal LLM (GPT-4o / Claude 3.5
  * **Universal:** Works on Web, Desktop (Windows/Mac/Linux), Games, and even remote video feeds (Citrix/VNC).
  * **Robust:** It sees what the user sees. If a CSS bug makes a button invisible, the agent knows it's invisible.
 * **Cons:**
- * **Expensive:** High-res screenshots cost many tokens ($0.01 per step). A 50-step workflow costs $0.50.
+ * **Expensive:** High-res screenshots cost many tokens (`0.01 per step). A 50-step workflow costs `0.50.
  * **Slow:** Vision processing takes 2-3 seconds.
 * **Coordinate Hallucination:** As discussed in **Screenshot Understanding Agents**, models struggle to give exact `(x,y)` coordinates for clicks.
 
@@ -56,12 +56,12 @@ Every modern Operating System and Web Browser maintains a hidden tree structure 
 
 **The Logic:**
 Instead of pixels, we scrape this tree and feed a text representation to the LLM.
-```json
+``json
 [
  {"id": 12, "role": "button", "name": "Submit", "bbox": [100, 200, 150, 230]},
  {"id": 13, "role": "input", "label": "Email", "value": ""}
 ]
-```
+``
 
 **Pros:**
 * **Precision:** You get the exact mathematical coordinates. There is zero "Hallucination" of where the button is.
@@ -253,11 +253,11 @@ What happens when the agent clicks "Submit" and nothing happens?
 
 Running a screen agent is expensive. Let's look at the math for a search task on Amazon (approx. 10 steps):
 * **Tokens per step (GPT-4o + Vision):** ~2,000 tokens.
-* **Input Cost ($2.50 / 1M tokens):** $0.005 per step.
+* **Input Cost (`2.50 / 1M tokens):** `0.005 per step.
 * **Output Cost ($10 / 1M tokens):** Negligible.
 * **Total for 10 steps:** $0.05.
 
-While $0.05 sounds small, if you run this agent 100 times a day, you are spending $5.00/day per user.
+While `0.05 sounds small, if you run this agent 100 times a day, you are spending `5.00/day per user.
 * **Optimization:** Use the **Hybrid Tree Approach** (Section 2.2). Sending the pruned text of the DOM costs only ~500 tokens ($0.001 per step). Use vision *only* when the text navigation fails.
 
 ---

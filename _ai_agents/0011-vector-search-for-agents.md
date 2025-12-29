@@ -3,7 +3,7 @@ title: "Vector Search for Agents"
 day: 11
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
   - vector-search
   - hnsw
@@ -54,8 +54,8 @@ In this simplified "Semantic Space":
 * **Woman** might be at `[0.01, 0.01]` (Not Royal, Very Female).
 
 The magic of embeddings is that **Math becomes Meaning**. By performing vector arithmetic, we can discover semantic truths that we never explicitly programmed.
-$$ \vec{\text{King}} - \vec{\text{Man}} + \vec{\text{Woman}} \approx \vec{\text{Queen}} $$
-$$ [0.99, 0.99] - [0.01, 0.99] + [0.01, 0.01] = [0.99, 0.01] $$
+` \vec{\text{King}} - \vec{\text{Man}} + \vec{\text{Woman}} \approx \vec{\text{Queen}} `
+` [0.99, 0.99] - [0.01, 0.99] + [0.01, 0.01] = [0.99, 0.01] `
 
 Modern Embedding Models (like OpenAI's `text-embedding-3-small`, Cohere's `embed-v3`, or the open-source `bge-m3`) don't use 2 dimensions. They use **1,536** (OpenAI) or **3,072** (Claude) dimensions. They map text into a hypersphere where "meaning" is preserved as geometric distance.
 
@@ -65,16 +65,16 @@ In this 1,536-dimensional space, concepts like "Syntax error", "Bug", and "Stack
 How do we measure if two thoughts are "close"? The choice of distance metric fundamentally alters how your agent perceives relevance.
 
 1. **Euclidean Distance (L2):**
- * *Formula:* $d(A, B) = \sqrt{\sum (A_i - B_i)^2}$
+ * *Formula:* `d(A, B) = \sqrt{\sum (A_i - B_i)^2}`
  * *Concept:* The straight-line distance between two points in space.
  * *Usage:* Rarely used for text. Euclidean distance is sensitive to the **Magnitude** of the vector. In some embedding models, a longer text produces a vector with a larger magnitude and thus drifts "farther away" from the origin. L2 distance would say a "Long Article about Dogs" is very far from a "Short tweet about Dogs" simply because of the length difference, even if they discuss the exact same topic.
 2. **Dot Product:**
- * *Formula:* $A \cdot B = \sum A_i B_i$
+ * *Formula:* `A \cdot B = \sum A_i B_i`
  * *Concept:* A projection of one vector onto another.
  * *Usage:* Valid *only* if vectors are normalized (magnitude of 1). If vectors are unnormalized, the Dot Product favors larger vectors. This is common in "Inner Product" search where the magnitude might represent the "Importance" or "Quality" of the document.
  * *Performance:* Highly optimized in hardware (Matrix Multiplication). This is the fastest calculation.
 3. **Cosine Similarity:**
- * *Formula:* $\frac{A \cdot B}{||A|| \cdot ||B||}$
+ * *Formula:* `\frac{A \cdot B}{||A|| \cdot ||B||}`
  * *Concept:* The cosine of the **angle** between two vectors. It completely ignores magnitude.
  * *Usage:* The industry standard for text retrieval. It asks: "Are these two vectors pointing in the same direction?"
  * *Why:* A document repeated twice ("Hello. Hello.") has the exact same direction as "Hello." (Magnitude doubles, angle stays same). Since we care about the *topic*, not the word count, Cosine is king.
@@ -101,8 +101,8 @@ If you have 1 million documents, and you want to find the nearest neighbor to a 
 6. Sort the list of 1,000,000 scores.
 7. Take the top 5.
 
-This is $O(N \cdot D)$, where $N$ is documents and $D$ is dimensions.
-With $N=1,000,000$ and $D=1,536$, that is roughly 1.5 billion floating point operations per query. On a fast CPU, this takes seconds. For an agent that needs to "think" in milliseconds (and might perform 50 searches in a loop to plan a trip), this is unacceptable.
+This is O(N \cdot D), where `N` is documents and `D` is dimensions.
+With `N=1,000,000` and `D=1,536`, that is roughly 1.5 billion floating point operations per query. On a fast CPU, this takes seconds. For an agent that needs to "think" in milliseconds (and might perform 50 searches in a loop to plan a trip), this is unacceptable.
 
 We need a way to find the nearest neighbors *without* looking at everyone. This is the **Nearest Neighbor Search (NNS)** problem. Since exact search is too slow, we accept **Approximate Nearest Neighbors (ANN)**. We trade 1-2% accuracy (Recall) for 100x speed.
 
@@ -120,7 +120,7 @@ The core idea is based on the "Six Degrees of Kevin Bacon" phenomenon (or Milgra
 
 **The Structure:**
 HNSW organizes vectors into a multi-layered graph (Skip List on steroids).
-* **Layer 0 (The Ground Truth):** Every vector is present. They are connected to their $M$ nearest semantic neighbors. This is a dense, messy web.
+* **Layer 0 (The Ground Truth):** Every vector is present. They are connected to their `M` nearest semantic neighbors. This is a dense, messy web.
 * **Layer 1 (The Express):** We sample 10% of the vectors. We connect them. This layer allows for medium-distance jumps.
 * **Layer 2 (The Super Express):** We sample 1% of the vectors. Long-range connections only.
 * **Layer 3 (The Stratosphere):** Maybe just 5-10 entry points (the "Hubs" of the data).
@@ -151,7 +151,7 @@ Imagine scattering 1,000 points on a map. Draw borders between them such that ev
  * *Speedup:* 1000x faster than brute force.
 
 * **The Edge Problem:** What if the Query lands on the very edge of Cluster #42, but the true nearest neighbor is just across the border in Cluster #43?
-* **Solution (`nprobe`):** We simply check the top $n$ closest clusters. `nprobe=10` is typical.
+* **Solution (`nprobe`):** We simply check the top `n` closest clusters. `nprobe=10` is typical.
 
 ### 4.3 Quantization (Compression)
 For massive datasets (1B+ vectors), RAM is expensive.
@@ -207,14 +207,14 @@ To fix this, we combine the old world (Keyword Search / BM25) with the new world
 **The Hybrid Algorithm (RRF):**
 We run both searches in parallel and fuse the ranked lists. We don't just average the scores (because Cosine Score is 0.8 and BM25 Score might be 15.2 - they are not normalized). We use **Rank-Based Fusion**.
 
-$$ \text{RRF\_Score}(d) = \sum_{r \in \text{Rankings}} \frac{1}{k + \text{rank}(d, r)} $$
-Where $k$ is a constant (usually 60). This formula says: "If a document appears at the top of *either* list, it's good. If it appears at the top of *both*, it's amazing."
+` \text{RRF\_Score}(d) = \sum_{r \in \text{Rankings}} \frac{1}{k + \text{rank}(d, r)} `
+Where `k` is a constant (usually 60). This formula says: "If a document appears at the top of *either* list, it's good. If it appears at the top of *both*, it's amazing."
 
 * **Example:**
  * Document A: Rank 1 in Vector, Rank 50 in Keyword.
- * Score = $1/(60+1) + 1/(60+50) = 0.016 + 0.009 = 0.025$.
+ * Score = `1/(60+1) + 1/(60+50) = 0.016 + 0.009 = 0.025`.
  * Document B: Rank 10 in Vector, Rank 10 in Keyword.
- * Score = $1/(60+10) + 1/(60+10) = 0.014 + 0.014 = 0.028$.
+ * Score = `1/(60+10) + 1/(60+10) = 0.014 + 0.014 = 0.028`.
  * **Winner:** Document B is boosted because it is "Pretty Good" in both, whereas A was only good in one (Semantically relevant but missing the keyword).
 
 **Agent Strategy:** Always use Hybrid Search for agents that deal with identifiers (SKUs, IDs, Names). Use pure Semantic Search for agents dealing with abstract exploration ("Summarize the vibe of the meeting").
@@ -263,13 +263,13 @@ Agents default to being helpful. If you ask a RAG agent "Why is the moon made of
 
 * **Solution:** Set a `similarity_threshold` (e.g., 0.75).
 * **Logic:**
- ```python
+ ``python
  matches = index.query(vector, top_k=5)
  valid_matches = [m for m in matches if m.score > 0.75]
 
  if not valid_matches:
  return "I checked my memory but found no relevant information."
- ```
+ ``
 This creates a **Fall-Back Mechanism**. The agent knows when it doesn't know.
 
 ### 8.3 The "Lost in the Middle" Re-Ranking
@@ -286,10 +286,10 @@ However, LLMs pay attention to the **End** of the context (Recency Bias) and the
 How much does this cost?
 
 * **Storage:** 1 Million vectors (1536 dim, float32)
- * $1536 \times 4 \text{ bytes} = 6 \text{ KB per vector}$.
- * $1M \times 6KB \approx 6 \text{ GB}$ RAM.
+ * `1536 \times 4 \text{ bytes} = 6 \text{ KB per vector}`.
+ * `1M \times 6KB \approx 6 \text{ GB}` RAM.
  * *Result:* This fits on a standard server ($50/mo). Use in-memory indices for speed.
- * 1 Billion vectors = 6 TB RAM. That requires a distributed cluster ($$$) or Disk-based Indexing (like LanceDB) with SSDs.
+ * 1 Billion vectors = 6 TB RAM. That requires a distributed cluster (`$) or Disk-based Indexing (like LanceDB) with SSDs.
 * **Compute (Embedding):**
  * OpenAI `text-embedding-3-small`: ~$0.02 / 1M tokens.
  * To embed a 10M word corpus (approx 13M tokens): $0.26. (Negligible).
@@ -306,7 +306,7 @@ How much does this cost?
 
 Let's implement a toy IVF index and RRF fusion to solidify these concepts.
 
-```python
+``python
 import numpy as np
 from sklearn.cluster import KMeans
 from collections import defaultdict
@@ -389,7 +389,7 @@ final_ranking = rrf(vec_hits, kw_hits)
 print(f"RRF Ranking: {final_ranking}")
 # Doc 5 likely wins because it is rank 2 in vec and rank 1 in kw.
 # Doc 1 is rank 1 in vec and rank 3 in kw.
-```
+``
 
 ---
 

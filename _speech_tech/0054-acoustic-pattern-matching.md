@@ -1,31 +1,31 @@
 ---
 title: "Acoustic Pattern Matching"
 day: 54
-collection: speech_tech
-categories:
-  - speech-tech
-tags:
-  - acoustic
-  - pattern-matching
-  - keyword-spotting
-  - dtw
-  - embeddings
-  - production
-difficulty: Hard
-subdomain: "Audio Retrieval"
-tech_stack:
-  - Python
-  - librosa
-  - PyTorch
-scale: "Matching queries across 1M+ audio clips with low latency"
-companies:
-  - Google
-  - Amazon
-  - Apple
-  - Spotify
 related_dsa_day: 54
 related_ml_day: 54
 related_agents_day: 54
+collection: speech_tech
+categories:
+ - speech-tech
+tags:
+ - acoustic
+ - pattern-matching
+ - keyword-spotting
+ - dtw
+ - embeddings
+ - production
+difficulty: Hard
+subdomain: "Audio Retrieval"
+tech_stack:
+ - Python
+ - librosa
+ - PyTorch
+scale: "Matching queries across 1M+ audio clips with low latency"
+companies:
+ - Google
+ - Amazon
+ - Apple
+ - Spotify
 ---
 
 **"Acoustic pattern matching is search—except your ‘strings’ are waveforms and your distance metric is learned."**
@@ -149,21 +149,21 @@ It helps to separate two archetypes:
 
 ### 3.1 Offline corpus search (query vs an archive)
 
-```
+``
 Query audio
-   |
-   v
+ |
+ v
 Feature/Embedding extraction
-   |
-   v
+ |
+ v
 Candidate retrieval (ANN / coarse index)
-   |
-   v
+ |
+ v
 Verification + localization (alignment / rescoring)
-   |
-   v
+ |
+ v
 Result: (clip_id, span, score, evidence)
-```
+``
 
 Key knobs:
 - **K** (how many candidates you refine)
@@ -172,21 +172,21 @@ Key knobs:
 
 ### 3.2 Streaming detection (continuous audio)
 
-```
+``
 Mic stream
-  |
-  v
+ |
+ v
 Framing (10–20ms) + log-mel
-  |
-  v
+ |
+ v
 Lightweight gate (VAD + tiny detector)
-  |
-  v
+ |
+ v
 Trigger + verify (optional)
-  |
-  v
+ |
+ v
 Action + telemetry (privacy-safe)
-```
+``
 
 Streaming constraints force discipline:
 - bounded runtime per second of audio
@@ -198,29 +198,29 @@ If you want this to run reliably, the “matching model” is only one component
 A practical production system usually includes:
 
 - **Frontend/feature service**
-  - consistent resampling, framing, normalization
-  - versioned configs (treat as a release artifact)
+ - consistent resampling, framing, normalization
+ - versioned configs (treat as a release artifact)
 
 - **Embedding service (optional)**
-  - batch embedding jobs for offline corpora
-  - streaming embedding for live audio (on-device or server-side)
+ - batch embedding jobs for offline corpora
+ - streaming embedding for live audio (on-device or server-side)
 
 - **Index store**
-  - ANN index + metadata store (clip_id → timestamps, segment labels, tenant ACLs)
-  - sharding by tenant/time to control blast radius
+ - ANN index + metadata store (clip_id → timestamps, segment labels, tenant ACLs)
+ - sharding by tenant/time to control blast radius
 
 - **Verifier**
-  - alignment scorer (DTW) or learned verifier
-  - returns localization spans + evidence
+ - alignment scorer (DTW) or learned verifier
+ - returns localization spans + evidence
 
 - **Policy + thresholding**
-  - per-segment thresholds (device/route/codec)
-  - warn/block/fallback behaviors (especially for streaming triggers)
+ - per-segment thresholds (device/route/codec)
+ - warn/block/fallback behaviors (especially for streaming triggers)
 
 - **Observability + RCA tooling**
-  - score distribution dashboards
-  - false alarm sampling (privacy-safe)
-  - change-log correlation (frontend/model/index updates)
+ - score distribution dashboards
+ - false alarm sampling (privacy-safe)
+ - change-log correlation (frontend/model/index updates)
 
 If you skip these, you often end up with a “model that works in a notebook” but is not operable in a product.
 
@@ -252,12 +252,12 @@ DTW wins when:
 Two common design patterns:
 
 - **Segment embeddings**: one vector per window/clip (fast retrieval).
-  - Pros: ANN search scales well.
-  - Cons: localization requires sliding windows or second-stage scoring.
+ - Pros: ANN search scales well.
+ - Cons: localization requires sliding windows or second-stage scoring.
 
 - **Frame embeddings**: one vector per frame (alignment still needed).
-  - Pros: great for localization and phonetic-ish matching.
-  - Cons: heavier compute and storage.
+ - Pros: great for localization and phonetic-ish matching.
+ - Cons: heavier compute and storage.
 
 Many mature systems do:
 > segment-level retrieval → frame-level or alignment refinement.
@@ -279,12 +279,12 @@ A common progression:
 Two different product modes:
 
 - **KWS (fixed set of keywords)**
-  - you can train a classifier specifically for the target keywords
-  - usually the best latency/accuracy/cost trade-off for wake words
+ - you can train a classifier specifically for the target keywords
+ - usually the best latency/accuracy/cost trade-off for wake words
 
 - **QbE (user provides an example query)**
-  - you can’t pretrain on every possible query
-  - embeddings + alignment methods become attractive
+ - you can’t pretrain on every possible query
+ - embeddings + alignment methods become attractive
 
 If your problem statement is “match this arbitrary query sound”, you’re in QbE land, and your system will look more like retrieval than like classification.
 
@@ -307,20 +307,20 @@ The goal here is to show the primitives. In production, you’ll optimize and ba
 
 ### 5.1 Log-mel extraction (strong default)
 
-```python
+``python
 import numpy as np
 import librosa
 
 
 def log_mel(x: np.ndarray, sr: int, n_mels: int = 64) -> np.ndarray:
-    """
-    Returns log-mel spectrogram with shape (n_mels, frames).
-    Uses a 10ms hop by default.
-    """
-    hop = int(0.01 * sr)
-    S = librosa.feature.melspectrogram(y=x, sr=sr, n_mels=n_mels, hop_length=hop)
-    return librosa.power_to_db(S, ref=np.max)
-```
+ """
+ Returns log-mel spectrogram with shape (n_mels, frames).
+ Uses a 10ms hop by default.
+ """
+ hop = int(0.01 * sr)
+ S = librosa.feature.melspectrogram(y=x, sr=sr, n_mels=n_mels, hop_length=hop)
+ return librosa.power_to_db(S, ref=np.max)
+``
 
 Production notes:
 - normalize consistently (per-utterance vs global mean/var)
@@ -328,19 +328,19 @@ Production notes:
 
 ### 5.2 DTW distance baseline
 
-```python
+``python
 import librosa
 import numpy as np
 
 
 def dtw_distance(q: np.ndarray, x: np.ndarray) -> float:
-    """
-    DTW distance between feature sequences q and x (shape: D x T).
-    Lower is better.
-    """
-    D, _ = librosa.sequence.dtw(X=q, Y=x, metric="euclidean")
-    return float(D[-1, -1])
-```
+ """
+ DTW distance between feature sequences q and x (shape: D x T).
+ Lower is better.
+ """
+ D, _ = librosa.sequence.dtw(X=q, Y=x, metric="euclidean")
+ return float(D[-1, -1])
+``
 
 Important: unconstrained DTW can be expensive.
 In production you typically add:
@@ -648,21 +648,21 @@ Mitigations:
 When matching quality regresses, triage in this order:
 
 1. **Scope**
-   - is it global or only certain segments (device, route, codec)?
-   - is it only streaming or also offline?
+ - is it global or only certain segments (device, route, codec)?
+ - is it only streaming or also offline?
 
 2. **Frontend**
-   - did sample rate distribution change?
-   - did VAD/AGC config change?
-   - did codec/packet loss metrics change?
+ - did sample rate distribution change?
+ - did VAD/AGC config change?
+ - did codec/packet loss metrics change?
 
 3. **Model/index**
-   - did the embedding model version change?
-   - did the index rebuild happen (or fail partially)?
-   - did K or ANN parameters change (speed vs recall trade-off)?
+ - did the embedding model version change?
+ - did the index rebuild happen (or fail partially)?
+ - did K or ANN parameters change (speed vs recall trade-off)?
 
 4. **Thresholds**
-   - did any thresholds change (or did traffic shift so that a fixed threshold is now wrong)?
+ - did any thresholds change (or did traffic shift so that a fixed threshold is now wrong)?
 
 This order is practical because frontend and segmentation changes are the most common root causes.
 

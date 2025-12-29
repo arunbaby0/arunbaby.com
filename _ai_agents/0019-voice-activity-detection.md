@@ -1,20 +1,20 @@
 ---
 title: "Voice Activity Detection (VAD)"
 day: 19
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - vad
-  - silero
-  - audio-processing
-  - webrtc
-  - turn-taking
-  - end-of-speech
-  - zero-crossing-rate
 related_dsa_day: 19
 related_ml_day: 19
 related_speech_day: 19
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - vad
+ - silero
+ - audio-processing
+ - webrtc
+ - turn-taking
+ - end-of-speech
+ - zero-crossing-rate
 difficulty: Medium
 ---
 
@@ -133,7 +133,7 @@ This allows for **"Pacing"**. The agent waits when you are thinking, and replies
 
 A robust Python wrapper for processing audio chunks.
 
-```python
+``python
 import torch
 import numpy as np
 
@@ -186,7 +186,7 @@ class VADEngine:
  self.silence_counter = 0 # Reset if speech returns
 
  return "NONE"
-```
+``
 
 ---
 

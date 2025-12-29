@@ -1,19 +1,19 @@
 ---
 title: "Screenshot Understanding Agents"
 day: 22
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - screenshot-understanding
-  - mllm
-  - vision-agents
-  - document-ai
-  - ocr
-difficulty: Medium
 related_dsa_day: 22
 related_ml_day: 22
 related_speech_day: 22
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - screenshot-understanding
+ - mllm
+ - vision-agents
+ - document-ai
+ - ocr
+difficulty: Medium
 ---
 
 **"Giving agents the eyes to read the screen as a human does."**
@@ -98,7 +98,7 @@ Imagine you have a 1000x1000 screenshot.
 4. **Final Input:** Concatenate all of them. The LLM now has 576 tokens for the "Big Picture" and 2304 tokens for the "Details".
 
 **Implementation Pseudocode:**
-```python
+``python
 def process_high_res(image):
  thumbnail = resize(image, (336, 336))
  tiles = split_into_grid(image, grid=(2, 2))
@@ -107,7 +107,7 @@ def process_high_res(image):
  # Send all to LLM
  prompt = "Look at these views: [Global] " + thumbnail + " [Details] " + encoded_tiles
  return llm.generate(prompt)
-```
+``
 
 **The Token Explosion Penalty:**
 Junior Engineers often wonder why their API bill is so high when using vision.
@@ -123,7 +123,7 @@ What can these MLLM agents actually *do* that simpler models couldn't?
 
 ### 4.1 OCR-Free Reading (Document Intelligence)
 Traditional OCR (Tesseract) gives you a "Bag of Words". It loses structure.
-* *Tesseract Output:* "Invoice Date Total 12/01/2023 $500". (Is $500 the total or a line item? Is the date the invoice date or due date?).
+* *Tesseract Output:* "Invoice Date Total 12/01/2023 `500". (Is `500 the total or a line item? Is the date the invoice date or due date?).
 * *MLLM Output:* "This is a table. Row 1 matches column 'Total' with '$500'."
 
 **The Spatial-Semantic Bridge:**
@@ -159,7 +159,7 @@ Vision models hallucinate differently than text models. You must build defenses 
  * *Cause:* Statistical co-occurrence. In the training data, "Bedrooms" almost always have "Pillows". If you show a blurry hospital bed without a pillow, the model might "hallucinate" a pillow because its priors are so strong.
  * *Defense:* **Ask for Coordinates.** Don't just ask "Is there a pillow?". Ask "Draw a bounding box around the pillow." If the model returns a box that is just empty space, you know it's hallucinating.
 2. **OCR Hallucination (Character Error):** Misreading blurry text or confusing similar glyphs.
- * Common errors: Reading `0` as `O`, `l` as `1`, or skipping decimal points (reading `$50.00` as `$5000`).
+ * Common errors: Reading `0` as `O`, `l` as `1`, or skipping decimal points (reading `50.00` as `5000`).
  * *Defense:* **Self-Correction**. Loop the vision call: "I see you extracted '$5000'. Zoom into the price area and check if there's a decimal point you missed."
 3. **Spatial/Relative Blindness:** Confusing "Left" and "Right" or "Behind" and "In front of".
  * *Why:* Data augmentation often involves random horizontal flipping during training. This inadvertently tells the model that "left/right" doesn't matter for object recognition.
@@ -213,7 +213,7 @@ Let's look at a concrete engineering task: An agent that audits expense reports.
 3. **Comparison:** The agent compares this to the Excel data: `Starbucks | $12.50 | 2023-11-20`.
 4. **Discrepancy Check:** The agent notices a $0.05 difference.
 5. **Evidence Extraction:** It uses **Visual Grounding** (Grounding DINO) to crop the "Total" area of the receipt.
-6. **Self-Correction:** It sends the crop back to the MLLM: "Look closely at this specific crop. Is the number $12.45 or $12.50?"
+6. **Self-Correction:** It sends the crop back to the MLLM: "Look closely at this specific crop. Is the number `12.45 or `12.50?"
 7. **Final Action:** The MLLM confirms $12.45. The agent flags the row for human review.
 
 This level of automation was impossible with "Blind" LLMs. By adding vision, we've given the agent the ability to interact with the messy, physical world through pixels.

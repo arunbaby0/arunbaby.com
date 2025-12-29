@@ -1,24 +1,24 @@
 ---
 title: "Wildcard Matching"
 day: 54
+related_ml_day: 54
+related_speech_day: 54
+related_agents_day: 54
 collection: dsa
 categories:
-  - dsa
+ - dsa
 tags:
-  - dynamic-programming
-  - string
-  - pattern-matching
-  - hard
-  - edge-cases
-  - state-machine
+ - dynamic-programming
+ - string
+ - pattern-matching
+ - hard
+ - edge-cases
+ - state-machine
 difficulty: Hard
 subdomain: "String DP"
 tech_stack: Python
 scale: "O(MN) DP, optimize to O(N) space"
 companies: Google, Meta, Amazon, Microsoft
-related_ml_day: 54
-related_speech_day: 54
-related_agents_day: 54
 ---
 
 **"Wildcard matching is more than a string puzzle—it is the foundation of every file system glob, every firewall rule, and every log-routing engine you use today."**
@@ -34,10 +34,10 @@ The matching must cover the entire input string (not just a substring).
 
 ### 1.1 Formal Definition
 Given:
-- $S = s_1 s_2 \dots s_m$
-- $P = p_1 p_2 \dots p_n$
+- `S = s_1 s_2 \dots s_m`
+- `P = p_1 p_2 \dots p_n`
 
-Determine if $S$ matches $P$.
+Determine if `S` matches `P`.
 
 **Example 1**
 - Input: `s = "aa"`, `p = "a"`
@@ -77,7 +77,7 @@ The difficulty lies entirely in the `*` operator.
 ### 2.3 Visualizing the State Machine
 Imagine a state machine where each character in the pattern is a state.
 
-```text
+``text
 Pattern: a * b
 
 State 0: Start
@@ -90,7 +90,7 @@ Transitions:
 (S1) --empty--> (S2)
 (S2) --any char--> (S2)
 (S2) --'b'--> (S3)
-```
+``
 
 In the state machine above, when we are in State 2, we have a choice: stay in State 2 (consuming a character) or move to State 3 if the current character is 'b'. This choice is what leads to the need for Dynamic Programming or backtracking.
 
@@ -111,23 +111,23 @@ A natural way to solve this is to define a recursive function `isMatch(s_idx, p_
 1. If both indices reach the end, return `True`.
 2. If the pattern ends but the string doesn't, return `False`.
 3. If the string ends but the pattern remains:
-   - If the remaining pattern characters are all `*`, return `True` (as `*` can match empty).
-   - Otherwise, return `False`.
+ - If the remaining pattern characters are all `*`, return `True` (as `*` can match empty).
+ - Otherwise, return `False`.
 4. If `p[p_idx]` is a literal or `?`:
-   - Match if `s[s_idx] == p[p_idx]` or `p[p_idx] == '?'`.
-   - Recurse to `isMatch(s_idx + 1, p_idx + 1)`.
+ - Match if `s[s_idx] == p[p_idx]` or `p[p_idx] == '?'`.
+ - Recurse to `isMatch(s_idx + 1, p_idx + 1)`.
 5. If `p[p_idx]` is `*`:
-   - Choice A: `*` matches empty. Recurse to `isMatch(s_idx, p_idx + 1)`.
-   - Choice B: `*` matches the current character and potentially more. Recurse to `isMatch(s_idx + 1, p_idx)`.
+ - Choice A: `*` matches empty. Recurse to `isMatch(s_idx, p_idx + 1)`.
+ - Choice B: `*` matches the current character and potentially more. Recurse to `isMatch(s_idx + 1, p_idx)`.
 
 ### 3.2 Complexity Analysis
-- **Time**: $O(2^{M+N})$ in the worst case (e.g., `s = "aaaaa"`, `p = "*****b"`). Every `*` creates two branches.
-- **Space**: $O(M+N)$ for the recursion stack.
+- **Time**: O(2^{M+N}) in the worst case (e.g., `s = "aaaaa"`, `p = "*****b"`). Every `*` creates two branches.
+- **Space**: O(M+N) for the recursion stack.
 
 ### 3.3 Adding Memoization (Top-Down DP)
-To optimize, we cache the results of `(s_idx, p_idx)`. There are only $M \times N$ possible states.
-- **Time**: $O(M \times N)$.
-- **Space**: $O(M \times N)$.
+To optimize, we cache the results of `(s_idx, p_idx)`. There are only `M \times N` possible states.
+- **Time**: O(M \times N).
+- **Space**: O(M \times N).
 
 ---
 
@@ -142,21 +142,21 @@ The table size will be `(len(s) + 1) x (len(p) + 1)`.
 
 ### 4.2 Base Cases
 1. `dp[0][0] = True`: An empty string matches an empty pattern.
-2. `dp[i][0] = False` for $i > 0$: A non-empty string cannot match an empty pattern.
+2. `dp[i][0] = False` for `i > 0`: A non-empty string cannot match an empty pattern.
 3. `dp[0][j]`: An empty string can only match a pattern if it consists entirely of `*`.
-   - `dp[0][j] = dp[0][j-1]` if `p[j-1] == '*'`.
+ - `dp[0][j] = dp[0][j-1]` if `p[j-1] == '*'`.
 
 ### 4.3 Transitions
 For `dp[i][j]`, check `p[j-1]`:
 
 1. **If `p[j-1]` is a literal or `?`**:
-   - We match if the current characters match AND the previous prefixes matched.
-   - `dp[i][j] = dp[i-1][j-1]` and (`p[j-1] == s[i-1]` or `p[j-1] == '?'`)
+ - We match if the current characters match AND the previous prefixes matched.
+ - `dp[i][j] = dp[i-1][j-1]` and (`p[j-1] == s[i-1]` or `p[j-1] == '?'`)
 
 2. **If `p[j-1]` is `*`**:
-   - `*` acts as empty: `dp[i][j] = dp[i][j-1]`
-   - `*` acts as one or more characters: `dp[i][j] = dp[i-1][j]`
-   - Combining them: `dp[i][j] = dp[i][j-1] or dp[i-1][j]`
+ - `*` acts as empty: `dp[i][j] = dp[i][j-1]`
+ - `*` acts as one or more characters: `dp[i][j] = dp[i-1][j]`
+ - Combining them: `dp[i][j] = dp[i][j-1] or dp[i-1][j]`
 
 ### 4.4 ASCII Visualization of DP Table
 Let's match `s = "adceb"`, `p = "*a*b"`.
@@ -185,7 +185,7 @@ Looking at the transitions:
 - `dp[i][j]` depends on `dp[i-1][j-1]`, `dp[i][j-1]`, and `dp[i-1][j]`.
 - This means we only need the **previous row** and the **current row**.
 
-We can reduce space to $O(N)$ by using a single array of size $N+1$. However, we must be careful with the "diagonal" dependency (`dp[i-1][j-1]`). We usually store the previous row's value in a temporary variable before overwriting.
+We can reduce space to O(N) by using a single array of size `N+1`. However, we must be careful with the "diagonal" dependency (`dp[i-1][j-1]`). We usually store the previous row's value in a temporary variable before overwriting.
 
 ---
 
@@ -196,7 +196,7 @@ In automata theory, a wildcard pattern can be represented as a **Non-determinist
 - A **Non-deterministic** machine can be in multiple states at once. When we see `*`, the machine "splits" into two: one state remains at the `*` loop, and another moves to the next character in the pattern.
 - A **Deterministic Finite Automaton (DFA)** can only be in one state at any time.
 
-Any NFA can be converted into a DFA using the **powerset construction**. However, the number of states in the DFA can be exponential relative to the NFA ($2^N$). For wildcard matching, the DFA is usually manageable, but the DP approach effectively simulates the NFA in $O(MN)$ time.
+Any NFA can be converted into a DFA using the **powerset construction**. However, the number of states in the DFA can be exponential relative to the NFA (`2^N`). For wildcard matching, the DFA is usually manageable, but the DP approach effectively simulates the NFA in O(MN) time.
 
 ### 6.2 Thompson's Construction
 Thompson's algorithm is a method for transforming a regular expression into an NFA. For wildcards:
@@ -209,20 +209,20 @@ In production engines like Go's `regexp` or Google's `RE2`, this NFA simulation 
 
 ## 7. Approach 3: Greedy Two-Pointer (The "Optimal" Interview Answer)
 
-While DP is $O(MN)$, there is a clever $O(MN)$ worst-case but $O(M+N)$ average-case greedy approach. It works because wildcards have a property: once a `*` matches a certain prefix, if we fail later, we only need to backtrack to the **most recent** `*` and try matching it against one more character.
+While DP is O(MN), there is a clever O(MN) worst-case but O(M+N) average-case greedy approach. It works because wildcards have a property: once a `*` matches a certain prefix, if we fail later, we only need to backtrack to the **most recent** `*` and try matching it against one more character.
 
 ### 7.1 The Logic
 Keep pointers `s_ptr`, `p_ptr`, `star_ptr` (index of last `*`), and `match_ptr` (index in `s` where `*` started matching).
 
 1. If `s[s_ptr]` matches `p[p_ptr]` (literal or `?`), increment both.
 2. If `p[p_ptr]` is `*`:
-   - Record `star_ptr = p_ptr` and `match_ptr = s_ptr`.
-   - Increment `p_ptr` (try matching `*` as empty first).
+ - Record `star_ptr = p_ptr` and `match_ptr = s_ptr`.
+ - Increment `p_ptr` (try matching `*` as empty first).
 3. If mismatch occurs:
-   - If we have a `star_ptr`, backtrack!
-   - `p_ptr = star_ptr + 1`.
-   - `match_ptr += 1` (the star now matches one more char).
-   - `s_ptr = match_ptr`.
+ - If we have a `star_ptr`, backtrack!
+ - `p_ptr = star_ptr + 1`.
+ - `match_ptr += 1` (the star now matches one more char).
+ - `s_ptr = match_ptr`.
 4. If no `star_ptr` and mismatch, return `False`.
 
 ### 7.2 Why this works
@@ -236,133 +236,133 @@ This is a form of backtracking that only remembers the **last** bit of non-deter
 
 This approach is the most direct translation of the mathematical recurrence. It uses a cache to avoid redundant sub-problems.
 
-```python
+``python
 class SolutionRecursive:
-    """
-    Top-Down Memoization.
-    Time: O(M * N)
-    Space: O(M * N) for the memoization table and recursion stack.
-    """
-    def isMatch(self, s: str, p: str) -> bool:
-        memo = {}
+ """
+ Top-Down Memoization.
+ Time: O(M * N)
+ Space: O(M * N) for the memoization table and recursion stack.
+ """
+ def isMatch(self, s: str, p: str) -> bool:
+ memo = {}
 
-        def dp(i: int, j: int) -> bool:
-            # Check cache
-            if (i, j) in memo:
-                return memo[(i, j)]
-            
-            # Base Case: Both reached end
-            if i == len(s) and j == len(p):
-                return True
-            # Pattern ended but string hasn't
-            if j == len(p):
-                return False
-            # String ended but pattern hasn't
-            if i == len(s):
-                # Pattern must only contain '*' to match empty string
-                return p[j] == '*' and dp(i, j + 1)
+ def dp(i: int, j: int) -> bool:
+ # Check cache
+ if (i, j) in memo:
+ return memo[(i, j)]
+ 
+ # Base Case: Both reached end
+ if i == len(s) and j == len(p):
+ return True
+ # Pattern ended but string hasn't
+ if j == len(p):
+ return False
+ # String ended but pattern hasn't
+ if i == len(s):
+ # Pattern must only contain '*' to match empty string
+ return p[j] == '*' and dp(i, j + 1)
 
-            # Recursive step
-            res = False
-            if p[j] == s[i] or p[j] == '?':
-                res = dp(i + 1, j + 1)
-            elif p[j] == '*':
-                # Match empty OR match one/more characters
-                res = dp(i, j + 1) or dp(i + 1, j)
-            
-            memo[(i, j)] = res
-            return res
+ # Recursive step
+ res = False
+ if p[j] == s[i] or p[j] == '?':
+ res = dp(i + 1, j + 1)
+ elif p[j] == '*':
+ # Match empty OR match one/more characters
+ res = dp(i, j + 1) or dp(i + 1, j)
+ 
+ memo[(i, j)] = res
+ return res
 
-        return dp(0, 0)
-```
+ return dp(0, 0)
+``
 
 ### 8.2 Approach 2: Bottom-Up Dynamic Programming (Standard)
 
 The iterative version is usually preferred in production for its predictable memory layout and lack of stack overflow risks.
 
-```python
+``python
 from typing import List
 
 class SolutionDP:
-    """
-    Standard Bottom-Up DP solution.
-    Time Complexity: O(M * N)
-    Space Complexity: O(M * N)
-    """
-    def isMatch(self, s: str, p: str) -> bool:
-        m, n = len(s), len(p)
-        
-        # Initialize DP table: dp[i][j] means s[:i] matches p[:j]
-        dp = [[False] * (n + 1) for _ in range(m + 1)]
-        
-        # Base Case: Empty string matches empty pattern
-        dp[0][0] = True
-        
-        # Base Case: Empty string matching pattern with '*'
-        # '*' can match zero characters, so it inherits from the previous pattern index.
-        for j in range(1, n + 1):
-            if p[j-1] == '*':
-                dp[0][j] = dp[0][j-1]
-        
-        # Fill the table
-        for i in range(1, m + 1):
-            for j in range(1, n + 1):
-                if p[j-1] == s[i-1] or p[j-1] == '?':
-                    # Characters match, carry over the result from both prefixes
-                    dp[i][j] = dp[i-1][j-1]
-                elif p[j-1] == '*':
-                    # Branching logic for '*':
-                    # Case 1: '*' matches empty (treat it as skipping the star)
-                    # Case 2: '*' matches one or more (treat it as consuming s[i-1])
-                    dp[i][j] = dp[i][j-1] or dp[i-1][j]
-        
-        return dp[m][n]
-```
+ """
+ Standard Bottom-Up DP solution.
+ Time Complexity: O(M * N)
+ Space Complexity: O(M * N)
+ """
+ def isMatch(self, s: str, p: str) -> bool:
+ m, n = len(s), len(p)
+ 
+ # Initialize DP table: dp[i][j] means s[:i] matches p[:j]
+ dp = [[False] * (n + 1) for _ in range(m + 1)]
+ 
+ # Base Case: Empty string matches empty pattern
+ dp[0][0] = True
+ 
+ # Base Case: Empty string matching pattern with '*'
+ # '*' can match zero characters, so it inherits from the previous pattern index.
+ for j in range(1, n + 1):
+ if p[j-1] == '*':
+ dp[0][j] = dp[0][j-1]
+ 
+ # Fill the table
+ for i in range(1, m + 1):
+ for j in range(1, n + 1):
+ if p[j-1] == s[i-1] or p[j-1] == '?':
+ # Characters match, carry over the result from both prefixes
+ dp[i][j] = dp[i-1][j-1]
+ elif p[j-1] == '*':
+ # Branching logic for '*':
+ # Case 1: '*' matches empty (treat it as skipping the star)
+ # Case 2: '*' matches one or more (treat it as consuming s[i-1])
+ dp[i][j] = dp[i][j-1] or dp[i-1][j]
+ 
+ return dp[m][n]
+``
 
 ### 8.3 Approach 3: Greedy Two-Pointer (Optimal Space)
 
-This is the "trick" solution that reduces space to $O(1)$ by manually managing the backtracking to the last seen `*`.
+This is the "trick" solution that reduces space to O(1) by manually managing the backtracking to the last seen `*`.
 
-```python
+``python
 class SolutionGreedy:
-    """
-    Greedy backtracking with O(1) extra space.
-    Time Complexity: O(M * N) worst case, but near O(M+N) on average.
-    Space Complexity: O(1)
-    """
-    def isMatch(self, s: str, p: str) -> bool:
-        s_ptr = p_ptr = 0
-        star_idx = -1
-        last_s_match = 0
-        
-        while s_ptr < len(s):
-            # 1. Match constant char or '?'
-            if p_ptr < len(p) and (p[p_ptr] == s[s_ptr] or p[p_ptr] == '?'):
-                s_ptr += 1
-                p_ptr += 1
-            # 2. Match '*'
-            elif p_ptr < len(p) and p[p_ptr] == '*':
-                # Record the star position and the current string position
-                star_idx = p_ptr
-                last_s_match = s_ptr
-                p_ptr += 1 # Try matching empty first
-            # 3. Mismatch, but we have a previous '*' to backtrack to
-            elif star_idx != -1:
-                # Backtrack pattern pointer to just after the star
-                p_ptr = star_idx + 1
-                # Increment the string pointer to the next possible match for the star
-                last_s_match += 1
-                s_ptr = last_s_match
-            # 4. Total mismatch
-            else:
-                return False
-        
-        # Check if remaining characters in pattern are all '*'
-        while p_ptr < len(p) and p[p_ptr] == '*':
-            p_ptr += 1
-            
-        return p_ptr == len(p)
-```
+ """
+ Greedy backtracking with O(1) extra space.
+ Time Complexity: O(M * N) worst case, but near O(M+N) on average.
+ Space Complexity: O(1)
+ """
+ def isMatch(self, s: str, p: str) -> bool:
+ s_ptr = p_ptr = 0
+ star_idx = -1
+ last_s_match = 0
+ 
+ while s_ptr < len(s):
+ # 1. Match constant char or '?'
+ if p_ptr < len(p) and (p[p_ptr] == s[s_ptr] or p[p_ptr] == '?'):
+ s_ptr += 1
+ p_ptr += 1
+ # 2. Match '*'
+ elif p_ptr < len(p) and p[p_ptr] == '*':
+ # Record the star position and the current string position
+ star_idx = p_ptr
+ last_s_match = s_ptr
+ p_ptr += 1 # Try matching empty first
+ # 3. Mismatch, but we have a previous '*' to backtrack to
+ elif star_idx != -1:
+ # Backtrack pattern pointer to just after the star
+ p_ptr = star_idx + 1
+ # Increment the string pointer to the next possible match for the star
+ last_s_match += 1
+ s_ptr = last_s_match
+ # 4. Total mismatch
+ else:
+ return False
+ 
+ # Check if remaining characters in pattern are all '*'
+ while p_ptr < len(p) and p[p_ptr] == '*':
+ p_ptr += 1
+ 
+ return p_ptr == len(p)
+``
 
 ---
 
@@ -378,7 +378,7 @@ The Bitap algorithm maintains a bitmask of potential matches. Each bit in the ma
 ### 9.2 Why use it?
 - **Speed**: It uses CPU bitwise instructions which are incredibly fast.
 - **Hardware Friendship**: It is very easy to implement in hardware (FGPAs) or low-level SIMD instructions.
-- **Fuzzy matching**: It can be easily extended to support "Levenstein distance" (allowing $k$ errors).
+- **Fuzzy matching**: It can be easily extended to support "Levenstein distance" (allowing `k` errors).
 
 While Bitap is usually overkill for interview wildcard matching, mentioning it as a "high-performance alternative" shows a level of depth that many candidates lack.
 
@@ -388,11 +388,11 @@ While Bitap is usually overkill for interview wildcard matching, mentioning it a
 
 | Approach | Time Complexity | Space Complexity | Notes |
 |---|---|---|---|
-| **Brute Force** | $O(2^{M+N})$ | $O(M+N)$ | Terrible for long strings with many stars. |
-| **Top-Down DP** | $O(MN)$ | $O(MN)$ | Good if many states are unreachable. |
-| **Bottom-Up DP** | $O(MN)$ | $O(MN)$ | Predictable and cache-friendly. |
-| **Space-Optimized DP** | $O(MN)$ | $O(N)$ | The standard for memory-constrained systems. |
-| **Greedy Pointer** | $O(MN)$ worst-case | $O(1)$ | Best in practice for most strings. |
+| **Brute Force** | O(2^{M+N}) | O(M+N) | Terrible for long strings with many stars. |
+| **Top-Down DP** | O(MN) | O(MN) | Good if many states are unreachable. |
+| **Bottom-Up DP** | O(MN) | O(MN) | Predictable and cache-friendly. |
+| **Space-Optimized DP** | O(MN) | O(N) | The standard for memory-constrained systems. |
+| **Greedy Pointer** | O(MN) worst-case | O(1) | Best in practice for most strings. |
 
 ---
 
@@ -404,28 +404,28 @@ The term "glob" comes from the very first versions of Unix. There was a standalo
 ### 11.2 Pattern Normalization (Optimization)
 Before running the matching algorithm, normalize your pattern:
 - Collapse multiple consecutive stars into one. `**` behaves exactly like `*`.
-- Complexity impact: This reduces the $N$ in $O(MN)$, potentially saving significant time in complex patterns.
+- Complexity impact: This reduces the `N` in O(MN), potentially saving significant time in complex patterns.
 
-```python
+``python
 def normalize(p: str) -> str:
-    if not p: return p
-    res = [p[0]]
-    for i in range(1, len(p)):
-        if p[i] == '*' and p[i-1] == '*':
-            continue
-        res.append(p[i])
-    return "".join(res)
-```
+ if not p: return p
+ res = [p[0]]
+ for i in range(1, len(p)):
+ if p[i] == '*' and p[i-1] == '*':
+ continue
+ res.append(p[i])
+ return "".join(res)
+``
 
 ### 11.3 Security: Avoiding ReDoS (Regex Denial of Service)
-While Wildcard matching is safer than full Regex (which can have exponential $O(2^N)$ backtracking in some engines), $O(MN)$ can still be abused.
-- If a user provides a pattern of $10^5$ characters and a string of $10^5$ characters, the DP table would require $10^{10}$ booleans (~10GB of RAM).
+While Wildcard matching is safer than full Regex (which can have exponential O(2^N) backtracking in some engines), O(MN) can still be abused.
+- If a user provides a pattern of `10^5` characters and a string of `10^5` characters, the DP table would require `10^{10}` booleans (~10GB of RAM).
 - **Defense**: Enforce limits on pattern and string lengths in your API. Usually, 1024 or 2048 is more than enough for globbing.
 
 ### 11.4 Wildcards in Databases: SQL `LIKE`
 In SQL, the `%` character acts as a wildcard (matching zero or more characters) and `_` acts as a single-character wildcard (equivalent to `?`).
 - `SELECT * FROM users WHERE email LIKE 'admin_%@google.com'`
-- Databases often optimize these queries by using indexes. If the pattern **starts** with literal characters (e.g., `admin_%`), the database can use a B-Tree index to perform a range scan. If it starts with a wildcard (e.g., `%@google.com`), it must perform a full table scan, which is $O(N)$ relative to the number of rows.
+- Databases often optimize these queries by using indexes. If the pattern **starts** with literal characters (e.g., `admin_%`), the database can use a B-Tree index to perform a range scan. If it starts with a wildcard (e.g., `%@google.com`), it must perform a full table scan, which is O(N) relative to the number of rows.
 
 ### 11.5 Compilation to Machine Code
 For extremely high-performance filtering (e.g., cloud networking layers), wildcard patterns are often compiled into specialized machine code or eBPF programs. This allows matching at line speed (100Gbps+) by reducing the matching logic to a series of optimized jumps and comparisons.
@@ -445,40 +445,40 @@ Example: `arn:aws:s3:::my-bucket/logs/2023/*`
 ### 12.1 Explaining the DP Implementation
 Let's look at the core loop of the DP solution again:
 
-```python
+``python
 for i in range(1, m + 1):
-    for j in range(1, n + 1):
-        if p[j-1] == s[i-1] or p[j-1] == '?':
-            dp[i][j] = dp[i-1][j-1]
-```
+ for j in range(1, n + 1):
+ if p[j-1] == s[i-1] or p[j-1] == '?':
+ dp[i][j] = dp[i-1][j-1]
+``
 - **Line 1 & 2**: We iterate through every character of the string (`i`) and every character of the pattern (`j`).
 - **Line 3**: We check for a "local match". If the characters are the same, or the pattern has a `?`.
 - **Line 4**: If it's a local match, then the logic is: "Does this prefix match?" depends entirely on "Did the previous prefix (excluding these two chars) match?". This is why we look at the diagonal `dp[i-1][j-1]`.
 
-```python
-        elif p[j-1] == '*':
-            dp[i][j] = dp[i][j-1] or dp[i-1][j]
-```
+``python
+ elif p[j-1] == '*':
+ dp[i][j] = dp[i][j-1] or dp[i-1][j]
+``
 - **Line 5**: If the pattern is a star...
 - **Line 6**: This is the heart of the branching logic.
-  - `dp[i][j-1]`: Can we match by treating the `*` as an empty string? (i.e., ignore the star and check if the current string prefix matched the pattern prefix *before* the star).
-  - `dp[i-1][j]`: Can we match by letting the `*` consume the current character `s[i-1]`? (i.e., if the shorter string `s[:i-1]` already matched the current pattern prefix including the star, then the star just "eats" one more character).
+ - `dp[i][j-1]`: Can we match by treating the `*` as an empty string? (i.e., ignore the star and check if the current string prefix matched the pattern prefix *before* the star).
+ - `dp[i-1][j]`: Can we match by letting the `*` consume the current character `s[i-1]`? (i.e., if the shorter string `s[:i-1]` already matched the current pattern prefix including the star, then the star just "eats" one more character).
 
 ### 12.2 Explaining the Greedy Implementation
 The greedy pointer approach is often more confusing. Let's break down the "backtrack" logic:
 
-```python
+``python
 elif star_idx != -1:
-    p_ptr = star_idx + 1
-    s_tmp_idx += 1
-    s_ptr = s_tmp_idx
-```
+ p_ptr = star_idx + 1
+ s_tmp_idx += 1
+ s_ptr = s_tmp_idx
+``
 - **Line 1**: We only reach this `elif` if there was a mismatch at the current `p_ptr` and `s_ptr`.
 - **Line 2**: We reset the pattern pointer to the character **immediately following** the last star we saw.
 - **Line 3**: We increment `s_tmp_idx`. This variable tracks the "end of the match" for the star. By incrementing it, we are effectively saying: "The star didn't match enough characters; let's try making it match one more."
 - **Line 4**: We reset the string pointer to this new starting point.
 
-This "backtracking to the last star" is what allows the algorithm to explore different "lengths" for the star's match without the full $O(MN)$ overhead of a DP table in most cases.
+This "backtracking to the last star" is what allows the algorithm to explore different "lengths" for the star's match without the full O(MN) overhead of a DP table in most cases.
 
 ---
 
@@ -505,8 +505,8 @@ In Agentic RAG (Retrieval-Augmented Generation), we often filter metadata.
 ## 14. Key Takeaways
 
 1. **Fundamental State Machine**: Wildcard matching is the bridge between simple string comparison and full Regular Expressions.
-2. **DP is Robust**: The $O(MN)$ DP approach is the most reliable way to handle the non-determinism of `*`.
-3. **Space Matters**: Reducing $O(MN)$ to $O(N)$ space is a critical optimization for production scale.
+2. **DP is Robust**: The O(MN) DP approach is the most reliable way to handle the non-determinism of `*`.
+3. **Space Matters**: Reducing O(MN) to O(N) space is a critical optimization for production scale.
 4. **History Matters**: From Unix `glob` to modern SQL, wildcard matching is one of the most successful abstractions in computer science.
 
 ---

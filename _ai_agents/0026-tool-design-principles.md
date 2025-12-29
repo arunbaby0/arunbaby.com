@@ -1,19 +1,19 @@
 ---
 title: "Tool Design Principles & Agentic Orchestration"
 day: 26
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - tool-use
-  - function-calling
-  - orchestration
-  - reliability
-  - engineering-best-practices
-difficulty: Medium
 related_dsa_day: 26
 related_ml_day: 26
 related_speech_day: 26
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - tool-use
+ - function-calling
+ - orchestration
+ - reliability
+ - engineering-best-practices
+difficulty: Medium
 ---
 
 **"An agent is only as good as the tools it can wield."**
@@ -318,7 +318,7 @@ Managing a cloud infrastructure is the perfect use case for complex tool design.
 As an engineer, you must protect your underlying APIs from your agents. An agent in an infinite loop could call an expensive API (like a paid search engine or a high-end MLLM) 10,000 times in a minute.
 
 **The Guardrail:**
-* **Per-Agent Quotas:** Limit each agent to $X tokens or $Y dollars per task.
+* **Per-Agent Quotas:** Limit each agent to `X tokens or `Y dollars per task.
 * **Token-Bucket Rate Limiter:** Implement a standard rate limiter (like the one we use for standard web APIs) on the tool execution layer. If the agent exceeds 5 calls per minute, the tool returns a `429 Too Many Requests` status code.
 * **Behavioral Detection:** Monitor for "Repeat Loops." If an agent calls the same tool with the same parameters 3 times in a row, kill the process and alert the human.
 

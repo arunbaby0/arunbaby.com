@@ -1,21 +1,21 @@
 ---
 title: "Self-Reflection and Critique"
 day: 39
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - self-reflection
-  - critique
-  - verification
-  - debiasing
-  - evals
-  - reliability
-  - multi-pass
-difficulty: Medium-Hard
 related_dsa_day: 39
 related_ml_day: 39
 related_speech_day: 39
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - self-reflection
+ - critique
+ - verification
+ - debiasing
+ - evals
+ - reliability
+ - multi-pass
+difficulty: Medium-Hard
 ---
 
 **"Make agents less overconfident: separate drafting from critique, force evidence, and turn failures into actionable feedback."**
@@ -51,18 +51,18 @@ Self-reflection is most valuable when it’s **operationalized**: you can measur
 
 A reliable pattern is a controlled multi-pass pipeline:
 
-```text
+``text
 Draft (fast, constructive)
-  |
-  v
+ |
+ v
 Critique (skeptical, rule-based)
-  |
-  v
+ |
+ v
 Revise (apply fixes only)
-  |
-  v
+ |
+ v
 Freeze (lock answer, emit evidence)
-```
+``
 
 ### Why this works
 
@@ -117,19 +117,19 @@ A structured critique should produce fields like:
 
 Example (conceptual):
 
-```json
+``json
 {
-  "verdict": "FAIL",
-  "issues": [
-    {"severity": "high", "issue": "Claim lacks evidence", "location": "Section 2"},
-    {"severity": "medium", "issue": "Edge case missing for empty input", "location": "Algorithm"}
-  ],
-  "fixes": [
-    {"action": "add", "details": "Add test case for empty input"},
-    {"action": "replace", "details": "Remove claim or add citation"}
-  ]
+ "verdict": "FAIL",
+ "issues": [
+ {"severity": "high", "issue": "Claim lacks evidence", "location": "Section 2"},
+ {"severity": "medium", "issue": "Edge case missing for empty input", "location": "Algorithm"}
+ ],
+ "fixes": [
+ {"action": "add", "details": "Add test case for empty input"},
+ {"action": "replace", "details": "Remove claim or add citation"}
+ ]
 }
-```
+``
 
 **Further reading (optional):** if your agent uses strict schemas, see [Structured Output Patterns](/ai-agents/0035-structured-output-patterns/).
 
@@ -143,10 +143,10 @@ Instead, use a rubric that forces the critic to check concrete properties.
 
 ### 4.5.1 Evidence rubric (grounding)
 - **FAIL (high)** if any “hard claim” has no evidence.
-  - Hard claim = numbers, policies, “X supports Y,” “best practice is…”
+ - Hard claim = numbers, policies, “X supports Y,” “best practice is…”
 - **FAIL (medium)** if evidence exists but is weak:
-  - citation doesn’t contain the claim
-  - quote is too vague or unrelated
+ - citation doesn’t contain the claim
+ - quote is too vague or unrelated
 - **PASS** only if every hard claim has supporting evidence or is clearly marked as uncertain.
 
 ### 4.5.2 Safety rubric (risk)
@@ -239,9 +239,9 @@ Many teams stop at “the JSON parsed.” That’s necessary, but not sufficient
 
 Example: a tool call can be valid JSON and still be dangerous:
 
-```json
+``json
 { "action": "delete", "path": "/" }
-```
+``
 
 Parsing success does not imply safety. Critique is the place to enforce “safe defaults.”
 
@@ -276,11 +276,11 @@ If you want consistent critique quality, treat critique itself as an API.
 Minimum contract:
 
 - Every issue must include:
-  - **severity**: high / medium / low
-  - **category**: evidence / correctness / safety / format / efficiency
-  - **location**: where the issue appears (section name, field name, step id)
-  - **why it matters**: one sentence
-  - **fix**: an actionable fix (add/remove/replace with concrete text)
+ - **severity**: high / medium / low
+ - **category**: evidence / correctness / safety / format / efficiency
+ - **location**: where the issue appears (section name, field name, step id)
+ - **why it matters**: one sentence
+ - **fix**: an actionable fix (add/remove/replace with concrete text)
 
 If the critic cannot produce a concrete fix, it should output a **question** instead (what info is missing?).
 
@@ -419,33 +419,33 @@ Avoid logging raw user secrets or full tool outputs. Treat critique logs like pr
 
 ## 11. Implementation sketch: a minimal reflection loop (pseudocode)
 
-```python
+``python
 def draft_then_critique(objective: str, constraints: list[str], context: dict) -> dict:
-    draft = llm.generate({"objective": objective, "constraints": constraints, "context": context})
+ draft = llm.generate({"objective": objective, "constraints": constraints, "context": context})
 
-    critique = llm.criticize({
-        "objective": objective,
-        "constraints": constraints,
-        "draft": draft,
-        "rubric": ["evidence", "correctness", "safety", "format"]
-    })
+ critique = llm.criticize({
+ "objective": objective,
+ "constraints": constraints,
+ "draft": draft,
+ "rubric": ["evidence", "correctness", "safety", "format"]
+ })
 
-    if critique["verdict"] == "PASS":
-        return {"final": draft, "critique": critique}
+ if critique["verdict"] == "PASS":
+ return {"final": draft, "critique": critique}
 
-    revised = llm.revise({
-        "draft": draft,
-        "critique": critique,
-        "rule": "Fix only issues listed. Do not add new claims without evidence."
-    })
+ revised = llm.revise({
+ "draft": draft,
+ "critique": critique,
+ "rule": "Fix only issues listed. Do not add new claims without evidence."
+ })
 
-    # Optional: run critic again with a small budget
-    critique2 = llm.criticize({"objective": objective, "constraints": constraints, "draft": revised})
-    if critique2["verdict"] == "PASS":
-        return {"final": revised, "critique": critique2}
+ # Optional: run critic again with a small budget
+ critique2 = llm.criticize({"objective": objective, "constraints": constraints, "draft": revised})
+ if critique2["verdict"] == "PASS":
+ return {"final": revised, "critique": critique2}
 
-    return {"status": "NEEDS_INPUT", "final": revised, "critique": critique2}
-```
+ return {"status": "NEEDS_INPUT", "final": revised, "critique": critique2}
+``
 
 Key design choice: the revise step is constrained to apply fixes, not rewrite everything.
 
@@ -481,8 +481,8 @@ With critique:
 
 1. Draft produces the report.
 2. Critic checks every paragraph:
-   - “Does this paragraph include citations?”
-   - “Does the citation support the paragraph’s claim?”
+ - “Does this paragraph include citations?”
+ - “Does the citation support the paragraph’s claim?”
 3. Reviser adds citations or removes claims.
 4. Finalizer outputs the report with an evidence list.
 
@@ -505,9 +505,9 @@ With critique + tests:
 1. Drafter writes a small solution + a small set of tests (including edge cases).
 2. Runner executes tests in a sandbox and returns the output.
 3. Critic checks:
-   - tests actually cover edge cases
-   - test output indicates pass
-   - the printed result matches the user’s asked output format
+ - tests actually cover edge cases
+ - test output indicates pass
+ - the printed result matches the user’s asked output format
 4. Reviser only changes code/tests where failures are shown.
 
 This pattern gives you a concrete success signal (“tests passed”) and turns correctness from “confidence” into “evidence.”
@@ -528,12 +528,12 @@ A safer architecture:
 
 1. **Draft:** propose a plan and classify each step as read-only or write.
 2. **Critique:** enforce policy:
-   - “No writes unless explicitly allowed”
-   - “Writes require validation + approval gate”
-   - “All tool calls must pass allowlists”
+ - “No writes unless explicitly allowed”
+ - “Writes require validation + approval gate”
+ - “All tool calls must pass allowlists”
 3. **Revise:** split the output into:
-   - a safe, read-only execution phase
-   - a proposed change set (diff / patch) that requires approval
+ - a safe, read-only execution phase
+ - a proposed change set (diff / patch) that requires approval
 4. **Freeze:** return the safe phase result plus the proposed change set and the risks.
 
 What you gain:

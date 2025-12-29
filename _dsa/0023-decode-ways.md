@@ -1,22 +1,22 @@
 ---
 title: "Decode Ways"
 day: 23
+related_ml_day: 23
+related_speech_day: 23
+related_agents_day: 23
 collection: dsa
 categories:
-  - dsa
+ - dsa
 tags:
-  - dynamic-programming
-  - string
-  - recursion
-  - memoization
-  - medium
+ - dynamic-programming
+ - string
+ - recursion
+ - memoization
+ - medium
 subdomain: "Sequence Dynamic Programming"
 tech_stack: [Python, C++, Java, Go, Rust]
 scale: "O(N) time, O(1) space"
 companies: [Facebook, Google, Uber, Microsoft, Amazon]
-related_ml_day: 23
-related_speech_day: 23
-related_agents_day: 23
 ---
 
 **A deceptive counting problem that teaches the fundamentals of state transitions and connects directly to Beam Search.**
@@ -42,25 +42,25 @@ To **decode** an encoded message, you need to group the digits and map them back
 Given a string `s` containing only digits, return the **number of ways** to decode it.
 
 **Example 1:**
-```
+``
 Input: s = "12"
 Output: 2
 Explanation: "12" could be decoded as "AB" (1 2) or "L" (12).
-```
+``
 
 **Example 2:**
-```
+``
 Input: s = "226"
 Output: 3
 Explanation: "226" could be decoded as "BZ" (2 26), "VF" (22 6), or "BBF" (2 2 6).
-```
+``
 
 **Example 3 (The Tricky One):**
-```
+``
 Input: s = "06"
 Output: 0
 Explanation: "06" cannot be mapped to "F" because of the leading zero ("6" is different from "06").
-```
+``
 
 **Constraints:**
 - `1 <= s.length <= 100`
@@ -68,7 +68,7 @@ Explanation: "06" cannot be mapped to "F" because of the leading zero ("6" is di
 
 ## Thematic Connection: Decoding Paths
 
-Why is this problem on Day 23?
+Why is this problem ?
 In **ML System Design** and **Speech Tech**, we often deal with "decoding" a sequence of probabilities into the most likely sequence of words.
 - **DSA:** We count *all* valid paths (Decode Ways).
 - **ML/Speech:** We search for the *best* path (Beam Search).
@@ -79,8 +79,8 @@ The underlying structure is a graph where each node represents a state (index in
 
 Let's think about this recursively.
 At any index `i`, we have two choices:
-1.  **Single Digit:** Take `s[i]` as a single number. Valid if `s[i]` is '1'-'9'.
-2.  **Double Digit:** Take `s[i]s[i+1]` as a two-digit number. Valid if it forms a number between 10 and 26.
+1. **Single Digit:** Take `s[i]` as a single number. Valid if `s[i]` is '1'-'9'.
+2. **Double Digit:** Take `s[i]s[i+1]` as a two-digit number. Valid if it forms a number between 10 and 26.
 
 Let `numDecodings(i)` be the number of ways to decode the suffix `s[i:]`.
 
@@ -93,28 +93,28 @@ Let `numDecodings(i)` be the number of ways to decode the suffix `s[i:]`.
 
 ### Python Implementation (Recursive)
 
-```python
+``python
 def numDecodings_recursive(s: str) -> int:
-    def decode(index):
-        # Base Case: End of string
-        if index == len(s):
-            return 1
-        
-        # Base Case: Leading zero
-        if s[index] == '0':
-            return 0
-        
-        # Option 1: Take 1 digit
-        res = decode(index + 1)
-        
-        # Option 2: Take 2 digits
-        if index + 1 < len(s) and (s[index] == '1' or (s[index] == '2' and s[index+1] in "0123456")):
-            res += decode(index + 2)
-            
-        return res
+ def decode(index):
+ # Base Case: End of string
+ if index == len(s):
+ return 1
+ 
+ # Base Case: Leading zero
+ if s[index] == '0':
+ return 0
+ 
+ # Option 1: Take 1 digit
+ res = decode(index + 1)
+ 
+ # Option 2: Take 2 digits
+ if index + 1 < len(s) and (s[index] == '1' or (s[index] == '2' and s[index+1] in "0123456")):
+ res += decode(index + 2)
+ 
+ return res
 
-    return decode(0)
-```
+ return decode(0)
+``
 
 ### Complexity Analysis
 - **Time Complexity:** \(O(2^N)\). In the worst case (e.g., "111111"), every step branches into two. This is the Fibonacci sequence recursion.
@@ -124,30 +124,30 @@ def numDecodings_recursive(s: str) -> int:
 
 We are re-calculating the same subproblems. `decode(5)` might be called from `decode(3)` (taking 2 steps) and `decode(4)` (taking 1 step). We can cache the results.
 
-```python
+``python
 def numDecodings_memo(s: str) -> int:
-    memo = {}
-    
-    def decode(index):
-        if index in memo:
-            return memo[index]
-        
-        if index == len(s):
-            return 1
-        
-        if s[index] == '0':
-            return 0
-        
-        res = decode(index + 1)
-        
-        if index + 1 < len(s) and (s[index] == '1' or (s[index] == '2' and s[index+1] in "0123456")):
-            res += decode(index + 2)
-            
-        memo[index] = res
-        return res
+ memo = {}
+ 
+ def decode(index):
+ if index in memo:
+ return memo[index]
+ 
+ if index == len(s):
+ return 1
+ 
+ if s[index] == '0':
+ return 0
+ 
+ res = decode(index + 1)
+ 
+ if index + 1 < len(s) and (s[index] == '1' or (s[index] == '2' and s[index+1] in "0123456")):
+ res += decode(index + 2)
+ 
+ memo[index] = res
+ return res
 
-    return decode(0)
-```
+ return decode(0)
+``
 
 - **Time Complexity:** \(O(N)\). We visit each index once.
 - **Space Complexity:** \(O(N)\) for memoization map + stack.
@@ -163,34 +163,34 @@ Let's flip it. Instead of recursion, let's build an array `dp`.
 
 **Transitions:**
 For `i` from 2 to `n`:
-1.  **One Digit:** If `s[i-1]` is not '0', we can add `dp[i-1]`.
-2.  **Two Digits:** If `s[i-2:i]` is between "10" and "26", we can add `dp[i-2]`.
+1. **One Digit:** If `s[i-1]` is not '0', we can add `dp[i-1]`.
+2. **Two Digits:** If `s[i-2:i]` is between "10" and "26", we can add `dp[i-2]`.
 
 ### Python Implementation (Iterative)
 
-```python
+``python
 def numDecodings_dp(s: str) -> int:
-    if not s or s[0] == '0':
-        return 0
-    
-    n = len(s)
-    dp = [0] * (n + 1)
-    
-    dp[0] = 1
-    dp[1] = 1
-    
-    for i in range(2, n + 1):
-        # Check if single digit is valid (1-9)
-        if s[i-1] != '0':
-            dp[i] += dp[i-1]
-            
-        # Check if two digits are valid (10-26)
-        two_digit = int(s[i-2:i])
-        if 10 <= two_digit <= 26:
-            dp[i] += dp[i-2]
-            
-    return dp[n]
-```
+ if not s or s[0] == '0':
+ return 0
+ 
+ n = len(s)
+ dp = [0] * (n + 1)
+ 
+ dp[0] = 1
+ dp[1] = 1
+ 
+ for i in range(2, n + 1):
+ # Check if single digit is valid (1-9)
+ if s[i-1] != '0':
+ dp[i] += dp[i-1]
+ 
+ # Check if two digits are valid (10-26)
+ two_digit = int(s[i-2:i])
+ if 10 <= two_digit <= 26:
+ dp[i] += dp[i-2]
+ 
+ return dp[n]
+``
 
 ### Complexity Analysis
 - **Time Complexity:** \(O(N)\).
@@ -200,38 +200,38 @@ def numDecodings_dp(s: str) -> int:
 
 Notice that `dp[i]` only depends on `dp[i-1]` and `dp[i-2]`. We don't need the whole array. We just need two variables.
 
-```python
+``python
 def numDecodings_optimized(s: str) -> int:
-    if not s or s[0] == '0':
-        return 0
-    
-    n = len(s)
-    two_back = 1 # dp[i-2] (initially dp[0])
-    one_back = 1 # dp[i-1] (initially dp[1])
-    
-    for i in range(2, n + 1):
-        current = 0
-        
-        # Single digit check
-        if s[i-1] != '0':
-            current += one_back
-            
-        # Double digit check
-        two_digit = int(s[i-2:i])
-        if 10 <= two_digit <= 26:
-            current += two_back
-            
-        two_back = one_back
-        one_back = current
-        
-    return one_back
-```
+ if not s or s[0] == '0':
+ return 0
+ 
+ n = len(s)
+ two_back = 1 # dp[i-2] (initially dp[0])
+ one_back = 1 # dp[i-1] (initially dp[1])
+ 
+ for i in range(2, n + 1):
+ current = 0
+ 
+ # Single digit check
+ if s[i-1] != '0':
+ current += one_back
+ 
+ # Double digit check
+ two_digit = int(s[i-2:i])
+ if 10 <= two_digit <= 26:
+ current += two_back
+ 
+ two_back = one_back
+ one_back = current
+ 
+ return one_back
+``
 
 - **Space Complexity:** \(O(1)\).
 
 ## Detailed Walkthrough: Tracing "226"
 
-Let's trace the `O(1)` space algorithm with `s = "226"`.
+Let's trace the O(1) space algorithm with `s = "226"`.
 
 **Initialization:**
 - `two_back` (dp[-1]) = 1
@@ -256,9 +256,9 @@ Let's trace the `O(1)` space algorithm with `s = "226"`.
 ## Edge Cases and Pitfalls
 
 This problem is famous for its edge cases.
-1.  **Leading Zeros:** "06" -> 0. "0" -> 0.
-2.  **Mid-stream Zeros:** "10" -> 1 ("J"). "100" -> 0 (The second '0' cannot be decoded alone, and "00" is invalid).
-3.  **Large Numbers:** "30" -> 0. "27" -> 1 ("BG", not "27").
+1. **Leading Zeros:** "06" -> 0. "0" -> 0.
+2. **Mid-stream Zeros:** "10" -> 1 ("J"). "100" -> 0 (The second '0' cannot be decoded alone, and "00" is invalid).
+3. **Large Numbers:** "30" -> 0. "27" -> 1 ("BG", not "27").
 
 **Debugging Tip:**
 If your code fails on "10", check if you handle the single digit case correctly. `s[i-1]` is '0', so you shouldn't add `dp[i-1]`. But `s[i-2:i]` is "10", which is valid, so you add `dp[i-2]`.
@@ -311,123 +311,123 @@ Understanding "Decode Ways" proves you understand the state-space graph that Bea
 **Interviewer:** "Can you write a test suite?"
 **You:** "Sure. I'd use a data-driven test."
 
-```python
+``python
 def test_decode_ways():
-    cases = [
-        ("12", 2),
-        ("226", 3),
-        ("0", 0),
-        ("06", 0),
-        ("10", 1),
-        ("27", 1),
-        ("2101", 1) # B J A
-    ]
-    for s, expected in cases:
-        assert numDecodings_optimized(s) == expected
-        print(f"Pass: {s} -> {expected}")
-```
+ cases = [
+ ("12", 2),
+ ("226", 3),
+ ("0", 0),
+ ("06", 0),
+ ("10", 1),
+ ("27", 1),
+ ("2101", 1) # B J A
+ ]
+ for s, expected in cases:
+ assert numDecodings_optimized(s) == expected
+ print(f"Pass: {s} -> {expected}")
+``
 
 ## Multi-Language Implementation
 
 ### C++
-```cpp
+``cpp
 class Solution {
 public:
-    int numDecodings(string s) {
-        if (s.empty() || s[0] == '0') return 0;
-        int n = s.length();
-        vector<int> dp(n + 1, 0);
-        dp[0] = 1;
-        dp[1] = 1;
-        
-        for (int i = 2; i <= n; ++i) {
-            int oneDigit = s[i-1] - '0';
-            int twoDigits = stoi(s.substr(i-2, 2));
-            
-            if (oneDigit >= 1) dp[i] += dp[i-1];
-            if (twoDigits >= 10 && twoDigits <= 26) dp[i] += dp[i-2];
-        }
-        return dp[n];
-    }
+ int numDecodings(string s) {
+ if (s.empty() || s[0] == '0') return 0;
+ int n = s.length();
+ vector<int> dp(n + 1, 0);
+ dp[0] = 1;
+ dp[1] = 1;
+ 
+ for (int i = 2; i <= n; ++i) {
+ int oneDigit = s[i-1] - '0';
+ int twoDigits = stoi(s.substr(i-2, 2));
+ 
+ if (oneDigit >= 1) dp[i] += dp[i-1];
+ if (twoDigits >= 10 && twoDigits <= 26) dp[i] += dp[i-2];
+ }
+ return dp[n];
+ }
 };
-```
+``
 
 ### Java
-```java
+``java
 class Solution {
-    public int numDecodings(String s) {
-        if (s == null || s.length() == 0 || s.charAt(0) == '0') return 0;
-        int n = s.length();
-        int[] dp = new int[n + 1];
-        dp[0] = 1;
-        dp[1] = 1;
-        
-        for (int i = 2; i <= n; i++) {
-            int oneDigit = Integer.valueOf(s.substring(i-1, i));
-            int twoDigits = Integer.valueOf(s.substring(i-2, i));
-            
-            if (oneDigit >= 1) dp[i] += dp[i-1];
-            if (twoDigits >= 10 && twoDigits <= 26) dp[i] += dp[i-2];
-        }
-        return dp[n];
-    }
+ public int numDecodings(String s) {
+ if (s == null || s.length() == 0 || s.charAt(0) == '0') return 0;
+ int n = s.length();
+ int[] dp = new int[n + 1];
+ dp[0] = 1;
+ dp[1] = 1;
+ 
+ for (int i = 2; i <= n; i++) {
+ int oneDigit = Integer.valueOf(s.substring(i-1, i));
+ int twoDigits = Integer.valueOf(s.substring(i-2, i));
+ 
+ if (oneDigit >= 1) dp[i] += dp[i-1];
+ if (twoDigits >= 10 && twoDigits <= 26) dp[i] += dp[i-2];
+ }
+ return dp[n];
+ }
 }
-```
+``
 
 ### Go
-```go
+``go
 func numDecodings(s string) int {
-    if len(s) == 0 || s[0] == '0' {
-        return 0
-    }
-    n := len(s)
-    dp := make([]int, n+1)
-    dp[0] = 1
-    dp[1] = 1
-    
-    for i := 2; i <= n; i++ {
-        oneDigit := s[i-1] - '0'
-        twoDigits, _ := strconv.Atoi(s[i-2 : i])
-        
-        if oneDigit >= 1 {
-            dp[i] += dp[i-1]
-        }
-        if twoDigits >= 10 && twoDigits <= 26 {
-            dp[i] += dp[i-2]
-        }
-    }
-    return dp[n]
+ if len(s) == 0 || s[0] == '0' {
+ return 0
+ }
+ n := len(s)
+ dp := make([]int, n+1)
+ dp[0] = 1
+ dp[1] = 1
+ 
+ for i := 2; i <= n; i++ {
+ oneDigit := s[i-1] - '0'
+ twoDigits, _ := strconv.Atoi(s[i-2 : i])
+ 
+ if oneDigit >= 1 {
+ dp[i] += dp[i-1]
+ }
+ if twoDigits >= 10 && twoDigits <= 26 {
+ dp[i] += dp[i-2]
+ }
+ }
+ return dp[n]
 }
-```
+``
 
 ### Rust
-```rust
+``rust
 impl Solution {
-    pub fn num_decodings(s: String) -> i32 {
-        if s.starts_with('0') {
-            return 0;
-        }
-        let n = s.len();
-        let chars: Vec<char> = s.chars().collect();
-        let mut dp = vec![0; n + 1];
-        dp[0] = 1;
-        dp[1] = 1;
-        
-        for i in 2..=n {
-            let one_digit = chars[i-1].to_digit(10).unwrap();
-            let two_digits = s[i-2..i].parse::<i32>().unwrap();
-            
-            if one_digit >= 1 {
-                dp[i] += dp[i-1];
-            }
-            if two_digits >= 10 && two_digits <= 26 {
-                dp[i] += dp[i-2];
-            }
-        }
-        dp[n]
-    }
+ pub fn num_decodings(s: String) -> i32 {
+ if s.starts_with('0') {
+ return 0;
+ }
+ let n = s.len();
+ let chars: Vec<char> = s.chars().collect();
+ let mut dp = vec![0; n + 1];
+ dp[0] = 1;
+ dp[1] = 1;
+ 
+ for i in 2..=n {
+ let one_digit = chars[i-1].to_digit(10).unwrap();
+ let two_digits = s[i-2..i].parse::<i32>().unwrap();
+ 
+ if one_digit >= 1 {
+ dp[i] += dp[i-1];
+ }
+ if two_digits >= 10 && two_digits <= 26 {
+ dp[i] += dp[i-2];
+ }
+ }
+ dp[n]
+ }
 }
-```
+``
 
 ## Appendix A: System Design Interview Transcript
 
@@ -438,15 +438,15 @@ impl Solution {
 **Interviewer:** "Exactly. You can't just split the string in half and process both sides independently, because the split point might be in the middle of a two-digit number. How do you handle that?"
 
 **Candidate:** "We can use a **Map-Reduce** approach with a twist.
-1.  **Split:** Divide the string `S` into chunks `C1, C2, ..., Ck`.
-2.  **Map:** For each chunk, we compute a transition matrix. Instead of returning a single number, we return a 2x2 matrix representing the linear transformation from the start of the chunk to the end.
-    - State 0: We consumed the last digit of the previous chunk.
-    - State 1: We 'borrowed' the last digit of the previous chunk to form a two-digit number.
-3.  **Reduce:** Multiply the matrices in order. Matrix multiplication is associative, so this can be parallelized using a segment tree or just standard parallel reduction."
+1. **Split:** Divide the string `S` into chunks `C1, C2, ..., Ck`.
+2. **Map:** For each chunk, we compute a transition matrix. Instead of returning a single number, we return a 2x2 matrix representing the linear transformation from the start of the chunk to the end.
+ - State 0: We consumed the last digit of the previous chunk.
+ - State 1: We 'borrowed' the last digit of the previous chunk to form a two-digit number.
+3. **Reduce:** Multiply the matrices in order. Matrix multiplication is associative, so this can be parallelized using a segment tree or just standard parallel reduction."
 
 **Interviewer:** "Impressive. That's actually how parallel prefix sum (scan) works. What about caching?"
 
-**Candidate:** "Since the mapping is static (A=1, B=2...), we can cache common substrings. If we see the pattern '12345' frequently, we can memoize its transition matrix in Redis. This would turn `O(N)` into `O(1)` for cache hits."
+**Candidate:** "Since the mapping is static (A=1, B=2...), we can cache common substrings. If we see the pattern '12345' frequently, we can memoize its transition matrix in Redis. This would turn O(N) into O(1) for cache hits."
 
 **Interviewer:** "What if the mapping changes dynamically? Say, for security rotation?"
 
@@ -462,8 +462,8 @@ We claim that `N(S)` satisfies the recurrence:
 
 **Proof:**
 The first decision is disjoint and exhaustive.
-1.  **Case 1:** We decode `d_1` as a single character. This is valid if `d_1 \in \{1..9\}`. If valid, the remaining problem is `S[2...n]`. The number of ways is `1 * N(S[2...n])`.
-2.  **Case 2:** We decode `d_1 d_2` as a single character. This is valid if `d_1 d_2 \in \{10..26\}`. If valid, the remaining problem is `S[3...n]`. The number of ways is `1 * N(S[3...n])`.
+1. **Case 1:** We decode `d_1` as a single character. This is valid if `d_1 \in \{1..9\}`. If valid, the remaining problem is `S[2...n]`. The number of ways is `1 * N(S[2...n])`.
+2. **Case 2:** We decode `d_1 d_2` as a single character. This is valid if `d_1 d_2 \in \{10..26\}`. If valid, the remaining problem is `S[3...n]`. The number of ways is `1 * N(S[3...n])`.
 
 Since these are the only two ways to consume the start of the string, by the **Rule of Sum**, the total ways is the sum of these two cases.
 This proves optimal substructure: The solution to the problem depends only on the solutions to its suffixes.
@@ -505,25 +505,25 @@ When testing your solution, ensure you cover these categories:
 
 "Decode Ways" belongs to the **Sequence DP** family. Here are others you should know:
 
-1.  **0/1 Knapsack:**
-    - **Problem:** Pick items with weight `w` and value `v` to maximize value within capacity `W`.
-    - **State:** `dp[i][w]` = Max value using first `i` items with capacity `w`.
-    - **Transition:** `max(dp[i-1][w], dp[i-1][w-w_i] + v_i)`.
+1. **0/1 Knapsack:**
+ - **Problem:** Pick items with weight `w` and value `v` to maximize value within capacity `W`.
+ - **State:** `dp[i][w]` = Max value using first `i` items with capacity `w`.
+ - **Transition:** `max(dp[i-1][w], dp[i-1][w-w_i] + v_i)`.
 
-2.  **Longest Increasing Subsequence (LIS):**
-    - **Problem:** Find the longest subsequence where elements are increasing.
-    - **State:** `dp[i]` = Length of LIS ending at index `i`.
-    - **Transition:** `dp[i] = 1 + max(dp[j])` for all `j < i` where `nums[j] < nums[i]`.
+2. **Longest Increasing Subsequence (LIS):**
+ - **Problem:** Find the longest subsequence where elements are increasing.
+ - **State:** `dp[i]` = Length of LIS ending at index `i`.
+ - **Transition:** `dp[i] = 1 + max(dp[j])` for all `j < i` where `nums[j] < nums[i]`.
 
-3.  **Longest Common Subsequence (LCS):**
-    - **Problem:** Find the longest subsequence common to two strings.
-    - **State:** `dp[i][j]` = LCS of `s1[0..i]` and `s2[0..j]`.
-    - **Transition:** If `s1[i] == s2[j]`, `1 + dp[i-1][j-1]`. Else `max(dp[i-1][j], dp[i][j-1])`.
+3. **Longest Common Subsequence (LCS):**
+ - **Problem:** Find the longest subsequence common to two strings.
+ - **State:** `dp[i][j]` = LCS of `s1[0..i]` and `s2[0..j]`.
+ - **Transition:** If `s1[i] == s2[j]`, `1 + dp[i-1][j-1]`. Else `max(dp[i-1][j], dp[i][j-1])`.
 
-4.  **Matrix Chain Multiplication:**
-    - **Problem:** Parenthesize matrix multiplications to minimize scalar operations.
-    - **State:** `dp[i][j]` = Min cost to multiply matrices `i` through `j`.
-    - **Transition:** `min(dp[i][k] + dp[k+1][j] + cost(i, k, j))` for all `k`.
+4. **Matrix Chain Multiplication:**
+ - **Problem:** Parenthesize matrix multiplications to minimize scalar operations.
+ - **State:** `dp[i][j]` = Min cost to multiply matrices `i` through `j`.
+ - **Transition:** `min(dp[i][k] + dp[k+1][j] + cost(i, k, j))` for all `k`.
 
 Mastering these patterns will allow you to solve 90% of DP problems in interviews.
 
@@ -532,9 +532,9 @@ Mastering these patterns will allow you to solve 90% of DP problems in interview
 Decode Ways is a masterclass in handling state transitions and edge cases. It teaches you to look beyond the "happy path" and rigorously define valid transitions.
 
 **Key Takeaways:**
-1.  **Zeros are the enemy.** Handle them first.
-2.  **State Definition:** `dp[i]` depends on `i-1` and `i-2`.
-3.  **Optimization:** Space can be reduced to `O(1)`.
+1. **Zeros are the enemy.** Handle them first.
+2. **State Definition:** `dp[i]` depends on `i-1` and `i-2`.
+3. **Optimization:** Space can be reduced to O(1).
 
 **Practice Problems:**
 - [Decode Ways II](https://leetcode.com/problems/decode-ways-ii/) (Hard)

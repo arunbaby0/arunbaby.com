@@ -3,7 +3,7 @@ title: "Voice Agent Architecture"
 day: 17
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
   - voice-agent
   - stt
@@ -12,12 +12,12 @@ tags:
   - deepgram
   - elevenlabs
   - barge-in
-related_dsa_day: 17
-related_ml_day: 17
-related_speech_day: 17
   - echo-cancellation
   - cost-analysis
 difficulty: Medium
+related_dsa_day: 17
+related_ml_day: 17
+related_speech_day: 17
 ---
 
 **"Talking to machines: The end of the Keyboard."**
@@ -160,7 +160,7 @@ Without AEC, the Agent hears its own voice loop back into the mic.
 
 The flow of data is a Figure-8 loop.
 
-```mermaid
+``mermaid
 sequenceDiagram
  participant User
  participant VAD
@@ -183,7 +183,7 @@ sequenceDiagram
  AudioPlayer-->>User: (Silence)
  VAD->>STT: "Wait!"
  STT->>LLM: "Wait!"
-```
+``
 
 ---
 
@@ -192,16 +192,16 @@ sequenceDiagram
 Voice is expensive. Text chat is nearly free. Let's do the math for a 10-minute active conversation.
 
 ### 7.1 Premium Stack (Deepgram + GPT-4o + ElevenLabs)
-* **STT (Deepgram):** $0.0043 / min. (10 mins = $0.043).
-* **LLM (GPT-4o):** ~$0.01 / turn. ~10 turns/min = $0.10 / min. (10 mins = $1.00).
-* **TTS (ElevenLabs):** $0.15 / min (roughly). (10 mins = $1.50).
+* **STT (Deepgram):** `0.0043 / min. (10 mins = `0.043).
+* **LLM (GPT-4o):** ~`0.01 / turn. ~10 turns/min = `0.10 / min. (10 mins = $1.00).
+* **TTS (ElevenLabs):** `0.15 / min (roughly). (10 mins = `1.50).
 * **Total:** **$2.54 per call.**
 * *Viability:* Only viable for high-value services (Legal, Medical, Banking).
 
 ### 7.2 Economy Stack (Deepgram + GPT-4o-mini + OpenAI TTS)
 * **STT (Deepgram):** $0.043.
-* **LLM (GPT-4o-mini):** ~$0.001 / turn. (10 mins = $0.10).
-* **TTS (OpenAI TTS):** $0.015 / min. (10 mins = $0.15).
+* **LLM (GPT-4o-mini):** ~`0.001 / turn. (10 mins = `0.10).
+* **TTS (OpenAI TTS):** `0.015 / min. (10 mins = `0.15).
 * **Total:** **$0.29 per call.**
 * *Viability:* Viable for Customer Support, Ordering, consumer apps.
 

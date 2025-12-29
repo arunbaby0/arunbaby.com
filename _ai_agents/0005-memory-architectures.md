@@ -3,13 +3,13 @@ title: "Memory Architectures"
 day: 5
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - memory
-  - long-term-memory
-  - vector-db
-  - generative-agents
-  - memgpt
+ - memory
+ - long-term-memory
+ - vector-db
+ - generative-agents
+ - memgpt
 difficulty: Easy
 related_dsa_day: 5
 related_ml_day: 5
@@ -45,7 +45,7 @@ The raw user prompt and System Instructions.
 ### 2.2 Short-Term / Working Memory (Context)
 This tracks the *current* conversation or active task. It holds the "Scratchpad" of thoughts.
 * **The Challenge:** The "Context Stuffing" problem.
-* **Strategy 1: Sliding Window.** Keep last $N$ turns. Simple, but forgets the beginning of the plan.
+* **Strategy 1: Sliding Window.** Keep last `N` turns. Simple, but forgets the beginning of the plan.
 * **Strategy 2: Summarization.** As the window fills, call the LLM to summarize the oldest 10 turns into a paragraph ("I successfully downloaded the data and cleaned it"). Inject this summary and drop the raw logs.
 * **Strategy 3: Entity Extraction.** Extract specific variables ("User Name: Alice", "Goal: Fix Bug") and store them in a state dictionary, reducing the text needed to purely essential facts.
 
@@ -78,10 +78,10 @@ Every observation is a distinct object in a time-ordered list.
 
 ### 3.2 The Retrieval Function
 How do we decide what to remember? They used a weighted score of 3 factors to retrieve top memories for a given query:
-$$ Score = \alpha \cdot \text{Recency} + \beta \cdot \text{Importance} + \gamma \cdot \text{Relevance} $$
+` Score = \alpha \cdot \text{Recency} + \beta \cdot \text{Importance} + \gamma \cdot \text{Relevance} `
 
 1. **Recency:** Exponential decay. I care about what happened 5 minutes ago more than 5 years ago.
- * $Score = 0.99^{\text{decay\_hours}}$
+ * `Score = 0.99^{\text{decay\_hours}}`
 2. **Importance:** A static score separating "Noise" from "Signal". "Ate toast" (1/10). "House on fire" (10/10).
  * *Implementation:* Ask the LLM to rate the importance of every new memory on ingestion.
 3. **Relevance:** The standard Cosine Similarity to the module's current query.
@@ -121,7 +121,7 @@ How does an agent "learn to code"?
 
 The formula for the Stanford retrieval function.
 
-```python
+``python
 def retrieve_memories(query_vector, memory_stream, alpha=1, beta=1, gamma=1):
  """
  Ranks memories by Recency, Importance, and Relevance.
@@ -150,7 +150,7 @@ def retrieve_memories(query_vector, memory_stream, alpha=1, beta=1, gamma=1):
  scored_memories.sort(key=lambda x: x[0], reverse=True)
 
  return [m[1] for m in scored_memories[:3]]
-```
+``
 
 ---
 

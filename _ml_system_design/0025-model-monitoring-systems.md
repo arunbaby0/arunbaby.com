@@ -1,22 +1,22 @@
 ---
 title: "Model Monitoring Systems"
 day: 25
+related_dsa_day: 25
+related_speech_day: 25
+related_agents_day: 25
 collection: ml_system_design
 categories:
-  - ml-system-design
+ - ml-system-design
 tags:
-  - monitoring
-  - drift-detection
-  - production-ml
-  - observability
-  - devops
+ - monitoring
+ - drift-detection
+ - production-ml
+ - observability
+ - devops
 subdomain: "MLOps"
 tech_stack: [Prometheus, Grafana, EvidentlyAI, Arize]
 scale: "Monitoring 1000+ models in production"
 companies: [Uber, Netflix, Datadog, Arize AI]
-related_dsa_day: 25
-related_speech_day: 25
-related_agents_day: 25
 ---
 
 **The silent killer of ML models is not a bug in the code, but a change in the world.**
@@ -51,18 +51,18 @@ The distribution of the target variable `P(Y)` changes.
 
 ## High-Level Architecture: The Monitoring Stack
 
-```ascii
-+-----------+     +------------+     +-------------+
-| Live App  | --> | Log Stream | --> | Drift Calc  |
-+-----------+     +------------+     +-------------+
-(FastAPI/Go)      (Kafka/S3)         (Airflow/Spark)
-                                           |
-                                           v
-+-----------+     +------------+     +-------------+
-| Alerting  | <-- | Dashboard  | <-- | Metrics DB  |
-+-----------+     +------------+     +-------------+
-(PagerDuty)       (Grafana)          (Prometheus)
-```
+``ascii
++-----------+ +------------+ +-------------+
+| Live App | --> | Log Stream | --> | Drift Calc |
++-----------+ +------------+ +-------------+
+(FastAPI/Go) (Kafka/S3) (Airflow/Spark)
+ |
+ v
++-----------+ +------------+ +-------------+
+| Alerting | <-- | Dashboard | <-- | Metrics DB |
++-----------+ +------------+ +-------------+
+(PagerDuty) (Grafana) (Prometheus)
+``
 
 How do we build a system to catch this?
 
@@ -74,10 +74,10 @@ Every prediction request and response must be logged.
 ### 2. The Calculation Layer (Drift Detection)
 A batch job (Airflow) or stream processor (Flink) calculates statistics.
 - **Statistical Tests:**
-    - **KS-Test (Kolmogorov-Smirnov):** For continuous features. Measures max distance between two CDFs.
-    - **Chi-Square Test:** For categorical features.
-    - **PSI (Population Stability Index):** Industry standard for financial models.
-    - **KL Divergence:** Measures information loss.
+ - **KS-Test (Kolmogorov-Smirnov):** For continuous features. Measures max distance between two CDFs.
+ - **Chi-Square Test:** For categorical features.
+ - **PSI (Population Stability Index):** Industry standard for financial models.
+ - **KL Divergence:** Measures information loss.
 
 ### 3. The Visualization Layer (Dashboards)
 - **Tools:** Grafana, Arize AI, Evidently AI.
@@ -95,32 +95,32 @@ PSI is the gold standard metric.
 
 **Implementation in Python:**
 
-```python
+``python
 import numpy as np
 
 def calculate_psi(expected, actual, buckets=10):
-    # 1. Define buckets (breakpoints) based on Expected distribution
-    breakpoints = np.percentile(expected, np.linspace(0, 100, buckets + 1))
-    
-    # 2. Calculate frequencies
-    expected_percents = np.histogram(expected, breakpoints)[0] / len(expected)
-    actual_percents = np.histogram(actual, breakpoints)[0] / len(actual)
-    
-    # 3. Avoid division by zero
-    expected_percents = np.where(expected_percents == 0, 0.0001, expected_percents)
-    actual_percents = np.where(actual_percents == 0, 0.0001, actual_percents)
-    
-    # 4. Calculate PSI
-    psi_values = (actual_percents - expected_percents) * \
-                 np.log(actual_percents / expected_percents)
-    
-    return np.sum(psi_values)
+ # 1. Define buckets (breakpoints) based on Expected distribution
+ breakpoints = np.percentile(expected, np.linspace(0, 100, buckets + 1))
+ 
+ # 2. Calculate frequencies
+ expected_percents = np.histogram(expected, breakpoints)[0] / len(expected)
+ actual_percents = np.histogram(actual, breakpoints)[0] / len(actual)
+ 
+ # 3. Avoid division by zero
+ expected_percents = np.where(expected_percents == 0, 0.0001, expected_percents)
+ actual_percents = np.where(actual_percents == 0, 0.0001, actual_percents)
+ 
+ # 4. Calculate PSI
+ psi_values = (actual_percents - expected_percents) * \
+ np.log(actual_percents / expected_percents)
+ 
+ return np.sum(psi_values)
 
 # Example
 train_data = np.random.normal(0, 1, 1000)
 prod_data = np.random.normal(0.5, 1, 1000) # Mean shifted
 print(f"PSI: {calculate_psi(train_data, prod_data):.4f}")
-```
+``
 
 ## Production Engineering: Async vs. Sync Monitoring
 
@@ -143,9 +143,9 @@ But how do you monitor **Embeddings** (Vectors of size 768)?
 You can't run KS-Test on 768 dimensions independently.
 
 **Solution: Dimensionality Reduction.**
-1.  **UMAP / t-SNE:** Project the 768-dim vectors to 2D.
-2.  **Visual Inspection:** Plot the Training Data (Blue) and Production Data (Red).
-3.  **Drift:** If the Red points form a cluster where there are no Blue points, you have **Out-of-Distribution (OOD)** data.
+1. **UMAP / t-SNE:** Project the 768-dim vectors to 2D.
+2. **Visual Inspection:** Plot the Training Data (Blue) and Production Data (Red).
+3. **Drift:** If the Red points form a cluster where there are no Blue points, you have **Out-of-Distribution (OOD)** data.
 
 **Automated Metric:**
 - **M-Statistic (Maximum Mean Discrepancy):** Measures the distance between two distributions in high-dimensional space using a kernel function.
@@ -159,10 +159,10 @@ Sometimes the data looks fine, and the predictions look fine, but the **reasonin
 - **Prod:** Model starts relying on "Zip Code" (because Income became noisy).
 
 **Detection:**
-1.  Calculate **SHAP values** for a sample of production requests.
-2.  Rank features by importance.
-3.  Compare with training feature importance.
-4.  **Alert:** If the rank order changes significantly (Kendall's Tau correlation).
+1. Calculate **SHAP values** for a sample of production requests.
+2. Rank features by importance.
+3. Compare with training feature importance.
+4. **Alert:** If the rank order changes significantly (Kendall's Tau correlation).
 
 ## Ethics: Bias and Fairness Monitoring
 
@@ -170,9 +170,9 @@ Drift isn't just about accuracy; it's about **Fairness**.
 If your model starts rejecting more women than men, you need to know *immediately*.
 
 **Metrics to Monitor:**
-1.  **Demographic Parity:** `P(Predicted=1 | Male) == P(Predicted=1 | Female)`.
-2.  **Equal Opportunity:** `TPR(Male) == TPR(Female)`.
-3.  **Disparate Impact:** `Ratio of acceptance rates > 0.8`.
+1. **Demographic Parity:** `P(Predicted=1 | Male) == P(Predicted=1 | Female)`.
+2. **Equal Opportunity:** `TPR(Male) == TPR(Female)`.
+3. **Disparate Impact:** `Ratio of acceptance rates > 0.8`.
 
 **Implementation:**
 You need "Protected Attributes" (Race, Gender) in your logs.
@@ -183,7 +183,7 @@ You need "Protected Attributes" (Race, Gender) in your logs.
 
 Let's build a real-time monitor using **FastAPI** and **Prometheus**.
 
-```python
+``python
 from fastapi import FastAPI
 from prometheus_client import Counter, Histogram, make_asgi_app
 import numpy as np
@@ -201,42 +201,42 @@ CURRENT_WINDOW = []
 
 @app.post("/predict")
 def predict(features: list):
-    # 1. Log Metric
-    PREDICTION_COUNTER.inc()
-    INPUT_VALUE_HIST.observe(features[0]) # Monitor 1st feature
-    
-    # 2. Add to Window for Drift Calc
-    CURRENT_WINDOW.append(features[0])
-    if len(CURRENT_WINDOW) > 1000:
-        score = calculate_psi(REF_DIST, CURRENT_WINDOW)
-        DRIFT_GAUGE.set(score)
-        CURRENT_WINDOW.clear()
-        
-    # 3. Predict
-    return {"prediction": 0.9}
+ # 1. Log Metric
+ PREDICTION_COUNTER.inc()
+ INPUT_VALUE_HIST.observe(features[0]) # Monitor 1st feature
+ 
+ # 2. Add to Window for Drift Calc
+ CURRENT_WINDOW.append(features[0])
+ if len(CURRENT_WINDOW) > 1000:
+ score = calculate_psi(REF_DIST, CURRENT_WINDOW)
+ DRIFT_GAUGE.set(score)
+ CURRENT_WINDOW.clear()
+ 
+ # 3. Predict
+ return {"prediction": 0.9}
 
 # Expose /metrics endpoint for Prometheus
 metrics_app = make_asgi_app()
 app.mount("/metrics", metrics_app)
-```
+``
 
 **Architecture:**
-1.  **FastAPI:** Serves the model.
-2.  **Prometheus Client:** Aggregates metrics in memory.
-3.  **Prometheus Server:** Scrapes `/metrics` every 15s.
-4.  **Grafana:** Visualizes the histograms.
+1. **FastAPI:** Serves the model.
+2. **Prometheus Client:** Aggregates metrics in memory.
+3. **Prometheus Server:** Scrapes `/metrics` every 15s.
+4. **Grafana:** Visualizes the histograms.
 
 ## Production Engineering: Alerting Strategies
 
 **The Boy Who Cried Wolf:** If you alert on every minor drift, engineers will ignore PagerDuty.
 
 **Best Practices:**
-1.  **Dynamic Thresholds:** Don't use `PSI > 0.2`. Use `PSI > MovingAverage(PSI) + 3*StdDev`.
-2.  **Multi-Window Alerts:** Alert only if drift persists for 3 hours.
-3.  **Severity Levels:**
-    - **P1 (Wake up):** Model returns `NaN` or 500s.
-    - **P2 (Next Morning):** PSI > 0.2.
-    - **P3 (Weekly Review):** Feature importance shift.
+1. **Dynamic Thresholds:** Don't use `PSI > 0.2`. Use `PSI > MovingAverage(PSI) + 3*StdDev`.
+2. **Multi-Window Alerts:** Alert only if drift persists for 3 hours.
+3. **Severity Levels:**
+ - **P1 (Wake up):** Model returns `NaN` or 500s.
+ - **P2 (Next Morning):** PSI > 0.2.
+ - **P3 (Weekly Review):** Feature importance shift.
 
 ## Data Quality: Great Expectations
 
@@ -258,13 +258,13 @@ Drift detects "Aggregate" shifts. But what if individual requests are weird?
 
 **Solution: Isolation Forest.**
 An unsupervised algorithm that isolates anomalies.
-1.  Randomly select a feature.
-2.  Randomly select a split value.
-3.  Repeat.
-4.  Anomalies are isolated quickly (short path length). Normal points require many splits (long path length).
+1. Randomly select a feature.
+2. Randomly select a split value.
+3. Repeat.
+4. Anomalies are isolated quickly (short path length). Normal points require many splits (long path length).
 
 **Implementation:**
-```python
+``python
 from sklearn.ensemble import IsolationForest
 
 # Train on "Normal" data
@@ -273,7 +273,7 @@ clf = IsolationForest(random_state=0).fit(X_train)
 # Predict on new data
 # -1 = Outlier, 1 = Normal
 preds = clf.predict(X_new)
-```
+``
 
 ## Deployment Strategies: A/B Testing vs. Shadow Mode
 
@@ -326,10 +326,10 @@ How do you deploy a new model safely?
 
 If you retrain on your own model's predictions, you create a **Feedback Loop**.
 **Example:**
-1.  Model recommends "Action Movies".
-2.  User clicks "Action Movies" (because that's all they see).
-3.  Model learns "User loves Action Movies".
-4.  Model recommends *only* "Action Movies".
+1. Model recommends "Action Movies".
+2. User clicks "Action Movies" (because that's all they see).
+3. Model learns "User loves Action Movies".
+4. Model recommends *only* "Action Movies".
 
 **Solution: Exploration.**
 - **Epsilon-Greedy:** 5% of the time, show random recommendations.
@@ -351,12 +351,12 @@ If you retrain on your own model's predictions, you create a **Feedback Loop**.
 Monitoring tabular models (XGBoost) is solved. Monitoring LLMs (GPT-4) is the Wild West.
 
 **New Metrics:**
-1.  **Hallucination Rate:** Does the model invent facts?
-    - *Detection:* Use a second LLM (Judge) to verify the answer against a Knowledge Base (RAG).
-2.  **Prompt Injection:** Is the user trying to jailbreak the model?
-    - *Detection:* Regex filters, Perplexity scores, or a specialized BERT classifier.
-3.  **Token Usage:** Cost per request.
-4.  **Toxicity:** Is the output offensive?
+1. **Hallucination Rate:** Does the model invent facts?
+ - *Detection:* Use a second LLM (Judge) to verify the answer against a Knowledge Base (RAG).
+2. **Prompt Injection:** Is the user trying to jailbreak the model?
+ - *Detection:* Regex filters, Perplexity scores, or a specialized BERT classifier.
+3. **Token Usage:** Cost per request.
+4. **Toxicity:** Is the output offensive?
 
 **The "LLM-as-a-Judge" Pattern:**
 Use GPT-4 to monitor GPT-3.5.
@@ -398,9 +398,9 @@ The Feature Store ensures that Offline (Training) and Online (Serving) values ar
 ML is expensive. You need to monitor the **Cost per Prediction**.
 
 **Metrics:**
-1.  **GPU Utilization:** If it's 20%, you are wasting money. Scale down.
-2.  **Spot Instance Availability:** If Spot price > On-Demand, switch.
-3.  **Model Size vs. Value:** Does the 100B parameter model generate 10x more revenue than the 10B model? Usually no.
+1. **GPU Utilization:** If it's 20%, you are wasting money. Scale down.
+2. **Spot Instance Availability:** If Spot price > On-Demand, switch.
+3. **Model Size vs. Value:** Does the 100B parameter model generate 10x more revenue than the 10B model? Usually no.
 
 **Auto-Scaling Policies:**
 - Scale based on **Queue Depth** (Lag), not CPU.
@@ -412,8 +412,8 @@ ML is expensive. You need to monitor the **Cost per Prediction**.
 **Implication:** You must be able to **explain** why a user was rejected for a loan.
 
 **Monitoring for Compliance:**
-1.  **Audit Logs:** Immutable log of every decision + model version + input data.
-2.  **Reproducibility:** Can you replay the request from 3 years ago and get the exact same result? (Requires versioning Code + Data + Model + Environment).
+1. **Audit Logs:** Immutable log of every decision + model version + input data.
+2. **Reproducibility:** Can you replay the request from 3 years ago and get the exact same result? (Requires versioning Code + Data + Model + Environment).
 
 ## Advanced Topic: Monitoring Vector Databases (RAG)
 
@@ -421,10 +421,10 @@ In RAG (Retrieval Augmented Generation), the "Model" is the LLM + Vector DB.
 If the Vector DB returns bad context, the LLM hallucinates.
 
 **What to Monitor:**
-1.  **Recall@K:** Are we retrieving the right documents? (Requires Ground Truth).
-2.  **Index Drift:** Does the HNSW graph structure degrade over time?
-3.  **Embedding Distribution:** Use PCA to visualize if new documents are clustering in a new region (Topic Drift).
-4.  **Latency:** Vector search can be slow. Monitor p99 latency.
+1. **Recall@K:** Are we retrieving the right documents? (Requires Ground Truth).
+2. **Index Drift:** Does the HNSW graph structure degrade over time?
+3. **Embedding Distribution:** Use PCA to visualize if new documents are clustering in a new region (Topic Drift).
+4. **Latency:** Vector search can be slow. Monitor p99 latency.
 
 ## Deep Dive: Online Learning (Continual Learning)
 
@@ -459,57 +459,57 @@ Allows monitoring frequency of strings (e.g., URLs) without knowing who visited 
 Don't click around in the UI. Version control your dashboards.
 **Jsonnet** is the standard for generating Grafana JSON.
 
-```jsonnet
+``jsonnet
 local grafana = import 'grafonnet/grafana.libsonnet';
 local dashboard = grafana.dashboard;
 local graph = grafana.graphPanel;
 local prometheus = grafana.prometheus;
 
 dashboard.new(
-  'Model Health',
-  schemaVersion=16,
+ 'Model Health',
+ schemaVersion=16,
 )
 .addPanel(
-  graph.new(
-    'Prediction Drift (PSI)',
-    datasource='Prometheus',
-  )
-  .addTarget(
-    prometheus.target(
-      'model_drift_score',
-    )
-  )
+ graph.new(
+ 'Prediction Drift (PSI)',
+ datasource='Prometheus',
+ )
+ .addTarget(
+ prometheus.target(
+ 'model_drift_score',
+ )
+ )
 )
-```
+``
 
 ## Appendix E: The Human-in-the-Loop
 
 Sometimes, the monitor shouldn't just alert; it should **escalate**.
 **Active Learning:**
-1.  Model is unsure (Confidence < 0.6).
-2.  Route request to a Human Reviewer.
-3.  Human labels it.
-4.  Add to training set.
-5.  Retrain.
+1. Model is unsure (Confidence < 0.6).
+2. Route request to a Human Reviewer.
+3. Human labels it.
+4. Add to training set.
+5. Retrain.
 
 This turns "Low Confidence" from a failure into a feature.
 
 ## Appendix F: Interview Questions
 
-1.  **Q:** "How do you monitor a model that runs on a mobile device (Edge)?"
-    **A:** You can't send all data to the cloud (bandwidth). Use **Federated Monitoring**. Calculate histograms locally on the device, send only the histogram (small JSON) to the server for aggregation.
+1. **Q:** "How do you monitor a model that runs on a mobile device (Edge)?"
+ **A:** You can't send all data to the cloud (bandwidth). Use **Federated Monitoring**. Calculate histograms locally on the device, send only the histogram (small JSON) to the server for aggregation.
 
-2.  **Q:** "What is the difference between Model Performance and Business Performance?"
-    **A:**
-    - **Model:** AUC, Accuracy, LogLoss.
-    - **Business:** Revenue, Churn, CTR.
-    - *Crucial:* Good Model Performance != Good Business Performance. (e.g., A clickbait model has high CTR but increases Churn).
+2. **Q:** "What is the difference between Model Performance and Business Performance?"
+ **A:**
+ - **Model:** AUC, Accuracy, LogLoss.
+ - **Business:** Revenue, Churn, CTR.
+ - *Crucial:* Good Model Performance != Good Business Performance. (e.g., A clickbait model has high CTR but increases Churn).
 
-3.  **Q:** "How do you distinguish between Data Drift and a Bug?"
-    **A:**
-    - **Bug:** Sudden step-change in metrics (usually after a deployment).
-    - **Drift:** Gradual trend over days/weeks.
-    - *Check:* Did we deploy code yesterday? Did the upstream data schema change?
+3. **Q:** "How do you distinguish between Data Drift and a Bug?"
+ **A:**
+ - **Bug:** Sudden step-change in metrics (usually after a deployment).
+ - **Drift:** Gradual trend over days/weeks.
+ - *Check:* Did we deploy code yesterday? Did the upstream data schema change?
 
 ## Conclusion
 

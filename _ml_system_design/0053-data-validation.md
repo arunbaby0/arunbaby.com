@@ -1,24 +1,24 @@
 ---
 title: "Data Validation"
 day: 53
+related_dsa_day: 53
+related_speech_day: 53
+related_agents_day: 53
 collection: ml_system_design
 categories:
-  - ml-system-design
+ - ml-system-design
 tags:
-  - data-validation
-  - data-quality
-  - mlops
-  - schema
-  - monitoring
-  - drift
+ - data-validation
+ - data-quality
+ - mlops
+ - schema
+ - monitoring
+ - drift
 difficulty: Hard
 subdomain: "Data Quality & Governance"
 tech_stack: Python, Great Expectations, TFDV, Spark, Kafka
 scale: "100TB/day, multi-tenant, low-latency gates"
 companies: Google, Meta, Netflix, Uber
-related_dsa_day: 53
-related_speech_day: 53
-related_agents_day: 53
 ---
 
 **"Most ML failures aren’t model bugs—they’re invalid data quietly passing through."**
@@ -73,43 +73,43 @@ like the “First Missing Positive” algorithm, you define the valid domain and
 
 ## 3. High-Level Architecture
 
-```
-            +------------------------+
-            | Upstream Sources       |
-            | (streams + batch)      |
-            +-----------+------------+
-                        |
-                        v
-              +-------------------+
-              | Ingestion Layer   |
-              | (Kafka/S3/HDFS)   |
-              +---------+---------+
-                        |
-           +------------+-------------+
-           |                          |
-           v                          v
- +-------------------+       +-------------------+
- | Validation (Fast) |       | Validation (Deep) |
- | schema + counts   |       | dist + drift      |
- +---------+---------+       +---------+---------+
-           |                          |
-           +------------+-------------+
-                        |
-                        v
-              +-------------------+
-              | Policy Engine     |
-              | (pass/warn/block) |
-              +---------+---------+
-                        |
-           +------------+-------------+
-           |                          |
-           v                          v
- +-------------------+       +-------------------+
- | Downstream:       |       | Quarantine Store  |
- | feature store,    |       | + RCA reports     |
- | training, serving |       +-------------------+
+``
+ +------------------------+
+ | Upstream Sources |
+ | (streams + batch) |
+ +-----------+------------+
+ |
+ v
  +-------------------+
-```
+ | Ingestion Layer |
+ | (Kafka/S3/HDFS) |
+ +---------+---------+
+ |
+ +------------+-------------+
+ | |
+ v v
+ +-------------------+ +-------------------+
+ | Validation (Fast) | | Validation (Deep) |
+ | schema + counts | | dist + drift |
+ +---------+---------+ +---------+---------+
+ | |
+ +------------+-------------+
+ |
+ v
+ +-------------------+
+ | Policy Engine |
+ | (pass/warn/block) |
+ +---------+---------+
+ |
+ +------------+-------------+
+ | |
+ v v
+ +-------------------+ +-------------------+
+ | Downstream: | | Quarantine Store |
+ | feature store, | | + RCA reports |
+ | training, serving | +-------------------+
+ +-------------------+
+``
 
 Key idea:
 - **Fast checks** run on every partition quickly (schema, counts, null rates).
@@ -150,11 +150,11 @@ The key lesson:
 ### 4.2 Where validation runs (batch vs streaming)
 
 - **Batch validation**
-  - validates partitions (daily tables)
-  - good for training data and offline features
+ - validates partitions (daily tables)
+ - good for training data and offline features
 - **Streaming validation**
-  - validates events in near real time (schema, rate, missing fields)
-  - good for online features and real-time inference pipelines
+ - validates events in near real time (schema, rate, missing fields)
+ - good for online features and real-time inference pipelines
 
 Most orgs end up with both.
 
@@ -280,14 +280,14 @@ Below are minimal examples of validation primitives. In production you’d use G
 If you’re familiar with common libraries:
 
 - **Great Expectations**
-  - “expectation suite” = a set of rules for a dataset
-  - “checkpoint” = validation run that produces a report
-  - good fit for: batch tables, SQL/Spark pipelines
+ - “expectation suite” = a set of rules for a dataset
+ - “checkpoint” = validation run that produces a report
+ - good fit for: batch tables, SQL/Spark pipelines
 
 - **TFDV (TensorFlow Data Validation)**
-  - “schema” + “statistics” = baseline + constraints
-  - drift/skew detection = compare stats between datasets/slices
-  - good fit for: TF pipelines and feature-heavy datasets
+ - “schema” + “statistics” = baseline + constraints
+ - drift/skew detection = compare stats between datasets/slices
+ - good fit for: TF pipelines and feature-heavy datasets
 
 Even if you don’t use these libraries, the primitives are the same:
 - schema checks
@@ -297,53 +297,53 @@ Even if you don’t use these libraries, the primitives are the same:
 
 ### 6.1 Schema validation (dict-based)
 
-```python
+``python
 from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple
 
 
 @dataclass
 class ValidationError:
-    field: str
-    message: str
+ field: str
+ message: str
 
 
 def validate_schema(record: Dict[str, Any], required: Dict[str, type]) -> List[ValidationError]:
-    errors: List[ValidationError] = []
-    for field, t in required.items():
-        if field not in record:
-            errors.append(ValidationError(field, "missing"))
-            continue
-        if record[field] is None:
-            errors.append(ValidationError(field, "null"))
-            continue
-        if not isinstance(record[field], t):
-            errors.append(ValidationError(field, f"type_mismatch: expected {t.__name__}"))
-    return errors
-```
+ errors: List[ValidationError] = []
+ for field, t in required.items():
+ if field not in record:
+ errors.append(ValidationError(field, "missing"))
+ continue
+ if record[field] is None:
+ errors.append(ValidationError(field, "null"))
+ continue
+ if not isinstance(record[field], t):
+ errors.append(ValidationError(field, f"type_mismatch: expected {t.__name__}"))
+ return errors
+``
 
 ### 6.2 Range and enum checks
 
-```python
+``python
 def validate_range(x: float, lo: float, hi: float) -> bool:
-    return lo <= x <= hi
+ return lo <= x <= hi
 
 
 def validate_enum(x: str, allowed: set[str]) -> bool:
-    return x in allowed
-```
+ return x in allowed
+``
 
 ### 6.3 Drift check on histograms (L1 distance)
 
-```python
+``python
 import numpy as np
 
 
 def l1_hist_distance(h1: np.ndarray, h2: np.ndarray) -> float:
-    h1 = h1 / (np.sum(h1) + 1e-9)
-    h2 = h2 / (np.sum(h2) + 1e-9)
-    return float(np.sum(np.abs(h1 - h2)))
-```
+ h1 = h1 / (np.sum(h1) + 1e-9)
+ h2 = h2 / (np.sum(h2) + 1e-9)
+ return float(np.sum(np.abs(h1 - h2)))
+``
 
 This is a lightweight baseline:
 - cheap
@@ -363,32 +363,32 @@ In practice:
 
 ### 6.5 A minimal policy engine (pass/warn/block)
 
-```python
+``python
 from dataclasses import dataclass
 from typing import List
 
 
 @dataclass
 class PolicyDecision:
-    status: str  # "pass" | "warn" | "block"
-    reasons: List[str]
+ status: str # "pass" | "warn" | "block"
+ reasons: List[str]
 
 
 def decide_policy(errors: List[str], warn_only: set[str]) -> PolicyDecision:
-    """
-    Very simple policy:
-    - if any error is not in warn_only -> block
-    - else if any errors exist -> warn
-    - else pass
-    """
-    if not errors:
-        return PolicyDecision("pass", [])
+ """
+ Very simple policy:
+ - if any error is not in warn_only -> block
+ - else if any errors exist -> warn
+ - else pass
+ """
+ if not errors:
+ return PolicyDecision("pass", [])
 
-    hard = [e for e in errors if e not in warn_only]
-    if hard:
-        return PolicyDecision("block", hard)
-    return PolicyDecision("warn", errors)
-```
+ hard = [e for e in errors if e not in warn_only]
+ if hard:
+ return PolicyDecision("block", hard)
+ return PolicyDecision("warn", errors)
+``
 
 In real systems, policies are per-dataset and per-severity tier.
 But this skeleton captures the core idea: validation results must be translated into actions.
@@ -457,20 +457,20 @@ This is the difference between:
 Drift detection can be done with different representations:
 
 - **Histograms**
-  - easy to interpret
-  - good for numeric features with stable ranges
-  - costs grow with number of bins × number of features
+ - easy to interpret
+ - good for numeric features with stable ranges
+ - costs grow with number of bins × number of features
 
 - **Sketches**
-  - compact
-  - streaming-friendly
-  - great for cardinality and heavy hitters
-  - less interpretable than histograms but still useful
+ - compact
+ - streaming-friendly
+ - great for cardinality and heavy hitters
+ - less interpretable than histograms but still useful
 
 - **Embedding statistics**
-  - for high-dimensional features (text embeddings, image embeddings)
-  - track mean/variance, PCA projections, or cluster assignments
-  - useful for catching “silent changes” upstream (new encoder version)
+ - for high-dimensional features (text embeddings, image embeddings)
+ - track mean/variance, PCA projections, or cluster assignments
+ - useful for catching “silent changes” upstream (new encoder version)
 
 Practical platform approach:
 - use cheap, interpretable drift checks for “core” features
@@ -663,31 +663,31 @@ It’s an underappreciated part of ML system reliability.
 When onboarding a dataset, start with:
 
 - **Schema**
-  - required fields present
-  - types correct
-  - nullability documented
+ - required fields present
+ - types correct
+ - nullability documented
 
 - **Completeness**
-  - expected partition cadence (hourly/daily)
-  - record count bounds
-  - freshness/latency bounds
+ - expected partition cadence (hourly/daily)
+ - record count bounds
+ - freshness/latency bounds
 
 - **Range and enums**
-  - numeric ranges (guard impossible values)
-  - known enums (country/device/app_version) with a safe “unknown” bucket
+ - numeric ranges (guard impossible values)
+ - known enums (country/device/app_version) with a safe “unknown” bucket
 
 - **Distribution**
-  - basic histograms for critical features
-  - category cardinality limits (avoid explosion)
+ - basic histograms for critical features
+ - category cardinality limits (avoid explosion)
 
 - **Policy**
-  - warn vs block definitions
-  - ownership routing (who gets paged)
-  - links to runbooks and change logs
+ - warn vs block definitions
+ - ownership routing (who gets paged)
+ - links to runbooks and change logs
 
 The point is not perfection; it’s catching high-impact failures early.
 
-### 12.2 Appendix: how Day 53 connects across tracks
+### 12.2 Appendix: howconnects across tracks
 
 The same pattern appears in all four tracks:
 - DSA: restrict to `[1..n]` and detect the missing element
@@ -726,12 +726,12 @@ This is a strong answer because it emphasizes operability and governance, not ju
 A simple rule that works well in practice:
 
 - **Stop the line** (block) when:
-  - training data integrity is compromised (missing partition, unit mismatch, label leakage)
-  - publishing features would poison many downstream models
+ - training data integrity is compromised (missing partition, unit mismatch, label leakage)
+ - publishing features would poison many downstream models
 
 - **Degrade gracefully** (fallback) when:
-  - serving needs to respond (online inference)
-  - you can default/clamp safely and alert the owner
+ - serving needs to respond (online inference)
+ - you can default/clamp safely and alert the owner
 
 This prevents the most common confusion:
 teams either block everything (causing outages) or allow everything (causing silent correctness failures).
@@ -764,24 +764,24 @@ lineage is what turns “data is bad” into “here is what to do now”.
 A useful way to think about progress:
 
 - **Level 0: ad-hoc**
-  - manual SQL checks, notebooks
-  - failures discovered after model regressions
+ - manual SQL checks, notebooks
+ - failures discovered after model regressions
 
 - **Level 1: schema checks**
-  - schema registry and required fields
-  - basic null/range checks
+ - schema registry and required fields
+ - basic null/range checks
 
 - **Level 2: gated publishing**
-  - warn/block policies
-  - quarantine and RCA packets
+ - warn/block policies
+ - quarantine and RCA packets
 
 - **Level 3: drift and segment checks**
-  - histograms, sketches, segment baselines
-  - change-log correlation
+ - histograms, sketches, segment baselines
+ - change-log correlation
 
 - **Level 4: closed-loop reliability**
-  - automated mitigations (rollback, safe fallback models)
-  - continuous evaluation of validation rules (shadow mode for new rules)
+ - automated mitigations (rollback, safe fallback models)
+ - continuous evaluation of validation rules (shadow mode for new rules)
 
 Most real orgs are between levels 1 and 3. Level 4 is where validation becomes a competitive advantage.
 
@@ -795,14 +795,14 @@ Many ML features come from joins:
 Joins fail silently in two ways:
 
 1. **Fanout explosions**
-   - a one-to-one join becomes one-to-many
-   - record counts inflate
-   - models learn duplicated labels or skewed weights
+ - a one-to-one join becomes one-to-many
+ - record counts inflate
+ - models learn duplicated labels or skewed weights
 
 2. **Join drop / sparsity**
-   - key mismatch causes many null joins
-   - features default unexpectedly
-   - online/offline skew increases
+ - key mismatch causes many null joins
+ - features default unexpectedly
+ - online/offline skew increases
 
 Validation checks for joins:
 - expected row count ratio bounds (post-join / pre-join)
@@ -836,28 +836,28 @@ Skew is especially important for:
 For a dataset `user_events_daily`, a practical expectation suite might include:
 
 - **Schema**
-  - required: `user_id`, `event_time`, `event_type`, `device`, `country`
-  - types: `user_id` string, `event_time` timestamp
+ - required: `user_id`, `event_time`, `event_type`, `device`, `country`
+ - types: `user_id` string, `event_time` timestamp
 
 - **Completeness**
-  - record_count within [0.8x, 1.2x] of 7-day median
-  - partition latency < 2 hours
+ - record_count within [0.8x, 1.2x] of 7-day median
+ - partition latency < 2 hours
 
 - **Null/range**
-  - `country` null rate < 0.1%
-  - `event_time` within partition date +/- 24h
-  - `age` in [0, 120] if present
+ - `country` null rate < 0.1%
+ - `event_time` within partition date +/- 24h
+ - `age` in [0, 120] if present
 
 - **Enums**
-  - `event_type` in allowlist (with unknown bucket)
-  - `device` in known taxonomy buckets
+ - `event_type` in allowlist (with unknown bucket)
+ - `device` in known taxonomy buckets
 
 - **Distribution**
-  - `event_type` proportion drift L1 distance < threshold
-  - heavy hitter checks on top event types and countries
+ - `event_type` proportion drift L1 distance < threshold
+ - heavy hitter checks on top event types and countries
 
 - **Join contracts**
-  - join with `user_profile` yields < 1% missing profiles
+ - join with `user_profile` yields < 1% missing profiles
 
 The key is not to validate everything; validate what prevents expensive incidents.
 

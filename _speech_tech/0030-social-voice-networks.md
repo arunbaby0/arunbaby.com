@@ -1,21 +1,21 @@
 ---
 title: "Social Voice Networks"
 day: 30
+related_dsa_day: 30
+related_ml_day: 30
+related_agents_day: 30
 collection: speech_tech
 categories:
-  - speech_tech
+ - speech_tech
 tags:
-  - social
-  - voice
-  - recommendation
-  - speaker recognition
+ - social
+ - voice
+ - recommendation
+ - speaker recognition
 subdomain: "Social Speech Applications"
 tech_stack: [Clubhouse, Discord, x-vector, ASR, GNN]
 scale: "Real-time, Millions of Users"
 companies: [Clubhouse, Discord, Twitter Spaces, LinkedIn Audio]
-related_dsa_day: 30
-related_ml_day: 30
-related_agents_day: 30
 ---
 
 **"Building recommendation and moderation systems for voice-based social platforms."**
@@ -25,10 +25,10 @@ related_agents_day: 30
 Social Voice Networks are platforms where users interact primarily through **live audio** rather than text or images.
 
 **Examples:**
--   **Clubhouse:** Live audio rooms with speakers and listeners.
--   **Twitter Spaces:** Audio conversations linked to Twitter.
--   **Discord Voice Channels:** Real-time voice chat for gaming/communities.
--   **LinkedIn Audio:** Professional networking via voice events.
+- **Clubhouse:** Live audio rooms with speakers and listeners.
+- **Twitter Spaces:** Audio conversations linked to Twitter.
+- **Discord Voice Channels:** Real-time voice chat for gaming/communities.
+- **LinkedIn Audio:** Professional networking via voice events.
 
 **Unique Challenges:**
 1. **Ephemeral:** Content disappears (unlike text posts).
@@ -38,40 +38,40 @@ Social Voice Networks are platforms where users interact primarily through **liv
 
 ## 2. System Architecture
 
-```
+``
 ┌──────────────────────────────────────────────┐
-│         Social Voice Network Platform         │
+│ Social Voice Network Platform │
 ├──────────────────────────────────────────────┤
-│                                               │
-│  ┌────────────┐  ┌────────────┐              │
-│  │ Live Audio │  │  Speaker   │              │
-│  │  Streams   │  │Recognition │              │
-│  └──────┬─────┘  └──────┬─────┘              │
-│         │                │                    │
-│         v                v                    │
-│  ┌──────────────────────────────┐            │
-│  │      ASR (Speech-to-Text)    │            │
-│  └──────────┬───────────────────┘            │
-│             │                                 │
-│             v                                 │
-│  ┌──────────────────────────────┐            │
-│  │   Content Moderation          │            │
-│  │   (Toxicity, Misinformation)  │            │
-│  └──────────┬───────────────────┘            │
-│             │                                 │
-│             v                                 │
-│  ┌──────────────────────────────┐            │
-│  │  Topic Extraction & Indexing │            │
-│  └──────────┬───────────────────┘            │
-│             │                                 │
-│             v                                 │
-│  ┌──────────────────────────────┐            │
-│  │  Recommendation Engine        │            │
-│  │  (User → Room matching)       │            │
-│  └──────────────────────────────┘            │
-│                                               │
+│ │
+│ ┌────────────┐ ┌────────────┐ │
+│ │ Live Audio │ │ Speaker │ │
+│ │ Streams │ │Recognition │ │
+│ └──────┬─────┘ └──────┬─────┘ │
+│ │ │ │
+│ v v │
+│ ┌──────────────────────────────┐ │
+│ │ ASR (Speech-to-Text) │ │
+│ └──────────┬───────────────────┘ │
+│ │ │
+│ v │
+│ ┌──────────────────────────────┐ │
+│ │ Content Moderation │ │
+│ │ (Toxicity, Misinformation) │ │
+│ └──────────┬───────────────────┘ │
+│ │ │
+│ v │
+│ ┌──────────────────────────────┐ │
+│ │ Topic Extraction & Indexing │ │
+│ └──────────┬───────────────────┘ │
+│ │ │
+│ v │
+│ ┌──────────────────────────────┐ │
+│ │ Recommendation Engine │ │
+│ │ (User → Room matching) │ │
+│ └──────────────────────────────┘ │
+│ │
 └──────────────────────────────────────────────┘
-```
+``
 
 ## 3. Speaker Recognition (Diarization)
 
@@ -80,22 +80,22 @@ Social Voice Networks are platforms where users interact primarily through **liv
 ### x-Vector Embeddings
 
 **Architecture:**
-```
+``
 Audio (MFCC features)
-  ↓
+ ↓
 TDNN (Time Delay Neural Network)
-  ↓
+ ↓
 Statistics Pooling (mean + std over time)
-  ↓
+ ↓
 Fully Connected Layers
-  ↓
+ ↓
 x-vector (512-dim embedding)
-```
+``
 
 **Training:** Softmax loss over speaker IDs.
 **Inference:** Extract x-vector for each segment, cluster to identify speakers.
 
-```python
+``python
 import torch
 import torchaudio
 from speechbrain.pretrained import EncoderClassifier
@@ -104,13 +104,13 @@ from speechbrain.pretrained import EncoderClassifier
 classifier = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb")
 
 def extract_speaker_embedding(audio_path):
-    # Load audio
-    signal, fs = torchaudio.load(audio_path)
-    
-    # Extract x-vector
-    embeddings = classifier.encode_batch(signal)
-    
-    return embeddings.squeeze()  # [512]
+ # Load audio
+ signal, fs = torchaudio.load(audio_path)
+ 
+ # Extract x-vector
+ embeddings = classifier.encode_batch(signal)
+ 
+ return embeddings.squeeze() # [512]
 
 # Clustering speakers
 from sklearn.cluster import AgglomerativeClustering
@@ -120,35 +120,35 @@ clustering = AgglomerativeClustering(n_clusters=None, distance_threshold=0.5)
 labels = clustering.fit_predict(embeddings)
 
 # labels[i] = speaker ID for segment i
-```
+``
 
 ### Speaker Change Detection
 
 **Problem:** Detect when a new speaker starts talking.
 
 **Approach: Bayesian Information Criterion (BIC)**
-```
+``
 For each potential change point t:
-  Model 1: [0, t] and [t+1, T] as two separate Gaussians
-  Model 2: [0, T] as one Gaussian
-  ΔBIC = BIC(Model1) - BIC(Model2)
-  
+ Model 1: [0, t] and [t+1, T] as two separate Gaussians
+ Model 2: [0, T] as one Gaussian
+ ΔBIC = BIC(Model1) - BIC(Model2)
+ 
 If ΔBIC > threshold: Change point detected
-```
+``
 
 **Neural Approach:** LSTM that predicts change points.
-```python
+``python
 class SpeakerChangeDetector(nn.Module):
-    def __init__(self):
-        self.lstm = nn.LSTM(input_size=40, hidden_size=256, num_layers=2, bidirectional=True)
-        self.fc = nn.Linear(512, 2)  # Binary classification: change or no change
-    
-    def forward(self, mfcc):
-        # mfcc: [batch, time, 40]
-        lstm_out, _ = self.lstm(mfcc)
-        logits = self.fc(lstm_out)  # [batch, time, 2]
-        return logits
-```
+ def __init__(self):
+ self.lstm = nn.LSTM(input_size=40, hidden_size=256, num_layers=2, bidirectional=True)
+ self.fc = nn.Linear(512, 2) # Binary classification: change or no change
+ 
+ def forward(self, mfcc):
+ # mfcc: [batch, time, 40]
+ lstm_out, _ = self.lstm(mfcc)
+ logits = self.fc(lstm_out) # [batch, time, 2]
+ return logits
+``
 
 ## 4. Real-time ASR for Transcription
 
@@ -161,28 +161,28 @@ class SpeakerChangeDetector(nn.Module):
 2. **Prediction Network:** Language model over previously emitted tokens.
 3. **Joint Network:** Combines encoder + prediction to emit tokens.
 
-```python
+``python
 class StreamingRNNT(nn.Module):
-    def __init__(self):
-        self.encoder = ConformerEncoder(streaming=True)
-        self.prediction = nn.LSTM(input_size=vocab_size, hidden_size=512)
-        self.joint = nn.Linear(512 + 512, vocab_size)
-    
-    def forward(self, audio_chunk, prev_token, prev_hidden):
-        # Encode audio
-        enc_out = self.encoder(audio_chunk)  # [1, 512]
-        
-        # Predict next token
-        pred_out, hidden = self.prediction(prev_token, prev_hidden)  # [1, 512]
-        
-        # Joint
-        joint_out = self.joint(torch.cat([enc_out, pred_out], dim=1))  # [1, vocab_size]
-        
-        # Greedy decode
-        token = joint_out.argmax(dim=1)
-        
-        return token, hidden
-```
+ def __init__(self):
+ self.encoder = ConformerEncoder(streaming=True)
+ self.prediction = nn.LSTM(input_size=vocab_size, hidden_size=512)
+ self.joint = nn.Linear(512 + 512, vocab_size)
+ 
+ def forward(self, audio_chunk, prev_token, prev_hidden):
+ # Encode audio
+ enc_out = self.encoder(audio_chunk) # [1, 512]
+ 
+ # Predict next token
+ pred_out, hidden = self.prediction(prev_token, prev_hidden) # [1, 512]
+ 
+ # Joint
+ joint_out = self.joint(torch.cat([enc_out, pred_out], dim=1)) # [1, vocab_size]
+ 
+ # Greedy decode
+ token = joint_out.argmax(dim=1)
+ 
+ return token, hidden
+``
 
 **Latency Breakdown:**
 - Audio chunk: 80ms
@@ -202,21 +202,21 @@ class StreamingRNNT(nn.Module):
 3. **Audio Features:** Prosody (shouting, aggressive tone).
 4. **Fusion:** Combine text + audio scores.
 
-```python
+``python
 class ToxicityDetector(nn.Module):
-    def __init__(self):
-        self.text_encoder = BERTModel()
-        self.audio_encoder = ResNet1D()  # Conv1D on mel-spectrogram
-        self.fusion = nn.Linear(768 + 256, 2)  # Binary: toxic or not
-    
-    def forward(self, text_tokens, audio):
-        text_emb = self.text_encoder(text_tokens).pooler_output  # [batch, 768]
-        audio_emb = self.audio_encoder(audio).squeeze()  # [batch, 256]
-        
-        combined = torch.cat([text_emb, audio_emb], dim=1)
-        logits = self.fusion(combined)
-        
-        return logits
+ def __init__(self):
+ self.text_encoder = BERTModel()
+ self.audio_encoder = ResNet1D() # Conv1D on mel-spectrogram
+ self.fusion = nn.Linear(768 + 256, 2) # Binary: toxic or not
+ 
+ def forward(self, text_tokens, audio):
+ text_emb = self.text_encoder(text_tokens).pooler_output # [batch, 768]
+ audio_emb = self.audio_encoder(audio).squeeze() # [batch, 256]
+ 
+ combined = torch.cat([text_emb, audio_emb], dim=1)
+ logits = self.fusion(combined)
+ 
+ return logits
 
 # Inference
 text = asr(audio_chunk)
@@ -224,9 +224,9 @@ logits = toxicity_detector(text, audio_chunk)
 is_toxic = logits.argmax(dim=1) == 1
 
 if is_toxic:
-    # Mute speaker, alert moderators
-    send_alert(speaker_id, timestamp)
-```
+ # Mute speaker, alert moderators
+ send_alert(speaker_id, timestamp)
+``
 
 ### Misinformation Detection
 
@@ -237,20 +237,20 @@ if is_toxic:
 2. **Claim Detection:** NER to extract claims ("vaccine contains microchips").
 3. **Verification:** Compare claim against knowledge base.
 
-```python
+``python
 def detect_misinformation(transcript):
-    # Extract claims using NER
-    claims = ner_model.extract_claims(transcript)
-    
-    for claim in claims:
-        # Query fact-checking APIs
-        fact_check_result = fact_check_api.verify(claim)
-        
-        if fact_check_result.confidence > 0.8 and fact_check_result.verdict == "false":
-            return True, claim
-    
-    return False, None
-```
+ # Extract claims using NER
+ claims = ner_model.extract_claims(transcript)
+ 
+ for claim in claims:
+ # Query fact-checking APIs
+ fact_check_result = fact_check_api.verify(claim)
+ 
+ if fact_check_result.confidence > 0.8 and fact_check_result.verdict == "false":
+ return True, claim
+ 
+ return False, None
+``
 
 ## 6. Topic Extraction and Tagging
 
@@ -259,7 +259,7 @@ def detect_misinformation(transcript):
 **Approach: LDA + Neural Topic Models**
 
 ### Latent Dirichlet Allocation (LDA)
-```python
+``python
 from sklearn.decomposition import LatentDirichletAllocation
 
 # Collect transcripts from a room
@@ -276,25 +276,25 @@ topics = lda.fit_transform(X)
 
 # Top topic
 top_topic_id = topics.argmax()
-```
+``
 
 ### Neural Topic Model (with BERT)
-```python
+``python
 class NeuralTopicModel(nn.Module):
-    def __init__(self, num_topics=100):
-        self.encoder = BERTModel()
-        self.topic_layer = nn.Linear(768, num_topics)
-    
-    def forward(self, text):
-        emb = self.encoder(text).pooler_output  # [batch, 768]
-        topic_dist = F.softmax(self.topic_layer(emb), dim=1)  # [batch, num_topics]
-        return topic_dist
+ def __init__(self, num_topics=100):
+ self.encoder = BERTModel()
+ self.topic_layer = nn.Linear(768, num_topics)
+ 
+ def forward(self, text):
+ emb = self.encoder(text).pooler_output # [batch, 768]
+ topic_dist = F.softmax(self.topic_layer(emb), dim=1) # [batch, num_topics]
+ return topic_dist
 
 # Tag room
 topic_dist = neural_topic_model(room_transcript)
-top_topics = topic_dist.argsort(descending=True)[:3]  # Top 3 topics
+top_topics = topic_dist.argsort(descending=True)[:3] # Top 3 topics
 room_tags = [topic_names[t] for t in top_topics]
-```
+``
 
 ## 7. Room Recommendation (User → Room Matching)
 
@@ -305,33 +305,33 @@ room_tags = [topic_names[t] for t in top_topics]
 **Graph:**
 - **Nodes:** Users, Rooms, Topics.
 - **Edges:** 
-  - User --joined--> Room
-  - Room --tagged_with--> Topic
-  - User --interested_in--> Topic
+ - User --joined--> Room
+ - Room --tagged_with--> Topic
+ - User --interested_in--> Topic
 
 **Recommendation:**
 1. **Random Walk:** Start from user, walk through graph.
 2. **Frequency:** Rooms visited most often in walks are recommended.
 
-```python
+``python
 def personalized_pagerank(graph, user_id, alpha=0.85, num_walks=1000):
-    scores = defaultdict(float)
-    
-    for _ in range(num_walks):
-        current = user_id
-        for step in range(10):
-            if random.random() < (1 - alpha):
-                current = user_id  # Restart
-            else:
-                neighbors = graph.neighbors(current)
-                if neighbors:
-                    current = random.choice(neighbors)
-            
-            if graph.node_type(current) == "Room":
-                scores[current] += 1
-    
-    return sorted(scores.items(), key=lambda x: x[1], reverse=True)[:10]
-```
+ scores = defaultdict(float)
+ 
+ for _ in range(num_walks):
+ current = user_id
+ for step in range(10):
+ if random.random() < (1 - alpha):
+ current = user_id # Restart
+ else:
+ neighbors = graph.neighbors(current)
+ if neighbors:
+ current = random.choice(neighbors)
+ 
+ if graph.node_type(current) == "Room":
+ scores[current] += 1
+ 
+ return sorted(scores.items(), key=lambda x: x[1], reverse=True)[:10]
+``
 
 ### Collaborative Filtering
 
@@ -342,29 +342,29 @@ R \approx U V^T
 \\]
 where \\(U\\) is user embeddings, \\(V\\) is room embeddings.
 
-```python
+``python
 class MatrixFactorization(nn.Module):
-    def __init__(self, num_users, num_rooms, k=128):
-        self.user_emb = nn.Embedding(num_users, k)
-        self.room_emb = nn.Embedding(num_rooms, k)
-    
-    def forward(self, user_id, room_id):
-        u = self.user_emb(user_id)  # [batch, k]
-        v = self.room_emb(room_id)  # [batch, k]
-        return (u * v).sum(dim=1)  # Dot product
+ def __init__(self, num_users, num_rooms, k=128):
+ self.user_emb = nn.Embedding(num_users, k)
+ self.room_emb = nn.Embedding(num_rooms, k)
+ 
+ def forward(self, user_id, room_id):
+ u = self.user_emb(user_id) # [batch, k]
+ v = self.room_emb(room_id) # [batch, k]
+ return (u * v).sum(dim=1) # Dot product
 
 # Training
 loss = mse_loss(model(user_batch, room_batch), labels)
-```
+``
 
 ### Content-based Filtering
 
 **Idea:** Recommend rooms similar to those the user joined before.
 
-```python
+``python
 # Extract room content features
 room_features = {
-    room_id: topic_model(room_transcript) for room_id in rooms
+ room_id: topic_model(room_transcript) for room_id in rooms
 }
 
 # User profile: average of joined rooms
@@ -372,11 +372,11 @@ user_profile = np.mean([room_features[r] for r in user_joined_rooms], axis=0)
 
 # Recommend by cosine similarity
 recommendations = sorted(
-    [(r, cosine_similarity(user_profile, room_features[r])) for r in rooms],
-    key=lambda x: x[1],
-    reverse=True
+ [(r, cosine_similarity(user_profile, room_features[r])) for r in rooms],
+ key=lambda x: x[1],
+ reverse=True
 )[:10]
-```
+``
 
 ## Deep Dive: Clubhouse's Recommendation Algorithm
 
@@ -413,23 +413,23 @@ where \\(S\\) is the set of already selected rooms.
 **Problem:** Fails with background noise (TV, music).
 
 **Neural VAD:**
-```python
+``python
 class NeuralVAD(nn.Module):
-    def __init__(self):
-        self.lstm = nn.LSTM(input_size=40, hidden_size=128, num_layers=2)
-        self.fc = nn.Linear(128, 2)  # Speech or silence
-    
-    def forward(self, mfcc):
-        # mfcc: [batch, time, 40]
-        lstm_out, _ = self.lstm(mfcc)
-        logits = self.fc(lstm_out[:, -1, :])  # Use last timestep
-        return logits
+ def __init__(self):
+ self.lstm = nn.LSTM(input_size=40, hidden_size=128, num_layers=2)
+ self.fc = nn.Linear(128, 2) # Speech or silence
+ 
+ def forward(self, mfcc):
+ # mfcc: [batch, time, 40]
+ lstm_out, _ = self.lstm(mfcc)
+ logits = self.fc(lstm_out[:, -1, :]) # Use last timestep
+ return logits
 
 # Inference
 is_speaking = neural_vad(audio_chunk).argmax(dim=1) == 1
 if is_speaking:
-    transmit_audio_to_server()
-```
+ transmit_audio_to_server()
+``
 
 **Benefit:** Reduces bandwidth by 80% (don't transmit silence).
 
@@ -438,35 +438,35 @@ if is_speaking:
 **Problem:** User A hears User B. User B hears their own voice echoed back (loop).
 
 **Acoustic Echo Cancellation (AEC):**
-```
+``
 Reference signal: What we played (User B's voice)
 Microphone signal: What we recorded (User A speaking + User B's echo)
 
 Goal: Subtract the echo from the microphone signal
-```
+``
 
 **Adaptive Filter (NLMS - Normalized Least Mean Squares):**
-```python
+``python
 def nlms_aec(reference, microphone, step_size=0.01, filter_length=512):
-    h = np.zeros(filter_length)  # Adaptive filter coefficients
-    output = []
-    
-    for n in range(filter_length, len(microphone)):
-        # Reference window
-        x = reference[n - filter_length:n]
-        
-        # Predicted echo
-        echo_estimate = np.dot(h, x)
-        
-        # Error (remove echo)
-        error = microphone[n] - echo_estimate
-        output.append(error)
-        
-        # Update filter (NLMS)
-        h += (step_size / (np.dot(x, x) + 1e-8)) * error * x
-    
-    return np.array(output)
-```
+ h = np.zeros(filter_length) # Adaptive filter coefficients
+ output = []
+ 
+ for n in range(filter_length, len(microphone)):
+ # Reference window
+ x = reference[n - filter_length:n]
+ 
+ # Predicted echo
+ echo_estimate = np.dot(h, x)
+ 
+ # Error (remove echo)
+ error = microphone[n] - echo_estimate
+ output.append(error)
+ 
+ # Update filter (NLMS)
+ h += (step_size / (np.dot(x, x) + 1e-8)) * error * x
+ 
+ return np.array(output)
+``
 
 **Modern Approach:** End-to-end neural AEC (Facebook's Demucs).
 
@@ -477,32 +477,32 @@ def nlms_aec(reference, microphone, step_size=0.01, filter_length=512):
 **Solution: Deep Learning Noise Suppression**
 
 **Architecture: U-Net on Spectrogram**
-```python
+``python
 class NoiseSuppressionUNet(nn.Module):
-    def __init__(self):
-        self.encoder = nn.Sequential(
-            nn.Conv2d(1, 64, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Conv2d(64, 128, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2)
-        )
-        
-        self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(128, 64, kernel_size=2, stride=2),
-            nn.ReLU(),
-            nn.ConvTranspose2d(64, 1, kernel_size=2, stride=2),
-            nn.Sigmoid()  # Mask (0 to 1)
-        )
-    
-    def forward(self, noisy_spec):
-        # noisy_spec: [batch, 1, freq, time]
-        enc = self.encoder(noisy_spec)
-        mask = self.decoder(enc)  # [batch, 1, freq, time]
-        clean_spec = noisy_spec * mask  # Element-wise multiply
-        return clean_spec
-```
+ def __init__(self):
+ self.encoder = nn.Sequential(
+ nn.Conv2d(1, 64, kernel_size=3, padding=1),
+ nn.ReLU(),
+ nn.MaxPool2d(2),
+ nn.Conv2d(64, 128, kernel_size=3, padding=1),
+ nn.ReLU(),
+ nn.MaxPool2d(2)
+ )
+ 
+ self.decoder = nn.Sequential(
+ nn.ConvTranspose2d(128, 64, kernel_size=2, stride=2),
+ nn.ReLU(),
+ nn.ConvTranspose2d(64, 1, kernel_size=2, stride=2),
+ nn.Sigmoid() # Mask (0 to 1)
+ )
+ 
+ def forward(self, noisy_spec):
+ # noisy_spec: [batch, 1, freq, time]
+ enc = self.encoder(noisy_spec)
+ mask = self.decoder(enc) # [batch, 1, freq, time]
+ clean_spec = noisy_spec * mask # Element-wise multiply
+ return clean_spec
+``
 
 **Training:**
 - Input: Noisy spectrogram.
@@ -516,19 +516,19 @@ class NoiseSuppressionUNet(nn.Module):
 **Problem:** Recognize specific users by their voice (not just cluster speakers).
 
 **Approach: Speaker Verification**
-```python
+``python
 class SpeakerVerifier(nn.Module):
-    def __init__(self):
-        self.encoder = ResNet1D()  # Extract speaker embedding
-    
-    def forward(self, audio_enrollment, audio_test):
-        emb_enroll = self.encoder(audio_enrollment)  # [1, 512]
-        emb_test = self.encoder(audio_test)  # [1, 512]
-        
-        # Cosine similarity
-        similarity = F.cosine_similarity(emb_enroll, emb_test)
-        
-        return similarity  # > 0.8 → Same speaker
+ def __init__(self):
+ self.encoder = ResNet1D() # Extract speaker embedding
+ 
+ def forward(self, audio_enrollment, audio_test):
+ emb_enroll = self.encoder(audio_enrollment) # [1, 512]
+ emb_test = self.encoder(audio_test) # [1, 512]
+ 
+ # Cosine similarity
+ similarity = F.cosine_similarity(emb_enroll, emb_test)
+ 
+ return similarity # > 0.8 → Same speaker
 
 # Enrollment
 user_emb = model.encoder(user_audio_samples)
@@ -538,8 +538,8 @@ db.store(user_id, user_emb)
 test_emb = model.encoder(test_audio)
 similarity = cosine_similarity(test_emb, db.get(user_id))
 if similarity > 0.8:
-    authenticated = True
-```
+ authenticated = True
+``
 
 **Use Case:** Automatically mute/unmute the correct participant in a meeting.
 
@@ -555,37 +555,37 @@ if similarity > 0.8:
 - **Quality:** Superior to MP3 at same bitrate.
 
 **Adaptive Bitrate:**
-```python
+``python
 def adjust_bitrate(network_conditions):
-    if network_conditions['bandwidth'] > 100:  # kbps
-        return 128  # High quality
-    elif network_conditions['bandwidth'] > 50:
-        return 64  # Medium quality
-    else:
-        return 24  # Low quality (voice still intelligible)
-```
+ if network_conditions['bandwidth'] > 100: # kbps
+ return 128 # High quality
+ elif network_conditions['bandwidth'] > 50:
+ return 64 # Medium quality
+ else:
+ return 24 # Low quality (voice still intelligible)
+``
 
 ## Deep Dive: Scalability (Handling Million Concurrent Users)
 
 **Architecture:**
-```
-         ┌──────────────┐
-         │  Load Balancer│
-         └───────┬───────┘
-                 │
-    ┌────────────┼────────────┐
-    │            │            │
-┌───▼───┐  ┌────▼────┐  ┌────▼────┐
-│Server1│  │ Server2 │  │ Server3 │
-└───────┘  └─────────┘  └─────────┘
-    │            │            │
-    └────────────┼────────────┘
-                 │
-         ┌───────▼────────┐
-         │   Media Server  │
-         │   (Janus, Jitsi)│
-         └────────────────┘
-```
+``
+ ┌──────────────┐
+ │ Load Balancer│
+ └───────┬───────┘
+ │
+ ┌────────────┼────────────┐
+ │ │ │
+┌───▼───┐ ┌────▼────┐ ┌────▼────┐
+│Server1│ │ Server2 │ │ Server3 │
+└───────┘ └─────────┘ └─────────┘
+ │ │ │
+ └────────────┼────────────┘
+ │
+ ┌───────▼────────┐
+ │ Media Server │
+ │ (Janus, Jitsi)│
+ └────────────────┘
+``
 
 **Techniques:**
 1. **WebRTC SFU (Selective Forwarding Unit):** Server forwards audio streams without decoding/encoding (low CPU).
@@ -598,78 +598,78 @@ def adjust_bitrate(network_conditions):
 
 ## Implementation: Full Social Voice Network Backend
 
-```python
+``python
 import torch
 import torch.nn as nn
 from transformers import BertModel
 import torchaudio
 
 class SocialVoiceBackend:
-    def __init__(self):
-        self.asr_model = load_asr_model()
-        self.speaker_recognition = load_xvector_model()
-        self.toxicity_detector = ToxicityDetector()
-        self.topic_model = NeuralTopicModel()
-        self.recommender = GraphRecommender()
-    
-    def process_audio_chunk(self, audio_chunk, room_id, user_id):
-        # 1. Speaker Recognition
-        speaker_emb = self.speaker_recognition.encode(audio_chunk)
-        speaker_id = self.cluster_speaker(speaker_emb, room_id)
-        
-        # 2. ASR
-        transcript = self.asr_model.transcribe(audio_chunk)
-        
-        # 3. Content Moderation
-        is_toxic, reason = self.toxicity_detector(transcript, audio_chunk)
-        if is_toxic:
-            self.mute_speaker(speaker_id, room_id, reason)
-            return
-        
-        # 4. Update room metadata
-        self.update_room_transcript(room_id, transcript)
-        
-        # 5. Extract topics (every 60 seconds)
-        if should_update_topics(room_id):
-            topics = self.topic_model(get_room_transcript(room_id))
-            self.update_room_topics(room_id, topics)
-    
-    def recommend_rooms(self, user_id, top_k=10):
-        # Get user interests
-        user_profile = self.get_user_profile(user_id)
-        
-        # Candidate generation
-        candidates = []
-        
-        # 1. Social graph
-        friends = self.get_friends(user_id)
-        candidates += self.get_rooms_with_users(friends)
-        
-        # 2. Topic matching
-        candidates += self.get_rooms_by_topics(user_profile['interests'])
-        
-        # 3. Collaborative filtering
-        similar_users = self.find_similar_users(user_id)
-        candidates += self.get_popular_rooms_among(similar_users)
-        
-        # Rank candidates
-        scores = self.recommender.rank(user_id, candidates)
-        
-        # Diversify
-        diverse_rooms = self.apply_mmr(scores, lambda_param=0.7)
-        
-        return diverse_rooms[:top_k]
+ def __init__(self):
+ self.asr_model = load_asr_model()
+ self.speaker_recognition = load_xvector_model()
+ self.toxicity_detector = ToxicityDetector()
+ self.topic_model = NeuralTopicModel()
+ self.recommender = GraphRecommender()
+ 
+ def process_audio_chunk(self, audio_chunk, room_id, user_id):
+ # 1. Speaker Recognition
+ speaker_emb = self.speaker_recognition.encode(audio_chunk)
+ speaker_id = self.cluster_speaker(speaker_emb, room_id)
+ 
+ # 2. ASR
+ transcript = self.asr_model.transcribe(audio_chunk)
+ 
+ # 3. Content Moderation
+ is_toxic, reason = self.toxicity_detector(transcript, audio_chunk)
+ if is_toxic:
+ self.mute_speaker(speaker_id, room_id, reason)
+ return
+ 
+ # 4. Update room metadata
+ self.update_room_transcript(room_id, transcript)
+ 
+ # 5. Extract topics (every 60 seconds)
+ if should_update_topics(room_id):
+ topics = self.topic_model(get_room_transcript(room_id))
+ self.update_room_topics(room_id, topics)
+ 
+ def recommend_rooms(self, user_id, top_k=10):
+ # Get user interests
+ user_profile = self.get_user_profile(user_id)
+ 
+ # Candidate generation
+ candidates = []
+ 
+ # 1. Social graph
+ friends = self.get_friends(user_id)
+ candidates += self.get_rooms_with_users(friends)
+ 
+ # 2. Topic matching
+ candidates += self.get_rooms_by_topics(user_profile['interests'])
+ 
+ # 3. Collaborative filtering
+ similar_users = self.find_similar_users(user_id)
+ candidates += self.get_popular_rooms_among(similar_users)
+ 
+ # Rank candidates
+ scores = self.recommender.rank(user_id, candidates)
+ 
+ # Diversify
+ diverse_rooms = self.apply_mmr(scores, lambda_param=0.7)
+ 
+ return diverse_rooms[:top_k]
 
 # Usage
 backend = SocialVoiceBackend()
 
 # Process incoming audio
 for audio_chunk in stream:
-    backend.process_audio_chunk(audio_chunk, room_id="tech_talk_123", user_id="alice")
+ backend.process_audio_chunk(audio_chunk, room_id="tech_talk_123", user_id="alice")
 
 # Recommend rooms
 recommendations = backend.recommend_rooms(user_id="alice", top_k=10)
-```
+``
 
 ## Top Interview Questions
 

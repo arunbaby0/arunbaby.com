@@ -1,21 +1,21 @@
 ---
 title: "Data Leakage Prevention"
 day: 45
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - data-leakage
-  - security
-  - pii
-  - redaction
-  - access-control
-  - logging
-  - governance
-difficulty: Medium-Hard
 related_dsa_day: 45
 related_ml_day: 45
 related_speech_day: 45
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - data-leakage
+ - security
+ - pii
+ - redaction
+ - access-control
+ - logging
+ - governance
+difficulty: Medium-Hard
 ---
 
 **"Prevent leaks by design: minimize data access, redact outputs and logs, and enforce least privilege for tools and memory."**

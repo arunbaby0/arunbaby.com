@@ -1,19 +1,19 @@
 ---
 title: "Database Interaction Agents: Mastering Text-to-SQL & Beyond"
 day: 28
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - sql
-  - database-agents
-  - text-to-sql
-  - data-engineering
-  - security
-difficulty: Medium
 related_dsa_day: 28
 related_ml_day: 28
 related_speech_day: 28
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - sql
+ - database-agents
+ - text-to-sql
+ - data-engineering
+ - security
+difficulty: Medium
 ---
 
 **"Democratizing data access through natural language."**

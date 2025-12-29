@@ -1,18 +1,18 @@
 ---
 title: "Course Schedule (Topological Sort)"
 day: 31
-collection: dsa
-categories:
-  - dsa
-tags:
-  - graph
-  - topological sort
-  - dfs
-  - cycle detection
-difficulty: Medium
 related_ml_day: 31
 related_speech_day: 31
 related_agents_day: 31
+collection: dsa
+categories:
+ - dsa
+tags:
+ - graph
+ - topological sort
+ - dfs
+ - cycle detection
+difficulty: Medium
 ---
 
 **"Can you finish all courses given their prerequisites?"**
@@ -24,18 +24,18 @@ There are a total of `numCourses` courses you have to take, labeled from `0` to 
 Return `true` if you can finish all courses. Otherwise, return `false`.
 
 **Example 1:**
-```
+``
 Input: numCourses = 2, prerequisites = [[1,0]]
 Output: true
 Explanation: Take course 0, then course 1.
-```
+``
 
 **Example 2:**
-```
+``
 Input: numCourses = 2, prerequisites = [[1,0],[0,1]]
 Output: false
 Explanation: Circular dependency (cycle).
-```
+``
 
 **This is a cycle detection problem in a directed graph!**
 
@@ -53,42 +53,42 @@ Explanation: Circular dependency (cycle).
 
 **Cycle Detection:** If we encounter a **Gray** node during DFS, there's a cycle.
 
-```python
+``python
 class Solution:
-    def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
-        # Build adjacency list
-        graph = defaultdict(list)
-        for course, prereq in prerequisites:
-            graph[course].append(prereq)
-        
-        # States: 0 = unvisited, 1 = visiting, 2 = visited
-        state = [0] * numCourses
-        
-        def has_cycle(course):
-            if state[course] == 1:  # Currently visiting → cycle!
-                return True
-            if state[course] == 2:  # Already processed
-                return False
-            
-            # Mark as visiting
-            state[course] = 1
-            
-            # Visit all prerequisites
-            for prereq in graph[course]:
-                if has_cycle(prereq):
-                    return True
-            
-            # Mark as visited
-            state[course] = 2
-            return False
-        
-        # Check all courses
-        for course in range(numCourses):
-            if has_cycle(course):
-                return False
-        
-        return True
-```
+ def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
+ # Build adjacency list
+ graph = defaultdict(list)
+ for course, prereq in prerequisites:
+ graph[course].append(prereq)
+ 
+ # States: 0 = unvisited, 1 = visiting, 2 = visited
+ state = [0] * numCourses
+ 
+ def has_cycle(course):
+ if state[course] == 1: # Currently visiting → cycle!
+ return True
+ if state[course] == 2: # Already processed
+ return False
+ 
+ # Mark as visiting
+ state[course] = 1
+ 
+ # Visit all prerequisites
+ for prereq in graph[course]:
+ if has_cycle(prereq):
+ return True
+ 
+ # Mark as visited
+ state[course] = 2
+ return False
+ 
+ # Check all courses
+ for course in range(numCourses):
+ if has_cycle(course):
+ return False
+ 
+ return True
+``
 
 **Time Complexity:** \\(O(V + E)\\) where V = courses, E = prerequisites.
 **Space Complexity:** \\(O(V + E)\\) for graph + \\(O(V)\\) for recursion stack.
@@ -101,35 +101,35 @@ class Solution:
 - Remove processed courses and update in-degrees.
 - If all courses are processed, return true.
 
-```python
+``python
 from collections import deque, defaultdict
 
 class Solution:
-    def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
-        # Build graph and in-degree count
-        graph = defaultdict(list)
-        in_degree = [0] * numCourses
-        
-        for course, prereq in prerequisites:
-            graph[prereq].append(course)  # prereq -> course
-            in_degree[course] += 1
-        
-        # Queue of courses with no prerequisites
-        queue = deque([i for i in range(numCourses) if in_degree[i] == 0])
-        processed = 0
-        
-        while queue:
-            course = queue.popleft()
-            processed += 1
-            
-            # Remove this course and update dependent courses
-            for dependent in graph[course]:
-                in_degree[dependent] -= 1
-                if in_degree[dependent] == 0:
-                    queue.append(dependent)
-        
-        return processed == numCourses
-```
+ def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
+ # Build graph and in-degree count
+ graph = defaultdict(list)
+ in_degree = [0] * numCourses
+ 
+ for course, prereq in prerequisites:
+ graph[prereq].append(course) # prereq -> course
+ in_degree[course] += 1
+ 
+ # Queue of courses with no prerequisites
+ queue = deque([i for i in range(numCourses) if in_degree[i] == 0])
+ processed = 0
+ 
+ while queue:
+ course = queue.popleft()
+ processed += 1
+ 
+ # Remove this course and update dependent courses
+ for dependent in graph[course]:
+ in_degree[dependent] -= 1
+ if in_degree[dependent] == 0:
+ queue.append(dependent)
+ 
+ return processed == numCourses
+``
 
 **Time Complexity:** \\(O(V + E)\\).
 **Space Complexity:** \\(O(V + E)\\).
@@ -138,30 +138,30 @@ class Solution:
 
 **Problem:** Return a valid course order. If impossible, return `[]`.
 
-```python
+``python
 class Solution:
-    def findOrder(self, numCourses: int, prerequisites: List[List[int]]) -> List[int]:
-        graph = defaultdict(list)
-        in_degree = [0] * numCourses
-        
-        for course, prereq in prerequisites:
-            graph[prereq].append(course)
-            in_degree[course] += 1
-        
-        queue = deque([i for i in range(numCourses) if in_degree[i] == 0])
-        order = []
-        
-        while queue:
-            course = queue.popleft()
-            order.append(course)
-            
-            for dependent in graph[course]:
-                in_degree[dependent] -= 1
-                if in_degree[dependent] == 0:
-                    queue.append(dependent)
-        
-        return order if len(order) == numCourses else []
-```
+ def findOrder(self, numCourses: int, prerequisites: List[List[int]]) -> List[int]:
+ graph = defaultdict(list)
+ in_degree = [0] * numCourses
+ 
+ for course, prereq in prerequisites:
+ graph[prereq].append(course)
+ in_degree[course] += 1
+ 
+ queue = deque([i for i in range(numCourses) if in_degree[i] == 0])
+ order = []
+ 
+ while queue:
+ course = queue.popleft()
+ order.append(course)
+ 
+ for dependent in graph[course]:
+ in_degree[dependent] -= 1
+ if in_degree[dependent] == 0:
+ queue.append(dependent)
+ 
+ return order if len(order) == numCourses else []
+``
 
 ## Deep Dive: Topological Sort - Why It Works
 
@@ -171,13 +171,13 @@ class Solution:
 
 **Proof:**
 - **⇒ (If topological ordering exists, then no cycles):**
-  - Suppose there's a cycle \\(v_1 \to v_2 \to \ldots \to v_k \to v_1\\).
-  - In a topological ordering, \\(v_1\\) must come before \\(v_2\\), \\(v_2\\) before \\(v_3\\), ..., \\(v_k\\) before \\(v_1\\).
-  - This implies \\(v_1\\) comes before \\(v_1\\) → **Contradiction!**
-  
+ - Suppose there's a cycle \\(v_1 \to v_2 \to \ldots \to v_k \to v_1\\).
+ - In a topological ordering, \\(v_1\\) must come before \\(v_2\\), \\(v_2\\) before \\(v_3\\), ..., \\(v_k\\) before \\(v_1\\).
+ - This implies \\(v_1\\) comes before \\(v_1\\) → **Contradiction!**
+ 
 - **⇐ (If no cycles, then topological ordering exists):**
-  - In a DAG, there exists at least one vertex with in-degree 0 (no incoming edges).
-  - Remove this vertex and repeat. This gives a topological ordering.
+ - In a DAG, there exists at least one vertex with in-degree 0 (no incoming edges).
+ - Remove this vertex and repeat. This gives a topological ordering.
 
 ## Deep Dive: Kahn's Algorithm Correctness
 
@@ -197,24 +197,24 @@ class Solution:
 
 **Idea:** Use DFS and add vertices to the result in **post-order** (after visiting all descendants).
 
-```python
+``python
 def topological_sort_dfs(graph, num_vertices):
-    visited = [False] * num_vertices
-    stack = []
-    
-    def dfs(v):
-        visited[v] = True
-        for neighbor in graph[v]:
-            if not visited[neighbor]:
-                dfs(neighbor)
-        stack.append(v)  # Add after visiting all descendants
-    
-    for v in range(num_vertices):
-        if not visited[v]:
-            dfs(v)
-    
-    return stack[::-1]  # Reverse to get topological order
-```
+ visited = [False] * num_vertices
+ stack = []
+ 
+ def dfs(v):
+ visited[v] = True
+ for neighbor in graph[v]:
+ if not visited[neighbor]:
+ dfs(neighbor)
+ stack.append(v) # Add after visiting all descendants
+ 
+ for v in range(num_vertices):
+ if not visited[v]:
+ dfs(v)
+ 
+ return stack[::-1] # Reverse to get topological order
+``
 
 **Why reverse?**
 - DFS post-order gives vertices in **decreasing finish time**.
@@ -226,31 +226,31 @@ def topological_sort_dfs(graph, num_vertices):
 
 **Solution:** This is finding the **longest path** in the DAG.
 
-```python
+``python
 def minimumSemesters(numCourses, prerequisites):
-    graph = defaultdict(list)
-    in_degree = [0] * numCourses
-    
-    for course, prereq in prerequisites:
-        graph[prereq].append(course)
-        in_degree[course] += 1
-    
-    queue = deque([(i, 1) for i in range(numCourses) if in_degree[i] == 0])  # (course, semester)
-    processed = 0
-    max_semester = 0
-    
-    while queue:
-        course, semester = queue.popleft()
-        processed += 1
-        max_semester = max(max_semester, semester)
-        
-        for dependent in graph[course]:
-            in_degree[dependent] -= 1
-            if in_degree[dependent] == 0:
-                queue.append((dependent, semester + 1))
-    
-    return max_semester if processed == numCourses else -1
-```
+ graph = defaultdict(list)
+ in_degree = [0] * numCourses
+ 
+ for course, prereq in prerequisites:
+ graph[prereq].append(course)
+ in_degree[course] += 1
+ 
+ queue = deque([(i, 1) for i in range(numCourses) if in_degree[i] == 0]) # (course, semester)
+ processed = 0
+ max_semester = 0
+ 
+ while queue:
+ course, semester = queue.popleft()
+ processed += 1
+ max_semester = max(max_semester, semester)
+ 
+ for dependent in graph[course]:
+ in_degree[dependent] -= 1
+ if in_degree[dependent] == 0:
+ queue.append((dependent, semester + 1))
+ 
+ return max_semester if processed == numCourses else -1
+``
 
 **Time Complexity:** \\(O(V + E)\\).
 
@@ -259,80 +259,80 @@ def minimumSemesters(numCourses, prerequisites):
 **Problem:** You have \\(K\\) workers. What's the minimum time to complete all courses?
 
 **Approach: DP on DAG**
-```python
+``python
 def minTimeToFinish(numCourses, prerequisites, time, K):
-    graph = defaultdict(list)
-    in_degree = [0] * numCourses
-    
-    for course, prereq in prerequisites:
-        graph[prereq].append(course)
-        in_degree[course] += 1
-    
-    # dp[course] = earliest time this course can start
-    dp = [0] * numCourses
-    
-    # Topological sort with time tracking
-    queue = deque([i for i in range(numCourses) if in_degree[i] == 0])
-    
-    while queue:
-        # Process K courses in parallel
-        current_batch = []
-        for _ in range(min(K, len(queue))):
-            if queue:
-                current_batch.append(queue.popleft())
-        
-        for course in current_batch:
-            for dependent in graph[course]:
-                dp[dependent] = max(dp[dependent], dp[course] + time[course])
-                in_degree[dependent] -= 1
-                if in_degree[dependent] == 0:
-                    queue.append(dependent)
-    
-    return max(dp[i] + time[i] for i in range(numCourses))
-```
+ graph = defaultdict(list)
+ in_degree = [0] * numCourses
+ 
+ for course, prereq in prerequisites:
+ graph[prereq].append(course)
+ in_degree[course] += 1
+ 
+ # dp[course] = earliest time this course can start
+ dp = [0] * numCourses
+ 
+ # Topological sort with time tracking
+ queue = deque([i for i in range(numCourses) if in_degree[i] == 0])
+ 
+ while queue:
+ # Process K courses in parallel
+ current_batch = []
+ for _ in range(min(K, len(queue))):
+ if queue:
+ current_batch.append(queue.popleft())
+ 
+ for course in current_batch:
+ for dependent in graph[course]:
+ dp[dependent] = max(dp[dependent], dp[course] + time[course])
+ in_degree[dependent] -= 1
+ if in_degree[dependent] == 0:
+ queue.append(dependent)
+ 
+ return max(dp[i] + time[i] for i in range(numCourses))
+``
 
 ## Deep Dive: All Possible Topological Orderings
 
 **Problem:** Print all valid course orderings.
 
 **Approach: Backtracking**
-```python
+``python
 def allTopologicalSorts(graph, num_vertices):
-    in_degree = [0] * num_vertices
-    for u in graph:
-        for v in graph[u]:
-            in_degree[v] += 1
-    
-    result = []
-    
-    def backtrack(current_order, remaining_in_degree):
-        # Find all vertices with in-degree 0
-        available = [v for v in range(num_vertices) if remaining_in_degree[v] == 0 and v not in current_order]
-        
-        if not available:
-            if len(current_order) == num_vertices:
-                result.append(current_order[:])
-            return
-        
-        for v in available:
-            # Choose v
-            current_order.append(v)
-            
-            # Update in-degrees
-            new_in_degree = remaining_in_degree[:]
-            new_in_degree[v] = -1  # Mark as used
-            for neighbor in graph[v]:
-                new_in_degree[neighbor] -= 1
-            
-            # Recurse
-            backtrack(current_order, new_in_degree)
-            
-            # Unchoose
-            current_order.pop()
-    
-    backtrack([], in_degree)
-    return result
-```
+ in_degree = [0] * num_vertices
+ for u in graph:
+ for v in graph[u]:
+ in_degree[v] += 1
+ 
+ result = []
+ 
+ def backtrack(current_order, remaining_in_degree):
+ # Find all vertices with in-degree 0
+ available = [v for v in range(num_vertices) if remaining_in_degree[v] == 0 and v not in current_order]
+ 
+ if not available:
+ if len(current_order) == num_vertices:
+ result.append(current_order[:])
+ return
+ 
+ for v in available:
+ # Choose v
+ current_order.append(v)
+ 
+ # Update in-degrees
+ new_in_degree = remaining_in_degree[:]
+ new_in_degree[v] = -1 # Mark as used
+ for neighbor in graph[v]:
+ new_in_degree[neighbor] -= 1
+ 
+ # Recurse
+ backtrack(current_order, new_in_degree)
+ 
+ # Unchoose
+ current_order.pop()
+ 
+ backtrack([], in_degree)
+ return result
+``
 
 **Time Complexity:** \\(O(V! \cdot E)\\) in worst case (exponential).
 
@@ -342,33 +342,33 @@ def allTopologicalSorts(graph, num_vertices):
 
 **Solution:** Use a min-heap instead of queue in Kahn's algorithm.
 
-```python
+``python
 import heapq
 
 def lexicographicallySmallestOrder(numCourses, prerequisites):
-    graph = defaultdict(list)
-    in_degree = [0] * numCourses
-    
-    for course, prereq in prerequisites:
-        graph[prereq].append(course)
-        in_degree[course] += 1
-    
-    # Min-heap instead of queue
-    heap = [i for i in range(numCourses) if in_degree[i] == 0]
-    heapq.heapify(heap)
-    
-    order = []
-    while heap:
-        course = heapq.heappop(heap)
-        order.append(course)
-        
-        for dependent in graph[course]:
-            in_degree[dependent] -= 1
-            if in_degree[dependent] == 0:
-                heapq.heappush(heap, dependent)
-    
-    return order if len(order) == numCourses else []
-```
+ graph = defaultdict(list)
+ in_degree = [0] * numCourses
+ 
+ for course, prereq in prerequisites:
+ graph[prereq].append(course)
+ in_degree[course] += 1
+ 
+ # Min-heap instead of queue
+ heap = [i for i in range(numCourses) if in_degree[i] == 0]
+ heapq.heapify(heap)
+ 
+ order = []
+ while heap:
+ course = heapq.heappop(heap)
+ order.append(course)
+ 
+ for dependent in graph[course]:
+ in_degree[dependent] -= 1
+ if in_degree[dependent] == 0:
+ heapq.heappush(heap, dependent)
+ 
+ return order if len(order) == numCourses else []
+``
 
 **Time Complexity:** \\(O((V + E) \log V)\\) due to heap operations.
 
@@ -384,49 +384,49 @@ def lexicographicallySmallestOrder(numCourses, prerequisites):
 3. Perform DFS on reversed graph in decreasing finish time order.
 4. Each DFS tree in step 3 is an SCC.
 
-```python
+``python
 def findSCC(graph, num_vertices):
-    # Step 1: DFS to get finish times
-    visited = [False] * num_vertices
-    stack = []
-    
-    def dfs1(v):
-        visited[v] = True
-        for neighbor in graph[v]:
-            if not visited[neighbor]:
-                dfs1(neighbor)
-        stack.append(v)
-    
-    for v in range(num_vertices):
-        if not visited[v]:
-            dfs1(v)
-    
-    # Step 2: Reverse graph
-    reversed_graph = defaultdict(list)
-    for u in graph:
-        for v in graph[u]:
-            reversed_graph[v].append(u)
-    
-    # Step 3: DFS on reversed graph
-    visited = [False] * num_vertices
-    sccs = []
-    
-    def dfs2(v, component):
-        visited[v] = True
-        component.append(v)
-        for neighbor in reversed_graph[v]:
-            if not visited[neighbor]:
-                dfs2(neighbor, component)
-    
-    while stack:
-        v = stack.pop()
-        if not visited[v]:
-            component = []
-            dfs2(v, component)
-            sccs.append(component)
-    
-    return sccs
-```
+ # Step 1: DFS to get finish times
+ visited = [False] * num_vertices
+ stack = []
+ 
+ def dfs1(v):
+ visited[v] = True
+ for neighbor in graph[v]:
+ if not visited[neighbor]:
+ dfs1(neighbor)
+ stack.append(v)
+ 
+ for v in range(num_vertices):
+ if not visited[v]:
+ dfs1(v)
+ 
+ # Step 2: Reverse graph
+ reversed_graph = defaultdict(list)
+ for u in graph:
+ for v in graph[u]:
+ reversed_graph[v].append(u)
+ 
+ # Step 3: DFS on reversed graph
+ visited = [False] * num_vertices
+ sccs = []
+ 
+ def dfs2(v, component):
+ visited[v] = True
+ component.append(v)
+ for neighbor in reversed_graph[v]:
+ if not visited[neighbor]:
+ dfs2(neighbor, component)
+ 
+ while stack:
+ v = stack.pop()
+ if not visited[v]:
+ component = []
+ dfs2(v, component)
+ sccs.append(component)
+ 
+ return sccs
+``
 
 **Application:** If any SCC has size > 1, there's a cycle.
 
@@ -442,45 +442,45 @@ def findSCC(graph, num_vertices):
 
 **Critical Path:** A → B → D (3 + 5 + 4 = 12 days).
 
-```python
+``python
 def criticalPath(tasks, dependencies):
-    graph = defaultdict(list)
-    in_degree = [0] * len(tasks)
-    
-    for task, dependency in dependencies:
-        graph[dependency].append(task)
-        in_degree[task] += 1
-    
-    # Earliest start time
-    earliest = [0] * len(tasks)
-    queue = deque([i for i in range(len(tasks)) if in_degree[i] == 0])
-    
-    while queue:
-        task = queue.popleft()
-        for dependent in graph[task]:
-            earliest[dependent] = max(earliest[dependent], earliest[task] + tasks[task])
-            in_degree[dependent] -= 1
-            if in_degree[dependent] == 0:
-                queue.append(dependent)
-    
-    # Latest start time (backward pass)
-    latest = [max(earliest)] * len(tasks)
-    in_degree = [len(graph[i]) for i in range(len(tasks))]
-    queue = deque([i for i in range(len(tasks)) if in_degree[i] == 0])  # Tasks with no dependents
-    
-    while queue:
-        task = queue.popleft()
-        for predecessor in reversed_graph[task]:
-            latest[predecessor] = min(latest[predecessor], latest[task] - tasks[predecessor])
-            in_degree[predecessor] -= 1
-            if in_degree[predecessor] == 0:
-                queue.append(predecessor)
-    
-    # Critical tasks have earliest == latest (no slack)
-    critical_tasks = [i for i in range(len(tasks)) if earliest[i] == latest[i]]
-    
-    return max(earliest) + max(tasks), critical_tasks
-```
+ graph = defaultdict(list)
+ in_degree = [0] * len(tasks)
+ 
+ for task, dependency in dependencies:
+ graph[dependency].append(task)
+ in_degree[task] += 1
+ 
+ # Earliest start time
+ earliest = [0] * len(tasks)
+ queue = deque([i for i in range(len(tasks)) if in_degree[i] == 0])
+ 
+ while queue:
+ task = queue.popleft()
+ for dependent in graph[task]:
+ earliest[dependent] = max(earliest[dependent], earliest[task] + tasks[task])
+ in_degree[dependent] -= 1
+ if in_degree[dependent] == 0:
+ queue.append(dependent)
+ 
+ # Latest start time (backward pass)
+ latest = [max(earliest)] * len(tasks)
+ in_degree = [len(graph[i]) for i in range(len(tasks))]
+ queue = deque([i for i in range(len(tasks)) if in_degree[i] == 0]) # Tasks with no dependents
+ 
+ while queue:
+ task = queue.popleft()
+ for predecessor in reversed_graph[task]:
+ latest[predecessor] = min(latest[predecessor], latest[task] - tasks[predecessor])
+ in_degree[predecessor] -= 1
+ if in_degree[predecessor] == 0:
+ queue.append(predecessor)
+ 
+ # Critical tasks have earliest == latest (no slack)
+ critical_tasks = [i for i in range(len(tasks)) if earliest[i] == latest[i]]
+ 
+ return max(earliest) + max(tasks), critical_tasks
+``
 
 ## Comparison Table
 
@@ -495,76 +495,76 @@ def criticalPath(tasks, dependencies):
 ## Implementation in Other Languages
 
 **C++:**
-```cpp
+``cpp
 class Solution {
 public:
-    bool canFinish(int numCourses, vector<vector<int>>& prerequisites) {
-        vector<vector<int>> graph(numCourses);
-        vector<int> indegree(numCourses, 0);
-        
-        for (auto& pre : prerequisites) {
-            graph[pre[1]].push_back(pre[0]);
-            indegree[pre[0]]++;
-        }
-        
-        queue<int> q;
-        for (int i = 0; i < numCourses; i++) {
-            if (indegree[i] == 0) q.push(i);
-        }
-        
-        int count = 0;
-        while (!q.empty()) {
-            int course = q.front(); q.pop();
-            count++;
-            
-            for (int next : graph[course]) {
-                if (--indegree[next] == 0) {
-                    q.push(next);
-                }
-            }
-        }
-        
-        return count == numCourses;
-    }
+ bool canFinish(int numCourses, vector<vector<int>>& prerequisites) {
+ vector<vector<int>> graph(numCourses);
+ vector<int> indegree(numCourses, 0);
+ 
+ for (auto& pre : prerequisites) {
+ graph[pre[1]].push_back(pre[0]);
+ indegree[pre[0]]++;
+ }
+ 
+ queue<int> q;
+ for (int i = 0; i < numCourses; i++) {
+ if (indegree[i] == 0) q.push(i);
+ }
+ 
+ int count = 0;
+ while (!q.empty()) {
+ int course = q.front(); q.pop();
+ count++;
+ 
+ for (int next : graph[course]) {
+ if (--indegree[next] == 0) {
+ q.push(next);
+ }
+ }
+ }
+ 
+ return count == numCourses;
+ }
 };
-```
+``
 
 **Java:**
-```java
+``java
 class Solution {
-    public boolean canFinish(int numCourses, int[][] prerequisites) {
-        List<List<Integer>> graph = new ArrayList<>();
-        for (int i = 0; i < numCourses; i++) {
-            graph.add(new ArrayList<>());
-        }
-        
-        int[] indegree = new int[numCourses];
-        for (int[] pre : prerequisites) {
-            graph.get(pre[1]).add(pre[0]);
-            indegree[pre[0]]++;
-        }
-        
-        Queue<Integer> queue = new LinkedList<>();
-        for (int i = 0; i < numCourses; i++) {
-            if (indegree[i] == 0) queue.offer(i);
-        }
-        
-        int count = 0;
-        while (!queue.isEmpty()) {
-            int course = queue.poll();
-            count++;
-            
-            for (int next : graph.get(course)) {
-                if (--indegree[next] == 0) {
-                    queue.offer(next);
-                }
-            }
-        }
-        
-        return count == numCourses;
-    }
+ public boolean canFinish(int numCourses, int[][] prerequisites) {
+ List<List<Integer>> graph = new ArrayList<>();
+ for (int i = 0; i < numCourses; i++) {
+ graph.add(new ArrayList<>());
+ }
+ 
+ int[] indegree = new int[numCourses];
+ for (int[] pre : prerequisites) {
+ graph.get(pre[1]).add(pre[0]);
+ indegree[pre[0]]++;
+ }
+ 
+ Queue<Integer> queue = new LinkedList<>();
+ for (int i = 0; i < numCourses; i++) {
+ if (indegree[i] == 0) queue.offer(i);
+ }
+ 
+ int count = 0;
+ while (!queue.isEmpty()) {
+ int course = queue.poll();
+ count++;
+ 
+ for (int next : graph.get(course)) {
+ if (--indegree[next] == 0) {
+ queue.offer(next);
+ }
+ }
+ }
+ 
+ return count == numCourses;
+ }
 }
-```
+``
 
 ## Top Interview Questions
 

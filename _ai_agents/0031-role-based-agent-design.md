@@ -1,19 +1,19 @@
 ---
 title: "Role-Based Agent Design"
 day: 31
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - agent-roles
-  - persona-design
-  - specialization
-  - multi-agent-systems
-  - task-decomposition
-difficulty: Medium
 related_dsa_day: 31
 related_ml_day: 31
 related_speech_day: 31
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - agent-roles
+ - persona-design
+ - specialization
+ - multi-agent-systems
+ - task-decomposition
+difficulty: Medium
 ---
 
 **"Generalists are okay, but Specialists win: Why Role-Based Design is the secret to production AI."**
@@ -331,7 +331,7 @@ As a junior engineer, you’ll move much faster if you treat each role like a mi
 
 Here’s a lightweight Role Spec you can copy:
 
-```text
+``text
 Role: Researcher
 Purpose: Gather relevant facts with sources; never execute changes or run write-tools.
 Inputs: query (string), constraints (list), retrieval_budget (int)
@@ -339,7 +339,7 @@ Outputs: { summary: string, sources: [{title,url}], open_questions: [string] }
 Tools: web_search, retrieve_docs
 Guards: max_steps=6, disallow file/system tools, require >=2 sources for claims
 Escalation: if sources < 2 -> ask human or broaden query
-```
+``
 
 This “Role Spec” approach makes your system debuggable: when a handoff fails, you can point to a violated contract instead of arguing about prompt phrasing.
 

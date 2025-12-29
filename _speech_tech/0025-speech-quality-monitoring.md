@@ -1,25 +1,25 @@
 ---
 title: "Speech Quality Monitoring"
 day: 25
+related_dsa_day: 25
+related_ml_day: 25
+related_agents_day: 25
 collection: speech_tech
 categories:
-  - speech-tech
-  - quality-assurance
-  - metrics
-  - mos
+ - speech-tech
+ - quality-assurance
+ - metrics
+ - mos
 tags:
-  - pesq
-  - polqa
-  - visqol
-  - nisqa
-  - audio-quality
+ - pesq
+ - polqa
+ - visqol
+ - nisqa
+ - audio-quality
 subdomain: "Evaluation & Metrics"
 tech_stack: [Python, Librosa, NISQA, ViSQOL]
 scale: "Real-time quality estimation"
 companies: [Zoom, Twilio, Discord, Spotify]
-related_dsa_day: 25
-related_ml_day: 25
-related_agents_day: 25
 ---
 
 **How do we know if the audio sounds "good" without asking a human?**
@@ -33,10 +33,10 @@ In Speech, "Quality" is subjective.
 - "The audio cuts in and out (packet loss)."
 
 For decades, the gold standard was **MOS (Mean Opinion Score)**.
-1.  Gather 20 humans.
-2.  Play them an audio clip.
-3.  Ask them to rate it 1 (Bad) to 5 (Excellent).
-4.  Average the scores.
+1. Gather 20 humans.
+2. Play them an audio clip.
+3. Ask them to rate it 1 (Bad) to 5 (Excellent).
+4. Average the scores.
 
 **Problem:** This is slow, expensive, and impossible to run in real-time on a Zoom call. We need **Objective Metrics**.
 
@@ -46,27 +46,27 @@ For decades, the gold standard was **MOS (Mean Opinion Score)**.
 You have the "Clean" (Reference) audio and the "Degraded" (Test) audio. You compare them.
 - **Use Case:** Codec development (MP3 vs AAC), Denoising model training.
 - **Metrics:**
-    - **PESQ (Perceptual Evaluation of Speech Quality):** The classic telecom standard. Models human hearing.
-    - **POLQA (Perceptual Objective Listening Quality Analysis):** The successor to PESQ. Handles wideband (HD) voice better.
-    - **ViSQOL (Virtual Speech Quality Objective Listener):** Google's open-source metric. Uses similarity of spectrograms.
+ - **PESQ (Perceptual Evaluation of Speech Quality):** The classic telecom standard. Models human hearing.
+ - **POLQA (Perceptual Objective Listening Quality Analysis):** The successor to PESQ. Handles wideband (HD) voice better.
+ - **ViSQOL (Virtual Speech Quality Objective Listener):** Google's open-source metric. Uses similarity of spectrograms.
 
 ### 2. Non-Intrusive (No-Reference)
 You *only* have the "Degraded" audio. You don't know what the original sounded like.
 - **Use Case:** Real-time monitoring (Zoom, Discord). You receive audio from the internet; you don't have the sender's microphone feed.
 - **Metrics:**
-    - **P.563:** Old standard.
-    - **NISQA (Non-Intrusive Speech Quality Assessment):** Deep Learning based.
-    - **DNS-MOS:** Microsoft's Deep Noise Suppression MOS predictor.
+ - **P.563:** Old standard.
+ - **NISQA (Non-Intrusive Speech Quality Assessment):** Deep Learning based.
+ - **DNS-MOS:** Microsoft's Deep Noise Suppression MOS predictor.
 
 ## Deep Dive: ViSQOL (Google)
 
 How does a machine "listen"?
 ViSQOL aligns the reference and degraded signals in time, then compares their spectrograms using a **Structural Similarity Index (SSIM)**-like approach.
 
-1.  **Spectrogram:** Convert audio to Time-Frequency domain.
-2.  **Alignment:** Use dynamic time warping to align the two signals (handling delays/jitter).
-3.  **Patch Comparison:** Compare small patches of the spectrograms.
-4.  **Mapping:** Map the similarity score to a MOS (1-5).
+1. **Spectrogram:** Convert audio to Time-Frequency domain.
+2. **Alignment:** Use dynamic time warping to align the two signals (handling delays/jitter).
+3. **Patch Comparison:** Compare small patches of the spectrograms.
+4. **Mapping:** Map the similarity score to a MOS (1-5).
 
 ## Deep Dive: NISQA (Deep Learning for Quality)
 
@@ -87,18 +87,18 @@ It allows **Reference-Free** monitoring. You can run this on the client side (in
 
 ## High-Level Architecture: Real-Time Quality Monitor
 
-```ascii
-+-----------+     +------------+     +-------------+
-| VoIP App  | --> | Edge Calc  | --> | Metrics Agg |
-+-----------+     +------------+     +-------------+
-(Microphone)      (DNS-MOS/VAD)      (Prometheus)
-                                           |
-                                           v
-+-----------+     +------------+     +-------------+
-| Codec Sw  | <-- | Alerting   | <-- | Dashboard   |
-+-----------+     +------------+     +-------------+
-(Opus Mode)       (Slack/PD)         (Grafana)
-```
+``ascii
++-----------+ +------------+ +-------------+
+| VoIP App | --> | Edge Calc | --> | Metrics Agg |
++-----------+ +------------+ +-------------+
+(Microphone) (DNS-MOS/VAD) (Prometheus)
+ |
+ v
++-----------+ +------------+ +-------------+
+| Codec Sw | <-- | Alerting | <-- | Dashboard |
++-----------+ +------------+ +-------------+
+(Opus Mode) (Slack/PD) (Grafana)
+``
 
 ## System Design: Real-Time Quality Monitor for VoIP
 
@@ -122,16 +122,16 @@ It allows **Reference-Free** monitoring. You can run this on the client side (in
 PESQ (ITU-T P.862) isn't just a simple subtraction. It simulates the human ear.
 
 **Steps:**
-1.  **Level Alignment:** Adjust volume so Reference and Degraded are equally loud.
-2.  **Input Filter:** Simulate the frequency response of a telephone handset (300Hz - 3400Hz).
-3.  **Auditory Transform:**
-    - Convert FFT to **Bark Scale** (perceptual pitch).
-    - Convert Amplitude to **Sone Scale** (perceptual loudness).
-4.  **Disturbance Calculation:**
-    - Subtract the two "Loudness Spectra".
-    - `D = |L_ref - L_deg|`.
-    - Apply asymmetric masking (we notice added noise more than missing sound).
-5.  **Aggregation:** Average the disturbance over time and frequency to get a score ( -0.5 to 4.5).
+1. **Level Alignment:** Adjust volume so Reference and Degraded are equally loud.
+2. **Input Filter:** Simulate the frequency response of a telephone handset (300Hz - 3400Hz).
+3. **Auditory Transform:**
+ - Convert FFT to **Bark Scale** (perceptual pitch).
+ - Convert Amplitude to **Sone Scale** (perceptual loudness).
+4. **Disturbance Calculation:**
+ - Subtract the two "Loudness Spectra".
+ - `D = |L_ref - L_deg|`.
+ - Apply asymmetric masking (we notice added noise more than missing sound).
+5. **Aggregation:** Average the disturbance over time and frequency to get a score ( -0.5 to 4.5).
 
 ## Engineering Component: Voice Activity Detection (VAD)
 
@@ -140,23 +140,23 @@ We need a VAD to filter out silence frames.
 
 **Simple Energy-Based VAD (Python):**
 
-```python
+``python
 import numpy as np
 
 def simple_vad(audio, frame_len=160, threshold=0.01):
-    # audio: numpy array of samples
-    # frame_len: 10ms at 16kHz
-    
-    frames = []
-    for i in range(0, len(audio), frame_len):
-        frame = audio[i:i+frame_len]
-        energy = np.sum(frame ** 2) / len(frame)
-        
-        if energy > threshold:
-            frames.append(frame)
-            
-    return np.concatenate(frames) if frames else np.array([])
-```
+ # audio: numpy array of samples
+ # frame_len: 10ms at 16kHz
+ 
+ frames = []
+ for i in range(0, len(audio), frame_len):
+ frame = audio[i:i+frame_len]
+ energy = np.sum(frame ** 2) / len(frame)
+ 
+ if energy > threshold:
+ frames.append(frame)
+ 
+ return np.concatenate(frames) if frames else np.array([])
+``
 
 **Advanced VAD:** WebRTC VAD uses a Gaussian Mixture Model (GMM) to distinguish speech from noise.
 
@@ -166,9 +166,9 @@ How does Zoom know your quality is bad? **RTCP (Real-time Transport Control Prot
 
 Every few seconds, the receiver sends an **RTCP Receiver Report (RR)** back to the sender.
 **Fields:**
-1.  **Fraction Lost:** Percentage of packets lost since last report.
-2.  **Cumulative Lost:** Total packets lost.
-3.  **Interarrival Jitter:** Variance in packet delay.
+1. **Fraction Lost:** Percentage of packets lost since last report.
+2. **Cumulative Lost:** Total packets lost.
+3. **Interarrival Jitter:** Variance in packet delay.
 
 **The Quality Estimator:**
 `MOS_est = 4.5 - PacketLossPenalty - JitterPenalty - LatencyPenalty`
@@ -191,9 +191,9 @@ Microsoft's **Deep Noise Suppression (DNS)** dataset is huge. They trained a met
 - **Input:** Log-Mel Spectrogram.
 - **Backbone:** ResNet-18 or Polyphonic Inception.
 - **Heads:**
-    1.  **SIG:** Signal Quality (How natural is the speech?).
-    2.  **BAK:** Background Quality (How intrusive is the noise?).
-    3.  **OVRL:** Overall Quality.
+ 1. **SIG:** Signal Quality (How natural is the speech?).
+ 2. **BAK:** Background Quality (How intrusive is the noise?).
+ 3. **OVRL:** Overall Quality.
 - **Training:** Trained on P.808 crowdsourced data (humans rating noisy clips).
 
 **Why separate SIG and BAK?**
@@ -222,9 +222,9 @@ A signal can be ugly (robotic) but perfectly intelligible (High STOI, Low PESQ).
 A signal can be beautiful but mumbled (Low STOI, High PESQ).
 
 **Algorithm:**
-1.  Decompose signal into TF-units (Time-Frequency).
-2.  Calculate correlation between Reference and Degraded envelopes in each band.
-3.  Average the correlations.
+1. Decompose signal into TF-units (Time-Frequency).
+2. Calculate correlation between Reference and Degraded envelopes in each band.
+3. Average the correlations.
 
 ## System Design: The "Netflix for Audio" Quality Pipeline
 
@@ -232,14 +232,14 @@ A signal can be beautiful but mumbled (Low STOI, High PESQ).
 **Goal:** Reject tracks with bad encoding artifacts.
 
 **Pipeline:**
-1.  **Ingest:** Upload WAV/FLAC.
-2.  **Transcode:** Convert to Ogg Vorbis (320kbps, 160kbps, 96kbps).
-3.  **Quality Check (ViSQOL):** Compare Transcoded vs. Original.
-    - If `ViSQOL < 4.5` for 320kbps, something is wrong with the encoder.
-4.  **Loudness Normalization (LUFS):**
-    - Measure Integrated Loudness (EBU R128).
-    - If track is too quiet (-20 LUFS), gain up.
-    - If track is too loud (-5 LUFS), gain down to target (-14 LUFS).
+1. **Ingest:** Upload WAV/FLAC.
+2. **Transcode:** Convert to Ogg Vorbis (320kbps, 160kbps, 96kbps).
+3. **Quality Check (ViSQOL):** Compare Transcoded vs. Original.
+ - If `ViSQOL < 4.5` for 320kbps, something is wrong with the encoder.
+4. **Loudness Normalization (LUFS):**
+ - Measure Integrated Loudness (EBU R128).
+ - If track is too quiet (-20 LUFS), gain up.
+ - If track is too loud (-5 LUFS), gain down to target (-14 LUFS).
 
 ## Codec Comparison: Opus vs. AAC vs. EVS
 
@@ -256,9 +256,9 @@ A signal can be beautiful but mumbled (Low STOI, High PESQ).
 ## Appendix C: Subjective Testing (MUSHRA)
 
 When MOS isn't enough, we use **MUSHRA (Multiple Stimuli with Hidden Reference and Anchor)**.
-1.  **Hidden Reference:** The original audio (should be rated 100).
-2.  **Anchor:** A low-pass filtered version (should be rated 20).
-3.  **Test Systems:** The models we are testing.
+1. **Hidden Reference:** The original audio (should be rated 100).
+2. **Anchor:** A low-pass filtered version (should be rated 20).
+3. **Test Systems:** The models we are testing.
 
 **Why?** It calibrates the listeners. If a listener rates the Anchor as 80, we disqualify them.
 
@@ -280,8 +280,8 @@ How does Alexa hear you from across the room? **Beamforming.**
 Using multiple microphones, we can steer the "listening beam" towards the speaker and nullify noise from the TV.
 
 **Metrics:**
-1.  **Directivity Index (DI):** Gain in the look direction vs. average gain.
-2.  **White Noise Gain (WNG):** Robustness to sensor noise.
+1. **Directivity Index (DI):** Gain in the look direction vs. average gain.
+2. **White Noise Gain (WNG):** Robustness to sensor noise.
 
 **MVDR Beamformer (Minimum Variance Distortionless Response):**
 Mathematically minimizes output power while maintaining unity gain in the target direction.
@@ -292,9 +292,9 @@ With VR/AR (Apple Vision Pro), audio is 3D.
 **HRTF (Head-Related Transfer Function):** How your ears/head filter sound based on direction.
 
 **Quality Metrics for Spatial Audio:**
-1.  **Localization Accuracy:** Can the user pinpoint the source?
-2.  **Timbral Coloration:** Does the HRTF distort the tone?
-3.  **Externalization:** Does it sound like it's "out there" or "in your head"?
+1. **Localization Accuracy:** Can the user pinpoint the source?
+2. **Timbral Coloration:** Does the HRTF distort the tone?
+3. **Externalization:** Does it sound like it's "out there" or "in your head"?
 
 ## Security: Audio Watermarking and Deepfake Detection
 
@@ -303,9 +303,9 @@ With VR/AR (Apple Vision Pro), audio is 3D.
 Embed an inaudible signal (spread spectrum) into the audio.
 
 **Detection:**
-1.  **Artifact Analysis:** GANs leave traces in the high frequencies.
-2.  **Phase Continuity:** Natural speech has specific phase relationships. Vocoders often break them.
-3.  **Biometrics:** Verify the "Voice Print" against a known enrollment.
+1. **Artifact Analysis:** GANs leave traces in the high frequencies.
+2. **Phase Continuity:** Natural speech has specific phase relationships. Vocoders often break them.
+3. **Biometrics:** Verify the "Voice Print" against a known enrollment.
 
 ## Accessibility: Hearing Loss Simulation
 
@@ -324,10 +324,10 @@ How does MP3/Opus actually compress audio?
 It's like FFT, but with overlapping windows (50% overlap) to prevent "blocking artifacts".
 
 **Process:**
-1.  **Windowing:** Multiply signal by a window function (Sine/Kaiser).
-2.  **MDCT:** Convert to frequency domain.
-3.  **Quantization:** Round the float values to integers. **This is where loss happens.**
-4.  **Entropy Coding:** Huffman coding to compress the integers.
+1. **Windowing:** Multiply signal by a window function (Sine/Kaiser).
+2. **MDCT:** Convert to frequency domain.
+3. **Quantization:** Round the float values to integers. **This is where loss happens.**
+4. **Entropy Coding:** Huffman coding to compress the integers.
 
 **Psychoacoustic Model:**
 The encoder calculates the **Masking Threshold** for each frequency band.
@@ -390,17 +390,17 @@ At 3kbps, they sound better than Opus at 12kbps, but the waveform looks *complet
 
 ## Appendix F: Interview Questions
 
-1.  **Q:** "How do you handle packet loss in a real-time audio app?"
-    **A:**
-    - **Jitter Buffer:** Hold packets for 20-50ms to reorder them.
-    - **FEC (Forward Error Correction):** Send redundant data (XOR of previous packets).
-    - **PLC (Packet Loss Concealment):** Generate fake audio to fill gaps.
+1. **Q:** "How do you handle packet loss in a real-time audio app?"
+ **A:**
+ - **Jitter Buffer:** Hold packets for 20-50ms to reorder them.
+ - **FEC (Forward Error Correction):** Send redundant data (XOR of previous packets).
+ - **PLC (Packet Loss Concealment):** Generate fake audio to fill gaps.
 
-2.  **Q:** "Why is 44.1kHz the standard sample rate?"
-    **A:** Nyquist Theorem. Humans hear up to 20kHz. We need `2 * MaxFreq` to reconstruct the signal. `2 * 20kHz = 40kHz`. The extra 4.1kHz is for anti-aliasing filter roll-off.
+2. **Q:** "Why is 44.1kHz the standard sample rate?"
+ **A:** Nyquist Theorem. Humans hear up to 20kHz. We need `2 * MaxFreq` to reconstruct the signal. `2 * 20kHz = 40kHz`. The extra 4.1kHz is for anti-aliasing filter roll-off.
 
-3.  **Q:** "What is the Cocktail Party Problem?"
-    **A:** The ability to focus on one speaker in a noisy room. Humans do it easily (binaural hearing). Machines struggle. Solved using **Blind Source Separation (BSS)** or **Target Speech Extraction (TSE)**.
+3. **Q:** "What is the Cocktail Party Problem?"
+ **A:** The ability to focus on one speaker in a noisy room. Humans do it easily (binaural hearing). Machines struggle. Solved using **Blind Source Separation (BSS)** or **Target Speech Extraction (TSE)**.
 
 ## Conclusion
 
@@ -408,7 +408,7 @@ Speech Quality Monitoring is moving from "Signal Processing" (PESQ) to "Deep Lea
 Just like in Vision (Perceptual Loss) and NLP (BERTScore), we are learning that **Neural Networks are the best judges of Neural Networks**.
 
 
-```python
+``python
 from pesq import pesq
 from scipy.io import wavfile
 
@@ -420,7 +420,7 @@ rate, deg = wavfile.read("degraded.wav")
 score = pesq(rate, ref, deg, 'wb')
 print(f"PESQ Score: {score:.2f}")
 # Output: 3.5 (Fair to Good)
-```
+``
 
 ## Appendix A: The "Silent" Failure in Speech
 

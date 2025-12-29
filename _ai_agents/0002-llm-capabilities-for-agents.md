@@ -3,13 +3,13 @@ title: "LLM Capabilities for Agents"
 day: 2
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - llm
-  - deep-learning
-  - reasoning
-  - cot
-  - benchmarks
+ - llm
+ - deep-learning
+ - reasoning
+ - cot
+ - benchmarks
 difficulty: Easy
 related_dsa_day: 2
 related_ml_day: 2
@@ -49,7 +49,7 @@ Daniel Kahneman, in "Thinking, Fast and Slow", distinguishes between System 1 (F
 Standard LLMs naturally operate in System 1. They generate the next token immediately based on surface-level statistics. Agents, however, *need* System 2. They face multi-step logic puzzles: "If the user is in the US, check inventory A. If inventory A is empty, check inventory B, but only if it's a weekday."
 
 To enable this, we rely on **Reasoning Paradigms**:
-* **Deductive Reasoning:** deriving a conclusion from premises ($A \to B, B \to C, \therefore A \to C$).
+* **Deductive Reasoning:** deriving a conclusion from premises (`A \to B, B \to C, \therefore A \to C`).
 * **Inductive Reasoning:** Seeing examples in the prompt and generalizing the rule.
 * **Abductive Reasoning:** The most critical for debugging. Seeing an observation ("The server returned 500") and inferring the most likely cause ("The database connection string is probably wrong").
 
@@ -125,7 +125,7 @@ Models you can host yourself. Essential for healthcare, finance, or privacy-crit
 
 * **Llama 3.1 70B & 405B (Meta):**
  * *Pros:* GPT-4 class performance for free (if you have the GPUs). Uncensored (mostly). You own your data. Excellent Tool Calling support.
- * *Cons:* Hosting 405B parameters is technically difficult and expensive ($$$ GPU clusters). The 70B model is the sweet spot for enterprise agents, fitting on a single fast node.
+ * *Cons:* Hosting 405B parameters is technically difficult and expensive (`$ GPU clusters). The 70B model is the sweet spot for enterprise agents, fitting on a single fast node.
 * **Mistral Large / Mixtral:**
  * *Pros:* Efficient "Mixture of Experts" (MoE) architecture. Good reasoning-to-cost ratio.
 

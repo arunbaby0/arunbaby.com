@@ -3,14 +3,14 @@ title: "Agent Frameworks Landscape"
 day: 6
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - frameworks
-  - langchain
-  - langgraph
-  - autogen
-  - crewai
-  - llamaindex
+ - frameworks
+ - langchain
+ - langgraph
+ - autogen
+ - crewai
+ - llamaindex
 difficulty: Easy
 related_dsa_day: 6
 related_ml_day: 6
@@ -93,7 +93,7 @@ LangChain realized that its original "Chain" abstraction (Sequence A -> Sequence
  * *Scenario:* Agent reaches "Execute Code" node. Graph pauses. Human Admin gets a ping. Human approves. Graph resumes.
  * This is critical for enterprise safety.
 * **Code Snippet (Conceptual):**
- ```python
+ ``python
  # Define State
  class State(TypedDict):
  messages: list
@@ -109,7 +109,7 @@ LangChain realized that its original "Chain" abstraction (Sequence A -> Sequence
  workflow.add_edge("tool", "agent")
 
  app = workflow.compile()
- ```
+ ``
 
 ### 3.2 AutoGen (The Conversationalist)
 Developed by Microsoft Research, AutoGen takes a different approach. It treats everything as a "Agent" that can send/receive messages.

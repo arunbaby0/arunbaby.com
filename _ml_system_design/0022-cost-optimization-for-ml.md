@@ -1,22 +1,22 @@
 ---
 title: "Cost Optimization for ML"
 day: 22
+related_dsa_day: 22
+related_speech_day: 22
+related_agents_day: 22
 collection: ml_system_design
 categories:
-  - ml-system-design
+ - ml-system-design
 tags:
-  - finops
-  - cloud-computing
-  - quantization
-  - pruning
-  - distillation
+ - finops
+ - cloud-computing
+ - quantization
+ - pruning
+ - distillation
 subdomain: "ML Infrastructure & Ops"
 tech_stack: [Python, AWS, Kubernetes, ONNX]
 scale: "Cluster-scale optimization"
 companies: [Uber, Airbnb, Netflix, Pinterest]
-related_dsa_day: 22
-related_speech_day: 22
-related_agents_day: 22
 ---
 
 **A comprehensive guide to FinOps for Machine Learning: reducing TCO without compromising accuracy or latency.**
@@ -38,7 +38,7 @@ Before we begin, let's define the language of money in tech.
 - **CAPEX (Capital Expenditure):** Upfront money spent on buying physical servers (e.g., buying 100 H100s for your own data center).
 - **OPEX (Operational Expenditure):** Ongoing money spent on cloud services (e.g., renting AWS EC2 instances). Most modern ML is OPEX.
 - **TCO (Total Cost of Ownership):** The sum of all costs (compute + storage + networking + engineering salaries + maintenance) over the life of the project.
-- **ROI (Return on Investment):** (Revenue - Cost) / Cost. If your model costs $100 to run and generates $110 in value, the ROI is 10%.
+- **ROI (Return on Investment):** (Revenue - Cost) / Cost. If your model costs `100 to run and generates `110 in value, the ROI is 10%.
 - **Unit Economics:** The cost to serve *one* unit of value (e.g., "Cost per 1000 predictions"). This is the most important metric for scaling.
 - **Commitment Savings Plan (CSP):** A contract where you promise to spend $X/hour for 1-3 years in exchange for a 30-50% discount.
 
@@ -63,28 +63,28 @@ This is usually 70-80% of the cost.
 
 ## High-Level Architecture: The Cost-Aware Pipeline
 
-```ascii
-+----------------+       +------------------+       +-------------------+
-|  User Request  | ----> |  Load Balancer   | ----> |  Inference Router |
-+----------------+       +------------------+       +-------------------+
-                                                            |
-                                         +------------------+------------------+
-                                         |                                     |
-                                 (High Confidence?)                     (Low Confidence?)
-                                         |                                     |
-                                         v                                     v
-                                +----------------+                    +----------------+
-                                |  CPU Cluster   |                    |  GPU Cluster   |
-                                | (DistilBERT)   |                    | (BERT-Large)   |
-                                +----------------+                    +----------------+
-                                         |                                     |
-                                         +------------------+------------------+
-                                                            |
-                                                            v
-                                                   +----------------+
-                                                   |    Response    |
-                                                   +----------------+
-```
+``ascii
++----------------+ +------------------+ +-------------------+
+| User Request | ----> | Load Balancer | ----> | Inference Router |
++----------------+ +------------------+ +-------------------+
+ |
+ +------------------+------------------+
+ | |
+ (High Confidence?) (Low Confidence?)
+ | |
+ v v
+ +----------------+ +----------------+
+ | CPU Cluster | | GPU Cluster |
+ | (DistilBERT) | | (BERT-Large) |
+ +----------------+ +----------------+
+ | |
+ +------------------+------------------+
+ |
+ v
+ +----------------+
+ | Response |
+ +----------------+
+``
 
 ## Strategy 1: The Spot Instance Revolution
 
@@ -96,18 +96,18 @@ You cannot run a standard web server on Spot instances without risk. But for ML,
 
 #### For Training
 Training is long-running but often checkpointable.
-1.  **Checkpoint Frequently:** Save your model weights to S3 every 10-15 minutes.
-2.  **Auto-Resume:** Use a job orchestrator (like Ray, Slurm, or Kubernetes Jobs) that detects when a node dies and automatically spins up a new one, loading the last checkpoint.
-3.  **Mixed Clusters:** Use a small "On-Demand" head node (manager) and a fleet of "Spot" worker nodes. If workers die, the manager survives and requests new workers.
+1. **Checkpoint Frequently:** Save your model weights to S3 every 10-15 minutes.
+2. **Auto-Resume:** Use a job orchestrator (like Ray, Slurm, or Kubernetes Jobs) that detects when a node dies and automatically spins up a new one, loading the last checkpoint.
+3. **Mixed Clusters:** Use a small "On-Demand" head node (manager) and a fleet of "Spot" worker nodes. If workers die, the manager survives and requests new workers.
 
 #### For Inference
 This is trickier because you can't drop user requests.
-1.  **Over-provisioning:** Run 20% more replicas than you need. If some get preempted, the others handle the load while new ones spin up.
-2.  **Graceful Shutdown:** Listen for the "Preemption Notice" (a signal sent by the cloud provider). When received:
-    - Stop accepting new requests (update Load Balancer health check to 'fail').
-    - Finish processing current requests.
-    - Upload logs.
-    - Die peacefully.
+1. **Over-provisioning:** Run 20% more replicas than you need. If some get preempted, the others handle the load while new ones spin up.
+2. **Graceful Shutdown:** Listen for the "Preemption Notice" (a signal sent by the cloud provider). When received:
+ - Stop accepting new requests (update Load Balancer health check to 'fail').
+ - Finish processing current requests.
+ - Upload logs.
+ - Die peacefully.
 
 ## Strategy 2: Model Optimization (Make it Smaller)
 
@@ -177,23 +177,23 @@ Create separate pools for different workloads.
 Prevent non-critical pods from stealing expensive GPU nodes.
 
 **Node Configuration:**
-```yaml
+``yaml
 # On the GPU node
 taints:
-  - key: "accelerator"
-    value: "nvidia-tesla-t4"
-    effect: "NoSchedule"
-```
+ - key: "accelerator"
+ value: "nvidia-tesla-t4"
+ effect: "NoSchedule"
+``
 
 **Pod Configuration:**
-```yaml
+``yaml
 # In your Inference Deployment
 tolerations:
-  - key: "accelerator"
-    operator: "Equal"
-    value: "nvidia-tesla-t4"
-    effect: "NoSchedule"
-```
+ - key: "accelerator"
+ operator: "Equal"
+ value: "nvidia-tesla-t4"
+ effect: "NoSchedule"
+``
 
 ### 3. Resource Requests & Limits
 If you don't set these, one pod can eat the whole node.
@@ -207,7 +207,7 @@ If you don't set these, one pod can eat the whole node.
 **Scenario:**
 You work at a startup. You have a sentiment analysis model (BERT-Base) that processes 1 million user reviews per day.
 - **Current Setup:** 5 x `g4dn.xlarge` (NVIDIA T4) instances running 24/7.
-- **Cost:** $0.526/hr * 24 hrs * 30 days * 5 instances = **$1,893 / month**.
+- **Cost:** `0.526/hr * 24 hrs * 30 days * 5 instances = **`1,893 / month**.
 
 **The Junior Engineer's Optimization Plan:**
 
@@ -215,62 +215,62 @@ You work at a startup. You have a sentiment analysis model (BERT-Base) that proc
 Traffic isn't constant. It peaks at 9 AM and drops at 2 AM.
 - You implement Kubernetes HPA.
 - Average instance count drops from 5 to 3.
-- **New Cost:** $1,135 / month. (**Saved $758**)
+- **New Cost:** `1,135 / month. (**Saved `758**)
 
 **Step 2: Spot Instances**
 You switch the node pool to Spot instances.
 - Spot price for `g4dn.xlarge` is ~$0.15/hr (approx 70% discount).
-- **New Cost:** $0.15 * 24 * 30 * 3 = $324 / month. (**Saved $811**)
+- **New Cost:** `0.15 * 24 * 30 * 3 = `324 / month. (**Saved $811**)
 
 **Step 3: Quantization & CPU Migration**
 You quantize the model to INT8 using ONNX Runtime. It now runs fast enough on a CPU!
 - You switch to `c6i.large` (Compute Optimized CPU) instances.
 - Spot price for `c6i.large` is ~$0.03/hr.
 - Because CPU is slower than GPU, you need 6 instances instead of 3 to handle the load.
-- **New Cost:** $0.03 * 24 * 30 * 6 = $129 / month. (**Saved $195**)
+- **New Cost:** `0.03 * 24 * 30 * 6 = `129 / month. (**Saved $195**)
 
 **Total Savings:**
-From **$1,893** to **$129** per month. That is a **93% reduction** in cost.
+From **`1,893** to **`129** per month. That is a **93% reduction** in cost.
 This is the power of system design.
 
 ## Implementation: Cost-Aware Router
 
 Let's look at code for a "Cascade" router. This is a pattern where you try a cheap model first, and only call the expensive model if the cheap one is unsure.
 
-```python
+``python
 import requests
 
 class ModelCascade:
-    def __init__(self):
-        self.cheap_model_url = "http://cpu-service/predict"
-        self.expensive_model_url = "http://gpu-service/predict"
-        self.confidence_threshold = 0.85
+ def __init__(self):
+ self.cheap_model_url = "http://cpu-service/predict"
+ self.expensive_model_url = "http://gpu-service/predict"
+ self.confidence_threshold = 0.85
 
-    def predict(self, input_text):
-        # Step 1: Call the Cheap Model (DistilBERT on CPU)
-        response = requests.post(self.cheap_model_url, json={"text": input_text})
-        result = response.json()
-        
-        confidence = result['confidence']
-        prediction = result['label']
-        
-        print(f"Cheap Model Confidence: {confidence}")
+ def predict(self, input_text):
+ # Step 1: Call the Cheap Model (DistilBERT on CPU)
+ response = requests.post(self.cheap_model_url, json={"text": input_text})
+ result = response.json()
+ 
+ confidence = result['confidence']
+ prediction = result['label']
+ 
+ print(f"Cheap Model Confidence: {confidence}")
 
-        # Step 2: Check Confidence
-        if confidence >= self.confidence_threshold:
-            # Good enough! Return early.
-            return prediction
-        
-        # Step 3: Fallback to Expensive Model (GPT-4 / Large BERT on GPU)
-        print("Confidence too low. Calling Expensive Model...")
-        response = requests.post(self.expensive_model_url, json={"text": input_text})
-        return response.json()['label']
+ # Step 2: Check Confidence
+ if confidence >= self.confidence_threshold:
+ # Good enough! Return early.
+ return prediction
+ 
+ # Step 3: Fallback to Expensive Model (GPT-4 / Large BERT on GPU)
+ print("Confidence too low. Calling Expensive Model...")
+ response = requests.post(self.expensive_model_url, json={"text": input_text})
+ return response.json()['label']
 
 # Usage
 cascade = ModelCascade()
 # "I love this product!" -> Cheap model is 99% sure. Returns. Cost: $0.0001
 # "The nuance of the texture was..." -> Cheap model is 60% sure. Calls GPU. Cost: $0.01
-```
+``
 
 ## Monitoring & Metrics: The FinOps Dashboard
 
@@ -282,9 +282,9 @@ You cannot optimize what you cannot measure. You need a dashboard.
 - **Kubecost:** A specialized tool that tells you exactly how much each namespace/deployment costs.
 
 **Key Metrics to Track:**
-1.  **Cost per Inference:** Total Cost / Total Requests. (Goal: Drive this down).
-2.  **GPU Utilization:** If average utilization is < 30%, you are wasting money. Scale down or bin-pack more models.
-3.  **Spot Interruption Rate:** How often are your nodes dying? If > 5%, your reliability might suffer.
+1. **Cost per Inference:** Total Cost / Total Requests. (Goal: Drive this down).
+2. **GPU Utilization:** If average utilization is < 30%, you are wasting money. Scale down or bin-pack more models.
+3. **Spot Interruption Rate:** How often are your nodes dying? If > 5%, your reliability might suffer.
 
 ## Vendor Comparison: AWS vs GCP vs Azure
 
@@ -311,19 +311,19 @@ Training a single large Transformer model can emit as much CO2 as 5 cars in thei
 ## Future Trends
 
 Where is this field going?
-1.  **Neuromorphic Computing:** Chips that mimic the human brain (Spiking Neural Networks). They consume milliwatts instead of watts.
-2.  **Optical Computing:** Using light (photons) instead of electricity (electrons) for matrix multiplication. Potentially 1000x faster and cheaper.
-3.  **Federated Learning:** Training models on user devices (phones) instead of central servers. Shifts the cost from you to the user (and preserves privacy).
+1. **Neuromorphic Computing:** Chips that mimic the human brain (Spiking Neural Networks). They consume milliwatts instead of watts.
+2. **Optical Computing:** Using light (photons) instead of electricity (electrons) for matrix multiplication. Potentially 1000x faster and cheaper.
+3. **Federated Learning:** Training models on user devices (phones) instead of central servers. Shifts the cost from you to the user (and preserves privacy).
 
 ## Checklist for Junior Engineers
 
 Before you deploy, ask yourself:
-1.  [ ] **Do I really need a GPU?** Have I benchmarked on a modern CPU?
-2.  [ ] **Is my model quantized?** Can I use INT8?
-3.  [ ] **Am I using Spot instances?** If not, why?
-4.  [ ] **Is auto-scaling enabled?** Or am I paying for idle time?
-5.  [ ] **Are my logs optimized?** Am I logging huge tensors to CloudWatch/Datadog? (This is a hidden cost killer!)
-6.  [ ] **Is the data in the same region?** Check for cross-region transfer fees.
+1. [ ] **Do I really need a GPU?** Have I benchmarked on a modern CPU?
+2. [ ] **Is my model quantized?** Can I use INT8?
+3. [ ] **Am I using Spot instances?** If not, why?
+4. [ ] **Is auto-scaling enabled?** Or am I paying for idle time?
+5. [ ] **Are my logs optimized?** Am I logging huge tensors to CloudWatch/Datadog? (This is a hidden cost killer!)
+6. [ ] **Is the data in the same region?** Check for cross-region transfer fees.
 
 ## Appendix A: System Design Interview Transcript
 
@@ -335,16 +335,16 @@ Before you deploy, ask yourself:
 
 **Candidate:** "Understood. I propose a Kubernetes-based architecture on AWS.
 1. **Compute:** We will use a mixed cluster.
-   - **Head Node:** On-Demand `m5.large` for the K8s control plane.
-   - **Notebooks:** Spot `t3.medium` instances. If they die, we lose the kernel but data is on EFS.
-   - **Training:** Spot `g4dn.xlarge` instances. We will use `Volcano` scheduler for batch scheduling.
+ - **Head Node:** On-Demand `m5.large` for the K8s control plane.
+ - **Notebooks:** Spot `t3.medium` instances. If they die, we lose the kernel but data is on EFS.
+ - **Training:** Spot `g4dn.xlarge` instances. We will use `Volcano` scheduler for batch scheduling.
 2. **Storage:**
-   - **Data:** S3 Standard-IA (Infrequent Access) to save money.
-   - **Checkpoints:** S3 Intelligent-Tiering.
-   - **Scratch Space:** Amazon FSx for Lustre (expensive but needed for speed) or just local NVMe on the instances.
+ - **Data:** S3 Standard-IA (Infrequent Access) to save money.
+ - **Checkpoints:** S3 Intelligent-Tiering.
+ - **Scratch Space:** Amazon FSx for Lustre (expensive but needed for speed) or just local NVMe on the instances.
 3. **Networking:**
-   - Keep everything in `us-east-1` to avoid data transfer fees.
-   - Use VPC Endpoints for S3 to avoid NAT Gateway charges."
+ - Keep everything in `us-east-1` to avoid data transfer fees.
+ - Use VPC Endpoints for S3 to avoid NAT Gateway charges."
 
 **Interviewer:** "How do you handle Spot interruptions during training?"
 

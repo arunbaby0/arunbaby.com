@@ -1,6 +1,9 @@
 ---
 title: "Neural Architecture Search (NAS) for Speech"
 day: 59
+related_dsa_day: 59
+related_ml_day: 59
+related_agents_day: 59
 collection: speech_tech
 categories:
   - speech-tech
@@ -17,9 +20,6 @@ tech_stack: [Optuna, PyTorch, Ray, ONNX, Kaldi]
 scale: "Searching billions of possible Conformer-Transformer combinations for low-latency ASR"
 companies: [Apple, Google, Meta, NVIDIA, Samsung]
 difficulty: Hard
-related_dsa_day: 59
-related_ml_day: 59
-related_agents_day: 59
 ---
 
 **"Hand-crafting speech architectures is reaching its limits. For the next generation of voice assistants, we don't build the model—we define the search space and let the computer discover the most efficient physics of sound."**
@@ -32,7 +32,7 @@ In the world of Speech Tech, we are constantly fighting two warring factions: **
 
 Historically, humans designed "Mobile-Optimized" architectures like **MobileNet** or **Cuside-Transformer** by hand. However, sound is complex. The optimal architecture for a "Quiet Home" is different from an "Industrial Warehouse."
 
-**Neural Architecture Search (NAS) for Speech** is the automation of this discovery. It treats a model's topology (number of heads, kernel sizes, dilation rates) as a **Constraint Satisfaction Problem** (connecting to our **Sudoku Solver** DSA topic). Today, we build the pipeline for discovering speech models that are "Pareto-Optimal"—better accuracy for less compute.
+**Neural Architecture Search (NAS) for Speech** is the automation of this discovery. It treats a model's topology (number of heads, kernel sizes, dilation rates) as a **Constraint Satisfaction Problem**. We explore the methods for discovering speech models that are "Pareto-Optimal"—better accuracy for less compute.
 
 ---
 
@@ -58,12 +58,12 @@ NAS depends on the "Architecture Palette." For speech, we typically search acros
 
 ## 3. High-Level Architecture: The Performance-Aware Searcher
 
-A production NAS system for speech (like Apple’s research into efficient ASR) follows a three-stage loop:
+A production NAS system for speech follows a three-stage loop:
 
-1.  **Search Controller (The Agent)**: Proposes a "Candidate Model" from the search space.
-2.  **Training & Evaluation (The Trial)**: Trains the candidate on a subset of the dataset (e.g., Librispeech-100) for a few epochs.
-3.  **Hardware Profiler**: Measures the **Latency** on a specific target device (e.g., iPhone 15, Pixel 8) and the **Power Consumption**.
-4.  **Reward Function**: Rewards candidates that have the best "WER-Latency" trade-off.
+1. **Search Controller (The Agent)**: Proposes a "Candidate Model" from the search space.
+2. **Training & Evaluation (The Trial)**: Trains the candidate on a subset of the dataset (e.g., Librispeech) for a few epochs.
+3. **Hardware Profiler**: Measures the **Latency** on a specific target device and the **Power Consumption**.
+4. **Reward Function**: Rewards candidates that have the best "WER-Latency" trade-off.
 
 ---
 
@@ -72,9 +72,9 @@ A production NAS system for speech (like Apple’s research into efficient ASR) 
 One of the most efficient NAS strategies is the **OFA (Once-for-all)** approach. Instead of training 1,000 separate models, we train one "Super-Network" that contains all possible sub-networks.
 
 ### The Logic
-1.  **Train the Super-Net**: Ensure that any "Slice" of the network (e.g., using only 4 heads instead of 8) is still functionally valid.
-2.  **Architectural Sampling**: Randomly pick sub-networks during training and update their weights.
-3.  **The Result**: At the end of training, you have a single set of weights from which you can "extract" the best model for any hardware constraint (one for a high-end server, one for a smartwatch) without re-training.
+1. **Train the Super-Net**: Ensure that any "Slice" of the network is still functionally valid.
+2. **Architectural Sampling**: Randomly pick sub-networks during training and update their weights.
+3. **The Result**: At the end of training, you have a single set of weights from which you can "extract" the best model for any hardware constraint without re-training.
 
 ```python
 class SpeechSuperNet(nn.Module):
@@ -96,20 +96,18 @@ class SpeechSuperNet(nn.Module):
 ## 5. The Reward Function: The "Efficiency Frontier"
 
 We don't just want the lowest Word Error Rate (WER). We want to solve for:
-$Reward = -WER - \lambda \cdot \log(Latency)$
+`Reward = -WER - lambda * log(Latency)`
 
-Where $\lambda$ represents how much we value speed.
-- If $\lambda$ is high, the system will favor tiny, lightning-fast models.
-- If $\lambda$ is low, it will favor heavy, accurate models.
+Where `lambda` represents how much we value speed.
 
 ---
 
 ## 6. Real-time Implementation: On-Device Accuracy
 
 When an architecture is discovered, how is it deployed?
-1.  **Export to ONNX/CoreML**: Convert the neural graph to a static format optimized for the mobile NPU (Neural Processing Unit).
-2.  **Quantization-Aware Discovery**: The NAS system searches for models that perform well even when their weights are compressed from 32-bit floats to 8-bit integers.
-3.  **Phonetic Pruning**: Prune layers that the NAS system identifies as redundant for specific acoustic environments.
+1. **Export to ONNX/CoreML**: Convert the neural graph to a format optimized for the mobile NPU.
+2. **Quantization-Aware Discovery**: Search for models that perform well with 8-bit integers.
+3. **Phonetic Pruning**: Prune redundant layers for specific acoustic environments.
 
 ---
 
@@ -126,28 +124,28 @@ When an architecture is discovered, how is it deployed?
 
 ## 8. Failure Modes in Speech NAS
 
-1.  **Invalid Topologies**: The searcher proposes a model that is too deep to fit in the GPU's memory.
-    *   *Mitigation*: Implement "Soft Constraints" in the search controller that reject configurations exceeding a resource budget (The Sudoku Link).
-2.  **The "Hardware Gap"**: A model that is fast on a CPU might be slow on a DSP (Digital Signal Processor).
-    *   *Mitigation*: Always perform evaluations on the **Physical Hardware**, not a simulator.
-3.  **Feature Mismatch**: The NAS finds a great model for 16kHz audio, but the production system uses 8kHz.
+1. **Invalid Topologies**: The searcher proposes a model that is too deep for target memory.
+  * *Mitigation*: Implement "Soft Constraints" that reject configurations exceeding a budget.
+2. **The "Hardware Gap"**: A model fast on a CPU might be slow on a DSP.
+  * *Mitigation*: Perform evaluations on the **Physical Hardware**.
+3. **Feature Mismatch**: The NAS finds a great model for 16kHz but the production uses 8kHz.
 
 ---
 
 ## 9. Real-World Case Study: Google’s "E-NAS" for Voice Assistant
 
 Google used NAS to design the "New Google Assistant" models.
-- **The Challenge**: The model had to understand voice locally on a phone to eliminate latency.
-- **The Result**: NAS discovered a "Hydra" architecture—a single shared convolutional trunk with multiple "Heads" for different tasks (ASR, Intent Detection). This reduced parameter count by 75% compared to the original design.
+- **The Challenge**: The model had to understand voice locally on a phone.
+- **The Result**: Discovered a "Hydra" architecture—a shared trunk with multiple heads for different tasks (ASR, Intent Detection). Reduced parameter count by 75%.
 
 ---
 
 ## 10. Key Takeaways
 
-1.  **Search is the new Engineering**: (The DSA Link) Automating the search for the "Correct digits in the grid" is the only way to achieve peak efficiency.
-2.  **Hardware-in-the-loop**: A speech model is only as good as its speed on the target device.
-3.  **NAS is not just for WER**: Use it to optimize for battery life, memory, and even privacy.
-4.  **Pruning starts in the Search phase**: (The ML Link) Use AutoML principles to kill poor architectures early.
+1. **Search is the new Engineering**: Automating the search for the "Correct digits in the grid" is the only way to achieve peak efficiency.
+2. **Hardware-in-the-loop**: A speech model is only as good as its speed on the target device.
+3. **NAS is not just for WER**: Optimize for battery life, memory, and privacy.
+4. **Pruning starts in the Search phase**: Use AutoML principles to kill poor architectures early.
 
 ---
 

@@ -1,21 +1,21 @@
 ---
 title: "Hierarchical Classification Systems"
 day: 29
+related_dsa_day: 29
+related_speech_day: 29
+related_agents_day: 29
 collection: ml_system_design
 categories:
-  - ml_system_design
+ - ml_system_design
 tags:
-  - classification
-  - taxonomy
-  - hierarchical
-  - multi-label
+ - classification
+ - taxonomy
+ - hierarchical
+ - multi-label
 subdomain: "Classification & Taxonomy"
 tech_stack: [TensorFlow, PyTorch, FAISS]
 scale: "Billions of items, Millions of categories"
 companies: [Amazon, Google Shopping, eBay, Wikipedia]
-related_dsa_day: 29
-related_speech_day: 29
-related_agents_day: 29
 ---
 
 **"Organizing the world's information into a structured hierarchy."**
@@ -25,17 +25,17 @@ related_agents_day: 29
 Hierarchical classification is the task of assigning an item to one or more nodes in a **taxonomy tree**.
 
 **Example: Product Categorization**
-```
+``
 Electronics
 ├── Computers
-│   ├── Laptops
-│   │   ├── Gaming Laptops
-│   │   └── Business Laptops
-│   └── Desktops
+│ ├── Laptops
+│ │ ├── Gaming Laptops
+│ │ └── Business Laptops
+│ └── Desktops
 └── Mobile Devices
-    ├── Smartphones
-    └── Tablets
-```
+ ├── Smartphones
+ └── Tablets
+``
 
 **Problem:** Given a product description "Dell XPS 15 with RTX 3050", classify it into:
 - Electronics > Computers > Laptops > Business Laptops (or Gaming Laptops?)
@@ -68,16 +68,16 @@ Electronics
 Train a **single multi-class classifier** predicting all leaf nodes, then use the hierarchy to ensure consistency.
 
 **Model:**
-```python
+``python
 # Predict all 30,000 leaf categories
-logits = model(input)  # Shape: [batch, 30000]
+logits = model(input) # Shape: [batch, 30000]
 probs = softmax(logits)
 
 # Post-process: ensure parent probabilities >= child probabilities
 for node in taxonomy.postorder():
-    if node.children:
-        node.prob = max(node.prob, max(child.prob for child in node.children))
-```
+ if node.children:
+ node.prob = max(node.prob, max(child.prob for child in node.children))
+``
 
 **Pros:**
 - Simple: One model.
@@ -92,20 +92,20 @@ for node in taxonomy.postorder():
 Train a **separate classifier at each internal node** to choose among its children.
 
 **Example:**
-```
+``
 Root Classifier: Electronics vs. Clothing vs. Books
-  ├─ Electronics Classifier: Computers vs. Mobile Devices
-  │   ├─ Computers Classifier: Laptops vs. Desktops
-```
+ ├─ Electronics Classifier: Computers vs. Mobile Devices
+ │ ├─ Computers Classifier: Laptops vs. Desktops
+``
 
 **Inference:**
-```python
+``python
 node = root
 while not node.is_leaf():
-    probs = node.classifier(input)
-    node = node.children[argmax(probs)]
+ probs = node.classifier(input)
+ node = node.children[argmax(probs)]
 return node
-```
+``
 
 **Pros:**
 - **Balanced:** Each classifier handles a small, focused problem.
@@ -120,32 +120,32 @@ return node
 Use a **shared encoder** with **hierarchical output heads**.
 
 **Architecture:**
-```python
+``python
 class HierarchicalClassifier(nn.Module):
-    def __init__(self, taxonomy):
-        super().__init__()
-        self.encoder = ResNet()  # Shared
-        self.heads = nn.ModuleDict({
-            node.id: nn.Linear(2048, len(node.children))
-            for node in taxonomy.internal_nodes()
-        })
-    
-    def forward(self, x):
-        features = self.encoder(x)
-        outputs = {}
-        for node_id, head in self.heads.items():
-            outputs[node_id] = head(features)
-        return outputs
-```
+ def __init__(self, taxonomy):
+ super().__init__()
+ self.encoder = ResNet() # Shared
+ self.heads = nn.ModuleDict({
+ node.id: nn.Linear(2048, len(node.children))
+ for node in taxonomy.internal_nodes()
+ })
+ 
+ def forward(self, x):
+ features = self.encoder(x)
+ outputs = {}
+ for node_id, head in self.heads.items():
+ outputs[node_id] = head(features)
+ return outputs
+``
 
 **Loss:**
-```python
+``python
 total_loss = 0
 for node in taxonomy.internal_nodes():
-    if node in ground_truth_path:
-        target = ground_truth_path[node].child_index
-        total_loss += cross_entropy(outputs[node.id], target)
-```
+ if node in ground_truth_path:
+ target = ground_truth_path[node].child_index
+ total_loss += cross_entropy(outputs[node.id], target)
+``
 
 **Pros:**
 - **Shared Representations:** Lower layers learn general features.
@@ -167,9 +167,9 @@ Some items belong to **multiple paths** in the tree.
 **Approach: Multi-Task Learning**
 - Treat each path as a separate task.
 - Loss = Sum of losses for all valid paths.
-```python
+``python
 loss = sum(path_loss(model(x), path) for path in ground_truth_paths)
-```
+``
 
 ## 5. Hierarchy-Aware Loss Functions
 
@@ -220,31 +220,31 @@ When the number of labels is in the millions (e.g., Wikipedia categories), stand
 
 **Approaches:**
 1. **Embedding-Based (AnnexML, Bonsai, Parabel):**
-   - Embed labels and inputs into the same space.
-   - Use ANN (Approximate Nearest Neighbors) to retrieve top-K labels.
+ - Embed labels and inputs into the same space.
+ - Use ANN (Approximate Nearest Neighbors) to retrieve top-K labels.
 2. **Attention Mechanisms:**
-   - Label-Attention: Attend to label descriptions during encoding.
+ - Label-Attention: Attend to label descriptions during encoding.
 3. **Tree Pruning:**
-   - Prune unlikely branches early using a lightweight model.
+ - Prune unlikely branches early using a lightweight model.
 
 **Parabel Architecture:**
-```
+``
 1. Build a label tree (clustering similar labels).
 2. Train classifiers at each node (like LCN).
 3. Beam search during inference to explore top-K branches.
-```
+``
 
 ## Deep Dive: Google's Knowledge Graph Categories
 
 Google Search uses a hierarchical taxonomy for entities.
 **Example:**
-```
+``
 Thing
 ├── Creative Work
-│   └── Movie
+│ └── Movie
 └── Person
-    └── Actor
-```
+ └── Actor
+``
 
 **Challenge:** New entities appear daily (new movies, new people).
 **Solution:**
@@ -258,12 +258,12 @@ In HMTL, tasks are organized in a hierarchy where:
 - **Higher tasks** are harder (e.g., "Is this a gaming laptop?").
 
 **Architecture:**
-```
+``
 Input → Shared Encoder → Task 1 (Electronics?) ──┐
-                         ├→ Task 2 (Computers?)   │
-                         └→ Task 3 (Laptops?)     │
-                                                   ├→ Final Prediction
-```
+ ├→ Task 2 (Computers?) │
+ └→ Task 3 (Laptops?) │
+ ├→ Final Prediction
+``
 
 **Loss:**
 \\[
@@ -293,18 +293,18 @@ where \\(\lambda_i\\) are learned or hand-tuned.
 
 **Solutions:**
 1. **Class Weighting:**
-   \\[
-   w_i = \frac{\text{total samples}}{\text{samples in class } i}
-   \\]
+ \\[
+ w_i = \frac{\text{total samples}}{\text{samples in class } i}
+ \\]
 2. **Focal Loss:**
-   \\[
-   \mathcal{L} = -\alpha (1 - p_t)^\gamma \log(p_t)
-   \\]
-   Focuses on hard-to-classify examples.
+ \\[
+ \mathcal{L} = -\alpha (1 - p_t)^\gamma \log(p_t)
+ \\]
+ Focuses on hard-to-classify examples.
 3. **Oversampling:**
-   - Augment rare classes.
+ - Augment rare classes.
 4. **Hierarchical Sampling:**
-   - Sample uniformly at each **level** of the tree, not uniformly across all leaves.
+ - Sample uniformly at each **level** of the tree, not uniformly across all leaves.
 
 ## Deep Dive: Evaluation Metrics
 
@@ -347,8 +347,8 @@ Compute F1 separately at each level of the hierarchy.
 **Solution: Active Learning**
 1. Train initial model on small labeled set.
 2. **Query:** Find the most uncertain samples.
-   - Entropy: \\( H = -\sum_i p_i \log p_i \\)
-   - Least Confident: \\( 1 - \max_i p_i \\)
+ - Entropy: \\( H = -\sum_i p_i \log p_i \\)
+ - Least Confident: \\( 1 - \max_i p_i \\)
 3. Human labels the queried samples.
 4. Retrain and repeat.
 
@@ -360,48 +360,48 @@ Compute F1 separately at each level of the hierarchy.
 **Idea:** Use attention at each level of the hierarchy to focus on relevant features.
 
 **Architecture:**
-```python
+``python
 class HierarchicalAttention(nn.Module):
-    def __init__(self):
-        self.word_attention = Attention()
-        self.sentence_attention = Attention()
-        self.document_attention = Attention()
-    
-    def forward(self, document):
-        # Level 1: Words → Sentence Representation
-        sentence_reps = []
-        for sentence in document:
-            word_reps = [self.embed(word) for word in sentence]
-            sentence_rep = self.word_attention(word_reps)
-            sentence_reps.append(sentence_rep)
-        
-        # Level 2: Sentences → Document Representation
-        doc_rep = self.sentence_attention(sentence_reps)
-        
-        # Level 3: Document → Category
-        category = self.document_attention(doc_rep)
-        return category
-```
+ def __init__(self):
+ self.word_attention = Attention()
+ self.sentence_attention = Attention()
+ self.document_attention = Attention()
+ 
+ def forward(self, document):
+ # Level 1: Words → Sentence Representation
+ sentence_reps = []
+ for sentence in document:
+ word_reps = [self.embed(word) for word in sentence]
+ sentence_rep = self.word_attention(word_reps)
+ sentence_reps.append(sentence_rep)
+ 
+ # Level 2: Sentences → Document Representation
+ doc_rep = self.sentence_attention(sentence_reps)
+ 
+ # Level 3: Document → Category
+ category = self.document_attention(doc_rep)
+ return category
+``
 
 ## Deep Dive: Label Embedding and Matching
 
 **Idea:** Embed both inputs and labels into the same space.
 
 **Training:**
-```python
-input_emb = encoder(product_description)  # [batch, 512]
-label_embs = label_encoder(all_labels)     # [30000, 512]
+``python
+input_emb = encoder(product_description) # [batch, 512]
+label_embs = label_encoder(all_labels) # [30000, 512]
 
 # Dot product similarity
-scores = input_emb @ label_embs.T  # [batch, 30000]
+scores = input_emb @ label_embs.T # [batch, 30000]
 loss = cross_entropy(scores, target)
-```
+``
 
 **Inference:**
-```python
+``python
 # Use FAISS for fast top-K retrieval
 top_k_labels = faiss_index.search(input_emb, k=10)
-```
+``
 
 **Benefit:** Decouples the number of labels from model size. Can add new labels without retraining.
 
@@ -422,57 +422,57 @@ top_k_labels = faiss_index.search(input_emb, k=10)
 
 ## Implementation Example: PyTorch Hierarchical Classifier
 
-```python
+``python
 import torch
 import torch.nn as nn
 
 class HierarchicalModel(nn.Module):
-    def __init__(self, taxonomy, embedding_dim=768):
-        super().__init__()
-        self.taxonomy = taxonomy
-        self.encoder = nn.Sequential(
-            nn.Linear(embedding_dim, 1024),
-            nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(1024, 512)
-        )
-        
-        # One classifier per internal node
-        self.classifiers = nn.ModuleDict()
-        for node in taxonomy.internal_nodes():
-            self.classifiers[str(node.id)] = nn.Linear(512, len(node.children))
-    
-    def forward(self, x, return_all=False):
-        features = self.encoder(x)
-        
-        if return_all:
-            # Return logits for all nodes (for training)
-            outputs = {}
-            for node_id, classifier in self.classifiers.items():
-                outputs[node_id] = classifier(features)
-            return outputs
-        else:
-            # Greedy path prediction (for inference)
-            node = self.taxonomy.root
-            path = [node]
-            
-            while not node.is_leaf():
-                logits = self.classifiers[str(node.id)](features)
-                child_idx = torch.argmax(logits, dim=1)
-                node = node.children[child_idx.item()]
-                path.append(node)
-            
-            return path
+ def __init__(self, taxonomy, embedding_dim=768):
+ super().__init__()
+ self.taxonomy = taxonomy
+ self.encoder = nn.Sequential(
+ nn.Linear(embedding_dim, 1024),
+ nn.ReLU(),
+ nn.Dropout(0.3),
+ nn.Linear(1024, 512)
+ )
+ 
+ # One classifier per internal node
+ self.classifiers = nn.ModuleDict()
+ for node in taxonomy.internal_nodes():
+ self.classifiers[str(node.id)] = nn.Linear(512, len(node.children))
+ 
+ def forward(self, x, return_all=False):
+ features = self.encoder(x)
+ 
+ if return_all:
+ # Return logits for all nodes (for training)
+ outputs = {}
+ for node_id, classifier in self.classifiers.items():
+ outputs[node_id] = classifier(features)
+ return outputs
+ else:
+ # Greedy path prediction (for inference)
+ node = self.taxonomy.root
+ path = [node]
+ 
+ while not node.is_leaf():
+ logits = self.classifiers[str(node.id)](features)
+ child_idx = torch.argmax(logits, dim=1)
+ node = node.children[child_idx.item()]
+ path.append(node)
+ 
+ return path
 
 def hierarchical_loss(outputs, true_path):
-    loss = 0
-    for node in true_path:
-        if not node.is_leaf():
-            logits = outputs[str(node.id)]
-            target = true_path.index(node.get_child_on_path(true_path))
-            loss += nn.CrossEntropyLoss()(logits, torch.tensor([target]))
-    return loss
-```
+ loss = 0
+ for node in true_path:
+ if not node.is_leaf():
+ logits = outputs[str(node.id)]
+ target = true_path.index(node.get_child_on_path(true_path))
+ loss += nn.CrossEntropyLoss()(logits, torch.tensor([target]))
+ return loss
+``
 
 ## Top Interview Questions
 

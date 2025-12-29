@@ -1,32 +1,32 @@
 ---
 title: "Scaling Multi-Agent Systems"
 day: 54
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - multi-agent
-  - scaling
-  - orchestration
-  - coordination
-  - reliability
-  - safety
-difficulty: Hard
-subdomain: "Multi-Agent Architecture"
-tech_stack:
-  - Python
-  - Message Queues
-  - Redis
-  - OpenTelemetry
-scale: "Hundreds of agents, thousands of tasks, bounded cost"
-companies:
-  - Microsoft
-  - Google
-  - OpenAI
-  - Anthropic
 related_dsa_day: 54
 related_ml_day: 54
 related_speech_day: 54
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - multi-agent
+ - scaling
+ - orchestration
+ - coordination
+ - reliability
+ - safety
+difficulty: Hard
+subdomain: "Multi-Agent Architecture"
+tech_stack:
+ - Python
+ - Message Queues
+ - Redis
+ - OpenTelemetry
+scale: "Hundreds of agents, thousands of tasks, bounded cost"
+companies:
+ - Microsoft
+ - Google
+ - OpenAI
+ - Anthropic
 ---
 
 **"A single agent is a demo. Scaling agents is distributed systems with language models in the loop."**
@@ -157,23 +157,23 @@ This is literally pattern matching: route tasks by matching metadata patterns to
 
 ### 3.1 Orchestrator + worker pool
 
-```
-         +-------------------+
-         | Orchestrator      |
-         | (planner+router)  |
-         +----+---------+----+
-              |         |
-              v         v
-        +-----------+  +-----------+
-        | Worker A  |  | Worker B  |
-        | (research)|  | (coding)  |
-        +-----------+  +-----------+
-              |
-              v
-        +-----------+
-        | Critic    |
-        +-----------+
-```
+``
+ +-------------------+
+ | Orchestrator |
+ | (planner+router) |
+ +----+---------+----+
+ | |
+ v v
+ +-----------+ +-----------+
+ | Worker A | | Worker B |
+ | (research)| | (coding) |
+ +-----------+ +-----------+
+ |
+ v
+ +-----------+
+ | Critic |
+ +-----------+
+``
 
 The orchestrator assigns tasks, enforces budgets, merges results, and triggers retries.
 
@@ -200,26 +200,26 @@ This improves quality, but must be bounded:
 ### 3.4 Hierarchical orchestration (team lead + specialists)
 A common production topology is hierarchical:
 
-```
-         +--------------------+
-         | Lead/Planner Agent |
-         +---------+----------+
-                   |
-      +------------+------------+
-      |                         |
-      v                         v
- +-----------+             +-----------+
- | Specialist|             | Specialist|
- | (data)    |             | (infra)   |
- +-----+-----+             +-----+-----+
-       |                         |
-       +-----------+-------------+
-                   |
-                   v
-            +-------------+
-            | Critic/QA   |
-            +-------------+
-```
+``
+ +--------------------+
+ | Lead/Planner Agent |
+ +---------+----------+
+ |
+ +------------+------------+
+ | |
+ v v
+ +-----------+ +-----------+
+ | Specialist| | Specialist|
+ | (data) | | (infra) |
+ +-----+-----+ +-----+-----+
+ | |
+ +-----------+-------------+
+ |
+ v
+ +-------------+
+ | Critic/QA |
+ +-------------+
+``
 
 This keeps planning centralized (reduces coordination overhead) while still allowing parallel execution.
 
@@ -325,41 +325,41 @@ This is the same safety logic as in data validation and pattern matching: untrus
 
 ## 5. Code Examples (Toy DAG Runner)
 
-```python
+``python
 from dataclasses import dataclass
 from typing import List, Dict, Set
 
 
 @dataclass
 class Task:
-    id: str
-    kind: str
-    deps: List[str]
-    payload: str
+ id: str
+ kind: str
+ deps: List[str]
+ payload: str
 
 
 def runnable(tasks: List[Task], done: Set[str]) -> List[Task]:
-    return [t for t in tasks if t.id not in done and all(d in done for d in t.deps)]
+ return [t for t in tasks if t.id not in done and all(d in done for d in t.deps)]
 
 
 def execute_plan(tasks: List[Task]) -> List[str]:
-    """
-    Toy sequential executor that respects dependencies.
-    Production version would run runnable tasks in parallel with budgets and retries.
-    """
-    done: Set[str] = set()
-    order: List[str] = []
+ """
+ Toy sequential executor that respects dependencies.
+ Production version would run runnable tasks in parallel with budgets and retries.
+ """
+ done: Set[str] = set()
+ order: List[str] = []
 
-    while len(done) < len(tasks):
-        ready = runnable(tasks, done)
-        if not ready:
-            raise ValueError("Cycle or missing dependency detected")
-        for t in ready:
-            # placeholder "execute"
-            done.add(t.id)
-            order.append(t.id)
-    return order
-```
+ while len(done) < len(tasks):
+ ready = runnable(tasks, done)
+ if not ready:
+ raise ValueError("Cycle or missing dependency detected")
+ for t in ready:
+ # placeholder "execute"
+ done.add(t.id)
+ order.append(t.id)
+ return order
+``
 
 This highlights the core: dependency management is a first-class part of scaling.
 
@@ -367,42 +367,42 @@ This highlights the core: dependency management is a first-class part of scaling
 Below is a conceptual sketch of what “budgeted execution” looks like.
 The important part is not the exact code; it’s the **explicit accounting** and **explicit failure reasons**.
 
-```python
+``python
 from dataclasses import dataclass
 from typing import Dict, Optional
 
 
 @dataclass
 class Budget:
-    max_steps: int
-    max_tool_calls: int
-    steps: int = 0
-    tool_calls: int = 0
+ max_steps: int
+ max_tool_calls: int
+ steps: int = 0
+ tool_calls: int = 0
 
 
 class IdempotencyStore:
-    def __init__(self) -> None:
-        self._seen: Dict[str, str] = {}
+ def __init__(self) -> None:
+ self._seen: Dict[str, str] = {}
 
-    def check_or_set(self, key: str, value: str) -> Optional[str]:
-        """
-        Returns existing value if key exists, else sets it and returns None.
-        """
-        if key in self._seen:
-            return self._seen[key]
-        self._seen[key] = value
-        return None
+ def check_or_set(self, key: str, value: str) -> Optional[str]:
+ """
+ Returns existing value if key exists, else sets it and returns None.
+ """
+ if key in self._seen:
+ return self._seen[key]
+ self._seen[key] = value
+ return None
 
 
 def enforce_budget(b: Budget, is_tool_call: bool) -> None:
-    b.steps += 1
-    if is_tool_call:
-        b.tool_calls += 1
-    if b.steps > b.max_steps:
-        raise RuntimeError("budget_exhausted:steps")
-    if b.tool_calls > b.max_tool_calls:
-        raise RuntimeError("budget_exhausted:tool_calls")
-```
+ b.steps += 1
+ if is_tool_call:
+ b.tool_calls += 1
+ if b.steps > b.max_steps:
+ raise RuntimeError("budget_exhausted:steps")
+ if b.tool_calls > b.max_tool_calls:
+ raise RuntimeError("budget_exhausted:tool_calls")
+``
 
 In a real system:
 - budgets are per task and per job (nested budgets)
@@ -517,25 +517,25 @@ Practical cost levers:
 If you want reliability, persist state explicitly. A practical minimal schema:
 
 - **Job**
-  - `job_id`, `tenant_id`, `created_at`
-  - `goal` (sanitized), `bundle_version`
-  - budgets: `max_tokens`, `max_tool_calls`, `max_wall_time_s`
-  - status: `RUNNING | SUCCEEDED | FAILED | CANCELLED`
+ - `job_id`, `tenant_id`, `created_at`
+ - `goal` (sanitized), `bundle_version`
+ - budgets: `max_tokens`, `max_tool_calls`, `max_wall_time_s`
+ - status: `RUNNING | SUCCEEDED | FAILED | CANCELLED`
 
 - **Task**
-  - `task_id`, `job_id`, `kind`, `deps`
-  - assigned agent role, attempt count, timestamps
-  - status transitions with reason codes (`tool_timeout`, `budget_exhausted`, `policy_denied`)
+ - `task_id`, `job_id`, `kind`, `deps`
+ - assigned agent role, attempt count, timestamps
+ - status transitions with reason codes (`tool_timeout`, `budget_exhausted`, `policy_denied`)
 
 - **Artifact**
-  - `artifact_id`, `task_id`
-  - versioning metadata (hash, diff, parent_version)
-  - ownership lock state (single writer) or PR state (open/merged)
+ - `artifact_id`, `task_id`
+ - versioning metadata (hash, diff, parent_version)
+ - ownership lock state (single writer) or PR state (open/merged)
 
 - **Tool call**
-  - `tool_call_id`, `task_id`
-  - tool name, args hash, latency, outcome
-  - **idempotency_key** for any write action
+ - `tool_call_id`, `task_id`
+ - tool name, args hash, latency, outcome
+ - **idempotency_key** for any write action
 
 Why this matters:
 - it lets you answer “what happened?” without scraping free-form chat logs
@@ -546,21 +546,21 @@ Why this matters:
 When (not if) something goes wrong, you need fast, deterministic mitigations:
 
 - **Kill switches**
-  - disable high-risk tools instantly (email/send/deploy/delete)
-  - force “draft-only” mode (no side effects)
+ - disable high-risk tools instantly (email/send/deploy/delete)
+ - force “draft-only” mode (no side effects)
 
 - **Degraded modes**
-  - reduce parallelism
-  - reduce model size / shorten context
-  - disable retrieval sources that are injecting bad content
+ - reduce parallelism
+ - reduce model size / shorten context
+ - disable retrieval sources that are injecting bad content
 
 - **Rollback**
-  - roll back the agent bundle (prompt + tools + policies + routing)
-  - roll back tool schema versions if the executor is rejecting calls
+ - roll back the agent bundle (prompt + tools + policies + routing)
+ - roll back tool schema versions if the executor is rejecting calls
 
 - **Audit workflow**
-  - list all tool calls in the incident window
-  - verify idempotency (no duplicate side effects)
+ - list all tool calls in the incident window
+ - verify idempotency (no duplicate side effects)
 
 The critical mindset shift:
 > treat agent behavior regressions like production incidents, not like “prompt tuning”.
@@ -610,24 +610,24 @@ The safest default is often:
 Before you allow agents to take real actions at scale:
 
 - **State and execution**
-  - durable task store (not chat logs)
-  - explicit task state machine with bounded retries
-  - idempotency keys for write tools
+ - durable task store (not chat logs)
+ - explicit task state machine with bounded retries
+ - idempotency keys for write tools
 
 - **Safety**
-  - per-role tool allowlists and RBAC
-  - policy engine outside the model
-  - HITL for high-risk actions
+ - per-role tool allowlists and RBAC
+ - policy engine outside the model
+ - HITL for high-risk actions
 
 - **Observability**
-  - job/task/tool traces with stable IDs
-  - cost metrics (tokens/tool calls per job)
-  - dashboards by tenant/segment
+ - job/task/tool traces with stable IDs
+ - cost metrics (tokens/tool calls per job)
+ - dashboards by tenant/segment
 
 - **Evaluation**
-  - golden workflows
-  - adversarial/prompt-injection tests
-  - tool failure simulation
+ - golden workflows
+ - adversarial/prompt-injection tests
+ - tool failure simulation
 
 If you can’t confidently say “we can roll back in minutes”, you’re not ready for high-autonomy actions.
 

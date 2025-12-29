@@ -1,21 +1,21 @@
 ---
 title: "Web Browsing Agents"
 day: 36
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - web-browsing
-  - browsing-agents
-  - retrieval
-  - tool-use
-  - prompt-injection
-  - scraping
-  - ranking
-difficulty: Medium-Hard
 related_dsa_day: 36
 related_ml_day: 36
 related_speech_day: 36
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - web-browsing
+ - browsing-agents
+ - retrieval
+ - tool-use
+ - prompt-injection
+ - scraping
+ - ranking
+difficulty: Medium-Hard
 ---
 
 **"Turn the open web into a reliable tool: browse, extract, verify, and cite—without getting prompt-injected."**
@@ -74,7 +74,7 @@ The goal is **repeatability**: same query → same pipeline decisions → predic
 
 Below is an ASCII diagram of a production-friendly browsing system:
 
-```text
+``text
 User Request
  |
  v
@@ -100,7 +100,7 @@ Verifier (LLM + heuristics + optional second model)
  |
  v
 Answer Composer (LLM)
-```
+``
 
 ### Why separate these roles?
 
@@ -178,7 +178,7 @@ A good extraction output often includes:
 
 Example schema (conceptual):
 
-```json
+``json
 {
  "claims": [
  {
@@ -189,7 +189,7 @@ Example schema (conceptual):
  }
  ]
 }
-```
+``
 
 ### Why quotes?
 
@@ -332,7 +332,7 @@ Caching fetched pages saves cost and improves latency. But you should cache with
 
 This is not a full production library, but it shows the flow clearly:
 
-```python
+``python
 def browse_answer(user_question: str) -> dict:
  plan = llm.plan({
  "question": user_question,
@@ -371,7 +371,7 @@ def browse_answer(user_question: str) -> dict:
  })
 
  return answer
-```
+``
 
 Key engineering detail: **the extractor returns structured evidence**, and the verifier checks it before composing the final answer.
 

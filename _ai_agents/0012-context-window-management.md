@@ -3,14 +3,14 @@ title: "Context Window Management"
 day: 12
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - context-window
-  - memory
-  - caching
-  - attention
-  - kv-cache
-  - compression
+ - context-window
+ - memory
+ - caching
+ - attention
+ - kv-cache
+ - compression
 difficulty: Medium-Easy
 related_dsa_day: 12
 related_ml_day: 12
@@ -30,7 +30,7 @@ In 2025, we have models with **1 Million+** tokens (Gemini 1.5, Claude 3).
 This leads to a dangerous fallacy: *"Why manage context? Just stuff everything in."*
 
 This is wrong for three reasons:
-1. **Cost:** Input tokens cost money. Re-sending a 100-page manual on every API call allows you to burn through your budget in minutes. Even at cheap rates, $0.50 per call * 1000 calls = $500.
+1. **Cost:** Input tokens cost money. Re-sending a 100-page manual on every API call allows you to burn through your budget in minutes. Even at cheap rates, `0.50 per call * 1000 calls = `500.
 2. **Latency:** Reading 1M tokens takes time. The **Time-to-First-Token (TTFT)** scales linearly (or worse) with input length. Real-time agents cannot wait 30 seconds to "read the manual" before answering "Hello."
 3. **Accuracy (The Dilution Effect):** The more garbage you put in the context, the less attention the model pays to the signal. This is known as the **Signal-to-Noise Ratio** problem. A model given 1000 irrelevant sentences and 1 relevant sentence is significantly more likely to hallucinate than a model given just the 1 relevant sentence.
 
@@ -42,13 +42,13 @@ Effective **Context Management** is the art of curating the perfect prompt—giv
 
 To understand why context matters, we must peek inside the Transformer architecture.
 
-### 2.1 The Quadratic Bottleneck: $O(N^2)$
+### 2.1 The Quadratic Bottleneck: O(N^2)
 The core mechanism of an LLM is **Self-Attention**.
 Every token in the sequence looks at every other token to calculate its "Attention Score."
 * "The" looks at "cat", "sat", "on", "mat".
 * "cat" looks at "The", "sat", "on", "mat".
 
-If you have sequence length $N$, the number of calculations is $N^2$.
+If you have sequence length `N`, the number of calculations is `N^2`.
 * 1k tokens -> 1M operations.
 * 100k tokens -> 10B operations.
 
@@ -169,7 +169,7 @@ Can we make the text itself smaller?
 
 Abstracting the logic for a managed buffer that handles pruning.
 
-```python
+``python
 import tiktoken
 import json
 
@@ -255,7 +255,7 @@ buffer.add_message("user", "Tell me a very long story about dinosaurs...")
 # Fix:
 buffer.update_summary("User is named Alice.")
 # Now get_messages() includes the summary.
-```
+``
 
 ---
 

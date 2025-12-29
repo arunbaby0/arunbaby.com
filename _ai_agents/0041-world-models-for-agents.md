@@ -1,21 +1,21 @@
 ---
 title: "World Models for Agents"
 day: 41
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - world-models
-  - state-estimation
-  - planning
-  - uncertainty
-  - simulation
-  - memory
-  - control
-difficulty: Medium-Hard
 related_dsa_day: 41
 related_ml_day: 41
 related_speech_day: 41
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - world-models
+ - state-estimation
+ - planning
+ - uncertainty
+ - simulation
+ - memory
+ - control
+difficulty: Medium-Hard
 ---
 
 **"Agents become reliable when they carry an internal model of reality: state, uncertainty, and predictions—not just chat history."**
@@ -117,17 +117,17 @@ This is what enables good behavior like:
 
 This is a JSON-like representation:
 
-```json
+``json
 {
-  "user_intent": "refund_status",
-  "order_id": "…",
-  "facts": [{"k": "status", "v": "shipped", "source": "api:get_order"}],
-  "unknowns": ["delivery_date"],
-  "budget": {"steps_left": 5}
+ "user_intent": "refund_status",
+ "order_id": "…",
+ "facts": [{"k": "status", "v": "shipped", "source": "api:get_order"}],
+ "unknowns": ["delivery_date"],
+ "budget": {"steps_left": 5}
 }
-```
+``
 
-**Pros:** debuggable, easy to validate, easy to persist  
+**Pros:** debuggable, easy to validate, easy to persist 
 **Cons:** manual schema design
 
 If you’re building an agent product, start here.
@@ -136,7 +136,7 @@ If you’re building an agent product, start here.
 
 Instead of explicit fields, you maintain a latent vector representation of the environment and retrieve relevant memories via similarity search.
 
-**Pros:** flexible, handles messy unstructured info  
+**Pros:** flexible, handles messy unstructured info 
 **Cons:** harder to debug, can hide contradictions
 
 This is useful for long-term memory retrieval, but it’s rarely sufficient alone for high-stakes action selection.
@@ -145,7 +145,7 @@ This is useful for long-term memory retrieval, but it’s rarely sufficient alon
 
 This is a model that can predict “next state” given current state and action.
 
-**Pros:** supports planning via rollouts  
+**Pros:** supports planning via rollouts 
 **Cons:** expensive, hard to train well, can be wrong in subtle ways
 
 This is common in robotics and reinforcement learning, and increasingly appears in digital environments (e.g., “simulate UI transitions”).
@@ -157,11 +157,11 @@ This is common in robotics and reinforcement learning, and increasingly appears 
 In real systems, you rarely pick exactly one representation. A common hybrid setup is:
 
 - **Structured state** for critical fields and decisions:
-  - budgets, permissions, tool status, user identifiers
+ - budgets, permissions, tool status, user identifiers
 - **Retrieval memory** (embeddings) for large text corpora:
-  - policies, documentation, prior notes
+ - policies, documentation, prior notes
 - **Lightweight predictors** for “next-step expectations”:
-  - rate limit backoff, UI transition guesses, tool success probability
+ - rate limit backoff, UI transition guesses, tool success probability
 
 Why hybrid works:
 
@@ -262,19 +262,19 @@ Practical technique:
 
 - every key fact has a `confidence` and a `source`
 - decisions have thresholds:
-  - “If confidence < 0.7, ask the user”
-  - “If confidence < 0.9 and action is write-risky, require approval”
+ - “If confidence < 0.7, ask the user”
+ - “If confidence < 0.9 and action is write-risky, require approval”
 
 Example:
 
-```json
+``json
 {
-  "facts": {
-    "account_balance": {"value": 120.50, "source": "api:get_balance", "confidence": 0.95},
-    "currency": {"value": "USD", "source": "ocr:screenshot", "confidence": 0.60}
-  }
+ "facts": {
+ "account_balance": {"value": 120.50, "source": "api:get_balance", "confidence": 0.95},
+ "currency": {"value": "USD", "source": "ocr:screenshot", "confidence": 0.60}
+ }
 }
-```
+``
 
 Here, the agent can proceed with balance but should re-verify currency before charging or displaying a final statement.
 
@@ -327,10 +327,10 @@ This is “world model hygiene.” It keeps your system honest and prevents subt
 
 World models become most powerful when combined with a planning architecture:
 
-- **Autonomous loop:** belief update → plan → act → update  
-  See [Autonomous Agent Architectures](/ai-agents/0038-autonomous-agent-architectures/).
-- **Hierarchical planning:** plan at multiple levels using state and budgets  
-  See [Hierarchical Planning](/ai-agents/0040-hierarchical-planning/).
+- **Autonomous loop:** belief update → plan → act → update 
+ See [Autonomous Agent Architectures](/ai-agents/0038-autonomous-agent-architectures/).
+- **Hierarchical planning:** plan at multiple levels using state and budgets 
+ See [Hierarchical Planning](/ai-agents/0040-hierarchical-planning/).
 
 The key connection is:
 
@@ -345,14 +345,14 @@ If the world model isn’t updated, planning doesn’t learn.
 Hierarchical planning works best when each layer reads a different slice of the world model:
 
 - **High-level planner** needs:
-  - objective, constraints, budgets, and major unknowns
+ - objective, constraints, budgets, and major unknowns
 - **Step planner** needs:
-  - current environment state (tool status, auth, rate limit)
-  - evidence gaps for the current chunk
+ - current environment state (tool status, auth, rate limit)
+ - evidence gaps for the current chunk
 - **Executor** needs:
-  - the next action and strict tool constraints
+ - the next action and strict tool constraints
 - **Verifier** needs:
-  - evidence, conflicts, and checks to run
+ - evidence, conflicts, and checks to run
 
 This is a performance and reliability win:
 
@@ -365,34 +365,34 @@ This is a performance and reliability win:
 
 ## 9. Implementation sketch: a minimal world model in code (pseudocode)
 
-```python
+``python
 def update_world_model(world: dict, observation: dict) -> dict:
-    # observation could come from a tool call: {type, source, payload, timestamp}
-    world["observations"].append(observation)
+ # observation could come from a tool call: {type, source, payload, timestamp}
+ world["observations"].append(observation)
 
-    # Example: update facts if observation is strong
-    if observation["type"] == "api_result" and observation["payload"].get("status"):
-        world["facts"]["status"] = {
-            "value": observation["payload"]["status"],
-            "source": observation["source"],
-            "ts": observation["timestamp"],
-            "confidence": 0.9
-        }
+ # Example: update facts if observation is strong
+ if observation["type"] == "api_result" and observation["payload"].get("status"):
+ world["facts"]["status"] = {
+ "value": observation["payload"]["status"],
+ "source": observation["source"],
+ "ts": observation["timestamp"],
+ "confidence": 0.9
+ }
 
-    # Example: track unknowns / conflicts
-    world = recompute_unknowns(world)
-    world = detect_conflicts(world)
-    return world
+ # Example: track unknowns / conflicts
+ world = recompute_unknowns(world)
+ world = detect_conflicts(world)
+ return world
 
 def decide_next_action(world: dict, constraints: list[str]) -> dict:
-    if world["unknowns"]:
-        return {"type": "ASK_USER", "question": f"I need: {world['unknowns'][0]}"}
+ if world["unknowns"]:
+ return {"type": "ASK_USER", "question": f"I need: {world['unknowns'][0]}"}
 
-    if world["facts"].get("auth_state", {}).get("value") == "unauthenticated":
-        return {"type": "TOOL_CALL", "tool": "login", "args": {}}
+ if world["facts"].get("auth_state", {}).get("value") == "unauthenticated":
+ return {"type": "TOOL_CALL", "tool": "login", "args": {}}
 
-    return {"type": "STOP", "status": "SUCCESS"}
-```
+ return {"type": "STOP", "status": "SUCCESS"}
+``
 
 The point is not this exact code—it’s the separation:
 
@@ -416,16 +416,16 @@ If you want to implement a world model quickly, start with these top-level field
 
 Conceptual schema:
 
-```json
+``json
 {
-  "observations": [],
-  "facts": {},
-  "unknowns": [],
-  "conflicts": [],
-  "budget": {"max_steps": 10, "steps_used": 0},
-  "permissions": {"allow_writes": false, "allowed_domains": []}
+ "observations": [],
+ "facts": {},
+ "unknowns": [],
+ "conflicts": [],
+ "budget": {"max_steps": 10, "steps_used": 0},
+ "permissions": {"allow_writes": false, "allowed_domains": []}
 }
-```
+``
 
 This is enough to build useful behavior. You can always extend later.
 
@@ -475,8 +475,8 @@ Good behavior:
 - Prefer sources with recent updates (when the question is time-sensitive).
 - Downgrade or reject claims without quotes.
 - If conflicts exist, either:
-  - fetch a primary source, or
-  - surface disagreement explicitly instead of guessing.
+ - fetch a primary source, or
+ - surface disagreement explicitly instead of guessing.
 
 This turns browsing from “summarize search results” into “evidence-driven reasoning.”
 
@@ -554,9 +554,9 @@ Build a small world model for a tool-using agent:
 
 - Define a JSON schema for `facts`, `unknowns`, `conflicts`, and `budget`.
 - Run 20 tasks and log:
-  - repeated tool calls
-  - number of clarifying questions
-  - time-to-success
+ - repeated tool calls
+ - number of clarifying questions
+ - time-to-success
 
 Then add one improvement (conflict detection or a backoff state) and measure if metrics improve.
 

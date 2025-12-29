@@ -1,19 +1,19 @@
 ---
 title: "Error Handling and Recovery"
 day: 33
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - error-handling
-  - reliability
-  - self-correction
-  - resilience
-  - circuit-breakers
-difficulty: Medium
 related_dsa_day: 33
 related_ml_day: 33
 related_speech_day: 33
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - error-handling
+ - reliability
+ - self-correction
+ - resilience
+ - circuit-breakers
+difficulty: Medium
 ---
 
 **"Agents that don't quit: Building resilient AI that can fix itself."**
@@ -61,7 +61,7 @@ This is the most dangerous error. The agent thinks it succeeded, but it actually
 When an agent hits a rate limit or a connection timeout, don't just retry in a infinite loop. You will burn tokens and potentially get your IP banned from the API provider.
 
 ### 2.1 The Math of Backoff
-In agentic systems, we use the formula: $Wait = Base \times 2^{Attempt} + Jitter$.
+In agentic systems, we use the formula: `Wait = Base \times 2^{Attempt} + Jitter`.
 * **Base:** Usually 1 second.
 * **Attempt:** The current retry count.
 * **Jitter:** A random value between 0 and 1000ms.
@@ -145,7 +145,7 @@ Avoid double-charging or double-executing.
 
 ## 9. Recovering from State Corruption
 
-If an agent has a "False Memory" at step 5, delete the last $N$ messages from its history and re-prompt it with the correct facts. This is "Selective Amnesia" to break a logic deadlock.
+If an agent has a "False Memory" at step 5, delete the last `N` messages from its history and re-prompt it with the correct facts. This is "Selective Amnesia" to break a logic deadlock.
 
 ---
 
@@ -312,7 +312,7 @@ Voice agents introduce a new dimension of failure: **Timing.**
 
 * **VAD False Positives:** The agent thinks the user started talking (due to background noise) and interrupts them.
 * **The Fix:** Implement a "Noise Gate" and a second, fast LLM to classify if the sound was speech or a door slamming.
-* **Latency Spikes:** If the ASR (Speech-to-Text) takes $>2$ seconds, the user thinks the agent is dead.
+* **Latency Spikes:** If the ASR (Speech-to-Text) takes `>2` seconds, the user thinks the agent is dead.
 * **The Fix: "Filler Words."** The system plays a pre-recorded "Umm..." or "Let me check that..." while the main LLM is thinking. This is "Psychological Error Handling."
 
 ---
@@ -336,7 +336,7 @@ As a junior engineer, you shouldn't just log errors to a text file. You should b
 **Must-Have Features:**
 * **Heat Map:** Which tools are failing most often? (e.g., Stripe API is failing 5% of the time).
 * **The "Retest" Button:** Allow developers to click a button to replay a failed trace with a different model.
-* **Token Burn Alert:** A "Panic" meter that glows red if an agent has spent $>\$1.00$ in retries in the last minute.
+* **Token Burn Alert:** A "Panic" meter that glows red if an agent has spent `>\`1.00$ in retries in the last minute.
 
 ---
 

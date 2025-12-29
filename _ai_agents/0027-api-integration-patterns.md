@@ -1,19 +1,19 @@
 ---
 title: "API Integration Patterns for AI Agents"
 day: 27
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - api-integration
-  - openapi
-  - scalability
-  - legacy-systems
-  - error-handling
-difficulty: Medium
 related_dsa_day: 27
 related_ml_day: 27
 related_speech_day: 27
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - api-integration
+ - openapi
+ - scalability
+ - legacy-systems
+ - error-handling
+difficulty: Medium
 ---
 
 **"Connecting the brain to the world's nervous system."**

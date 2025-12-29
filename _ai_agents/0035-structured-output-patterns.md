@@ -1,19 +1,19 @@
 ---
 title: "Structured Output Patterns"
 day: 35
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - structured-output
-  - json-mode
-  - pydantic
-  - function-calling
-  - schema-design
-difficulty: Medium
 related_dsa_day: 35
 related_ml_day: 35
 related_speech_day: 35
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - structured-output
+ - json-mode
+ - pydantic
+ - function-calling
+ - schema-design
+difficulty: Medium
 ---
 
 **"Make agents predictable: enforce schemas, validate outputs, and recover automatically when the model slips."**
@@ -21,7 +21,7 @@ related_speech_day: 35
 ## 1. Introduction: The “AI Contract”
 
 ### 1.1 The History of the AI Contract
-In the early days of LLMs (2020-2022), developers spent 80% of their time writing "Garbage Disposal" code—complex regex functions designed to clean up the conversation. You would ask for a list of fruits and get: *"Sure, I love fruits! Here they are: 1. Apple, 2. Banana... hope this helps!"*. This was the "Dark Ages" of agentic engineering. Today, we handle this through **Hard Constraints**.
+In the early days of LLMs (2020-2022), developers spent 80% of their time writing "Garbage Disposal" code—complex regex functions designed to clean up the conversation. You would ask for a list of fruits and get: *"Sure, I love fruits! Here they are: 1. Apple, 2. Banana... hope this helps!"*. This was the "Dark Ages" of agentic engineering. Today we handle this through **Hard Constraints**.
 
 ### 1.2 The Precision/Creativity Trade-off
 There is a fundamental tension in LLMs. The more you force them to follow a structure (Precision), the less "Creative" they become. For an agent checking a bank balance, you want 100.0% precision and 0.0% creativity. Structured output is the dial you use to turn down the model's "hallucination engine" and turn up its "logic engine."
@@ -95,14 +95,14 @@ One of the biggest mistakes developers make is asking for *pure* JSON (essential
 Include a `thought_process` field as the **first** key in your schema. Because LLMs process tokens sequentially, this forces the model to "explain" its logic *before* it picks the final value for the data fields.
 
 **Example Schema:**
-```json
+``json
 {
  "thought_process": "The user mentioned they are 25 but were born in 1998, which is consistent. They live in Paris, which is in France.",
  "age": 25,
  "country_code": "FR",
  "confidence_score": 0.95
 }
-```
+``
 By allowing this "Internal Monologue," you increase the accuracy of the structured data by up to 30%, especially for complex extraction tasks.
 
 ---
@@ -111,25 +111,25 @@ By allowing this "Internal Monologue," you increase the accuracy of the structur
 
 ### 3.1 The "Envelope" Pattern
 Wrap your data in a metadata layer. This allows your code to distinguish between an "Agent Answer" and an "Agent Error" using the same consistent JSON structure.
-```json
+``json
 {
  "status": "success",
  "payload": { ... },
  "error_msg": null,
  "execution_time_ms": 450
 }
-```
+``
 
 ### 3.2 The "Polymorphic" Tool
 Instead of having 10 different tools (which bloats the context window), use one `perform_action` tool that takes a `Union` of different types (e.g., `CreateUser`, `UpdateUser`).
 
 ### 3.3 The "Recursive Schema" Pattern
 For tasks like summarizing a document's table of contents, use a schema that allows a node to have child nodes.
-```python
+``python
 class Header(BaseModel):
  title: str
  sub_headers: List["Header"] = [] # Recursive!
-```
+``
 This is essential for capturing hierarchical information without losing the parent-child relationships.
 
 ---
@@ -142,7 +142,7 @@ In a traditional API, key names like `user_authentication_timestamp_registered` 
 If you are processing 1 million requests a day:
 * Key `"account_balance_in_usd"` = 25 tokens.
 * Key `"bal"` = 3 tokens.
-* **Savings:** 22 tokens per request. Over 1M requests, that's **22 Million tokens** saved. At $10 per million tokens, you just saved $220/day with a single rename.
+* **Savings:** 22 tokens per request. Over 1M requests, that's **22 Million tokens** saved. At `10 per million tokens, you just saved `220/day with a single rename.
 
 ### 4.2 The "Schema-Mapping" Solution
 You can use a "Compressed Schema" for the LLM (with 1-letter keys) and then have a small Python function that maps `a -> "account_name"`, `b -> "balance"` before the data hits your database. This gives you the best of both worlds: extreme token efficiency and human-readable code.
@@ -153,10 +153,10 @@ Use **Pydantic** classes to define your schemas. Pydantic handles the translatio
 
 **The Mini-Prompt Power:**
 The `Field(description="...")` parameter in Pydantic is your most powerful tool.
-```python
+``python
 class UserProfile(BaseModel):
  mood: str = Field(description="One of [HAPPY, SAD, ANGRY]. Default to HAPPY if unclear.")
-```
+``
 The LLM provider (like OpenAI or Anthropic) takes these descriptions and injects them directly into the "System Instructions." This is often more effective than writing a separate 5-page PDF of instructions because the instruction sits **exactly where the model is deciding what to write**.
 
 ---
@@ -238,7 +238,7 @@ Link AI Vision to UI Graphics. An agent looks at a photo, outputs the `[x, y]` c
 For complex agents, you don't just want one step. You want a **Plan**.
 
 **The DAG Schema:**
-```python
+``python
 class Step(BaseModel):
  id: int
  tool: str
@@ -247,7 +247,7 @@ class Step(BaseModel):
 
 class Plan(BaseModel):
  steps: List[Step]
-```
+``
 By structuring the plan as a **Directed Acyclic Graph (DAG)**, your orchestrator can look at the `dependencies` list and execute steps 1, 3, and 5 in parallel if they don't depend on each other. This reduces your total task latency by up to 50%.
 
 ---
@@ -286,9 +286,9 @@ Just because the output is JSON doesn't mean it's safe.
 
 **The Vulnerability:**
 Imagine your agent outputs a JSON that you then pass directly into a SQL query:
-```json
+``json
 {"user_id": "123; DROP TABLE users;"}
-```
+``
 **The Fix: Strict Validation.**
 In Pydantic, use `UUID` or `EmailStr` types instead of raw strings. This forces the parser to reject anything that doesn't follow the exact format, killing injection attacks before they touch your database.
 
@@ -341,14 +341,14 @@ A: This is often caused by "Leakage" from the model's training data. If the mode
 
 Let's look at a production-grade schema for a ticket-routing agent.
 
-```python
+``python
 class Ticket(BaseModel):
  thought: str = Field(..., description="Reasoning about the user's intent")
  priority: int = Field(1, ge=1, le=5)
  category: Literal["Billing", "Technical", "Shipping", "General"]
  entities: Dict[str, str] = Field(default_factory=dict, description="Extracted IDs, emails, etc")
  next_step: str = Field(..., description="Action to take: [REPLY, ESCALATE, WAIT]")
-```
+``
 
 ### 30.1 Why this works
 1. **Reasoning First:** The `thought` key forces the model to categorize correctly.
@@ -408,7 +408,7 @@ Sometimes, JSON isn't enough. If you need the agent to perform a complex calcula
 
 As a junior engineer, your first `while` loop should be a **JSON Recovery Loop**.
 
-```python
+``python
 retries = 3
 while retries > 0:
  try:
@@ -419,7 +419,7 @@ while retries > 0:
  # Pass the SPECIFIC pydantic error back to the model
  prompt += f"\nError in your last JSON: {str(e)}. Please correct it."
  retries -= 1
-```
+``
 This simple loop increases your system's reliability from 90% to 99.9%. By providing the model with the exact line and type of the error, you are giving it the "Map" it needs to fix itself.
 
 ---

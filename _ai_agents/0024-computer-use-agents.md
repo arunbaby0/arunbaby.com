@@ -1,19 +1,19 @@
 ---
 title: "Computer Use Agents"
 day: 24
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - computer-use
-  - anthropic-computer-use
-  - os-automation
-  - virtualization
-  - tool-use-vision
-difficulty: Medium
 related_dsa_day: 24
 related_ml_day: 24
 related_speech_day: 24
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - computer-use
+ - anthropic-computer-use
+ - os-automation
+ - virtualization
+ - tool-use-vision
+difficulty: Medium
 ---
 
 **"Moving from 'Chatting' with an AI to 'Co-working' with an OS."**
@@ -112,12 +112,12 @@ When Anthropic released Claude 3.5 Sonnet with "Computer Use" capabilities, they
 
 ### 8.1 The Tool-Definition Contract
 Unlike previous models that just "wrote code" to control the mouse, Claude's computer use tools are defined with a strict schema. The model doesn't just output `mouse_click`; it outputs a structured request:
-```json
+``json
 {
  "action": "mouse_move",
  "coordinate": [450, 210]
 }
-```
+``
 
 ### 8.2 The Redaction Layer
 One of the most important parts of the Anthropic architecture is the **Privacy Redaction Layer**. Since the agent is seeing your whole screen, it might see:
@@ -237,7 +237,7 @@ Pure "Pixel-based" computer use is robust but inefficient. Professional agents u
 * **The Vision Layer:** If the app is a game or a legacy tool with no accessibility metadata, the agent falls back to pure Vision.
 
 **The "Fallthrough" Code:**
-```python
+``python
 def click_button(label):
  # 1. Try to find the button in the Accessibility Tree (Fast/Reliable)
  coord = accessibility_api.get_coordinates(label)
@@ -249,7 +249,7 @@ def click_button(label):
  if coord: return mouse.click(coord)
 
  raise Exception("Button not found")
-```
+``
 
 ---
 

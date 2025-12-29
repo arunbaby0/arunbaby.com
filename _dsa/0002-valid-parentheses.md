@@ -1,21 +1,22 @@
 ---
 title: "Valid Parentheses"
 day: 2
+related_ml_day: 2
+related_speech_day: 2
+related_agents_day: 2
 collection: dsa
 categories:
-  - dsa
+ - dsa
 tags:
-  - stack
-  - strings
+ - stack
+ - strings
 topic: Stack
 difficulty: Easy
 companies: [Google, Meta, Amazon, Microsoft]
 leetcode_link: "https://leetcode.com/problems/valid-parentheses/"
 time_complexity: "O(n)"
 space_complexity: "O(n)"
-related_ml_day: 2
-related_speech_day: 2
-related_agents_day: 2
+
 ---
 
 **Why a simple stack solves bracket matching, expression parsing, and even neural network depth management in one elegant pattern.**
@@ -54,39 +55,39 @@ An input string is valid if:
 ### Examples
 
 **Example 1:**
-```
+``
 Input: s = "()"
 Output: true
 Explanation: Single pair of parentheses, properly matched
-```
+``
 
 **Example 2:**
-```
+``
 Input: s = "()[]{}"
 Output: true
 Explanation: Three pairs, each properly matched
-```
+``
 
 **Example 3:**
-```
+``
 Input: s = "(]"
 Output: false
 Explanation: Mismatched bracket types - opened '(' but closed ']'
-```
+``
 
 **Example 4:**
-```
+``
 Input: s = "([)]"
 Output: false
 Explanation: Wrong closing order - opened '[' but it's closed after ')'
-```
+``
 
 **Example 5:**
-```
+``
 Input: s = "{[]}"
 Output: true
 Explanation: Properly nested brackets
-```
+``
 
 ### Constraints
 - `1 <= s.length <= 10^4`
@@ -100,10 +101,10 @@ Explanation: Properly nested brackets
 
 Consider the string `"([{}])"`:
 
-```
-Position:  0 1 2 3 4 5
-String:    ( [ { } ] )
-```
+``
+Position: 0 1 2 3 4 5
+String: ( [ { } ] )
+``
 
 **Processing order:**
 1. See `(` → Must remember to close it later
@@ -118,36 +119,36 @@ String:    ( [ { } ] )
 ### What Makes a String Invalid?
 
 **Type 1: Wrong bracket type**
-```
+``
 "(]"
 Open: (
 Close: ]
 Error: Types don't match
-```
+``
 
 **Type 2: Wrong closing order**
-```
+``
 "([)]"
 Opens: ( [
 Next close: )
 Error: Expected ] (most recent opening), got )
-```
+``
 
 **Type 3: Unclosed opening brackets**
-```
+``
 "((("
 Opens: ( ( (
 Closes: none
 Error: Stack not empty at end
-```
+``
 
 **Type 4: Extra closing brackets**
-```
+``
 "())"
 Opens: (
 Closes: ) )
 Error: Second ) has nothing to match
-```
+``
 
 ---
 
@@ -157,48 +158,48 @@ Error: Second ) has nothing to match
 
 Repeatedly remove all adjacent valid pairs until no more removals are possible.
 
-```python
+``python
 def isValid(s: str) -> bool:
-    """
-    Brute force: Keep removing valid pairs
-    """
-    while True:
-        old_len = len(s)
-        
-        # Remove all valid pairs
-        s = s.replace('()', '')
-        s = s.replace('[]', '')
-        s = s.replace('{}', '')
-        
-        # If no removal happened, we're done
-        if len(s) == old_len:
-            break
-    
-    # Valid if string is now empty
-    return len(s) == 0
-```
+ """
+ Brute force: Keep removing valid pairs
+ """
+ while True:
+ old_len = len(s)
+ 
+ # Remove all valid pairs
+ s = s.replace('()', '')
+ s = s.replace('[]', '')
+ s = s.replace('{}', '')
+ 
+ # If no removal happened, we're done
+ if len(s) == old_len:
+ break
+ 
+ # Valid if string is now empty
+ return len(s) == 0
+``
 
 ### Example Walkthrough
 
-```
+``
 Input: "([{}])"
 
 Iteration 1:
-  - Replace "{}": "([])"
-  - Length changed, continue
+ - Replace "{}": "([])"
+ - Length changed, continue
 
 Iteration 2:
-  - Replace "[]": "()"
-  - Length changed, continue
+ - Replace "[]": "()"
+ - Length changed, continue
 
 Iteration 3:
-  - Replace "()": ""
-  - Length changed, continue
+ - Replace "()": ""
+ - Length changed, continue
 
 Iteration 4:
-  - No replacements possible
-  - String is empty → return True
-```
+ - No replacements possible
+ - String is empty → return True
+``
 
 ### Complexity Analysis
 
@@ -213,10 +214,10 @@ Iteration 4:
 ### Why This is Inefficient
 
 For a string like `"(((())))"`:
-```
-Iteration 1: "(((())))" → "(())"    # Remove 2 chars
-Iteration 2: "(())"     → ""        # Remove 4 chars
-```
+``
+Iteration 1: "(((())))" → "(())" # Remove 2 chars
+Iteration 2: "(())" → "" # Remove 4 chars
+``
 
 We're doing O(n) work per iteration, and iterations scale with depth of nesting.
 
@@ -230,103 +231,103 @@ Instead of removing pairs, **remember opening brackets on a stack** and match th
 
 ### Algorithm
 
-```python
+``python
 def isValid(s: str) -> bool:
-    """
-    Stack-based solution: O(n) time, O(n) space
-    
-    Key idea: Stack naturally maintains LIFO order
-    """
-    # Stack to store opening brackets
-    stack = []
-    
-    # Mapping of opening to closing brackets
-    pairs = {
-        '(': ')',
-        '[': ']',
-        '{': '}'
-    }
-    
-    for char in s:
-        if char in pairs:
-            # Opening bracket: push to stack
-            stack.append(char)
-        else:
-            # Closing bracket: must match top of stack
-            if not stack:
-                # No opening bracket to match
-                return False
-            
-            opening = stack.pop()
-            if pairs[opening] != char:
-                # Wrong type of bracket
-                return False
-    
-    # All brackets should be matched
-    return len(stack) == 0
-```
+ """
+ Stack-based solution: O(n) time, O(n) space
+ 
+ Key idea: Stack naturally maintains LIFO order
+ """
+ # Stack to store opening brackets
+ stack = []
+ 
+ # Mapping of opening to closing brackets
+ pairs = {
+ '(': ')',
+ '[': ']',
+ '{': '}'
+ }
+ 
+ for char in s:
+ if char in pairs:
+ # Opening bracket: push to stack
+ stack.append(char)
+ else:
+ # Closing bracket: must match top of stack
+ if not stack:
+ # No opening bracket to match
+ return False
+ 
+ opening = stack.pop()
+ if pairs[opening] != char:
+ # Wrong type of bracket
+ return False
+ 
+ # All brackets should be matched
+ return len(stack) == 0
+``
 
 ### Detailed Walkthrough
 
 **Example 1: `"([{}])"`**
 
-```
+``
 Initial: stack = []
 
 char='(': Opening → stack = ['(']
 char='[': Opening → stack = ['(', '[']
 char='{': Opening → stack = ['(', '[', '{']
 char='}': Closing
-  - Stack not empty ✓
-  - Pop '{', pairs['{'] = '}' = char ✓
-  - stack = ['(', '[']
+ - Stack not empty ✓
+ - Pop '{', pairs['{'] = '}' = char ✓
+ - stack = ['(', '[']
 char=']': Closing
-  - Stack not empty ✓
-  - Pop '[', pairs['['] = ']' = char ✓
-  - stack = ['(']
+ - Stack not empty ✓
+ - Pop '[', pairs['['] = ']' = char ✓
+ - stack = ['(']
 char=')': Closing
-  - Stack not empty ✓
-  - Pop '(', pairs['('] = ')' = char ✓
-  - stack = []
+ - Stack not empty ✓
+ - Pop '(', pairs['('] = ')' = char ✓
+ - stack = []
 
 Final: stack = [] (empty) → return True ✓
-```
+``
 
 **Example 2: `"([)]"` (Invalid)**
 
-```
+``
 Initial: stack = []
 
 char='(': Opening → stack = ['(']
 char='[': Opening → stack = ['(', '[']
 char=')': Closing
-  - Stack not empty ✓
-  - Pop '[', pairs['['] = ']' ≠ ')' ✗
-  - Return False
+ - Stack not empty ✓
+ - Pop '[', pairs['['] = ']' ≠ ')' ✗
+ - Return False
 
 Error: Expected ']' to match '[', got ')'
-```
+``
 
 **Example 3: `"((("` (Invalid - Unclosed)**
 
-```
+``
 char='(': stack = ['(']
 char='(': stack = ['(', '(']
 char='(': stack = ['(', '(', '(']
 
 End of string: stack = ['(', '(', '('] (not empty)
 Return False ✗
-```
+``
 
 **Example 4: `")))"` (Invalid - No Opening)**
 
-```
+``
 char=')': Closing
-  - Stack is empty ✗
-  - Return False
+ - Stack is empty ✗
+ - Return False
 
 Error: Closing bracket with no opening bracket
-```
+``
 
 ### Why Stack is Optimal
 
@@ -368,24 +369,24 @@ Error: Closing bracket with no opening bracket
 A **stack** is a linear data structure following **Last-In-First-Out (LIFO)** principle.
 
 **Operations:**
-```python
+``python
 stack = []
 
 # Push: Add to top
-stack.append('A')    # ['A']
-stack.append('B')    # ['A', 'B']
-stack.append('C')    # ['A', 'B', 'C']
+stack.append('A') # ['A']
+stack.append('B') # ['A', 'B']
+stack.append('C') # ['A', 'B', 'C']
 
 # Pop: Remove from top
-item = stack.pop()   # Returns 'C', stack = ['A', 'B']
-item = stack.pop()   # Returns 'B', stack = ['A']
+item = stack.pop() # Returns 'C', stack = ['A', 'B']
+item = stack.pop() # Returns 'B', stack = ['A']
 
 # Peek: View top without removing
-top = stack[-1]      # Returns 'A', stack unchanged
+top = stack[-1] # Returns 'A', stack unchanged
 
 # Check empty
 is_empty = len(stack) == 0
-```
+``
 
 ### Stack vs Other Data Structures
 
@@ -421,42 +422,42 @@ is_empty = len(stack) == 0
 
 ### Using a List (Default Python)
 
-```python
+``python
 def isValid(s: str) -> bool:
-    stack = []  # Python list as stack
-    pairs = {'(': ')', '[': ']', '{': '}'}
-    
-    for char in s:
-        if char in pairs:
-            stack.append(char)
-        else:
-            if not stack or pairs[stack.pop()] != char:
-                return False
-    
-    return not stack  # Pythonic way to check empty
-```
+ stack = [] # Python list as stack
+ pairs = {'(': ')', '[': ']', '{': '}'}
+ 
+ for char in s:
+ if char in pairs:
+ stack.append(char)
+ else:
+ if not stack or pairs[stack.pop()] != char:
+ return False
+ 
+ return not stack # Pythonic way to check empty
+``
 
 ### Using collections.deque (More Efficient)
 
-```python
+``python
 from collections import deque
 
 def isValid(s: str) -> bool:
-    """
-    Using deque for slightly better performance
-    """
-    stack = deque()  # Optimized for stack operations
-    pairs = {'(': ')', '[': ']', '{': '}'}
-    
-    for char in s:
-        if char in pairs:
-            stack.append(char)
-        else:
-            if not stack or pairs[stack.pop()] != char:
-                return False
-    
-    return len(stack) == 0
-```
+ """
+ Using deque for slightly better performance
+ """
+ stack = deque() # Optimized for stack operations
+ pairs = {'(': ')', '[': ']', '{': '}'}
+ 
+ for char in s:
+ if char in pairs:
+ stack.append(char)
+ else:
+ if not stack or pairs[stack.pop()] != char:
+ return False
+ 
+ return len(stack) == 0
+``
 
 **Why deque?**
 - Optimized for append/pop from both ends
@@ -469,25 +470,25 @@ def isValid(s: str) -> bool:
 
 ### Using String as Stack (Space-optimized)
 
-```python
+``python
 def isValid(s: str) -> bool:
-    """
-    Use string instead of list (immutable, but works for small inputs)
-    Not recommended for production!
-    """
-    stack_str = ""
-    pairs = {'(': ')', '[': ']', '{': '}'}
-    
-    for char in s:
-        if char in pairs:
-            stack_str += char
-        else:
-            if not stack_str or pairs[stack_str[-1]] != char:
-                return False
-            stack_str = stack_str[:-1]  # Remove last char
-    
-    return stack_str == ""
-```
+ """
+ Use string instead of list (immutable, but works for small inputs)
+ Not recommended for production!
+ """
+ stack_str = ""
+ pairs = {'(': ')', '[': ']', '{': '}'}
+ 
+ for char in s:
+ if char in pairs:
+ stack_str += char
+ else:
+ if not stack_str or pairs[stack_str[-1]] != char:
+ return False
+ stack_str = stack_str[:-1] # Remove last char
+ 
+ return stack_str == ""
+``
 
 **Why this is worse:**
 - String concatenation is O(n) in Python
@@ -500,190 +501,190 @@ def isValid(s: str) -> bool:
 
 ### Variation 1: Return Index of First Mismatch
 
-```python
+``python
 def findMismatch(s: str) -> int:
-    """
-    Return index of first mismatched bracket, or -1 if valid
-    
-    Useful for syntax highlighting in IDEs
-    """
-    stack = []
-    pairs = {'(': ')', '[': ']', '{': '}'}
-    
-    for i, char in enumerate(s):
-        if char in pairs:
-            # Store (bracket, index) pair
-            stack.append((char, i))
-        else:
-            if not stack:
-                # Closing bracket with no opening
-                return i
-            
-            opening, opening_idx = stack.pop()
-            if pairs[opening] != char:
-                # Type mismatch
-                return i
-    
-    # If stack not empty, return index of first unclosed bracket
-    if stack:
-        return stack[0][1]
-    
-    return -1  # Valid string
+ """
+ Return index of first mismatched bracket, or -1 if valid
+ 
+ Useful for syntax highlighting in IDEs
+ """
+ stack = []
+ pairs = {'(': ')', '[': ']', '{': '}'}
+ 
+ for i, char in enumerate(s):
+ if char in pairs:
+ # Store (bracket, index) pair
+ stack.append((char, i))
+ else:
+ if not stack:
+ # Closing bracket with no opening
+ return i
+ 
+ opening, opening_idx = stack.pop()
+ if pairs[opening] != char:
+ # Type mismatch
+ return i
+ 
+ # If stack not empty, return index of first unclosed bracket
+ if stack:
+ return stack[0][1]
+ 
+ return -1 # Valid string
 
 # Examples
-print(findMismatch("()"))      # -1 (valid)
-print(findMismatch("(]"))      # 1 (mismatch at index 1)
-print(findMismatch("(()"))     # 0 (unclosed at index 0)
-print(findMismatch(")"))       # 0 (no opening for closing)
-```
+print(findMismatch("()")) # -1 (valid)
+print(findMismatch("(]")) # 1 (mismatch at index 1)
+print(findMismatch("(()")) # 0 (unclosed at index 0)
+print(findMismatch(")")) # 0 (no opening for closing)
+``
 
 ### Variation 2: Count Minimum Removals
 
-```python
+``python
 def minRemoveToMakeValid(s: str) -> int:
-    """
-    Count minimum brackets to remove to make string valid
-    
-    Similar to edit distance for brackets
-    """
-    stack = []
-    to_remove = 0
-    
-    for char in s:
-        if char == '(':
-            stack.append('(')
-        elif char == ')':
-            if stack:
-                stack.pop()
-            else:
-                # Extra closing bracket
-                to_remove += 1
-    
-    # Unclosed opening brackets
-    to_remove += len(stack)
-    
-    return to_remove
+ """
+ Count minimum brackets to remove to make string valid
+ 
+ Similar to edit distance for brackets
+ """
+ stack = []
+ to_remove = 0
+ 
+ for char in s:
+ if char == '(':
+ stack.append('(')
+ elif char == ')':
+ if stack:
+ stack.pop()
+ else:
+ # Extra closing bracket
+ to_remove += 1
+ 
+ # Unclosed opening brackets
+ to_remove += len(stack)
+ 
+ return to_remove
 
 # Examples
-print(minRemoveToMakeValid("()"))      # 0
-print(minRemoveToMakeValid("(()"))     # 1 (remove one '(')
-print(minRemoveToMakeValid("())"))     # 1 (remove one ')')
-print(minRemoveToMakeValid("()("))     # 1
-```
+print(minRemoveToMakeValid("()")) # 0
+print(minRemoveToMakeValid("(()")) # 1 (remove one '(')
+print(minRemoveToMakeValid("())")) # 1 (remove one ')')
+print(minRemoveToMakeValid("()(")) # 1
+``
 
 ### Variation 3: Remove Invalid Brackets
 
-```python
+``python
 def removeInvalidParentheses(s: str) -> str:
-    """
-    Remove minimum number of brackets to make valid
-    
-    Two-pass algorithm:
-    1. Remove invalid closing brackets (left-to-right)
-    2. Remove invalid opening brackets (right-to-left)
-    """
-    def removeInvalid(s, open_char, close_char):
-        """
-        Single pass to remove invalid closing brackets
-        """
-        count = 0
-        result = []
-        
-        for char in s:
-            if char == open_char:
-                count += 1
-            elif char == close_char:
-                if count == 0:
-                    # Invalid closing bracket, skip it
-                    continue
-                count -= 1
-            
-            result.append(char)
-        
-        return ''.join(result)
-    
-    # First pass: remove invalid closing
-    s = removeInvalid(s, '(', ')')
-    
-    # Second pass: remove invalid opening (process reversed string)
-    s = removeInvalid(s[::-1], ')', '(')[::-1]
-    
-    return s
+ """
+ Remove minimum number of brackets to make valid
+ 
+ Two-pass algorithm:
+ 1. Remove invalid closing brackets (left-to-right)
+ 2. Remove invalid opening brackets (right-to-left)
+ """
+ def removeInvalid(s, open_char, close_char):
+ """
+ Single pass to remove invalid closing brackets
+ """
+ count = 0
+ result = []
+ 
+ for char in s:
+ if char == open_char:
+ count += 1
+ elif char == close_char:
+ if count == 0:
+ # Invalid closing bracket, skip it
+ continue
+ count -= 1
+ 
+ result.append(char)
+ 
+ return ''.join(result)
+ 
+ # First pass: remove invalid closing
+ s = removeInvalid(s, '(', ')')
+ 
+ # Second pass: remove invalid opening (process reversed string)
+ s = removeInvalid(s[::-1], ')', '(')[::-1]
+ 
+ return s
 
 # Examples
-print(removeInvalidParentheses("()())()"))  # "()()()" or "(())()"
+print(removeInvalidParentheses("()())()")) # "()()()" or "(())()"
 print(removeInvalidParentheses("(a)())()")) # "(a)()()"
-print(removeInvalidParentheses(")("))       # ""
-```
+print(removeInvalidParentheses(")(")) # ""
+``
 
 ### Variation 4: Longest Valid Parentheses
 
-```python
+``python
 def longestValidParentheses(s: str) -> int:
-    """
-    Find length of longest valid parentheses substring
-    
-    Example: "(()" → 2 (substring "()")
-             ")()())" → 4 (substring "()()")
-    """
-    stack = [-1]  # Initialize with base index
-    max_length = 0
-    
-    for i, char in enumerate(s):
-        if char == '(':
-            stack.append(i)
-        else:  # char == ')'
-            stack.pop()
-            if not stack:
-                # No matching opening, new base
-                stack.append(i)
-            else:
-                # Calculate length from last unmatched
-                current_length = i - stack[-1]
-                max_length = max(max_length, current_length)
-    
-    return max_length
+ """
+ Find length of longest valid parentheses substring
+ 
+ Example: "(()" → 2 (substring "()")
+ ")()())" → 4 (substring "()()")
+ """
+ stack = [-1] # Initialize with base index
+ max_length = 0
+ 
+ for i, char in enumerate(s):
+ if char == '(':
+ stack.append(i)
+ else: # char == ')'
+ stack.pop()
+ if not stack:
+ # No matching opening, new base
+ stack.append(i)
+ else:
+ # Calculate length from last unmatched
+ current_length = i - stack[-1]
+ max_length = max(max_length, current_length)
+ 
+ return max_length
 
 # Examples
-print(longestValidParentheses("(()"))      # 2
-print(longestValidParentheses(")()())"))   # 4
-print(longestValidParentheses(""))         # 0
-```
+print(longestValidParentheses("(()")) # 2
+print(longestValidParentheses(")()())")) # 4
+print(longestValidParentheses("")) # 0
+``
 
 ### Variation 5: Generate All Valid Parentheses
 
-```python
+``python
 def generateParentheses(n: int) -> list[str]:
-    """
-    Generate all combinations of n pairs of valid parentheses
-    
-    Example: n=3 → ["((()))", "(()())", "(())()", "()(())", "()()()"]
-    
-    Uses backtracking with stack validation
-    """
-    result = []
-    
-    def backtrack(current, open_count, close_count):
-        # Base case: used all n pairs
-        if len(current) == 2 * n:
-            result.append(current)
-            return
-        
-        # Can add opening if we haven't used all n
-        if open_count < n:
-            backtrack(current + '(', open_count + 1, close_count)
-        
-        # Can add closing if it would still be valid
-        if close_count < open_count:
-            backtrack(current + ')', open_count, close_count + 1)
-    
-    backtrack('', 0, 0)
-    return result
+ """
+ Generate all combinations of n pairs of valid parentheses
+ 
+ Example: n=3 → ["((()))", "(()())", "(())()", "()(())", "()()()"]
+ 
+ Uses backtracking with stack validation
+ """
+ result = []
+ 
+ def backtrack(current, open_count, close_count):
+ # Base case: used all n pairs
+ if len(current) == 2 * n:
+ result.append(current)
+ return
+ 
+ # Can add opening if we haven't used all n
+ if open_count < n:
+ backtrack(current + '(', open_count + 1, close_count)
+ 
+ # Can add closing if it would still be valid
+ if close_count < open_count:
+ backtrack(current + ')', open_count, close_count + 1)
+ 
+ backtrack('', 0, 0)
+ return result
 
 # Example
 print(generateParentheses(3))
 # Output: ['((()))', '(()())', '(())()', '()(())', '()()()']
-```
+``
 
 ---
 
@@ -691,56 +692,56 @@ print(generateParentheses(3))
 
 ### Edge Case 1: Empty String
 
-```python
+``python
 s = ""
 # Depends on problem definition
 # Usually: return True (vacuously valid)
-```
+``
 
 ### Edge Case 2: Single Character
 
-```python
-s = "("   # False (unclosed)
-s = ")"   # False (no opening)
-```
+``python
+s = "(" # False (unclosed)
+s = ")" # False (no opening)
+``
 
 ### Edge Case 3: Only Opening Brackets
 
-```python
-s = "((((("  # False (none closed)
-stack = ['(', '(', '(', '(', '(']  # Not empty
-```
+``python
+s = "(((((" # False (none closed)
+stack = ['(', '(', '(', '(', '('] # Not empty
+``
 
 ### Edge Case 4: Only Closing Brackets
 
-```python
-s = ")))))"  # False (no opening to match)
+``python
+s = ")))))" # False (no opening to match)
 # First ')' causes immediate failure
-```
+``
 
 ### Edge Case 5: Deeply Nested
 
-```python
-s = "(" * 5000 + ")" * 5000  # 10,000 characters
+``python
+s = "(" * 5000 + ")" * 5000 # 10,000 characters
 # Valid! Stack will grow to 5000, then empty
 # Tests stack capacity and memory
-```
+``
 
 ### Edge Case 6: Alternating Pattern
 
-```python
-s = "()()()()"  # Valid
+``python
+s = "()()()()" # Valid
 stack never grows beyond size 1
 # Efficient: O(1) space in practice
-```
+``
 
 ### Edge Case 7: Completely Nested
 
-```python
-s = "(((())))"  # Valid
+``python
+s = "(((())))" # Valid
 stack grows to n/2, then shrinks to 0
 # Worst case for space: O(n/2) = O(n)
-```
+``
 
 ---
 
@@ -748,129 +749,129 @@ stack grows to n/2, then shrinks to 0
 
 ### Input Validation
 
-```python
+``python
 def isValidRobust(s: str) -> bool:
-    """
-    Production-ready with validation
-    """
-    # Validate input
-    if s is None:
-        raise TypeError("Input cannot be None")
-    
-    if not isinstance(s, str):
-        raise TypeError(f"Expected string, got {type(s)}")
-    
-    # Empty string is valid
-    if not s:
-        return True
-    
-    # Quick check: odd length can't be valid
-    if len(s) % 2 != 0:
-        return False
-    
-    # Define valid characters
-    valid_chars = set('()[]{}')
-    pairs = {'(': ')', '[': ']', '{': '}'}
-    closing = set(pairs.values())
-    
-    stack = []
-    
-    for i, char in enumerate(s):
-        # Validate character
-        if char not in valid_chars:
-            raise ValueError(f"Invalid character '{char}' at index {i}")
-        
-        if char in pairs:
-            # Opening bracket
-            stack.append(char)
-        elif char in closing:
-            # Closing bracket
-            if not stack:
-                return False  # No opening to match
-            
-            opening = stack.pop()
-            if pairs[opening] != char:
-                return False  # Type mismatch
-    
-    return len(stack) == 0
-```
+ """
+ Production-ready with validation
+ """
+ # Validate input
+ if s is None:
+ raise TypeError("Input cannot be None")
+ 
+ if not isinstance(s, str):
+ raise TypeError(f"Expected string, got {type(s)}")
+ 
+ # Empty string is valid
+ if not s:
+ return True
+ 
+ # Quick check: odd length can't be valid
+ if len(s) % 2 != 0:
+ return False
+ 
+ # Define valid characters
+ valid_chars = set('()[]{}')
+ pairs = {'(': ')', '[': ']', '{': '}'}
+ closing = set(pairs.values())
+ 
+ stack = []
+ 
+ for i, char in enumerate(s):
+ # Validate character
+ if char not in valid_chars:
+ raise ValueError(f"Invalid character '{char}' at index {i}")
+ 
+ if char in pairs:
+ # Opening bracket
+ stack.append(char)
+ elif char in closing:
+ # Closing bracket
+ if not stack:
+ return False # No opening to match
+ 
+ opening = stack.pop()
+ if pairs[opening] != char:
+ return False # Type mismatch
+ 
+ return len(stack) == 0
+``
 
 ### Performance Optimizations
 
 **Optimization 1: Early Exit on Odd Length**
 
-```python
+``python
 # Odd length can never be valid
-if len(s) & 1:  # Bitwise AND is faster than modulo
-    return False
-```
+if len(s) & 1: # Bitwise AND is faster than modulo
+ return False
+``
 
 **Savings:** Skip processing for 50% of invalid inputs
 
 **Optimization 2: Pre-allocate Stack Capacity**
 
-```python
+``python
 # Python lists auto-resize, but we can hint capacity
 stack = []
 # For C++/Java: reserve stack capacity upfront
 # stack.reserve(len(s) // 2)
-```
+``
 
 **Savings:** Reduces memory allocations during execution
 
 **Optimization 3: Use Set for Closing Brackets**
 
-```python
+``python
 pairs = {'(': ')', '[': ']', '{': '}'}
-closing = set(pairs.values())  # O(1) lookup
+closing = set(pairs.values()) # O(1) lookup
 
 for char in s:
-    if char in pairs:  # O(1)
-        stack.append(char)
-    elif char in closing:  # O(1) instead of O(3) list search
-        # ...
-```
+ if char in pairs: # O(1)
+ stack.append(char)
+ elif char in closing: # O(1) instead of O(3) list search
+ # ...
+``
 
 **Savings:** Marginal but cleaner
 
 **Optimization 4: Avoid Repeated Dict Lookups**
 
-```python
+``python
 # Instead of checking pairs[opening] multiple times
 # Cache the result
 expected_closing = pairs.get(stack[-1], None)
 if expected_closing != char:
-    return False
-```
+ return False
+``
 
 ### Memory Optimization for Constrained Environments
 
-```python
+``python
 def isValidMemoryEfficient(s: str) -> bool:
-    """
-    Optimize for memory-constrained environments
-    
-    Trade-off: Slightly more complex code for lower memory
-    """
-    # Use indices instead of storing characters
-    # Opening brackets: ( = 0, [ = 1, { = 2
-    # Closing brackets: ) = 0, ] = 1, } = 2
-    
-    opening = {'(': 0, '[': 1, '{': 2}
-    closing = {')': 0, ']': 1, '}': 2}
-    
-    # Stack stores integers (4 bytes) instead of chars
-    stack = []
-    
-    for char in s:
-        if char in opening:
-            stack.append(opening[char])
-        elif char in closing:
-            if not stack or stack.pop() != closing[char]:
-                return False
-    
-    return not stack
-```
+ """
+ Optimize for memory-constrained environments
+ 
+ Trade-off: Slightly more complex code for lower memory
+ """
+ # Use indices instead of storing characters
+ # Opening brackets: ( = 0, [ = 1, { = 2
+ # Closing brackets: ) = 0, ] = 1, } = 2
+ 
+ opening = {'(': 0, '[': 1, '{': 2}
+ closing = {')': 0, ']': 1, '}': 2}
+ 
+ # Stack stores integers (4 bytes) instead of chars
+ stack = []
+ 
+ for char in s:
+ if char in opening:
+ stack.append(opening[char])
+ elif char in closing:
+ if not stack or stack.pop() != closing[char]:
+ return False
+ 
+ return not stack
+``
 
 **Memory savings:**
 - Storing `int` (4 bytes) vs `str` (28+ bytes in Python)
@@ -884,166 +885,166 @@ def isValidMemoryEfficient(s: str) -> bool:
 
 **Problem:** Validate mathematical expressions
 
-```python
+``python
 def validateExpression(expr: str) -> bool:
-    """
-    Validate expression has balanced brackets
-    
-    Examples:
-    - "(2 + 3) * 4" → Valid
-    - "((2 + 3)" → Invalid
-    - "2 + (3 * [4 - 5])" → Valid
-    """
-    stack = []
-    pairs = {'(': ')', '[': ']', '{': '}'}
-    
-    for char in expr:
-        if char in pairs:
-            stack.append(char)
-        elif char in pairs.values():
-            if not stack or pairs[stack.pop()] != char:
-                return False
-    
-    return not stack
+ """
+ Validate expression has balanced brackets
+ 
+ Examples:
+ - "(2 + 3) * 4" → Valid
+ - "((2 + 3)" → Invalid
+ - "2 + (3 * [4 - 5])" → Valid
+ """
+ stack = []
+ pairs = {'(': ')', '[': ']', '{': '}'}
+ 
+ for char in expr:
+ if char in pairs:
+ stack.append(char)
+ elif char in pairs.values():
+ if not stack or pairs[stack.pop()] != char:
+ return False
+ 
+ return not stack
 
 # Usage in calculator
 def evaluate(expr: str):
-    if not validateExpression(expr):
-        raise SyntaxError("Invalid expression: unmatched brackets")
-    
-    # Proceed with evaluation
-    return eval(expr)
-```
+ if not validateExpression(expr):
+ raise SyntaxError("Invalid expression: unmatched brackets")
+ 
+ # Proceed with evaluation
+ return eval(expr)
+``
 
 ### Application 2: HTML/XML Tag Validation
 
 **Problem:** Check if HTML tags are properly nested
 
-```python
+``python
 import re
 
 def validateHTML(html: str) -> bool:
-    """
-    Validate HTML tags are properly nested
-    
-    Example:
-    - "<div><p>Hello</p></div>" → Valid
-    - "<div><p>Hello</div></p>" → Invalid
-    """
-    # Extract tags
-    tag_pattern = r'<(/?)(\w+)[^>]*>'
-    tags = re.findall(tag_pattern, html)
-    
-    stack = []
-    
-    for is_closing, tag_name in tags:
-        if not is_closing:
-            # Opening tag
-            stack.append(tag_name)
-        else:
-            # Closing tag
-            if not stack or stack.pop() != tag_name:
-                return False
-    
-    return not stack
+ """
+ Validate HTML tags are properly nested
+ 
+ Example:
+ - "<div><p>Hello</p></div>" → Valid
+ - "<div><p>Hello</div></p>" → Invalid
+ """
+ # Extract tags
+ tag_pattern = r'<(/?)(\w+)[^>]*>'
+ tags = re.findall(tag_pattern, html)
+ 
+ stack = []
+ 
+ for is_closing, tag_name in tags:
+ if not is_closing:
+ # Opening tag
+ stack.append(tag_name)
+ else:
+ # Closing tag
+ if not stack or stack.pop() != tag_name:
+ return False
+ 
+ return not stack
 
 # Examples
-print(validateHTML("<div><p>Text</p></div>"))  # True
-print(validateHTML("<div><p>Text</div></p>"))  # False
-```
+print(validateHTML("<div><p>Text</p></div>")) # True
+print(validateHTML("<div><p>Text</div></p>")) # False
+``
 
 ### Application 3: Function Call Stack Validation
 
 **Problem:** Ensure function calls are properly matched with returns
 
-```python
+``python
 class FunctionCallTracker:
-    """
-    Track function call depth for debugging/profiling
-    """
-    def __init__(self):
-        self.call_stack = []
-    
-    def enter_function(self, func_name: str):
-        """Called when entering a function"""
-        self.call_stack.append((func_name, time.time()))
-        print(f"{'  ' * len(self.call_stack)}→ {func_name}")
-    
-    def exit_function(self, func_name: str):
-        """Called when exiting a function"""
-        if not self.call_stack:
-            raise RuntimeError("exit_function called without matching enter")
-        
-        name, start_time = self.call_stack.pop()
-        if name != func_name:
-            raise RuntimeError(f"Expected to exit {name}, got {func_name}")
-        
-        duration = time.time() - start_time
-        print(f"{'  ' * len(self.call_stack)}← {func_name} ({duration:.3f}s)")
-    
-    def is_balanced(self) -> bool:
-        """Check if all function calls have been exited"""
-        return len(self.call_stack) == 0
+ """
+ Track function call depth for debugging/profiling
+ """
+ def __init__(self):
+ self.call_stack = []
+ 
+ def enter_function(self, func_name: str):
+ """Called when entering a function"""
+ self.call_stack.append((func_name, time.time()))
+ print(f"{' ' * len(self.call_stack)}→ {func_name}")
+ 
+ def exit_function(self, func_name: str):
+ """Called when exiting a function"""
+ if not self.call_stack:
+ raise RuntimeError("exit_function called without matching enter")
+ 
+ name, start_time = self.call_stack.pop()
+ if name != func_name:
+ raise RuntimeError(f"Expected to exit {name}, got {func_name}")
+ 
+ duration = time.time() - start_time
+ print(f"{' ' * len(self.call_stack)}← {func_name} ({duration:.3f}s)")
+ 
+ def is_balanced(self) -> bool:
+ """Check if all function calls have been exited"""
+ return len(self.call_stack) == 0
 
 # Usage
 tracker = FunctionCallTracker()
 
 def func_a():
-    tracker.enter_function("func_a")
-    func_b()
-    tracker.exit_function("func_a")
+ tracker.enter_function("func_a")
+ func_b()
+ tracker.exit_function("func_a")
 
 def func_b():
-    tracker.enter_function("func_b")
-    # ... do work ...
-    tracker.exit_function("func_b")
-```
+ tracker.enter_function("func_b")
+ # ... do work ...
+ tracker.exit_function("func_b")
+``
 
 ### Application 4: ML Pipeline Validation
 
 **Problem:** Ensure data transformation pipeline stages are properly nested
 
-```python
+``python
 class PipelineValidator:
-    """
-    Validate ML pipeline stages are properly structured
-    
-    Example pipeline:
-    StartPipeline
-      |- StartPreprocess
-      |    |- StartNormalization
-      |    |- EndNormalization
-      |- EndPreprocess
-      |- StartModel
-      |    |- StartTraining
-      |    |- EndTraining
-      |- EndModel
-    EndPipeline
-    """
-    def __init__(self):
-        self.stage_stack = []
-    
-    def start_stage(self, stage_name: str):
-        """Enter a pipeline stage"""
-        self.stage_stack.append(stage_name)
-        print(f"{'  ' * len(self.stage_stack)}Start: {stage_name}")
-    
-    def end_stage(self, stage_name: str):
-        """Exit a pipeline stage"""
-        if not self.stage_stack:
-            raise ValueError(f"end_stage({stage_name}) called without matching start")
-        
-        expected = self.stage_stack.pop()
-        if expected != stage_name:
-            raise ValueError(f"Expected to end {expected}, got {stage_name}")
-        
-        print(f"{'  ' * len(self.stage_stack)}End: {stage_name}")
-    
-    def validate(self) -> bool:
-        """Check if all stages properly closed"""
-        if self.stage_stack:
-            raise ValueError(f"Unclosed stages: {self.stage_stack}")
-        return True
+ """
+ Validate ML pipeline stages are properly structured
+ 
+ Example pipeline:
+ StartPipeline
+ |- StartPreprocess
+ | |- StartNormalization
+ | |- EndNormalization
+ |- EndPreprocess
+ |- StartModel
+ | |- StartTraining
+ | |- EndTraining
+ |- EndModel
+ EndPipeline
+ """
+ def __init__(self):
+ self.stage_stack = []
+ 
+ def start_stage(self, stage_name: str):
+ """Enter a pipeline stage"""
+ self.stage_stack.append(stage_name)
+ print(f"{' ' * len(self.stage_stack)}Start: {stage_name}")
+ 
+ def end_stage(self, stage_name: str):
+ """Exit a pipeline stage"""
+ if not self.stage_stack:
+ raise ValueError(f"end_stage({stage_name}) called without matching start")
+ 
+ expected = self.stage_stack.pop()
+ if expected != stage_name:
+ raise ValueError(f"Expected to end {expected}, got {stage_name}")
+ 
+ print(f"{' ' * len(self.stage_stack)}End: {stage_name}")
+ 
+ def validate(self) -> bool:
+ """Check if all stages properly closed"""
+ if self.stage_stack:
+ raise ValueError(f"Unclosed stages: {self.stage_stack}")
+ return True
 
 # Usage
 validator = PipelineValidator()
@@ -1058,60 +1059,60 @@ validator.start_stage("Model")
 validator.end_stage("Model")
 validator.end_stage("Pipeline")
 
-validator.validate()  # ✓ All stages properly nested
-```
+validator.validate() # ✓ All stages properly nested
+``
 
 ### Application 5: Undo/Redo Functionality
 
 **Problem:** Implement undo/redo for text editor
 
-```python
+``python
 class TextEditor:
-    """
-    Text editor with undo/redo using two stacks
-    """
-    def __init__(self):
-        self.text = ""
-        self.undo_stack = []  # Stack of previous states
-        self.redo_stack = []  # Stack of undone actions
-    
-    def type(self, char: str):
-        """Add character"""
-        # Save current state for undo
-        self.undo_stack.append(self.text)
-        
-        # Clear redo stack (new action invalidates redo)
-        self.redo_stack = []
-        
-        # Update text
-        self.text += char
-    
-    def undo(self):
-        """Undo last action"""
-        if not self.undo_stack:
-            print("Nothing to undo")
-            return
-        
-        # Save current state for redo
-        self.redo_stack.append(self.text)
-        
-        # Restore previous state
-        self.text = self.undo_stack.pop()
-    
-    def redo(self):
-        """Redo last undone action"""
-        if not self.redo_stack:
-            print("Nothing to redo")
-            return
-        
-        # Save current state for undo
-        self.undo_stack.append(self.text)
-        
-        # Restore redone state
-        self.text = self.redo_stack.pop()
-    
-    def __str__(self):
-        return self.text
+ """
+ Text editor with undo/redo using two stacks
+ """
+ def __init__(self):
+ self.text = ""
+ self.undo_stack = [] # Stack of previous states
+ self.redo_stack = [] # Stack of undone actions
+ 
+ def type(self, char: str):
+ """Add character"""
+ # Save current state for undo
+ self.undo_stack.append(self.text)
+ 
+ # Clear redo stack (new action invalidates redo)
+ self.redo_stack = []
+ 
+ # Update text
+ self.text += char
+ 
+ def undo(self):
+ """Undo last action"""
+ if not self.undo_stack:
+ print("Nothing to undo")
+ return
+ 
+ # Save current state for redo
+ self.redo_stack.append(self.text)
+ 
+ # Restore previous state
+ self.text = self.undo_stack.pop()
+ 
+ def redo(self):
+ """Redo last undone action"""
+ if not self.redo_stack:
+ print("Nothing to redo")
+ return
+ 
+ # Save current state for undo
+ self.undo_stack.append(self.text)
+ 
+ # Restore redone state
+ self.text = self.redo_stack.pop()
+ 
+ def __str__(self):
+ return self.text
 
 # Example
 editor = TextEditor()
@@ -1120,14 +1121,14 @@ editor.type('e')
 editor.type('l')
 editor.type('l')
 editor.type('o')
-print(editor)  # "Hello"
+print(editor) # "Hello"
 
 editor.undo()
-print(editor)  # "Hell"
+print(editor) # "Hell"
 
 editor.redo()
-print(editor)  # "Hello"
-```
+print(editor) # "Hello"
+``
 
 ---
 
@@ -1135,113 +1136,113 @@ print(editor)  # "Hello"
 
 ### Comprehensive Test Suite
 
-```python
+``python
 import unittest
 
 class TestValidParentheses(unittest.TestCase):
-    
-    def test_empty_string(self):
-        """Empty string should be valid"""
-        self.assertTrue(isValid(""))
-    
-    def test_single_pair(self):
-        """Single pair of each type"""
-        self.assertTrue(isValid("()"))
-        self.assertTrue(isValid("[]"))
-        self.assertTrue(isValid("{}"))
-    
-    def test_multiple_pairs(self):
-        """Multiple pairs in sequence"""
-        self.assertTrue(isValid("()[]{}"))
-        self.assertTrue(isValid("()[]{()}"))
-    
-    def test_nested(self):
-        """Nested brackets"""
-        self.assertTrue(isValid("{[]}"))
-        self.assertTrue(isValid("{" + "{}}"))  # Escaped for Jekyll
-        self.assertTrue(isValid("([{}])"))
-    
-    def test_wrong_type(self):
-        """Mismatched bracket types"""
-        self.assertFalse(isValid("(]"))
-        self.assertFalse(isValid("{)"))
-        self.assertFalse(isValid("[}"))
-    
-    def test_wrong_order(self):
-        """Wrong closing order"""
-        self.assertFalse(isValid("([)]"))
-        self.assertFalse(isValid("{[}]"))
-    
-    def test_unclosed(self):
-        """Unclosed opening brackets"""
-        self.assertFalse(isValid("(("))
-        self.assertFalse(isValid("{[("))
-    
-    def test_extra_closing(self):
-        """Extra closing brackets"""
-        self.assertFalse(isValid("))"))
-        self.assertFalse(isValid("())"))
-    
-    def test_deeply_nested(self):
-        """Deep nesting"""
-        s = "(" * 1000 + ")" * 1000
-        self.assertTrue(isValid(s))
-    
-    def test_alternating(self):
-        """Alternating pattern"""
-        s = "()" * 1000
-        self.assertTrue(isValid(s))
-    
-    def test_complex_valid(self):
-        """Complex valid cases"""
-        self.assertTrue(isValid("{[()()]}"))
-        self.assertTrue(isValid("([]){}"))
-        self.assertTrue(isValid("{[({})]}"))
-    
-    def test_complex_invalid(self):
-        """Complex invalid cases"""
-        self.assertFalse(isValid("((((()"))
-        self.assertFalse(isValid("(((()))"))
-        self.assertFalse(isValid("{[(])}"))
+ 
+ def test_empty_string(self):
+ """Empty string should be valid"""
+ self.assertTrue(isValid(""))
+ 
+ def test_single_pair(self):
+ """Single pair of each type"""
+ self.assertTrue(isValid("()"))
+ self.assertTrue(isValid("[]"))
+ self.assertTrue(isValid("{}"))
+ 
+ def test_multiple_pairs(self):
+ """Multiple pairs in sequence"""
+ self.assertTrue(isValid("()[]{}"))
+ self.assertTrue(isValid("()[]{()}"))
+ 
+ def test_nested(self):
+ """Nested brackets"""
+ self.assertTrue(isValid("{[]}"))
+ self.assertTrue(isValid("{" + "{}}")) # Escaped for Jekyll
+ self.assertTrue(isValid("([{}])"))
+ 
+ def test_wrong_type(self):
+ """Mismatched bracket types"""
+ self.assertFalse(isValid("(]"))
+ self.assertFalse(isValid("{)"))
+ self.assertFalse(isValid("[}"))
+ 
+ def test_wrong_order(self):
+ """Wrong closing order"""
+ self.assertFalse(isValid("([)]"))
+ self.assertFalse(isValid("{[}]"))
+ 
+ def test_unclosed(self):
+ """Unclosed opening brackets"""
+ self.assertFalse(isValid("(("))
+ self.assertFalse(isValid("{[("))
+ 
+ def test_extra_closing(self):
+ """Extra closing brackets"""
+ self.assertFalse(isValid("))"))
+ self.assertFalse(isValid("())"))
+ 
+ def test_deeply_nested(self):
+ """Deep nesting"""
+ s = "(" * 1000 + ")" * 1000
+ self.assertTrue(isValid(s))
+ 
+ def test_alternating(self):
+ """Alternating pattern"""
+ s = "()" * 1000
+ self.assertTrue(isValid(s))
+ 
+ def test_complex_valid(self):
+ """Complex valid cases"""
+ self.assertTrue(isValid("{[()()]}"))
+ self.assertTrue(isValid("([]){}"))
+ self.assertTrue(isValid("{[({})]}"))
+ 
+ def test_complex_invalid(self):
+ """Complex invalid cases"""
+ self.assertFalse(isValid("((((()"))
+ self.assertFalse(isValid("(((()))"))
+ self.assertFalse(isValid("{[(])}"))
 
 if __name__ == '__main__':
-    unittest.main()
-```
+ unittest.main()
+``
 
 ### Performance Benchmarking
 
-```python
+``python
 import time
 import random
 
 def benchmark(func, test_cases):
-    """Benchmark function performance"""
-    start = time.time()
-    for test in test_cases:
-        func(test)
-    elapsed = time.time() - start
-    return elapsed
+ """Benchmark function performance"""
+ start = time.time()
+ for test in test_cases:
+ func(test)
+ elapsed = time.time() - start
+ return elapsed
 
 # Generate test cases
 def generate_valid_string(length):
-    """Generate valid bracket string"""
-    s = ""
-    for _ in range(length // 2):
-        s += "("
-    for _ in range(length // 2):
-        s += ")"
-    return s
+ """Generate valid bracket string"""
+ s = ""
+ for _ in range(length // 2):
+ s += "("
+ for _ in range(length // 2):
+ s += ")"
+ return s
 
 def generate_invalid_string(length):
-    """Generate invalid bracket string"""
-    brackets = "()[]{}"
-    return ''.join(random.choice(brackets) for _ in range(length))
+ """Generate invalid bracket string"""
+ brackets = "()[]{}"
+ return ''.join(random.choice(brackets) for _ in range(length))
 
 # Test cases
 test_cases = [
-    generate_valid_string(100) for _ in range(1000)
+ generate_valid_string(100) for _ in range(1000)
 ] + [
-    generate_invalid_string(100) for _ in range(1000)
+ generate_invalid_string(100) for _ in range(1000)
 ]
 
 # Benchmark
@@ -1249,17 +1250,17 @@ time_stack = benchmark(isValid, test_cases)
 print(f"Stack solution: {time_stack:.3f}s")
 
 # Expected: ~0.02s for 2000 strings of length 100
-```
+``
 
 ---
 
 ## Key Takeaways
 
-✅ **Stacks naturally solve LIFO problems** (brackets, function calls, undo)  
-✅ **O(n) single-pass solution** is optimal for validation  
-✅ **Hash map for pairs** makes code clean and extensible  
-✅ **Pattern applies widely** in compilers, parsers, editors, ML pipelines  
-✅ **Early exit optimizations** improve average-case performance  
+✅ **Stacks naturally solve LIFO problems** (brackets, function calls, undo) 
+✅ **O(n) single-pass solution** is optimal for validation 
+✅ **Hash map for pairs** makes code clean and extensible 
+✅ **Pattern applies widely** in compilers, parsers, editors, ML pipelines 
+✅ **Early exit optimizations** improve average-case performance 
 ✅ **Consider edge cases** (empty, single char, deeply nested)
 
 ---

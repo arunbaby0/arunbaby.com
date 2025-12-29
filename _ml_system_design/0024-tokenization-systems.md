@@ -1,22 +1,22 @@
 ---
 title: "Tokenization Systems"
 day: 24
+related_dsa_day: 24
+related_speech_day: 24
+related_agents_day: 24
 collection: ml_system_design
 categories:
-  - ml-system-design
+ - ml-system-design
 tags:
-  - nlp
-  - tokenization
-  - bpe
-  - wordpiece
-  - sentencepiece
+ - nlp
+ - tokenization
+ - bpe
+ - wordpiece
+ - sentencepiece
 subdomain: "NLP Preprocessing"
 tech_stack: [Python, HuggingFace, SentencePiece]
 scale: "Billion-scale corpus processing"
 companies: [OpenAI, Google, Meta, HuggingFace]
-related_dsa_day: 24
-related_speech_day: 24
-related_agents_day: 24
 ---
 
 **The critical preprocessing step that defines the vocabulary and capabilities of Large Language Models.**
@@ -41,19 +41,19 @@ Modern LLMs (GPT-4, Llama 3) use **Subword Tokenization**—a sweet spot between
 
 ## High-Level Architecture: The Tokenization Pipeline
 
-```ascii
-+-----------+     +--------------+     +-----------------+
-| Raw Text  | --> | Normalizer   | --> |  Pre-Tokenizer  |
-+-----------+     +--------------+     +-----------------+
-"Héllo!"          "hello!"             ["hello", "!"]
-                                             |
-                                             v
-+-----------+     +--------------+     +-----------------+
-| Token IDs | <-- | Post-Process | <-- |    Model        |
-+-----------+     +--------------+     +-----------------+
-[101, 7592,       [CLS] hello !        BPE / WordPiece
- 999, 102]        [SEP]
-```
+``ascii
++-----------+ +--------------+ +-----------------+
+| Raw Text | --> | Normalizer | --> | Pre-Tokenizer |
++-----------+ +--------------+ +-----------------+
+"Héllo!" "hello!" ["hello", "!"]
+ |
+ v
++-----------+ +--------------+ +-----------------+
+| Token IDs | <-- | Post-Process | <-- | Model |
++-----------+ +--------------+ +-----------------+
+[101, 7592, [CLS] hello ! BPE / WordPiece
+ 999, 102] [SEP]
+``
 
 ## The Spectrum of Tokenization
 
@@ -79,19 +79,19 @@ Modern LLMs (GPT-4, Llama 3) use **Subword Tokenization**—a sweet spot between
 Used by GPT-2, GPT-3, and RoBERTa.
 
 **Training (Learning the Vocabulary):**
-1.  Start with a vocabulary of all individual characters.
-2.  Represent the corpus as a sequence of characters.
-3.  Count the frequency of all adjacent pairs of tokens.
-4.  Merge the most frequent pair into a new token.
-5.  Repeat until the desired vocabulary size is reached.
+1. Start with a vocabulary of all individual characters.
+2. Represent the corpus as a sequence of characters.
+3. Count the frequency of all adjacent pairs of tokens.
+4. Merge the most frequent pair into a new token.
+5. Repeat until the desired vocabulary size is reached.
 
 **Example:**
 Corpus: "hug", "pug", "pun", "bun"
-1.  Base vocab: ['b', 'g', 'h', 'n', 'p', 'u']
-2.  Pairs: ('u', 'g') appears in "hug", "pug". ('u', 'n') appears in "pun", "bun".
-3.  Merge 'u', 'g' -> 'ug'.
-4.  New vocab: ['b', 'h', 'n', 'p', 'ug']
-5.  Now "hug" is ['h', 'ug'].
+1. Base vocab: ['b', 'g', 'h', 'n', 'p', 'u']
+2. Pairs: ('u', 'g') appears in "hug", "pug". ('u', 'n') appears in "pun", "bun".
+3. Merge 'u', 'g' -> 'ug'.
+4. New vocab: ['b', 'h', 'n', 'p', 'ug']
+5. Now "hug" is ['h', 'ug'].
 
 **Inference (Tokenizing new text):**
 Apply the learned merges in the same order.
@@ -122,57 +122,57 @@ With standard split-by-space, you lose information about whether there were 1 or
 
 Using a library is easy. Let's build BPE from scratch in Python to truly understand it.
 
-```python
+``python
 from collections import defaultdict
 
 def get_stats(vocab):
-    """
-    Compute frequencies of adjacent pairs.
-    vocab: dict of {"word space": frequency}
-    """
-    pairs = defaultdict(int)
-    for word, freq in vocab.items():
-        symbols = word.split()
-        for i in range(len(symbols) - 1):
-            pairs[symbols[i], symbols[i+1]] += freq
-    return pairs
+ """
+ Compute frequencies of adjacent pairs.
+ vocab: dict of {"word space": frequency}
+ """
+ pairs = defaultdict(int)
+ for word, freq in vocab.items():
+ symbols = word.split()
+ for i in range(len(symbols) - 1):
+ pairs[symbols[i], symbols[i+1]] += freq
+ return pairs
 
 def merge_vocab(pair, v_in):
-    """
-    Merge the most frequent pair in the vocabulary.
-    """
-    v_out = {}
-    bigram = ' '.join(pair)
-    replacement = ''.join(pair)
-    for word in v_in:
-        w_out = word.replace(bigram, replacement)
-        v_out[w_out] = v_in[word]
-    return v_out
+ """
+ Merge the most frequent pair in the vocabulary.
+ """
+ v_out = {}
+ bigram = ' '.join(pair)
+ replacement = ''.join(pair)
+ for word in v_in:
+ w_out = word.replace(bigram, replacement)
+ v_out[w_out] = v_in[word]
+ return v_out
 
 # 1. Initialize Vocabulary (Character level)
 # We add </w> to mark end of word
 vocab = {
-    "l o w </w>": 5,
-    "l o w e r </w>": 2,
-    "n e w e s t </w>": 6,
-    "w i d e s t </w>": 3
+ "l o w </w>": 5,
+ "l o w e r </w>": 2,
+ "n e w e s t </w>": 6,
+ "w i d e s t </w>": 3
 }
 
 num_merges = 10
 for i in range(num_merges):
-    pairs = get_stats(vocab)
-    if not pairs:
-        break
-    best = max(pairs, key=pairs.get)
-    vocab = merge_vocab(best, vocab)
-    print(f"Merge {i+1}: {best}")
+ pairs = get_stats(vocab)
+ if not pairs:
+ break
+ best = max(pairs, key=pairs.get)
+ vocab = merge_vocab(best, vocab)
+ print(f"Merge {i+1}: {best}")
 
 # Output:
 # Merge 1: ('e', 's') -> 'es'
 # Merge 2: ('es', 't') -> 'est'
 # Merge 3: ('est', '</w>') -> 'est</w>'
 # ...
-```
+``
 
 ## The Hidden Step: Normalization
 
@@ -190,29 +190,29 @@ It's easy to confuse these. Let's clarify the math.
 ### 1. BPE (Frequency-Based)
 - **Objective:** Maximize the frequency of merged tokens.
 - **Algorithm:**
-    1.  Count all symbol pairs.
-    2.  Merge the most frequent pair.
-    3.  Repeat.
+ 1. Count all symbol pairs.
+ 2. Merge the most frequent pair.
+ 3. Repeat.
 - **Pros:** Simple, fast.
 - **Cons:** Greedy. A merge now might prevent a better merge later.
 
 ### 2. WordPiece (Likelihood-Based)
 - **Objective:** Maximize the likelihood of the training data.
 - **Algorithm:**
-    1.  Count all symbol pairs.
-    2.  For each pair `(A, B)`, calculate the score: `freq(AB) / (freq(A) * freq(B))`.
-    3.  Merge the pair with the highest score.
+ 1. Count all symbol pairs.
+ 2. For each pair `(A, B)`, calculate the score: `freq(AB) / (freq(A) * freq(B))`.
+ 3. Merge the pair with the highest score.
 - **Intuition:** This is **Pointwise Mutual Information (PMI)**. It prioritizes pairs that appear together *more often than chance*.
 - **Example:** "th" is frequent, but "t" and "h" are also frequent individually. "q" and "u" are less frequent, but "q" is *almost always* followed by "u". WordPiece might prefer merging "qu" over "th".
 
 ### 3. Unigram (Probabilistic Pruning)
 - **Objective:** Minimize the encoding length (entropy) of the text.
 - **Algorithm:**
-    1.  Start with a massive vocabulary (e.g., all substrings).
-    2.  Train a Unigram Language Model on the current vocab.
-    3.  Calculate the "loss" (increase in perplexity) if we remove each token.
-    4.  Remove the bottom 20% of tokens that contribute least to the likelihood.
-    5.  Repeat until vocab size is reached.
+ 1. Start with a massive vocabulary (e.g., all substrings).
+ 2. Train a Unigram Language Model on the current vocab.
+ 3. Calculate the "loss" (increase in perplexity) if we remove each token.
+ 4. Remove the bottom 20% of tokens that contribute least to the likelihood.
+ 5. Repeat until vocab size is reached.
 - **Pros:** Probabilistic. Can output multiple segmentations with probabilities (useful for **Subword Regularization**).
 
 ## Advanced Topic: Byte-Level BPE (BBPE)
@@ -227,8 +227,8 @@ Standard BPE works on Unicode characters.
 **Solution:** Treat text as a stream of **Bytes** (UTF-8).
 - Base vocab size is exactly 256 (0x00 to 0xFF).
 - **Pros:**
-    1.  **Universal:** Can tokenize ANY string (even binary data, executables, images).
-    2.  **No [UNK]:** Every byte is in the vocab.
+ 1. **Universal:** Can tokenize ANY string (even binary data, executables, images).
+ 2. **No [UNK]:** Every byte is in the vocab.
 - **Cons:** Sequences are longer (UTF-8 characters can be 1-4 bytes).
 
 **Implementation Detail:**
@@ -275,8 +275,8 @@ For static datasets (training), we pre-tokenize everything and store it as `int3
 Facebook's XLM-RoBERTa supports 100 languages.
 - **Vocab Size:** 250,000.
 - **Sampling:** They sample training data from each language with `alpha = 0.3`.
-    - `Prob ~ (Count)^0.3`.
-    - This boosts low-resource languages (Swahili) and suppresses high-resource ones (English).
+ - `Prob ~ (Count)^0.3`.
+ - This boosts low-resource languages (Swahili) and suppresses high-resource ones (English).
 - **Result:** A single tokenizer that can handle "Hello" (English), "Bonjour" (French), and "नमस्ते" (Hindi).
 
 ## Tutorial: Training a SentencePiece Model
@@ -284,36 +284,36 @@ Facebook's XLM-RoBERTa supports 100 languages.
 Let's get our hands dirty. How do you actually train a tokenizer for a new language?
 
 ### 1. Install SentencePiece
-```bash
+``bash
 pip install sentencepiece
-```
+``
 
 ### 2. Prepare Data
 You need a single text file with one sentence per line.
 `data.txt`:
-```text
+``text
 Hello world
 This is a test
 ...
-```
+``
 
 ### 3. Train the Model
-```python
+``python
 import sentencepiece as spm
 
 spm.SentencePieceTrainer.train(
-    input='data.txt',
-    model_prefix='m',
-    vocab_size=1000,
-    model_type='bpe',  # or 'unigram', 'char', 'word'
-    character_coverage=1.0, # 1.0 for English, 0.9995 for CJK
-    user_defined_symbols=['<sep>', '<cls>']
+ input='data.txt',
+ model_prefix='m',
+ vocab_size=1000,
+ model_type='bpe', # or 'unigram', 'char', 'word'
+ character_coverage=1.0, # 1.0 for English, 0.9995 for CJK
+ user_defined_symbols=['<sep>', '<cls>']
 )
-```
+``
 This generates `m.model` (the binary) and `m.vocab` (the dictionary).
 
 ### 4. Load and Use
-```python
+``python
 sp = spm.SentencePieceProcessor()
 sp.load('m.model')
 
@@ -324,7 +324,7 @@ print(sp.encode_as_pieces('Hello world'))
 # Decode
 print(sp.decode_pieces([' Hello', ' world']))
 # 'Hello world'
-```
+``
 
 **Key Feature:** Reversibility.
 `Decode(Encode(s)) == s`.
@@ -335,15 +335,15 @@ This is NOT true for BERT's WordPiece (which loses spaces).
 The `tokenizers` library (written in Rust) is the engine under the hood of `transformers`.
 It has 4 components:
 
-1.  **Normalizer:** Cleans text (NFD, Lowercase, Strip Accents).
-2.  **Pre-Tokenizer:** Splits text into "words" (Whitespace, Punctuation).
-    - *Note:* SentencePiece skips this step.
-3.  **Model:** The core algorithm (BPE, WordPiece, Unigram).
-4.  **Post-Processor:** Adds special tokens (`[CLS]`, `[SEP]`).
+1. **Normalizer:** Cleans text (NFD, Lowercase, Strip Accents).
+2. **Pre-Tokenizer:** Splits text into "words" (Whitespace, Punctuation).
+ - *Note:* SentencePiece skips this step.
+3. **Model:** The core algorithm (BPE, WordPiece, Unigram).
+4. **Post-Processor:** Adds special tokens (`[CLS]`, `[SEP]`).
 
 ### Building a Tokenizer from Scratch with HF
 
-```python
+``python
 from tokenizers import Tokenizer
 from tokenizers.models import BPE
 from tokenizers.trainers import BpeTrainer
@@ -360,7 +360,7 @@ tokenizer.train(files, trainer)
 
 # 3. Save
 tokenizer.save("tokenizer.json")
-```
+``
 
 ## Comparative Analysis: BPE vs. WordPiece across Languages
 
@@ -390,20 +390,20 @@ When it saw this token at inference time, its embeddings were random garbage, ca
 
 ## Appendix B: Multilingual Tokenization Challenges
 
-1.  **Script Mixing:** If you train on 90% English and 10% Hindi, the Hindi tokens will be very short (characters), making inference slow and quality poor for Hindi.
-    - **Fix:** Oversample low-resource languages during tokenizer training.
-2.  **No Spaces:** Chinese/Japanese/Thai don't use spaces.
-    - **Fix:** SentencePiece is essential here. It doesn't rely on pre-tokenization (splitting by space).
+1. **Script Mixing:** If you train on 90% English and 10% Hindi, the Hindi tokens will be very short (characters), making inference slow and quality poor for Hindi.
+ - **Fix:** Oversample low-resource languages during tokenizer training.
+2. **No Spaces:** Chinese/Japanese/Thai don't use spaces.
+ - **Fix:** SentencePiece is essential here. It doesn't rely on pre-tokenization (splitting by space).
 
 ## Appendix C: System Design Interview Transcript
 
 **Interviewer:** "Design a tokenizer for a code generation model (like GitHub Copilot)."
 
 **Candidate:** "Code is different from natural language.
-1.  **Whitespace matters:** In Python, indentation is syntax. We must use a lossless tokenizer like SentencePiece or Byte-Level BPE. We cannot strip spaces.
-2.  **Vocabulary:** We need tokens for common keywords (`def`, `class`, `return`) and common multi-character operators (`==`, `!=`, `->`).
-3.  **CamelCase:** Variables like `myVariableName` should probably be split as `my`, `Variable`, `Name`.
-4.  **Vocab Size:** I'd aim for 50k. Code has a lot of unique identifiers, but we want to learn the structure, not memorize variable names."
+1. **Whitespace matters:** In Python, indentation is syntax. We must use a lossless tokenizer like SentencePiece or Byte-Level BPE. We cannot strip spaces.
+2. **Vocabulary:** We need tokens for common keywords (`def`, `class`, `return`) and common multi-character operators (`==`, `!=`, `->`).
+3. **CamelCase:** Variables like `myVariableName` should probably be split as `my`, `Variable`, `Name`.
+4. **Vocab Size:** I'd aim for 50k. Code has a lot of unique identifiers, but we want to learn the structure, not memorize variable names."
 
 **Interviewer:** "How do you handle multiple languages (Python, Java, C++)?"
 
@@ -417,15 +417,15 @@ Google's **ByT5** and **CANINE** architectures propose a radical idea: **No Toke
 ### ByT5 (Byte-Level T5)
 - **Input:** Raw UTF-8 bytes.
 - **Architecture:**
-    - A heavy **Encoder** that processes bytes.
-    - A light **Decoder**.
+ - A heavy **Encoder** that processes bytes.
+ - A light **Decoder**.
 - **Pros:**
-    - Robust to typos ("helo" is 1 byte away from "hello").
-    - No OOV (Out of Vocabulary) issues.
-    - Multilingual by default.
+ - Robust to typos ("helo" is 1 byte away from "hello").
+ - No OOV (Out of Vocabulary) issues.
+ - Multilingual by default.
 - **Cons:**
-    - **Sequence Length:** "The cat" is 2 tokens (BPE) but 7 bytes. Attention is `O(N^2)`, so 7x length = 49x compute.
-    - **Fix:** ByT5 uses a "bottleneck" architecture to downsample the byte stream.
+ - **Sequence Length:** "The cat" is 2 tokens (BPE) but 7 bytes. Attention is O(N^2), so 7x length = 49x compute.
+ - **Fix:** ByT5 uses a "bottleneck" architecture to downsample the byte stream.
 
 ### CANINE (Character Architecture with No tokenization In Neural Encoders)
 - Uses a hash-based embedding strategy.
@@ -437,14 +437,14 @@ Google's **ByT5** and **CANINE** architectures propose a radical idea: **No Toke
 Tokenization isn't just for text.
 **Vision Transformers (ViT)** tokenize images.
 
-1.  **Patching:** Split a 224x224 image into 16x16 patches.
-    - Result: 196 patches.
-2.  **Linear Projection:** Flatten each patch and map it to a vector.
-    - These vectors are the "tokens".
-3.  **VQ-GAN (Vector Quantized GAN):**
-    - Learns a "visual codebook" of 1024 shapes/textures.
-    - An image is represented as a grid of indices `[34, 99, 102, ...]`.
-    - This allows us to use GPT on images (DALL-E 1).
+1. **Patching:** Split a 224x224 image into 16x16 patches.
+ - Result: 196 patches.
+2. **Linear Projection:** Flatten each patch and map it to a vector.
+ - These vectors are the "tokens".
+3. **VQ-GAN (Vector Quantized GAN):**
+ - Learns a "visual codebook" of 1024 shapes/textures.
+ - An image is represented as a grid of indices `[34, 99, 102, ...]`.
+ - This allows us to use GPT on images (DALL-E 1).
 
 ## Subword Regularization: BPE-Dropout
 
@@ -452,9 +452,9 @@ Standard BPE is deterministic. "apple" -> "ap", "ple".
 But maybe "app", "le" is also valid.
 **BPE-Dropout** randomly drops merges during training.
 - **Training:** `x = "apple"`.
-    - Epoch 1: `["ap", "ple"]`
-    - Epoch 2: `["app", "le"]`
-    - Epoch 3: `["a", "pp", "le"]`
+ - Epoch 1: `["ap", "ple"]`
+ - Epoch 2: `["app", "le"]`
+ - Epoch 3: `["a", "pp", "le"]`
 - **Effect:** The model sees multiple segmentations of the same word. This makes it robust to noise and typos.
 - **Result:** 2-3 BLEU score improvement on Machine Translation tasks.
 
@@ -481,7 +481,7 @@ Should a space be a separate token?
 If you treat space as a separate token, " hello" becomes `[" ", "hello"]`.
 If you attach it, it becomes `["_hello"]`.
 The latter is more efficient (1 token vs 2).
-But what about "  hello" (2 spaces)?
+But what about " hello" (2 spaces)?
 - Attached: `["_", "_hello"]`? Or `["__hello"]`?
 - This edge case causes headaches in code generation (Python indentation).
 

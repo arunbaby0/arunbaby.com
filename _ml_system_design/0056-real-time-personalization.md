@@ -1,6 +1,9 @@
 ---
 title: "Real-time Personalization"
 day: 56
+related_dsa_day: 56
+related_speech_day: 56
+related_agents_day: 56
 collection: ml_system_design
 categories:
   - ml-system-design
@@ -31,10 +34,6 @@ companies:
   - TikTok
   - Amazon
   - Spotify
-related_dsa_day: 56
-related_speech_day: 56
-related_agents_day: 56
-related_agents_day: 56
 ---
 
 **"Generalization is the goal of ML, but Personalization is the goal of Products. Real-time personalization is about capturing the intent of the 'now'."**
@@ -43,12 +42,12 @@ related_agents_day: 56
 
 In the 2010s, a "personalized" experience meant that if you bought a toaster on Amazon, you would see ads for toasters for the next three weeks. This was the "Batch Era"—a world where user state was updated overnight and recommendations were driven by lagging indicators. 
 
-Today, we live in the "Instant Era."
+We live in the "Instant Era."
 When you open an app like TikTok or Instagram, the system doesn't care what you liked last month. It cares what you stopped scrolling for **30 seconds ago**. The transition from daily batch updates to sub-second streaming updates is not just a performance tweak; it is a fundamental shift in how we build AI systems.
 
 Real-time Personalization is the art of **Adaptive Intelligence**. It requires a seamless orchestration of low-latency data pipelines, vector search, and deep learning models that can adjust their output based on the very latest "click" or "swipe."
 
-Today, we will dissect the architecture of these systems, explore the math of exploration, and address the ethical responsibilities that come with "perfect" relevance.
+We will dissect the architecture of these systems, explore the math of exploration, and address the ethical responsibilities that come with "perfect" relevance.
 
 ---
 
@@ -129,8 +128,8 @@ In real-time, we use **Approximate Nearest Neighbors (ANN)** to retrieve items t
 
 ### 5.2 Vector Search
 We pre-compute item embeddings and store them in a vector database (Faiss, Milvus, Pinecone). At serving time:
-- Compute the User Embedding ($O(1)$).
-- Query the Vector DB for top-1000 items ($O(\log N)$).
+- Compute the User Embedding (O(1)).
+- Query the Vector DB for top-1000 items (O(log N)).
 
 ---
 
@@ -168,8 +167,8 @@ The connection to **Minimum Window Substring** is architectural.
 In real-time personalization, we are constantly "evicting" old data.
 - If we keep a user's clicks from 3 years ago in the low-latency feature vector, we waste memory and introduce noise.
 - We apply a **Windowing logic**:
-    - `Last 50 clicks`
-    - `Last 2 hours of activity`
+  - `Last 50 clicks`
+  - `Last 2 hours of activity`
 - Like the `left` pointer in DSA, the feature pipeline "contracts" the window to focus only on the subset of data that satisfies the "current intent" requirement.
 
 ## 9. Case Study: The "For You" Page (TikTok Architecture)
@@ -196,16 +195,16 @@ To avoid the "Filter Bubble" (where a user only sees things they already like), 
 
 ### 10.1 The Multi-Armed Bandit (MAB) Problem
 Imagine you are at a casino with 10 slot machines (the "arms"). You want to maximize your winnings.
-- Should you keep playing the machine that gave you $5? (**Exploitation**)
+- Should you keep playing the machine that gave you 5? (**Exploitation**)
 - Should you try the machine you haven't touched yet? (**Exploration**)
 
 ### 10.2 Thompson Sampling (The Bayesian Approach)
 For each item, we maintain a probability distribution (usually a Beta distribution) of its "Success Rate" (CTR).
-- $\alpha$: Number of clicks (Successes).
-- $\beta$: Number of impressions without a click (Failures).
+- `alpha`: Number of clicks (Successes).
+- `beta`: Number of impressions without a click (Failures).
 
 Each time we need to show an item:
-1. Sample a random value from the $Beta(\alpha_i, \beta_i)$ distribution for each item.
+1. Sample a random value from the `Beta(alpha_i, beta_i)` distribution for each item.
 2. Pick the item with the highest sampled value.
 
 **Why this works**: 
@@ -229,9 +228,9 @@ In a system like Spotify's, switching from JSON to Protobuf for recommendation p
 
 ### 12.1 NDCG (Normalized Discounted Cumulative Gain)
 We don't just care if the "right" item is in the list; we care if it is **at the top**.
-- $Gain$: The relevance of an item.
-- $Discount$: A penalty that increases as the item moves down the list.
-- $NDCG$ scales the score between 0 and 1, allowing us to compare performance across different users and sessions.
+- `Gain`: The relevance of an item.
+- `Discount`: A penalty that increases as the item moves down the list.
+- `NDCG` scales the score between 0 and 1, allowing us to compare performance across different users and sessions.
 
 ### 12.2 Model Calibration: The "Probability" Problem
 A ranking model might predict a click probability of 0.8, but in reality, the item only gets clicked 10% of the time. 
@@ -256,7 +255,7 @@ Algorithms learned long ago that "Outrage" drives more watch time than "Peace."
 When a loop is "too good," it can become predatory. 
 - **The Design Response**: Implementing "Consumption Breaks" or user-defined limits is becoming a legal requirement in many regions.
 
-### 13.4 Feature Engineering for Time-of-Day and Seasonality
+### 13.4 Feature Engineering for Time-of- and Seasonality
 A user's intent is often driven by the clock:
 - **Morning**: News, productivity music, weather.
 - **Evening**: Entertainment, cooking, social media.
@@ -378,6 +377,7 @@ Antigravity.
 2. **Context is King**: Real-time signals (Session state, location, device) are more predictive than long-term history.
 3. **Exploration is Mandatory**: Use Bayesian math (Thompson Sampling) to keep the system healthy and avoid cold-starts.
 4. **Ethics is a Feature**: Responsibility for diversity and safety must be built into the "Re-ranking" and "Policy" layers.
+
 ## 20. Conclusion: The Predictive Future
 
 We are moving away from "Apps" and toward "Intelligent Agents" that anticipate our needs. Building a real-time personalization system is the first step toward that future. By mastering the sliding windows of user intent, the multi-stage pipelines of retrieval, and the ethical guardrails of diversity, you are building the foundations of adaptive software.

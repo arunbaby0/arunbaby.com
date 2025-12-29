@@ -3,7 +3,7 @@ title: "Real-Time Agent Pipelines"
 day: 16
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
   - real-time
   - latency
@@ -12,13 +12,13 @@ tags:
   - streaming
   - asyncio
   - backpressure
-related_dsa_day: 16
-related_ml_day: 16
-related_speech_day: 16
   - tcp-udp
   - load-balancing
   - redis
 difficulty: Medium
+related_dsa_day: 16
+related_ml_day: 16
+related_speech_day: 16
 ---
 
 **"Speed is not a feature. Speed is the product."**
@@ -60,7 +60,7 @@ Imagine a standard HTTP pipeline implemented by a junior engineer:
 5. **Transport (Network Download):** Server -> User.
  * *Time:* 50ms.
 
-**Total:** $50 + 300 + 2000 + 500 + 50 = 2900ms$ (2.9 seconds).
+**Total:** `50 + 300 + 2000 + 500 + 50 = 2900ms` (2.9 seconds).
 This is nearly 3 seconds of dead air. In a voice conversation, 3 seconds is an eternity. It is the awkward silence that kills the vibe.
 
 ### 2.2 Streaming Pipelining (Parallel Execution)
@@ -80,7 +80,7 @@ To get to sub-500ms, we cannot execute these steps sequentially. We must **Pipel
 * **User:** The user hears "Hi" while the LLM is *still generating* the rest of the sentence (" there, how are you?").
 
 * **Latency Cost:** We only pay the "Time to First Token" (TTFT) of each stage, not the full processing time.
-* **New Total:** $50 (Net) + 200 (STT-Partial) + 300 (LLM-TTFT) + 100 (TTS-Partial) = 650ms$.
+* **New Total:** `50 (Net) + 200 (STT-Partial) + 300 (LLM-TTFT) + 100 (TTS-Partial) = 650ms`.
 * *Result:* The user perceives an instant response.
 
 ---
@@ -122,28 +122,28 @@ You **must** use `asyncio` (FastAPI/Quart/Litestar).
 
 ### 4.1 The Event Loop Mechanics: Single-Threaded Concurrency
 In a blocking server (e.g., Flask with Sync Workers):
-```python
+``python
 def handle_request():
  audio = receive_audio() # BLOCKS the thread for 2 seconds waiting for network
  text = transcribe(audio) # BLOCKS the thread for processing
  return text
-```
+``
 If you have 10 users, you need 10 threads. 1000 users = 1000 threads. The OS spends significant CPU time just context-switching between threads (saving/loading registers). You hit the "C10K Problem" (Connecting 10k users) very quickly.
 
 In `asyncio`:
-```python
+``python
 async def handle_request():
  audio = await receive_audio() # Yields control.
  text = await transcribe(audio)
  return text
-```
+``
 Here, `await` is a magical keyword. It tells the Event Loop: *"I am waiting for IO (Network/Disk). I release the CPU. Go do work for someone else. Wake me up when the data arrives."*
 One single thread can handle 10,000 connections because at any given millisecond, 9,999 of them are just waiting for packets.
 
 ### 4.2 Handling Streams in Python: Async Generators
 The most elegant pattern for pipelines is the **Async Generator**.
 
-```python
+``python
 async def llm_stream(prompt):
  # This call initiates the stream but doesn't block the whole function
  stream = await openai.chat.completions.create(model="gpt-4o", stream=True)
@@ -175,7 +175,7 @@ async def handle_websocket(ws):
 
  async for audio_chunk in audio_stream:
  await ws.send_bytes(audio_chunk)
-```
+``
 
 This code is **lazy**. No processing happens until the final `async for` loop pulls data properly.
 
@@ -255,7 +255,7 @@ How does Agent Logic send audio to User A? It doesn't have the socket handle.
 
 Here is a more complete implementation demonstrating the connection lifecycle and asyncio gathering.
 
-```python
+``python
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import asyncio
 import uuid
@@ -328,7 +328,7 @@ async def run_agent_pipeline(session_id, input_queue, ws):
 def process_vad(chunk):
  # Mock VAD
  return True
-```
+``
 
 ---
 

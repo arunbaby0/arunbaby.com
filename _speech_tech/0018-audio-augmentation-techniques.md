@@ -1,24 +1,24 @@
 ---
 title: "Audio Augmentation Techniques"
 day: 18
+related_dsa_day: 18
+related_ml_day: 18
+related_agents_day: 18
 collection: speech_tech
 categories:
-  - speech-tech
+ - speech-tech
 tags:
-  - data-augmentation
-  - audio
-  - speech-recognition
-  - tts
-  - noise-robustness
-  - specaugment
-  - transformations
+ - data-augmentation
+ - audio
+ - speech-recognition
+ - tts
+ - noise-robustness
+ - specaugment
+ - transformations
 subdomain: "Speech Training & Robustness"
 tech_stack: [PyTorch, torchaudio, librosa, sox, ffmpeg, numpy]
 scale: "Millions of utterances, online & offline augmentation, multi-lingual"
 companies: [Google, Amazon, Apple, Microsoft, Meta, Baidu]
-related_dsa_day: 18
-related_ml_day: 18
-related_agents_day: 18
 ---
 
 **Use audio augmentation techniques to make speech models robust to noise, accents, channels, and real-world conditions—built on the same matrix/tensor transformation principles as image rotation.**
@@ -35,21 +35,21 @@ Design an **Audio Augmentation System** for speech models (ASR, TTS, KWS, diariz
 ### Functional Requirements
 
 1. **Waveform-level augmentations:**
-   - Additive noise (background, babble, music)
-   - Reverberation (RIR convolution)
-   - Speed perturbation (time stretching)
-   - Pitch shifting
-   - Clipping, dynamic range compression
+ - Additive noise (background, babble, music)
+ - Reverberation (RIR convolution)
+ - Speed perturbation (time stretching)
+ - Pitch shifting
+ - Clipping, dynamic range compression
 2. **Spectrogram-level augmentations:**
-   - Time masking, frequency masking (SpecAugment)
-   - Time warping
-   - Random cropping/padding
+ - Time masking, frequency masking (SpecAugment)
+ - Time warping
+ - Random cropping/padding
 3. **Policy configuration:**
-   - Per-task policies (ASR vs TTS vs KWS)
-   - Probability and strength controls
+ - Per-task policies (ASR vs TTS vs KWS)
+ - Probability and strength controls
 4. **Integration:**
-   - Compatible with popular toolkits (PyTorch, torchaudio, ESPnet, SpeechBrain)
-   - Simple hooks in `DataLoader` / `tf.data` pipelines
+ - Compatible with popular toolkits (PyTorch, torchaudio, ESPnet, SpeechBrain)
+ - Simple hooks in `DataLoader` / `tf.data` pipelines
 
 ### Non-Functional Requirements
 
@@ -76,7 +76,7 @@ Many audio augmentations operate on **time-series or time-frequency matrices**:
 
 - Waveform-level: 1D array transforms (convolution, resampling, mixing)
 - Spectrogram-level: 2D matrix transforms (masking, warping) very similar to
-  the 2D rotation and slicing you saw in matrix DSA problems.
+ the 2D rotation and slicing you saw in matrix DSA problems.
 
 Understanding 2D index manipulations (like Rotate Image) gives intuition for
 time-frequency transforms in spectrogram space.
@@ -87,44 +87,44 @@ time-frequency transforms in spectrogram space.
 
 Add background noise at a specified **Signal-to-Noise Ratio (SNR)**:
 
-```python
+``python
 import numpy as np
 
 def add_noise(
-    audio: np.ndarray,
-    noise: np.ndarray,
-    snr_db: float
+ audio: np.ndarray,
+ noise: np.ndarray,
+ snr_db: float
 ) -> np.ndarray:
-    \"\"\"Add noise to audio at a given SNR (in dB).
+ \"\"\"Add noise to audio at a given SNR (in dB).
 
-    Args:
-        audio: Clean audio waveform (float32, [-1, 1])
-        noise: Noise waveform (float32, [-1, 1])
-        snr_db: Desired SNR in decibels (e.g., 0–20 dB)
-    \"\"\"\n    # Match noise length
-    if len(noise) < len(audio):
-        # Tile noise if too short
-        repeats = int(np.ceil(len(audio) / len(noise)))
-        noise = np.tile(noise, repeats)[:len(audio)]
-    else:
-        noise = noise[:len(audio)]
+ Args:
+ audio: Clean audio waveform (float32, [-1, 1])
+ noise: Noise waveform (float32, [-1, 1])
+ snr_db: Desired SNR in decibels (e.g., 0–20 dB)
+ \"\"\"\n # Match noise length
+ if len(noise) < len(audio):
+ # Tile noise if too short
+ repeats = int(np.ceil(len(audio) / len(noise)))
+ noise = np.tile(noise, repeats)[:len(audio)]
+ else:
+ noise = noise[:len(audio)]
 
-    # Compute signal and noise power
-    sig_power = np.mean(audio ** 2) + 1e-8
-    noise_power = np.mean(noise ** 2) + 1e-8
+ # Compute signal and noise power
+ sig_power = np.mean(audio ** 2) + 1e-8
+ noise_power = np.mean(noise ** 2) + 1e-8
 
-    # Desired noise power for target SNR
-    snr_linear = 10 ** (snr_db / 10.0)
-    target_noise_power = sig_power / snr_linear
+ # Desired noise power for target SNR
+ snr_linear = 10 ** (snr_db / 10.0)
+ target_noise_power = sig_power / snr_linear
 
-    # Scale noise
-    noise_scaling = np.sqrt(target_noise_power / noise_power)
-    noisy = audio + noise_scaling * noise
+ # Scale noise
+ noise_scaling = np.sqrt(target_noise_power / noise_power)
+ noisy = audio + noise_scaling * noise
 
-    # Clip to valid range
-    noisy = np.clip(noisy, -1.0, 1.0)
-    return noisy
-```
+ # Clip to valid range
+ noisy = np.clip(noisy, -1.0, 1.0)
+ return noisy
+``
 
 Sources of noise:
 
@@ -136,16 +136,16 @@ Sources of noise:
 
 Simulate room acoustics using Room Impulse Responses (RIRs):
 
-```python
+``python
 import scipy.signal
 
 def apply_reverb(audio: np.ndarray, rir: np.ndarray) -> np.ndarray:
-    \"\"\"Convolve audio with room impulse response.\"\"\"\n    reverbed = scipy.signal.fftconvolve(audio, rir, mode='full')
-    # Normalize and clip
-    reverbed = reverbed / (np.max(np.abs(reverbed)) + 1e-8)
-    reverbed = np.clip(reverbed, -1.0, 1.0)
-    return reverbed
-```
+ \"\"\"Convolve audio with room impulse response.\"\"\"\n reverbed = scipy.signal.fftconvolve(audio, rir, mode='full')
+ # Normalize and clip
+ reverbed = reverbed / (np.max(np.abs(reverbed)) + 1e-8)
+ reverbed = np.clip(reverbed, -1.0, 1.0)
+ return reverbed
+``
 
 RIR libraries (e.g., REVERB challenge data) are commonly used in ASR training.
 
@@ -153,12 +153,12 @@ RIR libraries (e.g., REVERB challenge data) are commonly used in ASR training.
 
 Change speed without changing pitch:
 
-```python
+``python
 import librosa
 
 def speed_perturb(audio: np.ndarray, sr: int, speed: float) -> np.ndarray:
-    \"\"\"Time-stretch audio by a given factor (e.g., 0.9, 1.1).\"\"\"\n    return librosa.effects.time_stretch(audio, rate=speed)
-```
+ \"\"\"Time-stretch audio by a given factor (e.g., 0.9, 1.1).\"\"\"\n return librosa.effects.time_stretch(audio, rate=speed)
+``
 
 Typical factors: 0.9x, 1.0x, 1.1x. This is widely used in ASR training:
 
@@ -169,10 +169,10 @@ Typical factors: 0.9x, 1.0x, 1.1x. This is widely used in ASR training:
 
 Change pitch without changing speed:
 
-```python
+``python
 def pitch_shift(audio: np.ndarray, sr: int, n_steps: float) -> np.ndarray:
-    \"\"\"Shift pitch by n_steps (semitones).\"\"\"\n    return librosa.effects.pitch_shift(audio, sr=sr, n_steps=n_steps)
-```
+ \"\"\"Shift pitch by n_steps (semitones).\"\"\"\n return librosa.effects.pitch_shift(audio, sr=sr, n_steps=n_steps)
+``
 
 Useful for:
 
@@ -186,37 +186,37 @@ SpecAugment-style transforms directly on the **time-frequency matrix**.
 
 ### 1. Time & Frequency Masking (SpecAugment)
 
-```python
+``python
 import torch
 
 def spec_augment(
-    spec: torch.Tensor,
-    time_mask_param: int = 30,
-    freq_mask_param: int = 13,
-    num_time_masks: int = 2,
-    num_freq_masks: int = 2
+ spec: torch.Tensor,
+ time_mask_param: int = 30,
+ freq_mask_param: int = 13,
+ num_time_masks: int = 2,
+ num_freq_masks: int = 2
 ) -> torch.Tensor:
-    \"\"\"Apply SpecAugment to log-mel spectrogram.
+ \"\"\"Apply SpecAugment to log-mel spectrogram.
 
-    Args:
-        spec: (freq, time) tensor
-    \"\"\"\n    augmented = spec.clone()
-    freq, time = augmented.shape
+ Args:
+ spec: (freq, time) tensor
+ \"\"\"\n augmented = spec.clone()
+ freq, time = augmented.shape
 
-    # Frequency masking
-    for _ in range(num_freq_masks):
-        f = torch.randint(0, freq_mask_param + 1, (1,)).item()
-        f0 = torch.randint(0, max(1, freq - f + 1), (1,)).item()
-        augmented[f0:f0+f, :] = 0.0
+ # Frequency masking
+ for _ in range(num_freq_masks):
+ f = torch.randint(0, freq_mask_param + 1, (1,)).item()
+ f0 = torch.randint(0, max(1, freq - f + 1), (1,)).item()
+ augmented[f0:f0+f, :] = 0.0
 
-    # Time masking
-    for _ in range(num_time_masks):
-        t = torch.randint(0, time_mask_param + 1, (1,)).item()
-        t0 = torch.randint(0, max(1, time - t + 1), (1,)).item()
-        augmented[:, t0:t0+t] = 0.0
+ # Time masking
+ for _ in range(num_time_masks):
+ t = torch.randint(0, time_mask_param + 1, (1,)).item()
+ t0 = torch.randint(0, max(1, time - t + 1), (1,)).item()
+ augmented[:, t0:t0+t] = 0.0
 
-    return augmented
-```
+ return augmented
+``
 
 This is analogous to **rectangle masking** on images—like randomly zeroing out
 patches, but in time/frequency coordinates instead of x/y.
@@ -232,74 +232,74 @@ Warp the spectrogram along time axis selectively:
 
 ### 1. PyTorch Example
 
-```python
+``python
 import torch
 from torch.utils.data import Dataset, DataLoader
 
 
 class SpeechDataset(Dataset):
-    def __init__(self, items, sr=16000, augment_waveform=None, augment_spec=None):
-        self.items = items
-        self.sr = sr
-        self.augment_waveform = augment_waveform
-        self.augment_spec = augment_spec
+ def __init__(self, items, sr=16000, augment_waveform=None, augment_spec=None):
+ self.items = items
+ self.sr = sr
+ self.augment_waveform = augment_waveform
+ self.augment_spec = augment_spec
 
-    def __len__(self):
-        return len(self.items)
+ def __len__(self):
+ return len(self.items)
 
-    def __getitem__(self, idx):
-        audio, text = self._load_item(self.items[idx])
+ def __getitem__(self, idx):
+ audio, text = self._load_item(self.items[idx])
 
-        # Waveform-level augmentation
-        if self.augment_waveform:
-            audio = self.augment_waveform(audio, self.sr)
+ # Waveform-level augmentation
+ if self.augment_waveform:
+ audio = self.augment_waveform(audio, self.sr)
 
-        # Feature extraction
-        spec = self._compute_logmel(audio)
+ # Feature extraction
+ spec = self._compute_logmel(audio)
 
-        # Spectrogram-level augmentation
-        if self.augment_spec:
-            spec = self.augment_spec(spec)
+ # Spectrogram-level augmentation
+ if self.augment_spec:
+ spec = self.augment_spec(spec)
 
-        # Tokenize text, pad, etc. (omitted)
-        return spec, text
+ # Tokenize text, pad, etc. (omitted)
+ return spec, text
 
-    def _load_item(self, item):
-        # Load from disk / shard index
-        raise NotImplementedError
+ def _load_item(self, item):
+ # Load from disk / shard index
+ raise NotImplementedError
 
-    def _compute_logmel(self, audio):
-        # Use torchaudio or librosa
-        raise NotImplementedError
-```
+ def _compute_logmel(self, audio):
+ # Use torchaudio or librosa
+ raise NotImplementedError
+``
 
 ### 2. Augmentation Policies
 
 Define different policies by composing functions:
 
-```python
+``python
 import random
 
 def build_waveform_augmenter(noise_bank, rir_bank):
-    def augment(audio, sr):
-        # Randomly choose which augmentations to apply
-        if random.random() < 0.5:
-            noise = random.choice(noise_bank)
-            snr = random.uniform(0, 20)
-            audio = add_noise(audio, noise, snr_db=snr)
+ def augment(audio, sr):
+ # Randomly choose which augmentations to apply
+ if random.random() < 0.5:
+ noise = random.choice(noise_bank)
+ snr = random.uniform(0, 20)
+ audio = add_noise(audio, noise, snr_db=snr)
 
-        if random.random() < 0.3:
-            rir = random.choice(rir_bank)
-            audio = apply_reverb(audio, rir)
+ if random.random() < 0.3:
+ rir = random.choice(rir_bank)
+ audio = apply_reverb(audio, rir)
 
-        if random.random() < 0.3:
-            speed = random.choice([0.9, 1.0, 1.1])
-            audio = speed_perturb(audio, sr, speed)
+ if random.random() < 0.3:
+ speed = random.choice([0.9, 1.0, 1.1])
+ audio = speed_perturb(audio, sr, speed)
 
-        return audio
+ return audio
 
-    return augment
-```
+ return augment
+``
 
 ## Performance & Scalability
 
@@ -322,8 +322,8 @@ Mitigations:
 - Shard noise/RIR banks across workers
 - Use consistent randomness per worker (seed + rank)
 - For very large setups, you may:
-  - Run augmentation as a separate service (e.g., gRPC microservice),
-  - Or as a preprocessing cluster writing augmented data to storage.
+ - Run augmentation as a separate service (e.g., gRPC microservice),
+ - Or as a preprocessing cluster writing augmented data to storage.
 
 ## Monitoring & Debugging
 
@@ -333,8 +333,8 @@ Mitigations:
 - **Distribution of speed/pitch factors** (are you overusing extreme values?).
 - **Fraction of samples** that receive each augmentation type.
 - **Impact on WER/MOS**:
-  - Compare training with and without specific augmentations,
-  - Track metric changes when you tweak augmentation configs.
+ - Compare training with and without specific augmentations,
+ - Track metric changes when you tweak augmentation configs.
 
 These should appear as first-class metrics in your monitoring stack, not just
 as ad-hoc logs.
@@ -342,50 +342,50 @@ as ad-hoc logs.
 ### Debug Techniques
 
 - Build tools to visualize:
-  - Waveforms and spectrograms **before/after** augmentation,
-  - Overlays that highlight masked/warped regions on spectrograms.
+ - Waveforms and spectrograms **before/after** augmentation,
+ - Overlays that highlight masked/warped regions on spectrograms.
 - Add a small “inspection” mode:
-  - Sample N utterances per epoch,
-  - Save augmented audio and features,
-  - Make them accessible via a lightweight web UI.
+ - Sample N utterances per epoch,
+ - Save augmented audio and features,
+ - Make them accessible via a lightweight web UI.
 - Periodically **listen to augmented audio** across various tasks and languages
-  to catch unnatural or damaging augmentations.
+ to catch unnatural or damaging augmentations.
 
 ## Failure Modes & Guardrails
 
 Audio augmentation is powerful but easy to misuse. Common failure modes:
 
 - **Over-augmentation**
-  - Too much noise or distortion leads to:
-    - Models that underfit clean data,
-    - Unnatural spectrograms that don’t resemble deployment audio.
-  - Guardrails:
-    - Cap augmentation strength (e.g., SNR ≥ 5 dB),
-    - Use curriculum-style schedules (weaker early, stronger later).
+ - Too much noise or distortion leads to:
+ - Models that underfit clean data,
+ - Unnatural spectrograms that don’t resemble deployment audio.
+ - Guardrails:
+ - Cap augmentation strength (e.g., SNR ≥ 5 dB),
+ - Use curriculum-style schedules (weaker early, stronger later).
 
 - **Label inconsistency**
-  - Augmentations that invalidate labels:
-    - Trimming utterances that remove labeled content,
-    - Heavy time warping that breaks alignments for CTC/RNN-T.
-  - Guardrails:
-    - Make sure text/labels are updated (or augmentation is disabled) when
-      transforms change time scale or content.
-    - For alignments, prefer feature-space masking (SpecAugment) that preserves
-      global timing.
+ - Augmentations that invalidate labels:
+ - Trimming utterances that remove labeled content,
+ - Heavy time warping that breaks alignments for CTC/RNN-T.
+ - Guardrails:
+ - Make sure text/labels are updated (or augmentation is disabled) when
+ transforms change time scale or content.
+ - For alignments, prefer feature-space masking (SpecAugment) that preserves
+ global timing.
 
 - **Domain mismatch**
-  - Applying augmentations that are unrealistic for the target domain:
-    - Adding car noise to smart speaker data that mostly comes from quiet homes,
-    - Applying extreme reverberation where close-talk microphones dominate.
-  - Guardrails:
-    - Build per-domain augmentation configs,
-    - Validate with domain experts and real recordings.
+ - Applying augmentations that are unrealistic for the target domain:
+ - Adding car noise to smart speaker data that mostly comes from quiet homes,
+ - Applying extreme reverberation where close-talk microphones dominate.
+ - Guardrails:
+ - Build per-domain augmentation configs,
+ - Validate with domain experts and real recordings.
 
 - **Hidden performance bottlenecks**
-  - Expensive augmentations (e.g., repeated FFTs, Python loops) running per sample.
-  - Guardrails:
-    - Benchmark augmentation CPU time separately,
-    - Move repeated computations (e.g., RIR FFTs) offline or cache them.
+ - Expensive augmentations (e.g., repeated FFTs, Python loops) running per sample.
+ - Guardrails:
+ - Benchmark augmentation CPU time separately,
+ - Move repeated computations (e.g., RIR FFTs) offline or cache them.
 
 Design your system so each augmentation has:
 
@@ -423,13 +423,13 @@ and to improve generalization across recording conditions.
 Many of these augmentations can be viewed as **matrix/tensor operations**:
 
 - Waveform-level operations:
-  - Convolution (with RIRs),
-  - Additive mixing (noise),
-  - Time warping (resampling).
+ - Convolution (with RIRs),
+ - Additive mixing (noise),
+ - Time warping (resampling).
 - Spectrogram-level operations:
-  - Masking (zeroing rectangles),
-  - Warping (index remapping),
-  - Cropping/padding (submatrix extraction/insertion).
+ - Masking (zeroing rectangles),
+ - Warping (index remapping),
+ - Cropping/padding (submatrix extraction/insertion).
 
 The same skills you practice on DSA problems like Rotate Image (index mapping,
 in-place vs out-of-place updates) transfer directly to designing and reasoning

@@ -1,20 +1,20 @@
 ---
 title: "Vision Agent Fundamentals"
 day: 21
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - computer-vision
-  - vit
-  - clip
-  - cnn
-  - embeddings
-  - multimodal
-difficulty: Medium
 related_dsa_day: 21
 related_ml_day: 21
 related_speech_day: 21
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - computer-vision
+ - vit
+ - clip
+ - cnn
+ - embeddings
+ - multimodal
+difficulty: Medium
 ---
 
 **"Giving eyes to the brain: How Agents see the world."**
@@ -48,8 +48,8 @@ In 2020, Google researchers proposed a radical idea: *"Can we treat an image lik
 **The Process (patchifying):**
 1. **Input:** Take an image, say 224x224 resolution.
 2. **Patching:** Instead of processing pixel-by-pixel (which is what CNNs do), we cut the image into a grid of fixed-size squares, usually 16x16 pixels.
- * $224 / 16 = 14$. So we get a $14 \times 14$ grid, resulting in **196 patches**.
-3. **Flattening:** Each 16x16 patch contains 256 pixels. Each pixel has 3 color channels (RGB). So one patch is $16 \times 16 \times 3 = 768$ raw numbers. We flatten this into a 1D vector.
+ * `224 / 16 = 14`. So we get a `14 \times 14` grid, resulting in **196 patches**.
+3. **Flattening:** Each 16x16 patch contains 256 pixels. Each pixel has 3 color channels (RGB). So one patch is `16 \times 16 \times 3 = 768` raw numbers. We flatten this into a 1D vector.
 4. **Projection:** We pass this vector through a linear layer to project it into an "Embedding Space".
  * *Analogy:* This patch is now legally a "Token". It is a "Visual Word".
 5. **Positional Encoding:** This is a crucial step that junior engineers often overlook. Since we cut the image up, the model doesn't know where the patches belong spatially. If we just gave it the 196 vectors, it would treat them like a "Bag of Pixels" (scrambled). We add a specialized positional vector (often sine/cosine functions or learned parameters) to tell it where each patch belongs. This allows the model to reconstruct the spatial structure.
@@ -84,11 +84,11 @@ For agents to work in the open world, they need **Open Vocabulary** vision. This
 
 ### 3.2 The Solution: Contrastive Learning
 OpenAI scraped 400 million (Image, Text) pairs from the internet. They trained two parallel encoders:
-1. **Image Encoder (ViT):** Turns an image into a vector ($V_i$).
-2. **Text Encoder (Transformer):** Turns a text caption into a vector ($T_i$).
+1. **Image Encoder (ViT):** Turns an image into a vector (`V_i`).
+2. **Text Encoder (Transformer):** Turns a text caption into a vector (`T_i`).
 
 **The Training Objective:**
-The model is not told "This is a cat". Instead, it is given a batch of $N$ images and $N$ captions. It must predict which caption matches which image.
+The model is not told "This is a cat". Instead, it is given a batch of `N` images and `N` captions. It must predict which caption matches which image.
 It maximizes the **Cosine Similarity** (Dot Product) between the correct pair (Dog Image, "Photo of a dog") and minimizes it for every incorrect pair.
 
 ### 3.3 The Zero-Shot Capability
@@ -102,9 +102,9 @@ You can build a "Classification Tool" for your agent without training a model.
 2. **Query:** Agent creates a list of possible descriptions: `["Home Icon", "Settings Icon", "User Profile", "Logout Button"]`.
 3. **Process:**
  * Crop the icon from the screenshot.
- * Pass the crop to CLIP Image Encoder -> Get Vector $I$.
- * Pass the text strings to CLIP Text Encoder -> Get Vectors $T_1, T_2, T_3, T_4$.
- * Compute Dot Products: $I \cdot T_1$, $I \cdot T_2$, etc.
+ * Pass the crop to CLIP Image Encoder -> Get Vector `I`.
+ * Pass the text strings to CLIP Text Encoder -> Get Vectors `T_1, T_2, T_3, T_4`.
+ * Compute Dot Products: `I \cdot T_1`, `I \cdot T_2`, etc.
 4. **Result:** The highest score wins. The agent "knows" it is a "Settings Icon" purely based on semantic similarity.
 
 This gives agents **Common Sense Vision**. They can identify objects they have never technically seen before, as long as they know the word for it.

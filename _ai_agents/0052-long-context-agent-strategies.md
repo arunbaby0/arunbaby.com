@@ -1,24 +1,24 @@
 ---
 title: "Long-Context Agent Strategies"
 day: 52
+related_dsa_day: 52
+related_ml_day: 52
+related_speech_day: 52
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - long-context
-  - memory
-  - summarization
-  - retrieval
-  - context-management
-  - reliability
+ - long-context
+ - memory
+ - summarization
+ - retrieval
+ - context-management
+ - reliability
 difficulty: Hard
 subdomain: "Agent Memory"
 tech_stack: Python, Vector DB, SQLite, JSON Schema
 scale: "Multi-hour tasks, 100k+ token corpora, bounded cost and latency"
 companies: OpenAI, Anthropic, Google, Microsoft
-related_dsa_day: 52
-related_ml_day: 52
-related_speech_day: 52
 ---
 
 **"Long context isn’t ‘more tokens’—it’s a strategy for keeping the right boundaries of information."**
@@ -64,16 +64,16 @@ The key insight:
 ### 2.2 Hot vs warm vs cold memory
 
 - **Hot memory (prompt)**
-  - tiny, always included
-  - constraints, current plan, immediate working set
+ - tiny, always included
+ - constraints, current plan, immediate working set
 
 - **Warm memory (summaries + structured state)**
-  - short summaries, decision logs, TODOs
-  - used frequently but not always
+ - short summaries, decision logs, TODOs
+ - used frequently but not always
 
 - **Cold memory (retrieval store)**
-  - full transcripts, documents, code history
-  - retrieved on demand
+ - full transcripts, documents, code history
+ - retrieved on demand
 
 This is the same “bounded state” idea as two pointers:
 keep only what’s needed to move forward safely.
@@ -81,15 +81,15 @@ keep only what’s needed to move forward safely.
 ### 2.3 Failure modes unique to long context
 
 1. **Constraint decay**
-   - early instruction gets ignored after many turns
+ - early instruction gets ignored after many turns
 2. **Plan drift**
-   - agent starts doing “interesting” work unrelated to goal
+ - agent starts doing “interesting” work unrelated to goal
 3. **Evidence conflicts**
-   - retrieved sources disagree; agent picks one without noting conflict
+ - retrieved sources disagree; agent picks one without noting conflict
 4. **Context overflow**
-   - too much retrieved text; model loses signal
+ - too much retrieved text; model loses signal
 5. **Cost runaway**
-   - prompt grows linearly with time
+ - prompt grows linearly with time
 
 ### 2.4 Context budgets (the agent version of “resource allocation”)
 
@@ -257,7 +257,7 @@ This is a simplified pattern you can adapt. It stores:
 - artifacts in a local SQLite DB
 - a naive retrieval over keywords (placeholder for a vector DB)
 
-```python
+``python
 import sqlite3
 from dataclasses import dataclass
 from typing import List, Optional
@@ -265,83 +265,83 @@ from typing import List, Optional
 
 @dataclass
 class Artifact:
-    artifact_id: str
-    title: str
-    text: str
+ artifact_id: str
+ title: str
+ text: str
 
 
 class MemoryStore:
-    def __init__(self, db_path: str = "agent_memory.sqlite") -> None:
-        self.db_path = db_path
-        self.hot_constraints: List[str] = []
-        self.summary: str = ""
-        self._init_db()
+ def __init__(self, db_path: str = "agent_memory.sqlite") -> None:
+ self.db_path = db_path
+ self.hot_constraints: List[str] = []
+ self.summary: str = ""
+ self._init_db()
 
-    def _init_db(self) -> None:
-        conn = sqlite3.connect(self.db_path)
-        cur = conn.cursor()
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS artifacts (
-                artifact_id TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                text TEXT NOT NULL
-            )
-            """
-        )
-        conn.commit()
-        conn.close()
+ def _init_db(self) -> None:
+ conn = sqlite3.connect(self.db_path)
+ cur = conn.cursor()
+ cur.execute(
+ """
+ CREATE TABLE IF NOT EXISTS artifacts (
+ artifact_id TEXT PRIMARY KEY,
+ title TEXT NOT NULL,
+ text TEXT NOT NULL
+ )
+ """
+ )
+ conn.commit()
+ conn.close()
 
-    def set_constraints(self, constraints: List[str]) -> None:
-        self.hot_constraints = constraints
+ def set_constraints(self, constraints: List[str]) -> None:
+ self.hot_constraints = constraints
 
-    def update_summary(self, new_summary: str) -> None:
-        # In production: keep structured sections + guard against losing constraints.
-        self.summary = new_summary.strip()
+ def update_summary(self, new_summary: str) -> None:
+ # In production: keep structured sections + guard against losing constraints.
+ self.summary = new_summary.strip()
 
-    def store_artifact(self, art: Artifact) -> None:
-        conn = sqlite3.connect(self.db_path)
-        cur = conn.cursor()
-        cur.execute(
-            "INSERT OR REPLACE INTO artifacts (artifact_id, title, text) VALUES (?, ?, ?)",
-            (art.artifact_id, art.title, art.text),
-        )
-        conn.commit()
-        conn.close()
+ def store_artifact(self, art: Artifact) -> None:
+ conn = sqlite3.connect(self.db_path)
+ cur = conn.cursor()
+ cur.execute(
+ "INSERT OR REPLACE INTO artifacts (artifact_id, title, text) VALUES (?, ?, ?)",
+ (art.artifact_id, art.title, art.text),
+ )
+ conn.commit()
+ conn.close()
 
-    def retrieve_keyword(self, query: str, k: int = 3) -> List[Artifact]:
-        # Placeholder retrieval; replace with vector search in production.
-        tokens = [t.lower() for t in query.split() if t.strip()]
-        conn = sqlite3.connect(self.db_path)
-        cur = conn.cursor()
-        cur.execute("SELECT artifact_id, title, text FROM artifacts")
-        rows = cur.fetchall()
-        conn.close()
+ def retrieve_keyword(self, query: str, k: int = 3) -> List[Artifact]:
+ # Placeholder retrieval; replace with vector search in production.
+ tokens = [t.lower() for t in query.split() if t.strip()]
+ conn = sqlite3.connect(self.db_path)
+ cur = conn.cursor()
+ cur.execute("SELECT artifact_id, title, text FROM artifacts")
+ rows = cur.fetchall()
+ conn.close()
 
-        scored = []
-        for artifact_id, title, text in rows:
-            t = text.lower()
-            score = sum(1 for tok in tokens if tok in t)
-            if score > 0:
-                scored.append((score, Artifact(artifact_id, title, text)))
-        scored.sort(key=lambda x: x[0], reverse=True)
-        return [a for _, a in scored[:k]]
+ scored = []
+ for artifact_id, title, text in rows:
+ t = text.lower()
+ score = sum(1 for tok in tokens if tok in t)
+ if score > 0:
+ scored.append((score, Artifact(artifact_id, title, text)))
+ scored.sort(key=lambda x: x[0], reverse=True)
+ return [a for _, a in scored[:k]]
 
-    def build_prompt_context(self, query: str) -> str:
-        # Hot memory always included
-        parts = []
-        if self.hot_constraints:
-            parts.append("CONSTRAINTS:\n- " + "\n- ".join(self.hot_constraints))
-        if self.summary:
-            parts.append("SUMMARY:\n" + self.summary)
+ def build_prompt_context(self, query: str) -> str:
+ # Hot memory always included
+ parts = []
+ if self.hot_constraints:
+ parts.append("CONSTRAINTS:\n- " + "\n- ".join(self.hot_constraints))
+ if self.summary:
+ parts.append("SUMMARY:\n" + self.summary)
 
-        # Retrieve cold memory only as needed
-        retrieved = self.retrieve_keyword(query, k=3)
-        if retrieved:
-            evidence = "\n\n".join([f"[{a.artifact_id}] {a.title}\n{a.text[:800]}" for a in retrieved])
-            parts.append("RETRIEVED EVIDENCE:\n" + evidence)
-        return "\n\n".join(parts)
-```
+ # Retrieve cold memory only as needed
+ retrieved = self.retrieve_keyword(query, k=3)
+ if retrieved:
+ evidence = "\n\n".join([f"[{a.artifact_id}] {a.title}\n{a.text[:800]}" for a in retrieved])
+ parts.append("RETRIEVED EVIDENCE:\n" + evidence)
+ return "\n\n".join(parts)
+``
 
 This is intentionally minimal, but it demonstrates the architecture:
 - keep constraints hot
@@ -426,7 +426,7 @@ Better:
 
 Example:
 - “Never send user secrets to external tools”
-  - enforce by redaction and tool-call filtering
+ - enforce by redaction and tool-call filtering
 
 ### 6.3 Conflict handling
 
@@ -506,7 +506,7 @@ Abstractive summaries can introduce errors:
 
 Practical fixes:
 - use structured summaries with labeled sections:
-  - Facts / Decisions / Open Questions / Next Steps
+ - Facts / Decisions / Open Questions / Next Steps
 - keep citations in summaries (“Decision D3 based on artifact A17”)
 - allow summaries to be corrected (summary is editable state, not sacred truth)
 
@@ -640,12 +640,12 @@ These are the agent equivalent of anomaly detection guardrails: they prevent rar
 Summaries can be:
 
 - **Extractive** (pull key sentences)
-  - pros: lower hallucination risk, preserves wording
-  - cons: can be verbose and redundant
+ - pros: lower hallucination risk, preserves wording
+ - cons: can be verbose and redundant
 
 - **Abstractive** (rewrite in new words)
-  - pros: compact, can unify multiple sources
-  - cons: higher risk of “rewriting history” incorrectly
+ - pros: compact, can unify multiple sources
+ - cons: higher risk of “rewriting history” incorrectly
 
 For long-context reliability, a strong pattern is hybrid:
 - use extractive snippets for constraints and critical facts
@@ -668,25 +668,25 @@ This is how you prevent long-context from turning into “everything in the prom
 When a long-context agent starts behaving badly (forgetting constraints, looping, drifting), a practical playbook:
 
 1. **Check budgets**
-   - did prompt size grow unexpectedly?
-   - did retrieval start returning too many chunks?
+ - did prompt size grow unexpectedly?
+ - did retrieval start returning too many chunks?
 
 2. **Check constraint enforcement**
-   - did a validator allow a risky action?
-   - did retrieved content override system constraints (prompt injection)?
+ - did a validator allow a risky action?
+ - did retrieved content override system constraints (prompt injection)?
 
 3. **Check memory freshness**
-   - are summaries stale or incorrect?
-   - did a decision log entry conflict with new evidence?
+ - are summaries stale or incorrect?
+ - did a decision log entry conflict with new evidence?
 
 4. **Reduce and reproduce**
-   - reproduce the failure with a smaller set of artifacts
-   - identify the minimal evidence that triggers the drift
+ - reproduce the failure with a smaller set of artifacts
+ - identify the minimal evidence that triggers the drift
 
 5. **Mitigate**
-   - tighten context packing budgets
-   - add conflict detection
-   - add “tool-first” enforcement for deterministic facts
+ - tighten context packing budgets
+ - add conflict detection
+ - add “tool-first” enforcement for deterministic facts
 
 This is the agent equivalent of anomaly response: treat misbehavior as a detectable pattern and fix the system primitives, not just the prompt.
 

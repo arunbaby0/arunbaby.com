@@ -3,13 +3,13 @@ title: "Prompt Engineering for Agents"
 day: 3
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - prompt-engineering
-  - react
-  - dspy
-  - security
-  - chain-of-thought
+ - prompt-engineering
+ - react
+ - dspy
+ - security
+ - chain-of-thought
 difficulty: Easy
 related_dsa_day: 3
 related_ml_day: 3
@@ -99,7 +99,7 @@ A robust System Prompt has 5 distinct sections:
 A prompt is not a static string. It is a **Template** filled at runtime.
 * *Static:* "Answer the user."
 * *Dynamic:*
- ```text
+ ``text
  Current Time: {{ timestamp }}
  User Location: {{ location }}
  User's Subscription Level: {{ plan }}
@@ -107,7 +107,7 @@ A prompt is not a static string. It is a **Template** filled at runtime.
  {{ memory_summary }}
 
  Task: Answer the user.
- ```
+ ``
 This gives the agent "Situational Awareness."
 
 ---
@@ -163,7 +163,7 @@ If the Prompt is Code, then **Prompt Injection** is Buffer Overflow.
 
 A conceptual implementation of a template engine.
 
-```python
+``python
 from datetime import datetime
 
 class PromptTemplate:
@@ -213,7 +213,7 @@ final_prompt = builder.format(
 )
 
 # This final string is what goes to the LLM
-```
+``
 
 ---
 

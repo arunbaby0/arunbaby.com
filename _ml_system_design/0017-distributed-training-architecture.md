@@ -1,23 +1,23 @@
 ---
 title: "Distributed Training Architecture"
 day: 17
+related_dsa_day: 17
+related_speech_day: 17
+related_agents_day: 17
 collection: ml_system_design
 categories:
-  - ml-system-design
+ - ml-system-design
 tags:
-  - distributed-training
-  - data-parallelism
-  - model-parallelism
-  - pipeline-parallelism
-  - all-reduce
-  - large-scale-sequences
+ - distributed-training
+ - data-parallelism
+ - model-parallelism
+ - pipeline-parallelism
+ - all-reduce
+ - large-scale-sequences
 subdomain: "Training Infrastructure"
 tech_stack: [PyTorch, TensorFlow, Horovod, NCCL, Kubernetes, Ray, DeepSpeed]
 scale: "1K+ GPUs, 10B+ parameters, PB-scale data"
 companies: [Google, Meta, OpenAI, DeepMind, Microsoft, Amazon]
-related_dsa_day: 17
-related_speech_day: 17
-related_agents_day: 17
 ---
 
 **Design distributed training architectures that can efficiently process massive sequential datasets and train billion-parameter models across thousands of GPUs.**
@@ -34,50 +34,50 @@ You need to design a **distributed training architecture** for large-scale deep 
 ### Functional Requirements
 
 1. **Data ingestion & preprocessing**
-   - Stream training data from distributed storage (S3/HDFS/GCS).
-   - Handle sharded datasets and multiple epochs.
-   - Perform lightweight preprocessing/augmentation online.
+ - Stream training data from distributed storage (S3/HDFS/GCS).
+ - Handle sharded datasets and multiple epochs.
+ - Perform lightweight preprocessing/augmentation online.
 
 2. **Parallel training**
-   - Support data parallelism, model parallelism, and pipeline parallelism.
-   - Allow hybrid combinations for very large models.
+ - Support data parallelism, model parallelism, and pipeline parallelism.
+ - Allow hybrid combinations for very large models.
 
 3. **Gradient synchronization**
-   - Efficient all-reduce / all-gather for gradients and parameters.
-   - Topology-aware communication (intra-node vs inter-node).
+ - Efficient all-reduce / all-gather for gradients and parameters.
+ - Topology-aware communication (intra-node vs inter-node).
 
 4. **Checkpointing & recovery**
-   - Periodic checkpoints to distributed storage.
-   - Resume after failures without losing significant progress.
+ - Periodic checkpoints to distributed storage.
+ - Resume after failures without losing significant progress.
 
 5. **Experiment management**
-   - Track configs, code versions, metrics, and artifacts.
-   - Support hyperparameter sweeps.
+ - Track configs, code versions, metrics, and artifacts.
+ - Support hyperparameter sweeps.
 
 6. **Scheduling & orchestration**
-   - Submit, pause, resume, and cancel training jobs.
-   - Allocate GPUs/TPUs across multiple teams.
+ - Submit, pause, resume, and cancel training jobs.
+ - Allocate GPUs/TPUs across multiple teams.
 
 ### Non-Functional Requirements
 
 1. **Throughput**
-   - High GPU utilization (70–90%).
-   - Minimize data pipeline and communication stalls.
+ - High GPU utilization (70–90%).
+ - Minimize data pipeline and communication stalls.
 
 2. **Scalability**
-   - Near-linear scaling when increasing GPU count (e.g., 8 → 64 → 512).
+ - Near-linear scaling when increasing GPU count (e.g., 8 → 64 → 512).
 
 3. **Reliability**
-   - Automatic recovery from worker/node failures.
-   - Tolerate transient network/storage issues.
+ - Automatic recovery from worker/node failures.
+ - Tolerate transient network/storage issues.
 
 4. **Cost efficiency**
-   - Reasonable cost per training step / per processed token.
-   - Ability to leverage spot/preemptible instances when possible.
+ - Reasonable cost per training step / per processed token.
+ - Ability to leverage spot/preemptible instances when possible.
 
 5. **Reproducibility**
-   - Seed control, deterministic data shuffling.
-   - Ability to reproduce critical experiments.
+ - Seed control, deterministic data shuffling.
+ - Ability to reproduce critical experiments.
 
 ## Understanding the Requirements
 
@@ -118,69 +118,69 @@ In all 3:
 
 ## High-Level Architecture
 
-```text
+``text
 ┌─────────────────────────────────────────────────────────────────┐
-│                Distributed Training Architecture                 │
+│ Distributed Training Architecture │
 └─────────────────────────────────────────────────────────────────┘
 
-                          Control Plane
-                    ┌────────────────────┐
-                    │  Orchestrator      │
-                    │  - Job scheduler   │
-                    │  - Resource mgr    │
-                    │  - Elastic scaling │
-                    └─────────┬──────────┘
-                              │
-           ┌──────────────────┼──────────────────┐
-           │                  │                  │
+ Control Plane
+ ┌────────────────────┐
+ │ Orchestrator │
+ │ - Job scheduler │
+ │ - Resource mgr │
+ │ - Elastic scaling │
+ └─────────┬──────────┘
+ │
+ ┌──────────────────┼──────────────────┐
+ │ │ │
 ┌──────────▼─────────┐ ┌─────▼──────┐ ┌────────▼────────┐
-│  Config & Params   │ │  Logging   │ │  Experiment     │
-│  - Model configs   │ │  & Metrics │ │  Tracking       │
-│  - Optimizer cfgs  │ │  (Prom/Graf)││  (MLflow/W&B)   │
+│ Config & Params │ │ Logging │ │ Experiment │
+│ - Model configs │ │ & Metrics │ │ Tracking │
+│ - Optimizer cfgs │ │ (Prom/Graf)││ (MLflow/W&B) │
 └─────────┬──────────┘ └─────┬──────┘ └────────┬────────┘
-          │                   │                 │
-          └───────────────────┼─────────────────┘
-                              │
-                         Data Plane
-          ┌──────────────────┼──────────────────┐
-          │                  │                  │
+ │ │ │
+ └───────────────────┼─────────────────┘
+ │
+ Data Plane
+ ┌──────────────────┼──────────────────┐
+ │ │ │
 ┌─────────▼────────┐ ┌──────▼───────┐ ┌────────▼────────┐
-│  Trainer Group 1 │ │ Trainer Group│ │ Trainer Group N │
-│  (Data Parallel) │ │ 2 (Hybrid)   │ │ (Specialized)   │
-│  GPUs: 0..7      │ │ GPUs: 8..15  │ │ GPUs: ...       │
+│ Trainer Group 1 │ │ Trainer Group│ │ Trainer Group N │
+│ (Data Parallel) │ │ 2 (Hybrid) │ │ (Specialized) │
+│ GPUs: 0..7 │ │ GPUs: 8..15 │ │ GPUs: ... │
 └─────────┬────────┘ └──────┬───────┘ └────────┬────────┘
-          │                  │                  │
-          └──────────────────┼──────────────────┘
-                             │
-                     ┌───────▼───────┐
-                     │   Data Layer  │
-                     │   - Sharded   │
-                     │     datasets  │
-                     │   - Feature   │
-                     │     store     │
-                     └───────────────┘
-```
+ │ │ │
+ └──────────────────┼──────────────────┘
+ │
+ ┌───────▼───────┐
+ │ Data Layer │
+ │ - Sharded │
+ │ datasets │
+ │ - Feature │
+ │ store │
+ └───────────────┘
+``
 
 ### Key Components
 
 1. **Data Layer**
-   - Sharded datasets in object storage (S3/GCS/HDFS).
-   - Optional feature store (pre-computed embeddings, features).
+ - Sharded datasets in object storage (S3/GCS/HDFS).
+ - Optional feature store (pre-computed embeddings, features).
 
 2. **Trainer Groups**
-   - Sets of GPUs/nodes cooperating on one training job.
-   - May use different parallelism strategies (pure data-parallel, hybrid, etc.).
+ - Sets of GPUs/nodes cooperating on one training job.
+ - May use different parallelism strategies (pure data-parallel, hybrid, etc.).
 
 3. **Communication Layer**
-   - NCCL, MPI, or gRPC for collective communication (all-reduce, all-gather).
+ - NCCL, MPI, or gRPC for collective communication (all-reduce, all-gather).
 
 4. **Control Plane**
-   - Orchestrates jobs, scales clusters, schedules resources.
-   - Often backed by Kubernetes + a training framework (Ray, Kubeflow, SageMaker, etc.).
+ - Orchestrates jobs, scales clusters, schedules resources.
+ - Often backed by Kubernetes + a training framework (Ray, Kubeflow, SageMaker, etc.).
 
 5. **Monitoring & Experimentation**
-   - Metrics pipelines (Prometheus, Grafana).
-   - Experiment tracking (MLflow, Weights & Biases).
+ - Metrics pipelines (Prometheus, Grafana).
+ - Experiment tracking (MLflow, Weights & Biases).
 
 ## Parallelism Strategies
 
@@ -189,36 +189,36 @@ In all 3:
 **Idea:** replicate the model on each worker, shard the data.
 
 - Each worker:
-  - Gets a different mini-batch.
-  - Computes local gradients.
+ - Gets a different mini-batch.
+ - Computes local gradients.
 - Then all workers:
-  - **All-reduce** gradients,
-  - Apply the update to their own copy of the model.
+ - **All-reduce** gradients,
+ - Apply the update to their own copy of the model.
 
-```python
+``python
 import torch
 import torch.distributed as dist
 
 def train_epoch_data_parallel(model, dataloader, optimizer, rank, world_size):
-    model.train()
-    for step, batch in enumerate(dataloader):
-        inputs = batch['inputs'].to(rank)
-        targets = batch['targets'].to(rank)
+ model.train()
+ for step, batch in enumerate(dataloader):
+ inputs = batch['inputs'].to(rank)
+ targets = batch['targets'].to(rank)
 
-        optimizer.zero_grad()
-        outputs = model(inputs)
-        loss = compute_loss(outputs, targets)
-        loss.backward()
+ optimizer.zero_grad()
+ outputs = model(inputs)
+ loss = compute_loss(outputs, targets)
+ loss.backward()
 
-        # Gradient all-reduce
-        for param in model.parameters():
-            if param.grad is None:
-                continue
-            dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
-            param.grad.data /= world_size
+ # Gradient all-reduce
+ for param in model.parameters():
+ if param.grad is None:
+ continue
+ dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
+ param.grad.data /= world_size
 
-        optimizer.step()
-```
+ optimizer.step()
+``
 
 **Pros:**
 - Simple to reason about.
@@ -235,30 +235,30 @@ def train_epoch_data_parallel(model, dataloader, optimizer, rank, world_size):
 - Often used when the model is too big for a single GPU.
 - Example: tensor parallelism (split matrix multiplications across GPUs).
 
-```python
+``python
 class TensorParallelLinear(torch.nn.Module):
-    \"\"\"Example of a tensor-parallel linear layer over 2 GPUs.\"\"\"\n    def __init__(self, in_features, out_features):
-        super().__init__()
-        self.out_half = out_features // 2
-        self.w0 = torch.nn.Parameter(
-            torch.randn(in_features, self.out_half, device='cuda:0')
-        )
-        self.w1 = torch.nn.Parameter(
-            torch.randn(in_features, self.out_half, device='cuda:1')
-        )
+ \"\"\"Example of a tensor-parallel linear layer over 2 GPUs.\"\"\"\n def __init__(self, in_features, out_features):
+ super().__init__()
+ self.out_half = out_features // 2
+ self.w0 = torch.nn.Parameter(
+ torch.randn(in_features, self.out_half, device='cuda:0')
+ )
+ self.w1 = torch.nn.Parameter(
+ torch.randn(in_features, self.out_half, device='cuda:1')
+ )
 
-    def forward(self, x):
-        # x initially on cuda:0
-        x0 = x.to('cuda:0')
-        x1 = x.to('cuda:1')
+ def forward(self, x):
+ # x initially on cuda:0
+ x0 = x.to('cuda:0')
+ x1 = x.to('cuda:1')
 
-        y0 = x0 @ self.w0
-        y1 = x1 @ self.w1
+ y0 = x0 @ self.w0
+ y1 = x1 @ self.w1
 
-        # Gather back to one device
-        y = torch.cat([y0.to('cuda:0'), y1.to('cuda:0')], dim=-1)
-        return y
-```
+ # Gather back to one device
+ y = torch.cat([y0.to('cuda:0'), y1.to('cuda:0')], dim=-1)
+ return y
+``
 
 **Pros:**
 - Allows training models larger than single-GPU memory.
@@ -271,12 +271,12 @@ class TensorParallelLinear(torch.nn.Module):
 
 **Idea:** Split the network into **stages** and place each on a GPU (or set of GPUs).
 
-```text
+``text
 Stage 0 (GPU0): layers 0–3
 Stage 1 (GPU1): layers 4–7
 Stage 2 (GPU2): layers 8–11
 ...
-```
+``
 
 - Micro-batches flow through the pipeline, overlapping compute across stages.
 - Schedules like GPipe and 1F1B (one-forward-one-backward) reduce pipeline bubbles.
@@ -307,39 +307,39 @@ For large corpora (text, audio, click logs), store data as **shards**:
 - `data-00000.tfrecord`, `data-00001.tfrecord`, ...
 - Each shard contains a manageable number of samples (e.g., 10K–100K).
 
-```python
+``python
 from torch.utils.data import IterableDataset
 
 class ShardedDataset(IterableDataset):
-    \"\"\"Distributed sharded dataset for large-scale sequential data.\"\"\"\n    def __init__(self, shard_paths: list[str], rank: int, world_size: int):
-        super().__init__()
-        self.shard_paths = shard_paths[rank::world_size]  # simple sharding
+ \"\"\"Distributed sharded dataset for large-scale sequential data.\"\"\"\n def __init__(self, shard_paths: list[str], rank: int, world_size: int):
+ super().__init__()
+ self.shard_paths = shard_paths[rank::world_size] # simple sharding
 
-    def __iter__(self):
-        for shard_path in self.shard_paths:
-            yield from self._read_shard(shard_path)
+ def __iter__(self):
+ for shard_path in self.shard_paths:
+ yield from self._read_shard(shard_path)
 
-    def _read_shard(self, path: str):
-        # Read compressed records (e.g., TFRecord, WebDataset tar)
-        # Yield token/audio sequences lazily
-        raise NotImplementedError
-```
+ def _read_shard(self, path: str):
+ # Read compressed records (e.g., TFRecord, WebDataset tar)
+ # Yield token/audio sequences lazily
+ raise NotImplementedError
+``
 
 ### 2. Sequence Bucketing & Packing
 
 To reduce padding waste when training on sequences:
 
-```python
+``python
 def bucket_by_length(sequences, bucket_sizes):
-    buckets = {b: [] for b in bucket_sizes}
-    for seq in sequences:
-        length = len(seq)
-        for b in bucket_sizes:
-            if length <= b:
-                buckets[b].append(seq)
-                break
-    return buckets
-```
+ buckets = {b: [] for b in bucket_sizes}
+ for seq in sequences:
+ length = len(seq)
+ for b in bucket_sizes:
+ if length <= b:
+ buckets[b].append(seq)
+ break
+ return buckets
+``
 
 - Group sequences by length bucket.
 - Within each bucket, pad to that bucket size.
@@ -347,19 +347,19 @@ def bucket_by_length(sequences, bucket_sizes):
 
 ### 3. Streaming Input Pipeline
 
-```python
+``python
 from torch.utils.data import DataLoader
 
 def build_dataloader(shards, batch_size, rank, world_size):
-    dataset = ShardedDataset(shards, rank, world_size)
-    dataloader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        num_workers=4,
-        prefetch_factor=4,
-    )
-    return dataloader
-```
+ dataset = ShardedDataset(shards, rank, world_size)
+ dataloader = DataLoader(
+ dataset,
+ batch_size=batch_size,
+ num_workers=4,
+ prefetch_factor=4,
+ )
+ return dataloader
+``
 
 Common pitfalls:
 
@@ -371,25 +371,25 @@ Common pitfalls:
 
 ### All-Reduce for Gradients
 
-```python
+``python
 import torch.distributed as dist
 
 def allreduce_gradients(model):
-    \"\"\"All-reduce gradients across data-parallel workers.\"\"\"\n    for param in model.parameters():
-        if param.grad is None:
-            continue
-        dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
-        param.grad.data /= dist.get_world_size()
-```
+ \"\"\"All-reduce gradients across data-parallel workers.\"\"\"\n for param in model.parameters():
+ if param.grad is None:
+ continue
+ dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
+ param.grad.data /= dist.get_world_size()
+``
 
 ### Topologies
 
 - **Ring all-reduce**
-  - Good bandwidth utilization.
-  - Latency grows with number of nodes.
+ - Good bandwidth utilization.
+ - Latency grows with number of nodes.
 - **Tree all-reduce**
-  - Better latency characteristics.
-  - Often used when world size is large.
+ - Better latency characteristics.
+ - Often used when world size is large.
 
 Frameworks like NCCL dynamically choose strategies based on the cluster topology:
 
@@ -401,24 +401,24 @@ Frameworks like NCCL dynamically choose strategies based on the cluster topology
 
 ### Checkpointing
 
-```python
+``python
 import torch
 
 def save_checkpoint(model, optimizer, step, path):
-    state = {
-        'model_state': model.state_dict(),
-        'optimizer_state': optimizer.state_dict(),
-        'step': step,
-    }
-    torch.save(state, path)
+ state = {
+ 'model_state': model.state_dict(),
+ 'optimizer_state': optimizer.state_dict(),
+ 'step': step,
+ }
+ torch.save(state, path)
 
 
 def load_checkpoint(model, optimizer, path, map_location='cuda'):
-    state = torch.load(path, map_location=map_location)
-    model.load_state_dict(state['model_state'])
-    optimizer.load_state_dict(state['optimizer_state'])
-    return state['step']
-```
+ state = torch.load(path, map_location=map_location)
+ model.load_state_dict(state['model_state'])
+ optimizer.load_state_dict(state['optimizer_state'])
+ return state['step']
+``
 
 Best practices:
 
@@ -431,57 +431,57 @@ Best practices:
 Scenarios:
 
 - **Worker dies** (e.g., preempted spot instance).
-  - Use elastic training (TorchElastic/Ray Train) to allow workers to join/leave.
-  - Rebuild process groups on the fly.
+ - Use elastic training (TorchElastic/Ray Train) to allow workers to join/leave.
+ - Rebuild process groups on the fly.
 - **Node dies**
-  - Kubernetes reschedules pods.
-  - Training resumes from latest checkpoint.
+ - Kubernetes reschedules pods.
+ - Training resumes from latest checkpoint.
 
 Important design question:
 
 - **How often do you checkpoint?**
-  - Trade-off between:
-    - Time spent writing checkpoints.
-    - Amount of work lost on failure.
+ - Trade-off between:
+ - Time spent writing checkpoints.
+ - Amount of work lost on failure.
 
 ## Monitoring & Metrics
 
 ### What to Track
 
 - **Training metrics**
-  - Loss, accuracy, perplexity, WER, etc.
-  - Learning rate schedules, gradient norms.
+ - Loss, accuracy, perplexity, WER, etc.
+ - Learning rate schedules, gradient norms.
 - **System metrics**
-  - GPU utilization, memory usage.
-  - Network bandwidth, all-reduce time.
-  - Data loader time vs step time.
+ - GPU utilization, memory usage.
+ - Network bandwidth, all-reduce time.
+ - Data loader time vs step time.
 
-```python
+``python
 class TrainingMetrics:
-    def __init__(self):
-        self.step_times = []
-        self.throughputs = []
+ def __init__(self):
+ self.step_times = []
+ self.throughputs = []
 
-    def log_step(self, step_time, samples):
-        self.step_times.append(step_time)
-        self.throughputs.append(samples / max(step_time, 1e-8))
+ def log_step(self, step_time, samples):
+ self.step_times.append(step_time)
+ self.throughputs.append(samples / max(step_time, 1e-8))
 
-    @property
-    def avg_step_time(self):
-        return sum(self.step_times) / len(self.step_times) if self.step_times else 0
+ @property
+ def avg_step_time(self):
+ return sum(self.step_times) / len(self.step_times) if self.step_times else 0
 
-    @property
-    def avg_throughput(self):
-        return sum(self.throughputs) / len(self.throughputs) if self.throughputs else 0
-```
+ @property
+ def avg_throughput(self):
+ return sum(self.throughputs) / len(self.throughputs) if self.throughputs else 0
+``
 
 Use Prometheus/Grafana or similar for real-time dashboards:
 
 - Per-job, per-node, per-GPU metrics.
 - Alerting for:
-  - Low GPU utilization,
-  - High all-reduce latency,
-  - Data loader bottlenecks.
+ - Low GPU utilization,
+ - High all-reduce latency,
+ - Data loader bottlenecks.
 
 ## Failure Modes & Mitigations
 
@@ -567,13 +567,13 @@ Assume:
 - 1T tokens total
 - 128 A100 GPUs at $3/hr each
 
-| Component               | Value           |
+| Component | Value |
 |-------------------------|-----------------|
-| Tokens/sec/GPU         | ~10,000         |
-| Total tokens/sec       | 1.28M           |
-| Time to process 1T tok | ~9 days         |
-| GPU cost/day           | 128 × $3 = $384 |
-| **Total cost**         | **≈ $3,456**    |
+| Tokens/sec/GPU | ~10,000 |
+| Total tokens/sec | 1.28M |
+| Time to process 1T tok | ~9 days |
+| GPU cost/day | 128 × `3 = `384 |
+| **Total cost** | **≈ $3,456** |
 
 Cost levers:
 
@@ -598,7 +598,7 @@ Cost levers:
 
 ### Connection to Thematic Link: Handling Large-Scale Sequential Data
 
-All three Day 17 topics share the same pattern:
+All three topics share the same pattern:
 
 **DSA (Add Two Numbers – Linked List):**
 - Process digits sequentially.

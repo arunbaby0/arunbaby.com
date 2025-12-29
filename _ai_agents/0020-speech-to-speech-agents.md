@@ -1,21 +1,21 @@
 ---
 title: "Real-Time Speech-to-Speech Agents"
 day: 20
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - speech-to-speech
-  - gpt-4o
-  - moshi
-  - ultravox
-  - multimodal
-  - audio-tokenization
-  - vq-vae
 related_dsa_day: 20
 related_ml_day: 20
 related_speech_day: 20
-  - encodec
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - speech-to-speech
+ - gpt-4o
+ - moshi
+ - ultravox
+ - multimodal
+ - audio-tokenization
+ - vq-vae
+ - encodec
 difficulty: Medium
 ---
 

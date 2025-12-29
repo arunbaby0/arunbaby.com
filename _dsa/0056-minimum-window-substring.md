@@ -1,6 +1,9 @@
 ---
 title: "Minimum Window Substring"
 day: 56
+related_ml_day: 56
+related_speech_day: 56
+related_agents_day: 56
 collection: dsa
 categories:
   - dsa
@@ -15,10 +18,6 @@ subdomain: "Sliding Window"
 tech_stack: Python
 scale: "O(N) time, O(K) space"
 companies: Google, Facebook, Amazon, Microsoft
-related_ml_day: 56
-related_speech_day: 56
-related_agents_day: 56
-related_agents_day: 56
 ---
 
 **"Minimum Window Substring is the crown jewel of the sliding window pattern—it teaches us how to find the smallest container that satisfies a complex set of requirements."**
@@ -29,7 +28,7 @@ In the vast landscape of data structures and algorithms, few patterns are as vis
 
 The **Minimum Window Substring** problem is the apex of this pattern. It isn't just a string puzzle; it is a masterclass in managing **invariants** under motion. How do you keep a set of requirements satisfied while constantly changing both boundaries of your search?
 
-Today, we will dismantle this problem, rebuilt it with optimized logic, and connect it to the broader systems of **Real-time Personalization** and **Adaptive Systems**.
+We will dismantle this problem, rebuilt it with optimized logic, and connect it to the broader systems of **Real-time Personalization** and **Adaptive Systems**.
 
 ---
 
@@ -65,10 +64,10 @@ The test cases will be generated such that the answer is **unique**.
 
 ### 2.1 Why Brute Force Fails
 A naive approach would be to check every possible substring of `s`:
-1. Generate all substrings ($O(N^2)$).
-2. For each substring, count character frequencies and compare with `t`'s frequencies ($O(N)$).
-3. Total time: $O(N^3)$.
-With $N = 10^5$, $N^3 = 10^{15}$, which is computationally impossible for any modern machine.
+1. Generate all substrings (O(N^2)).
+2. For each substring, count character frequencies and compare with `t`'s frequencies (O(N)).
+3. Total time: O(N^3).
+With `N = 10^5`, `N^3 = 10^{15}`, which is computationally impossible for any modern machine.
 
 ### 2.2 The Sliding Window Intuition
 The "Minimum Window" problem is a classic **constrained optimization** problem. We are searching for an interval `[left, right]` that minimizes `right - left + 1` subject to the constraint that all characters in `t` are present.
@@ -77,10 +76,10 @@ The key observation is:
 - If we find a valid window, can we make it smaller from the left?
 - If the window is invalid, we must make it larger from the right.
 
-This "contract and expand" movement is the essence of the **Sliding Window** pattern. It reduces the $O(N^2)$ search space of substrings into an $O(N)$ search space of window boundaries.
+This "contract and expand" movement is the essence of the **Sliding Window** pattern. It reduces the O(N^2) search space of substrings into an O(N) search space of window boundaries.
 
 ### 2.3 Thematic Link: Real-time Personalization and Adaptation
-Today's shared theme across tracks is **Real-time Adaptation and Dynamic Windowing**:
+The shared theme across tracks is **Real-time Adaptation and Dynamic Windowing**:
 - **DSA**: We are using a dynamic sliding window to adapt to the constraints of the target string.
 - **ML System Design**: Real-time Personalization systems use "feature windows" to capture a user's most recent interests while discarding stale data.
 - **Speech Tech**: Real-time Voice Adaptation uses moving windows of audio to adapt the model to a speaker's unique acoustic profile.
@@ -101,9 +100,9 @@ The algorithm uses two pointers, `left` and `right`, and a frequency map (or has
 ### 3.2 The Contraction Phase (Left Pointer)
 1. Once the window is valid, try to move the `left` pointer to the right.
 2. For each character removed at `left`:
-   - Check if the window is still valid.
-   - Update the "minimum window found so far" if the current valid window is smaller.
-   - If removing the character makes the window invalid, stop contracting and go back to the expansion phase.
+  - Check if the window is still valid.
+  - Update the "minimum window found so far" if the current valid window is smaller.
+  - If removing the character makes the window invalid, stop contracting and go back to the expansion phase.
 
 ---
 
@@ -189,11 +188,11 @@ class Solution:
                     formed -= 1
 
                 # Move the left pointer ahead, this will help to look for a new window.
-                l += 1    
+                l += 1 
 
-            # Keep moving the right pointer
-            r += 1    
-
+                # Keep moving the right pointer
+                r += 1 
+        
         return "" if ans[0] == float("inf") else s[ans[1] : ans[2] + 1]
 ```
 
@@ -243,7 +242,7 @@ class SolutionFiltered:
                     formed -= 1
                 l += 1
             r += 1
-            
+        
         return "" if ans[0] == float("inf") else s[ans[1] : ans[2] + 1]
 ```
 
@@ -254,7 +253,7 @@ class SolutionFiltered:
 Let's dissect the core logic of the `while l <= r and formed == required` block:
 
 1. `character = s[l]`: We are looking at the character that is about to be evicted from the window.
-2. `if r - l + 1 < ans[0]`: Before we evict, we check if this is the "best" (smallest) valid window we've seen. We store the result in a tuple to avoid slicing strings inside the loop (which is an $O(N)$ operation).
+2. `if r - l + 1 < ans[0]`: Before we evict, we check if this is the "best" (smallest) valid window we've seen. We store the result in a tuple to avoid slicing strings inside the loop (which is an O(N) operation).
 3. `window_counts[character] -= 1`: We decrement the count in our current window tracking map.
 4. `if character in dict_t and window_counts[character] < dict_t[character]`: This is the **critical decision point**. If the character we just evicted was part of the required set AND its new count is less than what `t` needs, the window is no longer valid.
 5. `formed -= 1`: We signal that we are missing a requirement. This will break the inner `while` loop, and the next iteration of the outer `while` loop will expand the `right` pointer to look for a replacement.
@@ -285,11 +284,11 @@ In production systems (especially in C++, Go, or Rust), the choice of how you st
 Python's `dict` is an open-addressed hash table.
 - **Pros**: Handles Unicode, easy to implement.
 - **Cons**: Every lookup requires calculating a hash. Frequent insertions and deletions trigger re-hashing and memory allocation.
-- **Latency**: Variable. $O(1)$ average, but $O(N)$ worst-case.
+- **Latency**: Variable. O(1) average, but O(N) worst-case.
 
 ### 8.2 Fixed Array (Low Flex, Zero Overhead)
 An `int[256]` or `int[128]` array.
-- **Pros**: $O(1)$ constant lookup. No hashing. Perfect **Cache Locality** (the entire array likely fits in the L1 cache).
+- **Pros**: O(1) constant lookup. No hashing. Perfect **Cache Locality** (the entire array likely fits in the L1 cache).
 - **Cons**: Only works if you know the character range (e.g., ASCII).
 - **Latency**: Deterministic. This is why high-frequency trading engines use arrays over maps whenever possible.
 
@@ -299,8 +298,8 @@ An `int[256]` or `int[128]` array.
 
 | Metric | Complexity | Explanation |
 |---|---|---|
-| **Time** | $O(S + T)$ | Each character in `s` is visited at most twice (once by `right`, once by `left`). |
-| **Space** | $O(S + T)$ | In the worst case, the hash maps store all unique characters in `s` and `t`. |
+| **Time** | O(S + T) | Each character in `s` is visited at most twice (once by `right`, once by `left`). |
+| **Space** | O(S + T) | In the worst case, the hash maps store all unique characters in `s` and `t`. |
 
 ---
 
@@ -341,7 +340,7 @@ Just as we move the `left` pointer to shrink the window, real-time systems prune
 
 ---
 
-## 15. A Letter to the Aspiring Engineer: The Bridge from $O(N^2)$ to $O(N)$
+## 15. A Letter to the Aspiring Engineer: The Bridge from O(N^2) to O(N)
 
 Dear Fellow Engineer,
 
@@ -349,7 +348,7 @@ When you first encounter a problem like this, your brain naturally thinks in "Su
 
 But professional engineering is the art of **Recognizing Redundant Work**.
 
-Inside an $O(N^2)$ search, you are asking the same questions thousands of times:
+Inside an O(N^2) search, you are asking the same questions thousands of times:
 - *"Does this window have an 'A'?"*
 - *"Is it still valid after I move the end by one pixel?"*
 
@@ -357,7 +356,7 @@ The Sliding Window is your way of saying: *"I remember what I saw."*
 
 When you move the `right` pointer, you don't re-scan the window. You just add one number. When you move the `left` pointer, you just subtract one. This **Incremental Update** is the secret to all high-performance software. 
 
-Whether you are building a database engine, a game physics loop, or a speech-to-text model, look for the "redundant scan." Once you find it, you'll find your $O(N)$ solution.
+Whether you are building a database engine, a game physics loop, or a speech-to-text model, look for the "redundant scan." Once you find it, you'll find your O(N) solution.
 
 Keep building,
 Antigravity.
@@ -428,9 +427,9 @@ This "Buffered Sliding Window" is exactly how **Acoustic Pattern Matching** (Spe
 
 ## 18. Key Takeaways and Final Review
 
-1. **State over Stuttering**: Use a numeric `formed` variable or a count of requirements to avoid $O(26)$ or $O(K)$ comparisons on every pointer movement.
+1. **State over Stuttering**: Use a numeric `formed` variable or a count of requirements to avoid O(26) or O(K) comparisons on every pointer movement.
 2. **Expansion then Exhaustion**: The right pointer finds a "candidate" (Validity); the left pointer "optimizes" (Minimality).
-3. **Indices over Slices**: Store indices `(start, end)` until the very last line. Slicing strings `s[l:r]` inside the loop creates $O(N^2)$ time and space overhead.
+3. **Indices over Slices**: Store indices `(start, end)` until the very last line. Slicing strings `s[l:r]` inside the loop creates O(N^2) time and space overhead.
 4. **Data Contract**: Always clarify if the character set is restricted (ASCII) or open (UTF-8).
 
 ---
@@ -471,9 +470,9 @@ FROM (
 2. **Ask about duplicates**: "Do the counts in `t` matter, or just the presence?" (In our problem, counts matter).
 3. **Start with the high-level logic**: Explain the right pointer's role (find validity) and the left pointer's role (optimize).
 4. **Manage the Edge Cases**:
-    - `t` is empty.
-    - `s` is shorter than `t`.
-    - No solution exists.
+  - `t` is empty.
+  - `s` is shorter than `t`.
+  - No solution exists.
 
 ---
 

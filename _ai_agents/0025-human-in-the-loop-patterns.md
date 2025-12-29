@@ -1,19 +1,19 @@
 ---
 title: "Human-in-the-Loop Patterns"
 day: 25
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - human-in-the-loop
-  - hitl
-  - active-learning
-  - feedback-loops
-  - agent-monitoring
-difficulty: Medium
 related_dsa_day: 25
 related_ml_day: 25
 related_speech_day: 25
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - human-in-the-loop
+ - hitl
+ - active-learning
+ - feedback-loops
+ - agent-monitoring
+difficulty: Medium
 ---
 
 **"The safest way to deploy AI: Keep the human in the driver's seat."**
@@ -45,7 +45,7 @@ When should an agent ask for help?
 ### 2.3 The Clarification Pattern (The Query)
 * **Definition:** The agent hits an ambiguity and asks the human for missing information.
 * **Trigger:** Low confidence scores or missing parameters.
-* **Example:** User: "Book a flight to London." Agent: "There are two flights at 5 PM. One is $500 (Economy) and one is $1500 (Business). Which do you prefer?"
+* **Example:** User: "Book a flight to London." Agent: "There are two flights at 5 PM. One is `500 (Economy) and one is `1500 (Business). Which do you prefer?"
 
 ---
 
@@ -86,7 +86,7 @@ Every time a human corrects an agent (e.g., "Don't click that button, click this
 
 Imagine an agent managing a company's crypto wallet.
 * **Pattern:** Any transaction under $100 is executed automatically (Autonomous).
-* **Pattern:** Any transaction between $100 and $1000 requires 1 human approval (Gatekeeper).
+* **Pattern:** Any transaction between `100 and `1000 requires 1 human approval (Gatekeeper).
 * **Pattern:** Any transaction over $1000 requires 2 human approvals (Multi-Sig HITL).
 
 This tiered architecture ensures high efficiency for small tasks while maintaining absolute security for large risks.
@@ -113,7 +113,7 @@ As a junior engineer, you shouldn't just rely on console logs. You need a specia
 
 **Essential Features:**
 * **The Fork Point:** A visual representation of the agent's decision tree.
-* **The "Why" Box:** A text area where the agent explains its reasoning: *"I am asking for help because the user's balance is $5, but the transaction is $100."*
+* **The "Why" Box:** A text area where the agent explains its reasoning: *"I am asking for help because the user's balance is `5, but the transaction is `100."*
 * **Action Injection:** The human should be able to type a "Correction" that is injected directly into the agent's context window as a "Preferred Action."
 * **Side-by-Side Diff:** Show the "Old Plan" vs the "Human-Modified Plan" so the agent can learn the delta.
 

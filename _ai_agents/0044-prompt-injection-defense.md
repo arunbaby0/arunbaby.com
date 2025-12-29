@@ -1,21 +1,21 @@
 ---
 title: "Prompt Injection Defense"
 day: 44
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - prompt-injection
-  - security
-  - tool-safety
-  - sandboxing
-  - web-browsing
-  - guardrails
-  - red-teaming
-difficulty: Medium-Hard
 related_dsa_day: 44
 related_ml_day: 44
 related_speech_day: 44
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - prompt-injection
+ - security
+ - tool-safety
+ - sandboxing
+ - web-browsing
+ - guardrails
+ - red-teaming
+difficulty: Medium-Hard
 ---
 
 **"Treat prompts like an attack surface: isolate untrusted content, validate every tool call, and fail closed under uncertainty."**

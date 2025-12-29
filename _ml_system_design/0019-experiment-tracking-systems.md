@@ -1,23 +1,23 @@
 ---
 title: "Experiment Tracking Systems"
 day: 19
+related_dsa_day: 19
+related_speech_day: 19
+related_agents_day: 19
 collection: ml_system_design
 categories:
-  - ml-system-design
+ - ml-system-design
 tags:
-  - experiment-tracking
-  - mlops
-  - metadata
-  - versioning
-  - reproducibility
-  - infrastructure
+ - experiment-tracking
+ - mlops
+ - metadata
+ - versioning
+ - reproducibility
+ - infrastructure
 subdomain: "MLOps & Infrastructure"
 tech_stack: [MLflow, Weights & Biases, Neptune, TensorBoard, PostgreSQL, S3, Git, Docker]
 scale: "10K+ experiments, 1M+ runs, PB-scale artifacts"
 companies: [Google, Meta, OpenAI, Microsoft, Amazon, Uber, Airbnb]
-related_dsa_day: 19
-related_speech_day: 19
-related_agents_day: 19
 ---
 
 **Design robust experiment tracking systems that enable systematic exploration, reproducibility, and collaboration across large ML teams.**
@@ -36,39 +36,39 @@ Design an **Experiment Tracking System** for ML teams that:
 ### Functional Requirements
 
 1. **Experiment lifecycle management:**
-   - Create experiments and runs
-   - Log parameters, metrics, tags, notes
-   - Upload artifacts (models, plots, datasets)
-   - Track code versions (Git commit, diff)
-   - Track data versions (dataset hashes, splits)
-   - Link parent/child runs (hyperparameter sweeps, ensemble members)
+ - Create experiments and runs
+ - Log parameters, metrics, tags, notes
+ - Upload artifacts (models, plots, datasets)
+ - Track code versions (Git commit, diff)
+ - Track data versions (dataset hashes, splits)
+ - Link parent/child runs (hyperparameter sweeps, ensemble members)
 
 2. **Query and search:**
-   - Filter by parameters, metrics, tags
-   - Full-text search over notes and descriptions
-   - Query by date, user, project
+ - Filter by parameters, metrics, tags
+ - Full-text search over notes and descriptions
+ - Query by date, user, project
 
 3. **Visualization and comparison:**
-   - Learning curves (metric vs step/epoch)
-   - Hyperparameter sweeps (parallel coordinates, scatter)
-   - Compare multiple runs side-by-side
-   - Export to notebooks (Jupyter, Colab)
+ - Learning curves (metric vs step/epoch)
+ - Hyperparameter sweeps (parallel coordinates, scatter)
+ - Compare multiple runs side-by-side
+ - Export to notebooks (Jupyter, Colab)
 
 4. **Artifact management:**
-   - Store and version models, checkpoints, plots
-   - Efficient storage for large artifacts (deduplication, compression)
-   - Support for streaming logs (real-time metrics)
+ - Store and version models, checkpoints, plots
+ - Efficient storage for large artifacts (deduplication, compression)
+ - Support for streaming logs (real-time metrics)
 
 5. **Reproducibility:**
-   - Capture full environment (packages, hardware, Docker image)
-   - Re-run experiments from tracked metadata
-   - Audit trail for compliance
+ - Capture full environment (packages, hardware, Docker image)
+ - Re-run experiments from tracked metadata
+ - Audit trail for compliance
 
 6. **Integration:**
-   - Python SDK (PyTorch, TensorFlow, JAX)
-   - CLI for automation
-   - REST API for custom clients
-   - Webhook/notification support
+ - Python SDK (PyTorch, TensorFlow, JAX)
+ - CLI for automation
+ - REST API for custom clients
+ - Webhook/notification support
 
 ### Non-Functional Requirements
 
@@ -100,81 +100,81 @@ A good experiment tracking system is the **foundation of MLOps**—it enables:
 Just like **Spiral Matrix** systematically traverses a 2D structure layer-by-layer:
 
 - **Experiment tracking** systematically explores multi-dimensional spaces:
-  - Hyperparameters × architectures × data configurations × training schedules
+ - Hyperparameters × architectures × data configurations × training schedules
 - Both require **clear state management**:
-  - Spiral: track boundaries (top, bottom, left, right)
-  - Experiments: track runs (completed, running, failed), checkpoints, metrics
+ - Spiral: track boundaries (top, bottom, left, right)
+ - Experiments: track runs (completed, running, failed), checkpoints, metrics
 - Both enable **resumability**:
-  - Spiral: can pause and resume traversal
-  - Experiments: can restart from checkpoints, resume sweeps
+ - Spiral: can pause and resume traversal
+ - Experiments: can restart from checkpoints, resume sweeps
 
 ## High-Level Architecture
 
-```
+``
 ┌─────────────────────────────────────────────────────────────────┐
-│                  Experiment Tracking System                      │
+│ Experiment Tracking System │
 └─────────────────────────────────────────────────────────────────┘
 
-                            Client Layer
-        ┌────────────────────────────────────────────┐
-        │  Python SDK  │  CLI  │  Web UI  │  API    │
-        └─────────────────────┬──────────────────────┘
-                              │
-                       API Gateway
-                ┌──────────────┴──────────────┐
-                │  - Auth & rate limiting      │
-                │  - Request routing           │
-                │  - Logging & monitoring      │
-                └──────────────┬──────────────┘
-                               │
-              ┌────────────────┼────────────────┐
-              │                │                │
-      ┌───────▼────────┐ ┌────▼─────┐ ┌───────▼────────┐
-      │  Metadata      │ │  Metrics │ │  Artifact      │
-      │  Service       │ │  Service │ │  Service       │
-      │                │ │          │ │                │
-      │ - Experiments  │ │ - Logs   │ │ - Models       │
-      │ - Runs         │ │ - Curves │ │ - Plots        │
-      │ - Parameters   │ │ - Scalars│ │ - Datasets     │
-      │ - Tags         │ │ - Hists  │ │ - Checkpoints  │
-      └───────┬────────┘ └────┬─────┘ └───────┬────────┘
-              │               │                │
-      ┌───────▼────────┐ ┌────▼─────┐ ┌───────▼────────┐
-      │  Postgres /    │ │  TimeSeries│ │  Object Store │
-      │  MySQL         │ │  DB        │ │  (S3/GCS)     │
-      │                │ │  (InfluxDB)│ │                │
-      │ - Structured   │ │ - Metrics  │ │ - Large files │
-      │   metadata     │ │ - Fast     │ │ - Versioned   │
-      └────────────────┘ │   queries  │ │ - Deduped     │
-                         └────────────┘ └────────────────┘
-```
+ Client Layer
+ ┌────────────────────────────────────────────┐
+ │ Python SDK │ CLI │ Web UI │ API │
+ └─────────────────────┬──────────────────────┘
+ │
+ API Gateway
+ ┌──────────────┴──────────────┐
+ │ - Auth & rate limiting │
+ │ - Request routing │
+ │ - Logging & monitoring │
+ └──────────────┬──────────────┘
+ │
+ ┌────────────────┼────────────────┐
+ │ │ │
+ ┌───────▼────────┐ ┌────▼─────┐ ┌───────▼────────┐
+ │ Metadata │ │ Metrics │ │ Artifact │
+ │ Service │ │ Service │ │ Service │
+ │ │ │ │ │ │
+ │ - Experiments │ │ - Logs │ │ - Models │
+ │ - Runs │ │ - Curves │ │ - Plots │
+ │ - Parameters │ │ - Scalars│ │ - Datasets │
+ │ - Tags │ │ - Hists │ │ - Checkpoints │
+ └───────┬────────┘ └────┬─────┘ └───────┬────────┘
+ │ │ │
+ ┌───────▼────────┐ ┌────▼─────┐ ┌───────▼────────┐
+ │ Postgres / │ │ TimeSeries│ │ Object Store │
+ │ MySQL │ │ DB │ │ (S3/GCS) │
+ │ │ │ (InfluxDB)│ │ │
+ │ - Structured │ │ - Metrics │ │ - Large files │
+ │ metadata │ │ - Fast │ │ - Versioned │
+ └────────────────┘ │ queries │ │ - Deduped │
+ └────────────┘ └────────────────┘
+``
 
 ### Key Components
 
 1. **Metadata Service:**
-   - Stores experiment and run metadata (params, tags, code versions, user, etc.)
-   - Relational DB for structured queries
-   - Indexes on common query patterns (user, project, date, tags)
+ - Stores experiment and run metadata (params, tags, code versions, user, etc.)
+ - Relational DB for structured queries
+ - Indexes on common query patterns (user, project, date, tags)
 
 2. **Metrics Service:**
-   - High-throughput metric logging (train loss, val accuracy, etc.)
-   - Time-series database (InfluxDB, Prometheus, or custom)
-   - Support for streaming metrics (real-time plots)
+ - High-throughput metric logging (train loss, val accuracy, etc.)
+ - Time-series database (InfluxDB, Prometheus, or custom)
+ - Support for streaming metrics (real-time plots)
 
 3. **Artifact Service:**
-   - Stores large files (models, checkpoints, plots, datasets)
-   - Object storage (S3, GCS, Azure Blob)
-   - Deduplication (hash-based), compression, tiered storage
+ - Stores large files (models, checkpoints, plots, datasets)
+ - Object storage (S3, GCS, Azure Blob)
+ - Deduplication (hash-based), compression, tiered storage
 
 4. **API Gateway:**
-   - Authentication & authorization (OAuth, API keys)
-   - Rate limiting (per user/project)
-   - Request routing and load balancing
+ - Authentication & authorization (OAuth, API keys)
+ - Rate limiting (per user/project)
+ - Request routing and load balancing
 
 5. **Web UI:**
-   - Dashboards for experiments, runs, metrics
-   - Comparison tools (side-by-side, parallel coordinates)
-   - Notebook integration (export to Jupyter)
+ - Dashboards for experiments, runs, metrics
+ - Comparison tools (side-by-side, parallel coordinates)
+ - Notebook integration (export to Jupyter)
 
 ## Component Deep-Dive
 
@@ -197,68 +197,68 @@ Just like **Spiral Matrix** systematically traverses a 2D structure layer-by-lay
 
 **Schema example (simplified):**
 
-```sql
+``sql
 CREATE TABLE experiments (
-    experiment_id UUID PRIMARY KEY,
-    name VARCHAR(255),
-    description TEXT,
-    created_at TIMESTAMP,
-    user_id VARCHAR(255),
-    project_id UUID
+ experiment_id UUID PRIMARY KEY,
+ name VARCHAR(255),
+ description TEXT,
+ created_at TIMESTAMP,
+ user_id VARCHAR(255),
+ project_id UUID
 );
 
 CREATE TABLE runs (
-    run_id UUID PRIMARY KEY,
-    experiment_id UUID REFERENCES experiments(experiment_id),
-    name VARCHAR(255),
-    status VARCHAR(50),  -- running, completed, failed
-    start_time TIMESTAMP,
-    end_time TIMESTAMP,
-    user_id VARCHAR(255),
-    git_commit VARCHAR(40),
-    git_diff TEXT,
-    docker_image VARCHAR(255),
-    environment JSONB,  -- packages, hardware
-    notes TEXT
+ run_id UUID PRIMARY KEY,
+ experiment_id UUID REFERENCES experiments(experiment_id),
+ name VARCHAR(255),
+ status VARCHAR(50), -- running, completed, failed
+ start_time TIMESTAMP,
+ end_time TIMESTAMP,
+ user_id VARCHAR(255),
+ git_commit VARCHAR(40),
+ git_diff TEXT,
+ docker_image VARCHAR(255),
+ environment JSONB, -- packages, hardware
+ notes TEXT
 );
 
 CREATE TABLE run_params (
-    run_id UUID REFERENCES runs(run_id),
-    key VARCHAR(255),
-    value TEXT,  -- JSON serialized
-    PRIMARY KEY (run_id, key)
+ run_id UUID REFERENCES runs(run_id),
+ key VARCHAR(255),
+ value TEXT, -- JSON serialized
+ PRIMARY KEY (run_id, key)
 );
 
 CREATE TABLE run_metrics (
-    run_id UUID REFERENCES runs(run_id),
-    key VARCHAR(255),  -- e.g., 'train_loss', 'val_accuracy'
-    step INT,
-    value FLOAT,
-    timestamp TIMESTAMP,
-    PRIMARY KEY (run_id, key, step)
+ run_id UUID REFERENCES runs(run_id),
+ key VARCHAR(255), -- e.g., 'train_loss', 'val_accuracy'
+ step INT,
+ value FLOAT,
+ timestamp TIMESTAMP,
+ PRIMARY KEY (run_id, key, step)
 );
 
 CREATE TABLE run_tags (
-    run_id UUID REFERENCES runs(run_id),
-    key VARCHAR(255),
-    value VARCHAR(255),
-    PRIMARY KEY (run_id, key)
+ run_id UUID REFERENCES runs(run_id),
+ key VARCHAR(255),
+ value VARCHAR(255),
+ PRIMARY KEY (run_id, key)
 );
 
 CREATE TABLE run_artifacts (
-    artifact_id UUID PRIMARY KEY,
-    run_id UUID REFERENCES runs(run_id),
-    path VARCHAR(1024),  -- e.g., 'model.pt', 'plots/loss.png'
-    size_bytes BIGINT,
-    content_hash VARCHAR(64),  -- SHA-256
-    storage_uri TEXT,  -- S3 URI
-    created_at TIMESTAMP
+ artifact_id UUID PRIMARY KEY,
+ run_id UUID REFERENCES runs(run_id),
+ path VARCHAR(1024), -- e.g., 'model.pt', 'plots/loss.png'
+ size_bytes BIGINT,
+ content_hash VARCHAR(64), -- SHA-256
+ storage_uri TEXT, -- S3 URI
+ created_at TIMESTAMP
 );
-```
+``
 
 ### 2. Python SDK (Client Interface)
 
-```python
+``python
 import experiment_tracker as et
 
 # Initialize client
@@ -266,42 +266,42 @@ client = et.Client(api_url="https://tracking.example.com", api_key="...")
 
 # Create experiment
 experiment = client.create_experiment(
-    name="ResNet50 ImageNet Ablation",
-    description="Testing different optimizers and learning rates"
+ name="ResNet50 ImageNet Ablation",
+ description="Testing different optimizers and learning rates"
 )
 
 # Start a run
 run = experiment.start_run(
-    name="run_adam_lr0.001",
-    tags={"optimizer": "adam", "dataset": "imagenet"}
+ name="run_adam_lr0.001",
+ tags={"optimizer": "adam", "dataset": "imagenet"}
 )
 
 # Log parameters
 run.log_params({
-    "model": "resnet50",
-    "optimizer": "adam",
-    "learning_rate": 0.001,
-    "batch_size": 256,
-    "epochs": 90
+ "model": "resnet50",
+ "optimizer": "adam",
+ "learning_rate": 0.001,
+ "batch_size": 256,
+ "epochs": 90
 })
 
 # Training loop
 for epoch in range(90):
-    train_loss = train_one_epoch(model, optimizer, train_loader)
-    val_acc = validate(model, val_loader)
-    
-    # Log metrics
-    run.log_metrics({
-        "train_loss": train_loss,
-        "val_accuracy": val_acc
-    }, step=epoch)
+ train_loss = train_one_epoch(model, optimizer, train_loader)
+ val_acc = validate(model, val_loader)
+ 
+ # Log metrics
+ run.log_metrics({
+ "train_loss": train_loss,
+ "val_accuracy": val_acc
+ }, step=epoch)
 
 # Save model
 run.log_artifact("model.pt", local_path="./checkpoints/model_epoch90.pt")
 
 # Mark run as complete
 run.finish()
-```
+``
 
 ### 3. Metric Logging & Streaming
 
@@ -311,17 +311,17 @@ For real-time metric visualization:
 - Metrics Service buffers and batches writes to time-series DB
 - Web UI subscribes to metric streams for live plots
 
-```python
+``python
 # Streaming metrics example
 def train_with_streaming_metrics(model, run):
-    for step, batch in enumerate(train_loader):
-        loss = train_step(model, batch)
-        
-        # Log every N steps for live tracking
-        if step % 10 == 0:
-            run.log_metric("train_loss", loss, step=step)
-            # Internally: buffered, batched, sent asynchronously
-```
+ for step, batch in enumerate(train_loader):
+ loss = train_step(model, batch)
+ 
+ # Log every N steps for live tracking
+ if step % 10 == 0:
+ run.log_metric("train_loss", loss, step=step)
+ # Internally: buffered, batched, sent asynchronously
+``
 
 ### 4. Artifact Storage & Deduplication
 
@@ -330,44 +330,44 @@ def train_with_streaming_metrics(model, run):
 **Solution:**
 
 - **Content-based deduplication:**
-  - Hash each artifact (SHA-256).
-  - If hash exists, create metadata entry but don't re-upload.
+ - Hash each artifact (SHA-256).
+ - If hash exists, create metadata entry but don't re-upload.
 - **Tiered storage:**
-  - Hot: Recent artifacts on fast storage (SSD, S3 standard).
-  - Cold: Old artifacts on cheaper storage (S3 Glacier, tape).
+ - Hot: Recent artifacts on fast storage (SSD, S3 standard).
+ - Cold: Old artifacts on cheaper storage (S3 Glacier, tape).
 - **Compression:**
-  - Compress models before upload (gzip, zstd).
+ - Compress models before upload (gzip, zstd).
 
-```python
+``python
 import hashlib
 import gzip
 
 def upload_artifact(run_id: str, path: str, local_file: str):
-    # Compute hash
-    with open(local_file, 'rb') as f:
-        content = f.read()
-        content_hash = hashlib.sha256(content).hexdigest()
-    
-    # Check if artifact with this hash exists
-    existing = artifact_service.get_by_hash(content_hash)
-    if existing:
-        # Create metadata entry pointing to existing storage
-        artifact_service.link_artifact(run_id, path, existing.storage_uri, content_hash)
-        return
-    
-    # Compress and upload
-    compressed = gzip.compress(content)
-    storage_uri = object_store.upload(f"{run_id}/{path}.gz", compressed)
-    
-    # Create metadata entry
-    artifact_service.create_artifact(
-        run_id=run_id,
-        path=path,
-        size_bytes=len(content),
-        content_hash=content_hash,
-        storage_uri=storage_uri
-    )
-```
+ # Compute hash
+ with open(local_file, 'rb') as f:
+ content = f.read()
+ content_hash = hashlib.sha256(content).hexdigest()
+ 
+ # Check if artifact with this hash exists
+ existing = artifact_service.get_by_hash(content_hash)
+ if existing:
+ # Create metadata entry pointing to existing storage
+ artifact_service.link_artifact(run_id, path, existing.storage_uri, content_hash)
+ return
+ 
+ # Compress and upload
+ compressed = gzip.compress(content)
+ storage_uri = object_store.upload(f"{run_id}/{path}.gz", compressed)
+ 
+ # Create metadata entry
+ artifact_service.create_artifact(
+ run_id=run_id,
+ path=path,
+ size_bytes=len(content),
+ content_hash=content_hash,
+ storage_uri=storage_uri
+ )
+``
 
 ### 5. Query & Search
 
@@ -379,18 +379,18 @@ def upload_artifact(run_id: str, path: str, local_file: str):
 
 **Implementation:**
 
-```python
+``python
 # Query API example
 runs = client.search_runs(
-    experiment_ids=["exp123"],
-    filter_string="params.learning_rate > 0.01 AND metrics.val_accuracy > 0.9",
-    order_by=["metrics.val_accuracy DESC"],
-    max_results=10
+ experiment_ids=["exp123"],
+ filter_string="params.learning_rate > 0.01 AND metrics.val_accuracy > 0.9",
+ order_by=["metrics.val_accuracy DESC"],
+ max_results=10
 )
 
 for run in runs:
-    print(f"Run {run.run_id}: LR={run.params['learning_rate']}, Acc={run.metrics['val_accuracy']}")
-```
+ print(f"Run {run.run_id}: LR={run.params['learning_rate']}, Acc={run.metrics['val_accuracy']}")
+``
 
 **Optimization:**
 
@@ -522,28 +522,28 @@ For petabyte-scale artifact storage:
 
 Integrate with hyperparameter tuning libraries (Optuna, Ray Tune):
 
-```python
+``python
 import optuna
 import experiment_tracker as et
 
 def objective(trial):
-    run = experiment.start_run(name=f"trial_{trial.number}")
-    
-    # Suggest hyperparameters
-    lr = trial.suggest_loguniform("learning_rate", 1e-5, 1e-1)
-    batch_size = trial.suggest_categorical("batch_size", [32, 64, 128])
-    
-    run.log_params({"learning_rate": lr, "batch_size": batch_size})
-    
-    # Train and log metrics
-    val_acc = train_and_evaluate(lr, batch_size, run)
-    
-    run.finish()
-    return val_acc
+ run = experiment.start_run(name=f"trial_{trial.number}")
+ 
+ # Suggest hyperparameters
+ lr = trial.suggest_loguniform("learning_rate", 1e-5, 1e-1)
+ batch_size = trial.suggest_categorical("batch_size", [32, 64, 128])
+ 
+ run.log_params({"learning_rate": lr, "batch_size": batch_size})
+ 
+ # Train and log metrics
+ val_acc = train_and_evaluate(lr, batch_size, run)
+ 
+ run.finish()
+ return val_acc
 
 study = optuna.create_study(direction="maximize")
 study.optimize(objective, n_trials=100)
-```
+``
 
 ### 2. Model Registry Integration
 
@@ -560,13 +560,13 @@ Track data versions alongside experiments:
 - Data pipeline version (Git commit)
 - Train/val/test split configs
 
-```python
+``python
 run.log_dataset(
-    name="imagenet_v2",
-    hash="sha256:abc123...",
-    split_config={"train": 0.8, "val": 0.1, "test": 0.1}
+ name="imagenet_v2",
+ hash="sha256:abc123...",
+ split_config={"train": 0.8, "val": 0.1, "test": 0.1}
 )
-```
+``
 
 ### 4. Compliance & Audit Trails
 
@@ -612,7 +612,7 @@ For regulated industries (healthcare, finance):
 
 ### Connection to Thematic Link: Systematic Iteration and State Tracking
 
-All three Day 19 topics converge on **systematic, stateful exploration**:
+All three topics converge on **systematic, stateful exploration**:
 
 **DSA (Spiral Matrix):**
 - Layer-by-layer traversal with boundary tracking

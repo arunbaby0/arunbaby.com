@@ -1,22 +1,22 @@
 ---
 title: "Speech Tokenization"
 day: 24
+related_dsa_day: 24
+related_ml_day: 24
+related_agents_day: 24
 collection: speech_tech
 categories:
-  - speech-tech
+ - speech-tech
 tags:
-  - asr
-  - tokenization
-  - self-supervised-learning
-  - hubert
-  - wav2vec
+ - asr
+ - tokenization
+ - self-supervised-learning
+ - hubert
+ - wav2vec
 subdomain: "Speech Representation Learning"
 tech_stack: [Python, PyTorch, Fairseq]
 scale: "O(T) time"
 companies: [Meta (FAIR), Google, Microsoft]
-related_dsa_day: 24
-related_ml_day: 24
-related_agents_day: 24
 ---
 
 **The breakthrough that allows us to treat audio like text, enabling GPT-style models for speech.**
@@ -43,8 +43,8 @@ For decades, we tried to use **Phonemes** as tokens.
 ## The New Way: Semantic & Acoustic Tokens
 
 We want tokens that capture:
-1.  **Semantics:** The meaning (words).
-2.  **Acoustics:** The speaker's voice, pitch, and emotion.
+1. **Semantics:** The meaning (words).
+2. **Acoustics:** The speaker's voice, pitch, and emotion.
 
 ### 1. VQ-VAE (Vector Quantized Variational Autoencoder)
 
@@ -75,29 +75,29 @@ These are **Neural Audio Codecs**.
 
 ## High-Level Architecture: The Speech-LLM Pipeline
 
-```ascii
-+-----------+    +-------------+    +-------------+    +-------------+
-| Raw Audio | -> |   Encoder   | -> |  Quantizer  | -> | Discrete Tok|
-+-----------+    +-------------+    +-------------+    +-------------+
-                      |                  |                  |
-                 (HuBERT/EnCodec)   (Codebook)         [34, 102, 88]
-                                                            |
-                                                            v
-+-----------+    +-------------+    +-------------+    +-------------+
-| New Audio | <- |   Vocoder   | <- |  LLM / GPT  | <- | Prompt Toks |
-+-----------+    +-------------+    +-------------+    +-------------+
-```
+``ascii
++-----------+ +-------------+ +-------------+ +-------------+
+| Raw Audio | -> | Encoder | -> | Quantizer | -> | Discrete Tok|
++-----------+ +-------------+ +-------------+ +-------------+
+ | | |
+ (HuBERT/EnCodec) (Codebook) [34, 102, 88]
+ |
+ v
++-----------+ +-------------+ +-------------+ +-------------+
+| New Audio | <- | Vocoder | <- | LLM / GPT | <- | Prompt Toks |
++-----------+ +-------------+ +-------------+ +-------------+
+``
 
 ## System Design: Building a Speech-LLM
 
 Once we have speech tokens, we can build cool things.
 
 **AudioLM (Google):**
-1.  **Semantic Tokens:** Use w2v-BERT to extract high-level meaning tokens.
-2.  **Acoustic Tokens:** Use SoundStream to extract low-level audio tokens.
-3.  **Transformer:** Train a GPT model to predict the next token.
-    - Input: `[Semantic_1, Semantic_2, ..., Acoustic_1, Acoustic_2, ...]`
-4.  **Inference:** Prompt with 3 seconds of audio. The model "continues" the speech, maintaining the speaker's voice and recording conditions!
+1. **Semantic Tokens:** Use w2v-BERT to extract high-level meaning tokens.
+2. **Acoustic Tokens:** Use SoundStream to extract low-level audio tokens.
+3. **Transformer:** Train a GPT model to predict the next token.
+ - Input: `[Semantic_1, Semantic_2, ..., Acoustic_1, Acoustic_2, ...]`
+4. **Inference:** Prompt with 3 seconds of audio. The model "continues" the speech, maintaining the speaker's voice and recording conditions!
 
 ## Deep Dive: How HuBERT Works
 
@@ -126,9 +126,9 @@ While HuBERT captures *semantics*, we also need *acoustics* (fidelity).
 
 **The Problem:** A single codebook of size 1024 is not enough to capture high-fidelity audio.
 **The Solution (RVQ):**
-1.  **Quantizer 1:** Approximates the vector. Residual = Vector - Q1(Vector).
-2.  **Quantizer 2:** Approximates the Residual. New Residual = Residual - Q2(Residual).
-3.  **Quantizer N:** ...
+1. **Quantizer 1:** Approximates the vector. Residual = Vector - Q1(Vector).
+2. **Quantizer 2:** Approximates the Residual. New Residual = Residual - Q2(Residual).
+3. **Quantizer N:** ...
 
 This gives us a *stack* of tokens for each time step.
 `[Token_Layer1, Token_Layer2, ..., Token_Layer8]`
@@ -172,20 +172,20 @@ Meta's **EnCodec** and Google's **SoundStream** are the state-of-the-art. They a
 
 ### 1. The Encoder-Decoder
 - **Convolutional:** Uses 1D Convolutions to downsample the audio.
-    - Input: 24kHz audio (24,000 samples/sec).
-    - Downsampling factor: 320x.
-    - Output: 75 frames/sec.
+ - Input: 24kHz audio (24,000 samples/sec).
+ - Downsampling factor: 320x.
+ - Output: 75 frames/sec.
 - **LSTM:** Adds a sequence modeling layer to capture long-term dependencies.
 
 ### 2. Residual Vector Quantization (RVQ)
 As mentioned, a single codebook is too coarse. RVQ uses a cascade of `N` quantizers (usually 8).
 - **Bitrate Control:**
-    - If we use 8 quantizers, we get high fidelity (6 kbps).
-    - If we use only the first 2 quantizers during decoding, we get lower fidelity but lower bitrate (1.5 kbps).
-    - *If you found this helpful, consider sharing it with others who might benefit.*
+ - If we use 8 quantizers, we get high fidelity (6 kbps).
+ - If we use only the first 2 quantizers during decoding, we get lower fidelity but lower bitrate (1.5 kbps).
+ - *If you found this helpful, consider sharing it with others who might benefit.*
 
 
-    - This allows **Bandwidth Scalability**.
+ - This allows **Bandwidth Scalability**.
 
 ### 3. Adversarial Loss (GAN)
 MSE (Mean Squared Error) loss produces "blurry" audio (muffled high frequencies).
@@ -201,18 +201,18 @@ Once we have tokens, we can generate audio like text.
 Generating 24,000 samples/sec is hard. Generating 75 tokens/sec is easy.
 
 **AudioLM (Google):**
-1.  **Semantic Stage:**
-    - Input: Text or Audio Prompt.
-    - Output: Semantic Tokens (from w2v-BERT).
-    - These tokens capture "The cat sat on the mat" but not the speaker's voice.
-2.  **Coarse Acoustic Stage:**
-    - Input: Semantic Tokens.
-    - Output: The first 3 layers of RVQ tokens (from SoundStream).
-    - These capture the speaker identity and prosody.
-3.  **Fine Acoustic Stage:**
-    - Input: Coarse Acoustic Tokens.
-    - Output: The remaining 5 layers of RVQ tokens.
-    - These capture the fine details (breath, background noise).
+1. **Semantic Stage:**
+ - Input: Text or Audio Prompt.
+ - Output: Semantic Tokens (from w2v-BERT).
+ - These tokens capture "The cat sat on the mat" but not the speaker's voice.
+2. **Coarse Acoustic Stage:**
+ - Input: Semantic Tokens.
+ - Output: The first 3 layers of RVQ tokens (from SoundStream).
+ - These capture the speaker identity and prosody.
+3. **Fine Acoustic Stage:**
+ - Input: Coarse Acoustic Tokens.
+ - Output: The remaining 5 layers of RVQ tokens.
+ - These capture the fine details (breath, background noise).
 
 **MusicLM (Google):**
 - Same architecture, but conditioned on **MuLan** embeddings (Text-Music joint embedding).
@@ -236,7 +236,7 @@ Want to build a custom tokenizer for a low-resource language?
 **3. Training Loop:**
 - **Optimizer:** AdamW (lr=3e-4).
 - **Balancer:** You have 5 losses (Reconstruction, Codebook, Commitment, Adversarial, Feature Matching). Balancing them is an art.
-    - `L_total = L_rec + 0.1 * L_adv + 1.0 * L_feat + ...`
+ - `L_total = L_rec + 0.1 * L_adv + 1.0 * L_feat + ...`
 
 **4. Evaluation:**
 - **ViSQOL:** An objective metric for audio quality (simulates human hearing).
@@ -258,8 +258,8 @@ The "Holy Grail" is to translate speech without converting to text first.
 
 Google's AudioLM combines both worlds.
 
-1.  **Semantic Tokens (w2v-BERT):** 25Hz. Captures "what" is said.
-2.  **Acoustic Tokens (SoundStream):** 75Hz. Captures "how" it is said.
+1. **Semantic Tokens (w2v-BERT):** 25Hz. Captures "what" is said.
+2. **Acoustic Tokens (SoundStream):** 75Hz. Captures "how" it is said.
 
 **Stage 1: Semantic Modeling**
 - Predict the next semantic token given history. `p(S_t | S_<t)`
@@ -283,39 +283,39 @@ This hierarchy allows it to generate coherent speech (Stage 1) that sounds high-
 
 ## Appendix C: Python Code for RVQ
 
-```python
+``python
 import torch
 import torch.nn as nn
 
 class ResidualVQ(nn.Module):
-    def __init__(self, num_quantizers, codebook_size, dim):
-        super().__init__()
-        self.layers = nn.ModuleList([
-            nn.Embedding(codebook_size, dim) for _ in range(num_quantizers)
-        ])
-        
-    def forward(self, x):
-        # x: [Batch, Dim]
-        residual = x
-        quantized_out = 0
-        indices = []
-        
-        for layer in self.layers:
-            # Find nearest neighbor in codebook
-            # (Simplified: dot product similarity)
-            dists = torch.cdist(residual.unsqueeze(1), layer.weight.unsqueeze(0))
-            idx = dists.argmin(dim=-1).squeeze(1)
-            indices.append(idx)
-            
-            # Get vector
-            quantized = layer(idx)
-            quantized_out += quantized
-            
-            # Update residual
-            residual = residual - quantized.detach()
-            
-        return quantized_out, indices
-```
+ def __init__(self, num_quantizers, codebook_size, dim):
+ super().__init__()
+ self.layers = nn.ModuleList([
+ nn.Embedding(codebook_size, dim) for _ in range(num_quantizers)
+ ])
+ 
+ def forward(self, x):
+ # x: [Batch, Dim]
+ residual = x
+ quantized_out = 0
+ indices = []
+ 
+ for layer in self.layers:
+ # Find nearest neighbor in codebook
+ # (Simplified: dot product similarity)
+ dists = torch.cdist(residual.unsqueeze(1), layer.weight.unsqueeze(0))
+ idx = dists.argmin(dim=-1).squeeze(1)
+ indices.append(idx)
+ 
+ # Get vector
+ quantized = layer(idx)
+ quantized_out += quantized
+ 
+ # Update residual
+ residual = residual - quantized.detach()
+ 
+ return quantized_out, indices
+``
 
 ## Case Study: Whisper's Tokenizer
 
@@ -341,10 +341,10 @@ Before HuBERT and wav2vec 2.0, there was **CPC** (Oord et al., 2018).
 It introduced the idea of **Self-Supervised Learning** for audio.
 
 **Idea:**
-1.  Split audio into segments.
-2.  Encode past segments into a context vector `c_t`.
-3.  Predict the *future* segments `z_{t+k}`.
-4.  **Contrastive Loss:** The model must distinguish the *true* future segment from random "negative" segments drawn from other parts of the audio.
+1. Split audio into segments.
+2. Encode past segments into a context vector `c_t`.
+3. Predict the *future* segments `z_{t+k}`.
+4. **Contrastive Loss:** The model must distinguish the *true* future segment from random "negative" segments drawn from other parts of the audio.
 
 **Why it matters:**
 CPC proved that you can learn high-quality audio representations without labels. HuBERT improved this by predicting *cluster IDs* instead of raw vectors, which is more stable.
@@ -353,9 +353,9 @@ CPC proved that you can learn high-quality audio representations without labels.
 
 Translating speech directly to speech (without text) is the frontier.
 **Challenges:**
-1.  **Data Scarcity:** We have millions of hours of ASR data (Speech -> Text) and MT data (Text -> Text), but very little S2ST data (English Audio -> French Audio).
-2.  **One-to-Many Mapping:** "Hello" can be said in infinite ways (happy, sad, loud, quiet). The model has to choose *one* target prosody.
-3.  **Latency:** For real-time translation (Skype), we need **Streaming Tokenization**. We can't wait for the full sentence to finish.
+1. **Data Scarcity:** We have millions of hours of ASR data (Speech -> Text) and MT data (Text -> Text), but very little S2ST data (English Audio -> French Audio).
+2. **One-to-Many Mapping:** "Hello" can be said in infinite ways (happy, sad, loud, quiet). The model has to choose *one* target prosody.
+3. **Latency:** For real-time translation (Skype), we need **Streaming Tokenization**. We can't wait for the full sentence to finish.
 
 **Solution: Unit-based Translation**
 Instead of predicting audio waveforms, we predict **Discrete Units** (HuBERT/EnCodec tokens).
@@ -382,13 +382,13 @@ We have tokens. How do we get audio back?
 We need a **Vocoder** (or HiFi-GAN).
 
 **Process:**
-1.  **De-quantization:** Look up the codebook vectors for the tokens.
-    - `[34, 99]` -> `[Vector_34, Vector_99]`.
-2.  **Upsampling:** The tokens are at 75Hz. Audio is at 24kHz. We need to upsample by 320x.
-    - Use Transposed Convolutions.
-3.  **Refinement:** The raw upsampled signal is robotic.
-    - Pass it through a **HiFi-GAN** generator.
-    - This neural net adds the "texture" and phase information to make it sound natural.
+1. **De-quantization:** Look up the codebook vectors for the tokens.
+ - `[34, 99]` -> `[Vector_34, Vector_99]`.
+2. **Upsampling:** The tokens are at 75Hz. Audio is at 24kHz. We need to upsample by 320x.
+ - Use Transposed Convolutions.
+3. **Refinement:** The raw upsampled signal is robotic.
+ - Pass it through a **HiFi-GAN** generator.
+ - This neural net adds the "texture" and phase information to make it sound natural.
 
 ## Latency Analysis: Streaming vs. Batch
 
@@ -403,8 +403,8 @@ For a real-time voice chat app (like Discord with AI voice), latency is critical
 **2. Streaming Processing (Online)**
 - **Chunking:** Process audio in 20ms chunks.
 - **Causal Convolutions:** The encoder can only look at *past* samples, not future ones.
-    - Standard Conv: `Output[t]` depends on `Input[t-k...t+k]`.
-    - Causal Conv: `Output[t]` depends on `Input[t-k...t]`.
+ - Standard Conv: `Output[t]` depends on `Input[t-k...t+k]`.
+ - Causal Conv: `Output[t]` depends on `Input[t-k...t]`.
 - **Latency:** 20-40ms. (Real-time).
 
 **Trade-off:** Causal models are slightly worse in quality because they lack future context ("I read..." -> need to know if next word is "book" (red) or "now" (reed)).
@@ -423,9 +423,9 @@ If two people speak at once, a standard VQ-VAE will produce a "mixed" token that
 Speech Tokenization bridges the gap between Signal Processing and NLP. It allows us to throw away complex DSP pipelines and just say: "It's all tokens."
 
 **Key Takeaways:**
-1.  **Discretization** is key to applying Transformers to audio.
-2.  **RVQ** allows hierarchical representation (Coarse -> Fine).
-3.  **Semantic Tokens** capture meaning; **Acoustic Tokens** capture style.
+1. **Discretization** is key to applying Transformers to audio.
+2. **RVQ** allows hierarchical representation (Coarse -> Fine).
+3. **Semantic Tokens** capture meaning; **Acoustic Tokens** capture style.
 
 
 

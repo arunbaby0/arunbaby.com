@@ -1,19 +1,19 @@
 ---
 title: "Agent Communication Protocols: The Language of Cooperation"
 day: 30
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - communication-protocols
-  - fipa-acl
-  - json-rpc
-  - message-passing
-  - standardization
-difficulty: Medium
 related_dsa_day: 30
 related_ml_day: 30
 related_speech_day: 30
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - communication-protocols
+ - fipa-acl
+ - json-rpc
+ - message-passing
+ - standardization
+difficulty: Medium
 ---
 
 **"The final frontier: Standardizing the Agent-to-Agent dialogue."**

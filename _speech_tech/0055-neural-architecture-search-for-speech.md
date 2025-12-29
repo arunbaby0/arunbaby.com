@@ -1,6 +1,9 @@
 ---
 title: "Neural Architecture Search for Speech"
 day: 55
+related_dsa_day: 55
+related_ml_day: 55
+related_agents_day: 55
 collection: speech-tech
 categories:
   - speech-tech
@@ -15,16 +18,13 @@ difficulty: Hard
 subdomain: "Deep Learning"
 tech_stack: Python, PyTorch, ESPnet
 scale: "Optimizing multi-million parameter models for real-time edge inference"
-related_dsa_day: 55
-related_ml_day: 55
-related_agents_day: 55
 ---
 
 **"Speech models are uniquely sensitive to temporal resolution. Neural Architecture Search (NAS) is the science of finding the perfect balance between time, frequency, and compute."**
 
 ## 1. Introduction: The Era of Automated Design
 
-Neural Architecture Search (NAS) represents a paradigm shift in how we build speech technology. In the early days of Deep Learning (2012-2017), researchers spent most of their time manually tuning the number of layers, the number of hidden units, and the kernel sizes of their models. This was a process of "Graduate Student Descent"—where a PhD student would manually try 50 variations to find the one that worked best. Today, we use search algorithms to do this "busy work," allowing researchers to focus on the high-level design of search spaces and objective functions.
+Neural Architecture Search (NAS) represents a paradigm shift in how we build speech technology. In the early days of Deep Learning (2012-2017), researchers spent most of their time manually tuning the number of layers, the number of hidden units, and the kernel sizes of their models. This was a process of "Graduate Student Descent"—where a PhD student would manually try 50 variations to find the one that worked best. Today we use search algorithms to do this "busy work," allowing researchers to focus on the high-level design of search spaces and objective functions.
 
 ---
 
@@ -57,7 +57,7 @@ We define a manifold of possible operations that the search engine can choose fr
 ### 3.2 The Search Strategy (The "Brains" of the Discovery)
 How do we explore an astronomical space of billions of possible architectures?
 - **Reinforcement Learning (RL)**: An agent (often an LSTM "Controller") proposes an architecture, trains it to convergence, and receives the Word Error Rate (WER) as a reward. This is "Brute Force" and extremely expensive.
-- **Differentiable NAS (DARTS)**: Instead of discrete choices, we use architectural weights ($\alpha$) and optimize them alongside model weights ($w$) using standard backpropagation and gradient descent. This has reduced search time from "Years" to "Days."
+- **Differentiable NAS (DARTS)**: Instead of discrete choices, we use architectural weights (`alpha`) and optimize them alongside model weights (`w`) using standard backpropagation and gradient descent. This has reduced search time from "Years" to "Days."
 - **Evolutionary Algorithms (EA)**: Using "Crossover" and "Mutation" on a population of architectures. Successful models "breed" to create the next generation of potential winners.
 
 ---
@@ -67,15 +67,23 @@ How do we explore an astronomical space of billions of possible architectures?
 To understand how a computer "learns" an architecture, we look at the **Continuous Relaxation** of the search space.
 
 ### 4.1 The Softmax Selection
-In a discrete search, you pick one operation $o_i$ from a set $O$. In DARTS, you compute a weighted sum:
-$$ \bar{o}(x) = \sum_{i \in O} \frac{\exp(\alpha_i)}{\sum_j \exp(\alpha_j)} o_i(x) $$
-where $\alpha$ are the architectural parameters. 
+In a discrete search, you pick one operation `o_i` from a set `O`. In DARTS, you compute a weighted sum:
+
+```
+o_hat(x) = sum( exp(alpha_i) / sum(exp(alpha_j)) * o_i(x) )
+```
+
+where `alpha` are the architectural parameters. 
 
 ### 4.2 Bilevel Optimization
 The optimization problem is defined as:
-$$ \min_{\alpha} \mathcal{L}_{val}(w^*(\alpha), \alpha) $$
-$$ \text{s.t. } w^*(\alpha) = \arg\min_{w} \mathcal{L}_{train}(w, \alpha) $$
-This means we are looking for architectural parameters $\alpha$ that minimize the validation loss, assuming the weights $w$ have been optimized for that architecture. In practice, we use a first-order approximation to update $\alpha$ and $w$ alternately, saving massive amounts of compute.
+
+```
+min_alpha L_val(w*(alpha), alpha)
+s.t. w*(alpha) = argmin_w L_train(w, alpha)
+```
+
+This means we are looking for architectural parameters `alpha` that minimize the validation loss, assuming the weights `w` have been optimized for that architecture. In practice, we use a first-order approximation to update `alpha` and `w` alternately, saving massive amounts of compute.
 
 ---
 
@@ -148,15 +156,15 @@ NAS is not just for efficiency; it’s for **Inclusion**.
 
 ## 11. Practical Implementation: A 10-Step Guide to Speech NAS
 
-1.  **Define the Metrics**: Accuracy (WER) vs. Latency (ms) vs. Power (mAh).
-2.  **Define the Search Space**: Kernel sizes (3 to 15), Expansion factors (1.5 to 6.0), Attention vs. Conv vs. Identity.
-3.  **Hardware Profiling**: Test 100 random architectures on your target device to build a **Latency Predictor**.
-4.  **Supernet Initialization**: Build the "One-Shot" model containing all operations.
-5.  **Sandwich Training**: Train the Supernet using the "max, min, and random" sampling strategy to ensure all paths are well-represented.
-6.  **Search Phase**: Run a Genetic Algorithm for 100 generations, using the Latency Predictor as a constraints checker.
-7.  **Symmetry Pruning**: Use group-theory based pruning to remove redundant architecture combinations.
-8.  **Training from Scratch**: Extract the Top 5 candidates and train them to convergence on your full dataset.
-9.  **Quantization-Aware Fine-Tuning**: Convert the winner to INT8/FP16 for mobile deployment.
+1. **Define the Metrics**: Accuracy (WER) vs. Latency (ms) vs. Power (mAh).
+2. **Define the Search Space**: Kernel sizes (3 to 15), Expansion factors (1.5 to 6.0), Attention vs. Conv vs. Identity.
+3. **Hardware Profiling**: Test 100 random architectures on your target device to build a **Latency Predictor**.
+4. **Supernet Initialization**: Build the "One-Shot" model containing all operations.
+5. **Sandwich Training**: Train the Supernet using the "max, min, and random" sampling strategy to ensure all paths are well-represented.
+6. **Search Phase**: Run a Genetic Algorithm for 100 generations, using the Latency Predictor as a constraints checker.
+7. **Symmetry Pruning**: Use group-theory based pruning to remove redundant architecture combinations.
+8. **Training from Scratch**: Extract the Top 5 candidates and train them to convergence on your full dataset.
+9. **Quantization-Aware Fine-Tuning**: Convert the winner to INT8/FP16 for mobile deployment.
 10. **Monitoring**: In production, track the "Latency Drift" to see if your NAS-discovered model is truly performant in the wild.
 
 ---
@@ -164,10 +172,10 @@ NAS is not just for efficiency; it’s for **Inclusion**.
 ## 12. Detailed Guide: How to Design a Speech Search Space
 
 Designing the space is more important than choosing the optimizer. Follow these rules:
-1.  **Rule of Diversity**: Your space should include both local (Conv) and global (Attention) operations.
-2.  **Rule of Hardware**: Include operations that have optimized CUDA/TensorFlow-Lite kernels. Searching for a "weird" operation with no fast implementation is a waste of time.
-3.  **Rule of Resolution**: Allow the search to decide where to downsample. Temporal resolution is the biggest driver of latency in speech.
-4.  **Rule of Depth**: Allow the search to skip layers entirely. Sometimes a 12-layer model is only marginally better than a 6-layer model.
+1. **Rule of Diversity**: Your space should include both local (Conv) and global (Attention) operations.
+2. **Rule of Hardware**: Include operations that have optimized CUDA/TensorFlow-Lite kernels. Searching for a "weird" operation with no fast implementation is a waste of time.
+3. **Rule of Resolution**: Allow the search to decide where to downsample. Temporal resolution is the biggest driver of latency in speech.
+4. **Rule of Depth**: Allow the search to skip layers entirely. Sometimes a 12-layer model is only marginally better than a 6-layer model.
 
 ---
 
@@ -198,28 +206,29 @@ As we make models smaller and faster, we enable wider surveillance.
 ## 16. Letter to the Aspiring Speech Engineer
 
 Dear Reader,
+
 If you are just starting your journey in Speech Technology, you are entering at a magical time. We are no longer limited by what we can hand-craft. The tools of search and optimization are your new "pencils." Learn the mathematics of **gradient flow** and the engineering of **Supernets**. Do not be afraid of the complexity; it is within that complexity that the most elegant and efficient solutions are found. The future of speech is not just about being "heard"—it is about being understood in the most efficient way possible.
 
 ---
 
 ## 17. Final Summary and Roadmap
 
-1.  **Search is the future**: Don't waste your time hand-tuning. Build a space and search it.
-2.  **Hardware is the constraint**: Always evaluate on your target device.
-3.  **Pruning is the key**: Like the N-Queens problem, success comes from knowing which paths to kill early.
+1. **Search is the future**: Don't waste your time hand-tuning. Build a space and search it.
+2. **Hardware is the constraint**: Always evaluate on your target device.
+3. **Pruning is the key**: Like the N-Queens problem, success comes from knowing which paths to kill early.
 
 ---
 
 ## 18. Bibliography and Recommended Reading
 
-1.  **"The Bitter Lesson"** by Rich Sutton.
-2.  **"Conformer: Convolution-augmented Transformer for Speech Recognition"** by Anmol Gulati et al.
-3.  **"DARTS: Differentiable Architecture Search"** by Hanxiao Liu et al.
-4.  **"Mobile-Conformer: A Lightweight Conformer for On-Device ASR"** by Google Research.
-5.  **"ESPnet-NAS: Neural Architecture Search for End-to-End Speech Processing"** by Shinji Watanabe et al.
-6.  **"Neural Architecture Search with Reinforcement Learning"** by Barret Zoph and Quoc V. Le.
-7.  **"ENAS: Efficient Neural Architecture Search via Parameter Sharing"** by Hieu Pham et al.
-8.  **"NAS-Bench-ASR: A Benchmarking Toolkit for Speech NAS"** by Team Speech-Auto.
+1. **"The Bitter Lesson"** by Rich Sutton.
+2. **"Conformer: Convolution-augmented Transformer for Speech Recognition"** by Anmol Gulati et al.
+3. **"DARTS: Differentiable Architecture Search"** by Hanxiao Liu et al.
+4. **"Mobile-Conformer: A Lightweight Conformer for On-Device ASR"** by Google Research.
+5. **"ESPnet-NAS: Neural Architecture Search for End-to-End Speech Processing"** by Shinji Watanabe et al.
+6. **"Neural Architecture Search with Reinforcement Learning"** by Barret Zoph and Quoc V. Le.
+7. **"ENAS: Efficient Neural Architecture Search via Parameter Sharing"** by Hieu Pham et al.
+8. **"NAS-Bench-ASR: A Benchmarking Toolkit for Speech NAS"** by Team Speech-Auto.
 
 ---
 
@@ -241,13 +250,13 @@ A: No. With open-source tools like ESPnet-NAS and Auto-PyTorch, even small start
 
 ## 20. Glossary of Terms for the Speech Professional
 
-*   **Alpha ($\alpha$):** The set of weights that determine the importance of each operation in a differentiable search space.
-*   **Acoustic Front-end:** The initial part of a speech model that converts a raw waveform into a MEL spectrogram.
-*   **Bilevel Optimization:** A mathematical structure for NAS where one optimization problem (architecture) contains another (weights).
-*   **Causal Convolution:** A convolution that only looks at previous and current time steps, required for streaming speech models.
-*   **Proxy Task:** A smaller, faster version of the training task used during the search phase to save time.
-*   **Supernet:** A large neural network that contains every possible architecture variation in the search space.
-*   **WER (Word Error Rate):** The primary metric for ASR accuracy.
+* **Alpha (alpha):** The set of weights that determine the importance of each operation in a differentiable search space.
+* **Acoustic Front-end:** The initial part of a speech model that converts a raw waveform into a MEL spectrogram.
+* **Bilevel Optimization:** A mathematical structure for NAS where one optimization problem (architecture) contains another (weights).
+* **Causal Convolution:** A convolution that only looks at previous and current time steps, required for streaming speech models.
+* **Proxy Task:** A smaller, faster version of the training task used during the search phase to save time.
+* **Supernet:** A large neural network that contains every possible architecture variation in the search space.
+* **WER (Word Error Rate):** The primary metric for ASR accuracy.
 
 ---
 
@@ -285,12 +294,17 @@ A: No. With open-source tools like ESPnet-NAS and Auto-PyTorch, even small start
 ## 23. Appendix: Mathematical Logic for the "Latency Penalty"
 
 In senior design interviews, you may be asked how to enforce a latency constraint mathematically. We use a **Soft Penalty Term** in the objective function:
-$$ \mathcal{L}_{total} = \mathcal{L}_{CE} + \lambda \cdot | \text{Lat}(\alpha) - \text{Lat}_{target} | $$
+
+```
+L_total = L_CE + lambda * abs(Lat(alpha) - Lat_target)
+```
+
 Where:
-- $\mathcal{L}_{CE}$ is the standard Cross-Entropy loss for speech.
-- $\text{Lat}(\alpha)$ is the predicted latency of the current architecture weights.
-- $\lambda$ is a hyperparameter that controls the "Strength" of the constraint. 
-By adjusting $\lambda$, you move along the **Pareto Frontier**, choosing between a model that is "Fast but Slightly Less Accurate" and one that is "Slow but Extremely Accurate." This is the core of the **Constraint Satisfaction Problem** in the ML system design context.
+- `L_CE` is the standard Cross-Entropy loss for speech.
+- `Lat(alpha)` is the predicted latency of the current architecture weights.
+- `lambda` is a hyperparameter that controls the "Strength" of the constraint. 
+
+By adjusting `lambda`, you move along the **Pareto Frontier**, choosing between a model that is "Fast but Slightly Less Accurate" and one that is "Slow but Extremely Accurate." This is the core of the **Constraint Satisfaction Problem** in the ML system design context.
 
 ---
 

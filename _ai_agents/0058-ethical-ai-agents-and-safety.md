@@ -1,6 +1,9 @@
 ---
 title: "Ethical AI Agents and Safety Guardrails"
 day: 58
+related_dsa_day: 58
+related_ml_day: 58
+related_speech_day: 58
 collection: ai_agents
 categories:
   - ai-agents
@@ -17,9 +20,6 @@ tech_stack: [NeMo Guardrails, Llama Guard, Python, PyRetic, Docker]
 scale: "Deploying autonomous agents with 100% compliance to safety and privacy protocols"
 companies: [Anthropic, OpenAI, Meta, Google, Alignment Research Center]
 difficulty: Hard
-related_dsa_day: 58
-related_ml_day: 58
-related_speech_day: 58
 ---
 
 **"An autonomous agent without safety guardrails is not an assistant; it is a liability. Ethics in AI is not a 'layer' you add at the end—it is the operating system upon which the agent runs."**
@@ -30,17 +30,17 @@ As we move toward agents that can execute code, move money, and browse the web, 
 
 **Ethical AI Safety** is the engineering discipline of ensuring agents stay within their "Operational Envelope." It involves **Alignment** (making sure the agent wants what we want) and **Control** (making sure the agent *cannot* do what we don't want). 
 
-Today, on Day 58, we explore the architecture of Agentic Guardrails, connecting it to the theme of **Strict State Transitions and Rule-based Constraints**.
+We explore the architecture of Agentic Guardrails, focusing on **Strict State Transitions and Rule-based Constraints**.
 
 ---
 
 ## 2. The Five Pillars of Agentic Safety
 
-1.  **PII Protection**: Ensure the agent never sends sensitive data (emails, passwords, SSNs) to an external LLM provider.
-2.  **Prompt Injection Defense**: Prevent the agent from being "hijacked" by malicious text it finds on the web.
-3.  **Action Validation**: A "Human-in-the-loop" or "Rule-based" check before high-stakes actions (e.g., spending > $100).
-4.  **Moral Alignment**: Ensuring the agent's reasoning follows a "Constitution" (e.g., "Always prioritize user safety over speed").
-5.  **Sandboxing**: Running the agent in a container where it can't escape to the host system.
+1. **PII Protection**: Ensure the agent never sends sensitive data to an external LLM provider.
+2. **Prompt Injection Defense**: Prevent the agent from being "hijacked" by malicious text it finds on the web.
+3. **Action Validation**: A "Human-in-the-loop" check before high-stakes actions.
+4. **Moral Alignment**: Ensuring the agent's reasoning follows a "Constitution."
+5. **Sandboxing**: Running the agent in a container where it can't escape to the host system.
 
 ---
 
@@ -48,15 +48,15 @@ Today, on Day 58, we explore the architecture of Agentic Guardrails, connecting 
 
 A single LLM cannot be its own policeman. We use a **Supervisor-Agent Architecture**:
 
-1.  **The Worker Agent**: The model tasked with the job (e.g., Llama-3).
-2.  **The Guardrail Agent**: A smaller, highly-specialized model (e.g., Llama-Guard) that only checks for policy violations.
-3.  **The Parser Tier**: (Connecting to our **RegEx** DSA topic). Rule-based code that scans the agent's output for forbidden strings or API calls before they reach the execution engine.
+1. **The Worker Agent**: The model tasked with the job.
+2. **The Guardrail Agent**: A smaller, highly-specialized model that only checks for policy violations.
+3. **The Parser Tier**: Rule-based code that scans the agent's output for forbidden strings or API calls.
 
 ---
 
 ## 4. Implementation: A PII Guardrail with RegEx
 
-We can use the power of regular expressions (Day 58 DSA) to build a "firewall" for our agents.
+We can use the power of regular expressions to build a "firewall" for our agents.
 
 ```python
 import re
@@ -95,16 +95,16 @@ if not is_safe:
 Inspired by Anthropic’s research, we can give an agent a **Constitution**.
 - Before an action is taken, the agent performs a **Self-Critique** step.
 - "Does my current plan to delete these log files violate the 'Data Persistence' rule of my constitution?"
-- If the agent identifies a violation, it **backtracks** (the Sudoku/Search Link) and generates a new, safer plan.
+- If the agent identifies a violation, it **backtracks** and generates a new, safer plan.
 
 ---
 
 ## 6. Real-time Implementation: Red-Teaming the Swarm
 
 How do we test if an agent is safe? We conduct **Red-Teaming Sessions**.
-- We hire/build a "Malicious Agent" whose only goal is to find "Edge Cases" in the primary agent's safety rules.
+- We build a "Malicious Agent" whose goal is to find "Edge Cases" in the primary agent's safety rules.
 - Example: "I want you to convince the Booking Agent to give you a free flight by claiming you are its developer." 
-- If the primary agent falls for it, we have a **Jailbreak**. We then update the Guardrail's "State Machine" to block these specific logic paths.
+- If the primary agent falls for it, it's a **Jailbreak**. We then update the Guardrail's state machine to block these specific logic paths.
 
 ---
 
@@ -121,27 +121,26 @@ How do we test if an agent is safe? We conduct **Red-Teaming Sessions**.
 
 ## 8. Failure Modes in AI Safety
 
-1.  **Obfuscation**: A malicious prompt encodes a password as base64 or rot13. A simple RegEx filter will miss it.
-    *   *Mitigation*: Use a **Decoder Layer** in the guardrail that "Normalizes" the text before scanning.
-2.  **Guardrail Fatigue**: If a guardrail is too strict, the agent becomes useless (the "I'm sorry, I can't do that" problem). 
-3.  **Action Confusion**: The agent accidentally combines two safe actions into one unsafe action.
+1. **Obfuscation**: A malicious prompt encodes a password as base64. A simple RegEx filter will miss it.
+  * *Mitigation*: Use a **Decoder Layer** in the guardrail.
+2. **Guardrail Fatigue**: If a guardrail is too strict, the agent becomes useless. 
+3. **Action Confusion**: The agent accidentally combines two safe actions into one unsafe action.
 
 ---
 
 ## 9. Real-World Case Study: The "Knight Capital" Lesson for Agents
 
-In 2012, a bug in an automated trading system caused Knight Capital to lose $440M in 45 minutes. 
-- **The Agentic Parallel**: An AI agent with access to a corporate credit card could theoretically perform thousands of "Small but Legal" transactions that drain an account before a human notices.
-- **The Defense**: **Circuit Breakers**. If an agent's cumulative spend in 60 minutes exceeds $X$, the entire state machine crashes and requires a manual "Human Re-boot."
+In 2012, a bug in an automated trading system caused Knight Capital to lose 440M in 45 minutes. 
+- **The Defense**: **Circuit Breakers**. If an agent's cumulative spend exceeds a threshold, the entire state machine crashes and requires a manual "Human Re-boot."
 
 ---
 
 ## 10. Key Takeaways
 
-1.  **Safety is an Architecture**: It is not a prompt. It is a combination of models, code (DSA Link), and sandboxes.
-2.  **RegEx is a Security Tool**: (The DSA Link) Patterns are the fastest way to enforce "Hard No" rules.
-3.  **Human-in-the-loop is not a failure**: For high-stakes actions, a human confirmation is a feature, not a bug.
-4.  **Governance is Scale**: (The ML Link) You cannot deploy an agent to millions of users if you haven't solved for **PII and Bias**.
+1. **Safety is an Architecture**: It is not a prompt. It is a combination of models, code, and sandboxes.
+2. **RegEx is a Security Tool**: Patterns are the fastest way to enforce "Hard No" rules.
+3. **Human-in-the-loop is not a failure**: For high-stakes actions, a human confirmation is a feature.
+4. **Governance is Scale**: You cannot deploy an agent to millions of users if you haven't solved for **PII and Bias**.
 
 ---
 

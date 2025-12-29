@@ -1,24 +1,24 @@
 ---
 title: "Audio Quality Validation"
 day: 53
+related_dsa_day: 53
+related_ml_day: 53
+related_agents_day: 53
 collection: speech_tech
 categories:
-  - speech-tech
+ - speech-tech
 tags:
-  - audio-quality
-  - data-validation
-  - asr
-  - monitoring
-  - preprocessing
-  - production
+ - audio-quality
+ - data-validation
+ - asr
+ - monitoring
+ - preprocessing
+ - production
 difficulty: Hard
 subdomain: "Audio QA & Validation"
 tech_stack: Python, librosa, PyTorch, WebRTC VAD
 scale: "Validating millions of utterances/day with privacy constraints"
 companies: Google, Amazon, Apple, Zoom
-related_dsa_day: 53
-related_ml_day: 53
-related_agents_day: 53
 ---
 
 **"If you don’t validate audio, you’ll debug ‘model regressions’ that are really microphone bugs."**
@@ -69,44 +69,44 @@ So a mature speech stack treats audio validation as:
 ### 2.1 Categories of quality checks
 
 1. **Format checks**
-   - sample rate correctness (e.g., 16kHz expected)
-   - bit depth / PCM encoding
-   - channel layout (mono vs stereo)
-   - duration bounds (too short/too long)
+ - sample rate correctness (e.g., 16kHz expected)
+ - bit depth / PCM encoding
+ - channel layout (mono vs stereo)
+ - duration bounds (too short/too long)
 
 2. **Signal integrity checks**
-   - clipping rate
-   - RMS energy range
-   - zero fraction / dropouts
-   - DC offset
+ - clipping rate
+ - RMS energy range
+ - zero fraction / dropouts
+ - DC offset
 
 3. **Content plausibility checks**
-   - speech present (VAD)
-   - SNR estimate in a reasonable range
-   - spectral characteristics consistent with speech
+ - speech present (VAD)
+ - SNR estimate in a reasonable range
+ - spectral characteristics consistent with speech
 
 4. **System/transport checks (streaming)**
-   - frame drops / jitter buffer underruns
-   - PLC/concealment rate
-   - codec mismatch artifacts
+ - frame drops / jitter buffer underruns
+ - PLC/concealment rate
+ - codec mismatch artifacts
 
 ### 2.3 “Quality” depends on task (ASR vs KWS vs diarization)
 
 The same audio can be “good enough” for one task and unusable for another.
 
 - **Wake word / keyword spotting**
-  - tolerates more noise
-  - but is sensitive to clipping and DC offset (false triggers)
-  - strongly affected by input route (speakerphone vs headset)
+ - tolerates more noise
+ - but is sensitive to clipping and DC offset (false triggers)
+ - strongly affected by input route (speakerphone vs headset)
 
 - **ASR dictation**
-  - needs intelligibility
-  - sensitive to sample rate mismatch and dropouts
-  - more robust to mild noise if the model is trained for it
+ - needs intelligibility
+ - sensitive to sample rate mismatch and dropouts
+ - more robust to mild noise if the model is trained for it
 
 - **Speaker diarization / verification**
-  - sensitive to codec artifacts and channel mixing
-  - speaker embeddings are brittle to distortions
+ - sensitive to codec artifacts and channel mixing
+ - speaker embeddings are brittle to distortions
 
 So validation thresholds are often **task-specific** and **segment-specific**.
 
@@ -154,32 +154,32 @@ Avoid by default:
 
 ## 3. Architecture (Validation as a Gate + Feedback Loop)
 
-```
+``
  Audio Input
-    |
-    v
+ |
+ v
  +-------------------+
- | Format Validator  | -> sample rate, duration, channels
+ | Format Validator | -> sample rate, duration, channels
  +---------+---------+
-           |
-           v
- +-------------------+      +-------------------+
- | Signal Validator  | ---> | Telemetry         |
- | (clipping, RMS)   |      | (privacy-safe)    |
- +---------+---------+      +---------+---------+
-           |
-           v
+ |
+ v
+ +-------------------+ +-------------------+
+ | Signal Validator | ---> | Telemetry |
+ | (clipping, RMS) | | (privacy-safe) |
+ +---------+---------+ +---------+---------+
+ |
+ v
  +-------------------+
  | Content Validator |
- | (VAD, SNR proxy)  |
+ | (VAD, SNR proxy) |
  +---------+---------+
-           |
-           v
- +-------------------+      +-------------------+
- | Policy Engine     | ---> | Actions           |
- | pass/warn/block   |      | (fallback, queue) |
- +-------------------+      +-------------------+
-```
+ |
+ v
+ +-------------------+ +-------------------+
+ | Policy Engine | ---> | Actions |
+ | pass/warn/block | | (fallback, queue) |
+ +-------------------+ +-------------------+
+``
 
 Key concept:
 - validation is not only observability; it must produce safe actions.
@@ -220,69 +220,69 @@ ML validators also need validation; keep them behind safe fallbacks.
 
 ### 5.1 Basic signal metrics
 
-```python
+``python
 import numpy as np
 
 
 def rms(x: np.ndarray) -> float:
-    return float(np.sqrt(np.mean(x**2) + 1e-12))
+ return float(np.sqrt(np.mean(x**2) + 1e-12))
 
 
 def clipping_rate(x: np.ndarray, clip_value: float = 0.99) -> float:
-    return float(np.mean(np.abs(x) >= clip_value))
+ return float(np.mean(np.abs(x) >= clip_value))
 
 
 def zero_fraction(x: np.ndarray, eps: float = 1e-6) -> float:
-    return float(np.mean(np.abs(x) <= eps))
+ return float(np.mean(np.abs(x) <= eps))
 
 
 def dc_offset(x: np.ndarray) -> float:
-    return float(np.mean(x))
-```
+ return float(np.mean(x))
+``
 
 ### 5.2 A minimal quality gate
 
-```python
+``python
 from dataclasses import dataclass
 
 
 @dataclass
 class AudioQualityReport:
-    ok: bool
-    reason: str
-    metrics: dict
+ ok: bool
+ reason: str
+ metrics: dict
 
 
 def validate_audio(x: np.ndarray, sample_rate: int) -> AudioQualityReport:
-    # Format checks
-    if sample_rate not in (16000, 48000):
-        return AudioQualityReport(False, "unsupported_sample_rate", {"sr": sample_rate})
+ # Format checks
+ if sample_rate not in (16000, 48000):
+ return AudioQualityReport(False, "unsupported_sample_rate", {"sr": sample_rate})
 
-    dur_s = len(x) / float(sample_rate)
-    if dur_s < 0.2:
-        return AudioQualityReport(False, "too_short", {"duration_s": dur_s})
-    if dur_s > 30.0:
-        return AudioQualityReport(False, "too_long", {"duration_s": dur_s})
+ dur_s = len(x) / float(sample_rate)
+ if dur_s < 0.2:
+ return AudioQualityReport(False, "too_short", {"duration_s": dur_s})
+ if dur_s > 30.0:
+ return AudioQualityReport(False, "too_long", {"duration_s": dur_s})
 
-    # Signal checks
-    r = rms(x)
-    c = clipping_rate(x)
-    z = zero_fraction(x)
-    d = dc_offset(x)
+ # Signal checks
+ r = rms(x)
+ c = clipping_rate(x)
+ z = zero_fraction(x)
+ d = dc_offset(x)
 
-    metrics = {"rms": r, "clipping_rate": c, "zero_fraction": z, "dc_offset": d}
+ metrics = {"rms": r, "clipping_rate": c, "zero_fraction": z, "dc_offset": d}
 
-    if z > 0.95:
-        return AudioQualityReport(False, "dropout_or_muted", metrics)
-    if c > 0.02:
-        return AudioQualityReport(False, "clipping", metrics)
-    if abs(d) > 0.05:
-        return AudioQualityReport(False, "dc_offset", metrics)
-    if r < 1e-3:
-        return AudioQualityReport(False, "very_low_energy", metrics)
+ if z > 0.95:
+ return AudioQualityReport(False, "dropout_or_muted", metrics)
+ if c > 0.02:
+ return AudioQualityReport(False, "clipping", metrics)
+ if abs(d) > 0.05:
+ return AudioQualityReport(False, "dc_offset", metrics)
+ if r < 1e-3:
+ return AudioQualityReport(False, "very_low_energy", metrics)
 
-    return AudioQualityReport(True, "ok", metrics)
-```
+ return AudioQualityReport(True, "ok", metrics)
+``
 
 This is a starting point; real systems add segment-aware thresholds and VAD/SNR proxies.
 
@@ -418,25 +418,25 @@ Downstream impact metrics:
 If you can build only one dashboard, include:
 
 - **User impact proxies**
-  - command success / completion rate
-  - “no speech detected” rate
-  - retry/correction rate
+ - command success / completion rate
+ - “no speech detected” rate
+ - retry/correction rate
 
 - **Signal health**
-  - RMS distribution (p50/p95)
-  - clipping rate
-  - zero fraction
-  - DC offset rate
+ - RMS distribution (p50/p95)
+ - clipping rate
+ - zero fraction
+ - DC offset rate
 
 - **Format health**
-  - sample rate distribution
-  - duration distribution (too short/too long rates)
+ - sample rate distribution
+ - duration distribution (too short/too long rates)
 
 - **Attribution**
-  - by device bucket
-  - by input route (Bluetooth vs built-in mic)
-  - by codec
-  - by region / app version
+ - by device bucket
+ - by input route (Bluetooth vs built-in mic)
+ - by codec
+ - by region / app version
 
 This makes rollouts and regressions visible quickly.
 
@@ -445,19 +445,19 @@ This makes rollouts and regressions visible quickly.
 Different speech surfaces have different best proxies:
 
 - **Wake word**
-  - false accept / false reject rates
-  - trigger rate per hour
-  - trigger rate by input route (Bluetooth vs speakerphone)
+ - false accept / false reject rates
+ - trigger rate per hour
+ - trigger rate by input route (Bluetooth vs speakerphone)
 
 - **Voice commands**
-  - command completion/success rate
-  - user retry rate
-  - “no match” rate
+ - command completion/success rate
+ - user retry rate
+ - “no match” rate
 
 - **Dictation**
-  - correction rate (user edits)
-  - confidence calibration drift
-  - “no speech detected” rate
+ - correction rate (user edits)
+ - confidence calibration drift
+ - “no speech detected” rate
 
 If you don’t segment metrics by surface, you’ll miss regressions that only impact one experience.
 
@@ -499,26 +499,26 @@ This is the central value proposition: validation prevents misdiagnosis and spee
 When you see a spike in WER or command failure and suspect audio quality:
 
 1. **Scope**
-   - which product surface (wake word, dictation, commands)?
-   - which segments are affected (device bucket, input route, codec, region)?
+ - which product surface (wake word, dictation, commands)?
+ - which segments are affected (device bucket, input route, codec, region)?
 
 2. **Format**
-   - did sample rate distribution change?
-   - did channel layout change (mono vs stereo)?
-   - did duration distribution shift (too many short clips)?
+ - did sample rate distribution change?
+ - did channel layout change (mono vs stereo)?
+ - did duration distribution shift (too many short clips)?
 
 3. **Signal**
-   - RMS distribution shift?
-   - clipping rate spike?
-   - zero fraction spike (dropouts)?
-   - DC offset spike?
+ - RMS distribution shift?
+ - clipping rate spike?
+ - zero fraction spike (dropouts)?
+ - DC offset spike?
 
 4. **Transport (streaming)**
-   - frame drops / underruns spike?
-   - PLC/concealment spike?
+ - frame drops / underruns spike?
+ - PLC/concealment spike?
 
 5. **Change logs**
-   - app rollout, codec update, AGC/VAD config change?
+ - app rollout, codec update, AGC/VAD config change?
 
 This mirrors general data validation: you want the fastest path from “something is wrong” to “what changed”.
 
@@ -536,20 +536,20 @@ Trends:
 High leverage testing strategy: inject controlled corruptions into clean audio and verify validators catch them.
 
 - **Clipping**
-  - scale amplitude up, clamp to [-1, 1]
-  - expected: clipping_rate spikes
+ - scale amplitude up, clamp to [-1, 1]
+ - expected: clipping_rate spikes
 
 - **Dropouts**
-  - zero out random 50–200ms spans
-  - expected: zero_fraction spikes
+ - zero out random 50–200ms spans
+ - expected: zero_fraction spikes
 
 - **Sample rate mismatch**
-  - resample but mislabel sample rate metadata
-  - expected: spectral distribution shifts, model confidence collapses
+ - resample but mislabel sample rate metadata
+ - expected: spectral distribution shifts, model confidence collapses
 
 - **Codec artifacts**
-  - simulate low bitrate + packet loss
-  - expected: spectral flatness/centroid shifts
+ - simulate low bitrate + packet loss
+ - expected: spectral flatness/centroid shifts
 
 These tests are privacy-friendly and give you repeatable regression coverage.
 
@@ -579,24 +579,24 @@ This turns quality from “vibes” into a managed contract, just like ML data v
 If you’re building this from scratch, implement in this order:
 
 1. **Format validation**
-   - sample rate and channel checks
-   - duration bounds
+ - sample rate and channel checks
+ - duration bounds
 
 2. **Signal integrity**
-   - clipping rate
-   - zero fraction/dropouts
-   - DC offset
+ - clipping rate
+ - zero fraction/dropouts
+ - DC offset
 
 3. **Segment dashboards**
-   - device bucket × input route × codec × region
+ - device bucket × input route × codec × region
 
 4. **Policy actions**
-   - warn vs block for training
-   - fallback vs warn for serving
+ - warn vs block for training
+ - fallback vs warn for serving
 
 5. **Streaming metrics**
-   - frame drop and underrun rate
-   - PLC/concealment rate
+ - frame drop and underrun rate
+ - PLC/concealment rate
 
 This gets you most of the benefit without over-engineering.
 
@@ -653,28 +653,28 @@ This table is not perfect diagnosis, but it accelerates triage.
 ### 12.7 Appendix: incident response checklist (speech edition)
 
 1. **Scope**
-   - which surface: wake word / commands / dictation?
-   - which segments: device bucket, route, codec, region?
+ - which surface: wake word / commands / dictation?
+ - which segments: device bucket, route, codec, region?
 
 2. **Format**
-   - sample rate shifts?
-   - channel layout shifts?
-   - duration shifts?
+ - sample rate shifts?
+ - channel layout shifts?
+ - duration shifts?
 
 3. **Signal**
-   - RMS/clipping/zero fraction shifts?
-   - DC offset spikes?
+ - RMS/clipping/zero fraction shifts?
+ - DC offset spikes?
 
 4. **Transport (streaming)**
-   - frame drops, underruns, PLC spikes?
+ - frame drops, underruns, PLC spikes?
 
 5. **Change correlation**
-   - app rollout, codec update, AGC/VAD config change?
+ - app rollout, codec update, AGC/VAD config change?
 
 6. **Mitigate**
-   - roll back suspect changes
-   - route segment to safer codec/profile
-   - prompt user for route change if needed
+ - roll back suspect changes
+ - route segment to safer codec/profile
+ - prompt user for route change if needed
 
 ### 12.8 Appendix: validation maturity model (speech)
 

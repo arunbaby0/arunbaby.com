@@ -3,13 +3,13 @@ title: "Tool Calling Fundamentals"
 day: 4
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - tools
-  - function-calling
-  - apis
-  - security
-  - pydantic
+ - tools
+ - function-calling
+ - apis
+ - security
+ - pydantic
 difficulty: Easy
 related_dsa_day: 4
 related_ml_day: 4
@@ -42,9 +42,9 @@ Let's trace a user request: *"What is the weather in Tokyo?"* through the system
 2. **Reasoning:** The model analyzes the user request against the menu. It performs **Semantic Matching**.
  * *Thinking:* "User asks for weather. 'Tokyo' is a city. This matches `get_weather`."
 3. **Generation:** The model generates a special token or formatted string (e.g., a JSON object) representing the *intent* to call the function:
- ```json
+ ``json
  { "tool": "get_weather", "arguments": { "city": "Tokyo" } }
- ```
+ ``
 4. **Pause (Stop Sequence):** The inference engine recognizes that the model has output a "Tool Call Block" and **stops** generating. It freezes the model state and returns control to the Python script (the Orchestrator).
 5. **Execution (The Runtime):**
  * Your code parses the JSON.
@@ -140,7 +140,7 @@ If an agent can run code, it can `os.system('rm -rf /')` or `os.environ['AWS_KEY
 
 Instead of showing the parsing code (which varies by library), let's look at the **Router Logic** structure.
 
-```python
+``python
 class ToolExecutor:
  """
  The 'Hands' of the agent.
@@ -179,7 +179,7 @@ class ToolExecutor:
 # if output.is_tool_call:
 # result = executor.execute(output.name, output.args)
 # memory.add("ToolResult", result)
-```
+``
 
 ---
 

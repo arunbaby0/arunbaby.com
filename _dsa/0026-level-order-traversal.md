@@ -1,21 +1,21 @@
 ---
 title: "Binary Tree Level Order Traversal"
 day: 26
+related_ml_day: 26
+related_speech_day: 26
+related_agents_day: 26
 collection: dsa
 categories:
-  - dsa
+ - dsa
 tags:
-  - binary-tree
-  - bfs
-  - queue
-  - medium
+ - binary-tree
+ - bfs
+ - queue
+ - medium
 subdomain: "Tree Algorithms"
 tech_stack: [Python, C++, Java]
 scale: "O(N) time, O(N) space"
 companies: [Facebook, Amazon, Microsoft, LinkedIn, Google]
-related_ml_day: 26
-related_speech_day: 26
-related_agents_day: 26
 ---
 
 **How do you print a corporate hierarchy level by level? CEO first, then VPs, then Managers...**
@@ -25,13 +25,13 @@ related_agents_day: 26
 Given the `root` of a binary tree, return the *level order traversal* of its nodes' values. (i.e., from left to right, level by level).
 
 **Example 1:**
-```
-    3
-   / \
-  9  20
-    /  \
-   15   7
-```
+``
+ 3
+ / \
+ 9 20
+ / \
+ 15 7
+``
 **Input:** `root = [3,9,20,null,null,15,7]`
 **Output:** `[[3],[9,20],[15,7]]`
 
@@ -54,40 +54,40 @@ The key data structure for BFS is the **Queue** (FIFO - First In, First Out).
 
 We use a `deque` (double-ended queue) in Python for efficient `popleft()`.
 
-```python
+``python
 from collections import deque
 
 class TreeNode:
-    def __init__(self, val=0, left=None, right=None):
-        self.val = val
-        self.left = left
-        self.right = right
+ def __init__(self, val=0, left=None, right=None):
+ self.val = val
+ self.left = left
+ self.right = right
 
 class Solution:
-    def levelOrder(self, root: TreeNode) -> List[List[int]]:
-        if not root:
-            return []
-        
-        result = []
-        queue = deque([root])
-        
-        while queue:
-            level_size = len(queue)
-            current_level = []
-            
-            for _ in range(level_size):
-                node = queue.popleft()
-                current_level.append(node.val)
-                
-                if node.left:
-                    queue.append(node.left)
-                if node.right:
-                    queue.append(node.right)
-            
-            result.append(current_level)
-            
-        return result
-```
+ def levelOrder(self, root: TreeNode) -> List[List[int]]:
+ if not root:
+ return []
+ 
+ result = []
+ queue = deque([root])
+ 
+ while queue:
+ level_size = len(queue)
+ current_level = []
+ 
+ for _ in range(level_size):
+ node = queue.popleft()
+ current_level.append(node.val)
+ 
+ if node.left:
+ queue.append(node.left)
+ if node.right:
+ queue.append(node.right)
+ 
+ result.append(current_level)
+ 
+ return result
+``
 
 **Complexity Analysis:**
 - **Time:** \(O(N)\). We visit every node once.
@@ -99,27 +99,27 @@ Can we do this with DFS? Yes, but it's less intuitive.
 We pass the `level` index in the recursion.
 `dfs(node, level)` adds `node.val` to `result[level]`.
 
-```python
+``python
 class Solution:
-    def levelOrder(self, root: TreeNode) -> List[List[int]]:
-        result = []
-        
-        def dfs(node, level):
-            if not node:
-                return
-            
-            # Ensure the list for this level exists
-            if len(result) == level:
-                result.append([])
-            
-            result[level].append(node.val)
-            
-            dfs(node.left, level + 1)
-            dfs(node.right, level + 1)
-            
-        dfs(root, 0)
-        return result
-```
+ def levelOrder(self, root: TreeNode) -> List[List[int]]:
+ result = []
+ 
+ def dfs(node, level):
+ if not node:
+ return
+ 
+ # Ensure the list for this level exists
+ if len(result) == level:
+ result.append([])
+ 
+ result[level].append(node.val)
+ 
+ dfs(node.left, level + 1)
+ dfs(node.right, level + 1)
+ 
+ dfs(root, 0)
+ return result
+``
 
 **Pros:** Simpler code (no queue).
 **Cons:** Uses system stack \(O(H)\) space. BFS uses heap space.
@@ -136,35 +136,35 @@ Use a standard BFS.
 Keep a flag `left_to_right`.
 If `left_to_right` is False, append to `current_level` in reverse (or use `deque.appendleft`).
 
-```python
+``python
 class Solution:
-    def zigzagLevelOrder(self, root: TreeNode) -> List[List[int]]:
-        if not root: return []
-        
-        res = []
-        q = deque([root])
-        left_to_right = True
-        
-        while q:
-            level_size = len(q)
-            level_nodes = deque() # Use deque for O(1) appendleft
-            
-            for _ in range(level_size):
-                node = q.popleft()
-                
-                if left_to_right:
-                    level_nodes.append(node.val)
-                else:
-                    level_nodes.appendleft(node.val)
-                    
-                if node.left: q.append(node.left)
-                if node.right: q.append(node.right)
-            
-            res.append(list(level_nodes))
-            left_to_right = not left_to_right
-            
-        return res
-```
+ def zigzagLevelOrder(self, root: TreeNode) -> List[List[int]]:
+ if not root: return []
+ 
+ res = []
+ q = deque([root])
+ left_to_right = True
+ 
+ while q:
+ level_size = len(q)
+ level_nodes = deque() # Use deque for O(1) appendleft
+ 
+ for _ in range(level_size):
+ node = q.popleft()
+ 
+ if left_to_right:
+ level_nodes.append(node.val)
+ else:
+ level_nodes.appendleft(node.val)
+ 
+ if node.left: q.append(node.left)
+ if node.right: q.append(node.right)
+ 
+ res.append(list(level_nodes))
+ left_to_right = not left_to_right
+ 
+ return res
+``
 
 ## Variant 2: N-ary Tree Level Order Traversal
 
@@ -173,30 +173,30 @@ class Solution:
 **Intuition:**
 Same as Binary Tree, but instead of adding `left` and `right`, we iterate through `children`.
 
-```python
+``python
 class Node:
-    def __init__(self, val=None, children=None):
-        self.val = val
-        self.children = children
+ def __init__(self, val=None, children=None):
+ self.val = val
+ self.children = children
 
 class Solution:
-    def levelOrder(self, root: 'Node') -> List[List[int]]:
-        if not root: return []
-        
-        res = []
-        q = deque([root])
-        
-        while q:
-            level = []
-            for _ in range(len(q)):
-                node = q.popleft()
-                level.append(node.val)
-                if node.children:
-                    q.extend(node.children)
-            res.append(level)
-            
-        return res
-```
+ def levelOrder(self, root: 'Node') -> List[List[int]]:
+ if not root: return []
+ 
+ res = []
+ q = deque([root])
+ 
+ while q:
+ level = []
+ for _ in range(len(q)):
+ node = q.popleft()
+ level.append(node.val)
+ if node.children:
+ q.extend(node.children)
+ res.append(level)
+ 
+ return res
+``
 
 ## Variant 3: Binary Tree Level Order Traversal II (Bottom-Up)
 
@@ -208,26 +208,26 @@ Standard BFS, but `result.insert(0, level)` or `result.reverse()` at the end.
 
 ## Variant 4:A Binary Search Tree (BST) is the backbone of efficient search. It guarantees \(O(\log N)\) lookup. But this guarantee only holds if the tree is valid. If a single node is out of place, the search algorithm breaks.t node** of each level.
 
-```python
+``python
 class Solution:
-    def rightSideView(self, root: TreeNode) -> List[int]:
-        if not root: return []
-        
-        res = []
-        q = deque([root])
-        
-        while q:
-            level_len = len(q)
-            for i in range(level_len):
-                node = q.popleft()
-                # If it's the last node in the current level
-                if i == level_len - 1:
-                    res.append(node.val)
-                
-                if node.left: q.append(node.left)
-                if node.right: q.append(node.right)
-        return res
-```
+ def rightSideView(self, root: TreeNode) -> List[int]:
+ if not root: return []
+ 
+ res = []
+ q = deque([root])
+ 
+ while q:
+ level_len = len(q)
+ for i in range(level_len):
+ node = q.popleft()
+ # If it's the last node in the current level
+ if i == level_len - 1:
+ res.append(node.val)
+ 
+ if node.left: q.append(node.left)
+ if node.right: q.append(node.right)
+ return res
+``
 
 ## Variant 5: Cousins in Binary Tree
 
@@ -238,41 +238,41 @@ Given `root`, `x`, and `y`, return `True` if they are cousins.
 BFS is perfect for tracking depth. We also need to track the parent.
 We can store `(node, parent)` in the queue.
 
-```python
+``python
 class Solution:
-    def isCousins(self, root: TreeNode, x: int, y: int) -> bool:
-        q = deque([(root, None)])
-        
-        while q:
-            level_size = len(q)
-            found_x = False
-            found_y = False
-            x_parent = None
-            y_parent = None
-            
-            for _ in range(level_size):
-                node, parent = q.popleft()
-                
-                if node.val == x:
-                    found_x = True
-                    x_parent = parent
-                if node.val == y:
-                    found_y = True
-                    y_parent = parent
-                
-                if node.left: q.append((node.left, node))
-                if node.right: q.append((node.right, node))
-            
-            # Check after finishing the level
-            if found_x and found_y:
-                return x_parent != y_parent
-            
-            # If one found but not the other, they are at different depths
-            if found_x or found_y:
-                return False
-                
-        return False
-```
+ def isCousins(self, root: TreeNode, x: int, y: int) -> bool:
+ q = deque([(root, None)])
+ 
+ while q:
+ level_size = len(q)
+ found_x = False
+ found_y = False
+ x_parent = None
+ y_parent = None
+ 
+ for _ in range(level_size):
+ node, parent = q.popleft()
+ 
+ if node.val == x:
+ found_x = True
+ x_parent = parent
+ if node.val == y:
+ found_y = True
+ y_parent = parent
+ 
+ if node.left: q.append((node.left, node))
+ if node.right: q.append((node.right, node))
+ 
+ # Check after finishing the level
+ if found_x and found_y:
+ return x_parent != y_parent
+ 
+ # If one found but not the other, they are at different depths
+ if found_x or found_y:
+ return False
+ 
+ return False
+``
 
 ## Advanced Variant 6: Maximum Width of Binary Tree
 
@@ -287,33 +287,33 @@ We can index the nodes like a Heap.
 - Right child: `2*i + 1`
 Width = `index_right - index_left + 1`.
 
-```python
+``python
 class Solution:
-    def widthOfBinaryTree(self, root: TreeNode) -> int:
-        if not root: return 0
-        
-        max_width = 0
-        # Queue stores (node, index)
-        q = deque([(root, 0)])
-        
-        while q:
-            level_len = len(q)
-            _, level_start_index = q[0]
-            
-            for i in range(level_len):
-                node, index = q.popleft()
-                
-                if node.left:
-                    q.append((node.left, 2*index))
-                if node.right:
-                    q.append((node.right, 2*index + 1))
-                    
-            # Calculate width for this level
-            # Current index is the last one popped
-            max_width = max(max_width, index - level_start_index + 1)
-            
-        return max_width
-```
+ def widthOfBinaryTree(self, root: TreeNode) -> int:
+ if not root: return 0
+ 
+ max_width = 0
+ # Queue stores (node, index)
+ q = deque([(root, 0)])
+ 
+ while q:
+ level_len = len(q)
+ _, level_start_index = q[0]
+ 
+ for i in range(level_len):
+ node, index = q.popleft()
+ 
+ if node.left:
+ q.append((node.left, 2*index))
+ if node.right:
+ q.append((node.right, 2*index + 1))
+ 
+ # Calculate width for this level
+ # Current index is the last one popped
+ max_width = max(max_width, index - level_start_index + 1)
+ 
+ return max_width
+``
 
 ## System Design: Distributed Graph Traversal (Pregel)
 
@@ -321,9 +321,9 @@ class Solution:
 **Candidate:** "You can't fit it in RAM. You need **Pregel** (Google's Bulk Synchronous Parallel model)."
 
 **The Pregel Model:**
-1.  **Supersteps:** Computation happens in rounds.
-2.  **Vertex-Centric:** Each vertex runs a function `Compute(messages)`.
-3.  **Message Passing:** Vertices send messages to neighbors (to be received in the next Superstep).
+1. **Supersteps:** Computation happens in rounds.
+2. **Vertex-Centric:** Each vertex runs a function `Compute(messages)`.
+3. **Message Passing:** Vertices send messages to neighbors (to be received in the next Superstep).
 
 **BFS in Pregel:**
 - **Superstep 0:** Source vertex sets `min_dist = 0` and sends `dist=1` to neighbors.
@@ -345,51 +345,51 @@ We can use BFS to traverse. We store `(node, col)` in the queue.
 We need a Hash Map `col -> list of nodes`.
 Finally, sort the map by keys (column index).
 
-```python
+``python
 class Solution:
-    def verticalOrder(self, root: TreeNode) -> List[List[int]]:
-        if not root: return []
-        
-        column_table = defaultdict(list)
-        q = deque([(root, 0)])
-        min_col = 0
-        max_col = 0
-        
-        while q:
-            node, col = q.popleft()
-            column_table[col].append(node.val)
-            
-            min_col = min(min_col, col)
-            max_col = max(max_col, col)
-            
-            if node.left: q.append((node.left, col - 1))
-            if node.right: q.append((node.right, col + 1))
-            
-        return [column_table[x] for x in range(min_col, max_col + 1)]
-```
+ def verticalOrder(self, root: TreeNode) -> List[List[int]]:
+ if not root: return []
+ 
+ column_table = defaultdict(list)
+ q = deque([(root, 0)])
+ min_col = 0
+ max_col = 0
+ 
+ while q:
+ node, col = q.popleft()
+ column_table[col].append(node.val)
+ 
+ min_col = min(min_col, col)
+ max_col = max(max_col, col)
+ 
+ if node.left: q.append((node.left, col - 1))
+ if node.right: q.append((node.right, col + 1))
+ 
+ return [column_table[x] for x in range(min_col, max_col + 1)]
+``
 
 ## Appendix B: Boundary Traversal
 
 **Problem:** Print the boundary of the tree (Left Boundary + Leaves + Right Boundary).
 **Intuition:**
-1.  **Left Boundary:** Keep going left. If no left, go right. (Exclude leaf).
-2.  **Leaves:** DFS/Preorder. Add if `!left` and `!right`.
-3.  **Right Boundary:** Keep going right. If no right, go left. (Exclude leaf). Add in reverse order.
+1. **Left Boundary:** Keep going left. If no left, go right. (Exclude leaf).
+2. **Leaves:** DFS/Preorder. Add if `!left` and `!right`.
+3. **Right Boundary:** Keep going right. If no right, go left. (Exclude leaf). Add in reverse order.
 
 This is a classic "Hard" problem that tests modular thinking. Don't try to do it in one pass. Break it down.
 
 ## Advanced Variant 7: Diagonal Traversal
 
 **Problem:** Print the tree diagonally.
-```
-    8
-   / \
-  3   10
- / \    \
-1   6    14
-   / \   /
-  4   7 13
-```
+``
+ 8
+ / \
+ 3 10
+ / \ \
+1 6 14
+ / \ /
+ 4 7 13
+``
 **Output:** `[[8, 10, 14], [3, 6, 7, 13], [1, 4]]`
 
 **Intuition:**
@@ -399,32 +399,32 @@ This is a classic "Hard" problem that tests modular thinking. Don't try to do it
 
 We can use a Queue. But instead of just popping, we iterate through the **right child chain** and add all of them to the current diagonal list, while pushing their left children to the queue for the next diagonal.
 
-```python
+``python
 class Solution:
-    def diagonalTraversal(self, root: TreeNode) -> List[List[int]]:
-        if not root: return []
-        
-        res = []
-        q = deque([root])
-        
-        while q:
-            level_size = len(q)
-            curr_diagonal = []
-            
-            for _ in range(level_size):
-                node = q.popleft()
-                
-                # Process the current node and all its right children
-                while node:
-                    curr_diagonal.append(node.val)
-                    if node.left:
-                        q.append(node.left)
-                    node = node.right
-            
-            res.append(curr_diagonal)
-            
-        return res
-```
+ def diagonalTraversal(self, root: TreeNode) -> List[List[int]]:
+ if not root: return []
+ 
+ res = []
+ q = deque([root])
+ 
+ while q:
+ level_size = len(q)
+ curr_diagonal = []
+ 
+ for _ in range(level_size):
+ node = q.popleft()
+ 
+ # Process the current node and all its right children
+ while node:
+ curr_diagonal.append(node.val)
+ if node.left:
+ q.append(node.left)
+ node = node.right
+ 
+ res.append(curr_diagonal)
+ 
+ return res
+``
 
 ## Advanced Variant 8: Serialize and Deserialize Binary Tree
 
@@ -437,49 +437,49 @@ Use a Queue. If a node is `None`, append "null".
 
 **Deserialization:**
 Use a Queue.
-1.  Read root `1`. Push to queue.
-2.  Pop `1`. Read next two values `2`, `3`. Attach as left/right. Push `2`, `3`.
-3.  Pop `2`. Read `null`, `null`. Attach.
-4.  Pop `3`. Read `4`, `5`. Attach. Push `4`, `5`.
+1. Read root `1`. Push to queue.
+2. Pop `1`. Read next two values `2`, `3`. Attach as left/right. Push `2`, `3`.
+3. Pop `2`. Read `null`, `null`. Attach.
+4. Pop `3`. Read `4`, `5`. Attach. Push `4`, `5`.
 
-```python
+``python
 class Codec:
-    def serialize(self, root):
-        if not root: return ""
-        q = deque([root])
-        res = []
-        while q:
-            node = q.popleft()
-            if node:
-                res.append(str(node.val))
-                q.append(node.left)
-                q.append(node.right)
-            else:
-                res.append("null")
-        return ",".join(res)
+ def serialize(self, root):
+ if not root: return ""
+ q = deque([root])
+ res = []
+ while q:
+ node = q.popleft()
+ if node:
+ res.append(str(node.val))
+ q.append(node.left)
+ q.append(node.right)
+ else:
+ res.append("null")
+ return ",".join(res)
 
-    def deserialize(self, data):
-        if not data: return None
-        vals = data.split(",")
-        root = TreeNode(int(vals[0]))
-        q = deque([root])
-        i = 1
-        while q:
-            node = q.popleft()
-            
-            # Left Child
-            if vals[i] != "null":
-                node.left = TreeNode(int(vals[i]))
-                q.append(node.left)
-            i += 1
-            
-            # Right Child
-            if vals[i] != "null":
-                node.right = TreeNode(int(vals[i]))
-                q.append(node.right)
-            i += 1
-        return root
-```
+ def deserialize(self, data):
+ if not data: return None
+ vals = data.split(",")
+ root = TreeNode(int(vals[0]))
+ q = deque([root])
+ i = 1
+ while q:
+ node = q.popleft()
+ 
+ # Left Child
+ if vals[i] != "null":
+ node.left = TreeNode(int(vals[i]))
+ q.append(node.left)
+ i += 1
+ 
+ # Right Child
+ if vals[i] != "null":
+ node.right = TreeNode(int(vals[i]))
+ q.append(node.right)
+ i += 1
+ return root
+``
 
 ## Deep Dive: Tree BFS vs. Graph BFS
 
@@ -507,9 +507,9 @@ Return min minutes until all fresh oranges rot.
 
 **Intuition:**
 This is **Multi-Source BFS**.
-1.  Push *all* initially rotten oranges into the Queue at `t=0`.
-2.  Run standard BFS.
-3.  The number of levels is the time.
+1. Push *all* initially rotten oranges into the Queue at `t=0`.
+2. Run standard BFS.
+3. The number of levels is the time.
 
 This pattern appears in:
 - "Walls and Gates"
@@ -518,16 +518,16 @@ This pattern appears in:
 
 ## Appendix D: Interview Questions
 
-1.  **Q:** "Can you perform Level Order Traversal without a Queue?"
-    **A:** Yes, using Recursion (DFS) and passing the level index (Approach 2). Or using two arrays (current_level, next_level).
+1. **Q:** "Can you perform Level Order Traversal without a Queue?"
+ **A:** Yes, using Recursion (DFS) and passing the level index (Approach 2). Or using two arrays (current_level, next_level).
 
-2.  **Q:** "What is the space complexity of BFS?"
-    **A:** \(O(W)\) where \(W\) is the maximum width. In a full binary tree, the last level has \(N/2\) leaves, so \(O(N)\).
+2. **Q:** "What is the space complexity of BFS?"
+ **A:** \(O(W)\) where \(W\) is the maximum width. In a full binary tree, the last level has \(N/2\) leaves, so \(O(N)\).
 
-3.  **Q:** "When should you use DFS vs BFS?"
-    **A:**
-    - **BFS:** Shortest path, levels, closer to root.
-    - **DFS:** Exhaustive search, backtracking, path finding, closer to leaves.
+3. **Q:** "When should you use DFS vs BFS?"
+ **A:**
+ - **BFS:** Shortest path, levels, closer to root.
+ - **DFS:** Exhaustive search, backtracking, path finding, closer to leaves.
 
 ## Advanced Variant 9: Populating Next Right Pointers in Each Node
 
@@ -538,36 +538,36 @@ Level Order Traversal is the obvious choice.
 But can we do it with **O(1) Space**?
 Yes. We can use the `next` pointers we already established in the *previous* level to traverse the *current* level.
 
-```python
+``python
 class Node:
-    def __init__(self, val: int = 0, left: 'Node' = None, right: 'Node' = None, next: 'Node' = None):
-        self.val = val
-        self.left = left
-        self.right = right
-        self.next = next
+ def __init__(self, val: int = 0, left: 'Node' = None, right: 'Node' = None, next: 'Node' = None):
+ self.val = val
+ self.left = left
+ self.right = right
+ self.next = next
 
 class Solution:
-    def connect(self, root: 'Node') -> 'Node':
-        if not root: return None
-        
-        leftmost = root
-        
-        while leftmost.left:
-            head = leftmost
-            while head:
-                # Connection 1: Left -> Right (Same Parent)
-                head.left.next = head.right
-                
-                # Connection 2: Right -> Next's Left (Different Parent)
-                if head.next:
-                    head.right.next = head.next.left
-                
-                head = head.next
-            
-            leftmost = leftmost.left
-            
-        return root
-```
+ def connect(self, root: 'Node') -> 'Node':
+ if not root: return None
+ 
+ leftmost = root
+ 
+ while leftmost.left:
+ head = leftmost
+ while head:
+ # Connection 1: Left -> Right (Same Parent)
+ head.left.next = head.right
+ 
+ # Connection 2: Right -> Next's Left (Different Parent)
+ if head.next:
+ head.right.next = head.next.left
+ 
+ head = head.next
+ 
+ leftmost = leftmost.left
+ 
+ return root
+``
 
 ## Advanced Variant 10: Average of Levels in Binary Tree
 
@@ -576,27 +576,27 @@ class Solution:
 **Intuition:**
 Standard BFS. Sum the values in the level loop, divide by `level_size`.
 
-```python
+``python
 class Solution:
-    def averageOfLevels(self, root: TreeNode) -> List[float]:
-        if not root: return []
-        res = []
-        q = deque([root])
-        
-        while q:
-            level_sum = 0
-            level_count = len(q)
-            
-            for _ in range(level_count):
-                node = q.popleft()
-                level_sum += node.val
-                if node.left: q.append(node.left)
-                if node.right: q.append(node.right)
-                
-            res.append(level_sum / level_count)
-            
-        return res
-```
+ def averageOfLevels(self, root: TreeNode) -> List[float]:
+ if not root: return []
+ res = []
+ q = deque([root])
+ 
+ while q:
+ level_sum = 0
+ level_count = len(q)
+ 
+ for _ in range(level_count):
+ node = q.popleft()
+ level_sum += node.val
+ if node.left: q.append(node.left)
+ if node.right: q.append(node.right)
+ 
+ res.append(level_sum / level_count)
+ 
+ return res
+``
 
 ## Advanced Variant 11: Find Bottom Left Tree Value
 
@@ -606,18 +606,18 @@ class Solution:
 Right-to-Left BFS.
 The last node visited will be the bottom-left node.
 
-```python
+``python
 class Solution:
-    def findBottomLeftValue(self, root: TreeNode) -> int:
-        q = deque([root])
-        node = root
-        while q:
-            node = q.popleft()
-            # Add Right first, then Left
-            if node.right: q.append(node.right)
-            if node.left: q.append(node.left)
-        return node.val
-```
+ def findBottomLeftValue(self, root: TreeNode) -> int:
+ q = deque([root])
+ node = root
+ while q:
+ node = q.popleft()
+ # Add Right first, then Left
+ if node.right: q.append(node.right)
+ if node.left: q.append(node.left)
+ return node.val
+``
 
 ## Deep Dive: Queue Implementation (Array vs. Linked List)
 
@@ -640,15 +640,15 @@ class Solution:
 **Interviewer:** "We need a queue for our Distributed BFS. Should we use Kafka or SQS?"
 
 **Candidate:**
-1.  **SQS (Simple Queue Service):**
-    - **Pros:** Infinite scaling, no management.
-    - **Cons:** No ordering guarantee (standard), expensive at high throughput.
-    - **Use Case:** Task Queue (Celery).
+1. **SQS (Simple Queue Service):**
+ - **Pros:** Infinite scaling, no management.
+ - **Cons:** No ordering guarantee (standard), expensive at high throughput.
+ - **Use Case:** Task Queue (Celery).
 
-2.  **Kafka:**
-    - **Pros:** High throughput (millions/sec), replayable (log), ordered within partition.
-    - **Cons:** Hard to manage (Zookeeper), fixed partitions.
-    - **Use Case:** Event Streaming, Data Pipeline.
+2. **Kafka:**
+ - **Pros:** High throughput (millions/sec), replayable (log), ordered within partition.
+ - **Cons:** Hard to manage (Zookeeper), fixed partitions.
+ - **Use Case:** Event Streaming, Data Pipeline.
 
 **Decision:** For BFS, we usually need a **Priority Queue** (to prioritize high-rank pages), so neither is perfect. We might use **Redis Sorted Sets**.
 
@@ -659,22 +659,22 @@ class Solution:
 **Intuition:**
 Standard BFS. Reset `sum` at the start of each level. The last `sum` is the answer.
 
-```python
+``python
 class Solution:
-    def deepestLeavesSum(self, root: TreeNode) -> int:
-        if not root: return 0
-        q = deque([root])
-        level_sum = 0
-        
-        while q:
-            level_sum = 0
-            for _ in range(len(q)):
-                node = q.popleft()
-                level_sum += node.val
-                if node.left: q.append(node.left)
-                if node.right: q.append(node.right)
-        return level_sum
-```
+ def deepestLeavesSum(self, root: TreeNode) -> int:
+ if not root: return 0
+ q = deque([root])
+ level_sum = 0
+ 
+ while q:
+ level_sum = 0
+ for _ in range(len(q)):
+ node = q.popleft()
+ level_sum += node.val
+ if node.left: q.append(node.left)
+ if node.right: q.append(node.right)
+ return level_sum
+``
 
 ## Appendix E: The "Word Ladder" Pattern
 
@@ -691,7 +691,7 @@ This is BFS on an implicit graph.
 Pre-process the dictionary into generic states:
 `hot` -> `*ot`, `h*t`, `ho*`.
 Map `*ot` -> `[hot, dot, lot]`.
-This allows `O(1)` neighbor finding.
+This allows O(1) neighbor finding.
 
 ## Deep Dive: Python `deque` Internals
 
@@ -711,25 +711,25 @@ Level Order Traversal.
 If we see a `null` node, we should **never** see a non-null node again.
 If we do, it's not complete.
 
-```python
+``python
 class Solution:
-    def isCompleteTree(self, root: TreeNode) -> bool:
-        q = deque([root])
-        seen_null = False
-        
-        while q:
-            node = q.popleft()
-            
-            if not node:
-                seen_null = True
-            else:
-                if seen_null:
-                    return False
-                q.append(node.left)
-                q.append(node.right)
-                
-        return True
-```
+ def isCompleteTree(self, root: TreeNode) -> bool:
+ q = deque([root])
+ seen_null = False
+ 
+ while q:
+ node = q.popleft()
+ 
+ if not node:
+ seen_null = True
+ else:
+ if seen_null:
+ return False
+ q.append(node.left)
+ q.append(node.right)
+ 
+ return True
+``
 
 ## Advanced Variant 14: Maximum Level Sum of a Binary Tree
 
@@ -738,33 +738,33 @@ class Solution:
 **Intuition:**
 Standard BFS. Track `max_sum` and `max_level`.
 
-```python
+``python
 class Solution:
-    def maxLevelSum(self, root: TreeNode) -> int:
-        if not root: return 0
-        q = deque([root])
-        max_sum = float('-inf')
-        max_level = 1
-        curr_level = 1
-        
-        while q:
-            level_sum = 0
-            level_len = len(q)
-            
-            for _ in range(level_len):
-                node = q.popleft()
-                level_sum += node.val
-                if node.left: q.append(node.left)
-                if node.right: q.append(node.right)
-            
-            if level_sum > max_sum:
-                max_sum = level_sum
-                max_level = curr_level
-                
-            curr_level += 1
-            
-        return max_level
-```
+ def maxLevelSum(self, root: TreeNode) -> int:
+ if not root: return 0
+ q = deque([root])
+ max_sum = float('-inf')
+ max_level = 1
+ curr_level = 1
+ 
+ while q:
+ level_sum = 0
+ level_len = len(q)
+ 
+ for _ in range(level_len):
+ node = q.popleft()
+ level_sum += node.val
+ if node.left: q.append(node.left)
+ if node.right: q.append(node.right)
+ 
+ if level_sum > max_sum:
+ max_sum = level_sum
+ max_level = curr_level
+ 
+ curr_level += 1
+ 
+ return max_level
+``
 
 ## Advanced Variant 15: Even Odd Tree
 
@@ -775,37 +775,37 @@ class Solution:
 **Intuition:**
 BFS with a toggle flag. Check conditions inside the loop.
 
-```python
+``python
 class Solution:
-    def isEvenOddTree(self, root: TreeNode) -> bool:
-        q = deque([root])
-        level = 0
-        
-        while q:
-            prev = float('-inf') if level % 2 == 0 else float('inf')
-            
-            for _ in range(len(q)):
-                node = q.popleft()
-                
-                if level % 2 == 0:
-                    # Even Level: Odd values, Increasing
-                    if node.val % 2 == 0 or node.val <= prev:
-                        return False
-                else:
-                    # Odd Level: Even values, Decreasing
-                    if node.val % 2 != 0 or node.val >= prev:
+ def isEvenOddTree(self, root: TreeNode) -> bool:
+ q = deque([root])
+ level = 0
+ 
+ while q:
+ prev = float('-inf') if level % 2 == 0 else float('inf')
+ 
+ for _ in range(len(q)):
+ node = q.popleft()
+ 
+ if level % 2 == 0:
+ # Even Level: Odd values, Increasing
+ if node.val % 2 == 0 or node.val <= prev:
+ return False
+ else:
+ # Odd Level: Even values, Decreasing
+ if node.val % 2 != 0 or node.val >= prev:
 *If you found this helpful, consider sharing it with others who might benefit.*
 
 
-                        
-                prev = node.val
-                if node.left: q.append(node.left)
-                if node.right: q.append(node.right)
-                
-            level += 1
-            
-        return True
-```
+ 
+ prev = node.val
+ if node.left: q.append(node.left)
+ if node.right: q.append(node.right)
+ 
+ level += 1
+ 
+ return True
+``
 
 ## System Design: Rate Limiter (Token Bucket)
 
@@ -835,26 +835,26 @@ We can use BFS (or DFS) and a bitmask to track parity of counts.
 `mask ^= (1 << node.val)`.
 If `mask & (mask - 1) == 0`, it's a palindrome.
 
-```python
+``python
 class Solution:
-    def pseudoPalindromicPaths (self, root: TreeNode) -> int:
-        count = 0
-        # (node, mask)
-        q = deque([(root, 0)])
-        
-        while q:
-            node, mask = q.popleft()
-            mask ^= (1 << node.val)
-            
-            if not node.left and not node.right:
-                if mask & (mask - 1) == 0:
-                    count += 1
-            
-            if node.left: q.append((node.left, mask))
-            if node.right: q.append((node.right, mask))
-            
-        return count
-```
+ def pseudoPalindromicPaths (self, root: TreeNode) -> int:
+ count = 0
+ # (node, mask)
+ q = deque([(root, 0)])
+ 
+ while q:
+ node, mask = q.popleft()
+ mask ^= (1 << node.val)
+ 
+ if not node.left and not node.right:
+ if mask & (mask - 1) == 0:
+ count += 1
+ 
+ if node.left: q.append((node.left, mask))
+ if node.right: q.append((node.right, mask))
+ 
+ return count
+``
 
 ## Conclusion
 

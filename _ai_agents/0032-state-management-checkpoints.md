@@ -1,19 +1,19 @@
 ---
 title: "State Management and Checkpoints"
 day: 32
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - state-management
-  - checkpointing
-  - persistence
-  - long-running-tasks
-  - reliability
-difficulty: Medium
 related_dsa_day: 32
 related_ml_day: 32
 related_speech_day: 32
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - state-management
+ - checkpointing
+ - persistence
+ - long-running-tasks
+ - reliability
+difficulty: Medium
 ---
 
 **"Agents that don't forget: Building reliability through state persistence."**
@@ -180,7 +180,7 @@ An agent that runs for 1,000 steps will have a bloated history. This isn't just 
 Instead of keeping 1,000 messages, every 10 steps, you trigger a "Janitor" agent. It takes the last 10 messages and turns them into a 1-paragraph summary. The raw messages are archived, and the "Live State" now only contains the summary.
 
 ### 9.2 The "Sliding Window" Strategy
-Keep only the $N$ most recent messages (e.g., the last 15). For anything older, rely on **RAG (Retrieval Augmented Generation)** to pull specific facts back into the state ONLY when they are mentioned.
+Keep only the `N` most recent messages (e.g., the last 15). For anything older, rely on **RAG (Retrieval Augmented Generation)** to pull specific facts back into the state ONLY when they are mentioned.
 
 ### 9.3 State Differential (Diffs)
 Instead of saving the entire 1MB history blob every time, save only the **Diff**. For example, record: *"Added message #24"* rather than resaving messages #1 through #24. This reduces your database I/O by 95% for long-running agents.
@@ -229,14 +229,14 @@ One of the biggest money-wasters in agentic engineering is the **Duplicate Tool 
 
 **The Fix: The "Tool Result Cache".**
 In your checkpointer, store a hash of the tool name and its arguments.
-```python
+``python
 checkpoint = {
  "history": [...],
  "tool_cache": {
  "hash_ab123": {"result": "Found 5 hotels", "timestamp": "2023-10-01T10:00:00Z"}
  }
 }
-```
+``
 When the agent tries to call a tool, the orchestrator first checks the `tool_cache`. If the hash exists, it returns the cached result *without* executing the code. This makes your agents **Idempotent** and saves a fortune in API costs.
 
 ---

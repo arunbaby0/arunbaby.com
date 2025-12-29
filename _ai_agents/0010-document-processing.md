@@ -3,14 +3,14 @@ title: "Document Processing for Agents"
 day: 10
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - rag
-  - pdf-parsing
-  - ocr
-  - multimodal
-  - unstructured
-  - llamaparse
+ - rag
+ - pdf-parsing
+ - ocr
+ - multimodal
+ - unstructured
+ - llamaparse
 difficulty: Medium-Easy
 related_dsa_day: 10
 related_ml_day: 10
@@ -123,7 +123,7 @@ What about charts? A Vector Database cannot "search" a bar chart.
 
 How an "Agentic Ingestion Pipeline" looks in pseudocode.
 
-```python
+``python
 def ingest_document(file_path):
  # 1. Routing
  if is_scanned(file_path):
@@ -145,7 +145,7 @@ def ingest_document(file_path):
 
  # 5. Indexing
  vector_db.add(chunks)
-```
+``
 
 ---
 

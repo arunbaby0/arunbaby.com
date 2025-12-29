@@ -1,22 +1,22 @@
 ---
 title: "Minimum Path Sum"
 day: 22
+related_ml_day: 22
+related_speech_day: 22
+related_agents_day: 22
 collection: dsa
 categories:
-  - dsa
+ - dsa
 tags:
-  - dynamic-programming
-  - matrix
-  - grid
-  - optimization
-  - medium
+ - dynamic-programming
+ - matrix
+ - grid
+ - optimization
+ - medium
 subdomain: "Grid Dynamic Programming"
 tech_stack: [Python, C++, Java]
 scale: "O(M×N) time, O(1) space"
 companies: [Google, Amazon, Apple, Bloomberg, Goldman Sachs]
-related_ml_day: 22
-related_speech_day: 22
-related_agents_day: 22
 ---
 
 **The classic grid optimization problem that bridges the gap between simple recursion and 2D Dynamic Programming.**
@@ -31,25 +31,25 @@ Given a `m x n` grid filled with non-negative numbers, find a path from the **to
 - The numbers in the grid are non-negative.
 
 **Example 1:**
-```
+``
 Input: grid = [
-  [1, 3, 1],
-  [1, 5, 1],
-  [4, 2, 1]
+ [1, 3, 1],
+ [1, 5, 1],
+ [4, 2, 1]
 ]
 Output: 7
-```
+``
 
 **Explanation:**
 The path is `1 → 3 → 1 → 1 → 1`.
 Sum: `1 + 3 + 1 + 1 + 1 = 7`.
 
 Let's visualize the grid and the path:
-```
+``
 [1] -> [3] -> [1]
-               |
-              [1] -> [1]
-```
+ |
+ [1] -> [1]
+``
 Wait, looking at the grid:
 (0,0)=1 -> (0,1)=3 -> (0,2)=1 -> (1,2)=1 -> (2,2)=1.
 Total = 7.
@@ -113,29 +113,29 @@ The cost of the current cell `grid[i][j]` is always added. Then we need to add t
 
 ### Python Implementation (Recursive)
 
-```python
+``python
 import math
 
 def minPathSum_recursive(grid):
-    m, n = len(grid), len(grid[0])
-    
-    def calculate(i, j):
-        # Base Case: Reached bottom-right
-        if i == m - 1 and j == n - 1:
-            return grid[i][j]
-        
-        # Base Case: Out of bounds
-        if i >= m or j >= n:
-            return math.inf
-        
-        # Recursive Step
-        move_right = calculate(i, j + 1)
-        move_down = calculate(i + 1, j)
-        
-        return grid[i][j] + min(move_right, move_down)
+ m, n = len(grid), len(grid[0])
+ 
+ def calculate(i, j):
+ # Base Case: Reached bottom-right
+ if i == m - 1 and j == n - 1:
+ return grid[i][j]
+ 
+ # Base Case: Out of bounds
+ if i >= m or j >= n:
+ return math.inf
+ 
+ # Recursive Step
+ move_right = calculate(i, j + 1)
+ move_down = calculate(i + 1, j)
+ 
+ return grid[i][j] + min(move_right, move_down)
 
-    return calculate(0, 0)
-```
+ return calculate(0, 0)
+``
 
 ### Complexity Analysis
 - **Time Complexity:** \(O(2^{m+n})\). At each step, we branch into two possibilities. The depth of the recursion is \(m+n\). This is exponential and extremely slow for large grids.
@@ -143,16 +143,16 @@ def minPathSum_recursive(grid):
 
 ### Why is it slow?
 Let's trace the calls for a simple 2x2 grid.
-```
+``
 (0,0)
-  |-- (0,1)
-  |     |-- (0,2) [Out]
-  |     |-- (1,1) [Target]
-  |
-  |-- (1,0)
-        |-- (1,1) [Target]
-        |-- (2,0) [Out]
-```
+ |-- (0,1)
+ | |-- (0,2) [Out]
+ | |-- (1,1) [Target]
+ |
+ |-- (1,0)
+ |-- (1,1) [Target]
+ |-- (2,0) [Out]
+``
 Notice that `(1,1)` is reached from `(0,1)` AND from `(1,0)`. In a larger grid, the number of overlapping subproblems explodes. We are re-calculating the minimum path for the same cells over and over again.
 
 ## Approach 2: Recursion with Memoization (Top-Down DP)
@@ -161,30 +161,30 @@ To fix the overlapping subproblems, we can store the result of `calculate(i, j)`
 
 ### Python Implementation (Memoization)
 
-```python
+``python
 def minPathSum_memo(grid):
-    m, n = len(grid), len(grid[0])
-    memo = {}
-    
-    def calculate(i, j):
-        # Check cache first
-        if (i, j) in memo:
-            return memo[(i, j)]
-        
-        if i == m - 1 and j == n - 1:
-            return grid[i][j]
-        
-        if i >= m or j >= n:
-            return float('inf')
-        
-        res = grid[i][j] + min(calculate(i, j + 1), calculate(i + 1, j))
-        
-        # Store in cache
-        memo[(i, j)] = res
-        return res
+ m, n = len(grid), len(grid[0])
+ memo = {}
+ 
+ def calculate(i, j):
+ # Check cache first
+ if (i, j) in memo:
+ return memo[(i, j)]
+ 
+ if i == m - 1 and j == n - 1:
+ return grid[i][j]
+ 
+ if i >= m or j >= n:
+ return float('inf')
+ 
+ res = grid[i][j] + min(calculate(i, j + 1), calculate(i + 1, j))
+ 
+ # Store in cache
+ memo[(i, j)] = res
+ return res
 
-    return calculate(0, 0)
-```
+ return calculate(0, 0)
+``
 
 ### Complexity Analysis
 - **Time Complexity:** \(O(m \times n)\). There are \(m \times n\) unique states (cells). Each state is computed once.
@@ -213,36 +213,36 @@ So, `dp[i][j] = grid[i][j] + min(dp[i-1][j], dp[i][j-1])`.
 ### Visualization of the DP Table
 
 Input:
-```
+``
 1 3 1
 1 5 1
 4 2 1
-```
+``
 
 **Step 1: Initialize (0,0)**
-```
+``
 1 . .
 . . .
 . . .
-```
+``
 
 **Step 2: Fill First Row**
 `dp[0][1] = 1 + 3 = 4`
 `dp[0][2] = 4 + 1 = 5`
-```
+``
 1 4 5
 . . .
 . . .
-```
+``
 
 **Step 3: Fill First Column**
 `dp[1][0] = 1 + 1 = 2`
 `dp[2][0] = 2 + 4 = 6`
-```
+``
 1 4 5
 2 . .
 6 . .
-```
+``
 
 **Step 4: Fill Inner Cells**
 `dp[1][1] = grid[1][1] + min(dp[0][1], dp[1][0])`
@@ -258,39 +258,39 @@ Input:
 `dp[2][2] = 1 + min(6, 8) = 1 + 6 = 7`
 
 Final DP Table:
-```
+``
 1 4 5
 2 7 6
 6 8 7
-```
+``
 The answer is `dp[2][2] = 7`.
 
 ### Python Implementation (Iterative)
 
-```python
+``python
 def minPathSum_iterative(grid):
-    if not grid:
-        return 0
-    
-    m, n = len(grid), len(grid[0])
-    dp = [[0] * n for _ in range(m)]
-    
-    for i in range(m):
-        for j in range(n):
-            if i == 0 and j == 0:
-                dp[i][j] = grid[i][j]
-            elif i == 0:
-                # First row, can only come from left
-                dp[i][j] = dp[i][j-1] + grid[i][j]
-            elif j == 0:
-                # First column, can only come from top
-                dp[i][j] = dp[i-1][j] + grid[i][j]
-            else:
-                # Inner cell, choose min of top or left
-                dp[i][j] = min(dp[i-1][j], dp[i][j-1]) + grid[i][j]
-                
-    return dp[m-1][n-1]
-```
+ if not grid:
+ return 0
+ 
+ m, n = len(grid), len(grid[0])
+ dp = [[0] * n for _ in range(m)]
+ 
+ for i in range(m):
+ for j in range(n):
+ if i == 0 and j == 0:
+ dp[i][j] = grid[i][j]
+ elif i == 0:
+ # First row, can only come from left
+ dp[i][j] = dp[i][j-1] + grid[i][j]
+ elif j == 0:
+ # First column, can only come from top
+ dp[i][j] = dp[i-1][j] + grid[i][j]
+ else:
+ # Inner cell, choose min of top or left
+ dp[i][j] = min(dp[i-1][j], dp[i][j-1]) + grid[i][j]
+ 
+ return dp[m-1][n-1]
+``
 
 ### Complexity Analysis
 - **Time Complexity:** \(O(m \times n)\). We iterate through the grid once.
@@ -303,29 +303,29 @@ Do we really need a separate `dp` table? Look at the recurrence again:
 
 We are just adding values to the original grid values. If the interviewer allows modifying the input, we can store the DP values directly in `grid`.
 
-```python
+``python
 def minPathSum_inplace(grid):
-    m, n = len(grid), len(grid[0])
-    
-    for i in range(m):
-        for j in range(n):
-            if i == 0 and j == 0:
-                continue
-            elif i == 0:
-                grid[i][j] += grid[i][j-1]
-            elif j == 0:
-                grid[i][j] += grid[i-1][0]
-            else:
-                grid[i][j] += min(grid[i-1][j], grid[i][j-1])
-                
-    return grid[m-1][n-1]
-```
+ m, n = len(grid), len(grid[0])
+ 
+ for i in range(m):
+ for j in range(n):
+ if i == 0 and j == 0:
+ continue
+ elif i == 0:
+ grid[i][j] += grid[i][j-1]
+ elif j == 0:
+ grid[i][j] += grid[i-1][0]
+ else:
+ grid[i][j] += min(grid[i-1][j], grid[i][j-1])
+ 
+ return grid[m-1][n-1]
+``
 
 - **Space Complexity:** \(O(1)\).
 
 ## Approach 5: Space Optimization (1D Array)
 
-What if we cannot modify the input (e.g., the grid is read-only or shared)? Do we still need `O(m*n)` space?
+What if we cannot modify the input (e.g., the grid is read-only or shared)? Do we still need O(m*n) space?
 
 Notice that to calculate row `i`, we only need the values from row `i` (which we are currently computing) and row `i-1` (the previous row). We don't need row `i-2` or anything before that.
 
@@ -340,29 +340,29 @@ When we are at `grid[i][j]`:
 
 So: `dp[j] = grid[i][j] + min(dp[j], dp[j-1])`.
 
-```python
+``python
 def minPathSum_1d(grid):
-    m, n = len(grid), len(grid[0])
-    dp = [0] * n
-    
-    # Initialize first value
-    dp[0] = grid[0][0]
-    
-    # Initialize first row
-    for j in range(1, n):
-        dp[j] = dp[j-1] + grid[0][j]
-        
-    for i in range(1, m):
-        # Handle first column of current row
-        dp[0] += grid[i][0]
-        
-        for j in range(1, n):
-            # dp[j] is value from top
-            # dp[j-1] is value from left
-            dp[j] = grid[i][j] + min(dp[j], dp[j-1])
-            
-    return dp[n-1]
-```
+ m, n = len(grid), len(grid[0])
+ dp = [0] * n
+ 
+ # Initialize first value
+ dp[0] = grid[0][0]
+ 
+ # Initialize first row
+ for j in range(1, n):
+ dp[j] = dp[j-1] + grid[0][j]
+ 
+ for i in range(1, m):
+ # Handle first column of current row
+ dp[0] += grid[i][0]
+ 
+ for j in range(1, n):
+ # dp[j] is value from top
+ # dp[j-1] is value from left
+ dp[j] = grid[i][j] + min(dp[j], dp[j-1])
+ 
+ return dp[n-1]
+``
 
 - **Space Complexity:** \(O(n)\). This is the most optimal space complexity without modifying input.
 
@@ -372,7 +372,7 @@ As a junior engineer, you might be working in a codebase that uses Java or C++. 
 
 ### C++ Implementation
 
-```cpp
+``cpp
 #include <vector>
 #include <algorithm>
 #include <iostream>
@@ -381,62 +381,62 @@ using namespace std;
 
 class Solution {
 public:
-    int minPathSum(vector<vector<int>>& grid) {
-        if (grid.empty()) return 0;
-        int m = grid.size();
-        int n = grid[0].size();
-        
-        // We will use the in-place approach for C++
-        for (int i = 0; i < m; ++i) {
-            for (int j = 0; j < n; ++j) {
-                if (i == 0 && j == 0) continue;
-                
-                if (i == 0) {
-                    grid[i][j] += grid[i][j-1];
-                } else if (j == 0) {
-                    grid[i][j] += grid[i-1][j];
-                } else {
-                    grid[i][j] += min(grid[i-1][j], grid[i][j-1]);
-                }
-            }
-        }
-        return grid[m-1][n-1];
-    }
+ int minPathSum(vector<vector<int>>& grid) {
+ if (grid.empty()) return 0;
+ int m = grid.size();
+ int n = grid[0].size();
+ 
+ // We will use the in-place approach for C++
+ for (int i = 0; i < m; ++i) {
+ for (int j = 0; j < n; ++j) {
+ if (i == 0 && j == 0) continue;
+ 
+ if (i == 0) {
+ grid[i][j] += grid[i][j-1];
+ } else if (j == 0) {
+ grid[i][j] += grid[i-1][j];
+ } else {
+ grid[i][j] += min(grid[i-1][j], grid[i][j-1]);
+ }
+ }
+ }
+ return grid[m-1][n-1];
+ }
 };
-```
+``
 
 ### Java Implementation
 
-```java
+``java
 class Solution {
-    public int minPathSum(int[][] grid) {
-        if (grid == null || grid.length == 0) return 0;
-        int m = grid.length;
-        int n = grid[0].length;
-        
-        // Using 1D array approach for Java
-        int[] dp = new int[n];
-        
-        dp[0] = grid[0][0];
-        
-        // Initialize first row
-        for (int j = 1; j < n; j++) {
-            dp[j] = dp[j-1] + grid[0][j];
-        }
-        
-        for (int i = 1; i < m; i++) {
-            // First column of current row
-            dp[0] += grid[i][0];
-            
-            for (int j = 1; j < n; j++) {
-                dp[j] = Math.min(dp[j], dp[j-1]) + grid[i][j];
-            }
-        }
-        
-        return dp[n-1];
-    }
+ public int minPathSum(int[][] grid) {
+ if (grid == null || grid.length == 0) return 0;
+ int m = grid.length;
+ int n = grid[0].length;
+ 
+ // Using 1D array approach for Java
+ int[] dp = new int[n];
+ 
+ dp[0] = grid[0][0];
+ 
+ // Initialize first row
+ for (int j = 1; j < n; j++) {
+ dp[j] = dp[j-1] + grid[0][j];
+ }
+ 
+ for (int i = 1; i < m; i++) {
+ // First column of current row
+ dp[0] += grid[i][0];
+ 
+ for (int j = 1; j < n; j++) {
+ dp[j] = Math.min(dp[j], dp[j-1]) + grid[i][j];
+ }
+ }
+ 
+ return dp[n-1];
+ }
 }
-```
+``
 
 ## Interview Simulation: The Dialogue
 
@@ -468,15 +468,15 @@ To help you prepare, let's simulate how a real interview conversation might go.
 
 **Interviewer:** "Looks good. What is the space complexity?"
 
-**Candidate:** "I used a 2D array, so it's `O(m*n)`. But looking at the recurrence, I only need the previous row to calculate the current row. So I could optimize this to `O(n)` space using a 1D array."
+**Candidate:** "I used a 2D array, so it's O(m*n). But looking at the recurrence, I only need the previous row to calculate the current row. So I could optimize this to O(n) space using a 1D array."
 
-**Interviewer:** "Can you do it in `O(1)` space?"
+**Interviewer:** "Can you do it in O(1) space?"
 
-**Candidate:** "If I am allowed to modify the input grid, I can store the cumulative sums directly in the grid cells. That would be `O(1)` auxiliary space."
+**Candidate:** "If I am allowed to modify the input grid, I can store the cumulative sums directly in the grid cells. That would be O(1) auxiliary space."
 
 **Interviewer:** "Perfect. Let's assume the input is read-only. How would you handle a case where the grid is extremely wide but not very tall (e.g., 10 rows, 1,000,000 columns)?"
 
-**Candidate:** "That's a great edge case. If `n` is much larger than `m`, my `O(n)` space solution would use a lot of memory. I should check which dimension is smaller. If `m < n`, I can treat columns as rows and iterate column by column, using an array of size `m` instead. So the space complexity would be `O(min(m, n))`."
+**Candidate:** "That's a great edge case. If `n` is much larger than `m`, my O(n) space solution would use a lot of memory. I should check which dimension is smaller. If `m < n`, I can treat columns as rows and iterate column by column, using an array of size `m` instead. So the space complexity would be `O(min(m, n))`."
 
 **Interviewer:** "Very impressive. One last question: What if we could move diagonally?"
 
@@ -491,34 +491,34 @@ Once you master Minimum Path Sum, you can solve a whole family of problems. Let'
 - **Difference:** Instead of `min()`, we use `sum()`.
 - **Recurrence:** `dp[i][j] = dp[i-1][j] + dp[i][j-1]`.
 - **Code Snippet:**
-```python
+``python
 def uniquePaths(m, n):
-    dp = [1] * n
-    for i in range(1, m):
-        for j in range(1, n):
-            dp[j] += dp[j-1]
-    return dp[n-1]
-```
+ dp = [1] * n
+ for i in range(1, m):
+ for j in range(1, n):
+ dp[j] += dp[j-1]
+ return dp[n-1]
+``
 
 ### 2. Unique Paths II (LeetCode 63)
 - **Problem:** Same as above, but with obstacles.
 - **Difference:** If `grid[i][j] == obstacle`, then `dp[i][j] = 0`.
 - **Key Insight:** An obstacle blocks all flow through that cell.
 - **Code Snippet:**
-```python
+``python
 def uniquePathsWithObstacles(obstacleGrid):
-    if obstacleGrid[0][0] == 1: return 0
-    m, n = len(obstacleGrid), len(obstacleGrid[0])
-    dp = [0] * n
-    dp[0] = 1
-    for i in range(m):
-        for j in range(n):
-            if obstacleGrid[i][j] == 1:
-                dp[j] = 0
-            elif j > 0:
-                dp[j] += dp[j-1]
-    return dp[n-1]
-```
+ if obstacleGrid[0][0] == 1: return 0
+ m, n = len(obstacleGrid), len(obstacleGrid[0])
+ dp = [0] * n
+ dp[0] = 1
+ for i in range(m):
+ for j in range(n):
+ if obstacleGrid[i][j] == 1:
+ dp[j] = 0
+ elif j > 0:
+ dp[j] += dp[j-1]
+ return dp[n-1]
+``
 
 ### 3. Dungeon Game (LeetCode 174)
 - **Problem:** Start with health `H`. Some cells decrease health (monsters), some increase it (potions). Find min initial health to survive.
@@ -529,7 +529,7 @@ def uniquePathsWithObstacles(obstacleGrid):
 ### 4. Cherry Pickup (LeetCode 741)
 - **Problem:** Go from top-left to bottom-right, then back to top-left, collecting maximum cherries.
 - **Difference:** This requires two simultaneous paths. The state becomes `dp[r1][c1][r2]`. It's a Hard problem, but built on the same principles.
-- **Complexity:** `O(N^3)`.
+- **Complexity:** O(N^3).
 
 ### 5. Maximum Path Sum
 - **Problem:** Find the path with the maximum sum.
@@ -549,61 +549,61 @@ Even experienced engineers make mistakes with DP. Here are the most common ones 
 - **Symptom:** Wrong answer on complex test cases.
 - **Cause:** Thinking "I should just pick the smaller number at each step".
 - **Example:**
-```
+``
 1 100 1
-1   1 1
-```
+1 1 1
+``
 Greedy would go Right (1 -> 100) because 100 is... wait, Greedy minimizes.
 Example:
-```
+``
 1 2 5
 9 1 1
-```
+``
 Greedy at (0,0): Right (2) vs Down (9). Picks Right.
 Path: 1 -> 2 -> 5. Sum = 8.
 Optimal: Down (9) -> Right (1) -> Right (1). Sum = 12. (Wait, this is max path).
 For Min Path:
-```
+``
 1 9 9
 5 1 1
-```
+``
 Greedy at (0,0): Down (5) vs Right (9). Picks Down.
 Path: 1 -> 5 -> 1 -> 1. Sum = 8.
 Optimal: 1 -> 9 -> 9... wait.
 Actually, Greedy fails because it doesn't look ahead.
 Correct Example:
-```
+``
 1 5 100
 1 1 1
-```
+``
 Greedy at (0,0): Right (5) vs Down (1). Picks Down.
 Path: 1 -> 1 -> 1 -> 1. Sum = 4.
 Path 2: 1 -> 5 -> 100. Sum = 106.
 Here Greedy worked.
 Counter-Example for Greedy Min Path:
-```
+``
 1 10 10
-1  1  1
-```
+1 1 1
+``
 Greedy at (0,0): Right (10) vs Down (1). Picks Down.
 Path: 1 -> 1 -> 1 -> 1. Sum = 4.
 Path 2: 1 -> 10 -> 10. Sum = 21.
 Greedy works often on simple grids, but fails when a "locally bad" move leads to a "globally good" path.
 Imagine:
-```
-1  100 1
+``
+1 100 1
 10 100 1
-```
+``
 Start (0,0).
 Right: 100. Down: 10.
 Greedy picks Down.
 Path: 1 -> 10 -> 100 -> 1 = 112.
 Optimal: 1 -> 100 -> 1 -> 1... wait.
 Let's construct a proper counter-example.
-```
+``
 1 1 10
 5 1 1
-```
+``
 Start (0,0).
 Right (1) vs Down (5). Greedy picks Right.
 Path: 1 -> 1 -> 10 -> 1 (forced). Sum = 13.
@@ -621,19 +621,19 @@ One fascinating application of this algorithm is **Seam Carving** for content-aw
 - **Goal:** Resize an image (reduce width) without distorting important objects.
 - **Method:** Find a "seam" (a path of pixels from top to bottom) that has the least "energy" (least importance/detail) and remove it.
 - **Algorithm:**
-    1. Calculate "energy" of each pixel (e.g., gradient magnitude).
-    2. Use the Minimum Path Sum algorithm (allowing diagonal moves) to find the vertical seam with the lowest total energy.
-    3. Remove that seam.
-    4. Repeat.
+ 1. Calculate "energy" of each pixel (e.g., gradient magnitude).
+ 2. Use the Minimum Path Sum algorithm (allowing diagonal moves) to find the vertical seam with the lowest total energy.
+ 3. Remove that seam.
+ 4. Repeat.
 
 This is exactly the same logic! You are finding a path through a grid of pixels to minimize the sum of energies.
 
 ## Conclusion
 
 The Minimum Path Sum problem is a cornerstone of Dynamic Programming. It teaches you:
-1.  **State Definition:** How to represent the problem at step `(i, j)`.
-2.  **Transition:** How to move from previous states to the current state.
-3.  **Optimization:** How to reduce space from `O(m*n)` to `O(n)`.
+1. **State Definition:** How to represent the problem at step `(i, j)`.
+2. **Transition:** How to move from previous states to the current state.
+3. **Optimization:** How to reduce space from O(m*n) to O(n).
 
 Mastering this gives you the tools to solve harder variations like "Dungeon Game", "Unique Paths II", and "Cherry Pickup".
 

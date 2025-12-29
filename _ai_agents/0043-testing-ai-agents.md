@@ -1,21 +1,21 @@
 ---
 title: "Testing AI Agents"
 day: 43
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - testing
-  - evals
-  - unit-tests
-  - integration-tests
-  - tool-mocking
-  - regression
-  - reliability
-difficulty: Medium-Hard
 related_dsa_day: 43
 related_ml_day: 43
 related_speech_day: 43
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - testing
+ - evals
+ - unit-tests
+ - integration-tests
+ - tool-mocking
+ - regression
+ - reliability
+difficulty: Medium-Hard
 ---
 
 **"Test agents like systems: validate tool calls, pin behaviors with replayable traces, and catch regressions before users do."**
@@ -395,16 +395,16 @@ This prevents “silent drift” where the test suite slowly stops representing 
 
 ## 9. A minimal test harness (pseudocode)
 
-```python
+``python
 def test_agent_scenario(agent, scenario):
-    tools = FakeTools(scenario["tool_responses"])
-    result = agent.run(scenario["input"], tools=tools)
+ tools = FakeTools(scenario["tool_responses"])
+ result = agent.run(scenario["input"], tools=tools)
 
-    assert result.stop_reason == scenario["expected_stop_reason"]
-    assert result.steps <= scenario["max_steps"]
-    assert not result.violations  # safety violations
-    assert tool_calls_match(result.trace.tool_calls, scenario["expected_tool_calls"])
-```
+ assert result.stop_reason == scenario["expected_stop_reason"]
+ assert result.steps <= scenario["max_steps"]
+ assert not result.violations # safety violations
+ assert tool_calls_match(result.trace.tool_calls, scenario["expected_tool_calls"])
+``
 
 The goal is stable, repeatable tests. The model can still be stochastic, but the test harness should reduce variability via tool replay and strict invariants.
 

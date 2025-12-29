@@ -1,24 +1,24 @@
 ---
 title: "Batch Speech Processing"
 day: 26
+related_dsa_day: 26
+related_ml_day: 26
+related_agents_day: 26
 collection: speech_tech
 categories:
-  - speech-tech
-  - asr
-  - pipelines
+ - speech-tech
+ - asr
+ - pipelines
 tags:
-  - offline-asr
-  - diarization
-  - forced-alignment
-  - whisper
-  - kaldi
+ - offline-asr
+ - diarization
+ - forced-alignment
+ - whisper
+ - kaldi
 subdomain: "ASR Systems"
 tech_stack: [Python, FFMpeg, Whisper, Pyannote]
 scale: "Transcribing millions of hours"
 companies: [Otter.ai, Rev.com, Descript, YouTube]
-related_dsa_day: 26
-related_ml_day: 26
-related_agents_day: 26
 ---
 
 **Real-time ASR is hard. Offline ASR is big.**
@@ -35,41 +35,41 @@ In Batch ASR (Otter.ai, YouTube Captions), **Accuracy is king**. You have the wh
 
 ## High-Level Architecture: The Batch Pipeline
 
-```ascii
-+-----------+     +------------+     +-------------+
+``ascii
++-----------+ +------------+ +-------------+
 | Raw Audio | --> | Preprocess | --> | Segmentation|
-+-----------+     +------------+     +-------------+
-(MP3/M4A)         (FFMpeg/VAD)       (30s Chunks)
-                                           |
-                                           v
-+-----------+     +------------+     +-------------+
-| Final Txt | <-- | Post-Proc  | <-- | Transcription|
-+-----------+     +------------+     +-------------+
-(SRT/JSON)        (Diarization)      (Whisper/ASR)
-```
++-----------+ +------------+ +-------------+
+(MP3/M4A) (FFMpeg/VAD) (30s Chunks)
+ |
+ v
++-----------+ +------------+ +-------------+
+| Final Txt | <-- | Post-Proc | <-- | Transcription|
++-----------+ +------------+ +-------------+
+(SRT/JSON) (Diarization) (Whisper/ASR)
+``
 
 ## Pipeline Architecture
 
 A typical Batch Speech Pipeline has 4 stages:
 
-1.  **Preprocessing (FFMpeg):**
-    - Convert format (MP3/M4A -> WAV).
-    - Resample (44.1kHz -> 16kHz).
-    - Mixdown (Stereo -> Mono).
-    - **VAD (Voice Activity Detection):** Remove silence to save compute.
+1. **Preprocessing (FFMpeg):**
+ - Convert format (MP3/M4A -> WAV).
+ - Resample (44.1kHz -> 16kHz).
+ - Mixdown (Stereo -> Mono).
+ - **VAD (Voice Activity Detection):** Remove silence to save compute.
 
-2.  **Segmentation:**
-    - Split long audio (1 hour) into chunks (30 seconds).
-    - Why? Transformer attention scales quadratically \(O(N^2)\). You can't feed 1 hour into BERT.
+2. **Segmentation:**
+ - Split long audio (1 hour) into chunks (30 seconds).
+ - Why? Transformer attention scales quadratically \(O(N^2)\). You can't feed 1 hour into BERT.
 
-3.  **Transcription (ASR):**
-    - Run Whisper / Conformer on each chunk.
-    - Get text + timestamps.
+3. **Transcription (ASR):**
+ - Run Whisper / Conformer on each chunk.
+ - Get text + timestamps.
 
-4.  **Post-Processing:**
-    - **Diarization:** Cluster segments by speaker.
-    - **Punctuation & Capitalization:** "hello world" -> "Hello world."
-    - **Inverse Text Normalization (ITN):** "twenty dollars" -> "$20".
+4. **Post-Processing:**
+ - **Diarization:** Cluster segments by speaker.
+ - **Punctuation & Capitalization:** "hello world" -> "Hello world."
+ - **Inverse Text Normalization (ITN):** "twenty dollars" -> "$20".
 
 ## Deep Dive: Speaker Diarization
 
@@ -77,9 +77,9 @@ A typical Batch Speech Pipeline has 4 stages:
 **Output:** "Speaker A spoke from 0:00 to 0:10. Speaker B spoke from 0:10 to 0:15."
 
 **Algorithm:**
-1.  **Embedding:** Extract a vector (d-vector / x-vector) for every 1-second sliding window.
-2.  **Clustering:** Use **Spectral Clustering** or **Agglomerative Hierarchical Clustering (AHC)** to group similar vectors.
-3.  **Re-segmentation:** Refine boundaries using a Viterbi decode.
+1. **Embedding:** Extract a vector (d-vector / x-vector) for every 1-second sliding window.
+2. **Clustering:** Use **Spectral Clustering** or **Agglomerative Hierarchical Clustering (AHC)** to group similar vectors.
+3. **Re-segmentation:** Refine boundaries using a Viterbi decode.
 
 **Tool:** `pyannote.audio` is the industry standard library.
 
@@ -102,16 +102,16 @@ This is solved using **Viterbi Alignment** (HMMs) or **CTC Segmentation**.
 **Scale:** 500 hours of video uploaded *every minute*.
 
 **Architecture:**
-1.  **Upload:** Video lands in Colossus (Google File System).
-2.  **Trigger:** Pub/Sub message to ASR Service.
-3.  **Sharding:** Video is split into 5-minute chunks.
-4.  **Parallelism:** 12 chunks are processed by 12 TPUs in parallel.
-5.  **Merge:** Results are stitched together.
-6.  **Indexing:** Captions are indexed for Search (SEO).
+1. **Upload:** Video lands in Colossus (Google File System).
+2. **Trigger:** Pub/Sub message to ASR Service.
+3. **Sharding:** Video is split into 5-minute chunks.
+4. **Parallelism:** 12 chunks are processed by 12 TPUs in parallel.
+5. **Merge:** Results are stitched together.
+6. **Indexing:** Captions are indexed for Search (SEO).
 
 ## Python Example: Batch Transcription with Whisper
 
-```python
+``python
 import whisper
 
 # Load model (Large-v2 is slow but accurate)
@@ -125,11 +125,11 @@ print(result["text"])
 
 # Segments with timestamps
 for segment in result["segments"]:
-    start = segment["start"]
-    end = segment["end"]
-    text = segment["text"]
-    print(f"[{start:.2f} - {end:.2f}]: {text}")
-```
+ start = segment["start"]
+ end = segment["end"]
+ text = segment["text"]
+ print(f"[{start:.2f} - {end:.2f}]: {text}")
+``
 
 ## Deep Dive: Whisper Architecture (The New Standard)
 
@@ -176,8 +176,8 @@ User wants: "I have $20."
 
 **ITN** is the process of converting spoken-form text to written-form text.
 **Techniques:**
-1.  **FST (Finite State Transducers):** Rule-based grammars (Nvidia NeMo). Fast, deterministic.
-2.  **LLM Rewriting:** "Rewrite this transcript to be formatted correctly." Slower, but handles complex cases ("Call 1-800-FLOWERS").
+1. **FST (Finite State Transducers):** Rule-based grammars (Nvidia NeMo). Fast, deterministic.
+2. **LLM Rewriting:** "Rewrite this transcript to be formatted correctly." Slower, but handles complex cases ("Call 1-800-FLOWERS").
 
 ## Advanced Topic: CTC vs. Transducer vs. Attention
 
@@ -211,27 +211,27 @@ The current state-of-the-art open-source VAD.
 - **Speed:** < 1ms per chunk.
 
 **Pipeline:**
-1.  Run VAD. Get timestamps `[(0, 10), (15, 20)]`.
-2.  Crop audio.
-3.  Batch the speech segments.
-4.  Send to Whisper.
-5.  Re-align timestamps to original file.
+1. Run VAD. Get timestamps `[(0, 10), (15, 20)]`.
+2. Crop audio.
+3. Batch the speech segments.
+4. Send to Whisper.
+5. Re-align timestamps to original file.
 
 ## Appendix B: Interview Questions
 
-1.  **Q:** "Why is Whisper better than Wav2Vec 2.0?"
-    **A:** Wav2Vec 2.0 is Self-Supervised (needs fine-tuning). Whisper is Weakly Supervised (trained on labeled data). Whisper handles punctuation and casing out-of-the-box.
+1. **Q:** "Why is Whisper better than Wav2Vec 2.0?"
+ **A:** Wav2Vec 2.0 is Self-Supervised (needs fine-tuning). Whisper is Weakly Supervised (trained on labeled data). Whisper handles punctuation and casing out-of-the-box.
 
-2.  **Q:** "How do you handle 'Hallucinations' in Whisper?"
-    **A:**
-    - **Beam Search:** Increase beam size.
-    - **Temperature Fallback:** If log-prob is low, increase temperature.
-    - **VAD:** Don't feed silence to Whisper (it tries to transcribe noise as words).
+2. **Q:** "How do you handle 'Hallucinations' in Whisper?"
+ **A:**
+ - **Beam Search:** Increase beam size.
+ - **Temperature Fallback:** If log-prob is low, increase temperature.
+ - **VAD:** Don't feed silence to Whisper (it tries to transcribe noise as words).
 
-3.  **Q:** "What is the difference between Speaker Diarization and Speaker Identification?"
-    **A:**
-    - **Diarization:** "Who spoke when?" (Speaker A, Speaker B). No names.
-    - **Identification:** "Is this Elon Musk?" (Matches against a database of voice prints).
+3. **Q:** "What is the difference between Speaker Diarization and Speaker Identification?"
+ **A:**
+ - **Diarization:** "Who spoke when?" (Speaker A, Speaker B). No names.
+ - **Identification:** "Is this Elon Musk?" (Matches against a database of voice prints).
 
 ## Deep Dive: Conformer Architecture (The "Macaron" Net)
 
@@ -240,11 +240,11 @@ Whisper uses Transformers. But Google uses **Conformers**.
 **Conformer = CNN + Transformer.**
 
 **The Block:**
-1.  **Feed Forward (Half-Step):** Like a Macaron sandwich.
-2.  **Self-Attention:** Captures long-range dependencies.
-3.  **Convolution Module:** Captures local patterns (phonemes).
-4.  **Feed Forward (Half-Step).**
-5.  **Layer Norm.**
+1. **Feed Forward (Half-Step):** Like a Macaron sandwich.
+2. **Self-Attention:** Captures long-range dependencies.
+3. **Convolution Module:** Captures local patterns (phonemes).
+4. **Feed Forward (Half-Step).**
+5. **Layer Norm.**
 
 **Why?** It converges faster and requires less data than pure Transformers for speech.
 
@@ -254,9 +254,9 @@ How do you prevent overfitting in ASR?
 **SpecAugment:** Augment the Spectrogram, not the Audio.
 
 **Transformations:**
-1.  **Time Warping:** Stretch/squeeze parts of the spectrogram.
-2.  **Frequency Masking:** Zero out a block of frequencies (Simulates a broken mic).
-3.  **Time Masking:** Zero out a block of time (Simulates packet loss).
+1. **Time Warping:** Stretch/squeeze parts of the spectrogram.
+2. **Frequency Masking:** Zero out a block of frequencies (Simulates a broken mic).
+3. **Time Masking:** Zero out a block of time (Simulates packet loss).
 
 **Impact:** It forces the model not to rely on any single frequency band or time slice. It learns robust features.
 
@@ -266,11 +266,11 @@ How do you prevent overfitting in ASR?
 **Requirement:** Redact PII (Personally Identifiable Information).
 
 **Pipeline:**
-1.  **ASR:** Transcribe audio to text + timestamps.
-2.  **NER (Named Entity Recognition):** Run a BERT model to find `[CREDIT_CARD]`, `[PHONE_NUMBER]`.
-3.  **Redaction:**
-    - **Text:** Replace with `[REDACTED]`.
-    - **Audio:** Beep out the segment using the timestamps.
+1. **ASR:** Transcribe audio to text + timestamps.
+2. **NER (Named Entity Recognition):** Run a BERT model to find `[CREDIT_CARD]`, `[PHONE_NUMBER]`.
+3. **Redaction:**
+ - **Text:** Replace with `[REDACTED]`.
+ - **Audio:** Beep out the segment using the timestamps.
 
 **Challenge:** "My name is **Art**" vs "This is **Art**". NER is hard on lowercase ASR output.
 **Solution:** Use a Truecasing model first.
@@ -299,10 +299,10 @@ Batch processing is expensive. How do we make it cheaper?
 
 **Problem:** Code-switching ("Hindi-English").
 **Solution:**
-1.  **Language ID:** Predict language every 5 seconds.
-2.  **Multilingual Model:** Train one model on 100 languages (Whisper).
-    - It learns a shared representation of "Speech".
-    - It can even do **Zero-Shot Translation** (Speech in French -> Text in English).
+1. **Language ID:** Predict language every 5 seconds.
+2. **Multilingual Model:** Train one model on 100 languages (Whisper).
+ - It learns a shared representation of "Speech".
+ - It can even do **Zero-Shot Translation** (Speech in French -> Text in English).
 
 ## Case Study: Spotify Podcast Transcription
 
@@ -313,24 +313,24 @@ Batch processing is expensive. How do we make it cheaper?
 - **Length:** Joe Rogan is 3 hours long.
 
 **Solution:**
-1.  **Music Detection:** Remove music segments.
-2.  **Chunking:** Split into 30s chunks with 5s overlap.
-3.  **Deduplication:** Merge the overlap regions using "Longest Common Subsequence".
+1. **Music Detection:** Remove music segments.
+2. **Chunking:** Split into 30s chunks with 5s overlap.
+3. **Deduplication:** Merge the overlap regions using "Longest Common Subsequence".
 
 ## Appendix C: Advanced Interview Questions
 
-1.  **Q:** "How does CTC Loss handle alignment?"
-    **A:** It introduces a "blank" token `<eps>`. `c-a-t` aligns to `c <eps> a <eps> t`. It sums over all possible alignments that produce the target text.
+1. **Q:** "How does CTC Loss handle alignment?"
+ **A:** It introduces a "blank" token `<eps>`. `c-a-t` aligns to `c <eps> a <eps> t`. It sums over all possible alignments that produce the target text.
 
-2.  **Q:** "What is the difference between Online and Offline Diarization?"
-    **A:**
-    - **Online:** Must decide "Who is speaking?" *now*. Hard.
-    - **Offline:** Can look at the whole file. Can run clustering (Spectral/AHC) on all embeddings. Much better accuracy.
+2. **Q:** "What is the difference between Online and Offline Diarization?"
+ **A:**
+ - **Online:** Must decide "Who is speaking?" *now*. Hard.
+ - **Offline:** Can look at the whole file. Can run clustering (Spectral/AHC) on all embeddings. Much better accuracy.
 
-3.  **Q:** "How do you optimize ASR for a specific domain (e.g., Medical)?"
-    **A:**
-    - **Fine-tuning:** Train the acoustic model on medical audio.
-    - **Language Model Fusion:** Train a text-only LM on medical journals. Fuse it with the ASR output during decoding (Shallow Fusion).
+3. **Q:** "How do you optimize ASR for a specific domain (e.g., Medical)?"
+ **A:**
+ - **Fine-tuning:** Train the acoustic model on medical audio.
+ - **Language Model Fusion:** Train a text-only LM on medical journals. Fuse it with the ASR output during decoding (Shallow Fusion).
 
 ## Deep Dive: Beam Search Decoding
 
@@ -340,11 +340,11 @@ The model outputs probabilities for each token: `P(token | audio)`.
 
 **Beam Search:**
 Keep the top `K` (Beam Width) hypotheses alive at each step.
-1.  Start with `[<s>]`.
-2.  Expand all `K` paths by 1 token.
-3.  Calculate score: `log(P(path))`.
-4.  Keep top `K`.
-5.  Repeat.
+1. Start with `[<s>]`.
+2. Expand all `K` paths by 1 token.
+3. Calculate score: `log(P(path))`.
+4. Keep top `K`.
+5. Repeat.
 
 **Beam Width Trade-off:**
 - `K=1`: Greedy (Fast, Bad).
@@ -370,12 +370,12 @@ How do we combine them?
 
 **Problem:** Identify the song in the background.
 **Algorithm:**
-1.  **Spectrogram:** Convert audio to Time-Frequency.
-2.  **Peaks:** Find local maxima (constellation map).
-3.  **Hashes:** Form pairs of peaks (Anchor point + Target point).
-    - `Hash = (Freq1, Freq2, DeltaTime)`
-4.  **Database:** Store `Hash -> (SongID, AbsoluteTime)`.
-5.  **Query:** Match hashes. Find a cluster of matches with consistent time offset.
+1. **Spectrogram:** Convert audio to Time-Frequency.
+2. **Peaks:** Find local maxima (constellation map).
+3. **Hashes:** Form pairs of peaks (Anchor point + Target point).
+ - `Hash = (Freq1, Freq2, DeltaTime)`
+4. **Database:** Store `Hash -> (SongID, AbsoluteTime)`.
+5. **Query:** Match hashes. Find a cluster of matches with consistent time offset.
 
 ## Engineering: FFMpeg Tricks for Speech
 
@@ -398,9 +398,9 @@ Listen to podcasts at 1.5x.
 Alexa is always listening. But sending audio to the cloud is expensive (and creepy).
 **Solution: Cascade Architecture.**
 
-1.  **Stage 1 (DSP):** Low power chip. Detects energy. (mW).
-2.  **Stage 2 (Tiny NN):** On-device model. Detects "Alexa". (High Recall, Low Precision).
-3.  **Stage 3 (Cloud):** Full ASR. Verifies "Alexa" and processes the command. (High Precision).
+1. **Stage 1 (DSP):** Low power chip. Detects energy. (mW).
+2. **Stage 2 (Tiny NN):** On-device model. Detects "Alexa". (High Recall, Low Precision).
+3. **Stage 3 (Cloud):** Full ASR. Verifies "Alexa" and processes the command. (High Precision).
 
 ## Appendix D: The "Long-Tail" Problem
 

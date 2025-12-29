@@ -1,15 +1,18 @@
 ---
 title: "Dialog State Tracking (DST)"
 day: 34
+related_dsa_day: 34
+related_ml_day: 34
+related_agents_day: 34
 collection: speech_tech
 categories:
-  - speech_tech
+ - speech_tech
 tags:
-  - nlp
-  - dialog-systems
-  - state-tracking
-  - transformers
-  - llm
+ - nlp
+ - dialog-systems
+ - state-tracking
+ - transformers
+ - llm
 subdomain: "Dialogue Systems"
 tech_stack: [TRADE, BERT-DST, Rasa, HuggingFace]
 scale: "Multi-turn, Multi-domain"
@@ -22,41 +25,41 @@ companies: [Amazon (Alexa), Google (Assistant), Apple (Siri), PolyAI]
 
 In a Task-Oriented Dialogue System (TODS), the pipeline typically looks like this:
 
-1.  **ASR:** Audio → Text ("I want a cheap Italian restaurant").
-2.  **NLU:** Text → Intent/Slots (`Intent: find_restaurant`, `Price: cheap`, `Cuisine: Italian`).
-3.  **DST (Dialog State Tracking):** Updates the **current state** of the conversation based on history.
-4.  **Policy (DPL):** Decides the next action (e.g., "Ask for location").
-5.  **NLG:** Action → Text ("Where are you located?").
-6.  **TTS:** Text → Audio.
+1. **ASR:** Audio → Text ("I want a cheap Italian restaurant").
+2. **NLU:** Text → Intent/Slots (`Intent: find_restaurant`, `Price: cheap`, `Cuisine: Italian`).
+3. **DST (Dialog State Tracking):** Updates the **current state** of the conversation based on history.
+4. **Policy (DPL):** Decides the next action (e.g., "Ask for location").
+5. **NLG:** Action → Text ("Where are you located?").
+6. **TTS:** Text → Audio.
 
 **Why is DST hard?**
 - **Multi-turn dependencies:**
-  - User: "Book a table at Mario's."
-  - System: "For how many?"
-  - User: "Five." (DST must know "Five" refers to `people`, not `time` or `price`).
+ - User: "Book a table at Mario's."
+ - System: "For how many?"
+ - User: "Five." (DST must know "Five" refers to `people`, not `time` or `price`).
 - **Corrections:**
-  - User: "Actually, make it for six." (DST must update `people=6`).
+ - User: "Actually, make it for six." (DST must update `people=6`).
 - **Co-reference:**
-  - User: "What's the address of **that** place?" (DST must resolve "that place" to "Mario's").
+ - User: "What's the address of **that** place?" (DST must resolve "that place" to "Mario's").
 
 ## 2. State Representation
 
 The **Dialog State** is typically a set of `(Slot, Value)` pairs.
 
 **Example State:**
-```json
+``json
 {
-  "domain": "restaurant",
-  "slots": {
-    "cuisine": "italian",
-    "price_range": "cheap",
-    "area": "center",
-    "people": "5"
-  }
+ "domain": "restaurant",
+ "slots": {
+ "cuisine": "italian",
+ "price_range": "cheap",
+ "area": "center",
+ "people": "5"
+ }
 }
-```
+``
 
-The goal of DST is to predict $S_t$ given $S_{t-1}$, System Action $A_{t-1}$, and User Utterance $U_t$.
+The goal of DST is to predict `S_t` given `S_{t-1}`, System Action `A_{t-1}`, and User Utterance `U_t`.
 
 ## 3. Approaches to DST
 
@@ -67,8 +70,8 @@ The goal of DST is to predict $S_t$ given $S_{t-1}$, System Action $A_{t-1}$, an
 
 ### 2. Classification-Based (Fixed Ontology)
 - **Ontology:** A pre-defined list of all possible values for every slot.
-  - `Cuisine`: [Italian, Chinese, Indian, ...]
-- **Model:** A classifier that takes $(U_t, S_{t-1})$ and outputs a probability distribution over the ontology for each slot.
+ - `Cuisine`: [Italian, Chinese, Indian, ...]
+- **Model:** A classifier that takes `(U_t, S_{t-1})` and outputs a probability distribution over the ontology for each slot.
 - **Pros:** Simple classification problem.
 - **Cons:** Cannot handle **out-of-vocabulary (OOV)** values (e.g., a new restaurant name).
 
@@ -84,9 +87,9 @@ The goal of DST is to predict $S_t$ given $S_{t-1}$, System Action $A_{t-1}$, an
 ### 1. TRADE (Transferable Multi-Domain State Generator)
 - **Problem:** How to handle multiple domains (Hotel, Train, Taxi) without training separate models?
 - **Architecture:**
-  - **Utterance Encoder:** BiGRU / BERT encodes user text.
-  - **Slot Gate:** Decides if a slot is `PTR` (generate from text), `DONTCARE`, or `NONE`.
-  - **State Generator:** Copy mechanism (Pointer Network) to copy words from user utterance into the slot value.
+ - **Utterance Encoder:** BiGRU / BERT encodes user text.
+ - **Slot Gate:** Decides if a slot is `PTR` (generate from text), `DONTCARE`, or `NONE`.
+ - **State Generator:** Copy mechanism (Pointer Network) to copy words from user utterance into the slot value.
 - **Key Feature:** Zero-shot transfer to new domains by sharing parameters.
 
 ### 2. BERT-DST
@@ -96,15 +99,15 @@ The goal of DST is to predict $S_t$ given $S_{t-1}$, System Action $A_{t-1}$, an
 
 ### 3. LLM-based DST (In-Context Learning)
 - **Prompt:**
-  ```
-  Conversation:
-  User: I need a hotel.
-  System: Where?
-  User: In Cambridge.
-  
-  Current State JSON:
-  {"service": "hotel", "slots": {"area": "cambridge"}}
-  ```
+ ``
+ Conversation:
+ User: I need a hotel.
+ System: Where?
+ User: In Cambridge.
+ 
+ Current State JSON:
+ {"service": "hotel", "slots": {"area": "cambridge"}}
+ ``
 - **Pros:** No training required. Handles complex reasoning.
 - **Cons:** High latency and cost.
 
@@ -140,7 +143,7 @@ The goal of DST is to predict $S_t$ given $S_{t-1}$, System Action $A_{t-1}$, an
 **MultiWOZ** is the standard benchmark dataset.
 - **Domains:** 7 (Restaurant, Hotel, Attraction, Train, Taxi, Hospital, Police).
 - **Complexity:** Users switch domains mid-conversation.
-  - "Book a hotel in the center. Also, I need a taxi to get there."
+ - "Book a hotel in the center. Also, I need a taxi to get there."
 
 **Cross-Domain Constraints:**
 - The destination of the taxi must match the address of the hotel.
@@ -158,18 +161,18 @@ The goal of DST is to predict $S_t$ given $S_{t-1}$, System Action $A_{t-1}$, an
 In production, DST adds latency to every turn.
 
 **Optimization:**
-1.  **Candidate Selection:** Only update slots relevant to the current domain.
-2.  **Caching:** Cache the state object. Only process the *delta* (new utterance).
-3.  **Distillation:** Distill BERT-Large into DistilBERT or TinyBERT for 10x speedup.
+1. **Candidate Selection:** Only update slots relevant to the current domain.
+2. **Caching:** Cache the state object. Only process the *delta* (new utterance).
+3. **Distillation:** Distill BERT-Large into DistilBERT or TinyBERT for 10x speedup.
 
 ## 10. Real-World Case Study: Google Duplex
 
 Google Duplex (AI that calls restaurants) requires extreme state tracking.
 - **State:** Not just slots, but also "negotiation state".
 - **Scenario:**
-  - AI: "Table for 7pm?"
-  - Human: "We only have 8pm."
-  - AI (DST): Update `time=20:00`, check if acceptable against user constraints.
+ - AI: "Table for 7pm?"
+ - Human: "We only have 8pm."
+ - AI (DST): Update `time=20:00`, check if acceptable against user constraints.
 
 ## 11. Top Interview Questions
 
@@ -180,7 +183,7 @@ Google Duplex (AI that calls restaurants) requires extreme state tracking.
 *Answer:* Pointer networks (copy mechanism) are better for names, times, and open sets. Classification is better for small fixed sets (Price: cheap/moderate/expensive).
 
 **Q3: How does DST interact with the Policy?**
-*Answer:* DST outputs the state $S_t$. The Policy takes $S_t$ and database results to decide the action $A_t$.
+*Answer:* DST outputs the state `S_t`. The Policy takes `S_t` and database results to decide the action `A_t`.
 
 ## 12. Summary
 
@@ -198,24 +201,24 @@ Google Duplex (AI that calls restaurants) requires extreme state tracking.
 
 **Key Components:**
 
-1.  **Utterance Encoder:**
-    -   Uses Bi-GRU to encode the user utterance $U_t$ and dialogue history $H_t$.
-    -   Output: Context vectors $H_{ctx}$.
+1. **Utterance Encoder:**
+ - Uses Bi-GRU to encode the user utterance `U_t` and dialogue history `H_t`.
+ - Output: Context vectors `H_{ctx}`.
 
-2.  **State Encoder:**
-    -   Encodes the slot names (e.g., "hotel-price", "train-destination").
-    -   This allows the model to understand semantic similarity between slots across domains.
+2. **State Encoder:**
+ - Encodes the slot names (e.g., "hotel-price", "train-destination").
+ - This allows the model to understand semantic similarity between slots across domains.
 
-3.  **Slot Gate (Classifier):**
-    -   For each slot $j$, predicts $P_{gate} \in \{PTR, NONE, DONTCARE\}$.
-    -   $PTR$: The value is in the utterance (generate it).
-    -   $NONE$: The slot is not mentioned.
-    -   $DONTCARE$: The user said "any".
+3. **Slot Gate (Classifier):**
+ - For each slot `j`, predicts `P_{gate} \in \{PTR, NONE, DONTCARE\}`.
+ - `PTR`: The value is in the utterance (generate it).
+ - `NONE`: The slot is not mentioned.
+ - `DONTCARE`: The user said "any".
 
-4.  **Copy Mechanism (Pointer Generator):**
-    -   If $P_{gate} = PTR$, the model generates the value by copying tokens from the utterance.
-    -   $P_{vocab} = P_{gen} P_{vocab} + (1 - P_{gen}) P_{copy}$.
-    -   This allows handling OOV words (e.g., rare restaurant names).
+4. **Copy Mechanism (Pointer Generator):**
+ - If `P_{gate} = PTR`, the model generates the value by copying tokens from the utterance.
+ - `P_{vocab} = P_{gen} P_{vocab} + (1 - P_{gen}) P_{copy}`.
+ - This allows handling OOV words (e.g., rare restaurant names).
 
 **Why it works for Zero-Shot:**
 - It learns a general "slot-filling" behavior.
@@ -235,27 +238,27 @@ Google Duplex (AI that calls restaurants) requires extreme state tracking.
 
 **Code Snippet (HuggingFace Transformers):**
 
-```python
+``python
 import torch
 from transformers import BertForQuestionAnswering
 
 class BertDST(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.bert = BertForQuestionAnswering.from_pretrained('bert-base-uncased')
-        self.classifier = torch.nn.Linear(768, 3) # NONE, DONTCARE, SPAN
+ def __init__(self):
+ super().__init__()
+ self.bert = BertForQuestionAnswering.from_pretrained('bert-base-uncased')
+ self.classifier = torch.nn.Linear(768, 3) # NONE, DONTCARE, SPAN
 
-    def forward(self, input_ids, attention_mask):
-        outputs = self.bert(input_ids, attention_mask=attention_mask)
-        start_logits = outputs.start_logits
-        end_logits = outputs.end_logits
-        
-        # Use [CLS] token embedding for classification
-        cls_embedding = outputs.hidden_states[-1][:, 0, :]
-        class_logits = self.classifier(cls_embedding)
-        
-        return start_logits, end_logits, class_logits
-```
+ def forward(self, input_ids, attention_mask):
+ outputs = self.bert(input_ids, attention_mask=attention_mask)
+ start_logits = outputs.start_logits
+ end_logits = outputs.end_logits
+ 
+ # Use [CLS] token embedding for classification
+ cls_embedding = outputs.hidden_states[-1][:, 0, :]
+ class_logits = self.classifier(cls_embedding)
+ 
+ return start_logits, end_logits, class_logits
+``
 
 ## 15. Deep Dive: LLM-based DST (In-Context Learning)
 
@@ -263,13 +266,13 @@ With GPT-4, we can do DST without training.
 
 **Prompt Engineering Strategy:**
 
-1.  **Instruction:** "You are a helpful assistant tracking the state of a dialogue. Output JSON."
-2.  **Ontology Definition:** "Possible slots: restaurant-food, restaurant-area, restaurant-price."
-3.  **Few-Shot Examples:** Provide 3-5 examples of difficult cases (corrections, co-reference).
-4.  **Chain-of-Thought (CoT):** Ask the model to explain *why* it updated a slot.
+1. **Instruction:** "You are a helpful assistant tracking the state of a dialogue. Output JSON."
+2. **Ontology Definition:** "Possible slots: restaurant-food, restaurant-area, restaurant-price."
+3. **Few-Shot Examples:** Provide 3-5 examples of difficult cases (corrections, co-reference).
+4. **Chain-of-Thought (CoT):** Ask the model to explain *why* it updated a slot.
 
 **Example Prompt:**
-```
+``
 User: "I want a cheap place."
 Reasoning: User specified price constraint.
 State: {"price": "cheap"}
@@ -281,7 +284,7 @@ State: {"price": "dontcare"}
 User: "Find me a place in the center."
 Reasoning: User added area constraint.
 State: {"price": "dontcare", "area": "center"}
-```
+``
 
 **Fine-Tuning (LoRA):**
 For lower latency/cost, fine-tune a smaller model (Llama-3-8B) on the MultiWOZ dataset. It can match GPT-4 performance at 1/10th the cost.
@@ -366,9 +369,9 @@ In AR/VR or Smart Displays, context includes screen clicks.
 - **Scenario:** User points at a screen and says "How much is this one?"
 - **Input:** Audio + Gaze/Touch coordinates.
 - **Resolution:**
-  - DST receives `click_event(item_id=123)`.
-  - Resolves "this one" to `item_id=123`.
-  - Updates state: `focused_item=123`.
+ - DST receives `click_event(item_id=123)`.
+ - Resolves "this one" to `item_id=123`.
+ - Updates state: `focused_item=123`.
 
 ## 21. Summary
 
@@ -422,9 +425,9 @@ DST is often the bottleneck.
 
 **Technique 3: State Delta Prediction**
 - Instead of predicting the full state every turn, predict the **operation**:
-  - `UPDATE(price, cheap)`
-  - `DELETE(area)`
-  - `KEEP(others)`
+ - `UPDATE(price, cheap)`
+ - `DELETE(area)`
+ - `KEEP(others)`
 
 ## 25. Deep Dive: Privacy in DST
 
@@ -434,40 +437,40 @@ DST stores user preferences. This is PII (Personally Identifiable Information).
 - `phone_number`, `credit_card`, `home_address`.
 
 **Mitigation:**
-1.  **PII Redaction:** Replace sensitive entities with tokens before storage.
-    - "Call 555-0199" -> "Call [PHONE_NUMBER]".
-    - DST tracks `phone=[PHONE_NUMBER]`.
-    - The actual number is stored in a secure, ephemeral context, not the logs.
-2.  **Federated Learning:** Train DST on user devices. Only send gradients to the server.
+1. **PII Redaction:** Replace sensitive entities with tokens before storage.
+ - "Call 555-0199" -> "Call [PHONE_NUMBER]".
+ - DST tracks `phone=[PHONE_NUMBER]`.
+ - The actual number is stored in a secure, ephemeral context, not the logs.
+2. **Federated Learning:** Train DST on user devices. Only send gradients to the server.
 
 ## 26. Code: Simple Rule-Based DST
 
 For simple use cases, don't use a Transformer.
 
-```python
+``python
 class RuleBasedDST:
-    def __init__(self):
-        self.state = {}
-        self.ontology = {
-            "price": ["cheap", "moderate", "expensive"],
-            "area": ["north", "south", "east", "west", "center"]
-        }
+ def __init__(self):
+ self.state = {}
+ self.ontology = {
+ "price": ["cheap", "moderate", "expensive"],
+ "area": ["north", "south", "east", "west", "center"]
+ }
 
-    def update(self, utterance):
-        utterance = utterance.lower()
-        
-        # Heuristic: Check for keywords
-        for slot, values in self.ontology.items():
-            for value in values:
-                if f" {value} " in f" {utterance} ":
-                    self.state[slot] = value
-                    
-        # Heuristic: Negation ("not cheap")
-        if "not cheap" in utterance and self.state.get("price") == "cheap":
-            del self.state["price"]
-            self.state["price_not"] = "cheap"
-            
-        return self.state
+ def update(self, utterance):
+ utterance = utterance.lower()
+ 
+ # Heuristic: Check for keywords
+ for slot, values in self.ontology.items():
+ for value in values:
+ if f" {value} " in f" {utterance} ":
+ self.state[slot] = value
+ 
+ # Heuristic: Negation ("not cheap")
+ if "not cheap" in utterance and self.state.get("price") == "cheap":
+ del self.state["price"]
+ self.state["price_not"] = "cheap"
+ 
+ return self.state
 
 # Usage
 dst = RuleBasedDST()
@@ -475,7 +478,7 @@ print(dst.update("I want a cheap restaurant"))
 # {'price': 'cheap'}
 print(dst.update("Actually, not cheap"))
 # {'price_not': 'cheap'}
-```
+``
 
 ## 27. Summary
 
@@ -513,8 +516,8 @@ How do we build a User Simulator?
 - **Goal:** The user has a goal `(inform: cuisine=italian, request: address)`.
 - **Stack:** The user keeps a stack of actions.
 - **Policy:**
-  - If System says "What cuisine?", User pops `inform: cuisine=italian`.
-  - If System says "Address is 123 Main St", User pops `request: address`.
+ - If System says "What cuisine?", User pops `inform: cuisine=italian`.
+ - If System says "Address is 123 Main St", User pops `request: address`.
 - **Error Model:** Introduce noise (ASR errors, synonym replacement) to make it realistic.
 
 **Neural User Simulator:**
@@ -545,12 +548,12 @@ Running BERT-DST on a phone?
 - **Latency:** Must be < 50ms.
 
 **Solutions:**
-1.  **MobileBERT / TinyBERT:** Compressed architectures (15-20MB).
-2.  **TFLite / ONNX Runtime:** Optimized inference engines for ARM CPUs.
-3.  **Dynamic Quantization:** Convert weights to INT8 at runtime.
+1. **MobileBERT / TinyBERT:** Compressed architectures (15-20MB).
+2. **TFLite / ONNX Runtime:** Optimized inference engines for ARM CPUs.
+3. **Dynamic Quantization:** Convert weights to INT8 at runtime.
 
 **Example (TFLite Conversion):**
-```python
+``python
 import tensorflow as tf
 
 converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_dir)
@@ -558,12 +561,12 @@ converter.optimizations = [tf.lite.Optimize.DEFAULT]
 tflite_model = converter.convert()
 
 with open('dst_model.tflite', 'wb') as f:
-    f.write(tflite_model)
-```
+ f.write(tflite_model)
+``
 
 with open('dst_model.tflite', 'wb') as f:
-    f.write(tflite_model)
-```
+ f.write(tflite_model)
+``
 
 ## 32. Deep Dive: Contextual Bandit for DST Optimization
 
@@ -587,16 +590,16 @@ with open('dst_model.tflite', 'wb') as f:
 **DST Component: "Slot Filling"**
 - Uses a **Diet Classifier** (Dual Intent Entity Transformer).
 - **Architecture:**
-  - Shared Transformer encoder for both Intent and Entity.
-  - Separate CRF heads for slot tagging.
+ - Shared Transformer encoder for both Intent and Entity.
+ - Separate CRF heads for slot tagging.
 - **Training:** Rasa NLU data format (Markdown).
 
 **Example:**
-```markdown
+``markdown
 ## intent:book_restaurant
 - I want to book a table at [Mario's](restaurant_name) for [5](people) people
 - Reserve [2](people) seats at [The Golden Dragon](restaurant_name)
-```
+``
 
 **Deployment:**
 - Rasa Action Server handles DST + Policy + NLG.

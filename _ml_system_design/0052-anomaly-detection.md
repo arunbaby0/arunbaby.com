@@ -1,24 +1,24 @@
 ---
 title: "Anomaly Detection"
 day: 52
+related_dsa_day: 52
+related_speech_day: 52
+related_agents_day: 52
 collection: ml_system_design
 categories:
-  - ml-system-design
+ - ml-system-design
 tags:
-  - anomaly-detection
-  - monitoring
-  - time-series
-  - streaming
-  - alerting
-  - mlops
+ - anomaly-detection
+ - monitoring
+ - time-series
+ - streaming
+ - alerting
+ - mlops
 difficulty: Hard
 subdomain: "Reliability & Monitoring"
 tech_stack: Python, Kafka, Flink, Prometheus, PyOD
 scale: "1M events/sec, multi-tenant, low false positives"
 companies: Netflix, Uber, Google, Amazon
-related_dsa_day: 52
-related_speech_day: 52
-related_agents_day: 52
 ---
 
 **"Anomaly detection is trapping rain water for metrics: find the boundaries of ‘normal’ and measure what overflows."**
@@ -50,15 +50,15 @@ In anomaly detection, we detect deviations from the learned “normal pattern”
 ### 2.1 Functional requirements
 
 - **Inputs**
-  - time-series metrics (QPS, latency, error rates)
-  - categorical counts (events by user type, country)
-  - distributions (histograms, sketches)
-  - model signals (loss, accuracy proxies, embedding stats)
+ - time-series metrics (QPS, latency, error rates)
+ - categorical counts (events by user type, country)
+ - distributions (histograms, sketches)
+ - model signals (loss, accuracy proxies, embedding stats)
 - **Outputs**
-  - anomaly alerts with severity
-  - explanation context (top contributing dimensions)
-  - links to dashboards/runbooks
-  - ability to suppress/acknowledge
+ - anomaly alerts with severity
+ - explanation context (top contributing dimensions)
+ - links to dashboards/runbooks
+ - ability to suppress/acknowledge
 
 ### 2.2 Non-functional requirements
 
@@ -76,39 +76,39 @@ In anomaly detection, we detect deviations from the learned “normal pattern”
 
 ### 3.1 Diagram
 
-```
-   Producers (services / models / pipelines)
-            |
-            v
-     +-------------+        +-------------------+
-     | Kafka/PubSub| -----> | Stream Processor  |
-     +-------------+        | (Flink/Spark)     |
-            |               +---------+---------+
-            |                         |
-            |                         v
-            |               +-------------------+
-            |               | Feature Builder   |
-            |               | (windows, joins)  |
-            |               +---------+---------+
-            |                         |
-            v                         v
- +-------------------+      +-------------------+
- | TS Store          |      | Detector Service  |
- | (Prom/TSDB)       |      | rules + ML        |
- +---------+---------+      +---------+---------+
-           |                         |
-           v                         v
- +-------------------+      +-------------------+
- | Dashboards        |      | Alert Router      |
- | (Grafana)         |      | (Pager/Slack)     |
- +-------------------+      +---------+---------+
-                                     |
-                                     v
-                           +-------------------+
-                           | Case Mgmt / RCA   |
-                           | (tickets, notes)  |
-                           +-------------------+
-```
+``
+ Producers (services / models / pipelines)
+ |
+ v
+ +-------------+ +-------------------+
+ | Kafka/PubSub| -----> | Stream Processor |
+ +-------------+ | (Flink/Spark) |
+ | +---------+---------+
+ | |
+ | v
+ | +-------------------+
+ | | Feature Builder |
+ | | (windows, joins) |
+ | +---------+---------+
+ | |
+ v v
+ +-------------------+ +-------------------+
+ | TS Store | | Detector Service |
+ | (Prom/TSDB) | | rules + ML |
+ +---------+---------+ +---------+---------+
+ | |
+ v v
+ +-------------------+ +-------------------+
+ | Dashboards | | Alert Router |
+ | (Grafana) | | (Pager/Slack) |
+ +-------------------+ +---------+---------+
+ |
+ v
+ +-------------------+
+ | Case Mgmt / RCA |
+ | (tickets, notes) |
+ +-------------------+
+``
 
 ### 3.2 Core idea
 
@@ -161,20 +161,20 @@ This is the “pattern recognition” layer: translate raw signals into somethin
 Common detector families:
 
 - **Rules**
-  - simple thresholds, rate-of-change, “no data” checks
-  - best for: clear SLO violations, missing pipelines
+ - simple thresholds, rate-of-change, “no data” checks
+ - best for: clear SLO violations, missing pipelines
 
 - **Statistical**
-  - z-score with robust estimators (median/MAD)
-  - EWMA control charts
-  - seasonal baselines (Holt-Winters)
-  - best for: stable metrics with known periodicity
+ - z-score with robust estimators (median/MAD)
+ - EWMA control charts
+ - seasonal baselines (Holt-Winters)
+ - best for: stable metrics with known periodicity
 
 - **ML / Unsupervised**
-  - Isolation Forest, One-Class SVM
-  - autoencoders
-  - clustering distance to centroids
-  - best for: high-dimensional signals, unknown patterns
+ - Isolation Forest, One-Class SVM
+ - autoencoders
+ - clustering distance to centroids
+ - best for: high-dimensional signals, unknown patterns
 
 The important production truth:
 > You don’t “pick one model”. You build a system that can run multiple detectors and fuse them.
@@ -225,7 +225,7 @@ RCA answers: “what is wrong, where, and why”.
 A common production pattern:
 1. detect anomaly on an aggregate metric (e.g., error_rate)
 2. compute deltas by dimension to find top contributors:
-   - region, cluster, device, app_version, request_type
+ - region, cluster, device, app_version, request_type
 3. present ranked suspects with evidence
 
 This is essentially “explainability via decomposition”.
@@ -280,76 +280,76 @@ The goal here is to show “detector primitives” that can be composed. In prod
 
 ### 6.1 Robust z-score (median + MAD)
 
-```python
+``python
 import numpy as np
 
 
 def robust_zscore(x: np.ndarray) -> np.ndarray:
-    """
-    Robust z-score using median and MAD (median absolute deviation).
-    Less sensitive to outliers than mean/std.
-    """
-    med = np.median(x)
-    mad = np.median(np.abs(x - med)) + 1e-9
-    return 0.6745 * (x - med) / mad
+ """
+ Robust z-score using median and MAD (median absolute deviation).
+ Less sensitive to outliers than mean/std.
+ """
+ med = np.median(x)
+ mad = np.median(np.abs(x - med)) + 1e-9
+ return 0.6745 * (x - med) / mad
 
 
 def detect_anomaly_robust_z(x_window: np.ndarray, threshold: float = 4.0) -> bool:
-    z = robust_zscore(x_window)
-    return abs(z[-1]) >= threshold
-```
+ z = robust_zscore(x_window)
+ return abs(z[-1]) >= threshold
+``
 
 ### 6.2 EWMA control chart
 
-```python
+``python
 def ewma(series: np.ndarray, alpha: float = 0.2) -> np.ndarray:
-    out = np.zeros_like(series, dtype=float)
-    out[0] = series[0]
-    for i in range(1, len(series)):
-        out[i] = alpha * series[i] + (1 - alpha) * out[i - 1]
-    return out
+ out = np.zeros_like(series, dtype=float)
+ out[0] = series[0]
+ for i in range(1, len(series)):
+ out[i] = alpha * series[i] + (1 - alpha) * out[i - 1]
+ return out
 
 
 def detect_ewma_shift(series: np.ndarray, alpha: float = 0.2, k: float = 3.0) -> bool:
-    """
-    Simple EWMA shift detector: compare last value to EWMA +/- k * std.
-    (In production, use rolling std and seasonality-aware baselines.)
-    """
-    smoothed = ewma(series, alpha=alpha)
-    mu = np.mean(smoothed[:-1])
-    sigma = np.std(smoothed[:-1]) + 1e-9
-    return abs(smoothed[-1] - mu) > k * sigma
-```
+ """
+ Simple EWMA shift detector: compare last value to EWMA +/- k * std.
+ (In production, use rolling std and seasonality-aware baselines.)
+ """
+ smoothed = ewma(series, alpha=alpha)
+ mu = np.mean(smoothed[:-1])
+ sigma = np.std(smoothed[:-1]) + 1e-9
+ return abs(smoothed[-1] - mu) > k * sigma
+``
 
 ### 6.3 Fusing detectors (rule + stats)
 
-```python
+``python
 from dataclasses import dataclass
 
 
 @dataclass
 class DetectionResult:
-    is_anomaly: bool
-    reason: str
+ is_anomaly: bool
+ reason: str
 
 
 def fused_detector(series: np.ndarray) -> DetectionResult:
-    # Rule: “no data” or impossible values
-    if np.isnan(series[-1]):
-        return DetectionResult(True, "missing_data")
-    if series[-1] < 0:
-        return DetectionResult(True, "negative_value")
+ # Rule: “no data” or impossible values
+ if np.isnan(series[-1]):
+ return DetectionResult(True, "missing_data")
+ if series[-1] < 0:
+ return DetectionResult(True, "negative_value")
 
-    # Statistical: robust z-score
-    if detect_anomaly_robust_z(series, threshold=4.0):
-        return DetectionResult(True, "robust_zscore")
+ # Statistical: robust z-score
+ if detect_anomaly_robust_z(series, threshold=4.0):
+ return DetectionResult(True, "robust_zscore")
 
-    # Statistical: EWMA shift
-    if detect_ewma_shift(series, alpha=0.2, k=3.0):
-        return DetectionResult(True, "ewma_shift")
+ # Statistical: EWMA shift
+ if detect_ewma_shift(series, alpha=0.2, k=3.0):
+ return DetectionResult(True, "ewma_shift")
 
-    return DetectionResult(False, "normal")
-```
+ return DetectionResult(False, "normal")
+``
 
 This illustrates a production principle:
 **anomaly detection is a system of small components**, not a single model.
@@ -368,30 +368,30 @@ Multivariate approaches:
 
 Here’s a small Isolation Forest example (conceptual; production needs careful feature scaling and segment baselines):
 
-```python
+``python
 from sklearn.ensemble import IsolationForest
 import numpy as np
 
 
 def fit_isolation_forest(X: np.ndarray) -> IsolationForest:
-    """
-    X shape: [n_samples, n_features]
-    Features could include: latency_p95, error_rate, qps, cpu, mem, etc.
-    """
-    model = IsolationForest(
-        n_estimators=200,
-        contamination="auto",
-        random_state=0,
-    )
-    model.fit(X)
-    return model
+ """
+ X shape: [n_samples, n_features]
+ Features could include: latency_p95, error_rate, qps, cpu, mem, etc.
+ """
+ model = IsolationForest(
+ n_estimators=200,
+ contamination="auto",
+ random_state=0,
+ )
+ model.fit(X)
+ return model
 
 
 def detect_multivariate(model: IsolationForest, x_latest: np.ndarray, score_threshold: float) -> bool:
-    # sklearn: higher score = more normal; lower = more anomalous
-    score = float(model.score_samples(x_latest.reshape(1, -1))[0])
-    return score < score_threshold
-```
+ # sklearn: higher score = more normal; lower = more anomalous
+ score = float(model.score_samples(x_latest.reshape(1, -1))[0])
+ return score < score_threshold
+``
 
 Operational note:
 - multivariate models are powerful but harder to explain
@@ -408,8 +408,8 @@ If you alert on `metric x country x device x app_version`, cardinality explodes.
 Strategies:
 - alert only on top-K segments (heavy hitters)
 - hierarchical detection:
-  - detect anomaly globally
-  - then drill down into segments to find top contributors
+ - detect anomaly globally
+ - then drill down into segments to find top contributors
 - sketching (Count-Min Sketch for counts, t-digest/KLL for quantiles)
 
 ### 7.2 State management in streaming
@@ -484,20 +484,20 @@ Unlike classification, anomaly detection often lacks ground truth.
 Practical evaluation strategies:
 
 - **Historical replay**
-  - replay a week/month of metrics
-  - compare alerts to known incidents and change logs
+ - replay a week/month of metrics
+ - compare alerts to known incidents and change logs
 
 - **Synthetic injections**
-  - inject controlled anomalies (drop QPS, spike errors, shift distributions)
-  - ensure detectors catch them with acceptable delay
+ - inject controlled anomalies (drop QPS, spike errors, shift distributions)
+ - ensure detectors catch them with acceptable delay
 
 - **Proxy labels**
-  - incident tickets, rollbacks, on-call notes
-  - not perfect, but useful for measuring recall on “real pain”
+ - incident tickets, rollbacks, on-call notes
+ - not perfect, but useful for measuring recall on “real pain”
 
 - **Human-in-the-loop tuning**
-  - collect feedback (noise vs real)
-  - tune thresholds and suppression policies
+ - collect feedback (noise vs real)
+ - tune thresholds and suppression policies
 
 You typically optimize for:
 - high precision for paging alerts
@@ -664,21 +664,21 @@ Rule of thumb:
 If your anomaly system is noisy, it dies. A practical playbook:
 
 - **Start narrow**
-  - detect a small set of critical metrics
-  - keep paging volume low
+ - detect a small set of critical metrics
+ - keep paging volume low
 
 - **Add explainability**
-  - top contributors
-  - baseline comparisons
-  - recent change log correlation
+ - top contributors
+ - baseline comparisons
+ - recent change log correlation
 
 - **Use severity tiers**
-  - paging only for high-confidence/high-impact signals
-  - Slack-only for exploratory detectors
+ - paging only for high-confidence/high-impact signals
+ - Slack-only for exploratory detectors
 
 - **Build feedback**
-  - allow “noise” labeling
-  - review suppressed alerts periodically
+ - allow “noise” labeling
+ - review suppressed alerts periodically
 
 This is the same “pattern recognition” lesson as the DSA problem:
 don’t react to every fluctuation; define the boundary of “actionable abnormal”.
@@ -689,24 +689,24 @@ When teams say “anomaly detection”, they often mean “baseline modeling”.
 Here’s a pragmatic ladder:
 
 - **Static thresholds**
-  - best for: hard limits (error_rate must be < 1%)
-  - worst for: seasonal metrics
+ - best for: hard limits (error_rate must be < 1%)
+ - worst for: seasonal metrics
 
 - **Rolling robust baseline (median/MAD)**
-  - best for: noisy but mostly stationary signals
-  - robust to spikes and outliers
+ - best for: noisy but mostly stationary signals
+ - robust to spikes and outliers
 
 - **Seasonal baseline (same time last week)**
-  - best for: strong weekly patterns
-  - easy to explain and cheap to run
+ - best for: strong weekly patterns
+ - easy to explain and cheap to run
 
 - **Holt-Winters / ETS**
-  - best for: smooth seasonality + trend
-  - good interpretability
+ - best for: smooth seasonality + trend
+ - good interpretability
 
 - **Learned baselines (per segment)**
-  - best for: complex multi-segment products
-  - requires strong governance to avoid accidental bias
+ - best for: complex multi-segment products
+ - requires strong governance to avoid accidental bias
 
 Production tip:
 start with seasonal comparisons + robust statistics.
@@ -731,13 +731,13 @@ teams can onboard new signals without changing code, and you can audit changes.
 These terms are often used interchangeably, but they’re different:
 
 - **Outlier**: a single unusual point relative to its neighbors.
-  - Example: one batch has a huge spike in null values.
+ - Example: one batch has a huge spike in null values.
 
 - **Anomaly**: a point or segment that violates an expected pattern.
-  - Example: error rate spike at 2am that is not part of normal seasonality.
+ - Example: error rate spike at 2am that is not part of normal seasonality.
 
 - **Drift**: the underlying distribution changes over time.
-  - Example: feature distribution slowly shifts after a product change.
+ - Example: feature distribution slowly shifts after a product change.
 
 Operationally:
 - outliers are often “data quality” issues
@@ -754,25 +754,25 @@ The best platforms support all three, but keep the response paths distinct:
 When an alert pages a human, the system should also provide a runbook-style checklist. A practical sequence:
 
 1. **Confirm impact**
-   - are user-facing SLOs burning?
-   - is this confined to a segment (region/device) or global?
+ - are user-facing SLOs burning?
+ - is this confined to a segment (region/device) or global?
 
 2. **Check data validity**
-   - missing data vs real zeros
-   - instrumentation changes (new labels, new units)
+ - missing data vs real zeros
+ - instrumentation changes (new labels, new units)
 
 3. **Correlate with recent changes**
-   - deploys, feature flags, config changes
-   - schema changes in pipelines
+ - deploys, feature flags, config changes
+ - schema changes in pipelines
 
 4. **Drill down**
-   - top contributors by dimension
-   - compare against historical baselines (same time last week)
+ - top contributors by dimension
+ - compare against historical baselines (same time last week)
 
 5. **Mitigate**
-   - rollback suspect deploys
-   - fail over traffic if it’s infra-related
-   - suppress alerts only with an explicit maintenance annotation
+ - rollback suspect deploys
+ - fail over traffic if it’s infra-related
+ - suppress alerts only with an explicit maintenance annotation
 
 This checklist turns “anomaly detection” into operational reality: consistent response beats clever scoring.
 

@@ -1,24 +1,24 @@
 ---
 title: "Median of Two Sorted Arrays"
 day: 51
+related_ml_day: 51
+related_speech_day: 51
+related_agents_day: 51
 collection: dsa
 categories:
-  - dsa
+ - dsa
 tags:
-  - binary-search
-  - divide-and-conquer
-  - arrays
-  - partition
-  - hard
-  - interview-classic
+ - binary-search
+ - divide-and-conquer
+ - arrays
+ - partition
+ - hard
+ - interview-classic
 difficulty: Hard
 subdomain: "Binary Search on Answer"
 tech_stack: Python
 scale: "O(log(min(m,n))) time, O(1) space"
 companies: Google, Meta, Amazon, Microsoft
-related_ml_day: 51
-related_speech_day: 51
-related_agents_day: 51
 ---
 **"Stop thinking ‘merge’. Think ‘partition’—the median is just the boundary between two halves."**
 
@@ -122,35 +122,35 @@ But it still fails the “log time” requirement.
 This is a great “interview warm-up” implementation because it’s simple and correct.
 It also becomes the baseline for differential testing against the optimal method.
 
-```python
+``python
 from typing import List
 
 
 def median_two_sorted_stream(nums1: List[int], nums2: List[int]) -> float:
-    """
-    Merge-like scan until the median position. O(m+n) time in worst case, O(1) space.
-    """
-    m, n = len(nums1), len(nums2)
-    total = m + n
-    mid = total // 2
+ """
+ Merge-like scan until the median position. O(m+n) time in worst case, O(1) space.
+ """
+ m, n = len(nums1), len(nums2)
+ total = m + n
+ mid = total // 2
 
-    i = j = 0
-    prev = curr = 0
+ i = j = 0
+ prev = curr = 0
 
-    # We only need to advance 'mid' steps.
-    for _ in range(mid + 1):
-        prev = curr
-        if i < m and (j >= n or nums1[i] <= nums2[j]):
-            curr = nums1[i]
-            i += 1
-        else:
-            curr = nums2[j]
-            j += 1
+ # We only need to advance 'mid' steps.
+ for _ in range(mid + 1):
+ prev = curr
+ if i < m and (j >= n or nums1[i] <= nums2[j]):
+ curr = nums1[i]
+ i += 1
+ else:
+ curr = nums2[j]
+ j += 1
 
-    if total % 2 == 1:
-        return float(curr)
-    return (prev + curr) / 2.0
-```
+ if total % 2 == 1:
+ return float(curr)
+ return (prev + curr) / 2.0
+``
 
 Edge case check:
 - if `nums1` is empty, we just walk `nums2`
@@ -216,17 +216,17 @@ This is the “correct” interview answer.
 
 The entire algorithm can be explained with **four boundary values**:
 
-```
+``
 A: [ ... A[i-1] | A[i] ... ]
-           ^        ^
-           |        |
-     A_left_max   A_right_min
+ ^ ^
+ | |
+ A_left_max A_right_min
 
 B: [ ... B[j-1] | B[j] ... ]
-           ^        ^
-           |        |
-     B_left_max   B_right_min
-```
+ ^ ^
+ | |
+ B_left_max B_right_min
+``
 
 We want the left partition to contain exactly half of the total elements (rounded up):
 
@@ -331,70 +331,70 @@ The partition method you implemented is effectively a highly optimized, constant
 
 ## 6. Implementation (Fully Commented Python)
 
-```python
+``python
 from typing import List
 
 
 class Solution:
-    def findMedianSortedArrays(self, nums1: List[int], nums2: List[int]) -> float:
-        """
-        Find the median of two sorted arrays in O(log(min(m, n))) time and O(1) space.
+ def findMedianSortedArrays(self, nums1: List[int], nums2: List[int]) -> float:
+ """
+ Find the median of two sorted arrays in O(log(min(m, n))) time and O(1) space.
 
-        Idea:
-        - Binary search the partition index i in the smaller array A.
-        - Derive j in the larger array B so that left side has half the elements.
-        - Check partition validity via boundary comparisons.
-        """
+ Idea:
+ - Binary search the partition index i in the smaller array A.
+ - Derive j in the larger array B so that left side has half the elements.
+ - Check partition validity via boundary comparisons.
+ """
 
-        # Ensure nums1 is the smaller array to minimize binary search space.
-        A, B = nums1, nums2
-        if len(A) > len(B):
-            A, B = B, A
+ # Ensure nums1 is the smaller array to minimize binary search space.
+ A, B = nums1, nums2
+ if len(A) > len(B):
+ A, B = B, A
 
-        m, n = len(A), len(B)
+ m, n = len(A), len(B)
 
-        # Left side size: (m+n+1)//2 ensures left gets the extra when total is odd.
-        left_size = (m + n + 1) // 2
+ # Left side size: (m+n+1)//2 ensures left gets the extra when total is odd.
+ left_size = (m + n + 1) // 2
 
-        lo, hi = 0, m  # i ranges over [0..m] inclusive boundaries
+ lo, hi = 0, m # i ranges over [0..m] inclusive boundaries
 
-        NEG_INF = float("-inf")
-        POS_INF = float("inf")
+ NEG_INF = float("-inf")
+ POS_INF = float("inf")
 
-        while lo <= hi:
-            i = (lo + hi) // 2
-            j = left_size - i
+ while lo <= hi:
+ i = (lo + hi) // 2
+ j = left_size - i
 
-            # Collect boundary values with sentinels for empty partitions.
-            A_left_max = A[i - 1] if i > 0 else NEG_INF
-            A_right_min = A[i] if i < m else POS_INF
+ # Collect boundary values with sentinels for empty partitions.
+ A_left_max = A[i - 1] if i > 0 else NEG_INF
+ A_right_min = A[i] if i < m else POS_INF
 
-            B_left_max = B[j - 1] if j > 0 else NEG_INF
-            B_right_min = B[j] if j < n else POS_INF
+ B_left_max = B[j - 1] if j > 0 else NEG_INF
+ B_right_min = B[j] if j < n else POS_INF
 
-            # Check if partition is valid.
-            if A_left_max <= B_right_min and B_left_max <= A_right_min:
-                # We found the correct partition.
-                if (m + n) % 2 == 1:
-                    # Odd total: median is the max of left side.
-                    return float(max(A_left_max, B_left_max))
+ # Check if partition is valid.
+ if A_left_max <= B_right_min and B_left_max <= A_right_min:
+ # We found the correct partition.
+ if (m + n) % 2 == 1:
+ # Odd total: median is the max of left side.
+ return float(max(A_left_max, B_left_max))
 
-                # Even total: median is average of the two middle values.
-                left_max = max(A_left_max, B_left_max)
-                right_min = min(A_right_min, B_right_min)
-                return (left_max + right_min) / 2.0
+ # Even total: median is average of the two middle values.
+ left_max = max(A_left_max, B_left_max)
+ right_min = min(A_right_min, B_right_min)
+ return (left_max + right_min) / 2.0
 
-            # Partition is invalid; adjust binary search.
-            if A_left_max > B_right_min:
-                # We took too many from A; move left.
-                hi = i - 1
-            else:
-                # We took too few from A; move right.
-                lo = i + 1
+ # Partition is invalid; adjust binary search.
+ if A_left_max > B_right_min:
+ # We took too many from A; move left.
+ hi = i - 1
+ else:
+ # We took too few from A; move right.
+ lo = i + 1
 
-        # If input arrays are sorted, we should never reach here.
-        raise ValueError("Invalid input: arrays are not sorted or other invariant broken.")
-```
+ # If input arrays are sorted, we should never reach here.
+ raise ValueError("Invalid input: arrays are not sorted or other invariant broken.")
+``
 
 ---
 
@@ -406,7 +406,7 @@ class Solution:
 
 ### 7.2 Highly imbalanced lengths
 - `A=[1000000]`, `B=[1,2,3,4,5,6,7,8,9]`
-  - Median should be `5` (combined length 10, middle two are 5 and 6 → 5.5?) Actually combined sorted is `[1..9, 1000000]`, median is `(5+6)/2=5.5`.
+ - Median should be `5` (combined length 10, middle two are 5 and 6 → 5.5?) Actually combined sorted is `[1..9, 1000000]`, median is `(5+6)/2=5.5`.
 
 ### 7.3 Duplicates
 - `A=[1,1,1]`, `B=[1,1]` → median `1`
@@ -424,45 +424,45 @@ In interviews you rarely write a full test harness, but in real codebases you sh
 The most valuable pattern here is **differential testing**:
 compare the “obviously correct” method against the “clever” method.
 
-```python
+``python
 import random
 
 
 def median_merge_baseline(a: list[int], b: list[int]) -> float:
-    merged = []
-    i = j = 0
-    while i < len(a) and j < len(b):
-        if a[i] <= b[j]:
-            merged.append(a[i]); i += 1
-        else:
-            merged.append(b[j]); j += 1
-    merged.extend(a[i:])
-    merged.extend(b[j:])
+ merged = []
+ i = j = 0
+ while i < len(a) and j < len(b):
+ if a[i] <= b[j]:
+ merged.append(a[i]); i += 1
+ else:
+ merged.append(b[j]); j += 1
+ merged.extend(a[i:])
+ merged.extend(b[j:])
 
-    n = len(merged)
-    if n % 2 == 1:
-        return float(merged[n // 2])
-    return (merged[n // 2 - 1] + merged[n // 2]) / 2.0
+ n = len(merged)
+ if n % 2 == 1:
+ return float(merged[n // 2])
+ return (merged[n // 2 - 1] + merged[n // 2]) / 2.0
 
 
 def randomized_test(trials: int = 200) -> None:
-    sol = Solution()
-    for _ in range(trials):
-        m = random.randint(0, 20)
-        n = random.randint(0, 20)
-        a = sorted(random.randint(-50, 50) for _ in range(m))
-        b = sorted(random.randint(-50, 50) for _ in range(n))
-        if m + n == 0:
-            continue
-        expected = median_merge_baseline(a, b)
-        got = sol.findMedianSortedArrays(a, b)
-        assert abs(expected - got) < 1e-9, (a, b, expected, got)
+ sol = Solution()
+ for _ in range(trials):
+ m = random.randint(0, 20)
+ n = random.randint(0, 20)
+ a = sorted(random.randint(-50, 50) for _ in range(m))
+ b = sorted(random.randint(-50, 50) for _ in range(n))
+ if m + n == 0:
+ continue
+ expected = median_merge_baseline(a, b)
+ got = sol.findMedianSortedArrays(a, b)
+ assert abs(expected - got) < 1e-9, (a, b, expected, got)
 
 
 if __name__ == "__main__":
-    randomized_test()
-    print("OK")
-```
+ randomized_test()
+ print("OK")
+``
 
 Why this matters:
 - it catches off-by-one errors instantly
@@ -607,20 +607,20 @@ This matters because interviewers grade **reasoning**, not just final code.
 Interviewers often ask variants to see if you truly own the technique:
 
 - **“What if I ask for the 90th percentile instead of the median?”**
-  - Answer: median is a special case of the \(k\)-th smallest selection problem.
-  - For a single query on two sorted arrays, you can compute the \(k\)-th element similarly.
-  - At massive distributed scale, you’ll often use approximate quantiles (sketches).
+ - Answer: median is a special case of the \(k\)-th smallest selection problem.
+ - For a single query on two sorted arrays, you can compute the \(k\)-th element similarly.
+ - At massive distributed scale, you’ll often use approximate quantiles (sketches).
 
 - **“What if arrays contain floats or timestamps?”**
-  - Answer: algorithm is order-based, works as long as comparisons are consistent.
-  - For even length, the “average” step may need domain-specific behavior (e.g., midpoint timestamp).
+ - Answer: algorithm is order-based, works as long as comparisons are consistent.
+ - For even length, the “average” step may need domain-specific behavior (e.g., midpoint timestamp).
 
 - **“What if the arrays are descending?”**
-  - Answer: either reverse comparisons or normalize by reversing inputs.
-  - The invariant is “left max <= right min” under the chosen ordering.
+ - Answer: either reverse comparisons or normalize by reversing inputs.
+ - The invariant is “left max <= right min” under the chosen ordering.
 
 - **“Can you do it without using infinities?”**
-  - Answer: yes, but sentinels simplify edge conditions (and reduce bugs).
+ - Answer: yes, but sentinels simplify edge conditions (and reduce bugs).
 
 ### 11.3 How to debug when it fails (fast)
 
@@ -682,27 +682,27 @@ but it’s useful to know as an alternative for:
 
 High-level pseudocode:
 
-```python
-def kth(a, b, k):  # 1-indexed k
-    if not a: return b[k-1]
-    if not b: return a[k-1]
-    if k == 1: return min(a[0], b[0])
+``python
+def kth(a, b, k): # 1-indexed k
+ if not a: return b[k-1]
+ if not b: return a[k-1]
+ if k == 1: return min(a[0], b[0])
 
-    i = min(len(a), k//2)
-    j = min(len(b), k//2)
+ i = min(len(a), k//2)
+ j = min(len(b), k//2)
 
-    if a[i-1] <= b[j-1]:
-        # discard first i elements of a
-        return kth(a[i:], b, k - i)
-    else:
-        # discard first j elements of b
-        return kth(a, b[j:], k - j)
-```
+ if a[i-1] <= b[j-1]:
+ # discard first i elements of a
+ return kth(a[i:], b, k - i)
+ else:
+ # discard first j elements of b
+ return kth(a, b[j:], k - j)
+``
 
 Why it works:
 - if `a[i-1] <= b[j-1]`, then `a[:i]` cannot contain the k-th element
-  (there are at least `i + j - 1 >= k - 1` elements <= `b[j-1]`),
-  so we can safely discard it.
+ (there are at least `i + j - 1 >= k - 1` elements <= `b[j-1]`),
+ so we can safely discard it.
 
 This is the same “discard half the search space” principle that powers binary search.
 
@@ -732,8 +732,8 @@ That’s the entire solution.
 After you compute a candidate median, a quick sanity check is:
 - the median must lie between the minimum and maximum of the combined arrays
 - more specifically, it must be:
-  - \(\ge\) the maximum of the left boundary values
-  - \(\le\) the minimum of the right boundary values
+ - \(\ge\) the maximum of the left boundary values
+ - \(\le\) the minimum of the right boundary values
 
 In code terms (once partition is valid):
 - `left_max = max(A_left_max, B_left_max)`

@@ -3,14 +3,14 @@ title: "Retrieval-Augmented Generation (RAG)"
 day: 9
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - rag
-  - vector-db
-  - embeddings
-  - hnsw
-  - ragas
-  - knowledge-retrieval
+ - rag
+ - vector-db
+ - embeddings
+ - hnsw
+ - ragas
+ - knowledge-retrieval
 difficulty: Medium-Easy
 related_dsa_day: 9
 related_ml_day: 9
@@ -58,21 +58,21 @@ When the user asks a question:
 2. **Semantic Search (k-NN):** We query the Vector DB: "Find the top 3 chunks geometrically closest to this query vector."
  * *Result:* Chunk A ("Vacation Policy..."), Chunk B ("Leave types...").
 3. **Context Injection:** We construct a prompt:
- ```text
+ ``text
  System: Answer the user using ONLY the context below. Do not use outside knowledge.
  Context:
  - Vacation Policy: 20 days per year...
  - Leave types: Sick, Annual...
 
  User: What is our vacation policy?
- ```
+ ``
 4. **Generation:** The LLM reads the context and answers "You get 20 days pear year."
 
 ---
 
 ## 3. Deep Dive: Vector Database Internals
 
-How does a database find the "nearest neighbor" among 100 million vectors in 10 milliseconds? It doesn't compare them all (that would be $O(N)$). It uses **Approximate Nearest Neighbors (ANN)** algorithms.
+How does a database find the "nearest neighbor" among 100 million vectors in 10 milliseconds? It doesn't compare them all (that would be O(N)). It uses **Approximate Nearest Neighbors (ANN)** algorithms.
 
 ### 3.1 HNSW (Hierarchical Navigable Small Worlds)
 This is the industry standard algorithm (used by Pinecone, Weaviate).
@@ -101,7 +101,7 @@ The standard pipeline is called "Naive RAG." It works for simple demos but fails
 
 ### 4.2 Advanced Patterns
 1. **Hybrid Search (Alpha):** Combine Vector Search (Semantic) with Keyword Search (BM25/Splade).
- * *Formula:* $Score = \alpha \cdot VectorScore + (1-\alpha) \cdot KeywordScore$.
+ * *Formula:* `Score = \alpha \cdot VectorScore + (1-\alpha) \cdot KeywordScore`.
  * *Why:* Ensures exact matches for IDs and Names work while retaining semantic understanding.
 2. **Re-Ranking (The Cross-Encoder):**
  * Retrieve top 50 results (fast & loose).
@@ -148,7 +148,7 @@ An advanced pattern where the LLM writes a Structured Database Query.
 
 Understanding the inner loop of a vector search engine (conceptual).
 
-```python
+``python
 def semantic_search(query, k=5):
  # 1. Embed Query
  query_vector = model.embed(query)
@@ -168,7 +168,7 @@ def semantic_search(query, k=5):
 
  # 5. Return Top K
  return scores[:k]
-```
+``
 
 ---
 

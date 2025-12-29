@@ -3,13 +3,13 @@ title: "Building Your First Agent"
 day: 7
 collection: ai_agents
 categories:
-  - ai-agents
+ - ai-agents
 tags:
-  - tutorial
-  - python
-  - openai
-  - react
-  - basics
+ - tutorial
+ - python
+ - openai
+ - react
+ - basics
 difficulty: Easy
 related_dsa_day: 7
 related_ml_day: 7
@@ -43,16 +43,16 @@ You will need:
 * `requests` (for our mock tools)
 * `termcolor` (to make the logs pretty)
 
-```bash
+``bash
 pip install openai requests termcolor
-```
+``
 
 ## 3. Step 1: Defining the "Hands" (Tools)
 
 Our agent is only as good as its tools. Let's define two simple Python functions.
 In a real production system, these would call live APIs. For this tutorial, we will mock the returns to ensure deterministic behavior so you can reproduce the results.
 
-```python
+``python
 import json
 
 # Mock Weather Tool (Real API requires keys)
@@ -78,7 +78,7 @@ def search_wikipedia(query: str):
 
  # Mock data
  return f"Wikipedia Summary: {query} is a famous location known for its culture, history, and vibrant economy."
-```
+``
 
 ## 4. Step 2: Defining the "Brain" (The Tool Schema)
 
@@ -86,7 +86,7 @@ We need to tell the LLM (GPT-4o) about these tools. We use the OpenAI `tools` sc
 
 A critical part of "Prompt Engineering" is actually "Schema Engineering." The more descriptive your parameter descriptions are, the better the agent performs.
 
-```python
+``python
 tools_schema = [
  {
  "type": "function",
@@ -123,7 +123,7 @@ tools_schema = [
  },
  }
 ]
-```
+``
 
 ## 5. Step 3: The "Heart" (The Execution Loop)
 
@@ -142,7 +142,7 @@ This is the magic. We need a `while` loop that orchestrates the **Perception-Rea
 
 ### 5.2 The Raw Implementation
 
-```python
+``python
 import os
 from openai import OpenAI
 from termcolor import colored
@@ -215,7 +215,7 @@ def run_agent(user_query):
 # Run it
 if __name__ == "__main__":
  run_agent("Plan a trip to Tokyo for me. What's the weather and what is it famous for?")
-```
+``
 
 ### 5.3 Execution Trace
 If you run this, you will see the logs:
@@ -234,7 +234,7 @@ The script above is fine for a demo, but messy for production. Let's refactor it
 
 ### The Agent Class
 
-```python
+``python
 class Agent:
  def __init__(self, system_prompt, tools, model="gpt-4o"):
  self.system_prompt = system_prompt
@@ -302,7 +302,7 @@ my_agent = Agent(
 )
 final_answer = my_agent.run("Tell me about London weather and history.")
 print(f"Final Answer: {final_answer}")
-```
+``
 
 ## 7. The "Why Frameworks Exist" Moment
 

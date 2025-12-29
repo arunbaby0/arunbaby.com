@@ -1,19 +1,19 @@
 ---
 title: "Observability and Tracing"
 day: 34
-collection: ai_agents
-categories:
-  - ai-agents
-tags:
-  - observability
-  - tracing
-  - monitoring
-  - langsmith
-  - telemetry
-difficulty: Medium
 related_dsa_day: 34
 related_ml_day: 34
 related_speech_day: 34
+collection: ai_agents
+categories:
+ - ai-agents
+tags:
+ - observability
+ - tracing
+ - monitoring
+ - langsmith
+ - telemetry
+difficulty: Medium
 ---
 
 **"Inside the mind of the machine: Mastering agentic observability."**
@@ -50,7 +50,7 @@ Every trace must record `prompt_tokens`, `completion_tokens`, and `total_time_ms
 ### 2.4 A Minimal Trace Event (What to Log First)
 If you’re building observability from scratch, start with a tiny, consistent JSON event per step. You can always add more fields later, but you cannot debug what you didn’t record.
 
-```json
+``json
 {
  "trace_id": "t-123",
  "span_id": "s-5",
@@ -62,7 +62,7 @@ If you’re building observability from scratch, start with a tiny, consistent J
  "completion_tokens": 220,
  "latency_ms": 1830
 }
-```
+``
 
 This is enough to answer the first two production questions: “**Where is time going?**” and “**Where is money going?**”.
 
@@ -78,7 +78,7 @@ How do you grade 1 million traces a day? You don't. You build a "Judge Agent."
 1. **Input:** The Judge is given the User's Query and the Agent's Final Answer.
 2. **Rubric:** The Judge has a strict scoring guide (e.g., "Score 1 if there is a hallucination, Score 5 if correct").
 3. **Chain of Thought:** The Judge must explain its reasoning *before* giving the score.
-4. **Action:** Any trace with a score $<3$ is automatically flagged for human review in a special dashboard.
+4. **Action:** Any trace with a score `<3` is automatically flagged for human review in a special dashboard.
 
 **Example Rubric:**
 > "Did the agent use the `google_search` tool when asked for current events? (Yes/No)"
@@ -276,7 +276,7 @@ When an agent sees an image, what do you store in the trace? You can't store a 5
 
 If you are a junior engineer, don't use raw `print` statements. Use a **Tracing Context Manager.**
 
-```python
+``python
 # Conceptual example of a Tracing implementation
 with trace.start_span("research_phase") as span:
  results = tool.call("web_search", query="shoes")
@@ -285,7 +285,7 @@ with trace.start_span("research_phase") as span:
  with trace.start_span("summarization") as sub_span:
  summary = llm.generate(results)
  sub_span.set_attribute("token_count", len(summary))
-```
+``
 * **The Result:** This code creates the **Hierarchy** (Section 7) automatically. If the search is fast but the summary is slow, your dashboard will show two bars of vastly different lengths.
 
 ---
@@ -386,7 +386,7 @@ LLM providers (OpenAI, Anthropic) update their models constantly. Sometimes, a "
 ## 33. Frequently Asked Questions (Junior Engineer Edition)
 
 **Q: Does tracing slow down my agent?**
-A: Yes, slightly. Most tracing libraries are asynchronous, but the serialization of the prompt text does add some overhead. For 99% of agents, the latency added ($<100ms$) is negligible compared to the LLM's response time ($>2000ms$).
+A: Yes, slightly. Most tracing libraries are asynchronous, but the serialization of the prompt text does add some overhead. For 99% of agents, the latency added (`<100ms`) is negligible compared to the LLM's response time (`>2000ms`).
 
 **Q: How do l handle multi-lingual traces?**
 A: Most "Judge Agents" (Section 3) are fluent in multiple languages. You can prompt the Judge to evaluate the agent's response in the user's local language.
