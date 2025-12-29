@@ -15,7 +15,6 @@ subdomain: "Trees & DP"
 tech_stack: Python
 scale: "O(N) time, O(H) space"
 companies: Google, Meta, Amazon, Microsoft, Apple
-related_dsa_day: 46
 related_ml_day: 46
 related_speech_day: 46
 related_agents_day: 46

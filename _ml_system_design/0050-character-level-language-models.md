@@ -16,7 +16,6 @@ tech_stack: PyTorch, Andrej Karpathy's minGPT
 scale: "Learning language one letter at a time"
 companies: OpenAI, DeepMind, Google
 related_dsa_day: 50
-related_ml_day: 50
 related_speech_day: 50
 related_agents_day: 50
 ---

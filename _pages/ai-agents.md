@@ -51,6 +51,9 @@ Each topic includes:
 - [Testing AI Agents](/ai-agents/0043-testing-ai-agents/)
 - [Prompt Injection Defense](/ai-agents/0044-prompt-injection-defense/)
 - [Data Leakage Prevention](/ai-agents/0045-data-leakage-prevention/)
+- [Ethical AI Agents and Safety](/ai-agents/0058-ethical-ai-agents-and-safety/)
+- [Agent Benchmarking Deep Dive](/ai-agents/0059-agent-benchmarking-deep-dive/)
+- [Future of AI Agents](/ai-agents/0060-future-of-ai-agents/)
 
 **Optimization & Efficiency:**
 - [Token Efficiency Optimization](/ai-agents/0046-token-efficiency-optimization/)
@@ -61,6 +64,7 @@ Each topic includes:
 
 **Deployment & Reliability:**
 - [Agent Deployment Patterns](/ai-agents/0053-agent-deployment-patterns/)
+- [Agent Reliability Engineering](/ai-agents/0057-agent-reliability-engineering/)
 
 **Knowledge & Reasoning:**
 - [Knowledge Graphs for Agents](/ai-agents/0051-knowledge-graphs-for-agents/)
@@ -73,6 +77,7 @@ Each topic includes:
 
 **Domain Specialization:**
 - [Building Domain-Specific Agents](/ai-agents/0050-building-domain-specific-agents/)
+- [Fine-Tuning for Agent Tasks](/ai-agents/0056-fine-tuning-for-agent-tasks/)
 
 ---
 

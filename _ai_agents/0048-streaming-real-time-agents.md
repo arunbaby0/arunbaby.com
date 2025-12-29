@@ -18,7 +18,6 @@ companies: ChatGPT, Perplexity, Anthropic, Vercel
 related_dsa_day: 48
 related_ml_day: 48
 related_speech_day: 48
-related_agents_day: 48
 ---
 
 **"Waiting 10 seconds for a thoughtful answer is okay. Waiting 10 seconds for a blank screen is broken."**

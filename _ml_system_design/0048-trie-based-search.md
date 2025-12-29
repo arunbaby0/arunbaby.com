@@ -16,7 +16,6 @@ tech_stack: Redis, Apache Solr, Custom C++
 scale: "10 Billion queries/day, <20ms latency"
 companies: Google, Amazon, Facebook, LinkedIn
 related_dsa_day: 48
-related_ml_day: 48
 related_speech_day: 48
 related_agents_day: 48
 ---

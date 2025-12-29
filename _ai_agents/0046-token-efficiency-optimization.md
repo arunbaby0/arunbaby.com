@@ -18,7 +18,6 @@ companies: OpenAI, Anthropic, Jasper, Copy.ai
 related_dsa_day: 46
 related_ml_day: 46
 related_speech_day: 46
-related_agents_day: 46
 ---
 
 **"The most expensive token is the one you didn't need to send."**

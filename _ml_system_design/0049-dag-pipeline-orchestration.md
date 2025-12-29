@@ -16,7 +16,6 @@ tech_stack: Apache Airflow, Kubeflow, Argo Workflows
 scale: "Orchestrating 10,000 tasks daily"
 companies: Airbnb (Airflow), Google (Kubeflow), Lyft (Flyte)
 related_dsa_day: 49
-related_ml_day: 49
 related_speech_day: 49
 related_agents_day: 49
 ---

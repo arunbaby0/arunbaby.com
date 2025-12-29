@@ -17,7 +17,6 @@ tech_stack: Python, Great Expectations, TFDV, Spark, Kafka
 scale: "100TB/day, multi-tenant, low-latency gates"
 companies: Google, Meta, Netflix, Uber
 related_dsa_day: 53
-related_ml_day: 53
 related_speech_day: 53
 related_agents_day: 53
 ---

@@ -18,7 +18,6 @@ scale: "Validating millions of utterances/day with privacy constraints"
 companies: Google, Amazon, Apple, Zoom
 related_dsa_day: 53
 related_ml_day: 53
-related_speech_day: 53
 related_agents_day: 53
 ---
 

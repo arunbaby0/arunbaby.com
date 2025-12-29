@@ -16,7 +16,6 @@ subdomain: "Array Manipulation"
 tech_stack: Python
 scale: "O(N) time, O(1) extra space"
 companies: Google, Meta, Amazon, Microsoft
-related_dsa_day: 53
 related_ml_day: 53
 related_speech_day: 53
 related_agents_day: 53
@@ -138,45 +137,113 @@ The sign bit acts as a boolean "seen" flag. Because we normalized everything to 
 
 ---
 
-## 5. Implementation Deep Dive
+---
 
-Let's look at the Python implementation for the Cyclic Placement approach, as it's the most common in interviews.
+## 5. Implementation Case Study: Two Approaches
+
+In this section, we provide the complete implementations for both the **Cyclic Placement** (swapping) and **Sign Marking** (encoding) strategies. While both are $O(N)$ time and $O(1)$ space, their cache behavior and mutation patterns differ.
+
+### 5.1 Cyclic Placement (The Swap Strategy)
+
+This approach is highly favored in interviews because it demonstrates an "in-place sorting" logic.
 
 ```python
 from typing import List
 
-class Solution:
-    def firstMissingPositive(self, nums: List[int]) -> int:
-        n = len(nums)
-        
-        # Phase 1: In-place Swapping (Cyclic Placement)
-        i = 0
-        while i < n:
-            # The value we are looking at
-            val = nums[i]
-            # The index where this value 'should' be
-            target_idx = val - 1
+def first_missing_positive_swap(nums: List[int]) -> int:
+    """
+    Finds the first missing positive integer using the cyclic placement pattern.
+    
+    Time: O(N) - Each number is placed in its correct position at most once.
+    Space: O(1) - No extra allocations proportional to input size.
+    """
+    n = len(nums)
+    
+    # Phase 1: In-place Swapping
+    # We move through the array and try to place each number 'v' in index 'v-1'.
+    for i in range(n):
+        while 1 <= nums[i] <= n and nums[nums[i] - 1] != nums[i]:
+            # Python's tuple unpacking makes in-place swapping safe and concise.
+            # We must swap nums[i] with the element at its 'home' index (nums[i] - 1).
+            # Note: The order matters here for the unpacking to work correctly.
+            correct_idx = nums[i] - 1
+            nums[i], nums[correct_idx] = nums[correct_idx], nums[i]
             
-            # Condition for swapping:
-            # 1. The value must be within the valid range [1, n]
-            # 2. The value is not already at its correct index
-            # 3. The value we are swapping WITH is not the same (prevents infinite loops on duplicates)
-            if 1 <= val <= n and nums[i] != nums[target_idx]:
-                # Perform the swap
-                nums[i], nums[target_idx] = nums[target_idx], nums[i]
-                # Note: We DO NOT increment i here, because the new nums[i] 
-                # might also need to be swapped.
-            else:
-                i += 1
-                
-        # Phase 2: Linear Scan for the first 'hole'
-        for i in range(n):
-            if nums[i] != i + 1:
-                return i + 1
-        
-        # If no hole found, the answer is n + 1
-        return n + 1
+    # Phase 2: Search for the first mismatch
+    # After the swaps, a correct array should look like [1, 2, 3, ..., n].
+    for i in range(n):
+        if nums[i] != i + 1:
+            return i + 1
+            
+    # If all positions are correct, the missing number is n + 1.
+    return n + 1
 ```
+
+### 5.2 Sign Marking (The Encoding Strategy)
+
+This approach is often used in performance-critical C systems because it avoids the overhead of repeated swapping and uses simple sign-bit toggling.
+
+```python
+def first_missing_positive_encoding(nums: List[int]) -> int:
+    """
+    Finds the first missing positive using the index-as-storage pattern.
+    
+    Steps:
+    1. Check for 1's presence.
+    2. Normalize: remove noisy negatives and large numbers.
+    3. Hash via sign bits: mark indices of seen values.
+    4. Scan for the first positive index.
+    """
+    n = len(nums)
+    
+    # 1. Edge Case: Is 1 present?
+    has_one = False
+    for x in nums:
+        if x == 1:
+            has_one = True
+            break
+    if not has_one:
+        return 1
+        
+    # 2. Normalization: Replace negatives and >n with 1
+    # Since we know 1 is present, we can safely overwrite noise with 1.
+    for i in range(n):
+        if nums[i] <= 0 or nums[i] > n:
+            nums[i] = 1
+            
+    # 3. Presence Encoding via Sign Bits
+    # For a value 'v', we treat nums[v-1] as the bucket for 'v'.
+    # We negate the value at index v-1 to mark 'v' as 'seen'.
+    for i in range(n):
+        val = abs(nums[i])
+        # Find index for this value
+        idx = val - 1
+        # If the number at idx is positive, negate it.
+        # We use abs() to avoid flipping a negative back to positive.
+        if nums[idx] > 0:
+            nums[idx] = -nums[idx]
+            
+    # 4. Search
+    # The first index that remains positive was never 'seen'.
+    for i in range(n):
+        if nums[i] > 0:
+            return i + 1
+            
+    return n + 1
+```
+
+### 5.3 Comparative Analysis: Which is better?
+
+| Feature | Swap Strategy | Sign Marking |
+| :--- | :--- | :--- |
+| **Logic** | Intuitive | Subtle (two-pass) |
+| **Mutation** | Heavy (many swaps) | Low (one write per idx) |
+| **Edge Cases** | Duplicates are tricky | Handled naturally |
+| **Best For** | Interviews | Systems with expensive writes |
+
+---
+
+## 6. Implementation Deep Dive: Line-by-Line Breakdown
 
 ### 5.1 The "Duplicate Guard" Explained
 Interviewer: "What happens if the input is `[1, 1]`?"
@@ -187,47 +254,83 @@ Me:
 
 ---
 
-## 6. Production Considerations: Beyond the Algorithm
+## 8. Scaling to Streaming Data (BitSets)
 
-In a real production environment, choosing an $O(1)$ space algorithm is an engineering trade-off.
+What if the numbers are coming from a live sensor? We use a **BitSet** for $O(N)$ space in bits (extremely compact).
 
-### 6.1 The Cost of Mutation
-In-place algorithms **mutate** their inputs. In a multi-threaded system, this is a dangerous side effect.
-- **Race Conditions**: If another part of your system is reading the `nums` array while `firstMissingPositive` is swapping elements, the reading thread will see an inconsistent and "corrupted" state of the data.
-- **Functional Purity**: Many modern architectural patterns (like Redux or functional programming) forbid mutation for exactly this reason. It makes debugging much harder.
+```python
+import array
 
-**Engineering Protocol**: Always document that a function is "in-place" and mutates its arguments. If the caller requires the original data to remain intact, they must pass a copy, effectively turning the space complexity back into $O(N)$.
+class BitSetValidator:
+    """
+    A memory-efficient BitSet for checking occurrences in large streams.
+    Requires ~1MB for 8 million possible positive integers.
+    """
+    def __init__(self, size: int):
+        # We use an 'I' (unsigned int) array to store bits.
+        # Each int has 32 bits.
+        self.bits = array.array('I', [0] * (size // 32 + 1))
+        
+    def add(self, n: int):
+        if n <= 0 or n > (len(self.bits) * 32):
+            return
+        # Locate which integer and which bit within that int
+        int_idx = (n - 1) // 32
+        bit_pos = (n - 1) % 32
+        # Set the bit
+        self.bits[int_idx] |= (1 << bit_pos)
+        
+    def find_first_missing(self) -> int:
+        for i, block in enumerate(self.bits):
+            if block == 0xFFFFFFFF:
+                continue # All 32 bits are 1
+            # Find the first 0 bit in this block
+            for b in range(32):
+                if not (block & (1 << b)):
+                    potential = i * 32 + b + 1
+                    return potential
+        return 1
+```
 
-### 6.2 Cache Locality vs. Allocation
-Why do we care about $O(1)$ if $O(N)$ memory is cheap?
-- **Small Objects and GC**: In languages like Java or Python, allocating $10^6$ small objects or a large HashSet triggers a "stop-the-world" garbage collection event eventually.
-- **Cache Hits**: Modern CPUs are much faster than RAM. An in-place array algorithm stays in the CPU's **L1 and L2 cache**. A HashSet involves hashing and traversing buckets, which often results in **Cache Misses**, slowing the algorithm down by a factor of 10 or more despite having the same $O(N)$ time complexity.
+## 9. Parallel Scaling: Distributed MapReduce Worker
 
-### 6.3 Zero-Copy Principles
-If you are building a high-frequency trading platform or a real-time speech processing system, you use **Zero-Copy** buffers. The data is written by the network card directly into a shared buffer. The processing algorithm (like ours) runs directly on that buffer. This avoids the massive performance overhead of copying data between the kernel and user space.
+For Petabyte-scale data validation, we use a distributed worker strategy. Each worker processes a chunk and emits a local frequency bitmap.
+
+```python
+# Simplified Distributed Worker Pattern (PySpark-like)
+def map_partition_to_bits(iterator):
+    """
+    Processes a partition of numbers and returns a local bit-array.
+    """
+    local_bits = 0
+    # Process only numbers in a specific range [1, R]
+    R = 1000000 
+    for x in iterator:
+        if 1 <= x <= R:
+            # Shift 1 to the 'x-1'th position and OR it
+            local_bits |= (1 << (x - 1))
+    yield local_bits
+
+def reduce_bitmaps(bit1, bit2):
+    """
+    Merges two bitmaps using a bitwise OR.
+    """
+    return bit1 | bit2
+
+# Resulting 'merged_bits' is searched for the first 0-bit.
+```
 
 ---
 
-## 7. Comparative Benchmarking (Theoretical)
+## 10. Implementation Deep Dive: Line-by-Line Breakdown
 
-| Input Size (N) | HashSet (Space/Time) | In-Place (Space/Time) | Advantage |
-|---|---|---|---|
-| 1,000 | 40 KB / 0.1ms | 0 KB / 0.05ms | Negligible |
-| 1,000,000 | 40 MB / 100ms | 0 KB / 40ms | Memory Saved |
-| 100,000,000 | 4 GB / 10s | 0 KB / 4s | **Critical** (prevents crash) |
+Let's dissect the **Cyclic Placement** (swapping) code line-by-line:
 
-On a machine with 2GB of RAM, the HashSet solution will crash (Out of Memory) for $N=10^8$, but the In-Place solution will complete successfully because it consumes no additional memory.
-
----
-
-## 8. Follow-up: Missing Positives in a Stream
-
-What if the numbers are coming from a live sensor or a web socket?
-- **Scenario**: You are tracking the "Active Session IDs" of millions of concurrent users.
-- **Problem**: You can't store them all in an array to sort or swap.
-- **Solution**: Use a **BitMap** or a **Bloom Filter**.
-  - A BitMap uses 1 bit per number. For $10^6$ IDs, you only need ~125 KB of memory to track everything precisely.
-  - This is a common pattern in **Database Indexing** and **Operating System Memory Management** (tracking free frames in RAM).
+1. `while i < n:`: We use a `while` loop instead of a `for` loop because we might need to re-evaluate the same index `i` multiple times if a swap brings a "new" number into `nums[i]`.
+2. `1 <= val <= n`: We only care about numbers that *could* be our answer. Negatives, zeros, and numbers larger than the array size are "noise" that we ignore.
+3. `nums[i] != nums[target_idx]`: This is the **most important line**. It prevents infinite loops if the array contains duplicates (e.g., `[1, 1]`). If the value at `i` is already present at its correct home `target_idx`, we don't swap.
+4. `nums[i], nums[target_idx] = nums[target_idx], nums[i]`: This Pythonic idiom handles the three-step swap process (temp variable) atomically and correctly.
+5. `for i in range(n): if nums[i] != i + 1: return i + 1`: This final pass is the "verification" phase. The first index that doesn't hold its expected value reveals the smallest missing positive.
 
 ---
 

@@ -17,7 +17,6 @@ tech_stack: Python, Kafka, Flink, Prometheus, PyOD
 scale: "1M events/sec, multi-tenant, low false positives"
 companies: Netflix, Uber, Google, Amazon
 related_dsa_day: 52
-related_ml_day: 52
 related_speech_day: 52
 related_agents_day: 52
 ---

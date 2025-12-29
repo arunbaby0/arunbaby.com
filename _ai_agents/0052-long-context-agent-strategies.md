@@ -19,7 +19,6 @@ companies: OpenAI, Anthropic, Google, Microsoft
 related_dsa_day: 52
 related_ml_day: 52
 related_speech_day: 52
-related_agents_day: 52
 ---
 
 **"Long context isn’t ‘more tokens’—it’s a strategy for keeping the right boundaries of information."**

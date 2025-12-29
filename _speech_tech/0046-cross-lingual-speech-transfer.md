@@ -17,7 +17,6 @@ scale: "Scaling from 100hrs high-resource to 1hr low-resource"
 companies: Meta (XLS-R), Google (USM), Mozilla Common Voice
 related_dsa_day: 46
 related_ml_day: 46
-related_speech_day: 46
 related_agents_day: 46
 ---
 

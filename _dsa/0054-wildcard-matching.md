@@ -16,7 +16,6 @@ subdomain: "String DP"
 tech_stack: Python
 scale: "O(MN) DP, optimize to O(N) space"
 companies: Google, Meta, Amazon, Microsoft
-related_dsa_day: 54
 related_ml_day: 54
 related_speech_day: 54
 related_agents_day: 54
@@ -233,7 +232,53 @@ This is a form of backtracking that only remembers the **last** bit of non-deter
 
 ## 8. Implementation
 
-### 8.1 Dynamic Programming (Standard)
+### 8.1 Approach 1: Top-Down Recursion with Memoization
+
+This approach is the most direct translation of the mathematical recurrence. It uses a cache to avoid redundant sub-problems.
+
+```python
+class SolutionRecursive:
+    """
+    Top-Down Memoization.
+    Time: O(M * N)
+    Space: O(M * N) for the memoization table and recursion stack.
+    """
+    def isMatch(self, s: str, p: str) -> bool:
+        memo = {}
+
+        def dp(i: int, j: int) -> bool:
+            # Check cache
+            if (i, j) in memo:
+                return memo[(i, j)]
+            
+            # Base Case: Both reached end
+            if i == len(s) and j == len(p):
+                return True
+            # Pattern ended but string hasn't
+            if j == len(p):
+                return False
+            # String ended but pattern hasn't
+            if i == len(s):
+                # Pattern must only contain '*' to match empty string
+                return p[j] == '*' and dp(i, j + 1)
+
+            # Recursive step
+            res = False
+            if p[j] == s[i] or p[j] == '?':
+                res = dp(i + 1, j + 1)
+            elif p[j] == '*':
+                # Match empty OR match one/more characters
+                res = dp(i, j + 1) or dp(i + 1, j)
+            
+            memo[(i, j)] = res
+            return res
+
+        return dp(0, 0)
+```
+
+### 8.2 Approach 2: Bottom-Up Dynamic Programming (Standard)
+
+The iterative version is usually preferred in production for its predictable memory layout and lack of stack overflow risks.
 
 ```python
 from typing import List
@@ -247,14 +292,14 @@ class SolutionDP:
     def isMatch(self, s: str, p: str) -> bool:
         m, n = len(s), len(p)
         
-        # Initialize DP table
-        # dp[i][j] means s[:i] matches p[:j]
+        # Initialize DP table: dp[i][j] means s[:i] matches p[:j]
         dp = [[False] * (n + 1) for _ in range(m + 1)]
         
         # Base Case: Empty string matches empty pattern
         dp[0][0] = True
         
         # Base Case: Empty string matching pattern with '*'
+        # '*' can match zero characters, so it inherits from the previous pattern index.
         for j in range(1, n + 1):
             if p[j-1] == '*':
                 dp[0][j] = dp[0][j-1]
@@ -263,42 +308,60 @@ class SolutionDP:
         for i in range(1, m + 1):
             for j in range(1, n + 1):
                 if p[j-1] == s[i-1] or p[j-1] == '?':
-                    # Current characters match, inherited from diagonal
+                    # Characters match, carry over the result from both prefixes
                     dp[i][j] = dp[i-1][j-1]
                 elif p[j-1] == '*':
-                    # Two sub-cases for '*':
-                    # 1. '*' matches empty sequence: dp[i][j-1]
-                    # 2. '*' matches 1 or more chars: dp[i-1][j]
+                    # Branching logic for '*':
+                    # Case 1: '*' matches empty (treat it as skipping the star)
+                    # Case 2: '*' matches one or more (treat it as consuming s[i-1])
                     dp[i][j] = dp[i][j-1] or dp[i-1][j]
         
         return dp[m][n]
+```
 
-# Space Optimized Version
-class SolutionOptimized:
+### 8.3 Approach 3: Greedy Two-Pointer (Optimal Space)
+
+This is the "trick" solution that reduces space to $O(1)$ by manually managing the backtracking to the last seen `*`.
+
+```python
+class SolutionGreedy:
+    """
+    Greedy backtracking with O(1) extra space.
+    Time Complexity: O(M * N) worst case, but near O(M+N) on average.
+    Space Complexity: O(1)
+    """
     def isMatch(self, s: str, p: str) -> bool:
-        m, n = len(s), len(p)
-        dp = [False] * (n + 1)
-        dp[0] = True
+        s_ptr = p_ptr = 0
+        star_idx = -1
+        last_s_match = 0
         
-        for j in range(1, n + 1):
-            if p[j-1] == '*':
-                dp[j] = dp[j-1]
-                
-        for i in range(1, m + 1):
-            # prev_diag stores dp[i-1][j-1]
-            prev_diag = dp[0]
-            dp[0] = False
-            for j in range(1, n + 1):
-                temp = dp[j] # This is dp[i-1][j] for the next iteration
-                if p[j-1] == s[i-1] or p[j-1] == '?':
-                    dp[j] = prev_diag
-                elif p[j-1] == '*':
-                    dp[j] = dp[j] or dp[j-1]
-                else:
-                    dp[j] = False
-                prev_diag = temp
+        while s_ptr < len(s):
+            # 1. Match constant char or '?'
+            if p_ptr < len(p) and (p[p_ptr] == s[s_ptr] or p[p_ptr] == '?'):
+                s_ptr += 1
+                p_ptr += 1
+            # 2. Match '*'
+            elif p_ptr < len(p) and p[p_ptr] == '*':
+                # Record the star position and the current string position
+                star_idx = p_ptr
+                last_s_match = s_ptr
+                p_ptr += 1 # Try matching empty first
+            # 3. Mismatch, but we have a previous '*' to backtrack to
+            elif star_idx != -1:
+                # Backtrack pattern pointer to just after the star
+                p_ptr = star_idx + 1
+                # Increment the string pointer to the next possible match for the star
+                last_s_match += 1
+                s_ptr = last_s_match
+            # 4. Total mismatch
+            else:
+                return False
         
-        return dp[n]
+        # Check if remaining characters in pattern are all '*'
+        while p_ptr < len(p) and p[p_ptr] == '*':
+            p_ptr += 1
+            
+        return p_ptr == len(p)
 ```
 
 ---

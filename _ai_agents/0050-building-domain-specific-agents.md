@@ -18,7 +18,6 @@ companies: Harvey.ai (Legal), Hippocratic AI (Medical), GitHub (Coding)
 related_dsa_day: 50
 related_ml_day: 50
 related_speech_day: 50
-related_agent_day: 50
 ---
 
 **"Don't build a generalist. Build a specialist."**

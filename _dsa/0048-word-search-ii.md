@@ -15,7 +15,6 @@ subdomain: "String & Trie"
 tech_stack: Python
 scale: "Searching 10k words in 100x100 grid"
 companies: Microsoft, Uber, Airbnb, Pinterest
-related_dsa_day: 48
 related_ml_day: 48
 related_speech_day: 48
 related_agents_day: 48

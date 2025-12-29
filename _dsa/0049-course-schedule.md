@@ -15,7 +15,6 @@ subdomain: "Graph Algorithms"
 tech_stack: Python
 scale: "Scheduling 100k jobs with dependencies"
 companies: Amazon, Google, Uber, Netflix
-related_dsa_day: 49
 related_ml_day: 49
 related_speech_day: 49
 related_agents_day: 49

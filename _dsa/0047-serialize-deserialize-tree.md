@@ -15,7 +15,6 @@ subdomain: "Trees & Design"
 tech_stack: Python
 scale: "Handling 1M+ nodes efficiently"
 companies: Uber, Google, Amazon, Facebook
-related_dsa_day: 47
 related_ml_day: 47
 related_speech_day: 47
 related_agents_day: 47

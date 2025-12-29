@@ -18,7 +18,6 @@ companies: OpenAI, Zapier, LangChain
 related_dsa_day: 47
 related_ml_day: 47
 related_speech_day: 47
-related_agents_day: 47
 ---
 
 **"Intelligence is cheap. Reliable, scalable intelligence is expensive."**

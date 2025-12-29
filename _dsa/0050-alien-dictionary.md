@@ -15,7 +15,6 @@ subdomain: "Graph Construction"
 tech_stack: Python
 scale: "Reconstructing alphabet from dictionary"
 companies: Facebook, Google, Airbnb, Amazon
-related_dsa_day: 50
 related_ml_day: 50
 related_speech_day: 50
 related_agents_day: 50

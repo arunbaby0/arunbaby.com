@@ -17,7 +17,6 @@ scale: "Real-time meeting transcription"
 companies: Zoom, Otter.ai, Gong
 related_dsa_day: 49
 related_ml_day: 49
-related_speech_day: 49
 related_agents_day: 49
 ---
 

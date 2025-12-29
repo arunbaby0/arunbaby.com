@@ -17,7 +17,6 @@ scale: "Adapting generic models to specific domains"
 companies: Nuance, Google Cloud, Amazon Transcribe
 related_dsa_day: 50
 related_ml_day: 50
-related_speech_day: 50
 related_agents_day: 50
 ---
 

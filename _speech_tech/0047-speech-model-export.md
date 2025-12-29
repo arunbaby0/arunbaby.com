@@ -17,7 +17,6 @@ scale: "Sub-100ms latency on mobile devices"
 companies: Apple (Siri), Amazon (Alexa), Google (Assistant)
 related_dsa_day: 47
 related_ml_day: 47
-related_speech_day: 47
 related_agents_day: 47
 ---
 

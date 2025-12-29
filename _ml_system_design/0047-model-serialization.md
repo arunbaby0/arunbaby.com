@@ -16,7 +16,6 @@ tech_stack: ONNX, TensorRT, PyTorch, Docker
 scale: "Managing 100TB of model artifacts"
 companies: NVIDIA, Microsoft (ONNX), Google (TFLite)
 related_dsa_day: 47
-related_ml_day: 47
 related_speech_day: 47
 related_agents_day: 47
 ---

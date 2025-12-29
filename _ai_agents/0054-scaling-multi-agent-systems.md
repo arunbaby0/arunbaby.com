@@ -27,7 +27,6 @@ companies:
 related_dsa_day: 54
 related_ml_day: 54
 related_speech_day: 54
-related_agents_day: 54
 ---
 
 **"A single agent is a demo. Scaling agents is distributed systems with language models in the loop."**

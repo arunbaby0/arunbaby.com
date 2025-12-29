@@ -17,7 +17,6 @@ scale: "Searching 100M songs by voice"
 companies: Spotify, Apple Music, Alexa
 related_dsa_day: 48
 related_ml_day: 48
-related_speech_day: 48
 related_agents_day: 48
 ---
 

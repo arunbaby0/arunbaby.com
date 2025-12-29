@@ -25,7 +25,6 @@ companies:
   - Spotify
 related_dsa_day: 54
 related_ml_day: 54
-related_speech_day: 54
 related_agents_day: 54
 ---
 

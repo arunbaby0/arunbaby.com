@@ -26,6 +26,7 @@ Each problem includes:
 
 **Stacks:**
 - [Valid Parentheses](/dsa/0002-valid-parentheses/)
+- [Largest Rectangle in Histogram](/dsa/0057-largest-rectangle-in-histogram/)
 
 **Linked Lists:**
 - [Merge Two Sorted Lists](/dsa/0003-merge-sorted-lists/)
@@ -35,6 +36,7 @@ Each problem includes:
 
 **Design:**
 - [LRU Cache](/dsa/0011-lru-cache/)
+- [LFU Cache](/dsa/0060-lfu-cache/)
 
 **Dynamic Programming:**
 - [Best Time to Buy/Sell Stock](/dsa/0004-best-time-buy-sell-stock/)
@@ -44,6 +46,7 @@ Each problem includes:
 - [Minimum Path Sum](/dsa/0022-minimum-path-sum/)
 - [Decode Ways](/dsa/0023-decode-ways/)
 - [Word Break](/dsa/0024-word-break/)
+- [Regular Expression Matching](/dsa/0058-regular-expression-matching/)
 
 **Trees & Graphs:**
 - [Binary Tree Traversal](/dsa/0007-binary-tree-traversal/)
@@ -77,9 +80,11 @@ Each problem includes:
 - [Container With Most Water](/dsa/0013-container-with-most-water/)
 - [Jump Game](/dsa/0020-jump-game/)
 - [Trapping Rain Water](/dsa/0052-trapping-rain-water/)
+- [Minimum Window Substring](/dsa/0056-minimum-window-substring/)
 
 **Backtracking:**
 - [Generate Parentheses](/dsa/0014-generate-parentheses/)
+- [Sudoku Solver](/dsa/0059-sudoku-solver/)
 
 **String Manipulation & Hash Tables:**
 - [Group Anagrams](/dsa/0015-group-anagrams/)

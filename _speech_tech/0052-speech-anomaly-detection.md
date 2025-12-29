@@ -18,7 +18,6 @@ scale: "Real-time detection across 1M+ devices and multi-region streaming"
 companies: Google, Amazon, Apple, Zoom
 related_dsa_day: 52
 related_ml_day: 52
-related_speech_day: 52
 related_agents_day: 52
 ---
 

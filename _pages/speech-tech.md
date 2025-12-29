@@ -73,9 +73,10 @@ Each post includes:
 - [Compute Allocation for Speech Models](/speech-tech/0013-compute-allocation-for-speech-models/)
 - [Multi-model Speech Ensemble](/speech-tech/0014-multi-model-speech-ensemble/)
 - [Cost-Efficient Speech Systems](/speech-tech/0022-cost-efficient-speech-systems/)
+- [Speech Infrastructure Scaling](/speech-tech/0057-speech-infrastructure-scaling/)
 
 **Conversational AI:**
-- Coming soon...
+- [Conversational AI System](/speech-tech/0058-conversational-ai-system/)
 
 **Model Optimization:**
 - [Distributed Speech Training](/speech-tech/0017-distributed-speech-training/)
@@ -88,6 +89,7 @@ Each post includes:
 
 **Adaptive Systems:**
 - [Adaptive Speech Models](/speech-tech/0020-adaptive-speech-models/)
+- [Real-time Voice Adaptation](/speech-tech/0056-real-time-voice-adaptation/)
 
 **Speech Model Design:**
 - [Speech Architecture Search](/speech-tech/0021-speech-architecture-search/)
@@ -104,6 +106,8 @@ Each post includes:
 
 **Pipeline Orchestration:**
 - [Speech Pipeline Dependencies](/speech-tech/0049-speech-pipeline-dependencies/)
+- [Neural Architecture Search for Speech](/speech-tech/0059-neural-architecture-search-for-speech/)
+- [Multi-tier Speech Caching](/speech-tech/0060-multi-tier-speech-caching/)
 
 ---
 

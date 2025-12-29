@@ -18,7 +18,6 @@ companies: LangChain, AutoGPT, Microsoft (AutoGen)
 related_dsa_day: 49
 related_ml_day: 49
 related_speech_day: 49
-related_agents_day: 49
 ---
 
 **"An Agent without a Plan is just a stochastic parrot reacting to noise."**

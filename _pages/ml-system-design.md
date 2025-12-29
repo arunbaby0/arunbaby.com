@@ -23,6 +23,7 @@ Each design includes:
 
 **Recommendation Systems:**
 - [Recommendation System - Candidate Retrieval](/ml-system-design/0001-recommendation-system/)
+- [Real-time Personalization](/ml-system-design/0056-real-time-personalization/)
 
 **Classification Systems:**
 - [Classification Pipeline Design](/ml-system-design/0002-classification-pipeline/)
@@ -82,6 +83,7 @@ Each design includes:
 
 **Natural Language Processing:**
 - [Character-Level Language Models](/ml-system-design/0050-character-level-language-models/)
+- [Advanced NLP Pipeline](/ml-system-design/0058-advanced-nlp-pipeline/)
 
 **Data Augmentation:**
 - [Data Augmentation Pipeline](/ml-system-design/0018-data-augmentation-pipeline/)
@@ -92,12 +94,15 @@ Each design includes:
 
 **AutoML & Model Design:**
 - [Neural Architecture Search](/ml-system-design/0021-neural-architecture-search/)
+- [AutoML Systems](/ml-system-design/0059-automl-systems/)
 
 **Infrastructure:**
 - [Caching Strategies](/ml-system-design/0010-caching-strategies/)
 - [Content Delivery Networks](/ml-system-design/0011-content-delivery-network/)
 - [Distributed ML Systems](/ml-system-design/0012-distributed-systems/)
 - [Resource Allocation for ML](/ml-system-design/0013-resource-allocation-for-ml/)
+- [Capacity Planning](/ml-system-design/0057-capacity-planning/)
+- [Advanced Caching](/ml-system-design/0060-advanced-caching/)
 - [Cost Optimization for ML](/ml-system-design/0022-cost-optimization-for-ml/)
 
 **Model Optimization:**

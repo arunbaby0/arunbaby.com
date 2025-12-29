@@ -16,7 +16,6 @@ subdomain: "Two Pointers & Invariants"
 tech_stack: Python
 scale: "O(N) time, O(1) space (two pointers)"
 companies: Google, Meta, Amazon, Microsoft
-related_dsa_day: 52
 related_ml_day: 52
 related_speech_day: 52
 related_agents_day: 52

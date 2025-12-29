@@ -16,7 +16,6 @@ tech_stack: PyTorch, Hugging Face, Ray Serve
 scale: "Serving 100+ fine-tuned models efficiently"
 companies: Hugging Face, Google Cloud, AWS, OpenAI
 related_dsa_day: 46
-related_ml_day: 46
 related_speech_day: 46
 related_agents_day: 46
 ---
