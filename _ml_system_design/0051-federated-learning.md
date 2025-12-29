@@ -17,7 +17,6 @@ tech_stack: PyTorch, TensorFlow Federated, gRPC, Kubernetes
 scale: "10M+ devices, intermittent connectivity, privacy constraints"
 companies: Google, Apple, Meta, Samsung
 related_dsa_day: 51
-related_ml_day: 51
 related_speech_day: 51
 related_agents_day: 51
 ---

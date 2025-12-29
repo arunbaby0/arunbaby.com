@@ -22,6 +22,7 @@ Each problem includes:
 
 **Arrays & Hash Tables:**
 - [Two Sum](/dsa/0001-two-sum/)
+- [First Missing Positive](/dsa/0053-first-missing-positive/)
 
 **Stacks:**
 - [Valid Parentheses](/dsa/0002-valid-parentheses/)
@@ -75,12 +76,14 @@ Each problem includes:
 **Two Pointers & Greedy:**
 - [Container With Most Water](/dsa/0013-container-with-most-water/)
 - [Jump Game](/dsa/0020-jump-game/)
+- [Trapping Rain Water](/dsa/0052-trapping-rain-water/)
 
 **Backtracking:**
 - [Generate Parentheses](/dsa/0014-generate-parentheses/)
 
 **String Manipulation & Hash Tables:**
 - [Group Anagrams](/dsa/0015-group-anagrams/)
+- [Wildcard Matching](/dsa/0054-wildcard-matching/)
 
 **Intervals:**
 - [Merge Intervals](/dsa/0016-merge-intervals/)

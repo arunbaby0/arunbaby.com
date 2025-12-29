@@ -16,7 +16,6 @@ subdomain: "Binary Search on Answer"
 tech_stack: Python
 scale: "O(log(min(m,n))) time, O(1) space"
 companies: Google, Meta, Amazon, Microsoft
-related_dsa_day: 51
 related_ml_day: 51
 related_speech_day: 51
 related_agents_day: 51

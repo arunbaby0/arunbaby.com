@@ -18,7 +18,6 @@ scale: "On-device learning across 1M+ users with strict privacy guarantees"
 companies: Apple, Google, Meta, Amazon
 related_dsa_day: 51
 related_ml_day: 51
-related_speech_day: 51
 related_agents_day: 51
 ---
 

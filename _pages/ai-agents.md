@@ -37,6 +37,7 @@ Each topic includes:
 
 **Multi-Agent Systems:**
 - [Multi-Agent Architectures](/ai-agents/0029-multi-agent-architectures/)
+- [Scaling Multi-Agent Systems](/ai-agents/0054-scaling-multi-agent-systems/)
 - [Agent Communication Protocols](/ai-agents/0030-agent-communication-protocols/)
 
 **Advanced Topics:**
@@ -54,6 +55,12 @@ Each topic includes:
 **Optimization & Efficiency:**
 - [Token Efficiency Optimization](/ai-agents/0046-token-efficiency-optimization/)
 - [Cost Management for AI Agents](/ai-agents/0047-cost-management-for-agents/)
+
+**Memory & Long Context:**
+- [Long-Context Agent Strategies](/ai-agents/0052-long-context-agent-strategies/)
+
+**Deployment & Reliability:**
+- [Agent Deployment Patterns](/ai-agents/0053-agent-deployment-patterns/)
 
 **Knowledge & Reasoning:**
 - [Knowledge Graphs for Agents](/ai-agents/0051-knowledge-graphs-for-agents/)

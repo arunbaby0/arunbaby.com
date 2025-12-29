@@ -40,6 +40,7 @@ Each post includes:
 - [Real-time Audio Segmentation](/speech-tech/0016-real-time-audio-segmentation/)
  - [Audio Augmentation Techniques](/speech-tech/0018-audio-augmentation-techniques/)
 - [Speech Tokenization](/speech-tech/0024-speech-tokenization/)
+- [Acoustic Pattern Matching](/speech-tech/0054-acoustic-pattern-matching/)
 
 **Real-time Processing:**
 - [Streaming Speech Systems](/speech-tech/0025-streaming-speech-systems/)
@@ -82,6 +83,8 @@ Each post includes:
 **Speech MLOps:**
 - [Speech Experiment Management](/speech-tech/0019-speech-experiment-management/)
 - [Speech Quality Monitoring](/speech-tech/0025-speech-quality-monitoring/)
+- [Speech Anomaly Detection](/speech-tech/0052-speech-anomaly-detection/)
+- [Audio Quality Validation](/speech-tech/0053-audio-quality-validation/)
 
 **Adaptive Systems:**
 - [Adaptive Speech Models](/speech-tech/0020-adaptive-speech-models/)

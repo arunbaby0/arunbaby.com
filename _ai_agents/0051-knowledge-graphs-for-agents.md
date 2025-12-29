@@ -19,7 +19,6 @@ companies: Google, Meta, Amazon, Microsoft
 related_dsa_day: 51
 related_ml_day: 51
 related_speech_day: 51
-related_agents_day: 51
 ---
 
 **"RAG gives you documents. A knowledge graph gives you *facts with structure*—and agents need structure to act reliably."**

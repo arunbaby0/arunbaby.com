@@ -74,6 +74,8 @@ Each design includes:
 - [Transfer Learning Systems](/ml-system-design/0046-transfer-learning/)
 - [Model Serialization Systems](/ml-system-design/0047-model-serialization/)
 - [DAG-based Pipeline Orchestration](/ml-system-design/0049-dag-pipeline-orchestration/)
+- [Anomaly Detection](/ml-system-design/0052-anomaly-detection/)
+- [Data Validation](/ml-system-design/0053-data-validation/)
 
 **Search & Retrieval:**
 - [Trie-based Search Systems](/ml-system-design/0048-trie-based-search/)
@@ -117,6 +119,7 @@ Each design includes:
 **Natural Language Processing:**
 - [Beam Search Decoding](/ml-system-design/0023-beam-search-decoding/)
 - [Tokenization Systems](/ml-system-design/0024-tokenization-systems/)
+- [Pattern Matching in ML](/ml-system-design/0054-pattern-matching-in-ml/)
 
 **Real-Time Systems:**
 - Coming soon...
