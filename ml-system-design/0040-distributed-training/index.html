@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Distributed Training Patterns">
     <meta itemprop="description" content="“Scaling from one GPU to thousands.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -329,11 +329,11 @@ To train these models, we must distribute the computation across hundreds or tho
 <h3 id="42-tensor-parallelism-tp">4.2. Tensor Parallelism (TP)</h3>
 <p>Split the tensors (matrices) themselves.</p>
 <ul>
-  <li><strong>Example:</strong> Matrix Multiplication $Y = X \cdot A$.</li>
-  <li>Split $A$ into columns $A_1, A_2$.</li>
-  <li>GPU 1 computes $Y_1 = X \cdot A_1$.</li>
-  <li>GPU 2 computes $Y_2 = X \cdot A_2$.</li>
-  <li>Concatenate $Y = [Y_1, Y_2]$.</li>
+  <li><strong>Example:</strong> Matrix Multiplication <code class="language-plaintext highlighter-rouge">Y = X \cdot A</code>.</li>
+  <li>Split <code class="language-plaintext highlighter-rouge">A</code> into columns <code class="language-plaintext highlighter-rouge">A_1, A_2</code>.</li>
+  <li>GPU 1 computes <code class="language-plaintext highlighter-rouge">Y_1 = X \cdot A_1</code>.</li>
+  <li>GPU 2 computes <code class="language-plaintext highlighter-rouge">Y_2 = X \cdot A_2</code>.</li>
+  <li>Concatenate <code class="language-plaintext highlighter-rouge">Y = [Y_1, Y_2]</code>.</li>
   <li>Requires high-bandwidth interconnect (NVLink) because synchronization happens <em>per layer</em>. Used in <strong>Megatron-LM</strong>.</li>
 </ul>
 
@@ -357,12 +357,9 @@ To train these models, we must distribute the computation across hundreds or tho
 <h3 id="61-hardware">6.1. Hardware</h3>
 <ul>
   <li><strong>Compute:</strong> NVIDIA H100 or A100 GPUs.</li>
-  <li><strong>Interconnect:</strong>
-    <ul>
-      <li><strong>Intra-node:</strong> NVLink / NVSwitch (900 GB/s). Crucial for Tensor Parallelism.</li>
-      <li><strong>Inter-node:</strong> InfiniBand or RoCE (RDMA over Converged Ethernet) (400 Gbps). Crucial for Data/Pipeline Parallelism.</li>
-    </ul>
-  </li>
+  <li><strong>Interconnect:</strong></li>
+  <li><strong>Intra-node:</strong> NVLink / NVSwitch (900 GB/s). Crucial for Tensor Parallelism.</li>
+  <li><strong>Inter-node:</strong> InfiniBand or RoCE (RDMA over Converged Ethernet) (400 Gbps). Crucial for Data/Pipeline Parallelism.</li>
   <li><strong>Storage:</strong> High-performance parallel file system (Lustre, GPUDirect Storage) to feed data at line rate.</li>
 </ul>
 
@@ -406,13 +403,10 @@ To train these models, we must distribute the computation across hundreds or tho
 
 <ul>
   <li><strong>Architecture:</strong> Transformer Decoder.</li>
-  <li><strong>Parallelism:</strong>
-    <ul>
-      <li><strong>Tensor Parallelism:</strong> Within each node (8 GPUs).</li>
-      <li><strong>Pipeline Parallelism:</strong> Across nodes.</li>
-      <li><strong>Data Parallelism:</strong> Across replicas of the pipeline.</li>
-    </ul>
-  </li>
+  <li><strong>Parallelism:</strong></li>
+  <li><strong>Tensor Parallelism:</strong> Within each node (8 GPUs).</li>
+  <li><strong>Pipeline Parallelism:</strong> Across nodes.</li>
+  <li><strong>Data Parallelism:</strong> Across replicas of the pipeline.</li>
   <li><strong>Infrastructure:</strong> Microsoft Azure AI Supercomputer (10,000+ GPUs).</li>
   <li><strong>Challenges:</strong> Stragglers (slow nodes), Silent Data Corruption (bit flips), Loss Spikes.</li>
 </ul>
@@ -420,82 +414,70 @@ To train these models, we must distribute the computation across hundreds or tho
 <h2 id="10-deep-dive-collective-communication-ring-all-reduce">10. Deep Dive: Collective Communication (Ring All-Reduce)</h2>
 
 <p>The efficiency of Data Parallelism hinges on the <strong>All-Reduce</strong> operation.
-<strong>Goal:</strong> Every GPU starts with a gradient vector $G_i$. Every GPU ends with the sum $\sum G_i$.</p>
+<strong>Goal:</strong> Every GPU starts with a gradient vector <code class="language-plaintext highlighter-rouge">G_i</code>. Every GPU ends with the sum <code class="language-plaintext highlighter-rouge">\sum G_i</code>.</p>
 
 <p><strong>Naive Approach:</strong></p>
 <ul>
   <li>All GPUs send their gradients to GPU 0 (Gather).</li>
   <li>GPU 0 sums them.</li>
   <li>GPU 0 sends the sum back to all GPUs (Broadcast).</li>
-  <li><strong>Bottleneck:</strong> GPU 0’s bandwidth. Time scales linearly with $N$ (number of GPUs).</li>
+  <li><strong>Bottleneck:</strong> GPU 0’s bandwidth. Time scales linearly with <code class="language-plaintext highlighter-rouge">N</code> (number of GPUs).</li>
 </ul>
 
 <p><strong>Ring All-Reduce:</strong></p>
 <ul>
   <li><strong>Topology:</strong> GPU 0 -&gt; GPU 1 -&gt; … -&gt; GPU N-1 -&gt; GPU 0.</li>
-  <li><strong>Step 1: Scatter-Reduce:</strong>
-    <ul>
-      <li>Split the gradient vector into $N$ chunks.</li>
-      <li>In each step, GPU $i$ sends a chunk to GPU $i+1$ and receives a chunk from GPU $i-1$.</li>
-      <li>It adds the received chunk to its local chunk and passes it on.</li>
-      <li>After $N-1$ steps, each GPU holds a fully summed chunk of the gradient vector (different chunk for each GPU).</li>
-    </ul>
-  </li>
-  <li><strong>Step 2: All-Gather:</strong>
-    <ul>
-      <li>Each GPU sends its fully summed chunk to the next neighbor.</li>
-      <li>After $N-1$ steps, all GPUs have all the fully summed chunks.</li>
-    </ul>
-  </li>
-  <li><strong>Complexity:</strong>
-    <ul>
-      <li>Data transmitted per GPU: $2(N-1) \frac{K}{N} \approx 2K$.</li>
-      <li><strong>Crucially:</strong> Independent of $N$. This allows scaling to thousands of GPUs.</li>
-    </ul>
-  </li>
+  <li><strong>Step 1: Scatter-Reduce:</strong></li>
+  <li>Split the gradient vector into <code class="language-plaintext highlighter-rouge">N</code> chunks.</li>
+  <li>In each step, GPU <code class="language-plaintext highlighter-rouge">i</code> sends a chunk to GPU <code class="language-plaintext highlighter-rouge">i+1</code> and receives a chunk from GPU <code class="language-plaintext highlighter-rouge">i-1</code>.</li>
+  <li>It adds the received chunk to its local chunk and passes it on.</li>
+  <li>After <code class="language-plaintext highlighter-rouge">N-1</code> steps, each GPU holds a fully summed chunk of the gradient vector (different chunk for each GPU).</li>
+  <li><strong>Step 2: All-Gather:</strong></li>
+  <li>Each GPU sends its fully summed chunk to the next neighbor.</li>
+  <li>After <code class="language-plaintext highlighter-rouge">N-1</code> steps, all GPUs have all the fully summed chunks.</li>
+  <li><strong>Complexity:</strong></li>
+  <li>Data transmitted per GPU: <code class="language-plaintext highlighter-rouge">2(N-1) \frac{K}{N} \approx 2K</code>.</li>
+  <li><strong>Crucially:</strong> Independent of <code class="language-plaintext highlighter-rouge">N</code>. This allows scaling to thousands of GPUs.</li>
 </ul>
 
 <h2 id="11-deep-dive-zero-zero-redundancy-optimizer-details">11. Deep Dive: ZeRO (Zero Redundancy Optimizer) Details</h2>
 
-<p>Let’s break down the memory savings for a model with $\Psi$ parameters.
+<p>Let’s break down the memory savings for a model with <code class="language-plaintext highlighter-rouge">\Psi</code> parameters.
 Using Mixed Precision (fp16/bf16) and Adam Optimizer.</p>
 
 <p><strong>Baseline (Standard DDP):</strong></p>
 <ul>
-  <li><strong>Parameters (fp16):</strong> $2\Psi$ bytes.</li>
-  <li><strong>Gradients (fp16):</strong> $2\Psi$ bytes.</li>
-  <li><strong>Optimizer States (fp32):</strong>
-    <ul>
-      <li>Master Weights: $4\Psi$ bytes.</li>
-      <li>Momentum: $4\Psi$ bytes.</li>
-      <li>Variance: $4\Psi$ bytes.</li>
-      <li>Total Opt States: $12\Psi$ bytes.</li>
-    </ul>
-  </li>
-  <li><strong>Total per GPU:</strong> $16\Psi$ bytes.</li>
+  <li><strong>Parameters (fp16):</strong> <code class="language-plaintext highlighter-rouge">2\Psi</code> bytes.</li>
+  <li><strong>Gradients (fp16):</strong> <code class="language-plaintext highlighter-rouge">2\Psi</code> bytes.</li>
+  <li><strong>Optimizer States (fp32):</strong></li>
+  <li>Master Weights: <code class="language-plaintext highlighter-rouge">4\Psi</code> bytes.</li>
+  <li>Momentum: <code class="language-plaintext highlighter-rouge">4\Psi</code> bytes.</li>
+  <li>Variance: <code class="language-plaintext highlighter-rouge">4\Psi</code> bytes.</li>
+  <li>Total Opt States: <code class="language-plaintext highlighter-rouge">12\Psi</code> bytes.</li>
+  <li><strong>Total per GPU:</strong> <code class="language-plaintext highlighter-rouge">16\Psi</code> bytes.</li>
 </ul>
 
 <p><strong>ZeRO-1 (Shard Optimizer States):</strong></p>
 <ul>
-  <li>Partition the $12\Psi$ optimizer states across $N$ GPUs.</li>
-  <li>Each GPU stores $\frac{12\Psi}{N}$.</li>
-  <li><strong>Total per GPU:</strong> $4\Psi + \frac{12\Psi}{N}$.</li>
+  <li>Partition the <code class="language-plaintext highlighter-rouge">12\Psi</code> optimizer states across <code class="language-plaintext highlighter-rouge">N</code> GPUs.</li>
+  <li>Each GPU stores <code class="language-plaintext highlighter-rouge">\frac{12\Psi}{N}</code>.</li>
+  <li><strong>Total per GPU:</strong> <code class="language-plaintext highlighter-rouge">4\Psi + \frac{12\Psi}{N}</code>.</li>
   <li><strong>Savings:</strong> ~4x reduction.</li>
 </ul>
 
 <p><strong>ZeRO-2 (Shard Gradients):</strong></p>
 <ul>
-  <li>Partition the $2\Psi$ gradients as well.</li>
-  <li>Each GPU stores $\frac{2\Psi + 12\Psi}{N}$.</li>
-  <li><strong>Total per GPU:</strong> $2\Psi + \frac{14\Psi}{N}$.</li>
+  <li>Partition the <code class="language-plaintext highlighter-rouge">2\Psi</code> gradients as well.</li>
+  <li>Each GPU stores <code class="language-plaintext highlighter-rouge">\frac{2\Psi + 12\Psi}{N}</code>.</li>
+  <li><strong>Total per GPU:</strong> <code class="language-plaintext highlighter-rouge">2\Psi + \frac{14\Psi}{N}</code>.</li>
   <li><strong>Savings:</strong> ~8x reduction.</li>
 </ul>
 
 <p><strong>ZeRO-3 (Shard Parameters):</strong></p>
 <ul>
-  <li>Partition the $2\Psi$ parameters too.</li>
-  <li><strong>Total per GPU:</strong> $\frac{16\Psi}{N}$.</li>
-  <li><strong>Savings:</strong> Linear reduction with $N$.</li>
+  <li>Partition the <code class="language-plaintext highlighter-rouge">2\Psi</code> parameters too.</li>
+  <li><strong>Total per GPU:</strong> <code class="language-plaintext highlighter-rouge">\frac{16\Psi}{N}</code>.</li>
+  <li><strong>Savings:</strong> Linear reduction with <code class="language-plaintext highlighter-rouge">N</code>.</li>
   <li><strong>Trade-off:</strong> Increased communication. Parameters must be broadcasted (all-gather) before each layer’s forward/backward pass and discarded immediately.</li>
 </ul>
 
@@ -503,10 +485,10 @@ Using Mixed Precision (fp16/bf16) and Adam Optimizer.</p>
 
 <p><strong>GPipe:</strong></p>
 <ul>
-  <li>Split batch into $M$ micro-batches.</li>
-  <li>Run all $M$ forward passes.</li>
-  <li>Run all $M$ backward passes.</li>
-  <li><strong>Memory Issue:</strong> Need to store activations for all $M$ micro-batches until the backward pass starts.</li>
+  <li>Split batch into <code class="language-plaintext highlighter-rouge">M</code> micro-batches.</li>
+  <li>Run all <code class="language-plaintext highlighter-rouge">M</code> forward passes.</li>
+  <li>Run all <code class="language-plaintext highlighter-rouge">M</code> backward passes.</li>
+  <li><strong>Memory Issue:</strong> Need to store activations for all <code class="language-plaintext highlighter-rouge">M</code> micro-batches until the backward pass starts.</li>
 </ul>
 
 <p><strong>1F1B (One Forward One Backward) - PipeDream:</strong></p>
@@ -514,34 +496,31 @@ Using Mixed Precision (fp16/bf16) and Adam Optimizer.</p>
   <li>Schedule: Forward 1, Forward 2, …, Backward 1, Forward 3, Backward 2…</li>
   <li>As soon as the first micro-batch finishes its forward pass at the last stage, it starts its backward pass.</li>
   <li>This frees up activation memory much earlier.</li>
-  <li><strong>Bubble:</strong> The idle time at the start and end of the pipeline.
-    <ul>
-      <li>Bubble fraction $\approx \frac{P-1}{M}$, where $P$ is pipeline stages.</li>
-      <li>To minimize bubble, we need $M \gg P$.</li>
-    </ul>
-  </li>
+  <li><strong>Bubble:</strong> The idle time at the start and end of the pipeline.</li>
+  <li>Bubble fraction <code class="language-plaintext highlighter-rouge">\approx \frac{P-1}{M}</code>, where <code class="language-plaintext highlighter-rouge">P</code> is pipeline stages.</li>
+  <li>To minimize bubble, we need <code class="language-plaintext highlighter-rouge">M \gg P</code>.</li>
 </ul>
 
 <h2 id="13-deep-dive-tensor-parallelism-megatron-lm">13. Deep Dive: Tensor Parallelism (Megatron-LM)</h2>
 
 <p>How do we split a Transformer Layer across GPUs?</p>
 
-<p><strong>MLP Layer ($A \rightarrow GeLU \rightarrow B$):</strong></p>
+<p><strong>MLP Layer (<code class="language-plaintext highlighter-rouge">A \rightarrow GeLU \rightarrow B</code>):</strong></p>
 <ul>
-  <li>$Y = GeLU(X A)$.</li>
-  <li>Split $A$ by <strong>columns</strong> ($A_1, A_2$).</li>
-  <li>Each GPU computes $Y_i = GeLU(X A_i)$.</li>
-  <li>Next matrix $B$ is split by <strong>rows</strong> ($B_1, B_2$).</li>
-  <li>Compute $Z = [Y_1, Y_2] \cdot \begin{bmatrix} B_1 \ B_2 \end{bmatrix} = Y_1 B_1 + Y_2 B_2$.</li>
-  <li><strong>All-Reduce:</strong> Sum the results $Y_1 B_1 + Y_2 B_2$ across GPUs.</li>
+  <li><code class="language-plaintext highlighter-rouge">Y = GeLU(X A)</code>.</li>
+  <li>Split <code class="language-plaintext highlighter-rouge">A</code> by <strong>columns</strong> (<code class="language-plaintext highlighter-rouge">A_1, A_2</code>).</li>
+  <li>Each GPU computes <code class="language-plaintext highlighter-rouge">Y_i = GeLU(X A_i)</code>.</li>
+  <li>Next matrix <code class="language-plaintext highlighter-rouge">B</code> is split by <strong>rows</strong> (<code class="language-plaintext highlighter-rouge">B_1, B_2</code>).</li>
+  <li>Compute <code class="language-plaintext highlighter-rouge">Z = [Y_1, Y_2] \cdot \begin{bmatrix} B_1 \\ B_2 \end{bmatrix} = Y_1 B_1 + Y_2 B_2</code>.</li>
+  <li><strong>All-Reduce:</strong> Sum the results <code class="language-plaintext highlighter-rouge">Y_1 B_1 + Y_2 B_2</code> across GPUs.</li>
   <li><strong>Benefit:</strong> Only one All-Reduce needed per MLP block.</li>
 </ul>
 
 <p><strong>Self-Attention Layer:</strong></p>
 <ul>
-  <li>Split Query ($Q$), Key ($K$), Value ($V$) weight matrices by <strong>columns</strong> (split heads).</li>
+  <li>Split Query (<code class="language-plaintext highlighter-rouge">Q</code>), Key (<code class="language-plaintext highlighter-rouge">K</code>), Value (<code class="language-plaintext highlighter-rouge">V</code>) weight matrices by <strong>columns</strong> (split heads).</li>
   <li>Each GPU computes attention for a subset of heads.</li>
-  <li>Output projection matrix $O$ is split by <strong>rows</strong>.</li>
+  <li>Output projection matrix <code class="language-plaintext highlighter-rouge">O</code> is split by <strong>rows</strong>.</li>
   <li><strong>All-Reduce:</strong> Sum the outputs of the projection.</li>
 </ul>
 
@@ -593,7 +572,7 @@ Using Mixed Precision (fp16/bf16) and Adam Optimizer.</p>
 
 <p><strong>3. Overlap (Compute-Comm):</strong></p>
 <ul>
-  <li>While the backward pass is computing gradients for layer $L-1$, the All-Reduce for layer $L$ (already in bucket) is running asynchronously on the network card.</li>
+  <li>While the backward pass is computing gradients for layer <code class="language-plaintext highlighter-rouge">L-1</code>, the All-Reduce for layer <code class="language-plaintext highlighter-rouge">L</code> (already in bucket) is running asynchronously on the network card.</li>
   <li><strong>Goal:</strong> Hide communication time behind computation time.</li>
 </ul>
 
@@ -604,13 +583,10 @@ Using Mixed Precision (fp16/bf16) and Adam Optimizer.</p>
   <li><strong>GPUs:</strong> 16,000 NVIDIA A100 (80GB).</li>
   <li><strong>Interconnect:</strong> InfiniBand 200 Gbps (Fat Tree).</li>
   <li><strong>Storage:</strong> 175 PB of Pure Storage FlashBlade.</li>
-  <li><strong>Optimization:</strong>
-    <ul>
-      <li><strong>xFormers:</strong> Optimized Attention kernels (FlashAttention).</li>
-      <li><strong>Checkpointing:</strong> Saved to distributed storage every few hours.</li>
-      <li><strong>Silent Data Corruption:</strong> Detected via loss spikes. If detected, roll back to previous checkpoint and skip the bad batch.</li>
-    </ul>
-  </li>
+  <li><strong>Optimization:</strong></li>
+  <li><strong>xFormers:</strong> Optimized Attention kernels (FlashAttention).</li>
+  <li><strong>Checkpointing:</strong> Saved to distributed storage every few hours.</li>
+  <li><strong>Silent Data Corruption:</strong> Detected via loss spikes. If detected, roll back to previous checkpoint and skip the bad batch.</li>
 </ul>
 
 <p><strong>Training Stability:</strong></p>
@@ -635,23 +611,23 @@ Using Mixed Precision (fp16/bf16) and Adam Optimizer.</p>
   <li>PS updates weights immediately.</li>
   <li>Workers pull new weights.</li>
   <li><strong>Pros:</strong> No waiting. High hardware utilization.</li>
-  <li><strong>Cons:</strong> <strong>Stale Gradients</strong>. Worker computes gradient on $W_t$, but by the time it pushes, the global weights are $W_{t+10}$. The gradient is “stale” and points in the wrong direction.</li>
+  <li><strong>Cons:</strong> <strong>Stale Gradients</strong>. Worker computes gradient on <code class="language-plaintext highlighter-rouge">W_t</code>, but by the time it pushes, the global weights are <code class="language-plaintext highlighter-rouge">W_{t+10}</code>. The gradient is “stale” and points in the wrong direction.</li>
   <li><strong>Solution:</strong> Rarely used now. Sync SGD with backup workers (ignore slowest 5%) is preferred.</li>
 </ul>
 
 <h2 id="19-interview-questions">19. Interview Questions</h2>
 
 <ol>
-  <li><strong>Explain All-Reduce.</strong> How does Ring All-Reduce work? What is its complexity? ($2(N-1) \frac{K}{N}$).</li>
+  <li><strong>Explain All-Reduce.</strong> How does Ring All-Reduce work? What is its complexity? (<code class="language-plaintext highlighter-rouge">2(N-1) \frac{K}{N}</code>).</li>
   <li><strong>Data Parallelism vs. Model Parallelism.</strong> When to use which?</li>
   <li><strong>What is the “Stale Gradient” problem?</strong> In Asynchronous SGD, workers might compute gradients on old weights. How does Synchronous SGD fix this?</li>
   <li><strong>How does ZeRO-3 work?</strong> How does it handle communication overhead? (Prefetching).</li>
-  <li><strong>Calculate Memory Footprint.</strong> For a model with $P$ parameters, using Adam optimizer and mixed precision.
+  <li><strong>Calculate Memory Footprint.</strong> For a model with <code class="language-plaintext highlighter-rouge">P</code> parameters, using Adam optimizer and mixed precision.
     <ul>
-      <li>Parameters: $2P$ bytes (fp16).</li>
-      <li>Gradients: $2P$ bytes (fp16).</li>
-      <li>Optimizer States: $12P$ bytes (fp32 copy of params, momentum, variance).</li>
-      <li>Total: $16P$ bytes. For 1B params, ~16GB.</li>
+      <li>Parameters: <code class="language-plaintext highlighter-rouge">2P</code> bytes (fp16).</li>
+      <li>Gradients: <code class="language-plaintext highlighter-rouge">2P</code> bytes (fp16).</li>
+      <li>Optimizer States: <code class="language-plaintext highlighter-rouge">12P</code> bytes (fp32 copy of params, momentum, variance).</li>
+      <li>Total: <code class="language-plaintext highlighter-rouge">16P</code> bytes. For 1B params, ~16GB.</li>
     </ul>
   </li>
 </ol>
@@ -675,26 +651,27 @@ Using Mixed Precision (fp16/bf16) and Adam Optimizer.</p>
 
 <p><strong>Memory Savings:</strong></p>
 <ul>
-  <li>Without checkpointing: $O(N)$ memory for $N$ layers.</li>
-  <li>With checkpointing every $\sqrt{N}$ layers: $O(\sqrt{N})$ memory.</li>
-  <li><strong>Cost:</strong> $\sqrt{N}$ extra forward passes (33% compute overhead for Transformers).</li>
+  <li>Without checkpointing: O(N) memory for <code class="language-plaintext highlighter-rouge">N</code> layers.</li>
+  <li>With checkpointing every <code class="language-plaintext highlighter-rouge">\sqrt{N}</code> layers: O(\sqrt{N}) memory.</li>
+  <li><strong>Cost:</strong> <code class="language-plaintext highlighter-rouge">\sqrt{N}</code> extra forward passes (33% compute overhead for Transformers).</li>
 </ul>
 
-<p><strong>PyTorch Implementation:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">torch.utils.checkpoint</span> <span class="kn">import</span> <span class="n">checkpoint</span>
+<p><strong>PyTorch Implementation:</strong>
+``python
+from torch.utils.checkpoint import checkpoint</p>
 
-<span class="k">class</span> <span class="nc">MyModel</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="c1"># Checkpoint expensive blocks
-</span>        <span class="n">x</span> <span class="o">=</span> <span class="nf">checkpoint</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">layer1</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="nf">checkpoint</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">layer2</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">x</span>
-</code></pre></div></div>
+<p>class MyModel(nn.Module):
+ def forward(self, x):
+ # Checkpoint expensive blocks
+ x = checkpoint(self.layer1, x)
+ x = checkpoint(self.layer2, x)
+ return x
+``</p>
 
 <h2 id="21-deep-dive-mixed-precision-training-fp16bf16">21. Deep Dive: Mixed Precision Training (FP16/BF16)</h2>
 
 <p><strong>Motivation:</strong> FP32 (32-bit floats) are slow and memory-hungry. FP16 (16-bit) is 2x faster and uses half the memory.
-<strong>Challenge:</strong> FP16 has limited range ($6 \times 10^{-8}$ to $65504$). Gradients can underflow (become zero) or overflow.</p>
+<strong>Challenge:</strong> FP16 has limited range (<code class="language-plaintext highlighter-rouge">6 \times 10^{-8}</code> to <code class="language-plaintext highlighter-rouge">65504</code>). Gradients can underflow (become zero) or overflow.</p>
 
 <p><strong>Solution: Mixed Precision (NVIDIA Apex / PyTorch AMP):</strong></p>
 <ol>
@@ -715,15 +692,15 @@ Using Mixed Precision (fp16/bf16) and Adam Optimizer.</p>
 
 <h2 id="22-deep-dive-flashattention-memory-efficient-attention">22. Deep Dive: FlashAttention (Memory-Efficient Attention)</h2>
 
-<p>Standard Attention: $O(N^2)$ memory for the attention matrix.
-For $N=4096$ tokens, this is 16M elements (64MB in FP16).</p>
+<p>Standard Attention: O(N^2) memory for the attention matrix.
+For <code class="language-plaintext highlighter-rouge">N=4096</code> tokens, this is 16M elements (64MB in FP16).</p>
 
 <p><strong>FlashAttention (Dao et al., 2022):</strong></p>
 <ul>
-  <li><strong>Idea:</strong> Never materialize the full $N \times N$ attention matrix.</li>
+  <li><strong>Idea:</strong> Never materialize the full <code class="language-plaintext highlighter-rouge">N \times N</code> attention matrix.</li>
   <li><strong>Algorithm:</strong>
     <ol>
-      <li>Tile $Q$, $K$, $V$ into blocks that fit in SRAM (on-chip cache).</li>
+      <li>Tile <code class="language-plaintext highlighter-rouge">Q</code>, <code class="language-plaintext highlighter-rouge">K</code>, <code class="language-plaintext highlighter-rouge">V</code> into blocks that fit in SRAM (on-chip cache).</li>
       <li>Compute attention for each block.</li>
       <li>Use online softmax (incremental computation) to avoid storing intermediate results in HBM (slow GPU memory).</li>
     </ol>
@@ -747,14 +724,15 @@ For $N=4096$ tokens, this is 16M elements (64MB in FP16).</p>
   <li><strong>Mixed Precision:</strong> Native support for BF16.</li>
 </ol>
 
-<p><strong>Usage:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">torch.distributed.fsdp</span> <span class="kn">import</span> <span class="n">FullyShardedDataParallel</span> <span class="k">as</span> <span class="n">FSDP</span>
+<p><strong>Usage:</strong>
+``python
+from torch.distributed.fsdp import FullyShardedDataParallel as FSDP</p>
 
-<span class="n">model</span> <span class="o">=</span> <span class="nc">MyTransformer</span><span class="p">()</span>
-<span class="n">model</span> <span class="o">=</span> <span class="nc">FSDP</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> 
-             <span class="n">auto_wrap_policy</span><span class="o">=</span><span class="n">transformer_auto_wrap_policy</span><span class="p">,</span>
-             <span class="n">mixed_precision</span><span class="o">=</span><span class="n">bf16_policy</span><span class="p">)</span>
-</code></pre></div></div>
+<p>model = MyTransformer()
+model = FSDP(model, 
+ auto_wrap_policy=transformer_auto_wrap_policy,
+ mixed_precision=bf16_policy)
+``</p>
 
 <p><strong>When to use FSDP vs DDP:</strong></p>
 <ul>
@@ -821,24 +799,21 @@ For $N=4096$ tokens, this is 16M elements (64MB in FP16).</p>
 <h2 id="27-deep-dive-bandwidth-analysis--bottleneck-detection">27. Deep Dive: Bandwidth Analysis &amp; Bottleneck Detection</h2>
 
 <p><strong>Theoretical Peak Performance:</strong>
-For a model with $P$ parameters and batch size $B$:</p>
+For a model with <code class="language-plaintext highlighter-rouge">P</code> parameters and batch size <code class="language-plaintext highlighter-rouge">B</code>:</p>
 <ul>
-  <li><strong>Compute:</strong> $2 \times P \times B$ FLOPs per forward pass (matrix multiplications).</li>
-  <li><strong>Memory Bandwidth:</strong> $2 \times P$ bytes to load weights (fp16).</li>
+  <li><strong>Compute:</strong> <code class="language-plaintext highlighter-rouge">2 \times P \times B</code> FLOPs per forward pass (matrix multiplications).</li>
+  <li><strong>Memory Bandwidth:</strong> <code class="language-plaintext highlighter-rouge">2 \times P</code> bytes to load weights (fp16).</li>
 </ul>
 
 <p><strong>Roofline Model:</strong></p>
 <ul>
   <li><strong>Arithmetic Intensity (AI):</strong> FLOPs / Bytes.</li>
-  <li>For Transformers: $AI \approx \frac{2PB}{2P} = B$ (batch size).</li>
-  <li><strong>A100 GPU:</strong>
-    <ul>
-      <li>Peak Compute: 312 TFLOPS (fp16).</li>
-      <li>Peak Bandwidth: 2 TB/s.</li>
-      <li><strong>Ridge Point:</strong> $AI = \frac{312}{2000} = 0.156$ FLOPs/Byte.</li>
-    </ul>
-  </li>
-  <li>If $B &lt; 0.156$, we are <strong>memory-bound</strong>. If $B &gt; 0.156$, we are <strong>compute-bound</strong>.</li>
+  <li>For Transformers: <code class="language-plaintext highlighter-rouge">AI \approx \frac{2PB}{2P} = B</code> (batch size).</li>
+  <li><strong>A100 GPU:</strong></li>
+  <li>Peak Compute: 312 TFLOPS (fp16).</li>
+  <li>Peak Bandwidth: 2 TB/s.</li>
+  <li><strong>Ridge Point:</strong> <code class="language-plaintext highlighter-rouge">AI = \frac{312}{2000} = 0.156</code> FLOPs/Byte.</li>
+  <li>If <code class="language-plaintext highlighter-rouge">B &lt; 0.156</code>, we are <strong>memory-bound</strong>. If <code class="language-plaintext highlighter-rouge">B &gt; 0.156</code>, we are <strong>compute-bound</strong>.</li>
 </ul>
 
 <p><strong>Implication:</strong></p>
@@ -863,13 +838,10 @@ For a model with $P$ parameters and batch size $B$:</p>
 <ul>
   <li><strong>Symptom:</strong> Loss becomes NaN after a few steps.</li>
   <li><strong>Cause:</strong> Gradient explosion, bad data, or numerical instability.</li>
-  <li><strong>Debug:</strong>
-    <ul>
-      <li>Log gradient norms per layer.</li>
-      <li>Check for NaN/Inf in activations.</li>
-      <li>Reduce learning rate.</li>
-    </ul>
-  </li>
+  <li><strong>Debug:</strong></li>
+  <li>Log gradient norms per layer.</li>
+  <li>Check for NaN/Inf in activations.</li>
+  <li>Reduce learning rate.</li>
   <li><strong>Fix:</strong> Gradient clipping, mixed precision with loss scaling.</li>
 </ul>
 
@@ -877,20 +849,14 @@ For a model with $P$ parameters and batch size $B$:</p>
 <ul>
   <li><strong>Symptom:</strong> Throughput is 50% of expected.</li>
   <li><strong>Cause:</strong> Communication overhead, data loading bottleneck, or stragglers.</li>
-  <li><strong>Debug:</strong>
-    <ul>
-      <li>Profile with <code class="language-plaintext highlighter-rouge">torch.profiler</code> or NVIDIA Nsight.</li>
-      <li>Check GPU utilization (<code class="language-plaintext highlighter-rouge">nvidia-smi dmon</code>).</li>
-      <li>Measure communication time vs compute time.</li>
-    </ul>
-  </li>
-  <li><strong>Fix:</strong>
-    <ul>
-      <li>Increase batch size (reduce communication frequency).</li>
-      <li>Use faster interconnect (InfiniBand).</li>
-      <li>Optimize data loading (more workers, prefetching).</li>
-    </ul>
-  </li>
+  <li><strong>Debug:</strong></li>
+  <li>Profile with <code class="language-plaintext highlighter-rouge">torch.profiler</code> or NVIDIA Nsight.</li>
+  <li>Check GPU utilization (<code class="language-plaintext highlighter-rouge">nvidia-smi dmon</code>).</li>
+  <li>Measure communication time vs compute time.</li>
+  <li><strong>Fix:</strong></li>
+  <li>Increase batch size (reduce communication frequency).</li>
+  <li>Use faster interconnect (InfiniBand).</li>
+  <li>Optimize data loading (more workers, prefetching).</li>
 </ul>
 
 <h2 id="29-advanced-topic-sequence-parallelism">29. Advanced Topic: Sequence Parallelism</h2>
@@ -908,7 +874,7 @@ For a model with $P$ parameters and batch size $B$:</p>
 
 <p><strong>Mixture of Experts (MoE):</strong></p>
 <ul>
-  <li>Replace the MLP layer with $N$ expert MLPs.</li>
+  <li>Replace the MLP layer with <code class="language-plaintext highlighter-rouge">N</code> expert MLPs.</li>
   <li>A router (gating network) decides which expert(s) to use for each token.</li>
   <li><strong>Benefit:</strong> Increase model capacity without increasing compute (only 1-2 experts are active per token).</li>
 </ul>
@@ -972,45 +938,45 @@ For a model with $P$ parameters and batch size $B$:</p>
 <p><strong>Kubeflow:</strong></p>
 <ul>
   <li>Kubernetes-native ML platform.</li>
-  <li><strong>Components:</strong>
-    <ul>
-      <li><strong>TFJob / PyTorchJob:</strong> Operators for distributed training.</li>
-      <li><strong>Katib:</strong> Hyperparameter tuning.</li>
-      <li><strong>KFServing:</strong> Model serving.</li>
-    </ul>
-  </li>
+  <li><strong>Components:</strong></li>
+  <li><strong>TFJob / PyTorchJob:</strong> Operators for distributed training.</li>
+  <li><strong>Katib:</strong> Hyperparameter tuning.</li>
+  <li><strong>KFServing:</strong> Model serving.</li>
 </ul>
 
-<p><strong>Example PyTorchJob:</strong></p>
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">kubeflow.org/v1</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">PyTorchJob</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">gpt-training</span>
-<span class="na">spec</span><span class="pi">:</span>
-  <span class="na">pytorchReplicaSpecs</span><span class="pi">:</span>
-    <span class="na">Master</span><span class="pi">:</span>
-      <span class="na">replicas</span><span class="pi">:</span> <span class="m">1</span>
-      <span class="na">template</span><span class="pi">:</span>
-        <span class="na">spec</span><span class="pi">:</span>
-          <span class="na">containers</span><span class="pi">:</span>
-          <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">pytorch</span>
-            <span class="na">image</span><span class="pi">:</span> <span class="s">pytorch/pytorch:2.0</span>
-            <span class="na">command</span><span class="pi">:</span> <span class="pi">[</span><span class="s2">"</span><span class="s">python"</span><span class="pi">,</span> <span class="s2">"</span><span class="s">train.py"</span><span class="pi">]</span>
-            <span class="na">resources</span><span class="pi">:</span>
-              <span class="na">limits</span><span class="pi">:</span>
-                <span class="na">nvidia.com/gpu</span><span class="pi">:</span> <span class="m">8</span>
-    <span class="na">Worker</span><span class="pi">:</span>
-      <span class="na">replicas</span><span class="pi">:</span> <span class="m">15</span>
-      <span class="na">template</span><span class="pi">:</span>
-        <span class="na">spec</span><span class="pi">:</span>
-          <span class="na">containers</span><span class="pi">:</span>
-          <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">pytorch</span>
-            <span class="na">image</span><span class="pi">:</span> <span class="s">pytorch/pytorch:2.0</span>
-            <span class="na">command</span><span class="pi">:</span> <span class="pi">[</span><span class="s2">"</span><span class="s">python"</span><span class="pi">,</span> <span class="s2">"</span><span class="s">train.py"</span><span class="pi">]</span>
-            <span class="na">resources</span><span class="pi">:</span>
-              <span class="na">limits</span><span class="pi">:</span>
-                <span class="na">nvidia.com/gpu</span><span class="pi">:</span> <span class="m">8</span>
-</code></pre></div></div>
+<p><strong>Example PyTorchJob:</strong>
+``yaml
+apiVersion: kubeflow.org/v1
+kind: PyTorchJob
+metadata:
+ name: gpt-training
+spec:
+ pytorchReplicaSpecs:
+ Master:
+ replicas: 1
+ template:
+ spec:
+ containers:</p>
+<ul>
+  <li>name: pytorch
+ image: pytorch/pytorch:2.0
+ command: [“python”, “train.py”]
+ resources:
+ limits:
+ nvidia.com/gpu: 8
+ Worker:
+ replicas: 15
+ template:
+ spec:
+ containers:</li>
+  <li>name: pytorch
+ image: pytorch/pytorch:2.0
+ command: [“python”, “train.py”]
+ resources:
+ limits:
+ nvidia.com/gpu: 8
+``</li>
+</ul>
 
 <h2 id="34-conclusion">34. Conclusion</h2>
 
@@ -1080,7 +1046,134 @@ For a model with $P$ parameters and batch size $B$:</p>
         
       </footer>
 
+      <div class="page__related page__related--full">
+  <h2 class="page__related-title">Related across topics</h2>
+  <style>
+    /* Make section span full content width and use 2 equal columns */
+    .page__related--full { float: inline-start; width: 100%; padding: 0; }
+    .cross-related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+    @media (max-width: 768px) { .cross-related-grid { grid-template-columns: 1fr; } }
+    /* Ensure archive cards stretch nicely in the grid */
+    .cross-related-grid .list__item, .cross-related-grid .grid__item { width: auto; float: none; margin: 0; }
+  </style>
+  <div class="cross-related-grid">
+    
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
       
+        <a href="/dsa/0040-trapping-rain-water/" rel="permalink">Trapping Rain Water
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Calculating capacity in a fragmented landscape.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/speech-tech/0040-wake-word-detection/" rel="permalink">Wake Word Detection
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Hey Siri, Alexa, OK Google: The gateway to voice AI.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ai-agents/0040-hierarchical-planning/" rel="permalink">Hierarchical Planning
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Make agents reliable at large tasks: plan at multiple levels, execute in small verified steps, and stop when budgets say so.”
+</p>
+  </article>
+</div>
+
+  </div>
+</div>
 
       <section class="page__share">
   <h4 class="page__share-title">Share on</h4>

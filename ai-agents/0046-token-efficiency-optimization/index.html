@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Token Efficiency Optimization">
     <meta itemprop="description" content="“The most expensive token is the one you didn’t need to send.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -323,57 +323,58 @@ Instead of “If the user does this, then you should do that”, use “User: X 
 
 <p>Here is a Python class that actively manages the context window ensuring we never overflow or overspend.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">tiktoken</span>
+<p>``python
+import tiktoken</p>
 
-<span class="k">class</span> <span class="nc">TokenBudgetManager</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="sh">"</span><span class="s">gpt-4</span><span class="sh">"</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">8000</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">max_tokens</span> <span class="o">=</span> <span class="n">max_tokens</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="n">tiktoken</span><span class="p">.</span><span class="nf">encoding_for_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-        <span class="c1"># Reserve 1000 tokens for the generated reply
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">safety_margin</span> <span class="o">=</span> <span class="mi">1000</span> 
-        
-    <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">encoding</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
-    
-    <span class="k">def</span> <span class="nf">compress_history</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">history</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Compresses conversation history to fit budget.
-        Strategy: Keep System Prompt + Last N messages. 
-        </span><span class="sh">"""</span>
-        <span class="n">current_tokens</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">preserved_messages</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># 1. Always keep System Prompt (Critical Instructions)
-</span>        <span class="n">system_msg</span> <span class="o">=</span> <span class="nf">next</span><span class="p">((</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">history</span> <span class="k">if</span> <span class="n">m</span><span class="p">[</span><span class="sh">'</span><span class="s">role</span><span class="sh">'</span><span class="p">]</span> <span class="o">==</span> <span class="sh">'</span><span class="s">system</span><span class="sh">'</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">system_msg</span><span class="p">:</span>
-            <span class="n">current_tokens</span> <span class="o">+=</span> <span class="n">self</span><span class="p">.</span><span class="nf">count</span><span class="p">(</span><span class="n">system_msg</span><span class="p">[</span><span class="sh">'</span><span class="s">content</span><span class="sh">'</span><span class="p">])</span>
-            <span class="n">preserved_messages</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">system_msg</span><span class="p">)</span>
-            
-        <span class="c1"># 2. Add recent messages backwards until budget hit
-</span>        <span class="n">budget</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">max_tokens</span> <span class="o">-</span> <span class="n">current_tokens</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">safety_margin</span>
-        
-        <span class="c1"># Reverse excluding system
-</span>        <span class="n">chat_msgs</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">history</span> <span class="k">if</span> <span class="n">m</span><span class="p">[</span><span class="sh">'</span><span class="s">role</span><span class="sh">'</span><span class="p">]</span> <span class="o">!=</span> <span class="sh">'</span><span class="s">system</span><span class="sh">'</span><span class="p">]</span>
-        
-        <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="nf">reversed</span><span class="p">(</span><span class="n">chat_msgs</span><span class="p">):</span>
-            <span class="n">msg_tokens</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">count</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="sh">'</span><span class="s">content</span><span class="sh">'</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">budget</span> <span class="o">-</span> <span class="n">msg_tokens</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">preserved_messages</span><span class="p">.</span><span class="nf">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span> <span class="c1"># Insert after system
-</span>                <span class="n">budget</span> <span class="o">-=</span> <span class="n">msg_tokens</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">break</span> <span class="c1"># Stop adding older messages
-</span>        
-        <span class="k">return</span> <span class="n">preserved_messages</span>
+<p>class TokenBudgetManager:
+ def <strong>init</strong>(self, model=”gpt-4”, max_tokens=8000):
+ self.max_tokens = max_tokens
+ self.encoding = tiktoken.encoding_for_model(model)
+ # Reserve 1000 tokens for the generated reply
+ self.safety_margin = 1000</p>
 
-<span class="c1"># Usage
-</span><span class="n">manager</span> <span class="o">=</span> <span class="nc">TokenBudgetManager</span><span class="p">()</span>
-<span class="n">history</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="p">{</span><span class="sh">"</span><span class="s">role</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">system</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">content</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">You are a concise agent...</span><span class="sh">"</span><span class="p">},</span>
-    <span class="p">{</span><span class="sh">"</span><span class="s">role</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">user</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">content</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">Hello world</span><span class="sh">"</span><span class="p">},</span>
-    <span class="c1"># ... 50 more messages
-</span><span class="p">]</span>
-<span class="n">optimized_history</span> <span class="o">=</span> <span class="n">manager</span><span class="p">.</span><span class="nf">compress_history</span><span class="p">(</span><span class="n">history</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def count(self, text):
+ return len(self.encoding.encode(text))</p>
+
+<p>def compress_history(self, history):
+ “””
+ Compresses conversation history to fit budget.
+ Strategy: Keep System Prompt + Last N messages. 
+ “””
+ current_tokens = 0
+ preserved_messages = []</p>
+
+<p># 1. Always keep System Prompt (Critical Instructions)
+ system_msg = next((m for m in history if m[‘role’] == ‘system’), None)
+ if system_msg:
+ current_tokens += self.count(system_msg[‘content’])
+ preserved_messages.append(system_msg)</p>
+
+<p># 2. Add recent messages backwards until budget hit
+ budget = self.max_tokens - current_tokens - self.safety_margin</p>
+
+<p># Reverse excluding system
+ chat_msgs = [m for m in history if m[‘role’] != ‘system’]</p>
+
+<p>for msg in reversed(chat_msgs):
+ msg_tokens = self.count(msg[‘content’])
+ if budget - msg_tokens &gt;= 0:
+ preserved_messages.insert(1, msg) # Insert after system
+ budget -= msg_tokens
+ else:
+ break # Stop adding older messages</p>
+
+<p>return preserved_messages</p>
+
+<h1 id="usage">Usage</h1>
+<p>manager = TokenBudgetManager()
+history = [
+ {“role”: “system”, “content”: “You are a concise agent…”},
+ {“role”: “user”, “content”: “Hello world”},
+ # … 50 more messages
+]
+optimized_history = manager.compress_history(history)
+``</p>
 
 <hr />
 
@@ -433,7 +434,7 @@ This creates physically dense information blocks, maximizing information-per-tok
 
 <h2 id="9-connections-to-other-topics">9. Connections to Other Topics</h2>
 
-<p>This connects deeply to the <strong>Transfer Learning</strong> theme of Day 46.</p>
+<p>This connects deeply to the <strong>Transfer Learning</strong> theme of .</p>
 <ul>
   <li><strong>Transfer Learning (ML)</strong>: Freezes the backbone to save compute.</li>
   <li><strong>Token Optimization (Agents)</strong>: Freezes/Compresses the System Prompt (the “backbone” of the agent’s personality) to save IO.</li>
@@ -463,7 +464,7 @@ This creates physically dense information blocks, maximizing information-per-tok
 <h2 id="12-key-takeaways">12. Key Takeaways</h2>
 
 <ol>
-  <li><strong>Count your tokens</strong>: Use <code class="language-plaintext highlighter-rouge">tiktoken</code>. Don’t guess. Length $\neq$ Tokens.</li>
+  <li><strong>Count your tokens</strong>: Use <code class="language-plaintext highlighter-rouge">tiktoken</code>. Don’t guess. Length <code class="language-plaintext highlighter-rouge">\neq</code> Tokens.</li>
   <li><strong>Minify everything</strong>: Prompts, Schemas, HTML.</li>
   <li><strong>Manage History</strong>: It’s a sliding window, not an infinite scroll.</li>
   <li><strong>Density is Quality</strong>: Concise prompts often yield smarter agents because the attention mechanism is less diluted.</li>

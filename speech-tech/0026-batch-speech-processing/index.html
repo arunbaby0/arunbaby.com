@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Batch Speech Processing">
     <meta itemprop="description" content="Real-time ASR is hard. Offline ASR is big.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -266,17 +266,18 @@ In Batch ASR (Otter.ai, YouTube Captions), <strong>Accuracy is king</strong>. Yo
 
 <h2 id="high-level-architecture-the-batch-pipeline">High-Level Architecture: The Batch Pipeline</h2>
 
-<pre><code class="language-ascii">+-----------+     +------------+     +-------------+
+<p><code class="language-plaintext highlighter-rouge">ascii
++-----------+ +------------+ +-------------+
 | Raw Audio | --&gt; | Preprocess | --&gt; | Segmentation|
-+-----------+     +------------+     +-------------+
-(MP3/M4A)         (FFMpeg/VAD)       (30s Chunks)
-                                           |
-                                           v
-+-----------+     +------------+     +-------------+
-| Final Txt | &lt;-- | Post-Proc  | &lt;-- | Transcription|
-+-----------+     +------------+     +-------------+
-(SRT/JSON)        (Diarization)      (Whisper/ASR)
-</code></pre>
++-----------+ +------------+ +-------------+
+(MP3/M4A) (FFMpeg/VAD) (30s Chunks)
+ |
+ v
++-----------+ +------------+ +-------------+
+| Final Txt | &lt;-- | Post-Proc | &lt;-- | Transcription|
++-----------+ +------------+ +-------------+
+(SRT/JSON) (Diarization) (Whisper/ASR)
+</code></p>
 
 <h2 id="pipeline-architecture">Pipeline Architecture</h2>
 
@@ -358,24 +359,25 @@ This is solved using <strong>Viterbi Alignment</strong> (HMMs) or <strong>CTC Se
 
 <h2 id="python-example-batch-transcription-with-whisper">Python Example: Batch Transcription with Whisper</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">whisper</span>
+<p>``python
+import whisper</p>
 
-<span class="c1"># Load model (Large-v2 is slow but accurate)
-</span><span class="n">model</span> <span class="o">=</span> <span class="n">whisper</span><span class="p">.</span><span class="nf">load_model</span><span class="p">(</span><span class="sh">"</span><span class="s">large</span><span class="sh">"</span><span class="p">)</span>
+<h1 id="load-model-large-v2-is-slow-but-accurate">Load model (Large-v2 is slow but accurate)</h1>
+<p>model = whisper.load_model(“large”)</p>
 
-<span class="c1"># Transcribe
-# beam_size=5: Better accuracy, slower
-</span><span class="n">result</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">transcribe</span><span class="p">(</span><span class="sh">"</span><span class="s">meeting.mp3</span><span class="sh">"</span><span class="p">,</span> <span class="n">beam_size</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<h1 id="transcribe">Transcribe</h1>
+<h1 id="beam_size5-better-accuracy-slower">beam_size=5: Better accuracy, slower</h1>
+<p>result = model.transcribe(“meeting.mp3”, beam_size=5)</p>
 
-<span class="nf">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">])</span>
+<p>print(result[“text”])</p>
 
-<span class="c1"># Segments with timestamps
-</span><span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="sh">"</span><span class="s">segments</span><span class="sh">"</span><span class="p">]:</span>
-    <span class="n">start</span> <span class="o">=</span> <span class="n">segment</span><span class="p">[</span><span class="sh">"</span><span class="s">start</span><span class="sh">"</span><span class="p">]</span>
-    <span class="n">end</span> <span class="o">=</span> <span class="n">segment</span><span class="p">[</span><span class="sh">"</span><span class="s">end</span><span class="sh">"</span><span class="p">]</span>
-    <span class="n">text</span> <span class="o">=</span> <span class="n">segment</span><span class="p">[</span><span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">]</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">[</span><span class="si">{</span><span class="n">start</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s"> - </span><span class="si">{</span><span class="n">end</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">]: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="segments-with-timestamps">Segments with timestamps</h1>
+<p>for segment in result[“segments”]:
+ start = segment[“start”]
+ end = segment[“end”]
+ text = segment[“text”]
+ print(f”[{start:.2f} - {end:.2f}]: {text}”)
+``</p>
 
 <h2 id="deep-dive-whisper-architecture-the-new-standard">Deep Dive: Whisper Architecture (The New Standard)</h2>
 
@@ -488,10 +490,10 @@ The current state-of-the-art open-source VAD.</p>
 <ol>
   <li>
     <p><strong>Q:</strong> “Why is Whisper better than Wav2Vec 2.0?”
-<strong>A:</strong> Wav2Vec 2.0 is Self-Supervised (needs fine-tuning). Whisper is Weakly Supervised (trained on labeled data). Whisper handles punctuation and casing out-of-the-box.</p>
+ <strong>A:</strong> Wav2Vec 2.0 is Self-Supervised (needs fine-tuning). Whisper is Weakly Supervised (trained on labeled data). Whisper handles punctuation and casing out-of-the-box.</p>
   </li>
   <li><strong>Q:</strong> “How do you handle ‘Hallucinations’ in Whisper?”
-<strong>A:</strong>
+ <strong>A:</strong>
     <ul>
       <li><strong>Beam Search:</strong> Increase beam size.</li>
       <li><strong>Temperature Fallback:</strong> If log-prob is low, increase temperature.</li>
@@ -499,7 +501,7 @@ The current state-of-the-art open-source VAD.</p>
     </ul>
   </li>
   <li><strong>Q:</strong> “What is the difference between Speaker Diarization and Speaker Identification?”
-<strong>A:</strong>
+ <strong>A:</strong>
     <ul>
       <li><strong>Diarization:</strong> “Who spoke when?” (Speaker A, Speaker B). No names.</li>
       <li><strong>Identification:</strong> “Is this Elon Musk?” (Matches against a database of voice prints).</li>
@@ -620,17 +622,17 @@ The current state-of-the-art open-source VAD.</p>
 <ol>
   <li>
     <p><strong>Q:</strong> “How does CTC Loss handle alignment?”
-<strong>A:</strong> It introduces a “blank” token <code class="language-plaintext highlighter-rouge">&lt;eps&gt;</code>. <code class="language-plaintext highlighter-rouge">c-a-t</code> aligns to <code class="language-plaintext highlighter-rouge">c &lt;eps&gt; a &lt;eps&gt; t</code>. It sums over all possible alignments that produce the target text.</p>
+ <strong>A:</strong> It introduces a “blank” token <code class="language-plaintext highlighter-rouge">&lt;eps&gt;</code>. <code class="language-plaintext highlighter-rouge">c-a-t</code> aligns to <code class="language-plaintext highlighter-rouge">c &lt;eps&gt; a &lt;eps&gt; t</code>. It sums over all possible alignments that produce the target text.</p>
   </li>
   <li><strong>Q:</strong> “What is the difference between Online and Offline Diarization?”
-<strong>A:</strong>
+ <strong>A:</strong>
     <ul>
       <li><strong>Online:</strong> Must decide “Who is speaking?” <em>now</em>. Hard.</li>
       <li><strong>Offline:</strong> Can look at the whole file. Can run clustering (Spectral/AHC) on all embeddings. Much better accuracy.</li>
     </ul>
   </li>
   <li><strong>Q:</strong> “How do you optimize ASR for a specific domain (e.g., Medical)?”
-<strong>A:</strong>
+ <strong>A:</strong>
     <ul>
       <li><strong>Fine-tuning:</strong> Train the acoustic model on medical audio.</li>
       <li><strong>Language Model Fusion:</strong> Train a text-only LM on medical journals. Fuse it with the ASR output during decoding (Shallow Fusion).</li>
@@ -845,7 +847,7 @@ We can use the biggest models, look at the entire context, and perform complex p
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          19 minute read
+          20 minute read
         
       </span>
     

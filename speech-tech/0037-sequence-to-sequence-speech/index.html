@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Sequence-to-Sequence Speech Models">
     <meta itemprop="description" content="“From waveforms to words, and back again.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -281,15 +281,15 @@
 </ol>
 
 <p><strong>Attention:</strong>
-\(\alpha_t = \text{softmax}(e_t)\)
-\(e_{t,i} = \text{score}(s_{t-1}, h_i)\)
-\(c_t = \sum_i \alpha_{t,i} h_i\)</p>
+<code class="language-plaintext highlighter-rouge">\alpha_t = \text{softmax}(e_t)</code>
+<code class="language-plaintext highlighter-rouge">e_{t,i} = \text{score}(s_{t-1}, h_i)</code>
+<code class="language-plaintext highlighter-rouge">c_t = \sum_i \alpha_{t,i} h_i</code></p>
 
 <p>Where:</p>
 <ul>
-  <li>$s_{t-1}$: Previous decoder state.</li>
-  <li>$h_i$: Encoder hidden state at time $i$.</li>
-  <li>$c_t$: Context vector (weighted sum of encoder states).</li>
+  <li><code class="language-plaintext highlighter-rouge">s_{t-1}</code>: Previous decoder state.</li>
+  <li><code class="language-plaintext highlighter-rouge">h_i</code>: Encoder hidden state at time <code class="language-plaintext highlighter-rouge">i</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">c_t</code>: Context vector (weighted sum of encoder states).</li>
 </ul>
 
 <h2 id="3-tts-tacotron-2">3. TTS: Tacotron 2</h2>
@@ -360,7 +360,7 @@
 
 <h3 id="3-long-sequences">3. Long Sequences</h3>
 <ul>
-  <li>Attention is $O(N^2)$ in memory.</li>
+  <li>Attention is O(N^2) in memory.</li>
   <li><strong>Fix:</strong> Chunked attention, or use CTC for ASR.</li>
 </ul>
 
@@ -416,23 +416,25 @@
 
 <p>In ASR, attention should be <strong>monotonic</strong> (left-to-right).</p>
 
-<p><strong>Good Alignment:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Audio frames:  [a1][a2][a3][a4][a5]
-Text:          [ h ][ e ][ l ][ l ][ o ]
-Attention:     ████
-               ░░░░████
-                   ░░░░████
-                       ░░░░████
-                           ░░░░████
-</code></pre></div></div>
+<p><strong>Good Alignment:</strong>
+<code class="language-plaintext highlighter-rouge">
+Audio frames: [a1][a2][a3][a4][a5]
+Text: [ h ][ e ][ l ][ l ][ o ]
+Attention: ████
+ ░░░░████
+ ░░░░████
+ ░░░░████
+ ░░░░████
+</code></p>
 
-<p><strong>Bad Alignment (Skipping):</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Audio frames:  [a1][a2][a3][a4][a5]
-Text:          [ h ][ e ][ l ][ l ][ o ]
-Attention:     ████
-               ░░░░████
-                           ░░░░████  ← Skipped a3!
-</code></pre></div></div>
+<p><strong>Bad Alignment (Skipping):</strong>
+<code class="language-plaintext highlighter-rouge">
+Audio frames: [a1][a2][a3][a4][a5]
+Text: [ h ][ e ][ l ][ l ][ o ]
+Attention: ████
+ ░░░░████
+ ░░░░████ ← Skipped a3!
+</code></p>
 
 <p><strong>Fix:</strong> Guided attention loss forces diagonal alignment early in training.</p>
 
@@ -443,7 +445,7 @@ Attention:     ████
 <p><strong>Monotonic Chunkwise Attention (MoChA):</strong></p>
 <ol>
   <li>At each decoder step, decide: “Should I move to the next audio chunk?”</li>
-  <li>Use a sigmoid gate: $p_{\text{move}} = \sigma(g(h_t, s_{t-1}))$</li>
+  <li>Use a sigmoid gate: <code class="language-plaintext highlighter-rouge">p_{\text{move}} = \sigma(g(h_t, s_{t-1}))</code></li>
   <li>If yes, attend to next chunk. If no, stay.</li>
 </ol>
 
@@ -548,53 +550,54 @@ Attention:     ████
 
 <h2 id="15-code-simple-seq2seq-asr">15. Code: Simple Seq2Seq ASR</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">Seq2SeqASR</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="c1"># Encoder: Bi-LSTM
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTM</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">,</span> <span class="n">num_layers</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> 
-                                <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">bidirectional</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        
-        <span class="c1"># Attention
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">attention</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">hidden_dim</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        
-        <span class="c1"># Decoder: LSTM
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">decoder</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTM</span><span class="p">(</span><span class="n">vocab_size</span> <span class="o">+</span> <span class="n">hidden_dim</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">,</span> 
-                                <span class="n">num_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        
-        <span class="c1"># Output projection
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">)</span>
-        
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_features</span><span class="p">,</span> <span class="n">text_input</span><span class="p">):</span>
-        <span class="c1"># Encode audio
-</span>        <span class="n">encoder_out</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span><span class="n">audio_features</span><span class="p">)</span>  <span class="c1"># (B, T, 2*H)
-</span>        
-        <span class="c1"># Decode
-</span>        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">hidden</span> <span class="o">=</span> <span class="bp">None</span>
-        
-        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">text_input</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)):</span>
-            <span class="c1"># Compute attention
-</span>            <span class="n">attn_scores</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">attention</span><span class="p">(</span><span class="n">encoder_out</span><span class="p">).</span><span class="nf">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (B, T)
-</span>            <span class="n">attn_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">attn_scores</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (B, T)
-</span>            <span class="n">context</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">bmm</span><span class="p">(</span><span class="n">attn_weights</span><span class="p">.</span><span class="nf">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">encoder_out</span><span class="p">)</span>  <span class="c1"># (B, 1, 2*H)
-</span>            
-            <span class="c1"># Decoder input: previous char + context
-</span>            <span class="n">decoder_input</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span><span class="n">text_input</span><span class="p">[:,</span> <span class="n">t</span><span class="p">:</span><span class="n">t</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">context</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-            
-            <span class="c1"># Decoder step
-</span>            <span class="n">decoder_out</span><span class="p">,</span> <span class="n">hidden</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">decoder</span><span class="p">(</span><span class="n">decoder_input</span><span class="p">,</span> <span class="n">hidden</span><span class="p">)</span>
-            
-            <span class="c1"># Predict next char
-</span>            <span class="n">logits</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">fc</span><span class="p">(</span><span class="n">decoder_out</span><span class="p">)</span>
-            <span class="n">outputs</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-</code></pre></div></div>
+<p>class Seq2SeqASR(nn.Module):
+ def <strong>init</strong>(self, input_dim, hidden_dim, vocab_size):
+ super().<strong>init</strong>()</p>
+
+<p># Encoder: Bi-LSTM
+ self.encoder = nn.LSTM(input_dim, hidden_dim, num_layers=3, 
+ batch_first=True, bidirectional=True)</p>
+
+<p># Attention
+ self.attention = nn.Linear(hidden_dim * 2, 1)</p>
+
+<p># Decoder: LSTM
+ self.decoder = nn.LSTM(vocab_size + hidden_dim * 2, hidden_dim, 
+ num_layers=2, batch_first=True)</p>
+
+<p># Output projection
+ self.fc = nn.Linear(hidden_dim, vocab_size)</p>
+
+<p>def forward(self, audio_features, text_input):
+ # Encode audio
+ encoder_out, _ = self.encoder(audio_features) # (B, T, 2*H)</p>
+
+<p># Decode
+ outputs = []
+ hidden = None</p>
+
+<p>for t in range(text_input.size(1)):
+ # Compute attention
+ attn_scores = self.attention(encoder_out).squeeze(-1) # (B, T)
+ attn_weights = torch.softmax(attn_scores, dim=1) # (B, T)
+ context = torch.bmm(attn_weights.unsqueeze(1), encoder_out) # (B, 1, 2*H)</p>
+
+<p># Decoder input: previous char + context
+ decoder_input = torch.cat([text_input[:, t:t+1], context], dim=-1)</p>
+
+<p># Decoder step
+ decoder_out, hidden = self.decoder(decoder_input, hidden)</p>
+
+<p># Predict next char
+ logits = self.fc(decoder_out)
+ outputs.append(logits)</p>
+
+<p>return torch.cat(outputs, dim=1)
+``</p>
 
 <h2 id="16-production-considerations">16. Production Considerations</h2>
 
@@ -629,7 +632,7 @@ Attention:     ████
   <li><strong>Connectionist Temporal Classification.</strong></li>
   <li>First “End-to-End” loss.</li>
   <li>Allowed predicting sequences shorter than input without explicit alignment.</li>
-  <li><strong>Cons:</strong> Conditional independence assumption (output at time $t$ depends only on input, not previous outputs).</li>
+  <li><strong>Cons:</strong> Conditional independence assumption (output at time <code class="language-plaintext highlighter-rouge">t</code> depends only on input, not previous outputs).</li>
 </ul>
 
 <p><strong>4. LAS (2016):</strong></p>
@@ -655,30 +658,27 @@ Attention:     ████
 
 <h2 id="18-deep-dive-connectionist-temporal-classification-ctc">18. Deep Dive: Connectionist Temporal Classification (CTC)</h2>
 
-<p><strong>Problem:</strong> Audio has $T$ frames (e.g., 1000). Text has $L$ characters (e.g., 50). $T \gg L$. How do we map them?</p>
+<p><strong>Problem:</strong> Audio has <code class="language-plaintext highlighter-rouge">T</code> frames (e.g., 1000). Text has <code class="language-plaintext highlighter-rouge">L</code> characters (e.g., 50). <code class="language-plaintext highlighter-rouge">T \gg L</code>. How do we map them?</p>
 
 <p><strong>CTC Solution:</strong></p>
 <ul>
-  <li>Introduce a <strong>blank token</strong> $\epsilon$.</li>
-  <li>Output sequence length is $T$.</li>
-  <li><strong>Collapse:</strong> Remove repeats and blanks.
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">h h e e l l l l o</code> → <code class="language-plaintext highlighter-rouge">hello</code></li>
-      <li><code class="language-plaintext highlighter-rouge">h h \epsilon e e l l \epsilon l l o</code> → <code class="language-plaintext highlighter-rouge">hello</code></li>
-    </ul>
-  </li>
+  <li>Introduce a <strong>blank token</strong> <code class="language-plaintext highlighter-rouge">\epsilon</code>.</li>
+  <li>Output sequence length is <code class="language-plaintext highlighter-rouge">T</code>.</li>
+  <li><strong>Collapse:</strong> Remove repeats and blanks.</li>
+  <li><code class="language-plaintext highlighter-rouge">h h e e l l l l o</code> → <code class="language-plaintext highlighter-rouge">hello</code></li>
+  <li><code class="language-plaintext highlighter-rouge">h h \epsilon e e l l \epsilon l l o</code> → <code class="language-plaintext highlighter-rouge">hello</code></li>
 </ul>
 
 <p><strong>Loss Function:</strong>
-\(P(Y|X) = \sum_{A \in \mathcal{B}^{-1}(Y)} P(A|X)\)</p>
+<code class="language-plaintext highlighter-rouge">P(Y|X) = \sum_{A \in \mathcal{B}^{-1}(Y)} P(A|X)</code></p>
 <ul>
-  <li>Sum over all valid alignments $A$ that collapse to $Y$.</li>
+  <li>Sum over all valid alignments <code class="language-plaintext highlighter-rouge">A</code> that collapse to <code class="language-plaintext highlighter-rouge">Y</code>.</li>
   <li>Computed efficiently using <strong>Dynamic Programming</strong> (Forward-Backward algorithm).</li>
 </ul>
 
 <p><strong>Pros:</strong></p>
 <ul>
-  <li>Fast inference ($O(1)$ per step).</li>
+  <li>Fast inference (O(1) per step).</li>
   <li>Streaming friendly.</li>
 </ul>
 
@@ -691,17 +691,17 @@ Attention:     ████
 
 <p><strong>Architecture:</strong></p>
 <ol>
-  <li><strong>Encoder (Audio):</strong> Processes audio frames $x_t$. Produces $h_t^{enc}$.</li>
-  <li><strong>Prediction Network (Text):</strong> Processes previous non-blank output $y_{u-1}$. Produces $h_u^{pred}$. (Like an LM).</li>
+  <li><strong>Encoder (Audio):</strong> Processes audio frames <code class="language-plaintext highlighter-rouge">x_t</code>. Produces <code class="language-plaintext highlighter-rouge">h_t^{enc}</code>.</li>
+  <li><strong>Prediction Network (Text):</strong> Processes previous non-blank output <code class="language-plaintext highlighter-rouge">y_{u-1}</code>. Produces <code class="language-plaintext highlighter-rouge">h_u^{pred}</code>. (Like an LM).</li>
   <li><strong>Joint Network:</strong> Combines them.
-\(z_{t,u} = \text{ReLU}(W_{enc} h_t^{enc} + W_{pred} h_u^{pred})\)
-\(P(y|t,u) = \text{softmax}(W_{out} z_{t,u})\)</li>
+ <code class="language-plaintext highlighter-rouge">z_{t,u} = \text{ReLU}(W_{enc} h_t^{enc} + W_{pred} h_u^{pred})</code>
+ <code class="language-plaintext highlighter-rouge">P(y|t,u) = \text{softmax}(W_{out} z_{t,u})</code></li>
 </ol>
 
 <p><strong>Inference (Greedy):</strong></p>
 <ul>
-  <li>If output is non-blank ($y$), feed to Prediction Network, increment $u$. Stay at audio frame $t$.</li>
-  <li>If output is blank ($\epsilon$), move to next audio frame $t+1$.</li>
+  <li>If output is non-blank (<code class="language-plaintext highlighter-rouge">y</code>), feed to Prediction Network, increment <code class="language-plaintext highlighter-rouge">u</code>. Stay at audio frame <code class="language-plaintext highlighter-rouge">t</code>.</li>
+  <li>If output is blank (<code class="language-plaintext highlighter-rouge">\epsilon</code>), move to next audio frame <code class="language-plaintext highlighter-rouge">t+1</code>.</li>
 </ul>
 
 <p><strong>Why it wins:</strong></p>
@@ -724,13 +724,10 @@ Attention:     ████
 <ul>
   <li><strong>Macaron Style:</strong> Feed-Forward -&gt; Multi-Head Attention -&gt; Conv Module -&gt; Feed-Forward.</li>
   <li><strong>Conv Module:</strong> Pointwise Conv -&gt; Gated Linear Unit (GLU) -&gt; Depthwise Conv -&gt; BatchNorm -&gt; Swish -&gt; Pointwise Conv.</li>
-  <li><strong>Why:</strong>
-    <ul>
-      <li><strong>CNNs</strong> capture local features (formants, transitions).</li>
-      <li><strong>Transformers</strong> capture global semantics.</li>
-      <li><strong>Result:</strong> SOTA on LibriSpeech.</li>
-    </ul>
-  </li>
+  <li><strong>Why:</strong></li>
+  <li><strong>CNNs</strong> capture local features (formants, transitions).</li>
+  <li><strong>Transformers</strong> capture global semantics.</li>
+  <li><strong>Result:</strong> SOTA on LibriSpeech.</li>
 </ul>
 
 <h2 id="21-deep-dive-fastspeech-2-non-autoregressive-tts">21. Deep Dive: FastSpeech 2 (Non-Autoregressive TTS)</h2>
@@ -772,9 +769,9 @@ Attention:     ████
 
 <p><strong>Architecture:</strong></p>
 <ul>
-  <li><strong>Posterior Encoder:</strong> Encodes linear spectrogram into latent $z$.</li>
-  <li><strong>Prior Encoder:</strong> Predicts distribution of $z$ from text (conditioned on alignment).</li>
-  <li><strong>Decoder (Generator):</strong> Transforms $z$ into waveform (HiFi-GAN style).</li>
+  <li><strong>Posterior Encoder:</strong> Encodes linear spectrogram into latent <code class="language-plaintext highlighter-rouge">z</code>.</li>
+  <li><strong>Prior Encoder:</strong> Predicts distribution of <code class="language-plaintext highlighter-rouge">z</code> from text (conditioned on alignment).</li>
+  <li><strong>Decoder (Generator):</strong> Transforms <code class="language-plaintext highlighter-rouge">z</code> into waveform (HiFi-GAN style).</li>
   <li><strong>Stochastic Duration Predictor:</strong> Models duration uncertainty.</li>
 </ul>
 
@@ -820,7 +817,7 @@ Attention:     ████
 
 <p><strong>Wait-k Policy:</strong></p>
 <ul>
-  <li>MT model waits for $k$ words before translating.</li>
+  <li>MT model waits for <code class="language-plaintext highlighter-rouge">k</code> words before translating.</li>
   <li>Balances context (accuracy) vs latency.</li>
 </ul>
 
@@ -832,14 +829,11 @@ Attention:     ████
 <ul>
   <li>680,000 hours of web audio.</li>
   <li><strong>Weak Supervision:</strong> Transcripts from ASR systems, subtitles (noisy).</li>
-  <li><strong>Multitask:</strong>
-    <ul>
-      <li>English Transcription.</li>
-      <li>Any-to-English Translation.</li>
-      <li>Language Identification.</li>
-      <li>Voice Activity Detection.</li>
-    </ul>
-  </li>
+  <li><strong>Multitask:</strong></li>
+  <li>English Transcription.</li>
+  <li>Any-to-English Translation.</li>
+  <li>Language Identification.</li>
+  <li>Voice Activity Detection.</li>
 </ul>
 
 <p><strong>Architecture:</strong></p>
@@ -868,13 +862,10 @@ Attention:     ████
 <p><strong>Architecture:</strong></p>
 <ul>
   <li><strong>Conformer</strong> (2 Billion parameters).</li>
-  <li><strong>MOST (Multi-Objective Supervised Training):</strong>
-    <ul>
-      <li><strong>BEST-RQ:</strong> Self-supervised loss (BERT-style on audio).</li>
-      <li><strong>Text-Injection:</strong> Train on text-only data (using shared encoder layers).</li>
-      <li><strong>ASR:</strong> Supervised loss on labeled audio.</li>
-    </ul>
-  </li>
+  <li><strong>MOST (Multi-Objective Supervised Training):</strong></li>
+  <li><strong>BEST-RQ:</strong> Self-supervised loss (BERT-style on audio).</li>
+  <li><strong>Text-Injection:</strong> Train on text-only data (using shared encoder layers).</li>
+  <li><strong>ASR:</strong> Supervised loss on labeled audio.</li>
 </ul>
 
 <p><strong>Result:</strong></p>
@@ -887,13 +878,10 @@ Attention:     ████
 
 <p><strong>ASR:</strong></p>
 <ul>
-  <li><strong>WER (Word Error Rate):</strong> $\frac{S + D + I}{N}$
-    <ul>
-      <li>S: Substitutions, D: Deletions, I: Insertions, N: Total words.</li>
-    </ul>
-  </li>
+  <li><strong>WER (Word Error Rate):</strong> <code class="language-plaintext highlighter-rouge">\frac{S + D + I}{N}</code></li>
+  <li>S: Substitutions, D: Deletions, I: Insertions, N: Total words.</li>
   <li><strong>CER (Character Error Rate):</strong> For languages without spaces (Chinese).</li>
-  <li><strong>RTF (Real-Time Factor):</strong> $\frac{\text{Processing Time}}{\text{Audio Duration}}$. RTF &lt; 1 means real-time.</li>
+  <li><strong>RTF (Real-Time Factor):</strong> <code class="language-plaintext highlighter-rouge">\frac{\text{Processing Time}}{\text{Audio Duration}}</code>. RTF &lt; 1 means real-time.</li>
 </ul>
 
 <p><strong>TTS:</strong></p>
@@ -909,44 +897,45 @@ Attention:     ████
 
 <h2 id="27-code-implementing-beam-search-for-seq2seq">27. Code: Implementing Beam Search for Seq2Seq</h2>
 
-<p>Greedy decoding (pick max prob) is suboptimal. Beam search explores $k$ paths.</p>
+<p>Greedy decoding (pick max prob) is suboptimal. Beam search explores <code class="language-plaintext highlighter-rouge">k</code> paths.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">beam_search_decoder</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">encoder_out</span><span class="p">,</span> <span class="n">beam_width</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
-    <span class="c1"># Start with [SOS] token
-</span>    <span class="c1"># Beam: list of (sequence, score, hidden_state)
-</span>    <span class="n">start_token</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">vocab</span><span class="p">[</span><span class="sh">'</span><span class="s">&lt;sos&gt;</span><span class="sh">'</span><span class="p">]</span>
-    <span class="n">beam</span> <span class="o">=</span> <span class="p">[([</span><span class="n">start_token</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">)]</span>
-    
-    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">max_len</span><span class="p">):</span>
-        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">seq</span><span class="p">,</span> <span class="n">score</span><span class="p">,</span> <span class="n">hidden</span> <span class="ow">in</span> <span class="n">beam</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">seq</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">model</span><span class="p">.</span><span class="n">vocab</span><span class="p">[</span><span class="sh">'</span><span class="s">&lt;eos&gt;</span><span class="sh">'</span><span class="p">]:</span>
-                <span class="n">candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">seq</span><span class="p">,</span> <span class="n">score</span><span class="p">,</span> <span class="n">hidden</span><span class="p">))</span>
-                <span class="k">continue</span>
-                
-            <span class="c1"># Predict next token
-</span>            <span class="n">last_token</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([[</span><span class="n">seq</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]])</span>
-            <span class="n">output</span><span class="p">,</span> <span class="n">new_hidden</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">decoder</span><span class="p">(</span><span class="n">last_token</span><span class="p">,</span> <span class="n">hidden</span><span class="p">,</span> <span class="n">encoder_out</span><span class="p">)</span>
-            <span class="n">log_probs</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">log_softmax</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-            
-            <span class="c1"># Get top k
-</span>            <span class="n">topk_probs</span><span class="p">,</span> <span class="n">topk_ids</span> <span class="o">=</span> <span class="n">log_probs</span><span class="p">.</span><span class="nf">topk</span><span class="p">(</span><span class="n">beam_width</span><span class="p">)</span>
-            
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">beam_width</span><span class="p">):</span>
-                <span class="n">token</span> <span class="o">=</span> <span class="n">topk_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">].</span><span class="nf">item</span><span class="p">()</span>
-                <span class="n">prob</span> <span class="o">=</span> <span class="n">topk_probs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">].</span><span class="nf">item</span><span class="p">()</span>
-                <span class="n">candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">seq</span> <span class="o">+</span> <span class="p">[</span><span class="n">token</span><span class="p">],</span> <span class="n">score</span> <span class="o">+</span> <span class="n">prob</span><span class="p">,</span> <span class="n">new_hidden</span><span class="p">))</span>
-        
-        <span class="c1"># Select top k candidates
-</span>        <span class="n">beam</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)[:</span><span class="n">beam_width</span><span class="p">]</span>
-        
-        <span class="c1"># Check if all finished
-</span>        <span class="k">if</span> <span class="nf">all</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">model</span><span class="p">.</span><span class="n">vocab</span><span class="p">[</span><span class="sh">'</span><span class="s">&lt;eos&gt;</span><span class="sh">'</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">beam</span><span class="p">):</span>
-            <span class="k">break</span>
-            
-    <span class="k">return</span> <span class="n">beam</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="c1"># Return best sequence
-</span></code></pre></div></div>
+<p>``python
+def beam_search_decoder(model, encoder_out, beam_width=3, max_len=50):
+ # Start with [SOS] token
+ # Beam: list of (sequence, score, hidden_state)
+ start_token = model.vocab[‘<sos>']
+ beam = [([start_token], 0.0, None)]</sos></p>
+
+<p>for _ in range(max_len):
+ candidates = []</p>
+
+<p>for seq, score, hidden in beam:
+ if seq[-1] == model.vocab[‘<eos>']:
+ candidates.append((seq, score, hidden))
+ continue</eos></p>
+
+<p># Predict next token
+ last_token = torch.tensor([[seq[-1]]])
+ output, new_hidden = model.decoder(last_token, hidden, encoder_out)
+ log_probs = torch.log_softmax(output, dim=-1)</p>
+
+<p># Get top k
+ topk_probs, topk_ids = log_probs.topk(beam_width)</p>
+
+<p>for i in range(beam_width):
+ token = topk_ids[0][i].item()
+ prob = topk_probs[0][i].item()
+ candidates.append((seq + [token], score + prob, new_hidden))</p>
+
+<p># Select top k candidates
+ beam = sorted(candidates, key=lambda x: x[1], reverse=True)[:beam_width]</p>
+
+<p># Check if all finished
+ if all(c[0][-1] == model.vocab[‘<eos>'] for c in beam):
+ break</eos></p>
+
+<p>return beam[0][0] # Return best sequence
+``</p>
 
 <h2 id="28-production-serving-speech-models-with-triton">28. Production: Serving Speech Models with Triton</h2>
 
@@ -1088,7 +1077,7 @@ Attention:     ████
 <ul>
   <li><strong>Data Imbalance:</strong> English has 1M hours, Swahili has 100.</li>
   <li><strong>Script Diversity:</strong> Latin, Cyrillic, Chinese, Arabic.</li>
-  <li><strong>Phonetic Overlap:</strong> “P” in English $\neq$ “P” in French.</li>
+  <li><strong>Phonetic Overlap:</strong> “P” in English <code class="language-plaintext highlighter-rouge">\neq</code> “P” in French.</li>
 </ul>
 
 <p><strong>Solutions:</strong></p>
@@ -1096,8 +1085,8 @@ Attention:     ████
   <li><strong>Language ID Token:</strong> <code class="language-plaintext highlighter-rouge">&lt;|en|&gt;</code>, <code class="language-plaintext highlighter-rouge">&lt;|fr|&gt;</code>.</li>
   <li><strong>Shared Vocabulary:</strong> SentencePiece (BPE) trained on all languages.</li>
   <li><strong>Balancing Sampling:</strong> Up-sample low-resource languages during training.
-\(p_l \propto (\frac{N_l}{N_{total}})^\alpha\)
-where $\alpha &lt; 1$ (e.g., 0.3) flattens the distribution.</li>
+ <code class="language-plaintext highlighter-rouge">p_l \propto (\frac{N_l}{N_{total}})^\alpha</code>
+ where <code class="language-plaintext highlighter-rouge">\alpha &lt; 1</code> (e.g., 0.3) flattens the distribution.</li>
   <li><strong>Adapter Modules:</strong> Small, language-specific layers inserted into the frozen giant model.</li>
 </ol>
 
@@ -1115,11 +1104,8 @@ where $\alpha &lt; 1$ (e.g., 0.3) flattens the distribution.</li>
 <p><strong>Architecture:</strong></p>
 <ul>
   <li><strong>Encoder:</strong> Pre-trained Wav2Vec 2.0.</li>
-  <li><strong>Decoder:</strong> Predicts semantic frame directly.
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">[INTENT: PlayMusic] [ARTIST: The Beatles] [GENRE: Rock]</code></li>
-    </ul>
-  </li>
+  <li><strong>Decoder:</strong> Predicts semantic frame directly.</li>
+  <li><code class="language-plaintext highlighter-rouge">[INTENT: PlayMusic] [ARTIST: The Beatles] [GENRE: Rock]</code></li>
 </ul>
 
 <p><strong>Challenges:</strong></p>
@@ -1132,24 +1118,25 @@ where $\alpha &lt; 1$ (e.g., 0.3) flattens the distribution.</li>
 
 <p>Visualizing attention maps is the best way to debug Seq2Seq models.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-<span class="kn">import</span> <span class="n">seaborn</span> <span class="k">as</span> <span class="n">sns</span>
+<p>``python
+import matplotlib.pyplot as plt
+import seaborn as sns</p>
 
-<span class="k">def</span> <span class="nf">plot_attention</span><span class="p">(</span><span class="n">attention_matrix</span><span class="p">,</span> <span class="n">input_text</span><span class="p">,</span> <span class="n">output_text</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    attention_matrix: (Output_Len, Input_Len) numpy array
-    </span><span class="sh">"""</span>
-    <span class="n">plt</span><span class="p">.</span><span class="nf">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
-    <span class="n">sns</span><span class="p">.</span><span class="nf">heatmap</span><span class="p">(</span><span class="n">attention_matrix</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="sh">'</span><span class="s">viridis</span><span class="sh">'</span><span class="p">,</span> 
-                <span class="n">xticklabels</span><span class="o">=</span><span class="n">input_text</span><span class="p">,</span> <span class="n">yticklabels</span><span class="o">=</span><span class="n">output_text</span><span class="p">)</span>
-    <span class="n">plt</span><span class="p">.</span><span class="nf">xlabel</span><span class="p">(</span><span class="sh">'</span><span class="s">Encoder Input</span><span class="sh">'</span><span class="p">)</span>
-    <span class="n">plt</span><span class="p">.</span><span class="nf">ylabel</span><span class="p">(</span><span class="sh">'</span><span class="s">Decoder Output</span><span class="sh">'</span><span class="p">)</span>
-    <span class="n">plt</span><span class="p">.</span><span class="nf">show</span><span class="p">()</span>
+<p>def plot_attention(attention_matrix, input_text, output_text):
+ “””
+ attention_matrix: (Output_Len, Input_Len) numpy array
+ “””
+ plt.figure(figsize=(10, 8))
+ sns.heatmap(attention_matrix, cmap=’viridis’, 
+ xticklabels=input_text, yticklabels=output_text)
+ plt.xlabel(‘Encoder Input’)
+ plt.ylabel(‘Decoder Output’)
+ plt.show()</p>
 
-<span class="c1"># Example usage
-# attn = model.get_attention_weights(...)
-# plot_attention(attn, audio_frames, predicted_words)
-</span></code></pre></div></div>
+<h1 id="example-usage">Example usage</h1>
+<h1 id="attn--modelget_attention_weights">attn = model.get_attention_weights(…)</h1>
+<h1 id="plot_attentionattn-audio_frames-predicted_words">plot_attention(attn, audio_frames, predicted_words)</h1>
+<p>``</p>
 
 <p><strong>What to look for:</strong></p>
 <ul>
@@ -1161,7 +1148,7 @@ where $\alpha &lt; 1$ (e.g., 0.3) flattens the distribution.</li>
 
 <h2 id="35-deep-dive-handling-long-form-audio">35. Deep Dive: Handling Long-Form Audio</h2>
 
-<p>Standard Transformers have $O(N^2)$ attention complexity. 30s audio = 1500 frames. 1 hour = 180,000 frames.</p>
+<p>Standard Transformers have O(N^2) attention complexity. 30s audio = 1500 frames. 1 hour = 180,000 frames.</p>
 
 <p><strong>Strategies:</strong></p>
 <ol>
@@ -1182,7 +1169,7 @@ where $\alpha &lt; 1$ (e.g., 0.3) flattens the distribution.</li>
   <li><strong>Sparse Attention (BigBird / Longformer):</strong>
     <ul>
       <li>Attend only to local window + global tokens.</li>
-      <li>$O(N)$ complexity.</li>
+      <li>O(N) complexity.</li>
     </ul>
   </li>
   <li><strong>Block-Processing (Emformer):</strong>
@@ -1199,13 +1186,10 @@ where $\alpha &lt; 1$ (e.g., 0.3) flattens the distribution.</li>
   <li>Treat audio tokens and text tokens as the same thing.</li>
   <li><strong>Tokenizer:</strong> SoundStream / EnCodec (Neural Audio Codec).</li>
   <li><strong>Model:</strong> Decoder-only Transformer (GPT).</li>
-  <li><strong>Training:</strong>
-    <ul>
-      <li>Text-only data (Web).</li>
-      <li>Audio-only data (Radio).</li>
-      <li>Paired data (ASR).</li>
-    </ul>
-  </li>
+  <li><strong>Training:</strong></li>
+  <li>Text-only data (Web).</li>
+  <li>Audio-only data (Radio).</li>
+  <li>Paired data (ASR).</li>
 </ul>
 
 <p><strong>Capabilities:</strong></p>
@@ -1242,8 +1226,8 @@ where $\alpha &lt; 1$ (e.g., 0.3) flattens the distribution.</li>
 
 <p><strong>1. Self-Attention Complexity:</strong></p>
 <ul>
-  <li><strong>RNN:</strong> $O(N)$ sequential operations. Cannot parallelize.</li>
-  <li><strong>Transformer:</strong> $O(1)$ sequential operations (parallelizable). $O(N^2)$ memory.</li>
+  <li><strong>RNN:</strong> O(N) sequential operations. Cannot parallelize.</li>
+  <li><strong>Transformer:</strong> O(1) sequential operations (parallelizable). O(N^2) memory.</li>
   <li><strong>Benefit:</strong> We can train on 1000 GPUs efficiently.</li>
 </ul>
 
@@ -1251,19 +1235,16 @@ where $\alpha &lt; 1$ (e.g., 0.3) flattens the distribution.</li>
 <ul>
   <li>Text uses absolute sinusoidal encodings.</li>
   <li><strong>Speech Problem:</strong> Audio length varies wildly. 10s vs 10m.</li>
-  <li><strong>Solution:</strong> <strong>Relative Positional Encoding.</strong>
-    <ul>
-      <li>Instead of adding $P_i$ to input $X_i$, add a bias $b_{i-j}$ to the attention score $A_{ij}$.</li>
-      <li>Allows the model to generalize to audio lengths unseen during training.</li>
-    </ul>
-  </li>
+  <li><strong>Solution:</strong> <strong>Relative Positional Encoding.</strong></li>
+  <li>Instead of adding <code class="language-plaintext highlighter-rouge">P_i</code> to input <code class="language-plaintext highlighter-rouge">X_i</code>, add a bias <code class="language-plaintext highlighter-rouge">b_{i-j}</code> to the attention score <code class="language-plaintext highlighter-rouge">A_{ij}</code>.</li>
+  <li>Allows the model to generalize to audio lengths unseen during training.</li>
 </ul>
 
 <p><strong>3. Subsampling:</strong></p>
 <ul>
   <li>Audio is high-frequency (100 frames/sec). Text is low-frequency (3 chars/sec).</li>
   <li><strong>Conv Subsampling:</strong> First 2 layers of Encoder are strided Convolutions (stride 2x2 = 4x reduction).</li>
-  <li>Reduces sequence length $N \to N/4$. Reduces attention cost $N^2 \to (N/4)^2 = N^2/16$.</li>
+  <li>Reduces sequence length <code class="language-plaintext highlighter-rouge">N \to N/4</code>. Reduces attention cost <code class="language-plaintext highlighter-rouge">N^2 \to (N/4)^2 = N^2/16</code>.</li>
 </ul>
 
 <h2 id="39-deep-dive-troubleshooting-seq2seq-models">39. Deep Dive: Troubleshooting Seq2Seq Models</h2>
@@ -1272,36 +1253,29 @@ where $\alpha &lt; 1$ (e.g., 0.3) flattens the distribution.</li>
 <ul>
   <li><strong>Symptom:</strong> Model outputs “Thank you Thank you Thank you” during silence.</li>
   <li><strong>Cause:</strong> Decoder language model is too strong; it predicts likely text even without acoustic evidence.</li>
-  <li><strong>Fix:</strong>
-    <ul>
-      <li><strong>Voice Activity Detection (VAD):</strong> Filter out silence.</li>
-      <li><strong>Coverage Penalty:</strong> Penalize attending to the same frames repeatedly.</li>
-    </ul>
-  </li>
+  <li><strong>Fix:</strong></li>
+  <li><strong>Voice Activity Detection (VAD):</strong> Filter out silence.</li>
+  <li><strong>Coverage Penalty:</strong> Penalize attending to the same frames repeatedly.</li>
 </ul>
 
 <p><strong>2. The “NaN” Loss:</strong></p>
 <ul>
   <li><strong>Symptom:</strong> Training crashes.</li>
   <li><strong>Cause:</strong> Exploding gradients in LSTM or division by zero in BatchNorm.</li>
-  <li><strong>Fix:</strong>
-    <ul>
-      <li>Gradient Clipping (norm 1.0).</li>
-      <li>Warmup learning rate.</li>
-      <li>Check for empty transcripts in data.</li>
-    </ul>
-  </li>
+  <li><strong>Fix:</strong></li>
+  <li>Gradient Clipping (norm 1.0).</li>
+  <li>Warmup learning rate.</li>
+  <li>Check for empty transcripts in data.</li>
 </ul>
 
 <p><strong>3. The “Babble” Problem:</strong></p>
 <ul>
   <li><strong>Symptom:</strong> Output is gibberish.</li>
   <li><strong>Cause:</strong> CTC alignment failed or Attention didn’t converge.</li>
-  <li><strong>Fix:</strong>
-    <ul>
-      <li><strong>Curriculum Learning:</strong> Train on short utterances first, then long.</li>
-      <li><strong>Guided Attention Loss:</strong> Force diagonal alignment for first few epochs.</li>
-    </ul>
+  <li><strong>Fix:</strong></li>
+  <li><strong>Curriculum Learning:</strong> Train on short utterances first, then long.</li>
+  <li>
+    <p><strong>Guided Attention Loss:</strong> Force diagonal alignment for first few epochs.</p>
   </li>
   <li><strong>Guided Attention Loss:</strong> Force diagonal alignment for first few epochs.</li>
 </ul>
@@ -1314,12 +1288,9 @@ where $\alpha &lt; 1$ (e.g., 0.3) flattens the distribution.</li>
 <ul>
   <li>Treats audio as a sequence of discrete tokens (using SoundStream codec).</li>
   <li>Uses a GPT-style decoder to generate audio tokens.</li>
-  <li><strong>Capabilities:</strong>
-    <ul>
-      <li><strong>Speech Continuation:</strong> Given 3s of speech, continue speaking in the same voice and style.</li>
-      <li><strong>Zero-Shot TTS:</strong> Generate speech from text in a target voice without fine-tuning.</li>
-    </ul>
-  </li>
+  <li><strong>Capabilities:</strong></li>
+  <li><strong>Speech Continuation:</strong> Given 3s of speech, continue speaking in the same voice and style.</li>
+  <li><strong>Zero-Shot TTS:</strong> Generate speech from text in a target voice without fine-tuning.</li>
 </ul>
 
 <p><strong>SpeechGPT (Fudan University):</strong></p>
@@ -1340,12 +1311,9 @@ where $\alpha &lt; 1$ (e.g., 0.3) flattens the distribution.</li>
 <ul>
   <li>Models like Vall-E can clone a voice from 3 seconds of audio.</li>
   <li><strong>Risk:</strong> Fraud (fake CEO calls), harassment, disinformation.</li>
-  <li><strong>Mitigation:</strong>
-    <ul>
-      <li><strong>Watermarking:</strong> Embed inaudible signals in generated audio.</li>
-      <li><strong>Detection:</strong> Train classifiers to detect synthesis artifacts.</li>
-    </ul>
-  </li>
+  <li><strong>Mitigation:</strong></li>
+  <li><strong>Watermarking:</strong> Embed inaudible signals in generated audio.</li>
+  <li><strong>Detection:</strong> Train classifiers to detect synthesis artifacts.</li>
 </ul>
 
 <p><strong>2. Bias in ASR:</strong></p>
@@ -1501,7 +1469,134 @@ where $\alpha &lt; 1$ (e.g., 0.3) flattens the distribution.</li>
         
       </footer>
 
+      <div class="page__related page__related--full">
+  <h2 class="page__related-title">Related across topics</h2>
+  <style>
+    /* Make section span full content width and use 2 equal columns */
+    .page__related--full { float: inline-start; width: 100%; padding: 0; }
+    .cross-related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+    @media (max-width: 768px) { .cross-related-grid { grid-template-columns: 1fr; } }
+    /* Ensure archive cards stretch nicely in the grid */
+    .cross-related-grid .list__item, .cross-related-grid .grid__item { width: auto; float: none; margin: 0; }
+  </style>
+  <div class="cross-related-grid">
+    
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
       
+        <a href="/dsa/0037-longest-increasing-subsequence/" rel="permalink">Longest Increasing Subsequence (LIS)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Finding the longest upward trend in chaos.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ml-system-design/0037-sequence-modeling/" rel="permalink">Sequence Modeling in ML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          19 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Predicting the next word, the next stock price, the next frame.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ai-agents/0037-code-execution-agents/" rel="permalink">Code Execution Agents
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          18 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Let agents run code safely: sandbox execution, cap damage, and verify outputs like a production system.”
+</p>
+  </article>
+</div>
+
+  </div>
+</div>
 
       <section class="page__share">
   <h4 class="page__share-title">Share on</h4>

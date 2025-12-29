@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Speech Quality Monitoring">
     <meta itemprop="description" content="How do we know if the audio sounds “good” without asking a human?">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -278,26 +278,20 @@ In Speech, “Quality” is subjective.</p>
 <p>You have the “Clean” (Reference) audio and the “Degraded” (Test) audio. You compare them.</p>
 <ul>
   <li><strong>Use Case:</strong> Codec development (MP3 vs AAC), Denoising model training.</li>
-  <li><strong>Metrics:</strong>
-    <ul>
-      <li><strong>PESQ (Perceptual Evaluation of Speech Quality):</strong> The classic telecom standard. Models human hearing.</li>
-      <li><strong>POLQA (Perceptual Objective Listening Quality Analysis):</strong> The successor to PESQ. Handles wideband (HD) voice better.</li>
-      <li><strong>ViSQOL (Virtual Speech Quality Objective Listener):</strong> Google’s open-source metric. Uses similarity of spectrograms.</li>
-    </ul>
-  </li>
+  <li><strong>Metrics:</strong></li>
+  <li><strong>PESQ (Perceptual Evaluation of Speech Quality):</strong> The classic telecom standard. Models human hearing.</li>
+  <li><strong>POLQA (Perceptual Objective Listening Quality Analysis):</strong> The successor to PESQ. Handles wideband (HD) voice better.</li>
+  <li><strong>ViSQOL (Virtual Speech Quality Objective Listener):</strong> Google’s open-source metric. Uses similarity of spectrograms.</li>
 </ul>
 
 <h3 id="2-non-intrusive-no-reference">2. Non-Intrusive (No-Reference)</h3>
 <p>You <em>only</em> have the “Degraded” audio. You don’t know what the original sounded like.</p>
 <ul>
   <li><strong>Use Case:</strong> Real-time monitoring (Zoom, Discord). You receive audio from the internet; you don’t have the sender’s microphone feed.</li>
-  <li><strong>Metrics:</strong>
-    <ul>
-      <li><strong>P.563:</strong> Old standard.</li>
-      <li><strong>NISQA (Non-Intrusive Speech Quality Assessment):</strong> Deep Learning based.</li>
-      <li><strong>DNS-MOS:</strong> Microsoft’s Deep Noise Suppression MOS predictor.</li>
-    </ul>
-  </li>
+  <li><strong>Metrics:</strong></li>
+  <li><strong>P.563:</strong> Old standard.</li>
+  <li><strong>NISQA (Non-Intrusive Speech Quality Assessment):</strong> Deep Learning based.</li>
+  <li><strong>DNS-MOS:</strong> Microsoft’s Deep Noise Suppression MOS predictor.</li>
 </ul>
 
 <h2 id="deep-dive-visqol-google">Deep Dive: ViSQOL (Google)</h2>
@@ -331,17 +325,18 @@ It allows <strong>Reference-Free</strong> monitoring. You can run this on the cl
 
 <h2 id="high-level-architecture-real-time-quality-monitor">High-Level Architecture: Real-Time Quality Monitor</h2>
 
-<pre><code class="language-ascii">+-----------+     +------------+     +-------------+
-| VoIP App  | --&gt; | Edge Calc  | --&gt; | Metrics Agg |
-+-----------+     +------------+     +-------------+
-(Microphone)      (DNS-MOS/VAD)      (Prometheus)
-                                           |
-                                           v
-+-----------+     +------------+     +-------------+
-| Codec Sw  | &lt;-- | Alerting   | &lt;-- | Dashboard   |
-+-----------+     +------------+     +-------------+
-(Opus Mode)       (Slack/PD)         (Grafana)
-</code></pre>
+<p><code class="language-plaintext highlighter-rouge">ascii
++-----------+ +------------+ +-------------+
+| VoIP App | --&gt; | Edge Calc | --&gt; | Metrics Agg |
++-----------+ +------------+ +-------------+
+(Microphone) (DNS-MOS/VAD) (Prometheus)
+ |
+ v
++-----------+ +------------+ +-------------+
+| Codec Sw | &lt;-- | Alerting | &lt;-- | Dashboard |
++-----------+ +------------+ +-------------+
+(Opus Mode) (Slack/PD) (Grafana)
+</code></p>
 
 <h2 id="system-design-real-time-quality-monitor-for-voip">System Design: Real-Time Quality Monitor for VoIP</h2>
 
@@ -397,22 +392,23 @@ We need a VAD to filter out silence frames.</p>
 
 <p><strong>Simple Energy-Based VAD (Python):</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+import numpy as np</p>
 
-<span class="k">def</span> <span class="nf">simple_vad</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">frame_len</span><span class="o">=</span><span class="mi">160</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
-    <span class="c1"># audio: numpy array of samples
-</span>    <span class="c1"># frame_len: 10ms at 16kHz
-</span>    
-    <span class="n">frames</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="n">frame_len</span><span class="p">):</span>
-        <span class="n">frame</span> <span class="o">=</span> <span class="n">audio</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">frame_len</span><span class="p">]</span>
-        <span class="n">energy</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">frame</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">energy</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
-            <span class="n">frames</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
-            
-    <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">concatenate</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span> <span class="k">if</span> <span class="n">frames</span> <span class="k">else</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([])</span>
-</code></pre></div></div>
+<p>def simple_vad(audio, frame_len=160, threshold=0.01):
+ # audio: numpy array of samples
+ # frame_len: 10ms at 16kHz</p>
+
+<p>frames = []
+ for i in range(0, len(audio), frame_len):
+ frame = audio[i:i+frame_len]
+ energy = np.sum(frame ** 2) / len(frame)</p>
+
+<p>if energy &gt; threshold:
+ frames.append(frame)</p>
+
+<p>return np.concatenate(frames) if frames else np.array([])
+``</p>
 
 <p><strong>Advanced VAD:</strong> WebRTC VAD uses a Gaussian Mixture Model (GMM) to distinguish speech from noise.</p>
 
@@ -728,7 +724,7 @@ At 3kbps, they sound better than Opus at 12kbps, but the waveform looks <em>comp
 
 <ol>
   <li><strong>Q:</strong> “How do you handle packet loss in a real-time audio app?”
-<strong>A:</strong>
+ <strong>A:</strong>
     <ul>
       <li><strong>Jitter Buffer:</strong> Hold packets for 20-50ms to reorder them.</li>
       <li><strong>FEC (Forward Error Correction):</strong> Send redundant data (XOR of previous packets).</li>
@@ -737,10 +733,10 @@ At 3kbps, they sound better than Opus at 12kbps, but the waveform looks <em>comp
   </li>
   <li>
     <p><strong>Q:</strong> “Why is 44.1kHz the standard sample rate?”
-<strong>A:</strong> Nyquist Theorem. Humans hear up to 20kHz. We need <code class="language-plaintext highlighter-rouge">2 * MaxFreq</code> to reconstruct the signal. <code class="language-plaintext highlighter-rouge">2 * 20kHz = 40kHz</code>. The extra 4.1kHz is for anti-aliasing filter roll-off.</p>
+ <strong>A:</strong> Nyquist Theorem. Humans hear up to 20kHz. We need <code class="language-plaintext highlighter-rouge">2 * MaxFreq</code> to reconstruct the signal. <code class="language-plaintext highlighter-rouge">2 * 20kHz = 40kHz</code>. The extra 4.1kHz is for anti-aliasing filter roll-off.</p>
   </li>
   <li><strong>Q:</strong> “What is the Cocktail Party Problem?”
-<strong>A:</strong> The ability to focus on one speaker in a noisy room. Humans do it easily (binaural hearing). Machines struggle. Solved using <strong>Blind Source Separation (BSS)</strong> or <strong>Target Speech Extraction (TSE)</strong>.</li>
+ <strong>A:</strong> The ability to focus on one speaker in a noisy room. Humans do it easily (binaural hearing). Machines struggle. Solved using <strong>Blind Source Separation (BSS)</strong> or <strong>Target Speech Extraction (TSE)</strong>.</li>
 </ol>
 
 <h2 id="conclusion">Conclusion</h2>
@@ -748,18 +744,19 @@ At 3kbps, they sound better than Opus at 12kbps, but the waveform looks <em>comp
 <p>Speech Quality Monitoring is moving from “Signal Processing” (PESQ) to “Deep Learning” (NISQA).
 Just like in Vision (Perceptual Loss) and NLP (BERTScore), we are learning that <strong>Neural Networks are the best judges of Neural Networks</strong>.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">pesq</span> <span class="kn">import</span> <span class="n">pesq</span>
-<span class="kn">from</span> <span class="n">scipy.io</span> <span class="kn">import</span> <span class="n">wavfile</span>
+<p>``python
+from pesq import pesq
+from scipy.io import wavfile</p>
 
-<span class="c1"># Load audio (must be 8k or 16k for PESQ)
-</span><span class="n">rate</span><span class="p">,</span> <span class="n">ref</span> <span class="o">=</span> <span class="n">wavfile</span><span class="p">.</span><span class="nf">read</span><span class="p">(</span><span class="sh">"</span><span class="s">reference.wav</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">rate</span><span class="p">,</span> <span class="n">deg</span> <span class="o">=</span> <span class="n">wavfile</span><span class="p">.</span><span class="nf">read</span><span class="p">(</span><span class="sh">"</span><span class="s">degraded.wav</span><span class="sh">"</span><span class="p">)</span>
+<h1 id="load-audio-must-be-8k-or-16k-for-pesq">Load audio (must be 8k or 16k for PESQ)</h1>
+<p>rate, ref = wavfile.read(“reference.wav”)
+rate, deg = wavfile.read(“degraded.wav”)</p>
 
-<span class="c1"># Calculate PESQ (Wideband)
-</span><span class="n">score</span> <span class="o">=</span> <span class="nf">pesq</span><span class="p">(</span><span class="n">rate</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">deg</span><span class="p">,</span> <span class="sh">'</span><span class="s">wb</span><span class="sh">'</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">PESQ Score: </span><span class="si">{</span><span class="n">score</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-<span class="c1"># Output: 3.5 (Fair to Good)
-</span></code></pre></div></div>
+<h1 id="calculate-pesq-wideband">Calculate PESQ (Wideband)</h1>
+<p>score = pesq(rate, ref, deg, ‘wb’)
+print(f”PESQ Score: {score:.2f}”)</p>
+<h1 id="output-35-fair-to-good">Output: 3.5 (Fair to Good)</h1>
+<p>``</p>
 
 <h2 id="appendix-a-the-silent-failure-in-speech">Appendix A: The “Silent” Failure in Speech</h2>
 

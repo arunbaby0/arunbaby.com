@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Cross-Lingual Speech Transfer">
     <meta itemprop="description" content="“If you know how to pronounce ‘P’ in English, you’re 90% of the way to pronouncing ‘P’ in Portuguese.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -284,12 +284,13 @@ These are “Low Resource” languages. We might only have 1 hour of transcribed
 
 <p>The state-of-the-art architecture for this is <strong>Wav2Vec 2.0 (XLS-R)</strong>.</p>
 
-<pre><code class="language-mermaid">graph TD
-    A[Raw Audio (Any Language)] --&gt; B[CNN Feature Extractor]
-    B --&gt; C[Transformer Context Network (Self-Attention)]
-    C --&gt; D[Quantization Module]
-    D --&gt; E[Contrastive Loss Target]
-</code></pre>
+<p><code class="language-plaintext highlighter-rouge">mermaid
+graph TD
+ A[Raw Audio (Any Language)] --&gt; B[CNN Feature Extractor]
+ B --&gt; C[Transformer Context Network (Self-Attention)]
+ C --&gt; D[Quantization Module]
+ D --&gt; E[Contrastive Loss Target]
+</code></p>
 
 <h3 id="the-key-insight-self-supervised-learning-ssl">The Key Insight: Self-Supervised Learning (SSL)</h3>
 <p>We don’t need text to learn sounds!</p>
@@ -358,50 +359,51 @@ These are “Low Resource” languages. We might only have 1 hour of transcribed
 
 <p>We will use Hugging Face <code class="language-plaintext highlighter-rouge">transformers</code> to fine-tune a pre-trained XLS-R model on a tiny custom dataset.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">from</span> <span class="n">transformers</span> <span class="kn">import</span> <span class="n">Wav2Vec2ForCTC</span><span class="p">,</span> <span class="n">Wav2Vec2Processor</span>
-<span class="kn">from</span> <span class="n">datasets</span> <span class="kn">import</span> <span class="n">load_dataset</span>
+<p>``python
+import torch
+from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+from datasets import load_dataset</p>
 
-<span class="c1"># 1. Load the Pre-trained Multilingual Model (300M params)
-# Facebook's XLS-R-300m was trained on 53 languages
-</span><span class="n">model_id</span> <span class="o">=</span> <span class="sh">"</span><span class="s">facebook/wav2vec2-xls-r-300m</span><span class="sh">"</span>
-<span class="n">processor</span> <span class="o">=</span> <span class="n">Wav2Vec2Processor</span><span class="p">.</span><span class="nf">from_pretrained</span><span class="p">(</span><span class="n">model_id</span><span class="p">)</span>
+<h1 id="1-load-the-pre-trained-multilingual-model-300m-params">1. Load the Pre-trained Multilingual Model (300M params)</h1>
+<h1 id="facebooks-xls-r-300m-was-trained-on-53-languages">Facebook’s XLS-R-300m was trained on 53 languages</h1>
+<p>model_id = “facebook/wav2vec2-xls-r-300m”
+processor = Wav2Vec2Processor.from_pretrained(model_id)</p>
 
-<span class="c1"># 2. Define the Target Vocabulary (e.g., Turkish)
-# We need to map the output neurons to Turkish characters
-</span><span class="n">target_vocab</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="sh">"</span><span class="s">a</span><span class="sh">"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="sh">"</span><span class="s">b</span><span class="sh">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="sh">"</span><span class="s">c</span><span class="sh">"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="sh">"</span><span class="s">ç</span><span class="sh">"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="sh">"</span><span class="s">d</span><span class="sh">"</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> 
-    <span class="c1"># ... all turkish chars
-</span>    <span class="sh">"</span><span class="s">&lt;pad&gt;</span><span class="sh">"</span><span class="p">:</span> <span class="mi">28</span><span class="p">,</span> <span class="sh">"</span><span class="s">&lt;s&gt;</span><span class="sh">"</span><span class="p">:</span> <span class="mi">29</span><span class="p">,</span> <span class="sh">"</span><span class="s">&lt;/s&gt;</span><span class="sh">"</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span> <span class="sh">"</span><span class="s">&lt;unk&gt;</span><span class="sh">"</span><span class="p">:</span> <span class="mi">31</span>
-<span class="p">}</span>
+<h1 id="2-define-the-target-vocabulary-eg-turkish">2. Define the Target Vocabulary (e.g., Turkish)</h1>
+<h1 id="we-need-to-map-the-output-neurons-to-turkish-characters">We need to map the output neurons to Turkish characters</h1>
+<p>target_vocab = {
+ “a”: 0, “b”: 1, “c”: 2, “ç”: 3, “d”: 4, 
+ # … all turkish chars
+ “<pad>": 28, "<s>": 29, "</s>": 30, "<unk>": 31
+}</unk></pad></p>
 
-<span class="c1"># 3. Initialize Model with new Head
-# The "head" is the final Linear layer. The body is kept.
-</span><span class="n">model</span> <span class="o">=</span> <span class="n">Wav2Vec2ForCTC</span><span class="p">.</span><span class="nf">from_pretrained</span><span class="p">(</span>
-    <span class="n">model_id</span><span class="p">,</span> 
-    <span class="n">vocab_size</span><span class="o">=</span><span class="nf">len</span><span class="p">(</span><span class="n">target_vocab</span><span class="p">),</span>
-    <span class="n">ctc_loss_reduction</span><span class="o">=</span><span class="sh">"</span><span class="s">mean</span><span class="sh">"</span><span class="p">,</span> 
-    <span class="n">pad_token_id</span><span class="o">=</span><span class="n">processor</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="n">pad_token_id</span>
-<span class="p">)</span>
+<h1 id="3-initialize-model-with-new-head">3. Initialize Model with new Head</h1>
+<h1 id="the-head-is-the-final-linear-layer-the-body-is-kept">The “head” is the final Linear layer. The body is kept.</h1>
+<p>model = Wav2Vec2ForCTC.from_pretrained(
+ model_id, 
+ vocab_size=len(target_vocab),
+ ctc_loss_reduction=”mean”, 
+ pad_token_id=processor.tokenizer.pad_token_id
+)</p>
 
-<span class="c1"># 4. Freeze the Feature Extractor?
-# For very low resource (10 mins), freeze it.
-# For moderate resource (1 hr), unfreeze it to adapt to recording mic.
-</span><span class="n">model</span><span class="p">.</span><span class="nf">freeze_feature_extractor</span><span class="p">()</span>
+<h1 id="4-freeze-the-feature-extractor">4. Freeze the Feature Extractor?</h1>
+<h1 id="for-very-low-resource-10-mins-freeze-it">For very low resource (10 mins), freeze it.</h1>
+<h1 id="for-moderate-resource-1-hr-unfreeze-it-to-adapt-to-recording-mic">For moderate resource (1 hr), unfreeze it to adapt to recording mic.</h1>
+<p>model.freeze_feature_extractor()</p>
 
-<span class="c1"># 5. Training Loop (Pseudo-code)
-# This uses CTC Loss, which works perfectly for transfer
-</span><span class="k">def</span> <span class="nf">train_step</span><span class="p">(</span><span class="n">batch</span><span class="p">):</span>
-    <span class="n">input_values</span> <span class="o">=</span> <span class="nf">processor</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="sh">"</span><span class="s">audio</span><span class="sh">"</span><span class="p">],</span> <span class="n">return_tensors</span><span class="o">=</span><span class="sh">"</span><span class="s">pt</span><span class="sh">"</span><span class="p">).</span><span class="n">input_values</span>
-    <span class="n">labels</span> <span class="o">=</span> <span class="nf">processor</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="sh">"</span><span class="s">sentence</span><span class="sh">"</span><span class="p">],</span> <span class="n">return_tensors</span><span class="o">=</span><span class="sh">"</span><span class="s">pt</span><span class="sh">"</span><span class="p">).</span><span class="n">input_ids</span>
-    
-    <span class="c1"># Forward
-</span>    <span class="n">loss</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">input_values</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">).</span><span class="n">loss</span>
-    
-    <span class="c1"># Backward
-</span>    <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
-    <span class="n">optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
-</code></pre></div></div>
+<h1 id="5-training-loop-pseudo-code">5. Training Loop (Pseudo-code)</h1>
+<h1 id="this-uses-ctc-loss-which-works-perfectly-for-transfer">This uses CTC Loss, which works perfectly for transfer</h1>
+<p>def train_step(batch):
+ input_values = processor(batch[“audio”], return_tensors=”pt”).input_values
+ labels = processor(batch[“sentence”], return_tensors=”pt”).input_ids</p>
+
+<p># Forward
+ loss = model(input_values, labels=labels).loss</p>
+
+<p># Backward
+ loss.backward()
+ optimizer.step()
+``</p>
 
 <hr />
 

@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Long-Context Agent Strategies">
     <meta itemprop="description" content="“Long context isn’t ‘more tokens’—it’s a strategy for keeping the right boundaries of information.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -303,24 +303,19 @@ They are agents with <strong>memory architecture</strong>:</p>
 <h3 id="22-hot-vs-warm-vs-cold-memory">2.2 Hot vs warm vs cold memory</h3>
 
 <ul>
-  <li><strong>Hot memory (prompt)</strong>
-    <ul>
-      <li>tiny, always included</li>
-      <li>constraints, current plan, immediate working set</li>
-    </ul>
+  <li><strong>Hot memory (prompt)</strong></li>
+  <li>tiny, always included</li>
+  <li>
+    <p>constraints, current plan, immediate working set</p>
   </li>
-  <li><strong>Warm memory (summaries + structured state)</strong>
-    <ul>
-      <li>short summaries, decision logs, TODOs</li>
-      <li>used frequently but not always</li>
-    </ul>
+  <li><strong>Warm memory (summaries + structured state)</strong></li>
+  <li>short summaries, decision logs, TODOs</li>
+  <li>
+    <p>used frequently but not always</p>
   </li>
-  <li><strong>Cold memory (retrieval store)</strong>
-    <ul>
-      <li>full transcripts, documents, code history</li>
-      <li>retrieved on demand</li>
-    </ul>
-  </li>
+  <li><strong>Cold memory (retrieval store)</strong></li>
+  <li>full transcripts, documents, code history</li>
+  <li>retrieved on demand</li>
 </ul>
 
 <p>This is the same “bounded state” idea as two pointers:
@@ -568,90 +563,89 @@ A practical decision record:</p>
   <li>a naive retrieval over keywords (placeholder for a vector DB)</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">sqlite3</span>
-<span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<p>``python
+import sqlite3
+from dataclasses import dataclass
+from typing import List, Optional</p>
 
+<p>@dataclass
+class Artifact:
+ artifact_id: str
+ title: str
+ text: str</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">Artifact</span><span class="p">:</span>
-    <span class="n">artifact_id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+<p>class MemoryStore:
+ def <strong>init</strong>(self, db_path: str = “agent_memory.sqlite”) -&gt; None:
+ self.db_path = db_path
+ self.hot_constraints: List[str] = []
+ self.summary: str = “”
+ self._init_db()</p>
 
+<p>def _init_db(self) -&gt; None:
+ conn = sqlite3.connect(self.db_path)
+ cur = conn.cursor()
+ cur.execute(
+ “””
+ CREATE TABLE IF NOT EXISTS artifacts (
+ artifact_id TEXT PRIMARY KEY,
+ title TEXT NOT NULL,
+ text TEXT NOT NULL
+ )
+ “””
+ )
+ conn.commit()
+ conn.close()</p>
 
-<span class="k">class</span> <span class="nc">MemoryStore</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">db_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">agent_memory.sqlite</span><span class="sh">"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">db_path</span> <span class="o">=</span> <span class="n">db_path</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">hot_constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">summary</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">""</span>
-        <span class="n">self</span><span class="p">.</span><span class="nf">_init_db</span><span class="p">()</span>
+<p>def set_constraints(self, constraints: List[str]) -&gt; None:
+ self.hot_constraints = constraints</p>
 
-    <span class="k">def</span> <span class="nf">_init_db</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="p">.</span><span class="nf">connect</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">db_path</span><span class="p">)</span>
-        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="p">.</span><span class="nf">cursor</span><span class="p">()</span>
-        <span class="n">cur</span><span class="p">.</span><span class="nf">execute</span><span class="p">(</span>
-            <span class="sh">"""</span><span class="s">
-            CREATE TABLE IF NOT EXISTS artifacts (
-                artifact_id TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                text TEXT NOT NULL
-            )
-            </span><span class="sh">"""</span>
-        <span class="p">)</span>
-        <span class="n">conn</span><span class="p">.</span><span class="nf">commit</span><span class="p">()</span>
-        <span class="n">conn</span><span class="p">.</span><span class="nf">close</span><span class="p">()</span>
+<p>def update_summary(self, new_summary: str) -&gt; None:
+ # In production: keep structured sections + guard against losing constraints.
+ self.summary = new_summary.strip()</p>
 
-    <span class="k">def</span> <span class="nf">set_constraints</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">hot_constraints</span> <span class="o">=</span> <span class="n">constraints</span>
+<p>def store_artifact(self, art: Artifact) -&gt; None:
+ conn = sqlite3.connect(self.db_path)
+ cur = conn.cursor()
+ cur.execute(
+ “INSERT OR REPLACE INTO artifacts (artifact_id, title, text) VALUES (?, ?, ?)”,
+ (art.artifact_id, art.title, art.text),
+ )
+ conn.commit()
+ conn.close()</p>
 
-    <span class="k">def</span> <span class="nf">update_summary</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">new_summary</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="c1"># In production: keep structured sections + guard against losing constraints.
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">summary</span> <span class="o">=</span> <span class="n">new_summary</span><span class="p">.</span><span class="nf">strip</span><span class="p">()</span>
+<p>def retrieve_keyword(self, query: str, k: int = 3) -&gt; List[Artifact]:
+ # Placeholder retrieval; replace with vector search in production.
+ tokens = [t.lower() for t in query.split() if t.strip()]
+ conn = sqlite3.connect(self.db_path)
+ cur = conn.cursor()
+ cur.execute(“SELECT artifact_id, title, text FROM artifacts”)
+ rows = cur.fetchall()
+ conn.close()</p>
 
-    <span class="k">def</span> <span class="nf">store_artifact</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">art</span><span class="p">:</span> <span class="n">Artifact</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="p">.</span><span class="nf">connect</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">db_path</span><span class="p">)</span>
-        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="p">.</span><span class="nf">cursor</span><span class="p">()</span>
-        <span class="n">cur</span><span class="p">.</span><span class="nf">execute</span><span class="p">(</span>
-            <span class="sh">"</span><span class="s">INSERT OR REPLACE INTO artifacts (artifact_id, title, text) VALUES (?, ?, ?)</span><span class="sh">"</span><span class="p">,</span>
-            <span class="p">(</span><span class="n">art</span><span class="p">.</span><span class="n">artifact_id</span><span class="p">,</span> <span class="n">art</span><span class="p">.</span><span class="n">title</span><span class="p">,</span> <span class="n">art</span><span class="p">.</span><span class="n">text</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="n">conn</span><span class="p">.</span><span class="nf">commit</span><span class="p">()</span>
-        <span class="n">conn</span><span class="p">.</span><span class="nf">close</span><span class="p">()</span>
+<p>scored = []
+ for artifact_id, title, text in rows:
+ t = text.lower()
+ score = sum(1 for tok in tokens if tok in t)
+ if score &gt; 0:
+ scored.append((score, Artifact(artifact_id, title, text)))
+ scored.sort(key=lambda x: x[0], reverse=True)
+ return [a for _, a in scored[:k]]</p>
 
-    <span class="k">def</span> <span class="nf">retrieve_keyword</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Artifact</span><span class="p">]:</span>
-        <span class="c1"># Placeholder retrieval; replace with vector search in production.
-</span>        <span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="p">.</span><span class="nf">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">query</span><span class="p">.</span><span class="nf">split</span><span class="p">()</span> <span class="k">if</span> <span class="n">t</span><span class="p">.</span><span class="nf">strip</span><span class="p">()]</span>
-        <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="p">.</span><span class="nf">connect</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">db_path</span><span class="p">)</span>
-        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="p">.</span><span class="nf">cursor</span><span class="p">()</span>
-        <span class="n">cur</span><span class="p">.</span><span class="nf">execute</span><span class="p">(</span><span class="sh">"</span><span class="s">SELECT artifact_id, title, text FROM artifacts</span><span class="sh">"</span><span class="p">)</span>
-        <span class="n">rows</span> <span class="o">=</span> <span class="n">cur</span><span class="p">.</span><span class="nf">fetchall</span><span class="p">()</span>
-        <span class="n">conn</span><span class="p">.</span><span class="nf">close</span><span class="p">()</span>
+<p>def build_prompt_context(self, query: str) -&gt; str:
+ # Hot memory always included
+ parts = []
+ if self.hot_constraints:
+ parts.append(“CONSTRAINTS:\n- “ + “\n- “.join(self.hot_constraints))
+ if self.summary:
+ parts.append(“SUMMARY:\n” + self.summary)</p>
 
-        <span class="n">scored</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">artifact_id</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
-            <span class="n">t</span> <span class="o">=</span> <span class="n">text</span><span class="p">.</span><span class="nf">lower</span><span class="p">()</span>
-            <span class="n">score</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">tokens</span> <span class="k">if</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">t</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">score</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">scored</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">score</span><span class="p">,</span> <span class="nc">Artifact</span><span class="p">(</span><span class="n">artifact_id</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">text</span><span class="p">)))</span>
-        <span class="n">scored</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">scored</span><span class="p">[:</span><span class="n">k</span><span class="p">]]</span>
-
-    <span class="k">def</span> <span class="nf">build_prompt_context</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="c1"># Hot memory always included
-</span>        <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">hot_constraints</span><span class="p">:</span>
-            <span class="n">parts</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sh">"</span><span class="s">CONSTRAINTS:</span><span class="se">\n</span><span class="s">- </span><span class="sh">"</span> <span class="o">+</span> <span class="sh">"</span><span class="se">\n</span><span class="s">- </span><span class="sh">"</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">hot_constraints</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">summary</span><span class="p">:</span>
-            <span class="n">parts</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sh">"</span><span class="s">SUMMARY:</span><span class="se">\n</span><span class="sh">"</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">summary</span><span class="p">)</span>
-
-        <span class="c1"># Retrieve cold memory only as needed
-</span>        <span class="n">retrieved</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">retrieve_keyword</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">retrieved</span><span class="p">:</span>
-            <span class="n">evidence</span> <span class="o">=</span> <span class="sh">"</span><span class="se">\n\n</span><span class="sh">"</span><span class="p">.</span><span class="nf">join</span><span class="p">([</span><span class="sa">f</span><span class="sh">"</span><span class="s">[</span><span class="si">{</span><span class="n">a</span><span class="p">.</span><span class="n">artifact_id</span><span class="si">}</span><span class="s">] </span><span class="si">{</span><span class="n">a</span><span class="p">.</span><span class="n">title</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">a</span><span class="p">.</span><span class="n">text</span><span class="p">[</span><span class="si">:</span><span class="mi">800</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">retrieved</span><span class="p">])</span>
-            <span class="n">parts</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sh">"</span><span class="s">RETRIEVED EVIDENCE:</span><span class="se">\n</span><span class="sh">"</span> <span class="o">+</span> <span class="n">evidence</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sh">"</span><span class="se">\n\n</span><span class="sh">"</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
-</code></pre></div></div>
+<p># Retrieve cold memory only as needed
+ retrieved = self.retrieve_keyword(query, k=3)
+ if retrieved:
+ evidence = “\n\n”.join([f”[{a.artifact_id}] {a.title}\n{a.text[:800]}” for a in retrieved])
+ parts.append(“RETRIEVED EVIDENCE:\n” + evidence)
+ return “\n\n”.join(parts)
+``</p>
 
 <p>This is intentionally minimal, but it demonstrates the architecture:</p>
 <ul>
@@ -758,11 +752,8 @@ Better:</p>
 
 <p>Example:</p>
 <ul>
-  <li>“Never send user secrets to external tools”
-    <ul>
-      <li>enforce by redaction and tool-call filtering</li>
-    </ul>
-  </li>
+  <li>“Never send user secrets to external tools”</li>
+  <li>enforce by redaction and tool-call filtering</li>
 </ul>
 
 <h3 id="63-conflict-handling">6.3 Conflict handling</h3>
@@ -861,11 +852,8 @@ If the agent naively packs that into context, it can follow it.</p>
 
 <p>Practical fixes:</p>
 <ul>
-  <li>use structured summaries with labeled sections:
-    <ul>
-      <li>Facts / Decisions / Open Questions / Next Steps</li>
-    </ul>
-  </li>
+  <li>use structured summaries with labeled sections:</li>
+  <li>Facts / Decisions / Open Questions / Next Steps</li>
   <li>keep citations in summaries (“Decision D3 based on artifact A17”)</li>
   <li>allow summaries to be corrected (summary is editable state, not sacred truth)</li>
 </ul>
@@ -1030,18 +1018,14 @@ A long-context strategy:</p>
 <p>Summaries can be:</p>
 
 <ul>
-  <li><strong>Extractive</strong> (pull key sentences)
-    <ul>
-      <li>pros: lower hallucination risk, preserves wording</li>
-      <li>cons: can be verbose and redundant</li>
-    </ul>
+  <li><strong>Extractive</strong> (pull key sentences)</li>
+  <li>pros: lower hallucination risk, preserves wording</li>
+  <li>
+    <p>cons: can be verbose and redundant</p>
   </li>
-  <li><strong>Abstractive</strong> (rewrite in new words)
-    <ul>
-      <li>pros: compact, can unify multiple sources</li>
-      <li>cons: higher risk of “rewriting history” incorrectly</li>
-    </ul>
-  </li>
+  <li><strong>Abstractive</strong> (rewrite in new words)</li>
+  <li>pros: compact, can unify multiple sources</li>
+  <li>cons: higher risk of “rewriting history” incorrectly</li>
 </ul>
 
 <p>For long-context reliability, a strong pattern is hybrid:</p>

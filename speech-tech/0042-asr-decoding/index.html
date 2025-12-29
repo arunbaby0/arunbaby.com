@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Automatic Speech Recognition (ASR) Decoding">
     <meta itemprop="description" content="“Turning acoustic probabilities into coherent text.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -256,41 +256,33 @@
 
 <p><strong>Automatic Speech Recognition (ASR)</strong> converts speech audio into text. The <strong>decoding</strong> stage is where we take the acoustic model’s output (probabilities over characters/tokens) and produce the final transcription.</p>
 
-<p><strong>Pipeline:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Audio → Feature Extraction (MFCC) → Acoustic Model → Decoder → Text
-</code></pre></div></div>
+<p><strong>Pipeline:</strong>
+<code class="language-plaintext highlighter-rouge">
+Audio → Feature Extraction (MFCC) → Acoustic Model → Decoder → Text
+</code></p>
 
 <p>The decoder’s job is to find the most likely text sequence given the acoustic observations.</p>
 
 <h2 id="2-the-decoding-problem">2. The Decoding Problem</h2>
 
 <p><strong>Mathematically:</strong>
-\(\hat{W} = \arg\max_W P(W | O)\)</p>
+<code class="language-plaintext highlighter-rouge">\hat{W} = \arg\max_W P(W | O)</code></p>
 
 <p>Where:</p>
 <ul>
-  <li>$O$ = Acoustic observations (audio features).</li>
-  <li>$W$ = Word sequence (transcription).</li>
+  <li><code class="language-plaintext highlighter-rouge">O</code> = Acoustic observations (audio features).</li>
+  <li><code class="language-plaintext highlighter-rouge">W</code> = Word sequence (transcription).</li>
 </ul>
 
 <p>Using Bayes’ theorem:
-\(P(W | O) = \frac{P(O | W) P(W)}{P(O)}\)</p>
+<code class="language-plaintext highlighter-rouge">P(W | O) = \frac{P(O | W) P(W)}{P(O)}</code></p>
 
-<p>Since $P(O)$ is constant, we maximize:
-\(\hat{W} = \arg\max_W P(O | W) \cdot P(W)\)</p>
+<p>Since <code class="language-plaintext highlighter-rouge">P(O)</code> is constant, we maximize:
+<code class="language-plaintext highlighter-rouge">\hat{W} = \arg\max_W P(O | W) \cdot P(W)</code></p>
 
 <ul>
-  <li>
-    <table>
-      <tbody>
-        <tr>
-          <td>$P(O</td>
-          <td>W)$ = <strong>Acoustic Model</strong> (AM): How likely is this audio given these words?</td>
-        </tr>
-      </tbody>
-    </table>
-  </li>
-  <li>$P(W)$ = <strong>Language Model</strong> (LM): How likely is this word sequence?</li>
+  <li><code class="language-plaintext highlighter-rouge">P(O | W)</code> = <strong>Acoustic Model</strong> (AM): How likely is this audio given these words?</li>
+  <li><code class="language-plaintext highlighter-rouge">P(W)</code> = <strong>Language Model</strong> (LM): How likely is this word sequence?</li>
 </ul>
 
 <h2 id="3-decoding-strategies">3. Decoding Strategies</h2>
@@ -303,14 +295,15 @@
   <li>Concatenate to form the output.</li>
 </ol>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">greedy_decode</span><span class="p">(</span><span class="n">probs</span><span class="p">):</span>
-    <span class="c1"># probs: (T, vocab_size)
-</span>    <span class="n">tokens</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">probs</span><span class="p">)):</span>
-        <span class="n">token</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">probs</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
-        <span class="n">tokens</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">tokens</span>
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">python
+def greedy_decode(probs):
+ # probs: (T, vocab_size)
+ tokens = []
+ for t in range(len(probs)):
+ token = np.argmax(probs[t])
+ tokens.append(token)
+ return tokens
+</code></p>
 
 <p><strong>Pros:</strong> Fast, simple.
 <strong>Cons:</strong> Doesn’t consider context. Often produces suboptimal results.</p>
@@ -325,23 +318,24 @@
   <li>Repeat until end-of-sequence.</li>
 </ol>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">beam_search</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">beam_width</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
-    <span class="c1"># probs: (T, vocab_size)
-</span>    <span class="n">sequences</span> <span class="o">=</span> <span class="p">[[[],</span> <span class="mf">0.0</span><span class="p">]]</span>  <span class="c1"># (tokens, score)
-</span>    
-    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">probs</span><span class="p">)):</span>
-        <span class="n">all_candidates</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">seq</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">sequences</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">probs</span><span class="p">[</span><span class="n">t</span><span class="p">])):</span>
-                <span class="n">new_seq</span> <span class="o">=</span> <span class="n">seq</span> <span class="o">+</span> <span class="p">[</span><span class="n">token</span><span class="p">]</span>
-                <span class="n">new_score</span> <span class="o">=</span> <span class="n">score</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="n">probs</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="n">token</span><span class="p">])</span>
-                <span class="n">all_candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">new_seq</span><span class="p">,</span> <span class="n">new_score</span><span class="p">))</span>
-        
-        <span class="c1"># Keep top-k
-</span>        <span class="n">sequences</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">all_candidates</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)[:</span><span class="n">beam_width</span><span class="p">]</span>
-    
-    <span class="k">return</span> <span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Return best sequence
-</span></code></pre></div></div>
+<p>``python
+def beam_search(probs, beam_width=5):
+ # probs: (T, vocab_size)
+ sequences = [[[], 0.0]] # (tokens, score)</p>
+
+<p>for t in range(len(probs)):
+ all_candidates = []
+ for seq, score in sequences:
+ for token in range(len(probs[t])):
+ new_seq = seq + [token]
+ new_score = score + np.log(probs[t][token])
+ all_candidates.append((new_seq, new_score))</p>
+
+<p># Keep top-k
+ sequences = sorted(all_candidates, key=lambda x: x[1], reverse=True)[:beam_width]</p>
+
+<p>return sequences[0][0] # Return best sequence
+``</p>
 
 <p><strong>Pros:</strong> Considers multiple hypotheses. Usually better than greedy.
 <strong>Cons:</strong> Computationally expensive. Still not globally optimal.</p>
@@ -363,18 +357,19 @@
   <li>Remove blank tokens.</li>
 </ol>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">ctc_decode</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">blank_token</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="n">tokens</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">prev</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-    
-    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">probs</span><span class="p">)):</span>
-        <span class="n">token</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">probs</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">token</span> <span class="o">!=</span> <span class="n">prev</span> <span class="ow">and</span> <span class="n">token</span> <span class="o">!=</span> <span class="n">blank_token</span><span class="p">:</span>
-            <span class="n">tokens</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
-        <span class="n">prev</span> <span class="o">=</span> <span class="n">token</span>
-    
-    <span class="k">return</span> <span class="n">tokens</span>
-</code></pre></div></div>
+<p>``python
+def ctc_decode(probs, blank_token=0):
+ tokens = []
+ prev = -1</p>
+
+<p>for t in range(len(probs)):
+ token = np.argmax(probs[t])
+ if token != prev and token != blank_token:
+ tokens.append(token)
+ prev = token</p>
+
+<p>return tokens
+``</p>
 
 <h3 id="34-attention-based-decoding">3.4. Attention-Based Decoding</h3>
 
@@ -387,19 +382,20 @@
   <li>At each step, attention weights determine which encoder states to focus on.</li>
 </ol>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">attention_decode</span><span class="p">(</span><span class="n">encoder_output</span><span class="p">,</span> <span class="n">decoder</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
-    <span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">BOS_TOKEN</span><span class="p">]</span>  <span class="c1"># Begin of sequence
-</span>    
-    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">max_length</span><span class="p">):</span>
-        <span class="n">output</span> <span class="o">=</span> <span class="nf">decoder</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">encoder_output</span><span class="p">)</span>
-        <span class="n">next_token</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">output</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-        <span class="n">tokens</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">next_token</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">next_token</span> <span class="o">==</span> <span class="n">EOS_TOKEN</span><span class="p">:</span>
-            <span class="k">break</span>
-    
-    <span class="k">return</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Remove BOS and EOS
-</span></code></pre></div></div>
+<p>``python
+def attention_decode(encoder_output, decoder, max_length=100):
+ tokens = [BOS_TOKEN] # Begin of sequence</p>
+
+<p>for _ in range(max_length):
+ output = decoder(tokens, encoder_output)
+ next_token = np.argmax(output[-1])
+ tokens.append(next_token)</p>
+
+<p>if next_token == EOS_TOKEN:
+ break</p>
+
+<p>return tokens[1:-1] # Remove BOS and EOS
+``</p>
 
 <h2 id="4-language-model-integration">4. Language Model Integration</h2>
 
@@ -411,29 +407,30 @@
 
 <p><strong>Idea:</strong> Combine AM and LM scores during beam search.</p>
 
-\[\text{score} = \log P_{AM}(y | x) + \lambda \log P_{LM}(y)\]
+<p><code class="language-plaintext highlighter-rouge">\text{score} = \log P_{AM}(y | x) + \lambda \log P_{LM}(y)</code></p>
 
-<p>Where $\lambda$ is a tunable weight.</p>
+<p>Where <code class="language-plaintext highlighter-rouge">\lambda</code> is a tunable weight.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">beam_search_with_lm</span><span class="p">(</span><span class="n">am_probs</span><span class="p">,</span> <span class="n">lm</span><span class="p">,</span> <span class="n">beam_width</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">lm_weight</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
-    <span class="n">sequences</span> <span class="o">=</span> <span class="p">[[[],</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]]</span>  <span class="c1"># (tokens, am_score, lm_score)
-</span>    
-    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">am_probs</span><span class="p">)):</span>
-        <span class="n">all_candidates</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">seq</span><span class="p">,</span> <span class="n">am_score</span><span class="p">,</span> <span class="n">lm_score</span> <span class="ow">in</span> <span class="n">sequences</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">am_probs</span><span class="p">[</span><span class="n">t</span><span class="p">])):</span>
-                <span class="n">new_seq</span> <span class="o">=</span> <span class="n">seq</span> <span class="o">+</span> <span class="p">[</span><span class="n">token</span><span class="p">]</span>
-                <span class="n">new_am_score</span> <span class="o">=</span> <span class="n">am_score</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="n">am_probs</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="n">token</span><span class="p">])</span>
-                <span class="n">new_lm_score</span> <span class="o">=</span> <span class="n">lm_score</span> <span class="o">+</span> <span class="n">lm</span><span class="p">.</span><span class="nf">score</span><span class="p">(</span><span class="n">new_seq</span><span class="p">)</span>
-                
-                <span class="n">combined</span> <span class="o">=</span> <span class="n">new_am_score</span> <span class="o">+</span> <span class="n">lm_weight</span> <span class="o">*</span> <span class="n">new_lm_score</span>
-                <span class="n">all_candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">new_seq</span><span class="p">,</span> <span class="n">new_am_score</span><span class="p">,</span> <span class="n">new_lm_score</span><span class="p">,</span> <span class="n">combined</span><span class="p">))</span>
-        
-        <span class="c1"># Keep top-k by combined score
-</span>        <span class="n">sequences</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">all_candidates</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)[:</span><span class="n">beam_width</span><span class="p">]</span>
-    
-    <span class="k">return</span> <span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-</code></pre></div></div>
+<p>``python
+def beam_search_with_lm(am_probs, lm, beam_width=5, lm_weight=0.5):
+ sequences = [[[], 0.0, 0.0]] # (tokens, am_score, lm_score)</p>
+
+<p>for t in range(len(am_probs)):
+ all_candidates = []
+ for seq, am_score, lm_score in sequences:
+ for token in range(len(am_probs[t])):
+ new_seq = seq + [token]
+ new_am_score = am_score + np.log(am_probs[t][token])
+ new_lm_score = lm_score + lm.score(new_seq)</p>
+
+<p>combined = new_am_score + lm_weight * new_lm_score
+ all_candidates.append((new_seq, new_am_score, new_lm_score, combined))</p>
+
+<p># Keep top-k by combined score
+ sequences = sorted(all_candidates, key=lambda x: x[3], reverse=True)[:beam_width]</p>
+
+<p>return sequences[0][0]
+``</p>
 
 <h3 id="42-deep-fusion">4.2. Deep Fusion</h3>
 
@@ -476,43 +473,44 @@ Handles CTC’s blank tokens and collapsed outputs properly.</p>
   </li>
 </ol>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">ctc_beam_search_with_lm</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">lm</span><span class="p">,</span> <span class="n">beam_width</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lm_weight</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
-    <span class="c1"># probs: (T, vocab_size)
-</span>    <span class="c1"># Initialize
-</span>    <span class="n">beams</span> <span class="o">=</span> <span class="p">{():</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)}</span>  <span class="c1"># prefix: (pb, pnb)
-</span>    
-    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">probs</span><span class="p">)):</span>
-        <span class="n">new_beams</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
-        
-        <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="p">(</span><span class="n">pb</span><span class="p">,</span> <span class="n">pnb</span><span class="p">)</span> <span class="ow">in</span> <span class="n">beams</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">probs</span><span class="p">[</span><span class="n">t</span><span class="p">])):</span>
-                <span class="n">p</span> <span class="o">=</span> <span class="n">probs</span><span class="p">[</span><span class="n">t</span><span class="p">][</span><span class="n">c</span><span class="p">]</span>
-                
-                <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="n">blank</span><span class="p">:</span>
-                    <span class="c1"># Extend with blank
-</span>                    <span class="n">key</span> <span class="o">=</span> <span class="n">prefix</span>
-                    <span class="n">new_beams</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_beams</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">pb</span> <span class="o">+</span> <span class="n">pnb</span><span class="p">)</span> <span class="o">*</span> <span class="n">p</span><span class="p">,</span> <span class="n">new_beams</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
-                
-                <span class="k">elif</span> <span class="n">prefix</span> <span class="ow">and</span> <span class="n">c</span> <span class="o">==</span> <span class="n">prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
-                    <span class="c1"># Repeat character (needs blank before)
-</span>                    <span class="n">new_beams</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_beams</span><span class="p">[</span><span class="n">prefix</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">new_beams</span><span class="p">[</span><span class="n">prefix</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">pb</span> <span class="o">*</span> <span class="n">p</span><span class="p">)</span>
-                    <span class="c1"># Or new character after blank
-</span>                    <span class="n">new_key</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="p">(</span><span class="n">c</span><span class="p">,)</span>
-                    <span class="n">new_beams</span><span class="p">[</span><span class="n">new_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_beams</span><span class="p">[</span><span class="n">new_key</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">new_beams</span><span class="p">[</span><span class="n">new_key</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">pnb</span> <span class="o">*</span> <span class="n">p</span><span class="p">)</span>
-                
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># New character
-</span>                    <span class="n">new_key</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="p">(</span><span class="n">c</span><span class="p">,)</span>
-                    <span class="n">lm_factor</span> <span class="o">=</span> <span class="n">lm</span><span class="p">.</span><span class="nf">score</span><span class="p">(</span><span class="n">new_key</span><span class="p">)</span> <span class="o">**</span> <span class="n">lm_weight</span>
-                    <span class="n">new_beams</span><span class="p">[</span><span class="n">new_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_beams</span><span class="p">[</span><span class="n">new_key</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">new_beams</span><span class="p">[</span><span class="n">new_key</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">pb</span> <span class="o">+</span> <span class="n">pnb</span><span class="p">)</span> <span class="o">*</span> <span class="n">p</span> <span class="o">*</span> <span class="n">lm_factor</span><span class="p">)</span>
-        
-        <span class="c1"># Prune to beam_width
-</span>        <span class="n">beams</span> <span class="o">=</span> <span class="nf">dict</span><span class="p">(</span><span class="nf">sorted</span><span class="p">(</span><span class="n">new_beams</span><span class="p">.</span><span class="nf">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nf">sum</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)[:</span><span class="n">beam_width</span><span class="p">])</span>
-    
-    <span class="c1"># Return best prefix
-</span>    <span class="n">best_prefix</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">beams</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nf">sum</span><span class="p">(</span><span class="n">beams</span><span class="p">[</span><span class="n">x</span><span class="p">]))</span>
-    <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="n">best_prefix</span><span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+def ctc_beam_search_with_lm(probs, lm, beam_width=10, blank=0, lm_weight=0.5):
+ # probs: (T, vocab_size)
+ # Initialize
+ beams = {(): (1.0, 0.0)} # prefix: (pb, pnb)</p>
+
+<p>for t in range(len(probs)):
+ new_beams = defaultdict(lambda: (0.0, 0.0))</p>
+
+<p>for prefix, (pb, pnb) in beams.items():
+ for c in range(len(probs[t])):
+ p = probs[t][c]</p>
+
+<p>if c == blank:
+ # Extend with blank
+ key = prefix
+ new_beams[key] = (new_beams[key][0] + (pb + pnb) * p, new_beams[key][1])</p>
+
+<p>elif prefix and c == prefix[-1]:
+ # Repeat character (needs blank before)
+ new_beams[prefix] = (new_beams[prefix][0], new_beams[prefix][1] + pb * p)
+ # Or new character after blank
+ new_key = prefix + (c,)
+ new_beams[new_key] = (new_beams[new_key][0], new_beams[new_key][1] + pnb * p)</p>
+
+<p>else:
+ # New character
+ new_key = prefix + (c,)
+ lm_factor = lm.score(new_key) ** lm_weight
+ new_beams[new_key] = (new_beams[new_key][0], new_beams[new_key][1] + (pb + pnb) * p * lm_factor)</p>
+
+<p># Prune to beam_width
+ beams = dict(sorted(new_beams.items(), key=lambda x: sum(x[1]), reverse=True)[:beam_width])</p>
+
+<p># Return best prefix
+ best_prefix = max(beams, key=lambda x: sum(beams[x]))
+ return list(best_prefix)
+``</p>
 
 <h2 id="6-system-design-production-asr-decoder">6. System Design: Production ASR Decoder</h2>
 
@@ -569,7 +567,7 @@ Handles CTC’s blank tokens and collapsed outputs properly.</p>
 </ul>
 
 <p><strong>Composition:</strong>
-\(\text{Decoding Graph} = H \circ C \circ L \circ G\)</p>
+<code class="language-plaintext highlighter-rouge">\text{Decoding Graph} = H \circ C \circ L \circ G</code></p>
 
 <p><strong>Benefits:</strong></p>
 <ul>
@@ -608,7 +606,7 @@ Handles CTC’s blank tokens and collapsed outputs properly.</p>
 <h2 id="9-word-error-rate-wer">9. Word Error Rate (WER)</h2>
 
 <p><strong>Definition:</strong>
-\(WER = \frac{S + D + I}{N}\)</p>
+<code class="language-plaintext highlighter-rouge">WER = \frac{S + D + I}{N}</code></p>
 
 <p>Where:</p>
 <ul>
@@ -700,16 +698,7 @@ Handles CTC’s blank tokens and collapsed outputs properly.</p>
 <p><strong>1. Posterior Probability:</strong></p>
 <ul>
   <li>Use the probability of the best hypothesis.</li>
-  <li>
-    <table>
-      <tbody>
-        <tr>
-          <td>$\text{confidence} = P(W</td>
-          <td>O)$.</td>
-        </tr>
-      </tbody>
-    </table>
-  </li>
+  <li><code class="language-plaintext highlighter-rouge">\text{confidence} = P(W | O)</code>.</li>
 </ul>
 
 <p><strong>2. Entropy:</strong></p>
@@ -740,14 +729,15 @@ Handles CTC’s blank tokens and collapsed outputs properly.</p>
   <li><strong>Shallow Fusion with Boosted LM:</strong> Add bonus score for hot words.</li>
 </ol>
 
-<p><strong>Example:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">hot_words</span> <span class="o">=</span> <span class="p">[</span><span class="sh">"</span><span class="s">Alexa</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Siri</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Cortana</span><span class="sh">"</span><span class="p">]</span>
-<span class="n">hot_word_boost</span> <span class="o">=</span> <span class="mf">2.0</span>  <span class="c1"># Log-scale boost
-</span>
-<span class="k">def</span> <span class="nf">score_with_hotwords</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">am_score</span><span class="p">,</span> <span class="n">lm_score</span><span class="p">):</span>
-    <span class="n">bonus</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">hot_word_boost</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">seq</span> <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">hot_words</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">am_score</span> <span class="o">+</span> <span class="n">lm_weight</span> <span class="o">*</span> <span class="n">lm_score</span> <span class="o">+</span> <span class="n">bonus</span>
-</code></pre></div></div>
+<p><strong>Example:</strong>
+``python
+hot_words = [“Alexa”, “Siri”, “Cortana”]
+hot_word_boost = 2.0 # Log-scale boost</p>
+
+<p>def score_with_hotwords(seq, am_score, lm_score):
+ bonus = sum(hot_word_boost for word in seq if word in hot_words)
+ return am_score + lm_weight * lm_score + bonus
+``</p>
 
 <h2 id="16-future-trends">16. Future Trends</h2>
 
@@ -804,33 +794,34 @@ Handles CTC’s blank tokens and collapsed outputs properly.</p>
   <li><strong>Output:</strong> Probability over vocabulary + blank.</li>
 </ul>
 
-<p><strong>Decoding Algorithm:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">rnnt_greedy_decode</span><span class="p">(</span><span class="n">encoder_output</span><span class="p">,</span> <span class="n">predictor</span><span class="p">,</span> <span class="n">joint</span><span class="p">):</span>
-    <span class="n">T</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">encoder_output</span><span class="p">)</span>
-    <span class="n">U</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Output index
-</span>    <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">pred_state</span> <span class="o">=</span> <span class="n">predictor</span><span class="p">.</span><span class="nf">initial_state</span><span class="p">()</span>
-    
-    <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">while</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">T</span><span class="p">:</span>
-        <span class="c1"># Get encoder output at time t
-</span>        <span class="n">enc_t</span> <span class="o">=</span> <span class="n">encoder_output</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
-        
-        <span class="c1"># Get prediction network output
-</span>        <span class="n">pred_output</span><span class="p">,</span> <span class="n">pred_state</span> <span class="o">=</span> <span class="nf">predictor</span><span class="p">(</span><span class="n">outputs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="n">outputs</span> <span class="k">else</span> <span class="p">[</span><span class="n">BOS</span><span class="p">],</span> <span class="n">pred_state</span><span class="p">)</span>
-        
-        <span class="c1"># Joint network
-</span>        <span class="n">logits</span> <span class="o">=</span> <span class="nf">joint</span><span class="p">(</span><span class="n">enc_t</span><span class="p">,</span> <span class="n">pred_output</span><span class="p">)</span>
-        <span class="n">token</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">token</span> <span class="o">==</span> <span class="n">BLANK</span><span class="p">:</span>
-            <span class="n">t</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># Advance time
-</span>        <span class="k">else</span><span class="p">:</span>
-            <span class="n">outputs</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
-            <span class="c1"># Don't advance time (can emit multiple tokens at same time step)
-</span>    
-    <span class="k">return</span> <span class="n">outputs</span>
-</code></pre></div></div>
+<p><strong>Decoding Algorithm:</strong>
+``python
+def rnnt_greedy_decode(encoder_output, predictor, joint):
+ T = len(encoder_output)
+ U = 0 # Output index
+ outputs = []
+ pred_state = predictor.initial_state()</p>
+
+<p>t = 0
+ while t &lt; T:
+ # Get encoder output at time t
+ enc_t = encoder_output[t]</p>
+
+<p># Get prediction network output
+ pred_output, pred_state = predictor(outputs[-1:] if outputs else [BOS], pred_state)</p>
+
+<p># Joint network
+ logits = joint(enc_t, pred_output)
+ token = np.argmax(logits)</p>
+
+<p>if token == BLANK:
+ t += 1 # Advance time
+ else:
+ outputs.append(token)
+ # Don’t advance time (can emit multiple tokens at same time step)</p>
+
+<p>return outputs
+``</p>
 
 <p><strong>Key Difference from CTC:</strong></p>
 <ul>
@@ -918,23 +909,24 @@ Handles CTC’s blank tokens and collapsed outputs properly.</p>
   <li>Return the hypothesis with lowest expected WER.</li>
 </ul>
 
-<p><strong>Algorithm:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">mbr_decode</span><span class="p">(</span><span class="n">n_best_list</span><span class="p">):</span>
-    <span class="c1"># n_best_list: [(hypothesis, probability), ...]
-</span>    <span class="n">best_hyp</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">best_risk</span> <span class="o">=</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">inf</span><span class="sh">'</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">hyp</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">n_best_list</span><span class="p">:</span>
-        <span class="n">risk</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">other_hyp</span><span class="p">,</span> <span class="n">other_prob</span> <span class="ow">in</span> <span class="n">n_best_list</span><span class="p">:</span>
-            <span class="n">risk</span> <span class="o">+=</span> <span class="n">other_prob</span> <span class="o">*</span> <span class="nf">word_error_rate</span><span class="p">(</span><span class="n">hyp</span><span class="p">,</span> <span class="n">other_hyp</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">risk</span> <span class="o">&lt;</span> <span class="n">best_risk</span><span class="p">:</span>
-            <span class="n">best_risk</span> <span class="o">=</span> <span class="n">risk</span>
-            <span class="n">best_hyp</span> <span class="o">=</span> <span class="n">hyp</span>
-    
-    <span class="k">return</span> <span class="n">best_hyp</span>
-</code></pre></div></div>
+<p><strong>Algorithm:</strong>
+``python
+def mbr_decode(n_best_list):
+ # n_best_list: [(hypothesis, probability), …]
+ best_hyp = None
+ best_risk = float(‘inf’)</p>
+
+<p>for hyp, prob in n_best_list:
+ risk = 0
+ for other_hyp, other_prob in n_best_list:
+ risk += other_prob * word_error_rate(hyp, other_hyp)</p>
+
+<p>if risk &lt; best_risk:
+ best_risk = risk
+ best_hyp = hyp</p>
+
+<p>return best_hyp
+``</p>
 
 <p><strong>Use Case:</strong> When WER is more important than likelihood.</p>
 
@@ -1008,27 +1000,28 @@ Handles CTC’s blank tokens and collapsed outputs properly.</p>
 
 <h2 id="27-implementation-pytorch-ctc-beam-search">27. Implementation: PyTorch CTC Beam Search</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">from</span> <span class="n">torchaudio.models.decoder</span> <span class="kn">import</span> <span class="n">ctc_decoder</span>
+<p>``python
+import torch
+from torchaudio.models.decoder import ctc_decoder</p>
 
-<span class="c1"># Load lexicon and LM
-</span><span class="n">decoder</span> <span class="o">=</span> <span class="nf">ctc_decoder</span><span class="p">(</span>
-    <span class="n">lexicon</span><span class="o">=</span><span class="sh">"</span><span class="s">lexicon.txt</span><span class="sh">"</span><span class="p">,</span>
-    <span class="n">tokens</span><span class="o">=</span><span class="sh">"</span><span class="s">tokens.txt</span><span class="sh">"</span><span class="p">,</span>
-    <span class="n">lm</span><span class="o">=</span><span class="sh">"</span><span class="s">language_model.arpa</span><span class="sh">"</span><span class="p">,</span>
-    <span class="n">beam_size</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
-    <span class="n">lm_weight</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-    <span class="n">word_score</span><span class="o">=-</span><span class="mf">0.2</span>
-<span class="p">)</span>
+<h1 id="load-lexicon-and-lm">Load lexicon and LM</h1>
+<p>decoder = ctc_decoder(
+ lexicon=”lexicon.txt”,
+ tokens=”tokens.txt”,
+ lm=”language_model.arpa”,
+ beam_size=50,
+ lm_weight=0.5,
+ word_score=-0.2
+)</p>
 
-<span class="c1"># Decode
-</span><span class="n">emissions</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>  <span class="c1"># (T, vocab_size)
-</span><span class="n">hypotheses</span> <span class="o">=</span> <span class="nf">decoder</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
+<h1 id="decode">Decode</h1>
+<p>emissions = model(audio) # (T, vocab_size)
+hypotheses = decoder(emissions)</p>
 
-<span class="c1"># Get best hypothesis
-</span><span class="n">best</span> <span class="o">=</span> <span class="n">hypotheses</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">text</span> <span class="o">=</span> <span class="sh">"</span><span class="s"> </span><span class="sh">"</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">best</span><span class="p">.</span><span class="n">words</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="get-best-hypothesis">Get best hypothesis</h1>
+<p>best = hypotheses[0][0]
+text = “ “.join(best.words)
+``</p>
 
 <h2 id="28-interview-strategy-asr-decoding">28. Interview Strategy: ASR Decoding</h2>
 
@@ -1147,7 +1140,134 @@ Handles CTC’s blank tokens and collapsed outputs properly.</p>
         
       </footer>
 
+      <div class="page__related page__related--full">
+  <h2 class="page__related-title">Related across topics</h2>
+  <style>
+    /* Make section span full content width and use 2 equal columns */
+    .page__related--full { float: inline-start; width: 100%; padding: 0; }
+    .cross-related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+    @media (max-width: 768px) { .cross-related-grid { grid-template-columns: 1fr; } }
+    /* Ensure archive cards stretch nicely in the grid */
+    .cross-related-grid .list__item, .cross-related-grid .grid__item { width: auto; float: none; margin: 0; }
+  </style>
+  <div class="cross-related-grid">
+    
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
       
+        <a href="/dsa/0042-merge-k-sorted-lists/" rel="permalink">Merge K Sorted Lists
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Combining order from chaos, one element at a time.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ml-system-design/0042-feature-stores/" rel="permalink">Feature Stores
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“The centralized truth for machine learning features.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ai-agents/0042-agent-evaluation-frameworks/" rel="permalink">Agent Evaluation Frameworks
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“If you can’t measure an agent, you can’t improve it: build evals for success, safety, cost, and regressions.”
+</p>
+  </article>
+</div>
+
+  </div>
+</div>
 
       <section class="page__share">
   <h4 class="page__share-title">Share on</h4>

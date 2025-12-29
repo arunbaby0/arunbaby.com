@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Resource Allocation for ML">
     <meta itemprop="description" content="Build production ML infrastructure that dynamically allocates resources using greedy optimization to maximize throughput and minimize costs.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -358,55 +358,56 @@
 
 <h2 id="high-level-architecture">High-Level Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────────┐
-│                         Resource Allocation System               │
-└─────────────────────────────────────────────────────────────────┘
+<p>``
+┌─────────────────────────────────────────────────────────────────┐
+│ Resource Allocation System │
+└─────────────────────────────────────────────────────────────────┘</p>
 
-┌─────────────┐         ┌──────────────────────────────────────┐
-│   Clients   │         │         Control Plane                 │
-│             │         │                                       │
-│ - Training  │────────▶│  ┌────────────────────────────┐     │
-│ - Inference │         │  │  Scheduler                 │     │
-│ - Tuning    │         │  │  - Job queue               │     │
-│ - Batch     │         │  │  - Priority management     │     │
-└─────────────┘         │  │  - Resource matching       │     │
-                        │  └────────────┬───────────────┘     │
-                        │               │                      │
-                        │               ▼                      │
-                        │  ┌────────────────────────────┐     │
-                        │  │  Allocator (Greedy)        │     │
-┌─────────────┐         │  │  - Bin packing             │     │
-│  Monitoring │◀────────│  │  - Preemption logic        │     │
-│             │         │  │  - Fair share calculation  │     │
-│ - Prometheus│         │  └────────────┬───────────────┘     │
-│ - Grafana   │         │               │                      │
-│ - Alerts    │         │               ▼                      │
-└─────────────┘         │  ┌────────────────────────────┐     │
-                        │  │  Resource Manager          │     │
-                        │  │  - Available resources     │     │
-                        │  │  - Usage tracking          │     │
-                        │  │  - Cost accounting         │     │
-                        │  └────────────┬───────────────┘     │
-                        └───────────────┼────────────────────┘
-                                        │
-                                        ▼
+<p>┌─────────────┐ ┌──────────────────────────────────────┐
+│ Clients │ │ Control Plane │
+│ │ │ │
+│ - Training │────────▶│ ┌────────────────────────────┐ │
+│ - Inference │ │ │ Scheduler │ │
+│ - Tuning │ │ │ - Job queue │ │
+│ - Batch │ │ │ - Priority management │ │
+└─────────────┘ │ │ - Resource matching │ │
+ │ └────────────┬───────────────┘ │
+ │ │ │
+ │ ▼ │
+ │ ┌────────────────────────────┐ │
+ │ │ Allocator (Greedy) │ │
+┌─────────────┐ │ │ - Bin packing │ │
+│ Monitoring │◀────────│ │ - Preemption logic │ │
+│ │ │ │ - Fair share calculation │ │
+│ - Prometheus│ │ └────────────┬───────────────┘ │
+│ - Grafana │ │ │ │
+│ - Alerts │ │ ▼ │
+└─────────────┘ │ ┌────────────────────────────┐ │
+ │ │ Resource Manager │ │
+ │ │ - Available resources │ │
+ │ │ - Usage tracking │ │
+ │ │ - Cost accounting │ │
+ │ └────────────┬───────────────┘ │
+ └───────────────┼────────────────────┘
+ │
+ ▼
 ┌──────────────────────────────────────────────────────────────┐
-│                     Data Plane                                │
-│                                                               │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
-│  │  Cluster 1  │  │  Cluster 2  │  │  Cluster N  │         │
-│  │             │  │             │  │             │         │
-│  │  ┌───────┐  │  │  ┌───────┐  │  │  ┌───────┐  │         │
-│  │  │GPU Pod│  │  │  │GPU Pod│  │  │  │GPU Pod│  │         │
-│  │  └───────┘  │  │  └───────┘  │  │  └───────┘  │         │
-│  │  ┌───────┐  │  │  ┌───────┐  │  │  ┌───────┐  │         │
-│  │  │GPU Pod│  │  │  │CPU Pod│  │  │  │TPU Pod│  │         │
-│  │  └───────┘  │  │  └───────┘  │  │  └───────┘  │         │
-│  │             │  │             │  │             │         │
-│  │  us-west-1  │  │  us-east-1  │  │  eu-west-1  │         │
-│  └─────────────┘  └─────────────┘  └─────────────┘         │
+│ Data Plane │
+│ │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ │
+│ │ Cluster 1 │ │ Cluster 2 │ │ Cluster N │ │
+│ │ │ │ │ │ │ │
+│ │ ┌───────┐ │ │ ┌───────┐ │ │ ┌───────┐ │ │
+│ │ │GPU Pod│ │ │ │GPU Pod│ │ │ │GPU Pod│ │ │
+│ │ └───────┘ │ │ └───────┘ │ │ └───────┘ │ │
+│ │ ┌───────┐ │ │ ┌───────┐ │ │ ┌───────┐ │ │
+│ │ │GPU Pod│ │ │ │CPU Pod│ │ │ │TPU Pod│ │ │
+│ │ └───────┘ │ │ └───────┘ │ │ └───────┘ │ │
+│ │ │ │ │ │ │ │
+│ │ us-west-1 │ │ us-east-1 │ │ eu-west-1 │ │
+│ └─────────────┘ └─────────────┘ └─────────────┘ │
 └──────────────────────────────────────────────────────────────┘
-</code></pre></div></div>
+``</p>
 
 <h3 id="key-components">Key Components</h3>
 
@@ -424,661 +425,696 @@
 
 <p>The scheduler maintains a priority queue of pending jobs and makes allocation decisions.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="n">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Dict</span>
-<span class="kn">from</span> <span class="n">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
-<span class="kn">import</span> <span class="n">heapq</span>
+<p>``python
+from dataclasses import dataclass
+from enum import Enum
+from typing import List, Optional, Dict
+from datetime import datetime, timedelta
+import heapq</p>
 
-<span class="k">class</span> <span class="nc">JobPriority</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Job priority levels.</span><span class="sh">"""</span>
-    <span class="n">CRITICAL</span> <span class="o">=</span> <span class="mi">0</span>      <span class="c1"># Production inference (P0)
-</span>    <span class="n">HIGH</span> <span class="o">=</span> <span class="mi">1</span>          <span class="c1"># Production training (P1)
-</span>    <span class="n">MEDIUM</span> <span class="o">=</span> <span class="mi">2</span>        <span class="c1"># Experimentation (P2)
-</span>    <span class="n">LOW</span> <span class="o">=</span> <span class="mi">3</span>           <span class="c1"># Batch processing (P3)
-</span>    <span class="n">PREEMPTIBLE</span> <span class="o">=</span> <span class="mi">4</span>   <span class="c1"># Can be killed anytime
-</span>
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">ResourceRequest</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Resources needed for a job.</span><span class="sh">"""</span>
-    <span class="n">cpus</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">memory_gb</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">gpus</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">gpu_type</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># "V100", "A100", "H100"
-</span>    <span class="n">disk_gb</span><span class="p">:</span> <span class="nb">int</span>
-    
-    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nf">hash</span><span class="p">((</span><span class="n">self</span><span class="p">.</span><span class="n">cpus</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">memory_gb</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">gpus</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">gpu_type</span><span class="p">))</span>
+<p>class JobPriority(Enum):
+ “"”Job priority levels.”””
+ CRITICAL = 0 # Production inference (P0)
+ HIGH = 1 # Production training (P1)
+ MEDIUM = 2 # Experimentation (P2)
+ LOW = 3 # Batch processing (P3)
+ PREEMPTIBLE = 4 # Can be killed anytime</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">Job</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">ML job to be scheduled.</span><span class="sh">"""</span>
-    <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">team_id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">priority</span><span class="p">:</span> <span class="n">JobPriority</span>
-    <span class="n">resources</span><span class="p">:</span> <span class="n">ResourceRequest</span>
-    <span class="n">estimated_duration_hours</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">deadline</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span>
-    <span class="n">submitted_at</span><span class="p">:</span> <span class="n">datetime</span>
-    <span class="n">started_at</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">can_preempt</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Priority comparison for heap queue.
-        
-        Sorting criteria (in order):
-        1. Priority level (lower is better)
-        2. Deadline proximity (earlier deadline wins)
-        3. Submission time (FIFO for same priority)
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">priority</span> <span class="o">!=</span> <span class="n">other</span><span class="p">.</span><span class="n">priority</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">priority</span><span class="p">.</span><span class="n">value</span> <span class="o">&lt;</span> <span class="n">other</span><span class="p">.</span><span class="n">priority</span><span class="p">.</span><span class="n">value</span>
-        
-        <span class="c1"># If both have deadlines, prioritize closer deadline
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">deadline</span> <span class="ow">and</span> <span class="n">other</span><span class="p">.</span><span class="n">deadline</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">deadline</span> <span class="o">&lt;</span> <span class="n">other</span><span class="p">.</span><span class="n">deadline</span>
-        
-        <span class="c1"># Jobs with deadlines beat those without
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">deadline</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">True</span>
-        <span class="k">if</span> <span class="n">other</span><span class="p">.</span><span class="n">deadline</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">False</span>
-        
-        <span class="c1"># FIFO for same priority
-</span>        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">submitted_at</span> <span class="o">&lt;</span> <span class="n">other</span><span class="p">.</span><span class="n">submitted_at</span>
-    
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">wait_time</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">timedelta</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">How long has this job been waiting?</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">started_at</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">started_at</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">submitted_at</span>
-        <span class="k">return</span> <span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">submitted_at</span>
-    
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_deadline_critical</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Is this job close to missing its deadline?</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">deadline</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">False</span>
-        
-        <span class="n">time_until_deadline</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">deadline</span> <span class="o">-</span> <span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">time_until_deadline</span> <span class="o">&lt;</span> <span class="nf">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">estimated_duration_hours</span> <span class="o">*</span> <span class="mf">1.5</span><span class="p">)</span>
+<p>@dataclass
+class ResourceRequest:
+ “"”Resources needed for a job.”””
+ cpus: int
+ memory_gb: int
+ gpus: int
+ gpu_type: str # “V100”, “A100”, “H100”
+ disk_gb: int</p>
 
+<p>def <strong>hash</strong>(self):
+ return hash((self.cpus, self.memory_gb, self.gpus, self.gpu_type))</p>
 
-<span class="k">class</span> <span class="nc">JobScheduler</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Priority-based job scheduler with fair share and preemption.
-    
-    Greedy strategy:
-    1. Prioritize high-priority jobs
-    2. Within same priority, consider deadlines and wait time
-    3. Implement fair share to prevent starvation
-    4. Preempt low-priority jobs for critical ones
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">fair_share_window_hours</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Job</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Min heap by priority
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">running_jobs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Job</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">fair_share_window</span> <span class="o">=</span> <span class="nf">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="n">fair_share_window_hours</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">team_usage</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># GPU-hours used
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">team_quotas</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># GPU-hours quota
-</span>        
-        <span class="n">heapq</span><span class="p">.</span><span class="nf">heapify</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">submit_job</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">Job</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Submit a new job to the scheduler.
-        
-        Why heap?
-        - O(log N) insertion
-        - O(1) to peek highest priority
-        - Automatically maintains priority order
-        </span><span class="sh">"""</span>
-        <span class="n">heapq</span><span class="p">.</span><span class="nf">heappush</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">get_next_job</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">available_resources</span><span class="p">:</span> <span class="n">ResourceRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Job</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Get the next job to schedule using greedy algorithm.
-        
-        Greedy strategy (like container problem):
-        1. Check highest priority job
-        2. If it fits, schedule it
-        3. If not, check if we can preempt lower-priority jobs
-        4. Consider fair share quotas
-        
-        Time: O(log N) - heap operations
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">None</span>
-        
-        <span class="c1"># Peek at highest priority job (don't pop yet)
-</span>        <span class="n">candidate</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="c1"># Check if resources are sufficient
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="nf">_can_fit</span><span class="p">(</span><span class="n">candidate</span><span class="p">.</span><span class="n">resources</span><span class="p">,</span> <span class="n">available_resources</span><span class="p">):</span>
-            <span class="c1"># Check fair share quota
-</span>            <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="nf">_check_fair_share</span><span class="p">(</span><span class="n">candidate</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">heapq</span><span class="p">.</span><span class="nf">heappop</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">)</span>
-        
-        <span class="c1"># High-priority job can't fit - check for preemption
-</span>        <span class="k">if</span> <span class="n">candidate</span><span class="p">.</span><span class="n">priority</span> <span class="ow">in</span> <span class="p">[</span><span class="n">JobPriority</span><span class="p">.</span><span class="n">CRITICAL</span><span class="p">,</span> <span class="n">JobPriority</span><span class="p">.</span><span class="n">HIGH</span><span class="p">]:</span>
-            <span class="n">preempt_candidate</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_find_preemptible_job</span><span class="p">(</span><span class="n">candidate</span><span class="p">.</span><span class="n">resources</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">preempt_candidate</span><span class="p">:</span>
-                <span class="c1"># Preempt lower-priority job
-</span>                <span class="n">self</span><span class="p">.</span><span class="nf">_preempt_job</span><span class="p">(</span><span class="n">preempt_candidate</span><span class="p">)</span>
-                <span class="k">return</span> <span class="n">heapq</span><span class="p">.</span><span class="nf">heappop</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">)</span>
-        
-        <span class="c1"># Try to find smaller job that fits (avoid fragmentation)
-</span>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="nf">_can_fit</span><span class="p">(</span><span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">,</span> <span class="n">available_resources</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="nf">_check_fair_share</span><span class="p">(</span><span class="n">job</span><span class="p">):</span>
-                    <span class="c1"># Remove from middle of heap (O(N) worst case)
-</span>                    <span class="n">self</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-                    <span class="n">self</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">.</span><span class="nf">pop</span><span class="p">()</span>
-                    <span class="n">heapq</span><span class="p">.</span><span class="nf">heapify</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">)</span>
-                    <span class="k">return</span> <span class="n">job</span>
-        
-        <span class="k">return</span> <span class="bp">None</span>
-    
-    <span class="k">def</span> <span class="nf">_can_fit</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">ResourceRequest</span><span class="p">,</span> <span class="n">available</span><span class="p">:</span> <span class="n">ResourceRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Check if requested resources fit in available resources.
-        
-        All dimensions must fit (like multi-dimensional bin packing).
-        </span><span class="sh">"""</span>
-        <span class="nf">return </span><span class="p">(</span>
-            <span class="n">request</span><span class="p">.</span><span class="n">cpus</span> <span class="o">&lt;=</span> <span class="n">available</span><span class="p">.</span><span class="n">cpus</span> <span class="ow">and</span>
-            <span class="n">request</span><span class="p">.</span><span class="n">memory_gb</span> <span class="o">&lt;=</span> <span class="n">available</span><span class="p">.</span><span class="n">memory_gb</span> <span class="ow">and</span>
-            <span class="n">request</span><span class="p">.</span><span class="n">gpus</span> <span class="o">&lt;=</span> <span class="n">available</span><span class="p">.</span><span class="n">gpus</span> <span class="ow">and</span>
-            <span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">gpu_type</span> <span class="o">==</span> <span class="n">available</span><span class="p">.</span><span class="n">gpu_type</span> <span class="ow">or</span> <span class="n">available</span><span class="p">.</span><span class="n">gpu_type</span> <span class="o">==</span> <span class="sh">"</span><span class="s">any</span><span class="sh">"</span><span class="p">)</span> <span class="ow">and</span>
-            <span class="n">request</span><span class="p">.</span><span class="n">disk_gb</span> <span class="o">&lt;=</span> <span class="n">available</span><span class="p">.</span><span class="n">disk_gb</span>
-        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_check_fair_share</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">Job</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Check if team is within their fair share quota.
-        
-        Prevent one team from monopolizing resources.
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">job</span><span class="p">.</span><span class="n">team_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">team_quotas</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">True</span>  <span class="c1"># No quota set
-</span>        
-        <span class="n">current_usage</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">team_usage</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">job</span><span class="p">.</span><span class="n">team_id</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
-        <span class="n">quota</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">team_quotas</span><span class="p">[</span><span class="n">job</span><span class="p">.</span><span class="n">team_id</span><span class="p">]</span>
-        
-        <span class="c1"># Allow critical jobs to exceed quota
-</span>        <span class="k">if</span> <span class="n">job</span><span class="p">.</span><span class="n">priority</span> <span class="o">==</span> <span class="n">JobPriority</span><span class="p">.</span><span class="n">CRITICAL</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">True</span>
-        
-        <span class="c1"># Check if within quota (with 10% grace)
-</span>        <span class="k">return</span> <span class="n">current_usage</span> <span class="o">&lt;</span> <span class="n">quota</span> <span class="o">*</span> <span class="mf">1.1</span>
-    
-    <span class="k">def</span> <span class="nf">_find_preemptible_job</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">needed</span><span class="p">:</span> <span class="n">ResourceRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Find a running job that can be preempted to free resources.
-        
-        Greedy choice: preempt lowest-priority job that frees enough resources.
-        </span><span class="sh">"""</span>
-        <span class="n">preemptible</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span> 
-            <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">running_jobs</span><span class="p">.</span><span class="nf">items</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">job</span><span class="p">.</span><span class="n">can_preempt</span> <span class="ow">and</span> <span class="n">job</span><span class="p">.</span><span class="n">priority</span> <span class="o">==</span> <span class="n">JobPriority</span><span class="p">.</span><span class="n">PREEMPTIBLE</span>
-        <span class="p">]</span>
-        
-        <span class="c1"># Sort by least resource usage (preempt smallest job if possible)
-</span>        <span class="n">preemptible</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">resources</span><span class="p">.</span><span class="n">gpus</span><span class="p">)</span>
-        
-        <span class="c1"># Greedy: find first job that frees enough resources
-</span>        <span class="k">for</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">preemptible</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="nf">_can_fit</span><span class="p">(</span><span class="n">needed</span><span class="p">,</span> <span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">job_id</span>
-        
-        <span class="k">return</span> <span class="bp">None</span>
-    
-    <span class="k">def</span> <span class="nf">_preempt_job</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Preempt a running job.
-        
-        In production:
-        - Send SIGTERM, wait for graceful shutdown
-        - Save checkpoint if training job
-        - Re-queue job with higher priority
-        </span><span class="sh">"""</span>
-        <span class="n">job</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">running_jobs</span><span class="p">.</span><span class="nf">pop</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
-        
-        <span class="c1"># Re-queue with higher priority (prevent starvation)
-</span>        <span class="n">job</span><span class="p">.</span><span class="n">priority</span> <span class="o">=</span> <span class="n">JobPriority</span><span class="p">.</span><span class="n">MEDIUM</span>
-        <span class="n">job</span><span class="p">.</span><span class="n">submitted_at</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="nf">submit_job</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">mark_started</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">Job</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Mark job as started.</span><span class="sh">"""</span>
-        <span class="n">job</span><span class="p">.</span><span class="n">started_at</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">running_jobs</span><span class="p">[</span><span class="n">job</span><span class="p">.</span><span class="n">job_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span>
-    
-    <span class="k">def</span> <span class="nf">mark_completed</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Mark job as completed and update usage.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">job_id</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">running_jobs</span><span class="p">:</span>
-            <span class="n">job</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">running_jobs</span><span class="p">.</span><span class="nf">pop</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
-            
-            <span class="c1"># Update team usage for fair share
-</span>            <span class="n">gpu_hours</span> <span class="o">=</span> <span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">.</span><span class="n">gpus</span> <span class="o">*</span> <span class="p">(</span>
-                <span class="p">(</span><span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">job</span><span class="p">.</span><span class="n">started_at</span><span class="p">).</span><span class="nf">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="mi">3600</span>
-            <span class="p">)</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">team_usage</span><span class="p">[</span><span class="n">job</span><span class="p">.</span><span class="n">team_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">team_usage</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">job</span><span class="p">.</span><span class="n">team_id</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">gpu_hours</span>
-</code></pre></div></div>
+<p>@dataclass
+class Job:
+ “"”ML job to be scheduled.”””
+ job_id: str
+ user_id: str
+ team_id: str
+ priority: JobPriority
+ resources: ResourceRequest
+ estimated_duration_hours: float
+ deadline: Optional[datetime]
+ submitted_at: datetime
+ started_at: Optional[datetime] = None
+ can_preempt: bool = False</p>
+
+<p>def <strong>lt</strong>(self, other):
+ “””
+ Priority comparison for heap queue.</p>
+
+<p>Sorting criteria (in order):</p>
+<ol>
+  <li>Priority level (lower is better)</li>
+  <li>Deadline proximity (earlier deadline wins)</li>
+  <li>Submission time (FIFO for same priority)
+ “””
+ if self.priority != other.priority:
+ return self.priority.value &lt; other.priority.value</li>
+</ol>
+
+<p># If both have deadlines, prioritize closer deadline
+ if self.deadline and other.deadline:
+ return self.deadline &lt; other.deadline</p>
+
+<p># Jobs with deadlines beat those without
+ if self.deadline:
+ return True
+ if other.deadline:
+ return False</p>
+
+<p># FIFO for same priority
+ return self.submitted_at &lt; other.submitted_at</p>
+
+<p>@property
+ def wait_time(self) -&gt; timedelta:
+ “"”How long has this job been waiting?”””
+ if self.started_at:
+ return self.started_at - self.submitted_at
+ return datetime.now() - self.submitted_at</p>
+
+<p>@property
+ def is_deadline_critical(self) -&gt; bool:
+ “"”Is this job close to missing its deadline?”””
+ if not self.deadline:
+ return False</p>
+
+<p>time_until_deadline = self.deadline - datetime.now()
+ return time_until_deadline &lt; timedelta(hours=self.estimated_duration_hours * 1.5)</p>
+
+<p>class JobScheduler:
+ “””
+ Priority-based job scheduler with fair share and preemption.</p>
+
+<p>Greedy strategy:</p>
+<ol>
+  <li>Prioritize high-priority jobs</li>
+  <li>Within same priority, consider deadlines and wait time</li>
+  <li>Implement fair share to prevent starvation</li>
+  <li>Preempt low-priority jobs for critical ones
+ “””</li>
+</ol>
+
+<p>def <strong>init</strong>(self, fair_share_window_hours: int = 24):
+ self.pending_jobs: List[Job] = [] # Min heap by priority
+ self.running_jobs: Dict[str, Job] = {}
+ self.fair_share_window = timedelta(hours=fair_share_window_hours)
+ self.team_usage: Dict[str, float] = {} # GPU-hours used
+ self.team_quotas: Dict[str, float] = {} # GPU-hours quota</p>
+
+<p>heapq.heapify(self.pending_jobs)</p>
+
+<p>def submit_job(self, job: Job):
+ “””
+ Submit a new job to the scheduler.</p>
+
+<p>Why heap?</p>
+<ul>
+  <li>O(log N) insertion</li>
+  <li>O(1) to peek highest priority</li>
+  <li>Automatically maintains priority order
+ “””
+ heapq.heappush(self.pending_jobs, job)</li>
+</ul>
+
+<p>def get_next_job(self, available_resources: ResourceRequest) -&gt; Optional[Job]:
+ “””
+ Get the next job to schedule using greedy algorithm.</p>
+
+<p>Greedy strategy (like container problem):</p>
+<ol>
+  <li>Check highest priority job</li>
+  <li>If it fits, schedule it</li>
+  <li>If not, check if we can preempt lower-priority jobs</li>
+  <li>Consider fair share quotas</li>
+</ol>
+
+<p>Time: O(log N) - heap operations
+ “””
+ if not self.pending_jobs:
+ return None</p>
+
+<p># Peek at highest priority job (don’t pop yet)
+ candidate = self.pending_jobs[0]</p>
+
+<p># Check if resources are sufficient
+ if self._can_fit(candidate.resources, available_resources):
+ # Check fair share quota
+ if self._check_fair_share(candidate):
+ return heapq.heappop(self.pending_jobs)</p>
+
+<p># High-priority job can’t fit - check for preemption
+ if candidate.priority in [JobPriority.CRITICAL, JobPriority.HIGH]:
+ preempt_candidate = self._find_preemptible_job(candidate.resources)
+ if preempt_candidate:
+ # Preempt lower-priority job
+ self._preempt_job(preempt_candidate)
+ return heapq.heappop(self.pending_jobs)</p>
+
+<p># Try to find smaller job that fits (avoid fragmentation)
+ for i, job in enumerate(self.pending_jobs):
+ if self._can_fit(job.resources, available_resources):
+ if self._check_fair_share(job):
+ # Remove from middle of heap (O(N) worst case)
+ self.pending_jobs[i] = self.pending_jobs[-1]
+ self.pending_jobs.pop()
+ heapq.heapify(self.pending_jobs)
+ return job</p>
+
+<p>return None</p>
+
+<p>def _can_fit(self, request: ResourceRequest, available: ResourceRequest) -&gt; bool:
+ “””
+ Check if requested resources fit in available resources.</p>
+
+<p>All dimensions must fit (like multi-dimensional bin packing).
+ “””
+ return (
+ request.cpus &lt;= available.cpus and
+ request.memory_gb &lt;= available.memory_gb and
+ request.gpus &lt;= available.gpus and
+ (request.gpu_type == available.gpu_type or available.gpu_type == “any”) and
+ request.disk_gb &lt;= available.disk_gb
+ )</p>
+
+<p>def _check_fair_share(self, job: Job) -&gt; bool:
+ “””
+ Check if team is within their fair share quota.</p>
+
+<p>Prevent one team from monopolizing resources.
+ “””
+ if job.team_id not in self.team_quotas:
+ return True # No quota set</p>
+
+<p>current_usage = self.team_usage.get(job.team_id, 0.0)
+ quota = self.team_quotas[job.team_id]</p>
+
+<p># Allow critical jobs to exceed quota
+ if job.priority == JobPriority.CRITICAL:
+ return True</p>
+
+<p># Check if within quota (with 10% grace)
+ return current_usage &lt; quota * 1.1</p>
+
+<p>def _find_preemptible_job(self, needed: ResourceRequest) -&gt; Optional[str]:
+ “””
+ Find a running job that can be preempted to free resources.</p>
+
+<p>Greedy choice: preempt lowest-priority job that frees enough resources.
+ “””
+ preemptible = [
+ (job_id, job) 
+ for job_id, job in self.running_jobs.items()
+ if job.can_preempt and job.priority == JobPriority.PREEMPTIBLE
+ ]</p>
+
+<p># Sort by least resource usage (preempt smallest job if possible)
+ preemptible.sort(key=lambda x: x[1].resources.gpus)</p>
+
+<p># Greedy: find first job that frees enough resources
+ for job_id, job in preemptible:
+ if self._can_fit(needed, job.resources):
+ return job_id</p>
+
+<p>return None</p>
+
+<p>def _preempt_job(self, job_id: str):
+ “””
+ Preempt a running job.</p>
+
+<p>In production:</p>
+<ul>
+  <li>Send SIGTERM, wait for graceful shutdown</li>
+  <li>Save checkpoint if training job</li>
+  <li>Re-queue job with higher priority
+ “””
+ job = self.running_jobs.pop(job_id)</li>
+</ul>
+
+<p># Re-queue with higher priority (prevent starvation)
+ job.priority = JobPriority.MEDIUM
+ job.submitted_at = datetime.now()
+ self.submit_job(job)</p>
+
+<p>def mark_started(self, job: Job):
+ “"”Mark job as started.”””
+ job.started_at = datetime.now()
+ self.running_jobs[job.job_id] = job</p>
+
+<p>def mark_completed(self, job_id: str):
+ “"”Mark job as completed and update usage.”””
+ if job_id in self.running_jobs:
+ job = self.running_jobs.pop(job_id)</p>
+
+<p># Update team usage for fair share
+ gpu_hours = job.resources.gpus * (
+ (datetime.now() - job.started_at).total_seconds() / 3600
+ )
+ self.team_usage[job.team_id] = self.team_usage.get(job.team_id, 0) + gpu_hours
+``</p>
 
 <h3 id="2-allocator---greedy-bin-packing">2. Allocator - Greedy Bin Packing</h3>
 
 <p>The allocator implements a greedy algorithm to pack jobs onto available resources.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
+<p>``python
+from typing import List, Dict, Tuple, Optional</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">Node</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">A compute node (e.g., GPU instance).</span><span class="sh">"""</span>
-    <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">available</span><span class="p">:</span> <span class="n">ResourceRequest</span>
-    <span class="n">capacity</span><span class="p">:</span> <span class="n">ResourceRequest</span>
-    <span class="n">cost_per_hour</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">region</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">is_spot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span>  <span class="c1"># Spot/preemptible instance
-</span>    
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">utilization</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">GPU utilization percentage.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">capacity</span><span class="p">.</span><span class="n">gpus</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="mf">0.0</span>
-        <span class="k">return</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">gpus</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">capacity</span><span class="p">.</span><span class="n">gpus</span><span class="p">)</span>
+<p>@dataclass
+class Node:
+ “"”A compute node (e.g., GPU instance).”””
+ node_id: str
+ available: ResourceRequest
+ capacity: ResourceRequest
+ cost_per_hour: float
+ region: str
+ is_spot: bool = False # Spot/preemptible instance</p>
 
+<p>@property
+ def utilization(self) -&gt; float:
+ “"”GPU utilization percentage.”””
+ if self.capacity.gpus == 0:
+ return 0.0
+ return 1.0 - (self.available.gpus / self.capacity.gpus)</p>
 
-<span class="k">class</span> <span class="nc">ResourceAllocator</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Greedy resource allocator using bin packing.
-    
-    Similar to Container With Most Water:
-    - Multiple bins (nodes) with capacities
-    - Jobs to pack (containers to fill)
-    - Greedy choice: pack job to minimize waste
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">nodes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">allocations</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># job_id -&gt; node_id
-</span>    
-    <span class="k">def</span> <span class="nf">add_node</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Add a compute node to the pool.</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node</span><span class="p">.</span><span class="n">node_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
-    
-    <span class="k">def</span> <span class="nf">allocate</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">Job</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Allocate resources for a job using greedy algorithm.
-        
-        Greedy strategies (in order of preference):
-        1. Best fit: minimize wasted resources
-        2. First fit: fill nodes to capacity (consolidation)
-        3. Worst fit: spread load evenly
-        
-        We use BEST FIT for cost efficiency.
-        
-        Returns:
-            node_id if allocation successful, None otherwise
-        </span><span class="sh">"""</span>
-        <span class="n">best_node</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">min_waste</span> <span class="o">=</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">inf</span><span class="sh">'</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">nodes</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-            <span class="c1"># Check if job fits
-</span>            <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="nf">_can_allocate</span><span class="p">(</span><span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
-                <span class="k">continue</span>
-            
-            <span class="c1"># Calculate waste (remaining resources after allocation)
-</span>            <span class="n">waste</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_calculate_waste</span><span class="p">(</span><span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
-            
-            <span class="c1"># Greedy choice: minimize waste (best fit)
-</span>            <span class="k">if</span> <span class="n">waste</span> <span class="o">&lt;</span> <span class="n">min_waste</span><span class="p">:</span>
-                <span class="n">min_waste</span> <span class="o">=</span> <span class="n">waste</span>
-                <span class="n">best_node</span> <span class="o">=</span> <span class="n">node_id</span>
-        
-        <span class="k">if</span> <span class="n">best_node</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">_allocate_to_node</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">best_node</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">best_node</span>
-        
-        <span class="k">return</span> <span class="bp">None</span>
-    
-    <span class="k">def</span> <span class="nf">allocate_multi_node</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">Job</span><span class="p">,</span> <span class="n">max_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="sh">"""</span><span class="s">
-        Allocate job across multiple nodes (for distributed training).
-        
-        Greedy approach:
-        1. Find nodes with most available resources
-        2. Allocate greedily to top candidates
-        3. Prefer nodes in same region (reduce network latency)
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">max_nodes</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">node</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">allocate</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="k">if</span> <span class="n">node</span> <span class="k">else</span> <span class="bp">None</span>
-        
-        <span class="c1"># Calculate per-node resource requirement
-</span>        <span class="n">gpus_per_node</span> <span class="o">=</span> <span class="p">(</span><span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">.</span><span class="n">gpus</span> <span class="o">+</span> <span class="n">max_nodes</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">max_nodes</span>
-        <span class="n">per_node_request</span> <span class="o">=</span> <span class="nc">ResourceRequest</span><span class="p">(</span>
-            <span class="n">cpus</span><span class="o">=</span><span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">.</span><span class="n">cpus</span> <span class="o">//</span> <span class="n">max_nodes</span><span class="p">,</span>
-            <span class="n">memory_gb</span><span class="o">=</span><span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">.</span><span class="n">memory_gb</span> <span class="o">//</span> <span class="n">max_nodes</span><span class="p">,</span>
-            <span class="n">gpus</span><span class="o">=</span><span class="n">gpus_per_node</span><span class="p">,</span>
-            <span class="n">gpu_type</span><span class="o">=</span><span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">.</span><span class="n">gpu_type</span><span class="p">,</span>
-            <span class="n">disk_gb</span><span class="o">=</span><span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">.</span><span class="n">disk_gb</span> <span class="o">//</span> <span class="n">max_nodes</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Find candidate nodes
-</span>        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">(</span><span class="n">node_id</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">nodes</span><span class="p">.</span><span class="nf">items</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="nf">_can_allocate</span><span class="p">(</span><span class="n">per_node_request</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
-        <span class="p">]</span>
-        
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">max_nodes</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">None</span>  <span class="c1"># Not enough nodes
-</span>        
-        <span class="c1"># Greedy: sort by region to co-locate
-</span>        <span class="n">region_groups</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
-            <span class="n">region_groups</span><span class="p">.</span><span class="nf">setdefault</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">region</span><span class="p">,</span> <span class="p">[]).</span><span class="nf">append</span><span class="p">((</span><span class="n">node_id</span><span class="p">,</span> <span class="n">node</span><span class="p">))</span>
-        
-        <span class="c1"># Pick largest region group
-</span>        <span class="n">best_region</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">region_groups</span><span class="p">.</span><span class="nf">keys</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">region_groups</span><span class="p">[</span><span class="n">r</span><span class="p">]))</span>
-        <span class="n">best_nodes</span> <span class="o">=</span> <span class="n">region_groups</span><span class="p">[</span><span class="n">best_region</span><span class="p">][:</span><span class="n">max_nodes</span><span class="p">]</span>
-        
-        <span class="c1"># Allocate to all nodes
-</span>        <span class="n">allocated</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">best_nodes</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">_allocate_to_node_partial</span><span class="p">(</span><span class="n">per_node_request</span><span class="p">,</span> <span class="n">node_id</span><span class="p">)</span>
-            <span class="n">allocated</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">node_id</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">allocated</span>
-    
-    <span class="k">def</span> <span class="nf">deallocate</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Release resources when job completes.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">job_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">allocations</span><span class="p">:</span>
-            <span class="k">return</span>
-        
-        <span class="n">node_id</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">allocations</span><span class="p">.</span><span class="nf">pop</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
-        <span class="c1"># In practice, restore node.available resources
-</span>    
-    <span class="k">def</span> <span class="nf">_can_allocate</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">ResourceRequest</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Check if request fits in node.</span><span class="sh">"""</span>
-        <span class="nf">return </span><span class="p">(</span>
-            <span class="n">request</span><span class="p">.</span><span class="n">cpus</span> <span class="o">&lt;=</span> <span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">cpus</span> <span class="ow">and</span>
-            <span class="n">request</span><span class="p">.</span><span class="n">memory_gb</span> <span class="o">&lt;=</span> <span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">memory_gb</span> <span class="ow">and</span>
-            <span class="n">request</span><span class="p">.</span><span class="n">gpus</span> <span class="o">&lt;=</span> <span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">gpus</span> <span class="ow">and</span>
-            <span class="n">request</span><span class="p">.</span><span class="n">gpu_type</span> <span class="o">==</span> <span class="n">node</span><span class="p">.</span><span class="n">capacity</span><span class="p">.</span><span class="n">gpu_type</span> <span class="ow">and</span>
-            <span class="n">request</span><span class="p">.</span><span class="n">disk_gb</span> <span class="o">&lt;=</span> <span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">disk_gb</span>
-        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_calculate_waste</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">ResourceRequest</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Calculate resource waste if we allocate request to node.
-        
-        Waste metric: sum of fractional unused resources.
-        Lower waste = better fit.
-        </span><span class="sh">"""</span>
-        <span class="n">cpu_waste</span> <span class="o">=</span> <span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">cpus</span> <span class="o">-</span> <span class="n">request</span><span class="p">.</span><span class="n">cpus</span><span class="p">)</span> <span class="o">/</span> <span class="n">node</span><span class="p">.</span><span class="n">capacity</span><span class="p">.</span><span class="n">cpus</span>
-        <span class="n">mem_waste</span> <span class="o">=</span> <span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">memory_gb</span> <span class="o">-</span> <span class="n">request</span><span class="p">.</span><span class="n">memory_gb</span><span class="p">)</span> <span class="o">/</span> <span class="n">node</span><span class="p">.</span><span class="n">capacity</span><span class="p">.</span><span class="n">memory_gb</span>
-        <span class="n">gpu_waste</span> <span class="o">=</span> <span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">gpus</span> <span class="o">-</span> <span class="n">request</span><span class="p">.</span><span class="n">gpus</span><span class="p">)</span> <span class="o">/</span> <span class="n">node</span><span class="p">.</span><span class="n">capacity</span><span class="p">.</span><span class="n">gpus</span> <span class="k">if</span> <span class="n">node</span><span class="p">.</span><span class="n">capacity</span><span class="p">.</span><span class="n">gpus</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
-        
-        <span class="c1"># Weighted sum (GPU waste matters most)
-</span>        <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">gpu_waste</span> <span class="o">+</span> <span class="mf">0.3</span> <span class="o">*</span> <span class="n">mem_waste</span> <span class="o">+</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="n">cpu_waste</span>
-    
-    <span class="k">def</span> <span class="nf">_allocate_to_node</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">Job</span><span class="p">,</span> <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Actually allocate job to node.</span><span class="sh">"""</span>
-        <span class="n">node</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span>
-        
-        <span class="c1"># Decrease available resources
-</span>        <span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">cpus</span> <span class="o">-=</span> <span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">.</span><span class="n">cpus</span>
-        <span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">memory_gb</span> <span class="o">-=</span> <span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">.</span><span class="n">memory_gb</span>
-        <span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">gpus</span> <span class="o">-=</span> <span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">.</span><span class="n">gpus</span>
-        <span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">disk_gb</span> <span class="o">-=</span> <span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">.</span><span class="n">disk_gb</span>
-        
-        <span class="c1"># Track allocation
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">allocations</span><span class="p">[</span><span class="n">job</span><span class="p">.</span><span class="n">job_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_id</span>
-    
-    <span class="k">def</span> <span class="nf">_allocate_to_node_partial</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">ResourceRequest</span><span class="p">,</span> <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Allocate partial resources (for multi-node jobs).</span><span class="sh">"""</span>
-        <span class="n">node</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span>
-        <span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">cpus</span> <span class="o">-=</span> <span class="n">request</span><span class="p">.</span><span class="n">cpus</span>
-        <span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">memory_gb</span> <span class="o">-=</span> <span class="n">request</span><span class="p">.</span><span class="n">memory_gb</span>
-        <span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">gpus</span> <span class="o">-=</span> <span class="n">request</span><span class="p">.</span><span class="n">gpus</span>
-        <span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">disk_gb</span> <span class="o">-=</span> <span class="n">request</span><span class="p">.</span><span class="n">disk_gb</span>
-    
-    <span class="k">def</span> <span class="nf">get_utilization_stats</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Calculate cluster utilization statistics.</span><span class="sh">"""</span>
-        <span class="n">total_gpus</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">capacity</span><span class="p">.</span><span class="n">gpus</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">nodes</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
-        <span class="n">used_gpus</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span>
-            <span class="n">node</span><span class="p">.</span><span class="n">capacity</span><span class="p">.</span><span class="n">gpus</span> <span class="o">-</span> <span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">gpus</span> 
-            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">nodes</span><span class="p">.</span><span class="nf">values</span><span class="p">()</span>
-        <span class="p">)</span>
-        
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">"</span><span class="s">total_gpus</span><span class="sh">"</span><span class="p">:</span> <span class="n">total_gpus</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">used_gpus</span><span class="sh">"</span><span class="p">:</span> <span class="n">used_gpus</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">utilization</span><span class="sh">"</span><span class="p">:</span> <span class="n">used_gpus</span> <span class="o">/</span> <span class="n">total_gpus</span> <span class="k">if</span> <span class="n">total_gpus</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">num_nodes</span><span class="sh">"</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">nodes</span><span class="p">),</span>
-            <span class="sh">"</span><span class="s">active_jobs</span><span class="sh">"</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">allocations</span><span class="p">)</span>
-        <span class="p">}</span>
-</code></pre></div></div>
+<p>class ResourceAllocator:
+ “””
+ Greedy resource allocator using bin packing.</p>
+
+<p>Similar to Container With Most Water:</p>
+<ul>
+  <li>Multiple bins (nodes) with capacities</li>
+  <li>Jobs to pack (containers to fill)</li>
+  <li>Greedy choice: pack job to minimize waste
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self):
+ self.nodes: Dict[str, Node] = {}
+ self.allocations: Dict[str, str] = {} # job_id -&gt; node_id</p>
+
+<p>def add_node(self, node: Node):
+ “"”Add a compute node to the pool.”””
+ self.nodes[node.node_id] = node</p>
+
+<p>def allocate(self, job: Job) -&gt; Optional[str]:
+ “””
+ Allocate resources for a job using greedy algorithm.</p>
+
+<p>Greedy strategies (in order of preference):</p>
+<ol>
+  <li>Best fit: minimize wasted resources</li>
+  <li>First fit: fill nodes to capacity (consolidation)</li>
+  <li>Worst fit: spread load evenly</li>
+</ol>
+
+<p>We use BEST FIT for cost efficiency.</p>
+
+<p>Returns:
+ node_id if allocation successful, None otherwise
+ “””
+ best_node = None
+ min_waste = float(‘inf’)</p>
+
+<p>for node_id, node in self.nodes.items():
+ # Check if job fits
+ if not self._can_allocate(job.resources, node):
+ continue</p>
+
+<p># Calculate waste (remaining resources after allocation)
+ waste = self._calculate_waste(job.resources, node)</p>
+
+<p># Greedy choice: minimize waste (best fit)
+ if waste &lt; min_waste:
+ min_waste = waste
+ best_node = node_id</p>
+
+<p>if best_node:
+ self._allocate_to_node(job, best_node)
+ return best_node</p>
+
+<p>return None</p>
+
+<p>def allocate_multi_node(self, job: Job, max_nodes: int = 8) -&gt; Optional[List[str]]:
+ “””
+ Allocate job across multiple nodes (for distributed training).</p>
+
+<p>Greedy approach:</p>
+<ol>
+  <li>Find nodes with most available resources</li>
+  <li>Allocate greedily to top candidates</li>
+  <li>Prefer nodes in same region (reduce network latency)
+ “””
+ if max_nodes == 1:
+ node = self.allocate(job)
+ return [node] if node else None</li>
+</ol>
+
+<p># Calculate per-node resource requirement
+ gpus_per_node = (job.resources.gpus + max_nodes - 1) // max_nodes
+ per_node_request = ResourceRequest(
+ cpus=job.resources.cpus // max_nodes,
+ memory_gb=job.resources.memory_gb // max_nodes,
+ gpus=gpus_per_node,
+ gpu_type=job.resources.gpu_type,
+ disk_gb=job.resources.disk_gb // max_nodes
+ )</p>
+
+<p># Find candidate nodes
+ candidates = [
+ (node_id, node)
+ for node_id, node in self.nodes.items()
+ if self._can_allocate(per_node_request, node)
+ ]</p>
+
+<p>if len(candidates) &lt; max_nodes:
+ return None # Not enough nodes</p>
+
+<p># Greedy: sort by region to co-locate
+ region_groups = {}
+ for node_id, node in candidates:
+ region_groups.setdefault(node.region, []).append((node_id, node))</p>
+
+<p># Pick largest region group
+ best_region = max(region_groups.keys(), key=lambda r: len(region_groups[r]))
+ best_nodes = region_groups[best_region][:max_nodes]</p>
+
+<p># Allocate to all nodes
+ allocated = []
+ for node_id, node in best_nodes:
+ self._allocate_to_node_partial(per_node_request, node_id)
+ allocated.append(node_id)</p>
+
+<p>return allocated</p>
+
+<p>def deallocate(self, job_id: str):
+ “"”Release resources when job completes.”””
+ if job_id not in self.allocations:
+ return</p>
+
+<p>node_id = self.allocations.pop(job_id)
+ # In practice, restore node.available resources</p>
+
+<p>def _can_allocate(self, request: ResourceRequest, node: Node) -&gt; bool:
+ “"”Check if request fits in node.”””
+ return (
+ request.cpus &lt;= node.available.cpus and
+ request.memory_gb &lt;= node.available.memory_gb and
+ request.gpus &lt;= node.available.gpus and
+ request.gpu_type == node.capacity.gpu_type and
+ request.disk_gb &lt;= node.available.disk_gb
+ )</p>
+
+<p>def _calculate_waste(self, request: ResourceRequest, node: Node) -&gt; float:
+ “””
+ Calculate resource waste if we allocate request to node.</p>
+
+<p>Waste metric: sum of fractional unused resources.
+ Lower waste = better fit.
+ “””
+ cpu_waste = (node.available.cpus - request.cpus) / node.capacity.cpus
+ mem_waste = (node.available.memory_gb - request.memory_gb) / node.capacity.memory_gb
+ gpu_waste = (node.available.gpus - request.gpus) / node.capacity.gpus if node.capacity.gpus &gt; 0 else 0</p>
+
+<p># Weighted sum (GPU waste matters most)
+ return 0.5 * gpu_waste + 0.3 * mem_waste + 0.2 * cpu_waste</p>
+
+<p>def _allocate_to_node(self, job: Job, node_id: str):
+ “"”Actually allocate job to node.”””
+ node = self.nodes[node_id]</p>
+
+<p># Decrease available resources
+ node.available.cpus -= job.resources.cpus
+ node.available.memory_gb -= job.resources.memory_gb
+ node.available.gpus -= job.resources.gpus
+ node.available.disk_gb -= job.resources.disk_gb</p>
+
+<p># Track allocation
+ self.allocations[job.job_id] = node_id</p>
+
+<p>def _allocate_to_node_partial(self, request: ResourceRequest, node_id: str):
+ “"”Allocate partial resources (for multi-node jobs).”””
+ node = self.nodes[node_id]
+ node.available.cpus -= request.cpus
+ node.available.memory_gb -= request.memory_gb
+ node.available.gpus -= request.gpus
+ node.available.disk_gb -= request.disk_gb</p>
+
+<p>def get_utilization_stats(self) -&gt; Dict:
+ “"”Calculate cluster utilization statistics.”””
+ total_gpus = sum(node.capacity.gpus for node in self.nodes.values())
+ used_gpus = sum(
+ node.capacity.gpus - node.available.gpus 
+ for node in self.nodes.values()
+ )</p>
+
+<p>return {
+ “total_gpus”: total_gpus,
+ “used_gpus”: used_gpus,
+ “utilization”: used_gpus / total_gpus if total_gpus &gt; 0 else 0,
+ “num_nodes”: len(self.nodes),
+ “active_jobs”: len(self.allocations)
+ }
+``</p>
 
 <h3 id="3-auto-scaler---dynamic-resource-provisioning">3. Auto-Scaler - Dynamic Resource Provisioning</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span>
-<span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="n">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<p>``python
+from typing import List
+from dataclasses import dataclass
+from datetime import datetime, timedelta</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">ScalingPolicy</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Auto-scaling policy configuration.</span><span class="sh">"""</span>
-    <span class="n">min_nodes</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">max_nodes</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">target_utilization</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.80</span>
-    <span class="n">scale_up_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.90</span>
-    <span class="n">scale_down_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.50</span>
-    <span class="n">cooldown_minutes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
-    
+<p>@dataclass
+class ScalingPolicy:
+ “"”Auto-scaling policy configuration.”””
+ min_nodes: int
+ max_nodes: int
+ target_utilization: float = 0.80
+ scale_up_threshold: float = 0.90
+ scale_down_threshold: float = 0.50
+ cooldown_minutes: int = 5</p>
 
-<span class="k">class</span> <span class="nc">AutoScaler</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Auto-scaler for dynamic resource provisioning.
-    
-    Greedy scaling decisions:
-    - Scale up: when utilization &gt; threshold OR queue is growing
-    - Scale down: when utilization &lt; threshold AND queue is empty
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">policy</span><span class="p">:</span> <span class="n">ScalingPolicy</span><span class="p">,</span> <span class="n">allocator</span><span class="p">:</span> <span class="n">ResourceAllocator</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">policy</span> <span class="o">=</span> <span class="n">policy</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">allocator</span> <span class="o">=</span> <span class="n">allocator</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">last_scale_action</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">pending_queue_size_history</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">def</span> <span class="nf">should_scale_up</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">current_utilization</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">queue_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Decide if we should scale up.
-        
-        Greedy conditions:
-        1. High utilization (&gt;90%)
-        2. Growing queue
-        3. Not in cooldown period
-        </span><span class="sh">"""</span>
-        <span class="c1"># Check cooldown
-</span>        <span class="nf">if </span><span class="p">(</span><span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">last_scale_action</span><span class="p">).</span><span class="nf">total_seconds</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">policy</span><span class="p">.</span><span class="n">cooldown_minutes</span> <span class="o">*</span> <span class="mi">60</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">False</span>
-        
-        <span class="c1"># Check if at max capacity
-</span>        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">policy</span><span class="p">.</span><span class="n">max_nodes</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">False</span>
-        
-        <span class="c1"># High utilization trigger
-</span>        <span class="k">if</span> <span class="n">current_utilization</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">policy</span><span class="p">.</span><span class="n">scale_up_threshold</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">True</span>
-        
-        <span class="c1"># Growing queue trigger
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">pending_queue_size_history</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">queue_size</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">pending_queue_size_history</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">pending_queue_size_history</span><span class="p">.</span><span class="nf">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">pending_queue_size_history</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="c1"># Queue is growing consistently
-</span>            <span class="k">if</span> <span class="nf">all</span><span class="p">(</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">pending_queue_size_history</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">pending_queue_size_history</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
-                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">pending_queue_size_history</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="p">):</span>
-                <span class="k">return</span> <span class="bp">True</span>
-        
-        <span class="k">return</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">should_scale_down</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">current_utilization</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">queue_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Decide if we should scale down.
-        
-        Conservative approach:
-        - Only scale down if utilization is low AND queue is empty
-        - Respect minimum nodes
-        </span><span class="sh">"""</span>
-        <span class="c1"># Check cooldown
-</span>        <span class="nf">if </span><span class="p">(</span><span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">last_scale_action</span><span class="p">).</span><span class="nf">total_seconds</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">policy</span><span class="p">.</span><span class="n">cooldown_minutes</span> <span class="o">*</span> <span class="mi">60</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">False</span>
-        
-        <span class="c1"># Check if at min capacity
-</span>        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">policy</span><span class="p">.</span><span class="n">min_nodes</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">False</span>
-        
-        <span class="c1"># Low utilization and empty queue
-</span>        <span class="nf">return </span><span class="p">(</span>
-            <span class="n">current_utilization</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">policy</span><span class="p">.</span><span class="n">scale_down_threshold</span> <span class="ow">and</span>
-            <span class="n">queue_size</span> <span class="o">==</span> <span class="mi">0</span>
-        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">scale_up</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Add nodes to the cluster.
-        
-        In practice:
-        - Call cloud provider API (AWS/GCP/Azure)
-        - Choose instance type based on queue composition
-        - Prefer spot instances for cost savings
-        </span><span class="sh">"""</span>
-        <span class="n">new_nodes</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">num_nodes</span><span class="p">):</span>
-            <span class="n">node_id</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">node-</span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">+</span> <span class="n">i</span><span class="si">}</span><span class="sh">"</span>
-            
-            <span class="c1"># Create node (example: A100 instance)
-</span>            <span class="n">node</span> <span class="o">=</span> <span class="nc">Node</span><span class="p">(</span>
-                <span class="n">node_id</span><span class="o">=</span><span class="n">node_id</span><span class="p">,</span>
-                <span class="n">available</span><span class="o">=</span><span class="nc">ResourceRequest</span><span class="p">(</span>
-                    <span class="n">cpus</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
-                    <span class="n">memory_gb</span><span class="o">=</span><span class="mi">244</span><span class="p">,</span>
-                    <span class="n">gpus</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-                    <span class="n">gpu_type</span><span class="o">=</span><span class="sh">"</span><span class="s">A100</span><span class="sh">"</span><span class="p">,</span>
-                    <span class="n">disk_gb</span><span class="o">=</span><span class="mi">1000</span>
-                <span class="p">),</span>
-                <span class="n">capacity</span><span class="o">=</span><span class="nc">ResourceRequest</span><span class="p">(</span>
-                    <span class="n">cpus</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
-                    <span class="n">memory_gb</span><span class="o">=</span><span class="mi">244</span><span class="p">,</span>
-                    <span class="n">gpus</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-                    <span class="n">gpu_type</span><span class="o">=</span><span class="sh">"</span><span class="s">A100</span><span class="sh">"</span><span class="p">,</span>
-                    <span class="n">disk_gb</span><span class="o">=</span><span class="mi">1000</span>
-                <span class="p">),</span>
-                <span class="n">cost_per_hour</span><span class="o">=</span><span class="mf">24.48</span><span class="p">,</span>  <span class="c1"># AWS p4d.24xlarge pricing
-</span>                <span class="n">region</span><span class="o">=</span><span class="sh">"</span><span class="s">us-west-2</span><span class="sh">"</span><span class="p">,</span>
-                <span class="n">is_spot</span><span class="o">=</span><span class="bp">True</span>  <span class="c1"># Use spot for cost savings
-</span>            <span class="p">)</span>
-            
-            <span class="n">self</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="nf">add_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            <span class="n">new_nodes</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">node_id</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">last_scale_action</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">new_nodes</span>
-    
-    <span class="k">def</span> <span class="nf">scale_down</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">num_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Remove nodes from the cluster.
-        
-        Greedy choice: remove least utilized nodes first.
-        </span><span class="sh">"""</span>
-        <span class="c1"># Find nodes with lowest utilization
-</span>        <span class="n">nodes_by_util</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="n">nodes</span><span class="p">.</span><span class="nf">items</span><span class="p">(),</span>
-            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">utilization</span>
-        <span class="p">)</span>
-        
-        <span class="n">removed</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes_by_util</span><span class="p">[:</span><span class="n">num_nodes</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">gpus</span> <span class="o">==</span> <span class="n">node</span><span class="p">.</span><span class="n">capacity</span><span class="p">.</span><span class="n">gpus</span><span class="p">:</span>  <span class="c1"># Fully idle
-</span>                <span class="k">del</span> <span class="n">self</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span>
-                <span class="n">removed</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">node_id</span><span class="p">)</span>
-                <span class="c1"># In practice: call cloud API to terminate instance
-</span>        
-        <span class="k">if</span> <span class="n">removed</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">last_scale_action</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span>
-        
-        <span class="k">return</span> <span class="n">removed</span>
-</code></pre></div></div>
+<p>class AutoScaler:
+ “””
+ Auto-scaler for dynamic resource provisioning.</p>
+
+<p>Greedy scaling decisions:</p>
+<ul>
+  <li>Scale up: when utilization &gt; threshold OR queue is growing</li>
+  <li>Scale down: when utilization &lt; threshold AND queue is empty
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self, policy: ScalingPolicy, allocator: ResourceAllocator):
+ self.policy = policy
+ self.allocator = allocator
+ self.last_scale_action = datetime.now()
+ self.pending_queue_size_history: List[int] = []</p>
+
+<p>def should_scale_up(self, current_utilization: float, queue_size: int) -&gt; bool:
+ “””
+ Decide if we should scale up.</p>
+
+<p>Greedy conditions:</p>
+<ol>
+  <li>High utilization (&gt;90%)</li>
+  <li>Growing queue</li>
+  <li>Not in cooldown period
+ “””
+ # Check cooldown
+ if (datetime.now() - self.last_scale_action).total_seconds() &lt; self.policy.cooldown_minutes * 60:
+ return False</li>
+</ol>
+
+<p># Check if at max capacity
+ if len(self.allocator.nodes) &gt;= self.policy.max_nodes:
+ return False</p>
+
+<p># High utilization trigger
+ if current_utilization &gt; self.policy.scale_up_threshold:
+ return True</p>
+
+<p># Growing queue trigger
+ self.pending_queue_size_history.append(queue_size)
+ if len(self.pending_queue_size_history) &gt; 5:
+ self.pending_queue_size_history.pop(0)</p>
+
+<p>if len(self.pending_queue_size_history) &gt;= 3:
+ # Queue is growing consistently
+ if all(
+ self.pending_queue_size_history[i] &lt; self.pending_queue_size_history[i+1]
+ for i in range(len(self.pending_queue_size_history) - 1)
+ ):
+ return True</p>
+
+<p>return False</p>
+
+<p>def should_scale_down(self, current_utilization: float, queue_size: int) -&gt; bool:
+ “””
+ Decide if we should scale down.</p>
+
+<p>Conservative approach:</p>
+<ul>
+  <li>Only scale down if utilization is low AND queue is empty</li>
+  <li>Respect minimum nodes
+ “””
+ # Check cooldown
+ if (datetime.now() - self.last_scale_action).total_seconds() &lt; self.policy.cooldown_minutes * 60:
+ return False</li>
+</ul>
+
+<p># Check if at min capacity
+ if len(self.allocator.nodes) &lt;= self.policy.min_nodes:
+ return False</p>
+
+<p># Low utilization and empty queue
+ return (
+ current_utilization &lt; self.policy.scale_down_threshold and
+ queue_size == 0
+ )</p>
+
+<p>def scale_up(self, num_nodes: int = 1) -&gt; List[str]:
+ “””
+ Add nodes to the cluster.</p>
+
+<p>In practice:</p>
+<ul>
+  <li>Call cloud provider API (AWS/GCP/Azure)</li>
+  <li>Choose instance type based on queue composition</li>
+  <li>Prefer spot instances for cost savings
+ “””
+ new_nodes = []
+ for i in range(num_nodes):
+ node_id = f”node-{len(self.allocator.nodes) + i}”</li>
+</ul>
+
+<p># Create node (example: A100 instance)
+ node = Node(
+ node_id=node_id,
+ available=ResourceRequest(
+ cpus=32,
+ memory_gb=244,
+ gpus=8,
+ gpu_type=”A100”,
+ disk_gb=1000
+ ),
+ capacity=ResourceRequest(
+ cpus=32,
+ memory_gb=244,
+ gpus=8,
+ gpu_type=”A100”,
+ disk_gb=1000
+ ),
+ cost_per_hour=24.48, # AWS p4d.24xlarge pricing
+ region=”us-west-2”,
+ is_spot=True # Use spot for cost savings
+ )</p>
+
+<p>self.allocator.add_node(node)
+ new_nodes.append(node_id)</p>
+
+<p>self.last_scale_action = datetime.now()
+ return new_nodes</p>
+
+<p>def scale_down(self, num_nodes: int = 1) -&gt; List[str]:
+ “””
+ Remove nodes from the cluster.</p>
+
+<p>Greedy choice: remove least utilized nodes first.
+ “””
+ # Find nodes with lowest utilization
+ nodes_by_util = sorted(
+ self.allocator.nodes.items(),
+ key=lambda x: x[1].utilization
+ )</p>
+
+<p>removed = []
+ for node_id, node in nodes_by_util[:num_nodes]:
+ if node.available.gpus == node.capacity.gpus: # Fully idle
+ del self.allocator.nodes[node_id]
+ removed.append(node_id)
+ # In practice: call cloud API to terminate instance</p>
+
+<p>if removed:
+ self.last_scale_action = datetime.now()</p>
+
+<p>return removed
+``</p>
 
 <h2 id="data-flow">Data Flow</h2>
 
 <h3 id="job-submission-to-completion">Job Submission to Completion</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. User submits job
-   └─&gt; API validates request
-   └─&gt; Scheduler adds to priority queue
-   
-2. Scheduler loop (every 1 second)
-   └─&gt; Get next job from queue (greedy priority)
-   └─&gt; Check resource availability
-   └─&gt; If available: allocate
-   └─&gt; If not: check preemption or wait
-   
-3. Allocator assigns job to node(s)
-   └─&gt; Best fit bin packing
-   └─&gt; Update node available resources
-   └─&gt; Send job to Kubernetes
-   
-4. Job runs on GPU pod
-   └─&gt; Training/inference executes
-   └─&gt; Metrics streamed to monitoring
-   
-5. Job completes
-   └─&gt; Resources released
-   └─&gt; Usage logged for billing
-   └─&gt; Fair share quotas updated
-   
-6. Auto-scaler (every 30 seconds)
-   └─&gt; Check utilization
-   └─&gt; Decide scale up/down
-   └─&gt; Provision/deprovision nodes
-</code></pre></div></div>
+<p>``</p>
+<ol>
+  <li>
+    <p>User submits job
+ └─&gt; API validates request
+ └─&gt; Scheduler adds to priority queue</p>
+  </li>
+  <li>
+    <p>Scheduler loop (every 1 second)
+ └─&gt; Get next job from queue (greedy priority)
+ └─&gt; Check resource availability
+ └─&gt; If available: allocate
+ └─&gt; If not: check preemption or wait</p>
+  </li>
+  <li>
+    <p>Allocator assigns job to node(s)
+ └─&gt; Best fit bin packing
+ └─&gt; Update node available resources
+ └─&gt; Send job to Kubernetes</p>
+  </li>
+  <li>
+    <p>Job runs on GPU pod
+ └─&gt; Training/inference executes
+ └─&gt; Metrics streamed to monitoring</p>
+  </li>
+  <li>
+    <p>Job completes
+ └─&gt; Resources released
+ └─&gt; Usage logged for billing
+ └─&gt; Fair share quotas updated</p>
+  </li>
+  <li>
+    <p>Auto-scaler (every 30 seconds)
+ └─&gt; Check utilization
+ └─&gt; Decide scale up/down
+ └─&gt; Provision/deprovision nodes
+``</p>
+  </li>
+</ol>
 
 <h3 id="resource-allocation-decision-tree">Resource Allocation Decision Tree</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Job arrives
-    │
-    ├─&gt; Priority: CRITICAL?
-    │   ├─&gt; Yes: Preempt lower-priority jobs if needed
-    │   └─&gt; No: Continue
-    │
-    ├─&gt; Resources available?
-    │   ├─&gt; Yes: Allocate immediately (greedy)
-    │   └─&gt; No: Continue
-    │
-    ├─&gt; Team within quota?
-    │   ├─&gt; Yes: Continue
-    │   └─&gt; No: Wait or reject
-    │
-    ├─&gt; Can preempt?
-    │   ├─&gt; Yes: Preempt and allocate
-    │   └─&gt; No: Add to queue
-    │
-    └─&gt; Queue job by priority
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+Job arrives
+ │
+ ├─&gt; Priority: CRITICAL?
+ │ ├─&gt; Yes: Preempt lower-priority jobs if needed
+ │ └─&gt; No: Continue
+ │
+ ├─&gt; Resources available?
+ │ ├─&gt; Yes: Allocate immediately (greedy)
+ │ └─&gt; No: Continue
+ │
+ ├─&gt; Team within quota?
+ │ ├─&gt; Yes: Continue
+ │ └─&gt; No: Wait or reject
+ │
+ ├─&gt; Can preempt?
+ │ ├─&gt; Yes: Preempt and allocate
+ │ └─&gt; No: Add to queue
+ │
+ └─&gt; Queue job by priority
+</code></p>
 
 <h2 id="scaling-strategies">Scaling Strategies</h2>
 
@@ -1086,32 +1122,35 @@
 
 <p><strong>Challenge:</strong> How many nodes to add when scaling up?</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">calculate_scale_up_nodes</span><span class="p">(</span><span class="n">queue</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Job</span><span class="p">],</span> <span class="n">current_nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Greedy calculation: how many nodes to add?
-    
-    Strategy:
-    1. Calculate total resource requirements in queue
-    2. Divide by node capacity
-    3. Add 20% buffer
-    4. Cap at max_nodes
-    </span><span class="sh">"""</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">queue</span><span class="p">:</span>
-        <span class="k">return</span> <span class="mi">0</span>
-    
-    <span class="c1"># Aggregate resource needs
-</span>    <span class="n">total_gpus_needed</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">.</span><span class="n">gpus</span> <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">queue</span><span class="p">)</span>
-    <span class="n">total_memory_needed</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">job</span><span class="p">.</span><span class="n">resources</span><span class="p">.</span><span class="n">memory_gb</span> <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">queue</span><span class="p">)</span>
-    
-    <span class="c1"># Assume 8 GPUs per node (A100 instance)
-</span>    <span class="n">gpus_per_node</span> <span class="o">=</span> <span class="mi">8</span>
-    <span class="n">nodes_for_gpus</span> <span class="o">=</span> <span class="p">(</span><span class="n">total_gpus_needed</span> <span class="o">+</span> <span class="n">gpus_per_node</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">gpus_per_node</span>
-    
-    <span class="c1"># Add 20% buffer
-</span>    <span class="n">nodes_to_add</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">nodes_for_gpus</span> <span class="o">*</span> <span class="mf">1.2</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="nf">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nodes_to_add</span><span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+def calculate_scale_up_nodes(queue: List[Job], current_nodes: int) -&gt; int:
+ “””
+ Greedy calculation: how many nodes to add?</p>
+
+<p>Strategy:</p>
+<ol>
+  <li>Calculate total resource requirements in queue</li>
+  <li>Divide by node capacity</li>
+  <li>Add 20% buffer</li>
+  <li>Cap at max_nodes
+ “””
+ if not queue:
+ return 0</li>
+</ol>
+
+<p># Aggregate resource needs
+ total_gpus_needed = sum(job.resources.gpus for job in queue)
+ total_memory_needed = sum(job.resources.memory_gb for job in queue)</p>
+
+<p># Assume 8 GPUs per node (A100 instance)
+ gpus_per_node = 8
+ nodes_for_gpus = (total_gpus_needed + gpus_per_node - 1) // gpus_per_node</p>
+
+<p># Add 20% buffer
+ nodes_to_add = int(nodes_for_gpus * 1.2)</p>
+
+<p>return max(1, nodes_to_add)
+``</p>
 
 <h3 id="vertical-scaling">Vertical Scaling</h3>
 
@@ -1163,278 +1202,281 @@
 
 <h3 id="handling-spot-instance-interruptions">Handling Spot Instance Interruptions</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SpotInstanceManager</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Manage spot/preemptible instances for cost savings.
-    
-    Spot instances are 70-90% cheaper but can be interrupted.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">checkpointing_jobs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># job_id -&gt; checkpoint_path
-</span>    
-    <span class="k">def</span> <span class="nf">handle_interruption</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">notice_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">120</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Handle spot instance interruption (2-minute warning).
-        
-        Greedy strategy:
-        1. Save checkpoints for training jobs
-        2. Re-queue jobs to on-demand instances
-        3. Prioritize critical jobs
-        </span><span class="sh">"""</span>
-        <span class="c1"># Find jobs running on this node
-</span>        <span class="n">jobs_on_node</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">job</span> <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">running_jobs</span><span class="p">.</span><span class="nf">values</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">job</span><span class="p">.</span><span class="n">node_id</span> <span class="o">==</span> <span class="n">node_id</span>
-        <span class="p">]</span>
-        
-        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs_on_node</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">job</span><span class="p">.</span><span class="n">priority</span> <span class="ow">in</span> <span class="p">[</span><span class="n">JobPriority</span><span class="p">.</span><span class="n">CRITICAL</span><span class="p">,</span> <span class="n">JobPriority</span><span class="p">.</span><span class="n">HIGH</span><span class="p">]:</span>
-                <span class="c1"># Move to on-demand instance immediately
-</span>                <span class="n">self</span><span class="p">.</span><span class="nf">_migrate_to_on_demand</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Save checkpoint and re-queue
-</span>                <span class="n">self</span><span class="p">.</span><span class="nf">_checkpoint_and_requeue</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_checkpoint_and_requeue</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">Job</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Save model checkpoint and re-queue job.</span><span class="sh">"""</span>
-        <span class="c1"># Trigger checkpoint save
-</span>        <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">s3://checkpoints/</span><span class="si">{</span><span class="n">job</span><span class="p">.</span><span class="n">job_id</span><span class="si">}</span><span class="s">/latest</span><span class="sh">"</span>
-        <span class="c1"># ... save logic ...
-</span>        
-        <span class="c1"># Re-queue with checkpoint resume
-</span>        <span class="n">job</span><span class="p">.</span><span class="n">resume_from_checkpoint</span> <span class="o">=</span> <span class="n">checkpoint_path</span>
-        <span class="n">scheduler</span><span class="p">.</span><span class="nf">submit_job</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+class SpotInstanceManager:
+ “””
+ Manage spot/preemptible instances for cost savings.</p>
+
+<p>Spot instances are 70-90% cheaper but can be interrupted.
+ “””</p>
+
+<p>def <strong>init</strong>(self):
+ self.checkpointing_jobs: Dict[str, str] = {} # job_id -&gt; checkpoint_path</p>
+
+<p>def handle_interruption(self, node_id: str, notice_seconds: int = 120):
+ “””
+ Handle spot instance interruption (2-minute warning).</p>
+
+<p>Greedy strategy:</p>
+<ol>
+  <li>Save checkpoints for training jobs</li>
+  <li>Re-queue jobs to on-demand instances</li>
+  <li>Prioritize critical jobs
+ “””
+ # Find jobs running on this node
+ jobs_on_node = [
+ job for job in running_jobs.values()
+ if job.node_id == node_id
+ ]</li>
+</ol>
+
+<p>for job in jobs_on_node:
+ if job.priority in [JobPriority.CRITICAL, JobPriority.HIGH]:
+ # Move to on-demand instance immediately
+ self._migrate_to_on_demand(job)
+ else:
+ # Save checkpoint and re-queue
+ self._checkpoint_and_requeue(job)</p>
+
+<p>def _checkpoint_and_requeue(self, job: Job):
+ “"”Save model checkpoint and re-queue job.”””
+ # Trigger checkpoint save
+ checkpoint_path = f”s3://checkpoints/{job.job_id}/latest”
+ # … save logic …</p>
+
+<p># Re-queue with checkpoint resume
+ job.resume_from_checkpoint = checkpoint_path
+ scheduler.submit_job(job)
+``</p>
 
 <h2 id="implementation-complete-system">Implementation: Complete System</h2>
 
 <p>Here’s a simplified but functional implementation:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">asyncio</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
-<span class="kn">import</span> <span class="n">logging</span>
+<p>``python
+import asyncio
+from typing import Dict, List
+import logging</p>
 
-<span class="k">class</span> <span class="nc">MLResourceManager</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Complete ML resource allocation system.
-    
-    Integrates scheduler, allocator, and auto-scaler.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">scaling_policy</span><span class="p">:</span> <span class="n">ScalingPolicy</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">scheduler</span> <span class="o">=</span> <span class="nc">JobScheduler</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">allocator</span> <span class="o">=</span> <span class="nc">ResourceAllocator</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">auto_scaler</span> <span class="o">=</span> <span class="nc">AutoScaler</span><span class="p">(</span><span class="n">scaling_policy</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">allocator</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="p">.</span><span class="nf">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
-        
-        <span class="c1"># Initialize with some nodes
-</span>        <span class="n">self</span><span class="p">.</span><span class="nf">_bootstrap_cluster</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">_bootstrap_cluster</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Start with minimum nodes.</span><span class="sh">"""</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">auto_scaler</span><span class="p">.</span><span class="n">policy</span><span class="p">.</span><span class="n">min_nodes</span><span class="p">):</span>
-            <span class="n">node</span> <span class="o">=</span> <span class="nc">Node</span><span class="p">(</span>
-                <span class="n">node_id</span><span class="o">=</span><span class="sa">f</span><span class="sh">"</span><span class="s">node-</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="sh">"</span><span class="p">,</span>
-                <span class="n">available</span><span class="o">=</span><span class="nc">ResourceRequest</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">244</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="sh">"</span><span class="s">A100</span><span class="sh">"</span><span class="p">,</span> <span class="mi">1000</span><span class="p">),</span>
-                <span class="n">capacity</span><span class="o">=</span><span class="nc">ResourceRequest</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">244</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="sh">"</span><span class="s">A100</span><span class="sh">"</span><span class="p">,</span> <span class="mi">1000</span><span class="p">),</span>
-                <span class="n">cost_per_hour</span><span class="o">=</span><span class="mf">24.48</span><span class="p">,</span>
-                <span class="n">region</span><span class="o">=</span><span class="sh">"</span><span class="s">us-west-2</span><span class="sh">"</span>
-            <span class="p">)</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="nf">add_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Main control loop.</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span><span class="sh">"</span><span class="s">Starting ML Resource Manager</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="c1"># 1. Process pending jobs
-</span>                <span class="k">await</span> <span class="n">self</span><span class="p">.</span><span class="nf">_schedule_jobs</span><span class="p">()</span>
-                
-                <span class="c1"># 2. Check auto-scaling
-</span>                <span class="k">await</span> <span class="n">self</span><span class="p">.</span><span class="nf">_check_scaling</span><span class="p">()</span>
-                
-                <span class="c1"># 3. Update metrics
-</span>                <span class="n">self</span><span class="p">.</span><span class="nf">_update_metrics</span><span class="p">()</span>
-                
-                <span class="c1"># Sleep before next iteration
-</span>                <span class="k">await</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-                
-            <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">error</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Error in control loop: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_schedule_jobs</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Schedule pending jobs to available resources.</span><span class="sh">"""</span>
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="c1"># Get available resources
-</span>            <span class="n">stats</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="nf">get_utilization_stats</span><span class="p">()</span>
-            
-            <span class="c1"># Get next job
-</span>            <span class="c1"># Create aggregate ResourceRequest for available resources
-</span>            <span class="c1"># (simplified - in practice, check per-node)
-</span>            <span class="n">total_available</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_get_total_available</span><span class="p">()</span>
-            
-            <span class="n">job</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">scheduler</span><span class="p">.</span><span class="nf">get_next_job</span><span class="p">(</span><span class="n">total_available</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="p">:</span>
-                <span class="k">break</span>  <span class="c1"># No more jobs or no jobs fit
-</span>            
-            <span class="c1"># Allocate resources
-</span>            <span class="n">allocation</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="nf">allocate</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">allocation</span><span class="p">:</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">scheduler</span><span class="p">.</span><span class="nf">mark_started</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Scheduled job </span><span class="si">{</span><span class="n">job</span><span class="p">.</span><span class="n">job_id</span><span class="si">}</span><span class="s"> to node </span><span class="si">{</span><span class="n">allocation</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-                
-                <span class="c1"># In production: submit to Kubernetes
-</span>                <span class="k">await</span> <span class="n">self</span><span class="p">.</span><span class="nf">_submit_to_k8s</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">allocation</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Put back in queue
-</span>                <span class="n">self</span><span class="p">.</span><span class="n">scheduler</span><span class="p">.</span><span class="nf">submit_job</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
-                <span class="k">break</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_check_scaling</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Check if we need to scale cluster.</span><span class="sh">"""</span>
-        <span class="n">stats</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="nf">get_utilization_stats</span><span class="p">()</span>
-        <span class="n">queue_size</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">scheduler</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">auto_scaler</span><span class="p">.</span><span class="nf">should_scale_up</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="sh">"</span><span class="s">utilization</span><span class="sh">"</span><span class="p">],</span> <span class="n">queue_size</span><span class="p">):</span>
-            <span class="n">num_nodes</span> <span class="o">=</span> <span class="nf">calculate_scale_up_nodes</span><span class="p">(</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">scheduler</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">,</span>
-                <span class="n">stats</span><span class="p">[</span><span class="sh">"</span><span class="s">num_nodes</span><span class="sh">"</span><span class="p">]</span>
-            <span class="p">)</span>
-            <span class="n">new_nodes</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">auto_scaler</span><span class="p">.</span><span class="nf">scale_up</span><span class="p">(</span><span class="n">num_nodes</span><span class="p">)</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Scaled up: added </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">new_nodes</span><span class="p">)</span><span class="si">}</span><span class="s"> nodes</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">elif</span> <span class="n">self</span><span class="p">.</span><span class="n">auto_scaler</span><span class="p">.</span><span class="nf">should_scale_down</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="sh">"</span><span class="s">utilization</span><span class="sh">"</span><span class="p">],</span> <span class="n">queue_size</span><span class="p">):</span>
-            <span class="n">removed</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">auto_scaler</span><span class="p">.</span><span class="nf">scale_down</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Scaled down: removed </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">removed</span><span class="p">)</span><span class="si">}</span><span class="s"> nodes</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_get_total_available</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResourceRequest</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Get aggregate available resources.</span><span class="sh">"""</span>
-        <span class="n">total_gpus</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">gpus</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="n">nodes</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
-        <span class="c1"># Simplified: return max available for any single node
-</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="n">nodes</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nc">ResourceRequest</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="sh">"</span><span class="s">none</span><span class="sh">"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        
-        <span class="n">max_node</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="n">nodes</span><span class="p">.</span><span class="nf">values</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span><span class="p">.</span><span class="n">available</span><span class="p">.</span><span class="n">gpus</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">max_node</span><span class="p">.</span><span class="n">available</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_submit_to_k8s</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">Job</span><span class="p">,</span> <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Submit job to Kubernetes (placeholder).</span><span class="sh">"""</span>
-        <span class="c1"># In production: create Kubernetes Job/Pod
-</span>        <span class="c1"># kubectl apply -f job.yaml
-</span>        <span class="k">pass</span>
-    
-    <span class="k">def</span> <span class="nf">_update_metrics</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Update monitoring metrics.</span><span class="sh">"""</span>
-        <span class="n">stats</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="nf">get_utilization_stats</span><span class="p">()</span>
-        <span class="c1"># Send to Prometheus/Datadog
-</span>        <span class="c1"># metrics.gauge("ml.gpu.utilization", stats["utilization"])
-</span>        <span class="c1"># metrics.gauge("ml.queue.size", len(self.scheduler.pending_jobs))
-</span>        <span class="k">pass</span>
-    
-    <span class="k">def</span> <span class="nf">submit_job</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">Job</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Public API to submit a job.</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">scheduler</span><span class="p">.</span><span class="nf">submit_job</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Job </span><span class="si">{</span><span class="n">job</span><span class="p">.</span><span class="n">job_id</span><span class="si">}</span><span class="s"> submitted</span><span class="sh">"</span><span class="p">)</span>
+<p>class MLResourceManager:
+ “””
+ Complete ML resource allocation system.</p>
 
+<p>Integrates scheduler, allocator, and auto-scaler.
+ “””</p>
 
-<span class="c1"># Usage example
-</span><span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-    <span class="c1"># Configure scaling policy
-</span>    <span class="n">policy</span> <span class="o">=</span> <span class="nc">ScalingPolicy</span><span class="p">(</span>
-        <span class="n">min_nodes</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-        <span class="n">max_nodes</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
-        <span class="n">target_utilization</span><span class="o">=</span><span class="mf">0.80</span><span class="p">,</span>
-        <span class="n">scale_up_threshold</span><span class="o">=</span><span class="mf">0.90</span><span class="p">,</span>
-        <span class="n">scale_down_threshold</span><span class="o">=</span><span class="mf">0.50</span><span class="p">,</span>
-        <span class="n">cooldown_minutes</span><span class="o">=</span><span class="mi">5</span>
-    <span class="p">)</span>
-    
-    <span class="c1"># Create resource manager
-</span>    <span class="n">manager</span> <span class="o">=</span> <span class="nc">MLResourceManager</span><span class="p">(</span><span class="n">policy</span><span class="p">)</span>
-    
-    <span class="c1"># Submit some jobs
-</span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
-        <span class="n">job</span> <span class="o">=</span> <span class="nc">Job</span><span class="p">(</span>
-            <span class="n">job_id</span><span class="o">=</span><span class="sa">f</span><span class="sh">"</span><span class="s">job-</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="sh">"</span><span class="p">,</span>
-            <span class="n">user_id</span><span class="o">=</span><span class="sh">"</span><span class="s">user1</span><span class="sh">"</span><span class="p">,</span>
-            <span class="n">team_id</span><span class="o">=</span><span class="sh">"</span><span class="s">ml-team</span><span class="sh">"</span><span class="p">,</span>
-            <span class="n">priority</span><span class="o">=</span><span class="n">JobPriority</span><span class="p">.</span><span class="n">MEDIUM</span><span class="p">,</span>
-            <span class="n">resources</span><span class="o">=</span><span class="nc">ResourceRequest</span><span class="p">(</span>
-                <span class="n">cpus</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-                <span class="n">memory_gb</span><span class="o">=</span><span class="mi">61</span><span class="p">,</span>
-                <span class="n">gpus</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                <span class="n">gpu_type</span><span class="o">=</span><span class="sh">"</span><span class="s">A100</span><span class="sh">"</span><span class="p">,</span>
-                <span class="n">disk_gb</span><span class="o">=</span><span class="mi">100</span>
-            <span class="p">),</span>
-            <span class="n">estimated_duration_hours</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
-            <span class="n">deadline</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-            <span class="n">submitted_at</span><span class="o">=</span><span class="n">datetime</span><span class="p">.</span><span class="nf">now</span><span class="p">(),</span>
-            <span class="n">can_preempt</span><span class="o">=</span><span class="bp">True</span>
-        <span class="p">)</span>
-        <span class="n">manager</span><span class="p">.</span><span class="nf">submit_job</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
-    
-    <span class="c1"># Run manager
-</span>    <span class="k">await</span> <span class="n">manager</span><span class="p">.</span><span class="nf">run</span><span class="p">()</span>
+<p>def <strong>init</strong>(self, scaling_policy: ScalingPolicy):
+ self.scheduler = JobScheduler()
+ self.allocator = ResourceAllocator()
+ self.auto_scaler = AutoScaler(scaling_policy, self.allocator)
+ self.logger = logging.getLogger(<strong>name</strong>)</p>
 
+<p># Initialize with some nodes
+ self._bootstrap_cluster()</p>
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="sh">"</span><span class="s">__main__</span><span class="sh">"</span><span class="p">:</span>
-    <span class="n">asyncio</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span><span class="nf">main</span><span class="p">())</span>
-</code></pre></div></div>
+<p>def _bootstrap_cluster(self):
+ “"”Start with minimum nodes.”””
+ for i in range(self.auto_scaler.policy.min_nodes):
+ node = Node(
+ node_id=f”node-{i}”,
+ available=ResourceRequest(32, 244, 8, “A100”, 1000),
+ capacity=ResourceRequest(32, 244, 8, “A100”, 1000),
+ cost_per_hour=24.48,
+ region=”us-west-2”
+ )
+ self.allocator.add_node(node)</p>
+
+<p>async def run(self):
+ “"”Main control loop.”””
+ self.logger.info(“Starting ML Resource Manager”)</p>
+
+<p>while True:
+ try:
+ # 1. Process pending jobs
+ await self._schedule_jobs()</p>
+
+<p># 2. Check auto-scaling
+ await self._check_scaling()</p>
+
+<p># 3. Update metrics
+ self._update_metrics()</p>
+
+<p># Sleep before next iteration
+ await asyncio.sleep(1)</p>
+
+<p>except Exception as e:
+ self.logger.error(f”Error in control loop: {e}”)</p>
+
+<p>async def _schedule_jobs(self):
+ “"”Schedule pending jobs to available resources.”””
+ while True:
+ # Get available resources
+ stats = self.allocator.get_utilization_stats()</p>
+
+<p># Get next job
+ # Create aggregate ResourceRequest for available resources
+ # (simplified - in practice, check per-node)
+ total_available = self._get_total_available()</p>
+
+<p>job = self.scheduler.get_next_job(total_available)
+ if not job:
+ break # No more jobs or no jobs fit</p>
+
+<p># Allocate resources
+ allocation = self.allocator.allocate(job)
+ if allocation:
+ self.scheduler.mark_started(job)
+ self.logger.info(f”Scheduled job {job.job_id} to node {allocation}”)</p>
+
+<p># In production: submit to Kubernetes
+ await self._submit_to_k8s(job, allocation)
+ else:
+ # Put back in queue
+ self.scheduler.submit_job(job)
+ break</p>
+
+<p>async def _check_scaling(self):
+ “"”Check if we need to scale cluster.”””
+ stats = self.allocator.get_utilization_stats()
+ queue_size = len(self.scheduler.pending_jobs)</p>
+
+<p>if self.auto_scaler.should_scale_up(stats[“utilization”], queue_size):
+ num_nodes = calculate_scale_up_nodes(
+ self.scheduler.pending_jobs,
+ stats[“num_nodes”]
+ )
+ new_nodes = self.auto_scaler.scale_up(num_nodes)
+ self.logger.info(f”Scaled up: added {len(new_nodes)} nodes”)</p>
+
+<p>elif self.auto_scaler.should_scale_down(stats[“utilization”], queue_size):
+ removed = self.auto_scaler.scale_down(1)
+ self.logger.info(f”Scaled down: removed {len(removed)} nodes”)</p>
+
+<p>def _get_total_available(self) -&gt; ResourceRequest:
+ “"”Get aggregate available resources.”””
+ total_gpus = sum(node.available.gpus for node in self.allocator.nodes.values())
+ # Simplified: return max available for any single node
+ if not self.allocator.nodes:
+ return ResourceRequest(0, 0, 0, “none”, 0)</p>
+
+<p>max_node = max(self.allocator.nodes.values(), key=lambda n: n.available.gpus)
+ return max_node.available</p>
+
+<p>async def _submit_to_k8s(self, job: Job, node_id: str):
+ “"”Submit job to Kubernetes (placeholder).”””
+ # In production: create Kubernetes Job/Pod
+ # kubectl apply -f job.yaml
+ pass</p>
+
+<p>def _update_metrics(self):
+ “"”Update monitoring metrics.”””
+ stats = self.allocator.get_utilization_stats()
+ # Send to Prometheus/Datadog
+ # metrics.gauge(“ml.gpu.utilization”, stats[“utilization”])
+ # metrics.gauge(“ml.queue.size”, len(self.scheduler.pending_jobs))
+ pass</p>
+
+<p>def submit_job(self, job: Job):
+ “"”Public API to submit a job.”””
+ self.scheduler.submit_job(job)
+ self.logger.info(f”Job {job.job_id} submitted”)</p>
+
+<h1 id="usage-example">Usage example</h1>
+<p>async def main():
+ # Configure scaling policy
+ policy = ScalingPolicy(
+ min_nodes=2,
+ max_nodes=50,
+ target_utilization=0.80,
+ scale_up_threshold=0.90,
+ scale_down_threshold=0.50,
+ cooldown_minutes=5
+ )</p>
+
+<p># Create resource manager
+ manager = MLResourceManager(policy)</p>
+
+<p># Submit some jobs
+ for i in range(10):
+ job = Job(
+ job_id=f”job-{i}”,
+ user_id=”user1”,
+ team_id=”ml-team”,
+ priority=JobPriority.MEDIUM,
+ resources=ResourceRequest(
+ cpus=8,
+ memory_gb=61,
+ gpus=1,
+ gpu_type=”A100”,
+ disk_gb=100
+ ),
+ estimated_duration_hours=2.0,
+ deadline=None,
+ submitted_at=datetime.now(),
+ can_preempt=True
+ )
+ manager.submit_job(job)</p>
+
+<p># Run manager
+ await manager.run()</p>
+
+<p>if <strong>name</strong> == “<strong>main</strong>”:
+ asyncio.run(main())
+``</p>
 
 <h2 id="monitoring--metrics">Monitoring &amp; Metrics</h2>
 
 <h3 id="key-metrics-to-track">Key Metrics to Track</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">MetricsCollector</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Collect and export metrics for monitoring.</span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">collect_metrics</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">:</span> <span class="n">MLResourceManager</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Collect current system metrics.</span><span class="sh">"""</span>
-        <span class="n">stats</span> <span class="o">=</span> <span class="n">manager</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="nf">get_utilization_stats</span><span class="p">()</span>
-        
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="c1"># Resource utilization
-</span>            <span class="sh">"</span><span class="s">gpu_utilization</span><span class="sh">"</span><span class="p">:</span> <span class="n">stats</span><span class="p">[</span><span class="sh">"</span><span class="s">utilization</span><span class="sh">"</span><span class="p">],</span>
-            <span class="sh">"</span><span class="s">total_gpus</span><span class="sh">"</span><span class="p">:</span> <span class="n">stats</span><span class="p">[</span><span class="sh">"</span><span class="s">total_gpus</span><span class="sh">"</span><span class="p">],</span>
-            <span class="sh">"</span><span class="s">used_gpus</span><span class="sh">"</span><span class="p">:</span> <span class="n">stats</span><span class="p">[</span><span class="sh">"</span><span class="s">used_gpus</span><span class="sh">"</span><span class="p">],</span>
-            <span class="sh">"</span><span class="s">idle_gpus</span><span class="sh">"</span><span class="p">:</span> <span class="n">stats</span><span class="p">[</span><span class="sh">"</span><span class="s">total_gpus</span><span class="sh">"</span><span class="p">]</span> <span class="o">-</span> <span class="n">stats</span><span class="p">[</span><span class="sh">"</span><span class="s">used_gpus</span><span class="sh">"</span><span class="p">],</span>
-            
-            <span class="c1"># Queue metrics
-</span>            <span class="sh">"</span><span class="s">queue_size</span><span class="sh">"</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">manager</span><span class="p">.</span><span class="n">scheduler</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">),</span>
-            <span class="sh">"</span><span class="s">running_jobs</span><span class="sh">"</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">manager</span><span class="p">.</span><span class="n">scheduler</span><span class="p">.</span><span class="n">running_jobs</span><span class="p">),</span>
-            
-            <span class="c1"># Performance metrics
-</span>            <span class="sh">"</span><span class="s">avg_wait_time_minutes</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="nf">_calculate_avg_wait_time</span><span class="p">(</span><span class="n">manager</span><span class="p">),</span>
-            <span class="sh">"</span><span class="s">p95_wait_time_minutes</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="nf">_calculate_p95_wait_time</span><span class="p">(</span><span class="n">manager</span><span class="p">),</span>
-            
-            <span class="c1"># Cost metrics
-</span>            <span class="sh">"</span><span class="s">hourly_cost</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="nf">_calculate_hourly_cost</span><span class="p">(</span><span class="n">manager</span><span class="p">),</span>
-            <span class="sh">"</span><span class="s">cost_per_job</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="nf">_calculate_cost_per_job</span><span class="p">(</span><span class="n">manager</span><span class="p">),</span>
-            
-            <span class="c1"># Fair share
-</span>            <span class="sh">"</span><span class="s">teams_over_quota</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="nf">_count_teams_over_quota</span><span class="p">(</span><span class="n">manager</span><span class="p">),</span>
-        <span class="p">}</span>
-    
-    <span class="k">def</span> <span class="nf">_calculate_avg_wait_time</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">:</span> <span class="n">MLResourceManager</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Average wait time for jobs in queue.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">manager</span><span class="p">.</span><span class="n">scheduler</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">:</span>
-            <span class="k">return</span> <span class="mf">0.0</span>
-        
-        <span class="n">total_wait</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span>
-            <span class="n">job</span><span class="p">.</span><span class="n">wait_time</span><span class="p">.</span><span class="nf">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="mi">60</span>
-            <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">manager</span><span class="p">.</span><span class="n">scheduler</span><span class="p">.</span><span class="n">pending_jobs</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">total_wait</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">manager</span><span class="p">.</span><span class="n">scheduler</span><span class="p">.</span><span class="n">pending_jobs</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_calculate_hourly_cost</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">:</span> <span class="n">MLResourceManager</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Current hourly cost of running cluster.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="nf">sum</span><span class="p">(</span>
-            <span class="n">node</span><span class="p">.</span><span class="n">cost_per_hour</span>
-            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">manager</span><span class="p">.</span><span class="n">allocator</span><span class="p">.</span><span class="n">nodes</span><span class="p">.</span><span class="nf">values</span><span class="p">()</span>
-        <span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+class MetricsCollector:
+ “"”Collect and export metrics for monitoring.”””</p>
+
+<p>def collect_metrics(self, manager: MLResourceManager) -&gt; Dict:
+ “"”Collect current system metrics.”””
+ stats = manager.allocator.get_utilization_stats()</p>
+
+<p>return {
+ # Resource utilization
+ “gpu_utilization”: stats[“utilization”],
+ “total_gpus”: stats[“total_gpus”],
+ “used_gpus”: stats[“used_gpus”],
+ “idle_gpus”: stats[“total_gpus”] - stats[“used_gpus”],</p>
+
+<p># Queue metrics
+ “queue_size”: len(manager.scheduler.pending_jobs),
+ “running_jobs”: len(manager.scheduler.running_jobs),</p>
+
+<p># Performance metrics
+ “avg_wait_time_minutes”: self._calculate_avg_wait_time(manager),
+ “p95_wait_time_minutes”: self._calculate_p95_wait_time(manager),</p>
+
+<p># Cost metrics
+ “hourly_cost”: self._calculate_hourly_cost(manager),
+ “cost_per_job”: self._calculate_cost_per_job(manager),</p>
+
+<p># Fair share
+ “teams_over_quota”: self._count_teams_over_quota(manager),
+ }</p>
+
+<p>def _calculate_avg_wait_time(self, manager: MLResourceManager) -&gt; float:
+ “"”Average wait time for jobs in queue.”””
+ if not manager.scheduler.pending_jobs:
+ return 0.0</p>
+
+<p>total_wait = sum(
+ job.wait_time.total_seconds() / 60
+ for job in manager.scheduler.pending_jobs
+ )
+ return total_wait / len(manager.scheduler.pending_jobs)</p>
+
+<p>def _calculate_hourly_cost(self, manager: MLResourceManager) -&gt; float:
+ “"”Current hourly cost of running cluster.”””
+ return sum(
+ node.cost_per_hour
+ for node in manager.allocator.nodes.values()
+ )
+``</p>
 
 <h3 id="alerts-to-configure">Alerts to Configure</h3>
 
@@ -1454,30 +1496,33 @@
 
 <p><strong>Problem:</strong> Many small free slots but can’t fit large jobs.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">defragment_cluster</span><span class="p">(</span><span class="n">allocator</span><span class="p">:</span> <span class="n">ResourceAllocator</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Defragment cluster by migrating jobs to consolidate resources.
-    
-    Greedy approach:
-    1. Find fragmented nodes (partial utilization)
-    2. Migrate small jobs to create large free nodes
-    3. Prioritize migration of preemptible jobs
-    </span><span class="sh">"""</span>
-    <span class="c1"># Find nodes with &lt;50% utilization
-</span>    <span class="n">fragmented</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="p">(</span><span class="n">node_id</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">allocator</span><span class="p">.</span><span class="n">nodes</span><span class="p">.</span><span class="nf">items</span><span class="p">()</span>
-        <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">node</span><span class="p">.</span><span class="n">utilization</span> <span class="o">&lt;</span> <span class="mf">0.5</span>
-    <span class="p">]</span>
-    
-    <span class="n">migrations</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">fragmented</span><span class="p">:</span>
-        <span class="c1"># Try to migrate jobs off this node
-</span>        <span class="c1"># ... implementation ...
-</span>        <span class="n">migrations</span> <span class="o">+=</span> <span class="mi">1</span>
-    
-    <span class="k">return</span> <span class="n">migrations</span>
-</code></pre></div></div>
+<p>``python
+def defragment_cluster(allocator: ResourceAllocator) -&gt; int:
+ “””
+ Defragment cluster by migrating jobs to consolidate resources.</p>
+
+<p>Greedy approach:</p>
+<ol>
+  <li>Find fragmented nodes (partial utilization)</li>
+  <li>Migrate small jobs to create large free nodes</li>
+  <li>Prioritize migration of preemptible jobs
+ “””
+ # Find nodes with &lt;50% utilization
+ fragmented = [
+ (node_id, node)
+ for node_id, node in allocator.nodes.items()
+ if 0 &lt; node.utilization &lt; 0.5
+ ]</li>
+</ol>
+
+<p>migrations = 0
+ for node_id, node in fragmented:
+ # Try to migrate jobs off this node
+ # … implementation …
+ migrations += 1</p>
+
+<p>return migrations
+``</p>
 
 <p><strong>Solution:</strong></p>
 <ul>
@@ -1609,18 +1654,18 @@
   <tbody>
     <tr>
       <td>Compute (on-demand A100)</td>
-      <td>$1.8M</td>
-      <td>Use spot (-70%) → $540K</td>
+      <td><code class="language-plaintext highlighter-rouge">1.8M | Use spot (-70%) → </code>540K</td>
+      <td> </td>
     </tr>
     <tr>
       <td>Storage (model checkpoints)</td>
-      <td>$50K</td>
-      <td>Lifecycle policies → $30K</td>
+      <td><code class="language-plaintext highlighter-rouge">50K | Lifecycle policies → </code>30K</td>
+      <td> </td>
     </tr>
     <tr>
       <td>Network (multi-region)</td>
-      <td>$20K</td>
-      <td>Co-location → $15K</td>
+      <td><code class="language-plaintext highlighter-rouge">20K | Co-location → </code>15K</td>
+      <td> </td>
     </tr>
     <tr>
       <td>Orchestration overhead</td>
@@ -1629,8 +1674,8 @@
     </tr>
     <tr>
       <td><strong>Total</strong></td>
-      <td><strong>$1.88M</strong></td>
-      <td><strong>$595K</strong></td>
+      <td><strong><code class="language-plaintext highlighter-rouge">1.88M** | **</code>595K</strong></td>
+      <td> </td>
     </tr>
     <tr>
       <td><strong>Savings</strong></td>
@@ -1692,7 +1737,7 @@
 <ul>
   <li>Before: 50% utilization, all on-demand = $1.8M/month</li>
   <li>After: 85% utilization, 70% spot = $595K/month</li>
-  <li><strong>Savings: $1.2M/month = $14.4M/year</strong></li>
+  <li><strong>Savings: <code class="language-plaintext highlighter-rouge">1.2M/month = </code>14.4M/year</strong></li>
 </ul>
 
 <p><strong>ROI:</strong> 48x in first year!</p>

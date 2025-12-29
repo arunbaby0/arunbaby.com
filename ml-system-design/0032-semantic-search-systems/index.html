@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Semantic Search Systems">
     <meta itemprop="description" content="“Moving beyond keywords to understand the meaning of a query.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -274,13 +274,14 @@
 
 <p><strong>Core Idea:</strong> Use a Deep Learning model (Transformer) to convert text into a fixed-size vector (embedding).</p>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Query "fix flat tire" → [BERT] → Vector Q (768-dim)
-                                      ↓
-                                   Similarity (Dot Product)
-                                      ↑
-Doc "repair wheel"    → [BERT] → Vector D (768-dim)
-</code></pre></div></div>
+<p><strong>Architecture:</strong>
+<code class="language-plaintext highlighter-rouge">
+Query "fix flat tire" → [BERT] → Vector Q (768-dim)
+ ↓
+ Similarity (Dot Product)
+ ↑
+Doc "repair wheel" → [BERT] → Vector D (768-dim)
+</code></p>
 
 <p><strong>Bi-Encoder (Siamese Network):</strong></p>
 <ul>
@@ -289,35 +290,36 @@ Doc "repair wheel"    → [BERT] → Vector D (768-dim)
   <li><strong>Fast Retrieval:</strong> Pre-compute all document vectors. At query time, only encode the query.</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">sentence_transformers</span> <span class="kn">import</span> <span class="n">SentenceTransformer</span>
+<p>``python
+from sentence_transformers import SentenceTransformer</p>
 
-<span class="n">model</span> <span class="o">=</span> <span class="nc">SentenceTransformer</span><span class="p">(</span><span class="sh">'</span><span class="s">all-MiniLM-L6-v2</span><span class="sh">'</span><span class="p">)</span>
+<p>model = SentenceTransformer(‘all-MiniLM-L6-v2’)</p>
 
-<span class="c1"># 1. Indexing (Offline)
-</span><span class="n">docs</span> <span class="o">=</span> <span class="p">[</span><span class="sh">"</span><span class="s">Guide to repairing a punctured wheel</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Best pizza in NY</span><span class="sh">"</span><span class="p">]</span>
-<span class="n">doc_embeddings</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span>  <span class="c1"># [2, 384]
-</span>
-<span class="c1"># 2. Search (Online)
-</span><span class="n">query</span> <span class="o">=</span> <span class="sh">"</span><span class="s">How to fix a flat tire</span><span class="sh">"</span>
-<span class="n">query_embedding</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>  <span class="c1"># [1, 384]
-</span>
-<span class="c1"># 3. Similarity
-</span><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
-<span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">dot</span><span class="p">(</span><span class="n">doc_embeddings</span><span class="p">,</span> <span class="n">query_embedding</span><span class="p">)</span>
-<span class="c1"># scores[0] will be high, scores[1] low
-</span></code></pre></div></div>
+<h1 id="1-indexing-offline">1. Indexing (Offline)</h1>
+<p>docs = [“Guide to repairing a punctured wheel”, “Best pizza in NY”]
+doc_embeddings = model.encode(docs) # [2, 384]</p>
+
+<h1 id="2-search-online">2. Search (Online)</h1>
+<p>query = “How to fix a flat tire”
+query_embedding = model.encode(query) # [1, 384]</p>
+
+<h1 id="3-similarity">3. Similarity</h1>
+<p>import numpy as np
+scores = np.dot(doc_embeddings, query_embedding)</p>
+<h1 id="scores0-will-be-high-scores1-low">scores[0] will be high, scores[1] low</h1>
+<p>``</p>
 
 <h2 id="3-vector-databases--ann-search">3. Vector Databases &amp; ANN Search</h2>
 
-<p><strong>Problem:</strong> Calculating dot product against 1 Billion vectors is too slow ($O(N)$).</p>
+<p><strong>Problem:</strong> Calculating dot product against 1 Billion vectors is too slow (O(N)).</p>
 <ul>
-  <li>1B vectors $\times$ 768 dims $\times$ 4 bytes $\approx$ 3 TB RAM.</li>
+  <li>1B vectors <code class="language-plaintext highlighter-rouge">\times</code> 768 dims <code class="language-plaintext highlighter-rouge">\times</code> 4 bytes <code class="language-plaintext highlighter-rouge">\approx</code> 3 TB RAM.</li>
   <li>Brute force scan takes seconds/minutes.</li>
 </ul>
 
 <p><strong>Solution:</strong> Approximate Nearest Neighbor (ANN) Search.</p>
 <ul>
-  <li>Trade-off: slightly lower recall (99% instead of 100%) for massive speedup ($O(\log N)$).</li>
+  <li>Trade-off: slightly lower recall (99% instead of 100%) for massive speedup (O(\log N)).</li>
 </ul>
 
 <h3 id="hnsw-hierarchical-navigable-small-world">HNSW (Hierarchical Navigable Small World)</h3>
@@ -345,7 +347,7 @@ Doc "repair wheel"    → [BERT] → Vector D (768-dim)
 <h3 id="faiss-facebook-ai-similarity-search">Faiss (Facebook AI Similarity Search)</h3>
 <p><strong>IVF (Inverted File):</strong></p>
 <ul>
-  <li>Cluster vectors into $K$ Voronoi cells (centroids).</li>
+  <li>Cluster vectors into <code class="language-plaintext highlighter-rouge">K</code> Voronoi cells (centroids).</li>
   <li>Assign each vector to the nearest centroid.</li>
   <li><strong>Search:</strong> Find the closest centroid to the query, then scan only vectors in that cell (and neighbors).</li>
 </ul>
@@ -355,33 +357,35 @@ Doc "repair wheel"    → [BERT] → Vector D (768-dim)
   <li>Compress vectors to save RAM.</li>
   <li>Split 768-dim vector into 8 sub-vectors of 96 dims.</li>
   <li>Quantize each sub-vector to 1 byte (256 centroids).</li>
-  <li><strong>Result:</strong> 768 floats (3 KB) $\to$ 8 bytes. 300x compression!</li>
+  <li><strong>Result:</strong> 768 floats (3 KB) <code class="language-plaintext highlighter-rouge">\to</code> 8 bytes. 300x compression!</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">faiss</span>
+<p>``python
+import faiss</p>
 
-<span class="n">d</span> <span class="o">=</span> <span class="mi">384</span>  <span class="c1"># Dimension
-</span><span class="n">nlist</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># Number of clusters (Voronoi cells)
-</span><span class="n">quantizer</span> <span class="o">=</span> <span class="n">faiss</span><span class="p">.</span><span class="nc">IndexFlatL2</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-<span class="n">index</span> <span class="o">=</span> <span class="n">faiss</span><span class="p">.</span><span class="nc">IndexIVFFlat</span><span class="p">(</span><span class="n">quantizer</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">nlist</span><span class="p">)</span>
+<p>d = 384 # Dimension
+nlist = 100 # Number of clusters (Voronoi cells)
+quantizer = faiss.IndexFlatL2(d)
+index = faiss.IndexIVFFlat(quantizer, d, nlist)</p>
 
-<span class="c1"># Train (find centroids)
-</span><span class="n">index</span><span class="p">.</span><span class="nf">train</span><span class="p">(</span><span class="n">doc_embeddings</span><span class="p">)</span>
+<h1 id="train-find-centroids">Train (find centroids)</h1>
+<p>index.train(doc_embeddings)</p>
 
-<span class="c1"># Add vectors
-</span><span class="n">index</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">doc_embeddings</span><span class="p">)</span>
+<h1 id="add-vectors">Add vectors</h1>
+<p>index.add(doc_embeddings)</p>
 
-<span class="c1"># Search
-</span><span class="n">D</span><span class="p">,</span> <span class="n">I</span> <span class="o">=</span> <span class="n">index</span><span class="p">.</span><span class="nf">search</span><span class="p">(</span><span class="n">query_embedding</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>  <span class="c1"># Return top 5
-</span></code></pre></div></div>
+<h1 id="search">Search</h1>
+<p>D, I = index.search(query_embedding, k=5) # Return top 5
+``</p>
 
 <h2 id="4-cross-encoders-re-ranking">4. Cross-Encoders (Re-Ranking)</h2>
 
 <p><strong>Problem:</strong> Bi-Encoders compress a whole document into one vector. Information is lost (“bottleneck”).
 <strong>Solution:</strong> Cross-Encoders process Query and Document <strong>together</strong>.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[CLS] Query [SEP] Document [SEP] → [BERT] → [Linear] → Score
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+[CLS] Query [SEP] Document [SEP] → [BERT] → [Linear] → Score
+</code></p>
 
 <p><strong>Mechanism:</strong></p>
 <ul>
@@ -397,7 +401,7 @@ Doc "repair wheel"    → [BERT] → Vector D (768-dim)
 <p><strong>Cons:</strong></p>
 <ul>
   <li><strong>Slow:</strong> Must run BERT for every (Query, Doc) pair. Cannot pre-compute.</li>
-  <li>$O(N)$ inference at query time.</li>
+  <li>O(N) inference at query time.</li>
 </ul>
 
 <p><strong>Production Pattern: Retrieve &amp; Re-Rank</strong></p>
@@ -407,14 +411,15 @@ Doc "repair wheel"    → [BERT] → Vector D (768-dim)
   <li><strong>Return:</strong> Top 10.</li>
 </ol>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">sentence_transformers</span> <span class="kn">import</span> <span class="n">CrossEncoder</span>
+<p>``python
+from sentence_transformers import CrossEncoder</p>
 
-<span class="n">cross_encoder</span> <span class="o">=</span> <span class="nc">CrossEncoder</span><span class="p">(</span><span class="sh">'</span><span class="s">cross-encoder/ms-marco-MiniLM-L-6-v2</span><span class="sh">'</span><span class="p">)</span>
+<p>cross_encoder = CrossEncoder(‘cross-encoder/ms-marco-MiniLM-L-6-v2’)</p>
 
-<span class="c1"># Re-rank candidates
-</span><span class="n">candidates</span> <span class="o">=</span> <span class="p">[(</span><span class="sh">"</span><span class="s">How to fix a flat tire</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Guide to repairing a punctured wheel</span><span class="sh">"</span><span class="p">),</span> <span class="p">...]</span>
-<span class="n">scores</span> <span class="o">=</span> <span class="n">cross_encoder</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="re-rank-candidates">Re-rank candidates</h1>
+<p>candidates = [(“How to fix a flat tire”, “Guide to repairing a punctured wheel”), …]
+scores = cross_encoder.predict(candidates)
+``</p>
 
 <h2 id="5-hybrid-search-best-of-both-worlds">5. Hybrid Search (Best of Both Worlds)</h2>
 
@@ -438,12 +443,12 @@ Instead of scores, use rank positions. Robust and parameter-free.
 \[
 \text{RRF}(d) = \sum_{r \in \text{Rankers}} \frac{1}{k + \text{rank}_r(d)}
 \]
-where $k$ is a constant (usually 60).</p>
+where <code class="language-plaintext highlighter-rouge">k</code> is a constant (usually 60).</p>
 
 <p><strong>Example:</strong></p>
 <ul>
-  <li>Doc A: Rank 1 in Vector, Rank 10 in BM25. Score = $1/61 + 1/70$.</li>
-  <li>Doc B: Rank 5 in Vector, Rank 5 in BM25. Score = $1/65 + 1/65$.</li>
+  <li>Doc A: Rank 1 in Vector, Rank 10 in BM25. Score = <code class="language-plaintext highlighter-rouge">1/61 + 1/70</code>.</li>
+  <li>Doc B: Rank 5 in Vector, Rank 5 in BM25. Score = <code class="language-plaintext highlighter-rouge">1/65 + 1/65</code>.</li>
 </ul>
 
 <h2 id="6-deep-dive-training-embedding-models">6. Deep Dive: Training Embedding Models</h2>
@@ -452,7 +457,7 @@ where $k$ is a constant (usually 60).</p>
 
 <p><strong>Contrastive Loss (InfoNCE):</strong></p>
 <ul>
-  <li><strong>Input:</strong> A batch of $(Query, PositiveDoc)$ pairs.</li>
+  <li><strong>Input:</strong> A batch of <code class="language-plaintext highlighter-rouge">(Query, PositiveDoc)</code> pairs.</li>
   <li><strong>Goal:</strong> Maximize similarity of positive pairs, minimize similarity with <em>all other docs in the batch</em> (In-batch Negatives).</li>
 </ul>
 
@@ -469,8 +474,8 @@ where $k$ is a constant (usually 60).</p>
 
 <p><strong>Matryoshka Representation Learning (MRL):</strong></p>
 <ul>
-  <li>Train embeddings such that the first $k$ dimensions alone are good.</li>
-  <li>Loss = $\sum_{k \in {64, 128, 256, 768}} \text{Loss}_k$.</li>
+  <li>Train embeddings such that the first <code class="language-plaintext highlighter-rouge">k</code> dimensions alone are good.</li>
+  <li>Loss = <code class="language-plaintext highlighter-rouge">\sum_{k \in \{64, 128, 256, 768\}} \text{Loss}_k</code>.</li>
   <li><strong>Benefit:</strong> Use 64 dims for fast initial filter (12x faster), 768 dims for re-ranking.</li>
 </ul>
 
@@ -529,25 +534,26 @@ where $k$ is a constant (usually 60).</p>
 <p><strong>NDCG (Normalized Discounted Cumulative Gain):</strong>
 Measures the quality of ranking. Highly relevant items should be at the top.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+import numpy as np</p>
 
-<span class="k">def</span> <span class="nf">dcg_at_k</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-    <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">asfarray</span><span class="p">(</span><span class="n">r</span><span class="p">)[:</span><span class="n">k</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">r</span><span class="p">.</span><span class="n">size</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">r</span> <span class="o">/</span> <span class="n">np</span><span class="p">.</span><span class="nf">log2</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">r</span><span class="p">.</span><span class="n">size</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)))</span>
-    <span class="k">return</span> <span class="mf">0.</span>
+<p>def dcg_at_k(r, k):
+ r = np.asfarray(r)[:k]
+ if r.size:
+ return np.sum(r / np.log2(np.arange(2, r.size + 2)))
+ return 0.</p>
 
-<span class="k">def</span> <span class="nf">ndcg_at_k</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-    <span class="n">dcg_max</span> <span class="o">=</span> <span class="nf">dcg_at_k</span><span class="p">(</span><span class="nf">sorted</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span> <span class="n">k</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">dcg_max</span><span class="p">:</span>
-        <span class="k">return</span> <span class="mf">0.</span>
-    <span class="k">return</span> <span class="nf">dcg_at_k</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="o">/</span> <span class="n">dcg_max</span>
+<p>def ndcg_at_k(r, k):
+ dcg_max = dcg_at_k(sorted(r, reverse=True), k)
+ if not dcg_max:
+ return 0.
+ return dcg_at_k(r, k) / dcg_max</p>
 
-<span class="c1"># Example: Relevance scores of retrieved items
-# 3 = Highly Relevant, 2 = Relevant, 1 = Somewhat, 0 = Irrelevant
-</span><span class="n">relevance</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">NDCG@5: </span><span class="si">{</span><span class="nf">ndcg_at_k</span><span class="p">(</span><span class="n">relevance</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="example-relevance-scores-of-retrieved-items">Example: Relevance scores of retrieved items</h1>
+<h1 id="3--highly-relevant-2--relevant-1--somewhat-0--irrelevant">3 = Highly Relevant, 2 = Relevant, 1 = Somewhat, 0 = Irrelevant</h1>
+<p>relevance = [3, 2, 3, 0, 1, 2]
+print(f”NDCG@5: {ndcg_at_k(relevance, 5)}”)
+``</p>
 
 <p><strong>MRR (Mean Reciprocal Rank):</strong>
 Focuses on the <em>first</em> relevant item.
@@ -581,59 +587,60 @@ If the first relevant item is at rank 1, MRR=1. If at rank 2, MRR=0.5.</p>
 
 <h2 id="implementation-end-to-end-semantic-search-api">Implementation: End-to-End Semantic Search API</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span>
-<span class="kn">from</span> <span class="n">sentence_transformers</span> <span class="kn">import</span> <span class="n">SentenceTransformer</span>
-<span class="kn">import</span> <span class="n">faiss</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+from fastapi import FastAPI
+from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np</p>
 
-<span class="n">app</span> <span class="o">=</span> <span class="nc">FastAPI</span><span class="p">()</span>
+<p>app = FastAPI()</p>
 
-<span class="c1"># Load Model
-# 'all-MiniLM-L6-v2' is a small, fast model good for English
-</span><span class="n">model</span> <span class="o">=</span> <span class="nc">SentenceTransformer</span><span class="p">(</span><span class="sh">'</span><span class="s">all-MiniLM-L6-v2</span><span class="sh">'</span><span class="p">)</span>
+<h1 id="load-model">Load Model</h1>
+<h1 id="all-minilm-l6-v2-is-a-small-fast-model-good-for-english">‘all-MiniLM-L6-v2’ is a small, fast model good for English</h1>
+<p>model = SentenceTransformer(‘all-MiniLM-L6-v2’)</p>
 
-<span class="c1"># Mock Database
-</span><span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="p">{</span><span class="sh">"</span><span class="s">id</span><span class="sh">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">The quick brown fox jumps over the lazy dog.</span><span class="sh">"</span><span class="p">},</span>
-    <span class="p">{</span><span class="sh">"</span><span class="s">id</span><span class="sh">"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">A fast auburn canine leaps over a sleepy hound.</span><span class="sh">"</span><span class="p">},</span>
-    <span class="p">{</span><span class="sh">"</span><span class="s">id</span><span class="sh">"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">Python is a programming language.</span><span class="sh">"</span><span class="p">},</span>
-    <span class="p">{</span><span class="sh">"</span><span class="s">id</span><span class="sh">"</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">Pythons are large constricting snakes.</span><span class="sh">"</span><span class="p">},</span>
-<span class="p">]</span>
+<h1 id="mock-database">Mock Database</h1>
+<p>documents = [
+ {“id”: 1, “text”: “The quick brown fox jumps over the lazy dog.”},
+ {“id”: 2, “text”: “A fast auburn canine leaps over a sleepy hound.”},
+ {“id”: 3, “text”: “Python is a programming language.”},
+ {“id”: 4, “text”: “Pythons are large constricting snakes.”},
+]</p>
 
-<span class="c1"># Build Index
-# Normalize embeddings for Cosine Similarity (Dot Product on normalized vectors)
-</span><span class="n">embeddings</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">encode</span><span class="p">([</span><span class="n">d</span><span class="p">[</span><span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">])</span>
-<span class="n">faiss</span><span class="p">.</span><span class="nf">normalize_L2</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
+<h1 id="build-index">Build Index</h1>
+<h1 id="normalize-embeddings-for-cosine-similarity-dot-product-on-normalized-vectors">Normalize embeddings for Cosine Similarity (Dot Product on normalized vectors)</h1>
+<p>embeddings = model.encode([d[‘text’] for d in documents])
+faiss.normalize_L2(embeddings)</p>
 
-<span class="c1"># IndexFlatIP = Exact Inner Product search
-</span><span class="n">index</span> <span class="o">=</span> <span class="n">faiss</span><span class="p">.</span><span class="nc">IndexFlatIP</span><span class="p">(</span><span class="mi">384</span><span class="p">)</span>
-<span class="n">index</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
+<h1 id="indexflatip--exact-inner-product-search">IndexFlatIP = Exact Inner Product search</h1>
+<p>index = faiss.IndexFlatIP(384)
+index.add(embeddings)</p>
 
-<span class="nd">@app.get</span><span class="p">(</span><span class="sh">"</span><span class="s">/search</span><span class="sh">"</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span>
-    <span class="c1"># Encode Query
-</span>    <span class="n">q_emb</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">encode</span><span class="p">([</span><span class="n">q</span><span class="p">])</span>
-    <span class="n">q_emb</span> <span class="o">=</span> <span class="n">q_emb</span><span class="p">.</span><span class="nf">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">faiss</span><span class="p">.</span><span class="nf">normalize_L2</span><span class="p">(</span><span class="n">q_emb</span><span class="p">)</span>
-    
-    <span class="c1"># Search
-</span>    <span class="n">scores</span><span class="p">,</span> <span class="n">indices</span> <span class="o">=</span> <span class="n">index</span><span class="p">.</span><span class="nf">search</span><span class="p">(</span><span class="n">q_emb</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
-    
-    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">score</span><span class="p">,</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">scores</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-        <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="k">continue</span>
-        <span class="n">results</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span>
-            <span class="sh">"</span><span class="s">id</span><span class="sh">"</span><span class="p">:</span> <span class="n">documents</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="sh">"</span><span class="s">id</span><span class="sh">"</span><span class="p">],</span>
-            <span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">:</span> <span class="n">documents</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">],</span>
-            <span class="sh">"</span><span class="s">score</span><span class="sh">"</span><span class="p">:</span> <span class="nf">float</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
-        <span class="p">})</span>
-    
-    <span class="k">return</span> <span class="n">results</span>
+<p>@app.get(“/search”)
+def search(q: str, k: int = 2):
+ # Encode Query
+ q_emb = model.encode([q])
+ q_emb = q_emb.reshape(1, -1)
+ faiss.normalize_L2(q_emb)</p>
 
-<span class="c1"># Example Usage:
-# /search?q=coding -&gt; Returns "Python is a programming language"
-# /search?q=reptile -&gt; Returns "Pythons are large constricting snakes"
-</span></code></pre></div></div>
+<p># Search
+ scores, indices = index.search(q_emb, k)</p>
+
+<p>results = []
+ for score, idx in zip(scores[0], indices[0]):
+ if idx == -1: continue
+ results.append({
+ “id”: documents[idx][“id”],
+ “text”: documents[idx][“text”],
+ “score”: float(score)
+ })</p>
+
+<p>return results</p>
+
+<h1 id="example-usage">Example Usage:</h1>
+<h1 id="searchqcoding---returns-python-is-a-programming-language">/search?q=coding -&gt; Returns “Python is a programming language”</h1>
+<h1 id="searchqreptile---returns-pythons-are-large-constricting-snakes">/search?q=reptile -&gt; Returns “Pythons are large constricting snakes”</h1>
+<p>``</p>
 
 <h2 id="top-interview-questions">Top Interview Questions</h2>
 

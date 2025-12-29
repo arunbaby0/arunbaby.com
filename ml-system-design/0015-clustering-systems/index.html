@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Clustering Systems">
     <meta itemprop="description" content="Design production clustering systems that group similar items using hash-based and distance-based approaches for recommendations, search, and analytics.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -387,47 +387,48 @@
 
 <h2 id="high-level-architecture">High-Level Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────────┐
-│                      Clustering System                           │
-└─────────────────────────────────────────────────────────────────┘
+<p>``
+┌─────────────────────────────────────────────────────────────────┐
+│ Clustering System │
+└─────────────────────────────────────────────────────────────────┘</p>
 
-                    ┌──────────────┐
-                    │   Data Input │
-                    │   (Features) │
-                    └──────┬───────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        │                  │                  │
+<p>┌──────────────┐
+ │ Data Input │
+ │ (Features) │
+ └──────┬───────┘
+ │
+ ┌──────────────────┼──────────────────┐
+ │ │ │
 ┌───────▼────────┐ ┌──────▼──────┐ ┌────────▼────────┐
-│ Batch          │ │ Streaming   │ │ Real-time       │
-│ Clustering     │ │ Updates     │ │ Assignment      │
-│                │ │             │ │                 │
-│ - K-means      │ │ - Mini-batch│ │ - Nearest       │
-│ - DBSCAN       │ │ - Online    │ │   cluster       │
-│ - Hierarchical │ │   updates   │ │ - LSH lookup    │
+│ Batch │ │ Streaming │ │ Real-time │
+│ Clustering │ │ Updates │ │ Assignment │
+│ │ │ │ │ │
+│ - K-means │ │ - Mini-batch│ │ - Nearest │
+│ - DBSCAN │ │ - Online │ │ cluster │
+│ - Hierarchical │ │ updates │ │ - LSH lookup │
 └───────┬────────┘ └──────┬──────┘ └────────┬────────┘
-        │                  │                  │
-        └──────────────────┼──────────────────┘
-                           │
-                    ┌──────▼──────┐
-                    │  Cluster    │
-                    │  Storage    │
-                    │             │
-                    │ - Centroids │
-                    │ - Metadata  │
-                    │ - Assignments│
-                    └──────┬──────┘
-                           │
-                    ┌──────▼──────┐
-                    │   Query API │
-                    │             │
-                    │ - Find      │
-                    │   cluster   │
-                    │ - Find      │
-                    │   similar   │
-                    │ - Stats     │
-                    └─────────────┘
-</code></pre></div></div>
+ │ │ │
+ └──────────────────┼──────────────────┘
+ │
+ ┌──────▼──────┐
+ │ Cluster │
+ │ Storage │
+ │ │
+ │ - Centroids │
+ │ - Metadata │
+ │ - Assignments│
+ └──────┬──────┘
+ │
+ ┌──────▼──────┐
+ │ Query API │
+ │ │
+ │ - Find │
+ │ cluster │
+ │ - Find │
+ │ similar │
+ │ - Stats │
+ └─────────────┘
+``</p>
 
 <h3 id="key-components">Key Components</h3>
 
@@ -446,999 +447,1055 @@
 
 <p>K-means is the <strong>most widely used</strong> clustering algorithm:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
-<span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">import</span> <span class="n">logging</span>
+<p>``python
+import numpy as np
+from typing import List, Tuple, Optional
+from dataclasses import dataclass
+import logging</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">ClusterMetrics</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Metrics for cluster quality.</span><span class="sh">"""</span>
-    <span class="n">inertia</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># Sum of squared distances to centroids
-</span>    <span class="n">silhouette_score</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># Cluster separation quality
-</span>    <span class="n">n_iterations</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">converged</span><span class="p">:</span> <span class="nb">bool</span>
+<p>@dataclass
+class ClusterMetrics:
+ “"”Metrics for cluster quality.”””
+ inertia: float # Sum of squared distances to centroids
+ silhouette_score: float # Cluster separation quality
+ n_iterations: int
+ converged: bool</p>
 
-<span class="k">class</span> <span class="nc">KMeansClustering</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Production K-means clustering.
-    
-    Similar to Group Anagrams:
-    - Anagrams: Group by exact match (sorted string)
-    - K-means: Group by approximate match (nearest centroid)
-    
-    Both use hash-like keys for grouping:
-    - Anagrams: hash = sorted(string)
-    - K-means: hash = nearest_centroid_id
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">n_clusters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
-        <span class="n">max_iters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">300</span><span class="p">,</span>
-        <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
-        <span class="n">init_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">kmeans++</span><span class="sh">"</span><span class="p">,</span>
-        <span class="n">random_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Initialize K-means clusterer.
-        
-        Args:
-            n_clusters: Number of clusters (k)
-            max_iters: Maximum iterations
-            tol: Convergence tolerance
-            init_method: </span><span class="sh">"</span><span class="s">random</span><span class="sh">"</span><span class="s"> or </span><span class="sh">"</span><span class="s">kmeans++</span><span class="sh">"</span><span class="s">
-            random_state: Random seed
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span> <span class="o">=</span> <span class="n">n_clusters</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">max_iters</span> <span class="o">=</span> <span class="n">max_iters</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">tol</span> <span class="o">=</span> <span class="n">tol</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">init_method</span> <span class="o">=</span> <span class="n">init_method</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">random_state</span> <span class="o">=</span> <span class="n">random_state</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">centroids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">labels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">inertia</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="p">.</span><span class="nf">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">random_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">seed</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="sh">'</span><span class="s">KMeansClustering</span><span class="sh">'</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Fit K-means to data.
-        
-        Algorithm:
-        1. Initialize k centroids
-        2. Assign points to nearest centroid (like hash lookup)
-        3. Update centroids to mean of assigned points
-        4. Repeat until convergence
-        
-        Args:
-            X: Data matrix of shape (n_samples, n_features)
-            
-        Returns:
-            self
-        </span><span class="sh">"""</span>
-        <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_features</span> <span class="o">=</span> <span class="n">X</span><span class="p">.</span><span class="n">shape</span>
-        
-        <span class="k">if</span> <span class="n">n_samples</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="s">n_samples (</span><span class="si">{</span><span class="n">n_samples</span><span class="si">}</span><span class="s">) must be &gt;= n_clusters (</span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span><span class="si">}</span><span class="s">)</span><span class="sh">"</span>
-            <span class="p">)</span>
-        
-        <span class="c1"># Initialize centroids
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">centroids</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_initialize_centroids</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        
-        <span class="c1"># Iterative assignment and update
-</span>        <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">max_iters</span><span class="p">):</span>
-            <span class="c1"># Assignment step: assign each point to nearest centroid
-</span>            <span class="c1"># (Like grouping strings by sorted key)
-</span>            <span class="n">old_labels</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">labels</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_assign_clusters</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-            
-            <span class="c1"># Update step: recompute centroids
-</span>            <span class="n">old_centroids</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">centroids</span><span class="p">.</span><span class="nf">copy</span><span class="p">()</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">_update_centroids</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-            
-            <span class="c1"># Check convergence
-</span>            <span class="n">centroid_shift</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">centroids</span> <span class="o">-</span> <span class="n">old_centroids</span><span class="p">)</span>
-            
-            <span class="k">if</span> <span class="n">centroid_shift</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">tol</span><span class="p">:</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Converged after </span><span class="si">{</span><span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s"> iterations</span><span class="sh">"</span><span class="p">)</span>
-                <span class="k">break</span>
-        
-        <span class="c1"># Calculate final inertia
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">inertia</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_calculate_inertia</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">self</span>
-    
-    <span class="k">def</span> <span class="nf">_initialize_centroids</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Initialize centroids.
-        
-        K-means++ initialization:
-        - Choose first centroid randomly
-        - Choose subsequent centroids with probability proportional to distance²
-        - Spreads out initial centroids for better convergence
-        </span><span class="sh">"""</span>
-        <span class="n">n_samples</span> <span class="o">=</span> <span class="n">X</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">init_method</span> <span class="o">==</span> <span class="sh">"</span><span class="s">random</span><span class="sh">"</span><span class="p">:</span>
-            <span class="c1"># Random initialization
-</span>            <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">choice</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">indices</span><span class="p">].</span><span class="nf">copy</span><span class="p">()</span>
-        
-        <span class="k">elif</span> <span class="n">self</span><span class="p">.</span><span class="n">init_method</span> <span class="o">==</span> <span class="sh">"</span><span class="s">kmeans++</span><span class="sh">"</span><span class="p">:</span>
-            <span class="c1"># K-means++ initialization
-</span>            <span class="n">centroids</span> <span class="o">=</span> <span class="p">[]</span>
-            
-            <span class="c1"># Choose first centroid randomly
-</span>            <span class="n">first_idx</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randint</span><span class="p">(</span><span class="n">n_samples</span><span class="p">)</span>
-            <span class="n">centroids</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">first_idx</span><span class="p">])</span>
-            
-            <span class="c1"># Choose remaining centroids
-</span>            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span><span class="p">):</span>
-                <span class="c1"># Calculate distances to nearest existing centroid
-</span>                <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">min</span><span class="p">([</span>
-                    <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">c</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
-                    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">centroids</span>
-                <span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-                
-                <span class="c1"># Choose next centroid with probability ∝ distance²
-</span>                <span class="n">probabilities</span> <span class="o">=</span> <span class="n">distances</span> <span class="o">/</span> <span class="n">distances</span><span class="p">.</span><span class="nf">sum</span><span class="p">()</span>
-                <span class="n">next_idx</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">choice</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">probabilities</span><span class="p">)</span>
-                <span class="n">centroids</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">next_idx</span><span class="p">])</span>
-            
-            <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">centroids</span><span class="p">)</span>
-        
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Unknown init_method: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">init_method</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_assign_clusters</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Assign each point to nearest centroid.
-        
-        This is the </span><span class="sh">"</span><span class="s">grouping</span><span class="sh">"</span><span class="s"> step (like anagram grouping).
-        
-        Returns:
-            Array of cluster labels
-        </span><span class="sh">"""</span>
-        <span class="c1"># Calculate distances to all centroids
-</span>        <span class="c1"># Shape: (n_samples, n_clusters)
-</span>        <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span>
-            <span class="n">X</span><span class="p">[:,</span> <span class="n">np</span><span class="p">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">centroids</span><span class="p">,</span>
-            <span class="n">axis</span><span class="o">=</span><span class="mi">2</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Assign to nearest centroid
-</span>        <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">argmin</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">labels</span>
-    
-    <span class="k">def</span> <span class="nf">_update_centroids</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Update centroids to mean of assigned points.
-        
-        If a cluster is empty, reinitialize that centroid.
-        </span><span class="sh">"""</span>
-        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span><span class="p">):</span>
-            <span class="c1"># Get points assigned to cluster k
-</span>            <span class="n">mask</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">labels</span> <span class="o">==</span> <span class="n">k</span>
-            
-            <span class="k">if</span> <span class="n">mask</span><span class="p">.</span><span class="nf">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="c1"># Update to mean of assigned points
-</span>                <span class="n">self</span><span class="p">.</span><span class="n">centroids</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">mask</span><span class="p">].</span><span class="nf">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Empty cluster - reinitialize randomly
-</span>                <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">warning</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Empty cluster </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s">, reinitializing</span><span class="sh">"</span><span class="p">)</span>
-                <span class="n">random_idx</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randint</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">centroids</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">random_idx</span><span class="p">]</span>
-    
-    <span class="k">def</span> <span class="nf">_calculate_inertia</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Calculate inertia (within-cluster sum of squares).
-        
-        Lower inertia = tighter clusters.
-        </span><span class="sh">"""</span>
-        <span class="n">inertia</span> <span class="o">=</span> <span class="mf">0.0</span>
-        
-        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span><span class="p">):</span>
-            <span class="n">mask</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">labels</span> <span class="o">==</span> <span class="n">k</span>
-            <span class="k">if</span> <span class="n">mask</span><span class="p">.</span><span class="nf">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">cluster_points</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
-                <span class="n">centroid</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">centroids</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
-                
-                <span class="c1"># Sum of squared distances
-</span>                <span class="n">inertia</span> <span class="o">+=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">((</span><span class="n">cluster_points</span> <span class="o">-</span> <span class="n">centroid</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">inertia</span>
-    
-    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Predict cluster labels for new data.
-        
-        This is like finding anagrams of a new string:
-        - Hash the string (sort it)
-        - Look up in hash table
-        
-        For K-means:
-        - Calculate distances to centroids
-        - Assign to nearest
-        
-        Args:
-            X: Data matrix of shape (n_samples, n_features)
-            
-        Returns:
-            Cluster labels
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">centroids</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sh">"</span><span class="s">Model not fitted. Call fit() first.</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span>
-            <span class="n">X</span><span class="p">[:,</span> <span class="n">np</span><span class="p">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">centroids</span><span class="p">,</span>
-            <span class="n">axis</span><span class="o">=</span><span class="mi">2</span>
-        <span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">argmin</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">get_cluster_centers</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Get cluster centroids.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">centroids</span><span class="p">.</span><span class="nf">copy</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">get_cluster_sizes</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Get number of points in each cluster.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">bincount</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">labels</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">calculate_silhouette_score</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Calculate silhouette score for cluster quality.
-        
-        Score ranges from -1 to 1:
-        - 1: Perfect clustering
-        - 0: Overlapping clusters
-        - -1: Wrong clustering
-        </span><span class="sh">"""</span>
-        <span class="kn">from</span> <span class="n">sklearn.metrics</span> <span class="kn">import</span> <span class="n">silhouette_score</span>
-        
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">unique</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">labels</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="mf">0.0</span>
-        
-        <span class="k">return</span> <span class="nf">silhouette_score</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">labels</span><span class="p">)</span>
-</code></pre></div></div>
+<p>class KMeansClustering:
+ “””
+ Production K-means clustering.</p>
+
+<p>Similar to Group Anagrams:</p>
+<ul>
+  <li>Anagrams: Group by exact match (sorted string)</li>
+  <li>K-means: Group by approximate match (nearest centroid)</li>
+</ul>
+
+<p>Both use hash-like keys for grouping:</p>
+<ul>
+  <li>Anagrams: hash = sorted(string)</li>
+  <li>K-means: hash = nearest_centroid_id
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(
+ self,
+ n_clusters: int = 8,
+ max_iters: int = 300,
+ tol: float = 1e-4,
+ init_method: str = “kmeans++”,
+ random_state: Optional[int] = None
+ ):
+ “””
+ Initialize K-means clusterer.</p>
+
+<p>Args:
+ n_clusters: Number of clusters (k)
+ max_iters: Maximum iterations
+ tol: Convergence tolerance
+ init_method: “random” or “kmeans++”
+ random_state: Random seed
+ “””
+ self.n_clusters = n_clusters
+ self.max_iters = max_iters
+ self.tol = tol
+ self.init_method = init_method
+ self.random_state = random_state</p>
+
+<p>self.centroids: Optional[np.ndarray] = None
+ self.labels: Optional[np.ndarray] = None
+ self.inertia: float = 0.0</p>
+
+<p>self.logger = logging.getLogger(<strong>name</strong>)</p>
+
+<p>if random_state is not None:
+ np.random.seed(random_state)</p>
+
+<p>def fit(self, X: np.ndarray) -&gt; ‘KMeansClustering’:
+ “””
+ Fit K-means to data.</p>
+
+<p>Algorithm:</p>
+<ol>
+  <li>Initialize k centroids</li>
+  <li>Assign points to nearest centroid (like hash lookup)</li>
+  <li>Update centroids to mean of assigned points</li>
+  <li>Repeat until convergence</li>
+</ol>
+
+<p>Args:
+ X: Data matrix of shape (n_samples, n_features)</p>
+
+<p>Returns:
+ self
+ “””
+ n_samples, n_features = X.shape</p>
+
+<p>if n_samples &lt; self.n_clusters:
+ raise ValueError(
+ f”n_samples ({n_samples}) must be &gt;= n_clusters ({self.n_clusters})”
+ )</p>
+
+<p># Initialize centroids
+ self.centroids = self._initialize_centroids(X)</p>
+
+<p># Iterative assignment and update
+ for iteration in range(self.max_iters):
+ # Assignment step: assign each point to nearest centroid
+ # (Like grouping strings by sorted key)
+ old_labels = self.labels
+ self.labels = self._assign_clusters(X)</p>
+
+<p># Update step: recompute centroids
+ old_centroids = self.centroids.copy()
+ self._update_centroids(X)</p>
+
+<p># Check convergence
+ centroid_shift = np.linalg.norm(self.centroids - old_centroids)</p>
+
+<p>if centroid_shift &lt; self.tol:
+ self.logger.info(f”Converged after {iteration + 1} iterations”)
+ break</p>
+
+<p># Calculate final inertia
+ self.inertia = self._calculate_inertia(X)</p>
+
+<p>return self</p>
+
+<p>def _initialize_centroids(self, X: np.ndarray) -&gt; np.ndarray:
+ “””
+ Initialize centroids.</p>
+
+<p>K-means++ initialization:</p>
+<ul>
+  <li>Choose first centroid randomly</li>
+  <li>Choose subsequent centroids with probability proportional to distance²</li>
+  <li>Spreads out initial centroids for better convergence
+ “””
+ n_samples = X.shape[0]</li>
+</ul>
+
+<p>if self.init_method == “random”:
+ # Random initialization
+ indices = np.random.choice(n_samples, self.n_clusters, replace=False)
+ return X[indices].copy()</p>
+
+<p>elif self.init_method == “kmeans++”:
+ # K-means++ initialization
+ centroids = []</p>
+
+<p># Choose first centroid randomly
+ first_idx = np.random.randint(n_samples)
+ centroids.append(X[first_idx])</p>
+
+<p># Choose remaining centroids
+ for _ in range(1, self.n_clusters):
+ # Calculate distances to nearest existing centroid
+ distances = np.min([
+ np.linalg.norm(X - c, axis=1) ** 2
+ for c in centroids
+ ], axis=0)</p>
+
+<p># Choose next centroid with probability ∝ distance²
+ probabilities = distances / distances.sum()
+ next_idx = np.random.choice(n_samples, p=probabilities)
+ centroids.append(X[next_idx])</p>
+
+<p>return np.array(centroids)</p>
+
+<p>else:
+ raise ValueError(f”Unknown init_method: {self.init_method}”)</p>
+
+<p>def _assign_clusters(self, X: np.ndarray) -&gt; np.ndarray:
+ “””
+ Assign each point to nearest centroid.</p>
+
+<p>This is the “grouping” step (like anagram grouping).</p>
+
+<p>Returns:
+ Array of cluster labels
+ “””
+ # Calculate distances to all centroids
+ # Shape: (n_samples, n_clusters)
+ distances = np.linalg.norm(
+ X[:, np.newaxis] - self.centroids,
+ axis=2
+ )</p>
+
+<p># Assign to nearest centroid
+ labels = np.argmin(distances, axis=1)</p>
+
+<p>return labels</p>
+
+<p>def _update_centroids(self, X: np.ndarray):
+ “””
+ Update centroids to mean of assigned points.</p>
+
+<p>If a cluster is empty, reinitialize that centroid.
+ “””
+ for k in range(self.n_clusters):
+ # Get points assigned to cluster k
+ mask = self.labels == k</p>
+
+<p>if mask.sum() &gt; 0:
+ # Update to mean of assigned points
+ self.centroids[k] = X[mask].mean(axis=0)
+ else:
+ # Empty cluster - reinitialize randomly
+ self.logger.warning(f”Empty cluster {k}, reinitializing”)
+ random_idx = np.random.randint(len(X))
+ self.centroids[k] = X[random_idx]</p>
+
+<p>def _calculate_inertia(self, X: np.ndarray) -&gt; float:
+ “””
+ Calculate inertia (within-cluster sum of squares).</p>
+
+<p>Lower inertia = tighter clusters.
+ “””
+ inertia = 0.0</p>
+
+<p>for k in range(self.n_clusters):
+ mask = self.labels == k
+ if mask.sum() &gt; 0:
+ cluster_points = X[mask]
+ centroid = self.centroids[k]</p>
+
+<p># Sum of squared distances
+ inertia += np.sum((cluster_points - centroid) ** 2)</p>
+
+<p>return inertia</p>
+
+<p>def predict(self, X: np.ndarray) -&gt; np.ndarray:
+ “””
+ Predict cluster labels for new data.</p>
+
+<p>This is like finding anagrams of a new string:</p>
+<ul>
+  <li>Hash the string (sort it)</li>
+  <li>Look up in hash table</li>
+</ul>
+
+<p>For K-means:</p>
+<ul>
+  <li>Calculate distances to centroids</li>
+  <li>Assign to nearest</li>
+</ul>
+
+<p>Args:
+ X: Data matrix of shape (n_samples, n_features)</p>
+
+<p>Returns:
+ Cluster labels
+ “””
+ if self.centroids is None:
+ raise ValueError(“Model not fitted. Call fit() first.”)</p>
+
+<p>distances = np.linalg.norm(
+ X[:, np.newaxis] - self.centroids,
+ axis=2
+ )</p>
+
+<p>return np.argmin(distances, axis=1)</p>
+
+<p>def get_cluster_centers(self) -&gt; np.ndarray:
+ “"”Get cluster centroids.”””
+ return self.centroids.copy()</p>
+
+<p>def get_cluster_sizes(self) -&gt; np.ndarray:
+ “"”Get number of points in each cluster.”””
+ return np.bincount(self.labels, minlength=self.n_clusters)</p>
+
+<p>def calculate_silhouette_score(self, X: np.ndarray) -&gt; float:
+ “””
+ Calculate silhouette score for cluster quality.</p>
+
+<p>Score ranges from -1 to 1:</p>
+<ul>
+  <li>1: Perfect clustering</li>
+  <li>0: Overlapping clusters</li>
+  <li>-1: Wrong clustering
+ “””
+ from sklearn.metrics import silhouette_score</li>
+</ul>
+
+<p>if len(np.unique(self.labels)) &lt; 2:
+ return 0.0</p>
+
+<p>return silhouette_score(X, self.labels)
+``</p>
 
 <h3 id="2-dbscan---density-based-clustering">2. DBSCAN - Density-Based Clustering</h3>
 
 <p>DBSCAN doesn’t require specifying k and finds arbitrary-shaped clusters:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">sklearn.neighbors</span> <span class="kn">import</span> <span class="n">NearestNeighbors</span>
+<p>``python
+from sklearn.neighbors import NearestNeighbors</p>
 
-<span class="k">class</span> <span class="nc">DBSCANClustering</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Density-Based Spatial Clustering (DBSCAN).
-    
-    Advantages over K-means:
-    - No need to specify k
-    - Finds arbitrary-shaped clusters
-    - Handles noise/outliers
-    
-    Good for:
-    - Geospatial data
-    - Data with varying density
-    - Anomaly detection
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">min_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Initialize DBSCAN.
-        
-        Args:
-            eps: Maximum distance for neighborhood
-            min_samples: Minimum points for core point
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">min_samples</span> <span class="o">=</span> <span class="n">min_samples</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">labels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">core_sample_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-    
-    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="sh">'</span><span class="s">DBSCANClustering</span><span class="sh">'</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Fit DBSCAN to data.
-        
-        Algorithm:
-        1. Find core points (points with &gt;= min_samples neighbors within eps)
-        2. Form clusters by connecting core points
-        3. Assign border points to nearest cluster
-        4. Mark noise points as outliers (-1)
-        </span><span class="sh">"""</span>
-        <span class="n">n_samples</span> <span class="o">=</span> <span class="n">X</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="c1"># Find neighbors for all points
-</span>        <span class="n">nbrs</span> <span class="o">=</span> <span class="nc">NearestNeighbors</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">eps</span><span class="p">).</span><span class="nf">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="n">neighborhoods</span> <span class="o">=</span> <span class="n">nbrs</span><span class="p">.</span><span class="nf">radius_neighbors</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">return_distance</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-        
-        <span class="c1"># Initialize labels (-1 = unvisited)
-</span>        <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">full</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-        
-        <span class="c1"># Find core points
-</span>        <span class="n">core_samples</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span>
-            <span class="nf">len</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">min_samples</span>
-            <span class="k">for</span> <span class="n">neighbors</span> <span class="ow">in</span> <span class="n">neighborhoods</span>
-        <span class="p">])</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">core_sample_indices</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">where</span><span class="p">(</span><span class="n">core_samples</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="c1"># Assign clusters
-</span>        <span class="n">cluster_id</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">n_samples</span><span class="p">):</span>
-            <span class="c1"># Skip if already labeled or not a core point
-</span>            <span class="k">if</span> <span class="n">labels</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">core_samples</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span>
-                <span class="k">continue</span>
-            
-            <span class="c1"># Start new cluster
-</span>            <span class="n">self</span><span class="p">.</span><span class="nf">_expand_cluster</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">neighborhoods</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">cluster_id</span><span class="p">,</span> <span class="n">core_samples</span><span class="p">)</span>
-            <span class="n">cluster_id</span> <span class="o">+=</span> <span class="mi">1</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span>
-        <span class="k">return</span> <span class="n">self</span>
-    
-    <span class="k">def</span> <span class="nf">_expand_cluster</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">seed_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">neighborhoods</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">],</span>
-        <span class="n">labels</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">cluster_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">core_samples</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span>
-    <span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Expand cluster from seed point using BFS.
-        
-        Similar to connected component search in graphs.
-        </span><span class="sh">"""</span>
-        <span class="c1"># Queue of points to process
-</span>        <span class="n">queue</span> <span class="o">=</span> <span class="p">[</span><span class="n">seed_idx</span><span class="p">]</span>
-        <span class="n">labels</span><span class="p">[</span><span class="n">seed_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">cluster_id</span>
-        
-        <span class="k">while</span> <span class="n">queue</span><span class="p">:</span>
-            <span class="n">current</span> <span class="o">=</span> <span class="n">queue</span><span class="p">.</span><span class="nf">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-            
-            <span class="c1"># Add neighbors to queue if core point
-</span>            <span class="k">if</span> <span class="n">core_samples</span><span class="p">[</span><span class="n">current</span><span class="p">]:</span>
-                <span class="k">for</span> <span class="n">neighbor</span> <span class="ow">in</span> <span class="n">neighborhoods</span><span class="p">[</span><span class="n">current</span><span class="p">]:</span>
-                    <span class="k">if</span> <span class="n">labels</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-                        <span class="n">labels</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]</span> <span class="o">=</span> <span class="n">cluster_id</span>
-                        <span class="n">queue</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">neighbor</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">X_train</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Predict cluster for new points.
-        
-        Assign to nearest core point</span><span class="sh">'</span><span class="s">s cluster.
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">labels</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sh">"</span><span class="s">Model not fitted</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="c1"># Find nearest core point for each new point
-</span>        <span class="n">nbrs</span> <span class="o">=</span> <span class="nc">NearestNeighbors</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="mi">1</span><span class="p">).</span><span class="nf">fit</span><span class="p">(</span>
-            <span class="n">X_train</span><span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">core_sample_indices</span><span class="p">]</span>
-        <span class="p">)</span>
-        
-        <span class="n">distances</span><span class="p">,</span> <span class="n">indices</span> <span class="o">=</span> <span class="n">nbrs</span><span class="p">.</span><span class="nf">kneighbors</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        
-        <span class="c1"># Assign to nearest core point's cluster if within eps
-</span>        <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">full</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="nf">zip</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">indices</span><span class="p">)):</span>
-            <span class="k">if</span> <span class="n">dist</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">eps</span><span class="p">:</span>
-                <span class="n">core_idx</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">core_sample_indices</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
-                <span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">labels</span><span class="p">[</span><span class="n">core_idx</span><span class="p">]</span>
-        
-        <span class="k">return</span> <span class="n">labels</span>
-</code></pre></div></div>
+<p>class DBSCANClustering:
+ “””
+ Density-Based Spatial Clustering (DBSCAN).</p>
+
+<p>Advantages over K-means:</p>
+<ul>
+  <li>No need to specify k</li>
+  <li>Finds arbitrary-shaped clusters</li>
+  <li>Handles noise/outliers</li>
+</ul>
+
+<p>Good for:</p>
+<ul>
+  <li>Geospatial data</li>
+  <li>Data with varying density</li>
+  <li>Anomaly detection
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self, eps: float = 0.5, min_samples: int = 5):
+ “””
+ Initialize DBSCAN.</p>
+
+<p>Args:
+ eps: Maximum distance for neighborhood
+ min_samples: Minimum points for core point
+ “””
+ self.eps = eps
+ self.min_samples = min_samples</p>
+
+<p>self.labels: Optional[np.ndarray] = None
+ self.core_sample_indices: Optional[np.ndarray] = None</p>
+
+<p>def fit(self, X: np.ndarray) -&gt; ‘DBSCANClustering’:
+ “””
+ Fit DBSCAN to data.</p>
+
+<p>Algorithm:</p>
+<ol>
+  <li>Find core points (points with &gt;= min_samples neighbors within eps)</li>
+  <li>Form clusters by connecting core points</li>
+  <li>Assign border points to nearest cluster</li>
+  <li>Mark noise points as outliers (-1)
+ “””
+ n_samples = X.shape[0]</li>
+</ol>
+
+<p># Find neighbors for all points
+ nbrs = NearestNeighbors(radius=self.eps).fit(X)
+ neighborhoods = nbrs.radius_neighbors(X, return_distance=False)</p>
+
+<p># Initialize labels (-1 = unvisited)
+ labels = np.full(n_samples, -1, dtype=int)</p>
+
+<p># Find core points
+ core_samples = np.array([
+ len(neighbors) &gt;= self.min_samples
+ for neighbors in neighborhoods
+ ])</p>
+
+<p>self.core_sample_indices = np.where(core_samples)[0]</p>
+
+<p># Assign clusters
+ cluster_id = 0</p>
+
+<p>for idx in range(n_samples):
+ # Skip if already labeled or not a core point
+ if labels[idx] != -1 or not core_samples[idx]:
+ continue</p>
+
+<p># Start new cluster
+ self._expand_cluster(idx, neighborhoods, labels, cluster_id, core_samples)
+ cluster_id += 1</p>
+
+<p>self.labels = labels
+ return self</p>
+
+<p>def _expand_cluster(
+ self,
+ seed_idx: int,
+ neighborhoods: List[np.ndarray],
+ labels: np.ndarray,
+ cluster_id: int,
+ core_samples: np.ndarray
+ ):
+ “””
+ Expand cluster from seed point using BFS.</p>
+
+<p>Similar to connected component search in graphs.
+ “””
+ # Queue of points to process
+ queue = [seed_idx]
+ labels[seed_idx] = cluster_id</p>
+
+<p>while queue:
+ current = queue.pop(0)</p>
+
+<p># Add neighbors to queue if core point
+ if core_samples[current]:
+ for neighbor in neighborhoods[current]:
+ if labels[neighbor] == -1:
+ labels[neighbor] = cluster_id
+ queue.append(neighbor)</p>
+
+<p>def predict(self, X: np.ndarray, X_train: np.ndarray) -&gt; np.ndarray:
+ “””
+ Predict cluster for new points.</p>
+
+<p>Assign to nearest core point’s cluster.
+ “””
+ if self.labels is None:
+ raise ValueError(“Model not fitted”)</p>
+
+<p># Find nearest core point for each new point
+ nbrs = NearestNeighbors(n_neighbors=1).fit(
+ X_train[self.core_sample_indices]
+ )</p>
+
+<p>distances, indices = nbrs.kneighbors(X)</p>
+
+<p># Assign to nearest core point’s cluster if within eps
+ labels = np.full(len(X), -1, dtype=int)</p>
+
+<p>for i, (dist, idx) in enumerate(zip(distances, indices)):
+ if dist[0] &lt;= self.eps:
+ core_idx = self.core_sample_indices[idx[0]]
+ labels[i] = self.labels[core_idx]</p>
+
+<p>return labels
+``</p>
 
 <h3 id="3-hierarchical-clustering">3. Hierarchical Clustering</h3>
 
 <p>Build a hierarchy of clusters (dendrogram):</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">scipy.cluster.hierarchy</span> <span class="kn">import</span> <span class="n">linkage</span><span class="p">,</span> <span class="n">fcluster</span>
-<span class="kn">from</span> <span class="n">scipy.spatial.distance</span> <span class="kn">import</span> <span class="n">pdist</span>
+<p>``python
+from scipy.cluster.hierarchy import linkage, fcluster
+from scipy.spatial.distance import pdist</p>
 
-<span class="k">class</span> <span class="nc">HierarchicalClustering</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Hierarchical (agglomerative) clustering.
-    
-    Advantages:
-    - Creates hierarchy (dendrogram)
-    - No need to specify k upfront
-    - Deterministic
-    
-    Disadvantages:
-    - O(N²) time and space
-    - Doesn</span><span class="sh">'</span><span class="s">t scale to millions of points
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">ward</span><span class="sh">"</span><span class="p">,</span> <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">euclidean</span><span class="sh">"</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Initialize hierarchical clustering.
-        
-        Args:
-            method: Linkage method (</span><span class="sh">"</span><span class="s">ward</span><span class="sh">"</span><span class="s">, </span><span class="sh">"</span><span class="s">average</span><span class="sh">"</span><span class="s">, </span><span class="sh">"</span><span class="s">complete</span><span class="sh">"</span><span class="s">, </span><span class="sh">"</span><span class="s">single</span><span class="sh">"</span><span class="s">)
-            metric: Distance metric
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">metric</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">linkage_matrix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">labels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-    
-    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="sh">'</span><span class="s">HierarchicalClustering</span><span class="sh">'</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Fit hierarchical clustering.
-        
-        Args:
-            X: Data matrix
-            n_clusters: Number of clusters to create
-        </span><span class="sh">"""</span>
-        <span class="c1"># Compute linkage matrix
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">linkage_matrix</span> <span class="o">=</span> <span class="nf">linkage</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">method</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">metric</span><span class="p">)</span>
-        
-        <span class="c1"># Cut dendrogram to get clusters
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">labels</span> <span class="o">=</span> <span class="nf">fcluster</span><span class="p">(</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">linkage_matrix</span><span class="p">,</span>
-            <span class="n">n_clusters</span><span class="p">,</span>
-            <span class="n">criterion</span><span class="o">=</span><span class="sh">'</span><span class="s">maxclust</span><span class="sh">'</span>
-        <span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># Convert to 0-indexed
-</span>        
-        <span class="k">return</span> <span class="n">self</span>
-    
-    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">X_train</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Predict cluster for new points.
-        
-        Assign to nearest training point</span><span class="sh">'</span><span class="s">s cluster.
-        </span><span class="sh">"""</span>
-        <span class="kn">from</span> <span class="n">sklearn.neighbors</span> <span class="kn">import</span> <span class="n">NearestNeighbors</span>
-        
-        <span class="n">nbrs</span> <span class="o">=</span> <span class="nc">NearestNeighbors</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="mi">1</span><span class="p">).</span><span class="nf">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">indices</span> <span class="o">=</span> <span class="n">nbrs</span><span class="p">.</span><span class="nf">kneighbors</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">labels</span><span class="p">[</span><span class="n">indices</span><span class="p">.</span><span class="nf">flatten</span><span class="p">()]</span>
-</code></pre></div></div>
+<p>class HierarchicalClustering:
+ “””
+ Hierarchical (agglomerative) clustering.</p>
+
+<p>Advantages:</p>
+<ul>
+  <li>Creates hierarchy (dendrogram)</li>
+  <li>No need to specify k upfront</li>
+  <li>Deterministic</li>
+</ul>
+
+<p>Disadvantages:</p>
+<ul>
+  <li>O(N²) time and space</li>
+  <li>Doesn’t scale to millions of points
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self, method: str = “ward”, metric: str = “euclidean”):
+ “””
+ Initialize hierarchical clustering.</p>
+
+<p>Args:
+ method: Linkage method (“ward”, “average”, “complete”, “single”)
+ metric: Distance metric
+ “””
+ self.method = method
+ self.metric = metric</p>
+
+<p>self.linkage_matrix: Optional[np.ndarray] = None
+ self.labels: Optional[np.ndarray] = None</p>
+
+<p>def fit(self, X: np.ndarray, n_clusters: int) -&gt; ‘HierarchicalClustering’:
+ “””
+ Fit hierarchical clustering.</p>
+
+<p>Args:
+ X: Data matrix
+ n_clusters: Number of clusters to create
+ “””
+ # Compute linkage matrix
+ self.linkage_matrix = linkage(X, method=self.method, metric=self.metric)</p>
+
+<p># Cut dendrogram to get clusters
+ self.labels = fcluster(
+ self.linkage_matrix,
+ n_clusters,
+ criterion=’maxclust’
+ ) - 1 # Convert to 0-indexed</p>
+
+<p>return self</p>
+
+<p>def predict(self, X: np.ndarray, X_train: np.ndarray, n_clusters: int) -&gt; np.ndarray:
+ “””
+ Predict cluster for new points.</p>
+
+<p>Assign to nearest training point’s cluster.
+ “””
+ from sklearn.neighbors import NearestNeighbors</p>
+
+<p>nbrs = NearestNeighbors(n_neighbors=1).fit(X_train)
+ _, indices = nbrs.kneighbors(X)</p>
+
+<p>return self.labels[indices.flatten()]
+``</p>
 
 <h3 id="4-locality-sensitive-hashing-for-fast-clustering">4. Locality-Sensitive Hashing for Fast Clustering</h3>
 
 <p>For very large datasets, use LSH for approximate clustering:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">List</span>
-<span class="kn">import</span> <span class="n">hashlib</span>
+<p>``python
+from typing import Dict, Set, List
+import hashlib</p>
 
-<span class="k">class</span> <span class="nc">LSHClustering</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Locality-Sensitive Hashing for fast approximate clustering.
-    
-    Similar to Group Anagrams:
-    - Anagrams: Hash = sorted string (exact)
-    - LSH: Hash = quantized vector (approximate)
-    
-    Both group similar items using hash keys.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">n_hash_functions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-        <span class="n">n_hash_tables</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
-        <span class="n">hash_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span>
-    <span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Initialize LSH clusterer.
-        
-        Args:
-            n_hash_functions: Number of hash functions per table
-            n_hash_tables: Number of hash tables
-            hash_size: Size of hash (bits)
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">n_hash_functions</span> <span class="o">=</span> <span class="n">n_hash_functions</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">n_hash_tables</span> <span class="o">=</span> <span class="n">n_hash_tables</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">hash_size</span> <span class="o">=</span> <span class="n">hash_size</span>
-        
-        <span class="c1"># Hash tables: table_id -&gt; {hash_key -&gt; [point_ids]}
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">hash_tables</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">{}</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">n_hash_tables</span><span class="p">)</span>
-        <span class="p">]</span>
-        
-        <span class="c1"># Random projection vectors for hashing
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">projection_vectors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="sh">'</span><span class="s">LSHClustering</span><span class="sh">'</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Build LSH index.
-        
-        Args:
-            X: Data matrix of shape (n_samples, n_features)
-        </span><span class="sh">"""</span>
-        <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_features</span> <span class="o">=</span> <span class="n">X</span><span class="p">.</span><span class="n">shape</span>
-        
-        <span class="c1"># Generate random projection vectors
-</span>        <span class="k">for</span> <span class="n">table_idx</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">n_hash_tables</span><span class="p">):</span>
-            <span class="n">table_projections</span> <span class="o">=</span> <span class="p">[]</span>
-            
-            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">n_hash_functions</span><span class="p">):</span>
-                <span class="c1"># Random unit vector
-</span>                <span class="n">random_vec</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="n">n_features</span><span class="p">)</span>
-                <span class="n">random_vec</span> <span class="o">/=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">random_vec</span><span class="p">)</span>
-                <span class="n">table_projections</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">random_vec</span><span class="p">)</span>
-            
-            <span class="n">self</span><span class="p">.</span><span class="n">projection_vectors</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">table_projections</span><span class="p">)</span>
-        
-        <span class="c1"># Insert all points into hash tables
-</span>        <span class="k">for</span> <span class="n">point_id</span><span class="p">,</span> <span class="n">point</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">_insert_point</span><span class="p">(</span><span class="n">point_id</span><span class="p">,</span> <span class="n">point</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">self</span>
-    
-    <span class="k">def</span> <span class="nf">_hash_point</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">point</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">table_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Hash a point using random projections.
-        
-        Similar to sorting string in anagram problem:
-        - Anagrams: sorted chars create hash key
-        - LSH: projection signs create hash key
-        
-        Returns:
-            Hash key (binary string)
-        </span><span class="sh">"""</span>
-        <span class="n">projections</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">projection_vectors</span><span class="p">[</span><span class="n">table_idx</span><span class="p">]</span>
-        
-        <span class="c1"># Sign of dot product with each projection vector
-</span>        <span class="n">hash_bits</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="sh">'</span><span class="s">1</span><span class="sh">'</span> <span class="k">if</span> <span class="n">np</span><span class="p">.</span><span class="nf">dot</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">proj</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="sh">'</span><span class="s">0</span><span class="sh">'</span>
-            <span class="k">for</span> <span class="n">proj</span> <span class="ow">in</span> <span class="n">projections</span>
-        <span class="p">]</span>
-        
-        <span class="k">return</span> <span class="sh">''</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">hash_bits</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_insert_point</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">point_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">point</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Insert point into all hash tables.</span><span class="sh">"""</span>
-        <span class="k">for</span> <span class="n">table_idx</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">n_hash_tables</span><span class="p">):</span>
-            <span class="n">hash_key</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_hash_point</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">table_idx</span><span class="p">)</span>
-            
-            <span class="k">if</span> <span class="n">hash_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">hash_tables</span><span class="p">[</span><span class="n">table_idx</span><span class="p">]:</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">hash_tables</span><span class="p">[</span><span class="n">table_idx</span><span class="p">][</span><span class="n">hash_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-            
-            <span class="n">self</span><span class="p">.</span><span class="n">hash_tables</span><span class="p">[</span><span class="n">table_idx</span><span class="p">][</span><span class="n">hash_key</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">point_id</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">find_similar_points</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">query</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Find k similar points to query.
-        
-        Args:
-            query: Query point
-            k: Number of similar points to return
-            
-        Returns:
-            List of point IDs
-        </span><span class="sh">"""</span>
-        <span class="n">candidates</span> <span class="o">=</span> <span class="nf">set</span><span class="p">()</span>
-        
-        <span class="c1"># Look up in all hash tables
-</span>        <span class="k">for</span> <span class="n">table_idx</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">n_hash_tables</span><span class="p">):</span>
-            <span class="n">hash_key</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_hash_point</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">table_idx</span><span class="p">)</span>
-            
-            <span class="c1"># Get points with same hash
-</span>            <span class="k">if</span> <span class="n">hash_key</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">hash_tables</span><span class="p">[</span><span class="n">table_idx</span><span class="p">]:</span>
-                <span class="n">candidates</span><span class="p">.</span><span class="nf">update</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">hash_tables</span><span class="p">[</span><span class="n">table_idx</span><span class="p">][</span><span class="n">hash_key</span><span class="p">])</span>
-        
-        <span class="c1"># Return top k candidates
-</span>        <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="n">candidates</span><span class="p">)[:</span><span class="n">k</span><span class="p">]</span>
-    
-    <span class="k">def</span> <span class="nf">get_clusters</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
-        <span class="sh">"""</span><span class="s">
-        Extract clusters from hash tables.
-        
-        Points in same hash bucket are in same cluster.
-        </span><span class="sh">"""</span>
-        <span class="c1"># Aggregate across all tables
-</span>        <span class="n">all_clusters</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">hash_tables</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">hash_key</span><span class="p">,</span> <span class="n">point_ids</span> <span class="ow">in</span> <span class="n">table</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">point_ids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="n">all_clusters</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nf">set</span><span class="p">(</span><span class="n">point_ids</span><span class="p">))</span>
-        
-        <span class="c1"># Merge overlapping clusters
-</span>        <span class="n">merged</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_merge_clusters</span><span class="p">(</span><span class="n">all_clusters</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">merged</span>
-    
-    <span class="k">def</span> <span class="nf">_merge_clusters</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">clusters</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
-        <span class="sh">"""</span><span class="s">Merge overlapping clusters.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">clusters</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[]</span>
-        
-        <span class="n">merged</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">current</span> <span class="o">=</span> <span class="n">clusters</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="k">for</span> <span class="n">cluster</span> <span class="ow">in</span> <span class="n">clusters</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
-            <span class="k">if</span> <span class="n">current</span> <span class="o">&amp;</span> <span class="n">cluster</span><span class="p">:</span>  <span class="c1"># Overlap
-</span>                <span class="n">current</span> <span class="o">|=</span> <span class="n">cluster</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">merged</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
-                <span class="n">current</span> <span class="o">=</span> <span class="n">cluster</span>
-        
-        <span class="n">merged</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">merged</span>
-</code></pre></div></div>
+<p>class LSHClustering:
+ “””
+ Locality-Sensitive Hashing for fast approximate clustering.</p>
+
+<p>Similar to Group Anagrams:</p>
+<ul>
+  <li>Anagrams: Hash = sorted string (exact)</li>
+  <li>LSH: Hash = quantized vector (approximate)</li>
+</ul>
+
+<p>Both group similar items using hash keys.
+ “””</p>
+
+<p>def <strong>init</strong>(
+ self,
+ n_hash_functions: int = 10,
+ n_hash_tables: int = 5,
+ hash_size: int = 8
+ ):
+ “””
+ Initialize LSH clusterer.</p>
+
+<p>Args:
+ n_hash_functions: Number of hash functions per table
+ n_hash_tables: Number of hash tables
+ hash_size: Size of hash (bits)
+ “””
+ self.n_hash_functions = n_hash_functions
+ self.n_hash_tables = n_hash_tables
+ self.hash_size = hash_size</p>
+
+<p># Hash tables: table_id -&gt; {hash_key -&gt; [point_ids]}
+ self.hash_tables: List[Dict[str, List[int]]] = [
+ {} for _ in range(n_hash_tables)
+ ]</p>
+
+<p># Random projection vectors for hashing
+ self.projection_vectors: List[List[np.ndarray]] = []</p>
+
+<p>def fit(self, X: np.ndarray) -&gt; ‘LSHClustering’:
+ “””
+ Build LSH index.</p>
+
+<p>Args:
+ X: Data matrix of shape (n_samples, n_features)
+ “””
+ n_samples, n_features = X.shape</p>
+
+<p># Generate random projection vectors
+ for table_idx in range(self.n_hash_tables):
+ table_projections = []</p>
+
+<p>for _ in range(self.n_hash_functions):
+ # Random unit vector
+ random_vec = np.random.randn(n_features)
+ random_vec /= np.linalg.norm(random_vec)
+ table_projections.append(random_vec)</p>
+
+<p>self.projection_vectors.append(table_projections)</p>
+
+<p># Insert all points into hash tables
+ for point_id, point in enumerate(X):
+ self._insert_point(point_id, point)</p>
+
+<p>return self</p>
+
+<p>def _hash_point(self, point: np.ndarray, table_idx: int) -&gt; str:
+ “””
+ Hash a point using random projections.</p>
+
+<p>Similar to sorting string in anagram problem:</p>
+<ul>
+  <li>Anagrams: sorted chars create hash key</li>
+  <li>LSH: projection signs create hash key</li>
+</ul>
+
+<p>Returns:
+ Hash key (binary string)
+ “””
+ projections = self.projection_vectors[table_idx]</p>
+
+<p># Sign of dot product with each projection vector
+ hash_bits = [
+ ‘1’ if np.dot(point, proj) &gt; 0 else ‘0’
+ for proj in projections
+ ]</p>
+
+<p>return ‘‘.join(hash_bits)</p>
+
+<p>def _insert_point(self, point_id: int, point: np.ndarray):
+ “"”Insert point into all hash tables.”””
+ for table_idx in range(self.n_hash_tables):
+ hash_key = self._hash_point(point, table_idx)</p>
+
+<p>if hash_key not in self.hash_tables[table_idx]:
+ self.hash_tables[table_idx][hash_key] = []</p>
+
+<p>self.hash_tables[table_idx][hash_key].append(point_id)</p>
+
+<p>def find_similar_points(
+ self,
+ query: np.ndarray,
+ k: int = 10
+ ) -&gt; List[int]:
+ “””
+ Find k similar points to query.</p>
+
+<p>Args:
+ query: Query point
+ k: Number of similar points to return</p>
+
+<p>Returns:
+ List of point IDs
+ “””
+ candidates = set()</p>
+
+<p># Look up in all hash tables
+ for table_idx in range(self.n_hash_tables):
+ hash_key = self._hash_point(query, table_idx)</p>
+
+<p># Get points with same hash
+ if hash_key in self.hash_tables[table_idx]:
+ candidates.update(self.hash_tables[table_idx][hash_key])</p>
+
+<p># Return top k candidates
+ return list(candidates)[:k]</p>
+
+<p>def get_clusters(self) -&gt; List[Set[int]]:
+ “””
+ Extract clusters from hash tables.</p>
+
+<p>Points in same hash bucket are in same cluster.
+ “””
+ # Aggregate across all tables
+ all_clusters = []</p>
+
+<p>for table in self.hash_tables:
+ for hash_key, point_ids in table.items():
+ if len(point_ids) &gt; 1:
+ all_clusters.append(set(point_ids))</p>
+
+<p># Merge overlapping clusters
+ merged = self._merge_clusters(all_clusters)</p>
+
+<p>return merged</p>
+
+<p>def _merge_clusters(self, clusters: List[Set[int]]) -&gt; List[Set[int]]:
+ “"”Merge overlapping clusters.”””
+ if not clusters:
+ return []</p>
+
+<p>merged = []
+ current = clusters[0]</p>
+
+<p>for cluster in clusters[1:]:
+ if current &amp; cluster: # Overlap
+ current |= cluster
+ else:
+ merged.append(current)
+ current = cluster</p>
+
+<p>merged.append(current)
+ return merged
+``</p>
 
 <h2 id="data-flow">Data Flow</h2>
 
 <h3 id="batch-clustering-pipeline">Batch Clustering Pipeline</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Data Collection
-   └─&gt; Features from data lake/warehouse
-   └─&gt; Embeddings from model inference
-
-2. Feature Engineering
-   └─&gt; Normalization/scaling
-   └─&gt; Dimensionality reduction (PCA, UMAP)
-   └─&gt; Feature selection
-
-3. Clustering
-   └─&gt; Run K-means/DBSCAN/Hierarchical
-   └─&gt; Evaluate cluster quality
-   └─&gt; Store centroids and assignments
-
-4. Indexing
-   └─&gt; Build fast similarity index (Faiss)
-   └─&gt; Store in cache (Redis)
-   └─&gt; Expose via API
-
-5. Monitoring
-   └─&gt; Track cluster drift
-   └─&gt; Alert on quality degradation
-   └─&gt; Trigger retraining
-</code></pre></div></div>
+<p>``</p>
+<ol>
+  <li>
+    <p>Data Collection
+ └─&gt; Features from data lake/warehouse
+ └─&gt; Embeddings from model inference</p>
+  </li>
+  <li>
+    <p>Feature Engineering
+ └─&gt; Normalization/scaling
+ └─&gt; Dimensionality reduction (PCA, UMAP)
+ └─&gt; Feature selection</p>
+  </li>
+  <li>
+    <p>Clustering
+ └─&gt; Run K-means/DBSCAN/Hierarchical
+ └─&gt; Evaluate cluster quality
+ └─&gt; Store centroids and assignments</p>
+  </li>
+  <li>
+    <p>Indexing
+ └─&gt; Build fast similarity index (Faiss)
+ └─&gt; Store in cache (Redis)
+ └─&gt; Expose via API</p>
+  </li>
+  <li>
+    <p>Monitoring
+ └─&gt; Track cluster drift
+ └─&gt; Alert on quality degradation
+ └─&gt; Trigger retraining
+``</p>
+  </li>
+</ol>
 
 <h3 id="real-time-assignment-flow">Real-Time Assignment Flow</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. New point arrives
-   └─&gt; Feature extraction
-
-2. Normalize features
-   └─&gt; Apply same scaling as training
-
-3. Find nearest cluster
-   └─&gt; LSH lookup (approximate)
-   └─&gt; Or Faiss search (exact)
-
-4. Return cluster ID + metadata
-   └─&gt; Cluster centroid
-   └─&gt; Similar points
-   └─&gt; Confidence score
-
-5. Optional: Update cluster
-   └─&gt; Online learning
-   └─&gt; Mini-batch update
-</code></pre></div></div>
+<p>``</p>
+<ol>
+  <li>
+    <p>New point arrives
+ └─&gt; Feature extraction</p>
+  </li>
+  <li>
+    <p>Normalize features
+ └─&gt; Apply same scaling as training</p>
+  </li>
+  <li>
+    <p>Find nearest cluster
+ └─&gt; LSH lookup (approximate)
+ └─&gt; Or Faiss search (exact)</p>
+  </li>
+  <li>
+    <p>Return cluster ID + metadata
+ └─&gt; Cluster centroid
+ └─&gt; Similar points
+ └─&gt; Confidence score</p>
+  </li>
+  <li>
+    <p>Optional: Update cluster
+ └─&gt; Online learning
+ └─&gt; Mini-batch update
+``</p>
+  </li>
+</ol>
 
 <h2 id="scaling-strategies">Scaling Strategies</h2>
 
 <h3 id="horizontal-scaling---distributed-k-means">Horizontal Scaling - Distributed K-Means</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">pyspark.ml.clustering</span> <span class="kn">import</span> <span class="n">KMeans</span> <span class="k">as</span> <span class="n">SparkKMeans</span>
-<span class="kn">from</span> <span class="n">pyspark.sql</span> <span class="kn">import</span> <span class="n">SparkSession</span>
+<p>``python
+from pyspark.ml.clustering import KMeans as SparkKMeans
+from pyspark.sql import SparkSession</p>
 
-<span class="k">class</span> <span class="nc">DistributedKMeans</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Distributed K-means using Spark.
-    
-    For datasets too large for single machine.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span> <span class="o">=</span> <span class="n">n_clusters</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="p">.</span><span class="n">builder</span><span class="p">.</span><span class="nf">appName</span><span class="p">(</span><span class="sh">"</span><span class="s">Clustering</span><span class="sh">"</span><span class="p">).</span><span class="nf">getOrCreate</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">None</span>
-    
-    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">data_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Fit K-means on distributed data.
-        
-        Args:
-            data_path: Path to data (S3, HDFS, etc.)
-        </span><span class="sh">"""</span>
-        <span class="c1"># Load data
-</span>        <span class="n">df</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">spark</span><span class="p">.</span><span class="n">read</span><span class="p">.</span><span class="nf">parquet</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span>
-        
-        <span class="c1"># Create K-means model
-</span>        <span class="n">kmeans</span> <span class="o">=</span> <span class="nc">SparkKMeans</span><span class="p">(</span>
-            <span class="n">k</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span><span class="p">,</span>
-            <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
-            <span class="n">featuresCol</span><span class="o">=</span><span class="sh">"</span><span class="s">features</span><span class="sh">"</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Fit (distributed across cluster)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">kmeans</span><span class="p">.</span><span class="nf">fit</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">self</span>
-    
-    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">data_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Predict clusters for new data.</span><span class="sh">"""</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">spark</span><span class="p">.</span><span class="n">read</span><span class="p">.</span><span class="nf">parquet</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span>
-        <span class="n">predictions</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">transform</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
-        <span class="n">predictions</span><span class="p">.</span><span class="n">write</span><span class="p">.</span><span class="nf">parquet</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
-</code></pre></div></div>
+<p>class DistributedKMeans:
+ “””
+ Distributed K-means using Spark.</p>
+
+<p>For datasets too large for single machine.
+ “””</p>
+
+<p>def <strong>init</strong>(self, n_clusters: int = 8):
+ self.n_clusters = n_clusters
+ self.spark = SparkSession.builder.appName(“Clustering”).getOrCreate()
+ self.model = None</p>
+
+<p>def fit(self, data_path: str):
+ “””
+ Fit K-means on distributed data.</p>
+
+<p>Args:
+ data_path: Path to data (S3, HDFS, etc.)
+ “””
+ # Load data
+ df = self.spark.read.parquet(data_path)</p>
+
+<p># Create K-means model
+ kmeans = SparkKMeans(
+ k=self.n_clusters,
+ seed=42,
+ featuresCol=”features”
+ )</p>
+
+<p># Fit (distributed across cluster)
+ self.model = kmeans.fit(df)</p>
+
+<p>return self</p>
+
+<p>def predict(self, data_path: str, output_path: str):
+ “"”Predict clusters for new data.”””
+ df = self.spark.read.parquet(data_path)
+ predictions = self.model.transform(df)
+ predictions.write.parquet(output_path)
+``</p>
 
 <h3 id="mini-batch-k-means-for-streaming">Mini-Batch K-Means for Streaming</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">MiniBatchKMeans</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Mini-batch K-means for streaming data.
-    
-    Updates clusters incrementally as new data arrives.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span> <span class="o">=</span> <span class="n">n_clusters</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">centroids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">n_clusters</span><span class="p">)</span>  <span class="c1"># Points per cluster
-</span>    
-    <span class="k">def</span> <span class="nf">partial_fit</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="sh">'</span><span class="s">MiniBatchKMeans</span><span class="sh">'</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Update clusters with mini-batch.
-        
-        Algorithm:
-        1. Assign batch points to nearest centroid
-        2. Update centroids with learning rate
-        3. Use exponential moving average
-        
-        Args:
-            X: Mini-batch of data
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">centroids</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="c1"># Initialize on first batch
-</span>            <span class="n">self</span><span class="p">.</span><span class="n">centroids</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:</span><span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span><span class="p">].</span><span class="nf">copy</span><span class="p">()</span>
-        
-        <span class="c1"># Assign points to clusters
-</span>        <span class="n">labels</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_assign_clusters</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        
-        <span class="c1"># Update centroids
-</span>        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span><span class="p">):</span>
-            <span class="n">mask</span> <span class="o">=</span> <span class="n">labels</span> <span class="o">==</span> <span class="n">k</span>
-            <span class="n">n_k</span> <span class="o">=</span> <span class="n">mask</span><span class="p">.</span><span class="nf">sum</span><span class="p">()</span>
-            
-            <span class="k">if</span> <span class="n">n_k</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="c1"># Exponential moving average
-</span>                <span class="n">learning_rate</span> <span class="o">=</span> <span class="n">n_k</span> <span class="o">/</span> <span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">counts</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">+</span> <span class="n">n_k</span><span class="p">)</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">centroids</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">learning_rate</span><span class="p">)</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">centroids</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">+</span>
-                    <span class="n">learning_rate</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">mask</span><span class="p">].</span><span class="nf">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-                <span class="p">)</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">counts</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">+=</span> <span class="n">n_k</span>
-        
-        <span class="k">return</span> <span class="n">self</span>
-    
-    <span class="k">def</span> <span class="nf">_assign_clusters</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Assign points to nearest centroid.</span><span class="sh">"""</span>
-        <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span>
-            <span class="n">X</span><span class="p">[:,</span> <span class="n">np</span><span class="p">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">centroids</span><span class="p">,</span>
-            <span class="n">axis</span><span class="o">=</span><span class="mi">2</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">argmin</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+class MiniBatchKMeans:
+ “””
+ Mini-batch K-means for streaming data.</p>
+
+<p>Updates clusters incrementally as new data arrives.
+ “””</p>
+
+<p>def <strong>init</strong>(self, n_clusters: int = 8, batch_size: int = 100):
+ self.n_clusters = n_clusters
+ self.batch_size = batch_size</p>
+
+<p>self.centroids: Optional[np.ndarray] = None
+ self.counts = np.zeros(n_clusters) # Points per cluster</p>
+
+<p>def partial_fit(self, X: np.ndarray) -&gt; ‘MiniBatchKMeans’:
+ “””
+ Update clusters with mini-batch.</p>
+
+<p>Algorithm:</p>
+<ol>
+  <li>Assign batch points to nearest centroid</li>
+  <li>Update centroids with learning rate</li>
+  <li>Use exponential moving average</li>
+</ol>
+
+<p>Args:
+ X: Mini-batch of data
+ “””
+ if self.centroids is None:
+ # Initialize on first batch
+ self.centroids = X[:self.n_clusters].copy()</p>
+
+<p># Assign points to clusters
+ labels = self._assign_clusters(X)</p>
+
+<p># Update centroids
+ for k in range(self.n_clusters):
+ mask = labels == k
+ n_k = mask.sum()</p>
+
+<p>if n_k &gt; 0:
+ # Exponential moving average
+ learning_rate = n_k / (self.counts[k] + n_k)
+ self.centroids[k] = (
+ (1 - learning_rate) * self.centroids[k] +
+ learning_rate * X[mask].mean(axis=0)
+ )
+ self.counts[k] += n_k</p>
+
+<p>return self</p>
+
+<p>def _assign_clusters(self, X: np.ndarray) -&gt; np.ndarray:
+ “"”Assign points to nearest centroid.”””
+ distances = np.linalg.norm(
+ X[:, np.newaxis] - self.centroids,
+ axis=2
+ )
+ return np.argmin(distances, axis=1)
+``</p>
 
 <h2 id="implementation-complete-system">Implementation: Complete System</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">redis</span>
-<span class="kn">import</span> <span class="n">json</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+import redis
+import json
+from typing import Dict, List, Optional
+import numpy as np</p>
 
-<span class="k">class</span> <span class="nc">ProductionClusteringSystem</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Complete production clustering system.
-    
-    Features:
-    - Multiple clustering algorithms
-    - Fast similarity search
-    - Incremental updates
-    - Caching
-    - Monitoring
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">kmeans</span><span class="sh">"</span><span class="p">,</span>
-        <span class="n">n_clusters</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-        <span class="n">cache_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">True</span>
-    <span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="n">algorithm</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span> <span class="o">=</span> <span class="n">n_clusters</span>
-        
-        <span class="c1"># Choose clustering algorithm
-</span>        <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="sh">"</span><span class="s">kmeans</span><span class="sh">"</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">clusterer</span> <span class="o">=</span> <span class="nc">KMeansClustering</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">n_clusters</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="sh">"</span><span class="s">dbscan</span><span class="sh">"</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">clusterer</span> <span class="o">=</span> <span class="nc">DBSCANClustering</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="sh">"</span><span class="s">lsh</span><span class="sh">"</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">clusterer</span> <span class="o">=</span> <span class="nc">LSHClustering</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Unknown algorithm: </span><span class="si">{</span><span class="n">algorithm</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="c1"># Cache for fast lookups
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">cache_enabled</span> <span class="o">=</span> <span class="n">cache_enabled</span>
-        <span class="k">if</span> <span class="n">cache_enabled</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">cache</span> <span class="o">=</span> <span class="n">redis</span><span class="p">.</span><span class="nc">Redis</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="sh">'</span><span class="s">localhost</span><span class="sh">'</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        
-        <span class="c1"># Training data (for incremental updates)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">X_train</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-        
-        <span class="c1"># Metrics
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">request_count</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">cache_hits</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="sh">'</span><span class="s">ProductionClusteringSystem</span><span class="sh">'</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Fit clustering model.</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">X_train</span> <span class="o">=</span> <span class="n">X</span><span class="p">.</span><span class="nf">copy</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">clusterer</span><span class="p">.</span><span class="nf">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        
-        <span class="c1"># Cache centroids
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">cache_enabled</span> <span class="ow">and</span> <span class="nf">hasattr</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">clusterer</span><span class="p">,</span> <span class="sh">'</span><span class="s">centroids</span><span class="sh">'</span><span class="p">):</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">_cache_centroids</span><span class="p">()</span>
-        
-        <span class="k">return</span> <span class="n">self</span>
-    
-    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Predict cluster for new points.</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">request_count</span> <span class="o">+=</span> <span class="nf">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        
-        <span class="c1"># Try cache first
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">cache_enabled</span><span class="p">:</span>
-            <span class="n">cached</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_try_cache</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">cached</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">cache_hits</span> <span class="o">+=</span> <span class="nf">len</span><span class="p">(</span><span class="n">cached</span><span class="p">)</span>
-                <span class="k">return</span> <span class="n">cached</span>
-        
-        <span class="c1"># Predict
-</span>        <span class="n">labels</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">clusterer</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        
-        <span class="c1"># Cache results
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">cache_enabled</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">_cache_predictions</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">labels</span>
-    
-    <span class="k">def</span> <span class="nf">find_similar</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">query</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Find k similar points to query.
-        
-        Returns indices of similar points in training data.
-        </span><span class="sh">"""</span>
-        <span class="c1"># Get query's cluster
-</span>        <span class="n">cluster_id</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">query</span><span class="p">.</span><span class="nf">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="c1"># Find points in same cluster
-</span>        <span class="k">if</span> <span class="nf">hasattr</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">clusterer</span><span class="p">,</span> <span class="sh">'</span><span class="s">labels</span><span class="sh">'</span><span class="p">):</span>
-            <span class="n">same_cluster</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">where</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">clusterer</span><span class="p">.</span><span class="n">labels</span> <span class="o">==</span> <span class="n">cluster_id</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            
-            <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">same_cluster</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">k</span><span class="p">:</span>
-                <span class="c1"># Calculate distances within cluster
-</span>                <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span>
-                    <span class="n">self</span><span class="p">.</span><span class="n">X_train</span><span class="p">[</span><span class="n">same_cluster</span><span class="p">]</span> <span class="o">-</span> <span class="n">query</span><span class="p">,</span>
-                    <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
-                <span class="p">)</span>
-                
-                <span class="c1"># Return k nearest
-</span>                <span class="n">nearest_indices</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">argsort</span><span class="p">(</span><span class="n">distances</span><span class="p">)[:</span><span class="n">k</span><span class="p">]</span>
-                <span class="k">return</span> <span class="n">same_cluster</span><span class="p">[</span><span class="n">nearest_indices</span><span class="p">].</span><span class="nf">tolist</span><span class="p">()</span>
-            
-            <span class="k">return</span> <span class="n">same_cluster</span><span class="p">.</span><span class="nf">tolist</span><span class="p">()</span>
-        
-        <span class="k">return</span> <span class="p">[]</span>
-    
-    <span class="k">def</span> <span class="nf">get_cluster_info</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">cluster_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Get information about a cluster.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nf">hasattr</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">clusterer</span><span class="p">,</span> <span class="sh">'</span><span class="s">labels</span><span class="sh">'</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">{}</span>
-        
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">clusterer</span><span class="p">.</span><span class="n">labels</span> <span class="o">==</span> <span class="n">cluster_id</span>
-        <span class="n">cluster_points</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">X_train</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
-        
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">"</span><span class="s">cluster_id</span><span class="sh">"</span><span class="p">:</span> <span class="n">cluster_id</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">size</span><span class="sh">"</span><span class="p">:</span> <span class="nf">int</span><span class="p">(</span><span class="n">mask</span><span class="p">.</span><span class="nf">sum</span><span class="p">()),</span>
-            <span class="sh">"</span><span class="s">centroid</span><span class="sh">"</span><span class="p">:</span> <span class="p">(</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">clusterer</span><span class="p">.</span><span class="n">centroids</span><span class="p">[</span><span class="n">cluster_id</span><span class="p">].</span><span class="nf">tolist</span><span class="p">()</span>
-                <span class="k">if</span> <span class="nf">hasattr</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">clusterer</span><span class="p">,</span> <span class="sh">'</span><span class="s">centroids</span><span class="sh">'</span><span class="p">)</span>
-                <span class="k">else</span> <span class="bp">None</span>
-            <span class="p">),</span>
-            <span class="sh">"</span><span class="s">mean</span><span class="sh">"</span><span class="p">:</span> <span class="n">cluster_points</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">).</span><span class="nf">tolist</span><span class="p">(),</span>
-            <span class="sh">"</span><span class="s">std</span><span class="sh">"</span><span class="p">:</span> <span class="n">cluster_points</span><span class="p">.</span><span class="nf">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">).</span><span class="nf">tolist</span><span class="p">(),</span>
-        <span class="p">}</span>
-    
-    <span class="k">def</span> <span class="nf">_cache_centroids</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Cache cluster centroids in Redis.</span><span class="sh">"""</span>
-        <span class="n">centroids</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">clusterer</span><span class="p">.</span><span class="nf">get_cluster_centers</span><span class="p">()</span>
-        
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">centroid</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">centroids</span><span class="p">):</span>
-            <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">centroid:</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="sh">"</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">(</span><span class="n">centroid</span><span class="p">.</span><span class="nf">tolist</span><span class="p">()))</span>
-    
-    <span class="k">def</span> <span class="nf">_try_cache</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">Try to get predictions from cache.</span><span class="sh">"""</span>
-        <span class="c1"># Simple caching by rounding features
-</span>        <span class="c1"># In production: use better hashing
-</span>        <span class="k">return</span> <span class="bp">None</span>
-    
-    <span class="k">def</span> <span class="nf">_cache_predictions</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">labels</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Cache predictions.</span><span class="sh">"""</span>
-        <span class="c1"># Implement caching strategy
-</span>        <span class="k">pass</span>
-    
-    <span class="k">def</span> <span class="nf">get_metrics</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Get system metrics.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">"</span><span class="s">algorithm</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">algorithm</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">n_clusters</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">request_count</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">request_count</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">cache_hit_rate</span><span class="sh">"</span><span class="p">:</span> <span class="p">(</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">cache_hits</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">request_count</span>
-                <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">request_count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
-            <span class="p">),</span>
-            <span class="sh">"</span><span class="s">training_samples</span><span class="sh">"</span><span class="p">:</span> <span class="p">(</span>
-                <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">X_train</span><span class="p">)</span> <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">X_train</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="mi">0</span>
-            <span class="p">),</span>
-        <span class="p">}</span>
+<p>class ProductionClusteringSystem:
+ “””
+ Complete production clustering system.</p>
 
+<p>Features:</p>
+<ul>
+  <li>Multiple clustering algorithms</li>
+  <li>Fast similarity search</li>
+  <li>Incremental updates</li>
+  <li>Caching</li>
+  <li>Monitoring
+ “””</li>
+</ul>
 
-<span class="c1"># Example usage
-</span><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="sh">"</span><span class="s">__main__</span><span class="sh">"</span><span class="p">:</span>
-    <span class="c1"># Generate sample data
-</span>    <span class="kn">from</span> <span class="n">sklearn.datasets</span> <span class="kn">import</span> <span class="n">make_blobs</span>
-    
-    <span class="n">X</span><span class="p">,</span> <span class="n">y_true</span> <span class="o">=</span> <span class="nf">make_blobs</span><span class="p">(</span>
-        <span class="n">n_samples</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
-        <span class="n">n_features</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-        <span class="n">centers</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-        <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span>
-    <span class="p">)</span>
-    
-    <span class="c1"># Create clustering system
-</span>    <span class="n">system</span> <span class="o">=</span> <span class="nc">ProductionClusteringSystem</span><span class="p">(</span>
-        <span class="n">algorithm</span><span class="o">=</span><span class="sh">"</span><span class="s">kmeans</span><span class="sh">"</span><span class="p">,</span>
-        <span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span>
-    <span class="p">)</span>
-    
-    <span class="c1"># Fit
-</span>    <span class="n">system</span><span class="p">.</span><span class="nf">fit</span><span class="p">(</span><span class="n">X</span><span class="p">[:</span><span class="mi">8000</span><span class="p">])</span>  <span class="c1"># Train on 80%
-</span>    
-    <span class="c1"># Predict
-</span>    <span class="n">labels</span> <span class="o">=</span> <span class="n">system</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="mi">8000</span><span class="p">:])</span>  <span class="c1"># Test on 20%
-</span>    
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Predicted </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span><span class="si">}</span><span class="s"> samples</span><span class="sh">"</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Metrics: </span><span class="si">{</span><span class="n">system</span><span class="p">.</span><span class="nf">get_metrics</span><span class="p">()</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="c1"># Find similar points
-</span>    <span class="n">query</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="mi">8000</span><span class="p">]</span>
-    <span class="n">similar</span> <span class="o">=</span> <span class="n">system</span><span class="p">.</span><span class="nf">find_similar</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Similar points to query: </span><span class="si">{</span><span class="n">similar</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="c1"># Get cluster info
-</span>    <span class="n">info</span> <span class="o">=</span> <span class="n">system</span><span class="p">.</span><span class="nf">get_cluster_info</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Cluster 0 info: </span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def <strong>init</strong>(
+ self,
+ algorithm: str = “kmeans”,
+ n_clusters: int = 10,
+ cache_enabled: bool = True
+ ):
+ self.algorithm = algorithm
+ self.n_clusters = n_clusters</p>
+
+<p># Choose clustering algorithm
+ if algorithm == “kmeans”:
+ self.clusterer = KMeansClustering(n_clusters=n_clusters)
+ elif algorithm == “dbscan”:
+ self.clusterer = DBSCANClustering()
+ elif algorithm == “lsh”:
+ self.clusterer = LSHClustering()
+ else:
+ raise ValueError(f”Unknown algorithm: {algorithm}”)</p>
+
+<p># Cache for fast lookups
+ self.cache_enabled = cache_enabled
+ if cache_enabled:
+ self.cache = redis.Redis(host=’localhost’, port=6379, db=0)</p>
+
+<p># Training data (for incremental updates)
+ self.X_train: Optional[np.ndarray] = None</p>
+
+<p># Metrics
+ self.request_count = 0
+ self.cache_hits = 0</p>
+
+<p>def fit(self, X: np.ndarray) -&gt; ‘ProductionClusteringSystem’:
+ “"”Fit clustering model.”””
+ self.X_train = X.copy()
+ self.clusterer.fit(X)</p>
+
+<p># Cache centroids
+ if self.cache_enabled and hasattr(self.clusterer, ‘centroids’):
+ self._cache_centroids()</p>
+
+<p>return self</p>
+
+<p>def predict(self, X: np.ndarray) -&gt; np.ndarray:
+ “"”Predict cluster for new points.”””
+ self.request_count += len(X)</p>
+
+<p># Try cache first
+ if self.cache_enabled:
+ cached = self._try_cache(X)
+ if cached is not None:
+ self.cache_hits += len(cached)
+ return cached</p>
+
+<p># Predict
+ labels = self.clusterer.predict(X)</p>
+
+<p># Cache results
+ if self.cache_enabled:
+ self._cache_predictions(X, labels)</p>
+
+<p>return labels</p>
+
+<p>def find_similar(
+ self,
+ query: np.ndarray,
+ k: int = 10
+ ) -&gt; List[int]:
+ “””
+ Find k similar points to query.</p>
+
+<p>Returns indices of similar points in training data.
+ “””
+ # Get query’s cluster
+ cluster_id = self.predict(query.reshape(1, -1))[0]</p>
+
+<p># Find points in same cluster
+ if hasattr(self.clusterer, ‘labels’):
+ same_cluster = np.where(self.clusterer.labels == cluster_id)[0]</p>
+
+<p>if len(same_cluster) &gt; k:
+ # Calculate distances within cluster
+ distances = np.linalg.norm(
+ self.X_train[same_cluster] - query,
+ axis=1
+ )</p>
+
+<p># Return k nearest
+ nearest_indices = np.argsort(distances)[:k]
+ return same_cluster[nearest_indices].tolist()</p>
+
+<p>return same_cluster.tolist()</p>
+
+<p>return []</p>
+
+<p>def get_cluster_info(self, cluster_id: int) -&gt; Dict:
+ “"”Get information about a cluster.”””
+ if not hasattr(self.clusterer, ‘labels’):
+ return {}</p>
+
+<p>mask = self.clusterer.labels == cluster_id
+ cluster_points = self.X_train[mask]</p>
+
+<p>return {
+ “cluster_id”: cluster_id,
+ “size”: int(mask.sum()),
+ “centroid”: (
+ self.clusterer.centroids[cluster_id].tolist()
+ if hasattr(self.clusterer, ‘centroids’)
+ else None
+ ),
+ “mean”: cluster_points.mean(axis=0).tolist(),
+ “std”: cluster_points.std(axis=0).tolist(),
+ }</p>
+
+<p>def _cache_centroids(self):
+ “"”Cache cluster centroids in Redis.”””
+ centroids = self.clusterer.get_cluster_centers()</p>
+
+<p>for i, centroid in enumerate(centroids):
+ key = f”centroid:{i}”
+ self.cache.set(key, json.dumps(centroid.tolist()))</p>
+
+<p>def _try_cache(self, X: np.ndarray) -&gt; Optional[np.ndarray]:
+ “"”Try to get predictions from cache.”””
+ # Simple caching by rounding features
+ # In production: use better hashing
+ return None</p>
+
+<p>def _cache_predictions(self, X: np.ndarray, labels: np.ndarray):
+ “"”Cache predictions.”””
+ # Implement caching strategy
+ pass</p>
+
+<p>def get_metrics(self) -&gt; Dict:
+ “"”Get system metrics.”””
+ return {
+ “algorithm”: self.algorithm,
+ “n_clusters”: self.n_clusters,
+ “request_count”: self.request_count,
+ “cache_hit_rate”: (
+ self.cache_hits / self.request_count
+ if self.request_count &gt; 0 else 0.0
+ ),
+ “training_samples”: (
+ len(self.X_train) if self.X_train is not None else 0
+ ),
+ }</p>
+
+<h1 id="example-usage">Example usage</h1>
+<p>if <strong>name</strong> == “<strong>main</strong>”:
+ # Generate sample data
+ from sklearn.datasets import make_blobs</p>
+
+<p>X, y_true = make_blobs(
+ n_samples=10000,
+ n_features=10,
+ centers=5,
+ random_state=42
+ )</p>
+
+<p># Create clustering system
+ system = ProductionClusteringSystem(
+ algorithm=”kmeans”,
+ n_clusters=5
+ )</p>
+
+<p># Fit
+ system.fit(X[:8000]) # Train on 80%</p>
+
+<p># Predict
+ labels = system.predict(X[8000:]) # Test on 20%</p>
+
+<p>print(f”Predicted {len(labels)} samples”)
+ print(f”Metrics: {system.get_metrics()}”)</p>
+
+<p># Find similar points
+ query = X[8000]
+ similar = system.find_similar(query, k=5)
+ print(f”Similar points to query: {similar}”)</p>
+
+<p># Get cluster info
+ info = system.get_cluster_info(0)
+ print(f”Cluster 0 info: {info}”)
+``</p>
 
 <h2 id="real-world-case-study-spotifys-music-clustering">Real-World Case Study: Spotify’s Music Clustering</h2>
 
@@ -1512,27 +1569,27 @@
   <tbody>
     <tr>
       <td><strong>Training (daily)</strong></td>
-      <td>2 hours @ $2/hr</td>
-      <td>15 min @ $20/hr</td>
+      <td>2 hours @ <code class="language-plaintext highlighter-rouge">2/hr | 15 min @ </code>20/hr</td>
       <td>-$1/day</td>
+      <td> </td>
     </tr>
     <tr>
       <td><strong>Storage</strong></td>
-      <td>10GB @ $0.10/GB/month</td>
-      <td>10GB @ $0.10/GB/month</td>
+      <td>10GB @ <code class="language-plaintext highlighter-rouge">0.10/GB/month | 10GB @ </code>0.10/GB/month</td>
       <td>Same</td>
+      <td> </td>
     </tr>
     <tr>
       <td><strong>Queries (10K/sec)</strong></td>
-      <td>$500/day</td>
-      <td>$100/day</td>
+      <td><code class="language-plaintext highlighter-rouge">500/day | </code>100/day</td>
       <td>-$400/day</td>
+      <td> </td>
     </tr>
     <tr>
       <td><strong>Total</strong></td>
-      <td><strong>$502/day</strong></td>
-      <td><strong>$121/day</strong></td>
+      <td><strong><code class="language-plaintext highlighter-rouge">502/day** | **</code>121/day</strong></td>
       <td><strong>-76%</strong></td>
+      <td> </td>
     </tr>
   </tbody>
 </table>
@@ -1615,17 +1672,18 @@
 
 <h3 id="universal-pattern">Universal Pattern</h3>
 
-<p><strong>Hash-Based Grouping:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Generic pattern for all three
-</span><span class="k">def</span> <span class="nf">group_items</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">hash_function</span><span class="p">):</span>
-    <span class="n">groups</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="nf">hash_function</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>  <span class="c1"># Create hash key
-</span>        <span class="n">groups</span><span class="p">[</span><span class="n">key</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>    <span class="c1"># Group by key
-</span>    
-    <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="n">groups</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
-</code></pre></div></div>
+<p><strong>Hash-Based Grouping:</strong>
+``python</p>
+<h1 id="generic-pattern-for-all-three">Generic pattern for all three</h1>
+<p>def group_items(items, hash_function):
+ groups = defaultdict(list)</p>
+
+<p>for item in items:
+ key = hash_function(item) # Create hash key
+ groups[key].append(item) # Group by key</p>
+
+<p>return list(groups.values())
+``</p>
 
 <p><strong>Applications:</strong></p>
 <ul>
@@ -1639,51 +1697,36 @@
 <p>To bring this closer to a real system design interview and to push the word count into the desired range, here are some structured prompts you can work through:</p>
 
 <ul>
-  <li><strong>Multi-tenant clustering platform:</strong>
-    <ul>
-      <li>How would you design a clustering service that multiple teams can use?</li>
-      <li>Consider:
-        <ul>
-          <li>Per-tenant configs (algorithm, k, distance metric),</li>
-          <li>Fair resource sharing and quotas,</li>
-          <li>Isolation between tenants’ data and models.</li>
-        </ul>
-      </li>
-      <li>Sketch how you would expose this via an API and how you would store results.</li>
-    </ul>
+  <li><strong>Multi-tenant clustering platform:</strong></li>
+  <li>How would you design a clustering service that multiple teams can use?</li>
+  <li>Consider:</li>
+  <li>Per-tenant configs (algorithm, k, distance metric),</li>
+  <li>Fair resource sharing and quotas,</li>
+  <li>Isolation between tenants’ data and models.</li>
+  <li>
+    <p>Sketch how you would expose this via an API and how you would store results.</p>
   </li>
-  <li><strong>Online vs offline clustering:</strong>
-    <ul>
-      <li>Offline: run nightly jobs to cluster all data (e.g., user embeddings).</li>
-      <li>Online: cluster only a neighborhood around a user when needed (e.g., real-time personalization).</li>
-      <li>What are the pros/cons of each, and when would you choose one over the other?</li>
-    </ul>
+  <li><strong>Online vs offline clustering:</strong></li>
+  <li>Offline: run nightly jobs to cluster all data (e.g., user embeddings).</li>
+  <li>Online: cluster only a neighborhood around a user when needed (e.g., real-time personalization).</li>
+  <li>
+    <p>What are the pros/cons of each, and when would you choose one over the other?</p>
   </li>
-  <li><strong>Cluster lifecycle management:</strong>
-    <ul>
-      <li>Clusters evolve as new data arrives and old data becomes stale.</li>
-      <li>How would you:
-        <ul>
-          <li>Detect when clusters drift or become unbalanced?</li>
-          <li>Recluster incrementally vs full recompute?</li>
-          <li>Roll out updated clusters to downstream systems safely?</li>
-        </ul>
-      </li>
-    </ul>
+  <li><strong>Cluster lifecycle management:</strong></li>
+  <li>Clusters evolve as new data arrives and old data becomes stale.</li>
+  <li>How would you:</li>
+  <li>Detect when clusters drift or become unbalanced?</li>
+  <li>Recluster incrementally vs full recompute?</li>
+  <li>
+    <p>Roll out updated clusters to downstream systems safely?</p>
   </li>
-  <li><strong>Evaluation &amp; monitoring checklist:</strong>
-    <ul>
-      <li>For any production clustering system, you should monitor:
-        <ul>
-          <li>Cluster sizes (are some clusters dominating?),</li>
-          <li>Cluster purity/homogeneity (if you have labels),</li>
-          <li>Drift in feature distributions over time,</li>
-          <li>Impact on downstream metrics (CTR, conversion, engagement).</li>
-        </ul>
-      </li>
-      <li>Think about what dashboards and alerts you’d build, and who would own them.</li>
-    </ul>
-  </li>
+  <li><strong>Evaluation &amp; monitoring checklist:</strong></li>
+  <li>For any production clustering system, you should monitor:</li>
+  <li>Cluster sizes (are some clusters dominating?),</li>
+  <li>Cluster purity/homogeneity (if you have labels),</li>
+  <li>Drift in feature distributions over time,</li>
+  <li>Impact on downstream metrics (CTR, conversion, engagement).</li>
+  <li>Think about what dashboards and alerts you’d build, and who would own them.</li>
 </ul>
 
 <p>These questions are exactly the kind of follow-ups you’ll see at senior levels:

@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Model Ensembling">
     <meta itemprop="description" content="Build production ensemble systems that combine multiple models using backtracking strategies to explore optimal combinations.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -231,7 +231,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          25 minute read
+          24 minute read
         
       </span>
     
@@ -394,46 +394,47 @@
 
 <h2 id="high-level-architecture">High-Level Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────────┐
-│                      Ensemble System                             │
-└─────────────────────────────────────────────────────────────────┘
+<p>``
+┌─────────────────────────────────────────────────────────────────┐
+│ Ensemble System │
+└─────────────────────────────────────────────────────────────────┘</p>
 
-                            ┌──────────────┐
-                            │   Request    │
-                            │   (Features) │
-                            └──────┬───────┘
-                                   │
-                    ┌──────────────▼──────────────┐
-                    │   Ensemble Orchestrator     │
-                    │   - Route to models         │
-                    │   - Collect predictions     │
-                    │   - Apply combination       │
-                    └──────────────┬──────────────┘
-                                   │
-        ┌──────────────────────────┼──────────────────────────┐
-        │                          │                          │
-┌───────▼────────┐        ┌───────▼────────┐        ┌───────▼────────┐
-│   Model 1      │        │   Model 2      │        │   Model N      │
-│   (XGBoost)    │        │   (Neural Net) │        │   (Linear)     │
-│                │        │                │        │                │
-│  Pred: 0.85    │        │  Pred: 0.72    │        │  Pred: 0.79    │
-└────────┬───────┘        └────────┬───────┘        └────────┬───────┘
-         │                         │                         │
-         └─────────────────────────┼─────────────────────────┘
-                                   │
-                    ┌──────────────▼──────────────┐
-                    │   Combiner                  │
-                    │   - Voting / Averaging      │
-                    │   - Stacking                │
-                    │   - Weighted combination    │
-                    └──────────────┬──────────────┘
-                                   │
-                            ┌──────▼───────┐
-                            │  Final Pred  │
-                            │   0.80       │
-                            │  (conf 0.92) │
-                            └──────────────┘
-</code></pre></div></div>
+<p>┌──────────────┐
+ │ Request │
+ │ (Features) │
+ └──────┬───────┘
+ │
+ ┌──────────────▼──────────────┐
+ │ Ensemble Orchestrator │
+ │ - Route to models │
+ │ - Collect predictions │
+ │ - Apply combination │
+ └──────────────┬──────────────┘
+ │
+ ┌──────────────────────────┼──────────────────────────┐
+ │ │ │
+┌───────▼────────┐ ┌───────▼────────┐ ┌───────▼────────┐
+│ Model 1 │ │ Model 2 │ │ Model N │
+│ (XGBoost) │ │ (Neural Net) │ │ (Linear) │
+│ │ │ │ │ │
+│ Pred: 0.85 │ │ Pred: 0.72 │ │ Pred: 0.79 │
+└────────┬───────┘ └────────┬───────┘ └────────┬───────┘
+ │ │ │
+ └─────────────────────────┼─────────────────────────┘
+ │
+ ┌──────────────▼──────────────┐
+ │ Combiner │
+ │ - Voting / Averaging │
+ │ - Stacking │
+ │ - Weighted combination │
+ └──────────────┬──────────────┘
+ │
+ ┌──────▼───────┐
+ │ Final Pred │
+ │ 0.80 │
+ │ (conf 0.92) │
+ └──────────────┘
+``</p>
 
 <h3 id="key-components">Key Components</h3>
 
@@ -451,1055 +452,1098 @@
 
 <p>The orchestrator decides which models to query using backtracking:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span>
-<span class="kn">from</span> <span class="n">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">import</span> <span class="n">asyncio</span>
-<span class="kn">import</span> <span class="n">time</span>
+<p>``python
+from dataclasses import dataclass
+from typing import List, Dict, Optional, Callable
+from enum import Enum
+import asyncio
+import time</p>
 
-<span class="k">class</span> <span class="nc">ModelStatus</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Model health status.</span><span class="sh">"""</span>
-    <span class="n">HEALTHY</span> <span class="o">=</span> <span class="sh">"</span><span class="s">healthy</span><span class="sh">"</span>
-    <span class="n">DEGRADED</span> <span class="o">=</span> <span class="sh">"</span><span class="s">degraded</span><span class="sh">"</span>
-    <span class="n">FAILED</span> <span class="o">=</span> <span class="sh">"</span><span class="s">failed</span><span class="sh">"</span>
+<p>class ModelStatus(Enum):
+ “"”Model health status.”””
+ HEALTHY = “healthy”
+ DEGRADED = “degraded”
+ FAILED = “failed”</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">Model</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Represents a single model in the ensemble.</span><span class="sh">"""</span>
-    <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># "xgboost", "neural_net", "linear", etc.
-</span>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">avg_latency_ms</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">accuracy</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># On validation set
-</span>    <span class="n">status</span><span class="p">:</span> <span class="n">ModelStatus</span> <span class="o">=</span> <span class="n">ModelStatus</span><span class="p">.</span><span class="n">HEALTHY</span>
-    
-    <span class="c1"># For diversity
-</span>    <span class="n">architecture</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">""</span>
-    <span class="n">training_data</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">""</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Make prediction (async for parallel execution).</span><span class="sh">"""</span>
-        <span class="c1"># Simulate prediction
-</span>        <span class="k">await</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">sleep</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">avg_latency_ms</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">)</span>
-        
-        <span class="c1"># In production: call actual model
-</span>        <span class="c1"># return self.model.predict(features)
-</span>        
-        <span class="c1"># For demo: return dummy prediction
-</span>        <span class="k">return</span> <span class="mf">0.5</span> <span class="o">+</span> <span class="nf">hash</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">model_id</span><span class="p">)</span> <span class="o">%</span> <span class="mi">50</span> <span class="o">/</span> <span class="mf">100.0</span>
+<p>@dataclass
+class Model:
+ “"”Represents a single model in the ensemble.”””
+ model_id: str
+ model_type: str # “xgboost”, “neural_net”, “linear”, etc.
+ version: str
+ avg_latency_ms: float
+ accuracy: float # On validation set
+ status: ModelStatus = ModelStatus.HEALTHY</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">EnsembleConfig</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Configuration for ensemble.</span><span class="sh">"""</span>
-    <span class="n">max_models</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
-    <span class="n">max_latency_ms</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.0</span>
-    <span class="n">min_diversity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span>  <span class="c1"># Min difference in architecture
-</span>    <span class="n">combination_strategy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">voting</span><span class="sh">"</span>  <span class="c1"># "voting", "averaging", "stacking"
-</span>    
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">EnsembleResult</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Result from ensemble prediction.</span><span class="sh">"""</span>
-    <span class="n">prediction</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">models_used</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">latency_ms</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">individual_predictions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+<p># For diversity
+ architecture: str = “”
+ training_data: str = “”</p>
 
+<p>async def predict(self, features: Dict) -&gt; float:
+ “"”Make prediction (async for parallel execution).”””
+ # Simulate prediction
+ await asyncio.sleep(self.avg_latency_ms / 1000.0)</p>
 
-<span class="k">class</span> <span class="nc">EnsembleOrchestrator</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Orchestrates ensemble prediction using backtracking for model selection.
-    
-    Similar to Generate Parentheses:
-    - Explore combinations of models
-    - Prune combinations that violate constraints
-    - Select optimal subset
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">EnsembleConfig</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Model</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        
-    <span class="k">def</span> <span class="nf">add_model</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Add a model to the ensemble.</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">select_models_backtracking</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">features</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
-        <span class="n">max_latency</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Model</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Select best subset of models using backtracking.
-        
-        Similar to Generate Parentheses backtracking:
-        1. Start with empty selection
-        2. Try adding each model
-        3. Check constraints (latency, diversity)
-        4. Recurse to try more models
-        5. Backtrack if constraints violated
-        
-        Constraints:
-        - Total latency &lt;= max_latency
-        - Model diversity &gt;= min_diversity
-        - Number of models &lt;= max_models
-        
-        Returns:
-            List of selected models
-        </span><span class="sh">"""</span>
-        <span class="n">best_selection</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">best_score</span> <span class="o">=</span> <span class="o">-</span><span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">inf</span><span class="sh">'</span><span class="p">)</span>
-        
-        <span class="k">def</span> <span class="nf">calculate_diversity</span><span class="p">(</span><span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Model</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-            <span class="sh">"""</span><span class="s">Calculate diversity score for model set.</span><span class="sh">"""</span>
-            <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">models</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">return</span> <span class="mf">1.0</span>
-            
-            <span class="c1"># Diversity = fraction of unique architectures
-</span>            <span class="n">unique_archs</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="nf">set</span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">architecture</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">))</span>
-            <span class="k">return</span> <span class="n">unique_archs</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
-        
-        <span class="k">def</span> <span class="nf">estimate_accuracy</span><span class="p">(</span><span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Model</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-            <span class="sh">"""</span><span class="s">Estimate ensemble accuracy from individual models.</span><span class="sh">"""</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">models</span><span class="p">:</span>
-                <span class="k">return</span> <span class="mf">0.0</span>
-            
-            <span class="c1"># Simple heuristic: weighted average with diversity bonus
-</span>            <span class="n">avg_acc</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">accuracy</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
-            <span class="n">diversity_bonus</span> <span class="o">=</span> <span class="nf">calculate_diversity</span><span class="p">(</span><span class="n">models</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>
-            <span class="k">return</span> <span class="n">avg_acc</span> <span class="o">+</span> <span class="n">diversity_bonus</span>
-        
-        <span class="k">def</span> <span class="nf">backtrack</span><span class="p">(</span>
-            <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-            <span class="n">current_selection</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Model</span><span class="p">],</span>
-            <span class="n">current_latency</span><span class="p">:</span> <span class="nb">float</span>
-        <span class="p">):</span>
-            <span class="sh">"""</span><span class="s">
-            Backtracking function to explore model combinations.
-            
-            Args:
-                index: Current model index to consider
-                current_selection: Models selected so far
-                current_latency: Cumulative latency
-            </span><span class="sh">"""</span>
-            <span class="k">nonlocal</span> <span class="n">best_selection</span><span class="p">,</span> <span class="n">best_score</span>
-            
-            <span class="c1"># Base case: evaluated all models
-</span>            <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">current_selection</span><span class="p">:</span>
-                    <span class="n">score</span> <span class="o">=</span> <span class="nf">estimate_accuracy</span><span class="p">(</span><span class="n">current_selection</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">score</span> <span class="o">&gt;</span> <span class="n">best_score</span><span class="p">:</span>
-                        <span class="n">best_score</span> <span class="o">=</span> <span class="n">score</span>
-                        <span class="n">best_selection</span> <span class="o">=</span> <span class="n">current_selection</span><span class="p">[:]</span>
-                <span class="k">return</span>
-            
-            <span class="n">model</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
-            
-            <span class="c1"># Skip unhealthy models
-</span>            <span class="k">if</span> <span class="n">model</span><span class="p">.</span><span class="n">status</span> <span class="o">!=</span> <span class="n">ModelStatus</span><span class="p">.</span><span class="n">HEALTHY</span><span class="p">:</span>
-                <span class="nf">backtrack</span><span class="p">(</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">current_selection</span><span class="p">,</span> <span class="n">current_latency</span><span class="p">)</span>
-                <span class="k">return</span>
-            
-            <span class="c1"># Choice 1: Include current model (if constraints satisfied)
-</span>            <span class="n">new_latency</span> <span class="o">=</span> <span class="n">current_latency</span> <span class="o">+</span> <span class="n">model</span><span class="p">.</span><span class="n">avg_latency_ms</span>
-            
-            <span class="n">can_add</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="nf">len</span><span class="p">(</span><span class="n">current_selection</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">max_models</span> <span class="ow">and</span>
-                <span class="n">new_latency</span> <span class="o">&lt;=</span> <span class="n">max_latency</span> <span class="ow">and</span>
-                <span class="nf">calculate_diversity</span><span class="p">(</span><span class="n">current_selection</span> <span class="o">+</span> <span class="p">[</span><span class="n">model</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">min_diversity</span>
-            <span class="p">)</span>
-            
-            <span class="k">if</span> <span class="n">can_add</span><span class="p">:</span>
-                <span class="n">current_selection</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-                <span class="nf">backtrack</span><span class="p">(</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">current_selection</span><span class="p">,</span> <span class="n">new_latency</span><span class="p">)</span>
-                <span class="n">current_selection</span><span class="p">.</span><span class="nf">pop</span><span class="p">()</span>  <span class="c1"># Backtrack
-</span>            
-            <span class="c1"># Choice 2: Skip current model
-</span>            <span class="nf">backtrack</span><span class="p">(</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">current_selection</span><span class="p">,</span> <span class="n">current_latency</span><span class="p">)</span>
-        
-        <span class="c1"># Start backtracking
-</span>        <span class="nf">backtrack</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[],</span> <span class="mf">0.0</span><span class="p">)</span>
-        
-        <span class="c1"># Ensure at least one model
-</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">best_selection</span> <span class="ow">and</span> <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">:</span>
-            <span class="c1"># Fallback: use single best model
-</span>            <span class="n">best_selection</span> <span class="o">=</span> <span class="p">[</span><span class="nf">max</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="p">.</span><span class="n">accuracy</span><span class="p">)]</span>
-        
-        <span class="k">return</span> <span class="n">best_selection</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnsembleResult</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Make ensemble prediction.
-        
-        Steps:
-        1. Select models using backtracking
-        2. Query selected models in parallel
-        3. Combine predictions
-        4. Return result with metadata
-        </span><span class="sh">"""</span>
-        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">perf_counter</span><span class="p">()</span>
-        
-        <span class="c1"># Select models
-</span>        <span class="n">selected_models</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">select_models_backtracking</span><span class="p">(</span>
-            <span class="n">features</span><span class="p">,</span>
-            <span class="n">max_latency</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">max_latency_ms</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Query models in parallel (async)
-</span>        <span class="n">prediction_tasks</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">selected_models</span>
-        <span class="p">]</span>
-        
-        <span class="n">predictions</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">gather</span><span class="p">(</span><span class="o">*</span><span class="n">prediction_tasks</span><span class="p">)</span>
-        
-        <span class="c1"># Build predictions map
-</span>        <span class="n">pred_map</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">model</span><span class="p">.</span><span class="n">model_id</span><span class="p">:</span> <span class="n">pred</span>
-            <span class="k">for</span> <span class="n">model</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">selected_models</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span>
-        <span class="p">}</span>
-        
-        <span class="c1"># Combine predictions
-</span>        <span class="n">final_pred</span><span class="p">,</span> <span class="n">confidence</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_combine_predictions</span><span class="p">(</span>
-            <span class="n">selected_models</span><span class="p">,</span>
-            <span class="n">predictions</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Calculate latency
-</span>        <span class="n">latency_ms</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="p">.</span><span class="nf">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
-        
-        <span class="k">return</span> <span class="nc">EnsembleResult</span><span class="p">(</span>
-            <span class="n">prediction</span><span class="o">=</span><span class="n">final_pred</span><span class="p">,</span>
-            <span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span>
-            <span class="n">models_used</span><span class="o">=</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">model_id</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">selected_models</span><span class="p">],</span>
-            <span class="n">latency_ms</span><span class="o">=</span><span class="n">latency_ms</span><span class="p">,</span>
-            <span class="n">individual_predictions</span><span class="o">=</span><span class="n">pred_map</span>
-        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_combine_predictions</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Model</span><span class="p">],</span>
-        <span class="n">predictions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Combine predictions using configured strategy.
-        
-        Returns:
-            (final_prediction, confidence)
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">combination_strategy</span> <span class="o">==</span> <span class="sh">"</span><span class="s">voting</span><span class="sh">"</span><span class="p">:</span>
-            <span class="c1"># For binary classification: majority vote
-</span>            <span class="n">votes</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="k">if</span> <span class="n">p</span> <span class="o">&gt;</span> <span class="mf">0.5</span> <span class="k">else</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">predictions</span><span class="p">]</span>
-            <span class="n">final</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">votes</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">votes</span><span class="p">)</span>
-            <span class="n">confidence</span> <span class="o">=</span> <span class="nf">abs</span><span class="p">(</span><span class="n">final</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span>  <span class="c1"># How confident is majority
-</span>            
-        <span class="k">elif</span> <span class="n">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">combination_strategy</span> <span class="o">==</span> <span class="sh">"</span><span class="s">averaging</span><span class="sh">"</span><span class="p">:</span>
-            <span class="c1"># Simple average
-</span>            <span class="n">final</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
-            
-            <span class="c1"># Confidence based on agreement
-</span>            <span class="n">variance</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">((</span><span class="n">p</span> <span class="o">-</span> <span class="n">final</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">predictions</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
-            <span class="n">confidence</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">variance</span><span class="p">)</span>  <span class="c1"># High agreement = high confidence
-</span>            
-        <span class="k">elif</span> <span class="n">self</span><span class="p">.</span><span class="n">config</span><span class="p">.</span><span class="n">combination_strategy</span> <span class="o">==</span> <span class="sh">"</span><span class="s">weighted_averaging</span><span class="sh">"</span><span class="p">:</span>
-            <span class="c1"># Weight by model accuracy
-</span>            <span class="n">total_weight</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">accuracy</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">)</span>
-            <span class="n">final</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span>
-                <span class="n">m</span><span class="p">.</span><span class="n">accuracy</span> <span class="o">*</span> <span class="n">p</span>
-                <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">models</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span>
-            <span class="p">)</span> <span class="o">/</span> <span class="n">total_weight</span>
-            
-            <span class="c1"># Weighted variance for confidence
-</span>            <span class="n">variance</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span>
-                <span class="n">m</span><span class="p">.</span><span class="n">accuracy</span> <span class="o">*</span> <span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="n">final</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
-                <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">models</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span>
-            <span class="p">)</span> <span class="o">/</span> <span class="n">total_weight</span>
-            <span class="n">confidence</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">variance</span><span class="p">)</span>
-            
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Default: simple average
-</span>            <span class="n">final</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
-            <span class="n">confidence</span> <span class="o">=</span> <span class="mf">0.5</span>
-        
-        <span class="k">return</span> <span class="n">final</span><span class="p">,</span> <span class="n">confidence</span>
-</code></pre></div></div>
+<p># In production: call actual model
+ # return self.model.predict(features)</p>
+
+<p># For demo: return dummy prediction
+ return 0.5 + hash(self.model_id) % 50 / 100.0</p>
+
+<p>@dataclass
+class EnsembleConfig:
+ “"”Configuration for ensemble.”””
+ max_models: int = 10
+ max_latency_ms: float = 100.0
+ min_diversity: float = 0.3 # Min difference in architecture
+ combination_strategy: str = “voting” # “voting”, “averaging”, “stacking”</p>
+
+<p>@dataclass
+class EnsembleResult:
+ “"”Result from ensemble prediction.”””
+ prediction: float
+ confidence: float
+ models_used: List[str]
+ latency_ms: float
+ individual_predictions: Dict[str, float]</p>
+
+<p>class EnsembleOrchestrator:
+ “””
+ Orchestrates ensemble prediction using backtracking for model selection.</p>
+
+<p>Similar to Generate Parentheses:</p>
+<ul>
+  <li>Explore combinations of models</li>
+  <li>Prune combinations that violate constraints</li>
+  <li>Select optimal subset
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self, config: EnsembleConfig):
+ self.config = config
+ self.models: List[Model] = []</p>
+
+<p>def add_model(self, model: Model):
+ “"”Add a model to the ensemble.”””
+ self.models.append(model)</p>
+
+<p>def select_models_backtracking(
+ self,
+ features: Dict,
+ max_latency: float
+ ) -&gt; List[Model]:
+ “””
+ Select best subset of models using backtracking.</p>
+
+<p>Similar to Generate Parentheses backtracking:</p>
+<ol>
+  <li>Start with empty selection</li>
+  <li>Try adding each model</li>
+  <li>Check constraints (latency, diversity)</li>
+  <li>Recurse to try more models</li>
+  <li>Backtrack if constraints violated</li>
+</ol>
+
+<p>Constraints:</p>
+<ul>
+  <li>Total latency &lt;= max_latency</li>
+  <li>Model diversity &gt;= min_diversity</li>
+  <li>Number of models &lt;= max_models</li>
+</ul>
+
+<p>Returns:
+ List of selected models
+ “””
+ best_selection = []
+ best_score = -float(‘inf’)</p>
+
+<p>def calculate_diversity(models: List[Model]) -&gt; float:
+ “"”Calculate diversity score for model set.”””
+ if len(models) &lt;= 1:
+ return 1.0</p>
+
+<p># Diversity = fraction of unique architectures
+ unique_archs = len(set(m.architecture for m in models))
+ return unique_archs / len(models)</p>
+
+<p>def estimate_accuracy(models: List[Model]) -&gt; float:
+ “"”Estimate ensemble accuracy from individual models.”””
+ if not models:
+ return 0.0</p>
+
+<p># Simple heuristic: weighted average with diversity bonus
+ avg_acc = sum(m.accuracy for m in models) / len(models)
+ diversity_bonus = calculate_diversity(models) * 0.1
+ return avg_acc + diversity_bonus</p>
+
+<p>def backtrack(
+ index: int,
+ current_selection: List[Model],
+ current_latency: float
+ ):
+ “””
+ Backtracking function to explore model combinations.</p>
+
+<p>Args:
+ index: Current model index to consider
+ current_selection: Models selected so far
+ current_latency: Cumulative latency
+ “””
+ nonlocal best_selection, best_score</p>
+
+<p># Base case: evaluated all models
+ if index == len(self.models):
+ if current_selection:
+ score = estimate_accuracy(current_selection)
+ if score &gt; best_score:
+ best_score = score
+ best_selection = current_selection[:]
+ return</p>
+
+<p>model = self.models[index]</p>
+
+<p># Skip unhealthy models
+ if model.status != ModelStatus.HEALTHY:
+ backtrack(index + 1, current_selection, current_latency)
+ return</p>
+
+<p># Choice 1: Include current model (if constraints satisfied)
+ new_latency = current_latency + model.avg_latency_ms</p>
+
+<p>can_add = (
+ len(current_selection) &lt; self.config.max_models and
+ new_latency &lt;= max_latency and
+ calculate_diversity(current_selection + [model]) &gt;= self.config.min_diversity
+ )</p>
+
+<p>if can_add:
+ current_selection.append(model)
+ backtrack(index + 1, current_selection, new_latency)
+ current_selection.pop() # Backtrack</p>
+
+<p># Choice 2: Skip current model
+ backtrack(index + 1, current_selection, current_latency)</p>
+
+<p># Start backtracking
+ backtrack(0, [], 0.0)</p>
+
+<p># Ensure at least one model
+ if not best_selection and self.models:
+ # Fallback: use single best model
+ best_selection = [max(self.models, key=lambda m: m.accuracy)]</p>
+
+<p>return best_selection</p>
+
+<p>async def predict(self, features: Dict) -&gt; EnsembleResult:
+ “””
+ Make ensemble prediction.</p>
+
+<p>Steps:</p>
+<ol>
+  <li>Select models using backtracking</li>
+  <li>Query selected models in parallel</li>
+  <li>Combine predictions</li>
+  <li>Return result with metadata
+ “””
+ start_time = time.perf_counter()</li>
+</ol>
+
+<p># Select models
+ selected_models = self.select_models_backtracking(
+ features,
+ max_latency=self.config.max_latency_ms
+ )</p>
+
+<p># Query models in parallel (async)
+ prediction_tasks = [
+ model.predict(features)
+ for model in selected_models
+ ]</p>
+
+<p>predictions = await asyncio.gather(*prediction_tasks)</p>
+
+<p># Build predictions map
+ pred_map = {
+ model.model_id: pred
+ for model, pred in zip(selected_models, predictions)
+ }</p>
+
+<p># Combine predictions
+ final_pred, confidence = self._combine_predictions(
+ selected_models,
+ predictions
+ )</p>
+
+<p># Calculate latency
+ latency_ms = (time.perf_counter() - start_time) * 1000</p>
+
+<p>return EnsembleResult(
+ prediction=final_pred,
+ confidence=confidence,
+ models_used=[m.model_id for m in selected_models],
+ latency_ms=latency_ms,
+ individual_predictions=pred_map
+ )</p>
+
+<p>def _combine_predictions(
+ self,
+ models: List[Model],
+ predictions: List[float]
+ ) -&gt; tuple[float, float]:
+ “””
+ Combine predictions using configured strategy.</p>
+
+<p>Returns:
+ (final_prediction, confidence)
+ “””
+ if self.config.combination_strategy == “voting”:
+ # For binary classification: majority vote
+ votes = [1 if p &gt; 0.5 else 0 for p in predictions]
+ final = sum(votes) / len(votes)
+ confidence = abs(final - 0.5) * 2 # How confident is majority</p>
+
+<p>elif self.config.combination_strategy == “averaging”:
+ # Simple average
+ final = sum(predictions) / len(predictions)</p>
+
+<p># Confidence based on agreement
+ variance = sum((p - final) ** 2 for p in predictions) / len(predictions)
+ confidence = 1.0 / (1.0 + variance) # High agreement = high confidence</p>
+
+<p>elif self.config.combination_strategy == “weighted_averaging”:
+ # Weight by model accuracy
+ total_weight = sum(m.accuracy for m in models)
+ final = sum(
+ m.accuracy * p
+ for m, p in zip(models, predictions)
+ ) / total_weight</p>
+
+<p># Weighted variance for confidence
+ variance = sum(
+ m.accuracy * (p - final) ** 2
+ for m, p in zip(models, predictions)
+ ) / total_weight
+ confidence = 1.0 / (1.0 + variance)</p>
+
+<p>else:
+ # Default: simple average
+ final = sum(predictions) / len(predictions)
+ confidence = 0.5</p>
+
+<p>return final, confidence
+``</p>
 
 <h3 id="2-combination-strategies">2. Combination Strategies</h3>
 
 <p>Different strategies for combining model predictions:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LogisticRegression</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+from sklearn.linear_model import LogisticRegression
+import numpy as np</p>
 
-<span class="k">class</span> <span class="nc">EnsembleCombiner</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Different strategies for combining model predictions.</span><span class="sh">"""</span>
-    
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">simple_voting</span><span class="p">(</span><span class="n">predictions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Majority voting for binary classification.
-        
-        Each model votes 0 or 1, return majority.
-        </span><span class="sh">"""</span>
-        <span class="n">votes</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="k">if</span> <span class="n">p</span> <span class="o">&gt;</span> <span class="n">threshold</span> <span class="k">else</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">predictions</span><span class="p">]</span>
-        <span class="k">return</span> <span class="nf">sum</span><span class="p">(</span><span class="n">votes</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">votes</span><span class="p">)</span>
-    
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">weighted_voting</span><span class="p">(</span>
-        <span class="n">predictions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
-        <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Weighted voting.
-        
-        Models with higher accuracy get more weight.
-        </span><span class="sh">"""</span>
-        <span class="n">total_weight</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nf">sum</span><span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">p</span> <span class="k">for</span> <span class="n">w</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">predictions</span><span class="p">))</span> <span class="o">/</span> <span class="n">total_weight</span>
-    
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">simple_averaging</span><span class="p">(</span><span class="n">predictions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Simple arithmetic mean.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="nf">sum</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
-    
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">geometric_mean</span><span class="p">(</span><span class="n">predictions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Geometric mean - useful when models have different scales.
-        
-        Formula: (p1 * p2 * ... * pn)^(1/n)
-        </span><span class="sh">"""</span>
-        <span class="n">product</span> <span class="o">=</span> <span class="mf">1.0</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">predictions</span><span class="p">:</span>
-            <span class="n">product</span> <span class="o">*=</span> <span class="nf">max</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mf">1e-10</span><span class="p">)</span>  <span class="c1"># Avoid zero
-</span>        <span class="k">return</span> <span class="n">product</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">predictions</span><span class="p">))</span>
-    
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">rank_averaging</span><span class="p">(</span><span class="n">predictions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Average of ranks instead of raw predictions.
-        
-        Useful when models have different scales/calibrations.
-        </span><span class="sh">"""</span>
-        <span class="c1"># Sort predictions and assign ranks
-</span>        <span class="n">sorted_preds</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="nf">enumerate</span><span class="p">(</span><span class="n">predictions</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-        <span class="n">ranks</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nf">len</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">rank</span><span class="p">,</span> <span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">sorted_preds</span><span class="p">):</span>
-            <span class="n">ranks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">rank</span>
-        
-        <span class="c1"># Normalize ranks to [0, 1]
-</span>        <span class="n">avg_rank</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">ranks</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">ranks</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">avg_rank</span> <span class="o">/</span> <span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">ranks</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">ranks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mf">0.5</span>
+<p>class EnsembleCombiner:
+ “"”Different strategies for combining model predictions.”””</p>
 
+<p>@staticmethod
+ def simple_voting(predictions: List[float], threshold: float = 0.5) -&gt; float:
+ “””
+ Majority voting for binary classification.</p>
 
-<span class="k">class</span> <span class="nc">StackingCombiner</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Stacking: Train a meta-model to combine base model predictions.
-    
-    This is the most powerful but also most complex approach.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">meta_model</span> <span class="o">=</span> <span class="nc">LogisticRegression</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">is_trained</span> <span class="o">=</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">base_predictions</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>  <span class="c1"># Shape: (n_samples, n_models)
-</span>        <span class="n">true_labels</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span>
-    <span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Train meta-model on base model predictions.
-        
-        Args:
-            base_predictions: Predictions from base models (holdout set)
-            true_labels: True labels
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">meta_model</span><span class="p">.</span><span class="nf">fit</span><span class="p">(</span><span class="n">base_predictions</span><span class="p">,</span> <span class="n">true_labels</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">is_trained</span> <span class="o">=</span> <span class="bp">True</span>
-    
-    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">base_predictions</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Predict using meta-model.
-        
-        Args:
-            base_predictions: Predictions from base models
-            
-        Returns:
-            Final ensemble predictions
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">is_trained</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sh">"</span><span class="s">Meta-model not trained. Call train() first.</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">meta_model</span><span class="p">.</span><span class="nf">predict_proba</span><span class="p">(</span><span class="n">base_predictions</span><span class="p">)[:,</span> <span class="mi">1</span><span class="p">]</span>
-    
-    <span class="k">def</span> <span class="nf">get_model_importances</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Get feature importances (which base models are most important).
-        
-        Returns:
-            Dictionary mapping model index to importance
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">is_trained</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">{}</span>
-        
-        <span class="c1"># For logistic regression, coefficients indicate importance
-</span>        <span class="n">coeffs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">abs</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">meta_model</span><span class="p">.</span><span class="n">coef_</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">normalized</span> <span class="o">=</span> <span class="n">coeffs</span> <span class="o">/</span> <span class="n">coeffs</span><span class="p">.</span><span class="nf">sum</span><span class="p">()</span>
-        
-        <span class="k">return</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="nf">float</span><span class="p">(</span><span class="n">imp</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">imp</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">normalized</span><span class="p">)}</span>
-</code></pre></div></div>
+<p>Each model votes 0 or 1, return majority.
+ “””
+ votes = [1 if p &gt; threshold else 0 for p in predictions]
+ return sum(votes) / len(votes)</p>
+
+<p>@staticmethod
+ def weighted_voting(
+ predictions: List[float],
+ weights: List[float]
+ ) -&gt; float:
+ “””
+ Weighted voting.</p>
+
+<p>Models with higher accuracy get more weight.
+ “””
+ total_weight = sum(weights)
+ return sum(w * p for w, p in zip(weights, predictions)) / total_weight</p>
+
+<p>@staticmethod
+ def simple_averaging(predictions: List[float]) -&gt; float:
+ “"”Simple arithmetic mean.”””
+ return sum(predictions) / len(predictions)</p>
+
+<p>@staticmethod
+ def geometric_mean(predictions: List[float]) -&gt; float:
+ “””
+ Geometric mean - useful when models have different scales.</p>
+
+<p>Formula: (p1 * p2 * … * pn)^(1/n)
+ “””
+ product = 1.0
+ for p in predictions:
+ product *= max(p, 1e-10) # Avoid zero
+ return product ** (1.0 / len(predictions))</p>
+
+<p>@staticmethod
+ def rank_averaging(predictions: List[float]) -&gt; float:
+ “””
+ Average of ranks instead of raw predictions.</p>
+
+<p>Useful when models have different scales/calibrations.
+ “””
+ # Sort predictions and assign ranks
+ sorted_preds = sorted(enumerate(predictions), key=lambda x: x[1])
+ ranks = [0] * len(predictions)</p>
+
+<p>for rank, (idx, _) in enumerate(sorted_preds):
+ ranks[idx] = rank</p>
+
+<p># Normalize ranks to [0, 1]
+ avg_rank = sum(ranks) / len(ranks)
+ return avg_rank / (len(ranks) - 1) if len(ranks) &gt; 1 else 0.5</p>
+
+<p>class StackingCombiner:
+ “””
+ Stacking: Train a meta-model to combine base model predictions.</p>
+
+<p>This is the most powerful but also most complex approach.
+ “””</p>
+
+<p>def <strong>init</strong>(self):
+ self.meta_model = LogisticRegression()
+ self.is_trained = False</p>
+
+<p>def train(
+ self,
+ base_predictions: np.ndarray, # Shape: (n_samples, n_models)
+ true_labels: np.ndarray
+ ):
+ “””
+ Train meta-model on base model predictions.</p>
+
+<p>Args:
+ base_predictions: Predictions from base models (holdout set)
+ true_labels: True labels
+ “””
+ self.meta_model.fit(base_predictions, true_labels)
+ self.is_trained = True</p>
+
+<p>def predict(self, base_predictions: np.ndarray) -&gt; np.ndarray:
+ “””
+ Predict using meta-model.</p>
+
+<p>Args:
+ base_predictions: Predictions from base models</p>
+
+<p>Returns:
+ Final ensemble predictions
+ “””
+ if not self.is_trained:
+ raise ValueError(“Meta-model not trained. Call train() first.”)</p>
+
+<p>return self.meta_model.predict_proba(base_predictions)[:, 1]</p>
+
+<p>def get_model_importances(self) -&gt; Dict[int, float]:
+ “””
+ Get feature importances (which base models are most important).</p>
+
+<p>Returns:
+ Dictionary mapping model index to importance
+ “””
+ if not self.is_trained:
+ return {}</p>
+
+<p># For logistic regression, coefficients indicate importance
+ coeffs = np.abs(self.meta_model.coef_[0])
+ normalized = coeffs / coeffs.sum()</p>
+
+<p>return {i: float(imp) for i, imp in enumerate(normalized)}
+``</p>
 
 <h3 id="3-diversity-optimization">3. Diversity Optimization</h3>
 
 <p>Diverse models make better ensembles. Here’s how to measure and ensure diversity:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">scipy.spatial.distance</span> <span class="kn">import</span> <span class="n">pdist</span><span class="p">,</span> <span class="n">squareform</span>
-<span class="kn">from</span> <span class="n">scipy.stats</span> <span class="kn">import</span> <span class="n">spearmanr</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+from scipy.spatial.distance import pdist, squareform
+from scipy.stats import spearmanr
+import numpy as np</p>
 
-<span class="k">class</span> <span class="nc">DiversityAnalyzer</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Analyze and optimize model diversity in ensemble.</span><span class="sh">"""</span>
-    
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">prediction_diversity</span><span class="p">(</span>
-        <span class="n">predictions</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span>  <span class="c1"># Shape: (n_samples, n_models)
-</span>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Calculate diversity based on prediction disagreement.
-        
-        High diversity = models make different predictions.
-        
-        Returns:
-            Diversity score in [0, 1]
-        </span><span class="sh">"""</span>
-        <span class="n">n_models</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        
-        <span class="k">if</span> <span class="n">n_models</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="mf">0.0</span>
-        
-        <span class="c1"># Calculate pairwise correlation between model predictions
-</span>        <span class="n">correlations</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">n_models</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_models</span><span class="p">):</span>
-                <span class="n">corr</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="nf">spearmanr</span><span class="p">(</span><span class="n">predictions</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="n">j</span><span class="p">])</span>
-                <span class="n">correlations</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">corr</span><span class="p">)</span>
-        
-        <span class="c1"># Diversity = 1 - average correlation
-</span>        <span class="n">avg_correlation</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">correlations</span><span class="p">)</span>
-        <span class="n">diversity</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">avg_correlation</span>
-        
-        <span class="k">return</span> <span class="nf">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">diversity</span><span class="p">)</span>
-    
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">architectural_diversity</span><span class="p">(</span><span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Model</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Calculate diversity based on model architectures.
-        
-        Different architectures (XGBoost, NN, Linear) = high diversity.
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">models</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="mf">0.0</span>
-        
-        <span class="c1"># Count unique architectures
-</span>        <span class="n">unique_archs</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="nf">set</span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">architecture</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">))</span>
-        
-        <span class="c1"># Diversity = ratio of unique to total
-</span>        <span class="k">return</span> <span class="n">unique_archs</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
-    
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">error_diversity</span><span class="p">(</span>
-        <span class="n">predictions</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>  <span class="c1"># Shape: (n_samples, n_models)
-</span>        <span class="n">true_labels</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Calculate diversity based on error patterns.
-        
-        Good diversity = models make errors on different samples.
-        
-        Returns:
-            Error diversity score
-        </span><span class="sh">"""</span>
-        <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_models</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">.</span><span class="n">shape</span>
-        
-        <span class="c1"># Determine which samples each model gets wrong
-</span>        <span class="n">errors</span> <span class="o">=</span> <span class="p">(</span><span class="n">predictions</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">!=</span> <span class="n">true_labels</span><span class="p">.</span><span class="nf">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        
-        <span class="c1"># Calculate pairwise error overlap
-</span>        <span class="n">overlaps</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">n_models</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_models</span><span class="p">):</span>
-                <span class="c1"># What fraction of errors are shared?
-</span>                <span class="n">shared_errors</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">errors</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">errors</span><span class="p">[:,</span> <span class="n">j</span><span class="p">])</span>
-                <span class="n">total_errors</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">errors</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">|</span> <span class="n">errors</span><span class="p">[:,</span> <span class="n">j</span><span class="p">])</span>
-                
-                <span class="k">if</span> <span class="n">total_errors</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">overlap</span> <span class="o">=</span> <span class="n">shared_errors</span> <span class="o">/</span> <span class="n">total_errors</span>
-                    <span class="n">overlaps</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">overlap</span><span class="p">)</span>
-        
-        <span class="c1"># Diversity = 1 - average overlap
-</span>        <span class="n">avg_overlap</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">overlaps</span><span class="p">)</span> <span class="k">if</span> <span class="n">overlaps</span> <span class="k">else</span> <span class="mf">0.5</span>
-        <span class="k">return</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">avg_overlap</span>
-    
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">select_diverse_subset</span><span class="p">(</span>
-        <span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Model</span><span class="p">],</span>
-        <span class="n">predictions</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>  <span class="c1"># Shape: (n_samples, n_models)
-</span>        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># Number of models to select
-</span>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Select k most diverse models using greedy algorithm.
-        
-        Similar to backtracking but greedy instead of exhaustive.
-        
-        Algorithm:
-        1. Start with best individual model
-        2. Iteratively add model that maximizes diversity
-        3. Stop when k models selected
-        
-        Returns:
-            Indices of selected models
-        </span><span class="sh">"""</span>
-        <span class="n">n_models</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">k</span> <span class="o">&gt;=</span> <span class="n">n_models</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="nf">range</span><span class="p">(</span><span class="n">n_models</span><span class="p">))</span>
-        
-        <span class="c1"># Start with best model
-</span>        <span class="n">accuracies</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">accuracy</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">]</span>
-        <span class="n">selected</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">accuracies</span><span class="p">)]</span>
-        
-        <span class="c1"># Greedily add most diverse models
-</span>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="n">max_diversity</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-            <span class="n">best_candidate</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-            
-            <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">n_models</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">:</span>
-                    <span class="k">continue</span>
-                
-                <span class="c1"># Calculate diversity if we add this candidate
-</span>                <span class="n">test_selection</span> <span class="o">=</span> <span class="n">selected</span> <span class="o">+</span> <span class="p">[</span><span class="n">candidate</span><span class="p">]</span>
-                <span class="n">test_predictions</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="n">test_selection</span><span class="p">]</span>
-                
-                <span class="n">diversity</span> <span class="o">=</span> <span class="n">DiversityAnalyzer</span><span class="p">.</span><span class="nf">prediction_diversity</span><span class="p">(</span><span class="n">test_predictions</span><span class="p">)</span>
-                
-                <span class="k">if</span> <span class="n">diversity</span> <span class="o">&gt;</span> <span class="n">max_diversity</span><span class="p">:</span>
-                    <span class="n">max_diversity</span> <span class="o">=</span> <span class="n">diversity</span>
-                    <span class="n">best_candidate</span> <span class="o">=</span> <span class="n">candidate</span>
-            
-            <span class="k">if</span> <span class="n">best_candidate</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">selected</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">best_candidate</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">selected</span>
-</code></pre></div></div>
+<p>class DiversityAnalyzer:
+ “"”Analyze and optimize model diversity in ensemble.”””</p>
+
+<p>@staticmethod
+ def prediction_diversity(
+ predictions: np.ndarray # Shape: (n_samples, n_models)
+ ) -&gt; float:
+ “””
+ Calculate diversity based on prediction disagreement.</p>
+
+<p>High diversity = models make different predictions.</p>
+
+<p>Returns:
+ Diversity score in [0, 1]
+ “””
+ n_models = predictions.shape[1]</p>
+
+<p>if n_models &lt;= 1:
+ return 0.0</p>
+
+<p># Calculate pairwise correlation between model predictions
+ correlations = []</p>
+
+<p>for i in range(n_models):
+ for j in range(i + 1, n_models):
+ corr, _ = spearmanr(predictions[:, i], predictions[:, j])
+ correlations.append(corr)</p>
+
+<p># Diversity = 1 - average correlation
+ avg_correlation = np.mean(correlations)
+ diversity = 1.0 - avg_correlation</p>
+
+<p>return max(0.0, diversity)</p>
+
+<p>@staticmethod
+ def architectural_diversity(models: List[Model]) -&gt; float:
+ “””
+ Calculate diversity based on model architectures.</p>
+
+<p>Different architectures (XGBoost, NN, Linear) = high diversity.
+ “””
+ if len(models) &lt;= 1:
+ return 0.0</p>
+
+<p># Count unique architectures
+ unique_archs = len(set(m.architecture for m in models))</p>
+
+<p># Diversity = ratio of unique to total
+ return unique_archs / len(models)</p>
+
+<p>@staticmethod
+ def error_diversity(
+ predictions: np.ndarray, # Shape: (n_samples, n_models)
+ true_labels: np.ndarray
+ ) -&gt; float:
+ “””
+ Calculate diversity based on error patterns.</p>
+
+<p>Good diversity = models make errors on different samples.</p>
+
+<p>Returns:
+ Error diversity score
+ “””
+ n_samples, n_models = predictions.shape</p>
+
+<p># Determine which samples each model gets wrong
+ errors = (predictions &gt; 0.5) != true_labels.reshape(-1, 1)</p>
+
+<p># Calculate pairwise error overlap
+ overlaps = []</p>
+
+<p>for i in range(n_models):
+ for j in range(i + 1, n_models):
+ # What fraction of errors are shared?
+ shared_errors = np.sum(errors[:, i] &amp; errors[:, j])
+ total_errors = np.sum(errors[:, i] | errors[:, j])</p>
+
+<p>if total_errors &gt; 0:
+ overlap = shared_errors / total_errors
+ overlaps.append(overlap)</p>
+
+<p># Diversity = 1 - average overlap
+ avg_overlap = np.mean(overlaps) if overlaps else 0.5
+ return 1.0 - avg_overlap</p>
+
+<p>@staticmethod
+ def select_diverse_subset(
+ models: List[Model],
+ predictions: np.ndarray, # Shape: (n_samples, n_models)
+ k: int # Number of models to select
+ ) -&gt; List[int]:
+ “””
+ Select k most diverse models using greedy algorithm.</p>
+
+<p>Similar to backtracking but greedy instead of exhaustive.</p>
+
+<p>Algorithm:</p>
+<ol>
+  <li>Start with best individual model</li>
+  <li>Iteratively add model that maximizes diversity</li>
+  <li>Stop when k models selected</li>
+</ol>
+
+<p>Returns:
+ Indices of selected models
+ “””
+ n_models = len(models)</p>
+
+<p>if k &gt;= n_models:
+ return list(range(n_models))</p>
+
+<p># Start with best model
+ accuracies = [m.accuracy for m in models]
+ selected = [np.argmax(accuracies)]</p>
+
+<p># Greedily add most diverse models
+ for _ in range(k - 1):
+ max_diversity = -1
+ best_candidate = -1</p>
+
+<p>for candidate in range(n_models):
+ if candidate in selected:
+ continue</p>
+
+<p># Calculate diversity if we add this candidate
+ test_selection = selected + [candidate]
+ test_predictions = predictions[:, test_selection]</p>
+
+<p>diversity = DiversityAnalyzer.prediction_diversity(test_predictions)</p>
+
+<p>if diversity &gt; max_diversity:
+ max_diversity = diversity
+ best_candidate = candidate</p>
+
+<p>if best_candidate &gt;= 0:
+ selected.append(best_candidate)</p>
+
+<p>return selected
+``</p>
 
 <h3 id="4-dynamic-ensemble-selection">4. Dynamic Ensemble Selection</h3>
 
 <p>Select different model subsets based on input characteristics:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
+<p>``python
+from sklearn.cluster import KMeans
+from typing import Callable</p>
 
-<span class="k">class</span> <span class="nc">DynamicEnsembleSelector</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Dynamic ensemble selection: choose models based on input.
-    
-    Idea: Different models are good for different types of inputs.
-    
-    Example:
-    - Linear models good for simple patterns
-    - Neural nets good for complex patterns
-    - Tree models good for categorical features
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Model</span><span class="p">],</span> <span class="n">n_regions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">models</span> <span class="o">=</span> <span class="n">models</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">n_regions</span> <span class="o">=</span> <span class="n">n_regions</span>
-        
-        <span class="c1"># Cluster validation set to identify regions
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">clusterer</span> <span class="o">=</span> <span class="nc">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">n_regions</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
-        
-        <span class="c1"># Best models for each region
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">region_models</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">is_trained</span> <span class="o">=</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">X_val</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">y_val</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">model_predictions</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span>  <span class="c1"># Shape: (n_samples, n_models)
-</span>    <span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Train selector on validation data.
-        
-        Steps:
-        1. Cluster input space into regions
-        2. For each region, find best models
-        3. Store region -&gt; models mapping
-        </span><span class="sh">"""</span>
-        <span class="c1"># Cluster input space
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">clusterer</span><span class="p">.</span><span class="nf">fit</span><span class="p">(</span><span class="n">X_val</span><span class="p">)</span>
-        <span class="n">clusters</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">clusterer</span><span class="p">.</span><span class="n">labels_</span>
-        
-        <span class="c1"># For each region, find best models
-</span>        <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">n_regions</span><span class="p">):</span>
-            <span class="n">region_mask</span> <span class="o">=</span> <span class="n">clusters</span> <span class="o">==</span> <span class="n">region</span>
-            <span class="n">region_y</span> <span class="o">=</span> <span class="n">y_val</span><span class="p">[</span><span class="n">region_mask</span><span class="p">]</span>
-            <span class="n">region_preds</span> <span class="o">=</span> <span class="n">model_predictions</span><span class="p">[</span><span class="n">region_mask</span><span class="p">]</span>
-            
-            <span class="c1"># Evaluate each model on this region
-</span>            <span class="n">model_scores</span> <span class="o">=</span> <span class="p">[]</span>
-            
-            <span class="k">for</span> <span class="n">model_idx</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">)):</span>
-                <span class="n">preds</span> <span class="o">=</span> <span class="n">region_preds</span><span class="p">[:,</span> <span class="n">model_idx</span><span class="p">]</span>
-                
-                <span class="c1"># Calculate accuracy for this model in this region
-</span>                <span class="n">accuracy</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">((</span><span class="n">preds</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">==</span> <span class="n">region_y</span><span class="p">)</span>
-                <span class="n">model_scores</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">model_idx</span><span class="p">,</span> <span class="n">accuracy</span><span class="p">))</span>
-            
-            <span class="c1"># Sort by accuracy and take top models
-</span>            <span class="n">model_scores</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-            
-            <span class="c1"># Take top 3 models for this region
-</span>            <span class="n">self</span><span class="p">.</span><span class="n">region_models</span><span class="p">[</span><span class="n">region</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">model_scores</span><span class="p">[:</span><span class="mi">3</span><span class="p">]]</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">is_trained</span> <span class="o">=</span> <span class="bp">True</span>
-    
-    <span class="k">def</span> <span class="nf">select_models</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Select best models for given input.
-        
-        Args:
-            features: Input features (single sample)
-            
-        Returns:
-            Indices of selected models
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">is_trained</span><span class="p">:</span>
-            <span class="c1"># Fallback: use all models
-</span>            <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">)))</span>
-        
-        <span class="c1"># Determine which region this input belongs to
-</span>        <span class="n">region</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">clusterer</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">.</span><span class="nf">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="c1"># Return best models for this region
-</span>        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">region_models</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="nf">list</span><span class="p">(</span><span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">))))</span>
-</code></pre></div></div>
+<p>class DynamicEnsembleSelector:
+ “””
+ Dynamic ensemble selection: choose models based on input.</p>
+
+<p>Idea: Different models are good for different types of inputs.</p>
+
+<p>Example:</p>
+<ul>
+  <li>Linear models good for simple patterns</li>
+  <li>Neural nets good for complex patterns</li>
+  <li>Tree models good for categorical features
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self, models: List[Model], n_regions: int = 5):
+ self.models = models
+ self.n_regions = n_regions</p>
+
+<p># Cluster validation set to identify regions
+ self.clusterer = KMeans(n_clusters=n_regions, random_state=42)</p>
+
+<p># Best models for each region
+ self.region_models: Dict[int, List[int]] = {}</p>
+
+<p>self.is_trained = False</p>
+
+<p>def train(
+ self,
+ X_val: np.ndarray,
+ y_val: np.ndarray,
+ model_predictions: np.ndarray # Shape: (n_samples, n_models)
+ ):
+ “””
+ Train selector on validation data.</p>
+
+<p>Steps:</p>
+<ol>
+  <li>Cluster input space into regions</li>
+  <li>For each region, find best models</li>
+  <li>Store region -&gt; models mapping
+ “””
+ # Cluster input space
+ self.clusterer.fit(X_val)
+ clusters = self.clusterer.labels_</li>
+</ol>
+
+<p># For each region, find best models
+ for region in range(self.n_regions):
+ region_mask = clusters == region
+ region_y = y_val[region_mask]
+ region_preds = model_predictions[region_mask]</p>
+
+<p># Evaluate each model on this region
+ model_scores = []</p>
+
+<p>for model_idx in range(len(self.models)):
+ preds = region_preds[:, model_idx]</p>
+
+<p># Calculate accuracy for this model in this region
+ accuracy = np.mean((preds &gt; 0.5) == region_y)
+ model_scores.append((model_idx, accuracy))</p>
+
+<p># Sort by accuracy and take top models
+ model_scores.sort(key=lambda x: x[1], reverse=True)</p>
+
+<p># Take top 3 models for this region
+ self.region_models[region] = [idx for idx, _ in model_scores[:3]]</p>
+
+<p>self.is_trained = True</p>
+
+<p>def select_models(self, features: np.ndarray) -&gt; List[int]:
+ “””
+ Select best models for given input.</p>
+
+<p>Args:
+ features: Input features (single sample)</p>
+
+<p>Returns:
+ Indices of selected models
+ “””
+ if not self.is_trained:
+ # Fallback: use all models
+ return list(range(len(self.models)))</p>
+
+<p># Determine which region this input belongs to
+ region = self.clusterer.predict(features.reshape(1, -1))[0]</p>
+
+<p># Return best models for this region
+ return self.region_models.get(region, list(range(len(self.models))))
+``</p>
 
 <h2 id="data-flow">Data Flow</h2>
 
 <h3 id="prediction-pipeline">Prediction Pipeline</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Request arrives with features
-   └─&gt; Feature preprocessing/validation
-
-2. Model selection (backtracking or dynamic)
-   └─&gt; Identify optimal subset of models
-   └─&gt; Consider: latency budget, diversity, accuracy
-
-3. Parallel inference
-   └─&gt; Query selected models concurrently
-   └─&gt; Set timeout for each model
-   └─&gt; Handle failures gracefully
-
-4. Prediction combination
-   └─&gt; Apply combination strategy
-   └─&gt; Calculate confidence score
-
-5. Post-processing
-   └─&gt; Calibration
-   └─&gt; Threshold optimization
-   └─&gt; Explanation generation
-
-6. Return result
-   └─&gt; Final prediction
-   └─&gt; Confidence
-   └─&gt; Models used
-   └─&gt; Latency breakdown
-</code></pre></div></div>
+<p>``</p>
+<ol>
+  <li>
+    <p>Request arrives with features
+ └─&gt; Feature preprocessing/validation</p>
+  </li>
+  <li>
+    <p>Model selection (backtracking or dynamic)
+ └─&gt; Identify optimal subset of models
+ └─&gt; Consider: latency budget, diversity, accuracy</p>
+  </li>
+  <li>
+    <p>Parallel inference
+ └─&gt; Query selected models concurrently
+ └─&gt; Set timeout for each model
+ └─&gt; Handle failures gracefully</p>
+  </li>
+  <li>
+    <p>Prediction combination
+ └─&gt; Apply combination strategy
+ └─&gt; Calculate confidence score</p>
+  </li>
+  <li>
+    <p>Post-processing
+ └─&gt; Calibration
+ └─&gt; Threshold optimization
+ └─&gt; Explanation generation</p>
+  </li>
+  <li>
+    <p>Return result
+ └─&gt; Final prediction
+ └─&gt; Confidence
+ └─&gt; Models used
+ └─&gt; Latency breakdown
+``</p>
+  </li>
+</ol>
 
 <h3 id="training-pipeline">Training Pipeline</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Train base models
-   ├─&gt; Different algorithms
-   ├─&gt; Different feature sets
-   ├─&gt; Different train/val splits
-   └─&gt; Ensure diversity
-
-2. Generate meta-features (for stacking)
-   └─&gt; Cross-validation predictions
-   └─&gt; Avoid overfitting
-
-3. Train meta-model
-   └─&gt; Learn optimal combination
-   └─&gt; Regularization to prevent overfitting
-
-4. Evaluate ensemble
-   └─&gt; Compare to individual models
-   └─&gt; A/B test in production
-
-5. Deploy
-   └─&gt; Canary rollout
-   └─&gt; Monitor performance
-</code></pre></div></div>
+<p>``</p>
+<ol>
+  <li>
+    <p>Train base models
+ ├─&gt; Different algorithms
+ ├─&gt; Different feature sets
+ ├─&gt; Different train/val splits
+ └─&gt; Ensure diversity</p>
+  </li>
+  <li>
+    <p>Generate meta-features (for stacking)
+ └─&gt; Cross-validation predictions
+ └─&gt; Avoid overfitting</p>
+  </li>
+  <li>
+    <p>Train meta-model
+ └─&gt; Learn optimal combination
+ └─&gt; Regularization to prevent overfitting</p>
+  </li>
+  <li>
+    <p>Evaluate ensemble
+ └─&gt; Compare to individual models
+ └─&gt; A/B test in production</p>
+  </li>
+  <li>
+    <p>Deploy
+ └─&gt; Canary rollout
+ └─&gt; Monitor performance
+``</p>
+  </li>
+</ol>
 
 <h2 id="scaling-strategies">Scaling Strategies</h2>
 
 <h3 id="horizontal-scaling---parallel-inference">Horizontal Scaling - Parallel Inference</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">ray</span>
+<p>``python
+import ray</p>
 
-<span class="nd">@ray.remote</span>
-<span class="k">class</span> <span class="nc">ModelServer</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Ray actor for serving a single model.</span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
-        <span class="c1"># Load actual model weights
-</span>        <span class="c1"># self.model_impl = load_model(model.model_id)
-</span>    
-    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Make prediction.</span><span class="sh">"""</span>
-        <span class="c1"># return self.model_impl.predict(features)
-</span>        <span class="k">return</span> <span class="mf">0.5</span>  <span class="c1"># Dummy
-</span>
+<p>@ray.remote
+class ModelServer:
+ “"”Ray actor for serving a single model.”””</p>
 
-<span class="k">class</span> <span class="nc">DistributedEnsemble</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Distributed ensemble using Ray.</span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Model</span><span class="p">]):</span>
-        <span class="c1"># Create Ray actor for each model
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">model_servers</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">ModelServer</span><span class="p">.</span><span class="nf">remote</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span>
-        <span class="p">]</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">models</span> <span class="o">=</span> <span class="n">models</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnsembleResult</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Make distributed prediction.</span><span class="sh">"""</span>
-        <span class="c1"># Query all models in parallel using Ray
-</span>        <span class="n">prediction_futures</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">server</span><span class="p">.</span><span class="n">predict</span><span class="p">.</span><span class="nf">remote</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">server</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">model_servers</span>
-        <span class="p">]</span>
-        
-        <span class="c1"># Wait for all predictions
-</span>        <span class="n">predictions</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">gather</span><span class="p">(</span><span class="o">*</span><span class="p">[</span>
-            <span class="n">asyncio</span><span class="p">.</span><span class="nf">create_task</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nf">_ray_to_asyncio</span><span class="p">(</span><span class="n">future</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">prediction_futures</span>
-        <span class="p">])</span>
-        
-        <span class="c1"># Combine predictions
-</span>        <span class="n">final_pred</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="nc">EnsembleResult</span><span class="p">(</span>
-            <span class="n">prediction</span><span class="o">=</span><span class="n">final_pred</span><span class="p">,</span>
-            <span class="n">confidence</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
-            <span class="n">models_used</span><span class="o">=</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">model_id</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">],</span>
-            <span class="n">latency_ms</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-            <span class="n">individual_predictions</span><span class="o">=</span><span class="p">{}</span>
-        <span class="p">)</span>
-    
-    <span class="nd">@staticmethod</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_ray_to_asyncio</span><span class="p">(</span><span class="n">ray_future</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Convert Ray future to asyncio.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">ray</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">ray_future</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def <strong>init</strong>(self, model: Model):
+ self.model = model
+ # Load actual model weights
+ # self.model_impl = load_model(model.model_id)</p>
+
+<p>def predict(self, features: Dict) -&gt; float:
+ “"”Make prediction.”””
+ # return self.model_impl.predict(features)
+ return 0.5 # Dummy</p>
+
+<p>class DistributedEnsemble:
+ “"”Distributed ensemble using Ray.”””</p>
+
+<p>def <strong>init</strong>(self, models: List[Model]):
+ # Create Ray actor for each model
+ self.model_servers = [
+ ModelServer.remote(model)
+ for model in models
+ ]
+ self.models = models</p>
+
+<p>async def predict(self, features: Dict) -&gt; EnsembleResult:
+ “"”Make distributed prediction.”””
+ # Query all models in parallel using Ray
+ prediction_futures = [
+ server.predict.remote(features)
+ for server in self.model_servers
+ ]</p>
+
+<p># Wait for all predictions
+ predictions = await asyncio.gather(*[
+ asyncio.create_task(self._ray_to_asyncio(future))
+ for future in prediction_futures
+ ])</p>
+
+<p># Combine predictions
+ final_pred = sum(predictions) / len(predictions)</p>
+
+<p>return EnsembleResult(
+ prediction=final_pred,
+ confidence=0.8,
+ models_used=[m.model_id for m in self.models],
+ latency_ms=0.0,
+ individual_predictions={}
+ )</p>
+
+<p>@staticmethod
+ async def _ray_to_asyncio(ray_future):
+ “"”Convert Ray future to asyncio.”””
+ return ray.get(ray_future)
+``</p>
 
 <h3 id="vertical-scaling---model-compression">Vertical Scaling - Model Compression</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">EnsembleOptimizer</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Optimize ensemble for production.</span><span class="sh">"""</span>
-    
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">knowledge_distillation</span><span class="p">(</span>
-        <span class="n">ensemble</span><span class="p">:</span> <span class="n">EnsembleOrchestrator</span><span class="p">,</span>
-        <span class="n">X_train</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">student_model</span><span class="p">:</span> <span class="nb">any</span>
-    <span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Distill ensemble into single student model.
-        
-        Benefits:
-        - Single model = lower latency
-        - Retains most of ensemble</span><span class="sh">'</span><span class="s">s accuracy
-        - Easier deployment
-        
-        Process:
-        1. Generate ensemble predictions on training data
-        2. Train student model to mimic ensemble
-        3. Use soft labels (probabilities) not hard labels
-        </span><span class="sh">"""</span>
-        <span class="c1"># Get ensemble predictions (soft labels)
-</span>        <span class="n">ensemble_preds</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">X_train</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">ensemble</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-            <span class="n">ensemble_preds</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="n">prediction</span><span class="p">)</span>
-        
-        <span class="n">ensemble_preds</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">ensemble_preds</span><span class="p">)</span>
-        
-        <span class="c1"># Train student model
-</span>        <span class="n">student_model</span><span class="p">.</span><span class="nf">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">ensemble_preds</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">student_model</span>
-    
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">prune_models</span><span class="p">(</span>
-        <span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Model</span><span class="p">],</span>
-        <span class="n">predictions</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">true_labels</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">target_size</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Prune ensemble to target size while maintaining accuracy.
-        
-        Greedy algorithm:
-        1. Start with full ensemble
-        2. Iteratively remove least important model
-        3. Stop when target size reached or accuracy drops
-        
-        Returns:
-            Indices of models to keep
-        </span><span class="sh">"""</span>
-        <span class="n">n_models</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
-        <span class="n">remaining</span> <span class="o">=</span> <span class="nf">list</span><span class="p">(</span><span class="nf">range</span><span class="p">(</span><span class="n">n_models</span><span class="p">))</span>
-        
-        <span class="c1"># Calculate baseline accuracy
-</span>        <span class="n">ensemble_preds</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="n">remaining</span><span class="p">].</span><span class="nf">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">baseline_acc</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">((</span><span class="n">ensemble_preds</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">==</span> <span class="n">true_labels</span><span class="p">)</span>
-        
-        <span class="k">while</span> <span class="nf">len</span><span class="p">(</span><span class="n">remaining</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">target_size</span><span class="p">:</span>
-            <span class="n">min_impact</span> <span class="o">=</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">inf</span><span class="sh">'</span><span class="p">)</span>
-            <span class="n">model_to_remove</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-            
-            <span class="c1"># Try removing each model
-</span>            <span class="k">for</span> <span class="n">model_idx</span> <span class="ow">in</span> <span class="n">remaining</span><span class="p">:</span>
-                <span class="n">test_remaining</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">remaining</span> <span class="k">if</span> <span class="n">m</span> <span class="o">!=</span> <span class="n">model_idx</span><span class="p">]</span>
-                
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">test_remaining</span><span class="p">:</span>
-                    <span class="k">break</span>
-                
-                <span class="c1"># Evaluate ensemble without this model
-</span>                <span class="n">test_preds</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="n">test_remaining</span><span class="p">].</span><span class="nf">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                <span class="n">test_acc</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">((</span><span class="n">test_preds</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">==</span> <span class="n">true_labels</span><span class="p">)</span>
-                
-                <span class="c1"># How much does accuracy drop?
-</span>                <span class="n">impact</span> <span class="o">=</span> <span class="n">baseline_acc</span> <span class="o">-</span> <span class="n">test_acc</span>
-                
-                <span class="k">if</span> <span class="n">impact</span> <span class="o">&lt;</span> <span class="n">min_impact</span><span class="p">:</span>
-                    <span class="n">min_impact</span> <span class="o">=</span> <span class="n">impact</span>
-                    <span class="n">model_to_remove</span> <span class="o">=</span> <span class="n">model_idx</span>
-            
-            <span class="k">if</span> <span class="n">model_to_remove</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">break</span>
-            
-            <span class="c1"># Remove least important model
-</span>            <span class="n">remaining</span><span class="p">.</span><span class="nf">remove</span><span class="p">(</span><span class="n">model_to_remove</span><span class="p">)</span>
-            
-            <span class="c1"># Update baseline
-</span>            <span class="n">ensemble_preds</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[:,</span> <span class="n">remaining</span><span class="p">].</span><span class="nf">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">baseline_acc</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">((</span><span class="n">ensemble_preds</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">==</span> <span class="n">true_labels</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">remaining</span>
-</code></pre></div></div>
+<p>``python
+class EnsembleOptimizer:
+ “"”Optimize ensemble for production.”””</p>
+
+<p>@staticmethod
+ def knowledge_distillation(
+ ensemble: EnsembleOrchestrator,
+ X_train: np.ndarray,
+ student_model: any
+ ):
+ “””
+ Distill ensemble into single student model.</p>
+
+<p>Benefits:</p>
+<ul>
+  <li>Single model = lower latency</li>
+  <li>Retains most of ensemble’s accuracy</li>
+  <li>Easier deployment</li>
+</ul>
+
+<p>Process:</p>
+<ol>
+  <li>Generate ensemble predictions on training data</li>
+  <li>Train student model to mimic ensemble</li>
+  <li>Use soft labels (probabilities) not hard labels
+ “””
+ # Get ensemble predictions (soft labels)
+ ensemble_preds = []</li>
+</ol>
+
+<p>for x in X_train:
+ result = ensemble.predict(x)
+ ensemble_preds.append(result.prediction)</p>
+
+<p>ensemble_preds = np.array(ensemble_preds)</p>
+
+<p># Train student model
+ student_model.fit(X_train, ensemble_preds)</p>
+
+<p>return student_model</p>
+
+<p>@staticmethod
+ def prune_models(
+ models: List[Model],
+ predictions: np.ndarray,
+ true_labels: np.ndarray,
+ target_size: int
+ ) -&gt; List[int]:
+ “””
+ Prune ensemble to target size while maintaining accuracy.</p>
+
+<p>Greedy algorithm:</p>
+<ol>
+  <li>Start with full ensemble</li>
+  <li>Iteratively remove least important model</li>
+  <li>Stop when target size reached or accuracy drops</li>
+</ol>
+
+<p>Returns:
+ Indices of models to keep
+ “””
+ n_models = len(models)
+ remaining = list(range(n_models))</p>
+
+<p># Calculate baseline accuracy
+ ensemble_preds = predictions[:, remaining].mean(axis=1)
+ baseline_acc = np.mean((ensemble_preds &gt; 0.5) == true_labels)</p>
+
+<p>while len(remaining) &gt; target_size:
+ min_impact = float(‘inf’)
+ model_to_remove = -1</p>
+
+<p># Try removing each model
+ for model_idx in remaining:
+ test_remaining = [m for m in remaining if m != model_idx]</p>
+
+<p>if not test_remaining:
+ break</p>
+
+<p># Evaluate ensemble without this model
+ test_preds = predictions[:, test_remaining].mean(axis=1)
+ test_acc = np.mean((test_preds &gt; 0.5) == true_labels)</p>
+
+<p># How much does accuracy drop?
+ impact = baseline_acc - test_acc</p>
+
+<p>if impact &lt; min_impact:
+ min_impact = impact
+ model_to_remove = model_idx</p>
+
+<p>if model_to_remove &lt; 0:
+ break</p>
+
+<p># Remove least important model
+ remaining.remove(model_to_remove)</p>
+
+<p># Update baseline
+ ensemble_preds = predictions[:, remaining].mean(axis=1)
+ baseline_acc = np.mean((ensemble_preds &gt; 0.5) == true_labels)</p>
+
+<p>return remaining
+``</p>
 
 <h2 id="implementation-complete-system">Implementation: Complete System</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">logging</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+import logging
+from typing import List, Dict, Optional
+import numpy as np</p>
 
-<span class="k">class</span> <span class="nc">ProductionEnsemble</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Complete production ensemble system.
-    
-    Features:
-    - Model selection using backtracking
-    - Multiple combination strategies
-    - Fallback handling
-    - Performance monitoring
-    - A/B testing support
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Model</span><span class="p">],</span>
-        <span class="n">config</span><span class="p">:</span> <span class="n">EnsembleConfig</span><span class="p">,</span>
-        <span class="n">combiner_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">weighted_averaging</span><span class="sh">"</span>
-    <span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">orchestrator</span> <span class="o">=</span> <span class="nc">EnsembleOrchestrator</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-        
-        <span class="c1"># Add models to orchestrator
-</span>        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">orchestrator</span><span class="p">.</span><span class="nf">add_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">combiner_type</span> <span class="o">=</span> <span class="n">combiner_type</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="p">.</span><span class="nf">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
-        
-        <span class="c1"># Metrics
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">prediction_count</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">total_latency</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">fallback_count</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">features</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
-        <span class="n">explain</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Make ensemble prediction with optional explanation.
-        
-        Args:
-            features: Input features
-            explain: Whether to include explanation
-            
-        Returns:
-            Dictionary with prediction and metadata
-        </span><span class="sh">"""</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="c1"># Get ensemble prediction
-</span>            <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">self</span><span class="p">.</span><span class="n">orchestrator</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-            
-            <span class="c1"># Update metrics
-</span>            <span class="n">self</span><span class="p">.</span><span class="n">prediction_count</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">total_latency</span> <span class="o">+=</span> <span class="n">result</span><span class="p">.</span><span class="n">latency_ms</span>
-            
-            <span class="c1"># Build response
-</span>            <span class="n">response</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="sh">"</span><span class="s">prediction</span><span class="sh">"</span><span class="p">:</span> <span class="n">result</span><span class="p">.</span><span class="n">prediction</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">confidence</span><span class="sh">"</span><span class="p">:</span> <span class="n">result</span><span class="p">.</span><span class="n">confidence</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">latency_ms</span><span class="sh">"</span><span class="p">:</span> <span class="n">result</span><span class="p">.</span><span class="n">latency_ms</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">models_used</span><span class="sh">"</span><span class="p">:</span> <span class="n">result</span><span class="p">.</span><span class="n">models_used</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">success</span><span class="sh">"</span><span class="p">:</span> <span class="bp">True</span>
-            <span class="p">}</span>
-            
-            <span class="c1"># Add explanation if requested
-</span>            <span class="k">if</span> <span class="n">explain</span><span class="p">:</span>
-                <span class="n">response</span><span class="p">[</span><span class="sh">"</span><span class="s">explanation</span><span class="sh">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_generate_explanation</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-            
-            <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="s">Prediction: </span><span class="si">{</span><span class="n">result</span><span class="p">.</span><span class="n">prediction</span><span class="si">:</span><span class="p">.</span><span class="mi">3</span><span class="n">f</span><span class="si">}</span><span class="s"> </span><span class="sh">"</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="s">(confidence: </span><span class="si">{</span><span class="n">result</span><span class="p">.</span><span class="n">confidence</span><span class="si">:</span><span class="p">.</span><span class="mi">3</span><span class="n">f</span><span class="si">}</span><span class="s">, </span><span class="sh">"</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="s">latency: </span><span class="si">{</span><span class="n">result</span><span class="p">.</span><span class="n">latency_ms</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">ms, </span><span class="sh">"</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="s">models: </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="n">models_used</span><span class="p">)</span><span class="si">}</span><span class="s">)</span><span class="sh">"</span>
-            <span class="p">)</span>
-            
-            <span class="k">return</span> <span class="n">response</span>
-            
-        <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="c1"># Fallback: use simple heuristic or cached result
-</span>            <span class="n">self</span><span class="p">.</span><span class="n">fallback_count</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">error</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Ensemble prediction failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-            
-            <span class="k">return</span> <span class="p">{</span>
-                <span class="sh">"</span><span class="s">prediction</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>  <span class="c1"># Neutral prediction
-</span>                <span class="sh">"</span><span class="s">confidence</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">latency_ms</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">models_used</span><span class="sh">"</span><span class="p">:</span> <span class="p">[],</span>
-                <span class="sh">"</span><span class="s">success</span><span class="sh">"</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">error</span><span class="sh">"</span><span class="p">:</span> <span class="nf">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-            <span class="p">}</span>
-    
-    <span class="k">def</span> <span class="nf">_generate_explanation</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">EnsembleResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Generate explanation for ensemble prediction.
-        
-        Returns:
-            Dictionary with explanation details
-        </span><span class="sh">"""</span>
-        <span class="c1"># Analyze which models contributed most
-</span>        <span class="n">preds</span> <span class="o">=</span> <span class="nf">list</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="n">individual_predictions</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
-        <span class="n">final_pred</span> <span class="o">=</span> <span class="n">result</span><span class="p">.</span><span class="n">prediction</span>
-        
-        <span class="c1"># Calculate agreement
-</span>        <span class="n">agreements</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="mf">1.0</span> <span class="o">-</span> <span class="nf">abs</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="n">final_pred</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">preds</span>
-        <span class="p">]</span>
-        
-        <span class="c1"># Sort models by agreement
-</span>        <span class="n">model_agreements</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span>
-            <span class="nf">zip</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="n">models_used</span><span class="p">,</span> <span class="n">agreements</span><span class="p">),</span>
-            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span>
-        <span class="p">)</span>
-        
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">"</span><span class="s">final_prediction</span><span class="sh">"</span><span class="p">:</span> <span class="n">final_pred</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">model_contributions</span><span class="sh">"</span><span class="p">:</span> <span class="p">[</span>
-                <span class="p">{</span>
-                    <span class="sh">"</span><span class="s">model_id</span><span class="sh">"</span><span class="p">:</span> <span class="n">model_id</span><span class="p">,</span>
-                    <span class="sh">"</span><span class="s">agreement</span><span class="sh">"</span><span class="p">:</span> <span class="n">agreement</span><span class="p">,</span>
-                    <span class="sh">"</span><span class="s">prediction</span><span class="sh">"</span><span class="p">:</span> <span class="n">result</span><span class="p">.</span><span class="n">individual_predictions</span><span class="p">[</span><span class="n">model_id</span><span class="p">]</span>
-                <span class="p">}</span>
-                <span class="k">for</span> <span class="n">model_id</span><span class="p">,</span> <span class="n">agreement</span> <span class="ow">in</span> <span class="n">model_agreements</span>
-            <span class="p">],</span>
-            <span class="sh">"</span><span class="s">consensus_level</span><span class="sh">"</span><span class="p">:</span> <span class="nf">sum</span><span class="p">(</span><span class="n">agreements</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">agreements</span><span class="p">)</span> <span class="k">if</span> <span class="n">agreements</span> <span class="k">else</span> <span class="mf">0.0</span>
-        <span class="p">}</span>
-    
-    <span class="k">def</span> <span class="nf">get_metrics</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Get performance metrics.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">"</span><span class="s">prediction_count</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">prediction_count</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">avg_latency_ms</span><span class="sh">"</span><span class="p">:</span> <span class="p">(</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">total_latency</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">prediction_count</span>
-                <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">prediction_count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
-            <span class="p">),</span>
-            <span class="sh">"</span><span class="s">fallback_rate</span><span class="sh">"</span><span class="p">:</span> <span class="p">(</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">fallback_count</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">prediction_count</span>
-                <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">prediction_count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
-            <span class="p">),</span>
-            <span class="sh">"</span><span class="s">models_available</span><span class="sh">"</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">orchestrator</span><span class="p">.</span><span class="n">models</span><span class="p">),</span>
-            <span class="sh">"</span><span class="s">healthy_models</span><span class="sh">"</span><span class="p">:</span> <span class="nf">sum</span><span class="p">(</span>
-                <span class="mi">1</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">orchestrator</span><span class="p">.</span><span class="n">models</span>
-                <span class="k">if</span> <span class="n">m</span><span class="p">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">ModelStatus</span><span class="p">.</span><span class="n">HEALTHY</span>
-            <span class="p">)</span>
-        <span class="p">}</span>
+<p>class ProductionEnsemble:
+ “””
+ Complete production ensemble system.</p>
 
+<p>Features:</p>
+<ul>
+  <li>Model selection using backtracking</li>
+  <li>Multiple combination strategies</li>
+  <li>Fallback handling</li>
+  <li>Performance monitoring</li>
+  <li>A/B testing support
+ “””</li>
+</ul>
 
-<span class="c1"># Example usage
-</span><span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-    <span class="c1"># Create models
-</span>    <span class="n">models</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="nc">Model</span><span class="p">(</span><span class="sh">"</span><span class="s">xgb_v1</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">xgboost</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">1.0</span><span class="sh">"</span><span class="p">,</span> <span class="mf">15.0</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">,</span> <span class="n">architecture</span><span class="o">=</span><span class="sh">"</span><span class="s">tree</span><span class="sh">"</span><span class="p">),</span>
-        <span class="nc">Model</span><span class="p">(</span><span class="sh">"</span><span class="s">nn_v1</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">neural_net</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">1.0</span><span class="sh">"</span><span class="p">,</span> <span class="mf">25.0</span><span class="p">,</span> <span class="mf">0.87</span><span class="p">,</span> <span class="n">architecture</span><span class="o">=</span><span class="sh">"</span><span class="s">deep_learning</span><span class="sh">"</span><span class="p">),</span>
-        <span class="nc">Model</span><span class="p">(</span><span class="sh">"</span><span class="s">lr_v1</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">linear</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">1.0</span><span class="sh">"</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.80</span><span class="p">,</span> <span class="n">architecture</span><span class="o">=</span><span class="sh">"</span><span class="s">linear</span><span class="sh">"</span><span class="p">),</span>
-        <span class="nc">Model</span><span class="p">(</span><span class="sh">"</span><span class="s">lgbm_v1</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">lightgbm</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">1.0</span><span class="sh">"</span><span class="p">,</span> <span class="mf">12.0</span><span class="p">,</span> <span class="mf">0.86</span><span class="p">,</span> <span class="n">architecture</span><span class="o">=</span><span class="sh">"</span><span class="s">tree</span><span class="sh">"</span><span class="p">),</span>
-        <span class="nc">Model</span><span class="p">(</span><span class="sh">"</span><span class="s">rf_v1</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">random_forest</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">1.0</span><span class="sh">"</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">0.84</span><span class="p">,</span> <span class="n">architecture</span><span class="o">=</span><span class="sh">"</span><span class="s">tree</span><span class="sh">"</span><span class="p">),</span>
-    <span class="p">]</span>
-    
-    <span class="c1"># Configure ensemble
-</span>    <span class="n">config</span> <span class="o">=</span> <span class="nc">EnsembleConfig</span><span class="p">(</span>
-        <span class="n">max_models</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-        <span class="n">max_latency_ms</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span>
-        <span class="n">min_diversity</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
-        <span class="n">combination_strategy</span><span class="o">=</span><span class="sh">"</span><span class="s">weighted_averaging</span><span class="sh">"</span>
-    <span class="p">)</span>
-    
-    <span class="c1"># Create ensemble
-</span>    <span class="n">ensemble</span> <span class="o">=</span> <span class="nc">ProductionEnsemble</span><span class="p">(</span><span class="n">models</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-    
-    <span class="c1"># Make predictions
-</span>    <span class="n">features</span> <span class="o">=</span> <span class="p">{</span><span class="sh">"</span><span class="s">feature1</span><span class="sh">"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="sh">"</span><span class="s">feature2</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">}</span>
-    
-    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">ensemble</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">explain</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Prediction: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="c1"># Get metrics
-</span>    <span class="n">metrics</span> <span class="o">=</span> <span class="n">ensemble</span><span class="p">.</span><span class="nf">get_metrics</span><span class="p">()</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Metrics: </span><span class="si">{</span><span class="n">metrics</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p>def <strong>init</strong>(
+ self,
+ models: List[Model],
+ config: EnsembleConfig,
+ combiner_type: str = “weighted_averaging”
+ ):
+ self.orchestrator = EnsembleOrchestrator(config)</p>
 
+<p># Add models to orchestrator
+ for model in models:
+ self.orchestrator.add_model(model)</p>
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="sh">"</span><span class="s">__main__</span><span class="sh">"</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="n">asyncio</span>
-    <span class="n">asyncio</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span><span class="nf">main</span><span class="p">())</span>
-</code></pre></div></div>
+<p>self.combiner_type = combiner_type
+ self.logger = logging.getLogger(<strong>name</strong>)</p>
+
+<p># Metrics
+ self.prediction_count = 0
+ self.total_latency = 0.0
+ self.fallback_count = 0</p>
+
+<p>async def predict(
+ self,
+ features: Dict,
+ explain: bool = False
+ ) -&gt; Dict:
+ “””
+ Make ensemble prediction with optional explanation.</p>
+
+<p>Args:
+ features: Input features
+ explain: Whether to include explanation</p>
+
+<p>Returns:
+ Dictionary with prediction and metadata
+ “””
+ try:
+ # Get ensemble prediction
+ result = await self.orchestrator.predict(features)</p>
+
+<p># Update metrics
+ self.prediction_count += 1
+ self.total_latency += result.latency_ms</p>
+
+<p># Build response
+ response = {
+ “prediction”: result.prediction,
+ “confidence”: result.confidence,
+ “latency_ms”: result.latency_ms,
+ “models_used”: result.models_used,
+ “success”: True
+ }</p>
+
+<p># Add explanation if requested
+ if explain:
+ response[“explanation”] = self._generate_explanation(result)</p>
+
+<p>self.logger.info(
+ f”Prediction: {result.prediction:.3f} “
+ f”(confidence: {result.confidence:.3f}, “
+ f”latency: {result.latency_ms:.1f}ms, “
+ f”models: {len(result.models_used)})”
+ )</p>
+
+<p>return response</p>
+
+<p>except Exception as e:
+ # Fallback: use simple heuristic or cached result
+ self.fallback_count += 1
+ self.logger.error(f”Ensemble prediction failed: {e}”)</p>
+
+<p>return {
+ “prediction”: 0.5, # Neutral prediction
+ “confidence”: 0.0,
+ “latency_ms”: 0.0,
+ “models_used”: [],
+ “success”: False,
+ “error”: str(e)
+ }</p>
+
+<p>def _generate_explanation(self, result: EnsembleResult) -&gt; Dict:
+ “””
+ Generate explanation for ensemble prediction.</p>
+
+<p>Returns:
+ Dictionary with explanation details
+ “””
+ # Analyze which models contributed most
+ preds = list(result.individual_predictions.values())
+ final_pred = result.prediction</p>
+
+<p># Calculate agreement
+ agreements = [
+ 1.0 - abs(p - final_pred)
+ for p in preds
+ ]</p>
+
+<p># Sort models by agreement
+ model_agreements = sorted(
+ zip(result.models_used, agreements),
+ key=lambda x: x[1],
+ reverse=True
+ )</p>
+
+<p>return {
+ “final_prediction”: final_pred,
+ “model_contributions”: [
+ {
+ “model_id”: model_id,
+ “agreement”: agreement,
+ “prediction”: result.individual_predictions[model_id]
+ }
+ for model_id, agreement in model_agreements
+ ],
+ “consensus_level”: sum(agreements) / len(agreements) if agreements else 0.0
+ }</p>
+
+<p>def get_metrics(self) -&gt; Dict:
+ “"”Get performance metrics.”””
+ return {
+ “prediction_count”: self.prediction_count,
+ “avg_latency_ms”: (
+ self.total_latency / self.prediction_count
+ if self.prediction_count &gt; 0 else 0.0
+ ),
+ “fallback_rate”: (
+ self.fallback_count / self.prediction_count
+ if self.prediction_count &gt; 0 else 0.0
+ ),
+ “models_available”: len(self.orchestrator.models),
+ “healthy_models”: sum(
+ 1 for m in self.orchestrator.models
+ if m.status == ModelStatus.HEALTHY
+ )
+ }</p>
+
+<h1 id="example-usage">Example usage</h1>
+<p>async def main():
+ # Create models
+ models = [
+ Model(“xgb_v1”, “xgboost”, “1.0”, 15.0, 0.85, architecture=”tree”),
+ Model(“nn_v1”, “neural_net”, “1.0”, 25.0, 0.87, architecture=”deep_learning”),
+ Model(“lr_v1”, “linear”, “1.0”, 5.0, 0.80, architecture=”linear”),
+ Model(“lgbm_v1”, “lightgbm”, “1.0”, 12.0, 0.86, architecture=”tree”),
+ Model(“rf_v1”, “random_forest”, “1.0”, 20.0, 0.84, architecture=”tree”),
+ ]</p>
+
+<p># Configure ensemble
+ config = EnsembleConfig(
+ max_models=3,
+ max_latency_ms=50.0,
+ min_diversity=0.3,
+ combination_strategy=”weighted_averaging”
+ )</p>
+
+<p># Create ensemble
+ ensemble = ProductionEnsemble(models, config)</p>
+
+<p># Make predictions
+ features = {“feature1”: 1.0, “feature2”: 0.5}</p>
+
+<p>result = await ensemble.predict(features, explain=True)
+ print(f”Prediction: {result}”)</p>
+
+<p># Get metrics
+ metrics = ensemble.get_metrics()
+ print(f”Metrics: {metrics}”)</p>
+
+<p>if <strong>name</strong> == “<strong>main</strong>”:
+ import asyncio
+ asyncio.run(main())
+``</p>
 
 <h2 id="real-world-case-study-netflix-recommendation-ensemble">Real-World Case Study: Netflix Recommendation Ensemble</h2>
 
@@ -1528,14 +1572,11 @@
   <li><strong>Model selection:</strong>
     <ul>
       <li>Not all models run for every request</li>
-      <li>Dynamic selection based on:
-        <ul>
-          <li>User type (new vs established)</li>
-          <li>Device (mobile vs TV vs web)</li>
-          <li>Time of day</li>
-          <li>Available data</li>
-        </ul>
-      </li>
+      <li>Dynamic selection based on:</li>
+      <li>User type (new vs established)</li>
+      <li>Device (mobile vs TV vs web)</li>
+      <li>Time of day</li>
+      <li>Available data</li>
     </ul>
   </li>
   <li><strong>Combination:</strong>
@@ -1581,9 +1622,9 @@
   <tbody>
     <tr>
       <td><strong>Compute</strong></td>
-      <td>$100/day</td>
-      <td>$300/day</td>
+      <td><code class="language-plaintext highlighter-rouge">100/day | </code>300/day</td>
       <td>+$200/day</td>
+      <td> </td>
     </tr>
     <tr>
       <td><strong>Latency (p95)</strong></td>
@@ -1611,8 +1652,8 @@
 <p><strong>ROI Calculation:</strong></p>
 <ul>
   <li>Additional compute cost: +$200/day</li>
-  <li>Reduced false positives: 6,000 × $10 = $60,000/day saved</li>
-  <li><strong>Net benefit: $59,800/day = $21.8M/year</strong></li>
+  <li>Reduced false positives: 6,000 × <code class="language-plaintext highlighter-rouge">10 = </code>60,000/day saved</li>
+  <li><strong>Net benefit: <code class="language-plaintext highlighter-rouge">59,800/day = </code>21.8M/year</strong></li>
 </ul>
 
 <h3 id="optimization-strategies">Optimization Strategies</h3>

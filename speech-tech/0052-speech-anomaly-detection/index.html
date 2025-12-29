@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Speech Anomaly Detection">
     <meta itemprop="description" content="“If ASR is the brain, anomaly detection is the nervous system—it tells you when the audio reality changed.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -398,38 +398,39 @@ small, stable summaries that let you detect large classes of failures early.</p>
 
 <h3 id="31-high-level-diagram">3.1 High-level diagram</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   Device / Client (streaming audio)
-        |
-        |  (frames)
-        v
-  +-------------------+
-  | Audio Frontend    |  -&gt; resample, AGC, VAD
-  +---------+---------+
-            |
-            v
-  +-------------------+      +-------------------+
-  | Feature Extractor | ---&gt; | Local Detectors   |
-  | (mel, energy, etc)|      | (fast rules + ML) |
-  +---------+---------+      +---------+---------+
-            |                          |
-            | aggregated telemetry     | local actions
-            v                          v
-  +-------------------+       +-------------------+
-  | Telemetry Uploader|       | Mitigation Layer  |
-  | (privacy-safe)    |       | (fallbacks)       |
-  +---------+---------+       +-------------------+
-            |
-            v
-  +-------------------+       +-------------------+
-  | Streaming Backend | ----&gt; | Server Detectors  |
-  | (Kafka/Flink)     |       | (fleet signals)   |
-  +---------+---------+       +---------+---------+
-            |                          |
-            v                          v
-  +-------------------+       +-------------------+
-  | Dashboards/TSDB   |       | Alerting + RCA    |
-  +-------------------+       +-------------------+
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+ Device / Client (streaming audio)
+ |
+ | (frames)
+ v
+ +-------------------+
+ | Audio Frontend | -&gt; resample, AGC, VAD
+ +---------+---------+
+ |
+ v
+ +-------------------+ +-------------------+
+ | Feature Extractor | ---&gt; | Local Detectors |
+ | (mel, energy, etc)| | (fast rules + ML) |
+ +---------+---------+ +---------+---------+
+ | |
+ | aggregated telemetry | local actions
+ v v
+ +-------------------+ +-------------------+
+ | Telemetry Uploader| | Mitigation Layer |
+ | (privacy-safe) | | (fallbacks) |
+ +---------+---------+ +-------------------+
+ |
+ v
+ +-------------------+ +-------------------+
+ | Streaming Backend | ----&gt; | Server Detectors |
+ | (Kafka/Flink) | | (fleet signals) |
+ +---------+---------+ +---------+---------+
+ | |
+ v v
+ +-------------------+ +-------------------+
+ | Dashboards/TSDB | | Alerting + RCA |
+ +-------------------+ +-------------------+
+</code></p>
 
 <h3 id="32-key-design-principle">3.2 Key design principle</h3>
 
@@ -527,20 +528,18 @@ ML detectors can be fragile to distribution shift; use them behind guardrails an
 
 <h3 id="51-basic-signal-quality-features">5.1 Basic signal quality features</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+import numpy as np</p>
 
+<p>def rms(x: np.ndarray) -&gt; float:
+ return float(np.sqrt(np.mean(x**2) + 1e-12))</p>
 
-<span class="k">def</span> <span class="nf">rms</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="k">return</span> <span class="nf">float</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">sqrt</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-12</span><span class="p">))</span>
+<p>def clipping_rate(x: np.ndarray, clip_value: float = 0.99) -&gt; float:
+ return float(np.mean(np.abs(x) &gt;= clip_value))</p>
 
-
-<span class="k">def</span> <span class="nf">clipping_rate</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">clip_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.99</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="k">return</span> <span class="nf">float</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">clip_value</span><span class="p">))</span>
-
-
-<span class="k">def</span> <span class="nf">zero_fraction</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="k">return</span> <span class="nf">float</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">eps</span><span class="p">))</span>
-</code></pre></div></div>
+<p>def zero_fraction(x: np.ndarray, eps: float = 1e-6) -&gt; float:
+ return float(np.mean(np.abs(x) &lt;= eps))
+``</p>
 
 <p>Interpretation:</p>
 <ul>
@@ -550,39 +549,39 @@ ML detectors can be fragile to distribution shift; use them behind guardrails an
 
 <h3 id="52-a-simple-rule-based-detector">5.2 A simple rule-based detector</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<p>``python
+from dataclasses import dataclass</p>
 
+<p>@dataclass
+class SpeechAnomaly:
+ is_anomaly: bool
+ reason: str</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">SpeechAnomaly</span><span class="p">:</span>
-    <span class="n">is_anomaly</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span>
+<p>def detect_signal_anomaly(frame: np.ndarray) -&gt; SpeechAnomaly:
+ r = rms(frame)
+ c = clipping_rate(frame)
+ z = zero_fraction(frame)</p>
 
-
-<span class="k">def</span> <span class="nf">detect_signal_anomaly</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SpeechAnomaly</span><span class="p">:</span>
-    <span class="n">r</span> <span class="o">=</span> <span class="nf">rms</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
-    <span class="n">c</span> <span class="o">=</span> <span class="nf">clipping_rate</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
-    <span class="n">z</span> <span class="o">=</span> <span class="nf">zero_fraction</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
-
-    <span class="c1"># Tune thresholds per product/device segment.
-</span>    <span class="k">if</span> <span class="n">z</span> <span class="o">&gt;</span> <span class="mf">0.95</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nc">SpeechAnomaly</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="sh">"</span><span class="s">dropout_or_muted</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">c</span> <span class="o">&gt;</span> <span class="mf">0.02</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nc">SpeechAnomaly</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="sh">"</span><span class="s">clipping</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="mf">1e-3</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nc">SpeechAnomaly</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="sh">"</span><span class="s">unexpected_silence</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nc">SpeechAnomaly</span><span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="sh">"</span><span class="s">ok</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p># Tune thresholds per product/device segment.
+ if z &gt; 0.95:
+ return SpeechAnomaly(True, “dropout_or_muted”)
+ if c &gt; 0.02:
+ return SpeechAnomaly(True, “clipping”)
+ if r &lt; 1e-3:
+ return SpeechAnomaly(True, “unexpected_silence”)
+ return SpeechAnomaly(False, “ok”)
+``</p>
 
 <h3 id="53-distribution-shift-detector-histogram-distance">5.3 Distribution shift detector (histogram distance)</h3>
 
 <p>For fleet monitoring, you can compare feature histograms over time windows.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">l1_hist_distance</span><span class="p">(</span><span class="n">h1</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">h2</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="n">h1</span> <span class="o">=</span> <span class="n">h1</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">h1</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-9</span><span class="p">)</span>
-    <span class="n">h2</span> <span class="o">=</span> <span class="n">h2</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">h2</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-9</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nf">float</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">abs</span><span class="p">(</span><span class="n">h1</span> <span class="o">-</span> <span class="n">h2</span><span class="p">)))</span>
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">python
+def l1_hist_distance(h1: np.ndarray, h2: np.ndarray) -&gt; float:
+ h1 = h1 / (np.sum(h1) + 1e-9)
+ h2 = h2 / (np.sum(h2) + 1e-9)
+ return float(np.sum(np.abs(h1 - h2)))
+</code></p>
 
 <p>This works well for:</p>
 <ul>
@@ -647,24 +646,19 @@ Common strategies:</p>
 <p>Anomaly detection has messy labels, so evaluate with multiple lenses:</p>
 
 <ul>
-  <li><strong>Incident replay</strong>
-    <ul>
-      <li>replay historical telemetry</li>
-      <li>check if detectors would have fired on known incidents</li>
-    </ul>
+  <li><strong>Incident replay</strong></li>
+  <li>replay historical telemetry</li>
+  <li>
+    <p>check if detectors would have fired on known incidents</p>
   </li>
-  <li><strong>Synthetic corruptions</strong>
-    <ul>
-      <li>inject clipping, dropouts, resampling errors, packet loss</li>
-      <li>validate detection delay and severity mapping</li>
-    </ul>
+  <li><strong>Synthetic corruptions</strong></li>
+  <li>inject clipping, dropouts, resampling errors, packet loss</li>
+  <li>
+    <p>validate detection delay and severity mapping</p>
   </li>
-  <li><strong>Controlled rollouts</strong>
-    <ul>
-      <li>roll out detector configs gradually</li>
-      <li>measure alert volume, confirmed true positives, and mitigation impact</li>
-    </ul>
-  </li>
+  <li><strong>Controlled rollouts</strong></li>
+  <li>roll out detector configs gradually</li>
+  <li>measure alert volume, confirmed true positives, and mitigation impact</li>
 </ul>
 
 <p>Metrics that matter:</p>
@@ -837,27 +831,22 @@ Design guidelines:</p>
 <p>In addition to generic “precision/latency”, speech teams track metrics that map to real failure modes:</p>
 
 <ul>
-  <li><strong>Audio frontend health</strong>
-    <ul>
-      <li>sample rate distribution (should be stable)</li>
-      <li>input route distribution (BT vs wired vs built-in mic)</li>
-      <li>VAD speech fraction (sudden changes suggest frontend bugs)</li>
-    </ul>
+  <li><strong>Audio frontend health</strong></li>
+  <li>sample rate distribution (should be stable)</li>
+  <li>input route distribution (BT vs wired vs built-in mic)</li>
+  <li>
+    <p>VAD speech fraction (sudden changes suggest frontend bugs)</p>
   </li>
-  <li><strong>ASR decode health</strong>
-    <ul>
-      <li>blank token rate (CTC-like systems)</li>
-      <li>average token entropy / confidence</li>
-      <li>repetition rate (looping outputs)</li>
-    </ul>
+  <li><strong>ASR decode health</strong></li>
+  <li>blank token rate (CTC-like systems)</li>
+  <li>average token entropy / confidence</li>
+  <li>
+    <p>repetition rate (looping outputs)</p>
   </li>
-  <li><strong>User experience proxies</strong>
-    <ul>
-      <li>re-try rate (“user repeated the command”)</li>
-      <li>correction rate (“user edited the transcript”)</li>
-      <li>abort rate (user cancels mid-utterance)</li>
-    </ul>
-  </li>
+  <li><strong>User experience proxies</strong></li>
+  <li>re-try rate (“user repeated the command”)</li>
+  <li>correction rate (“user edited the transcript”)</li>
+  <li>abort rate (user cancels mid-utterance)</li>
 </ul>
 
 <p>These metrics help you distinguish:</p>
@@ -888,14 +877,11 @@ Design guidelines:</p>
 <h3 id="103-confusing-model-issues-with-audio-pipeline-issues">10.3 Confusing model issues with audio pipeline issues</h3>
 <p>Mitigation:</p>
 <ul>
-  <li>detect anomalies at multiple layers:
-    <ul>
-      <li>signal level</li>
-      <li>feature level</li>
-      <li>model confidence level
+  <li>detect anomalies at multiple layers:</li>
+  <li>signal level</li>
+  <li>feature level</li>
+  <li>model confidence level
 If only signal metrics spike, it’s likely pipeline/transport.</li>
-    </ul>
-  </li>
 </ul>
 
 <h3 id="104-debugging-playbook-what-you-do-during-an-incident">10.4 Debugging playbook (what you do during an incident)</h3>
@@ -1104,30 +1090,24 @@ you need guardrails, canarying, and time-bounded actions to avoid oscillations a
 <p>One of the best ways to evaluate anomaly detectors without user audio is to create synthetic corruptions:</p>
 
 <ul>
-  <li><strong>Clipping</strong>
-    <ul>
-      <li>multiply amplitude and clamp to [-1, 1]</li>
-      <li>expected detector: clipping rate spikes</li>
-    </ul>
+  <li><strong>Clipping</strong></li>
+  <li>multiply amplitude and clamp to [-1, 1]</li>
+  <li>
+    <p>expected detector: clipping rate spikes</p>
   </li>
-  <li><strong>Dropouts</strong>
-    <ul>
-      <li>zero out random 50–200ms spans</li>
-      <li>expected detector: zero fraction spikes, jitter/PLC metrics may spike in streaming</li>
-    </ul>
+  <li><strong>Dropouts</strong></li>
+  <li>zero out random 50–200ms spans</li>
+  <li>
+    <p>expected detector: zero fraction spikes, jitter/PLC metrics may spike in streaming</p>
   </li>
-  <li><strong>Sample rate mismatch</strong>
-    <ul>
-      <li>resample to 44.1kHz but label as 16kHz (or vice versa)</li>
-      <li>expected detector: feature distribution shifts, confidence collapses</li>
-    </ul>
+  <li><strong>Sample rate mismatch</strong></li>
+  <li>resample to 44.1kHz but label as 16kHz (or vice versa)</li>
+  <li>
+    <p>expected detector: feature distribution shifts, confidence collapses</p>
   </li>
-  <li><strong>Codec artifacts</strong>
-    <ul>
-      <li>apply low bitrate compression and packet loss simulation</li>
-      <li>expected detector: spectral flatness/centroid shifts, transport metrics spike</li>
-    </ul>
-  </li>
+  <li><strong>Codec artifacts</strong></li>
+  <li>apply low bitrate compression and packet loss simulation</li>
+  <li>expected detector: spectral flatness/centroid shifts, transport metrics spike</li>
 </ul>
 
 <p>These recipes make incident replay far more robust because you can validate detectors against known failure modes without collecting real user audio.</p>
@@ -1232,35 +1212,29 @@ you avoid “we can’t debug because privacy” and “we leaked privacy to deb
 <p>If you can build only one dashboard, include:</p>
 
 <ul>
-  <li><strong>User impact</strong>
-    <ul>
-      <li>command success / completion rate (or best proxy)</li>
-      <li>“no speech detected” rate</li>
-      <li>user retry/correction rate</li>
-    </ul>
+  <li><strong>User impact</strong></li>
+  <li>command success / completion rate (or best proxy)</li>
+  <li>“no speech detected” rate</li>
+  <li>
+    <p>user retry/correction rate</p>
   </li>
-  <li><strong>Signal health</strong>
-    <ul>
-      <li>RMS distribution (p50/p95)</li>
-      <li>clipping rate</li>
-      <li>zero fraction</li>
-    </ul>
+  <li><strong>Signal health</strong></li>
+  <li>RMS distribution (p50/p95)</li>
+  <li>clipping rate</li>
+  <li>
+    <p>zero fraction</p>
   </li>
-  <li><strong>Transport health (streaming)</strong>
-    <ul>
-      <li>frame drop rate</li>
-      <li>jitter/underrun rate</li>
-      <li>PLC/concealment rate</li>
-    </ul>
+  <li><strong>Transport health (streaming)</strong></li>
+  <li>frame drop rate</li>
+  <li>jitter/underrun rate</li>
+  <li>
+    <p>PLC/concealment rate</p>
   </li>
-  <li><strong>Attribution panels</strong>
-    <ul>
-      <li>by app version</li>
-      <li>by codec type</li>
-      <li>by device bucket</li>
-      <li>by region</li>
-    </ul>
-  </li>
+  <li><strong>Attribution panels</strong></li>
+  <li>by app version</li>
+  <li>by codec type</li>
+  <li>by device bucket</li>
+  <li>by region</li>
 </ul>
 
 <p>This dashboard makes anomalies obvious and shortens “where is it happening?” to a few minutes.</p>

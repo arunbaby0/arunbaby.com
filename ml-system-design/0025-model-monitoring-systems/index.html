@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Model Monitoring Systems">
     <meta itemprop="description" content="The silent killer of ML models is not a bug in the code, but a change in the world.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -290,17 +290,18 @@ In Machine Learning, if the world changes but your model stays the same, the mod
 
 <h2 id="high-level-architecture-the-monitoring-stack">High-Level Architecture: The Monitoring Stack</h2>
 
-<pre><code class="language-ascii">+-----------+     +------------+     +-------------+
-| Live App  | --&gt; | Log Stream | --&gt; | Drift Calc  |
-+-----------+     +------------+     +-------------+
-(FastAPI/Go)      (Kafka/S3)         (Airflow/Spark)
-                                           |
-                                           v
-+-----------+     +------------+     +-------------+
-| Alerting  | &lt;-- | Dashboard  | &lt;-- | Metrics DB  |
-+-----------+     +------------+     +-------------+
-(PagerDuty)       (Grafana)          (Prometheus)
-</code></pre>
+<p><code class="language-plaintext highlighter-rouge">ascii
++-----------+ +------------+ +-------------+
+| Live App | --&gt; | Log Stream | --&gt; | Drift Calc |
++-----------+ +------------+ +-------------+
+(FastAPI/Go) (Kafka/S3) (Airflow/Spark)
+ |
+ v
++-----------+ +------------+ +-------------+
+| Alerting | &lt;-- | Dashboard | &lt;-- | Metrics DB |
++-----------+ +------------+ +-------------+
+(PagerDuty) (Grafana) (Prometheus)
+</code></p>
 
 <p>How do we build a system to catch this?</p>
 
@@ -314,14 +315,11 @@ In Machine Learning, if the world changes but your model stays the same, the mod
 <h3 id="2-the-calculation-layer-drift-detection">2. The Calculation Layer (Drift Detection)</h3>
 <p>A batch job (Airflow) or stream processor (Flink) calculates statistics.</p>
 <ul>
-  <li><strong>Statistical Tests:</strong>
-    <ul>
-      <li><strong>KS-Test (Kolmogorov-Smirnov):</strong> For continuous features. Measures max distance between two CDFs.</li>
-      <li><strong>Chi-Square Test:</strong> For categorical features.</li>
-      <li><strong>PSI (Population Stability Index):</strong> Industry standard for financial models.</li>
-      <li><strong>KL Divergence:</strong> Measures information loss.</li>
-    </ul>
-  </li>
+  <li><strong>Statistical Tests:</strong></li>
+  <li><strong>KS-Test (Kolmogorov-Smirnov):</strong> For continuous features. Measures max distance between two CDFs.</li>
+  <li><strong>Chi-Square Test:</strong> For categorical features.</li>
+  <li><strong>PSI (Population Stability Index):</strong> Industry standard for financial models.</li>
+  <li><strong>KL Divergence:</strong> Measures information loss.</li>
 </ul>
 
 <h3 id="3-the-visualization-layer-dashboards">3. The Visualization Layer (Dashboards)</h3>
@@ -344,31 +342,32 @@ In Machine Learning, if the world changes but your model stays the same, the mod
 
 <p><strong>Implementation in Python:</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+import numpy as np</p>
 
-<span class="k">def</span> <span class="nf">calculate_psi</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span> <span class="n">actual</span><span class="p">,</span> <span class="n">buckets</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-    <span class="c1"># 1. Define buckets (breakpoints) based on Expected distribution
-</span>    <span class="n">breakpoints</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">percentile</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span> <span class="n">np</span><span class="p">.</span><span class="nf">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">buckets</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-    
-    <span class="c1"># 2. Calculate frequencies
-</span>    <span class="n">expected_percents</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">histogram</span><span class="p">(</span><span class="n">expected</span><span class="p">,</span> <span class="n">breakpoints</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">expected</span><span class="p">)</span>
-    <span class="n">actual_percents</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">histogram</span><span class="p">(</span><span class="n">actual</span><span class="p">,</span> <span class="n">breakpoints</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">actual</span><span class="p">)</span>
-    
-    <span class="c1"># 3. Avoid division by zero
-</span>    <span class="n">expected_percents</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">where</span><span class="p">(</span><span class="n">expected_percents</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.0001</span><span class="p">,</span> <span class="n">expected_percents</span><span class="p">)</span>
-    <span class="n">actual_percents</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">where</span><span class="p">(</span><span class="n">actual_percents</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.0001</span><span class="p">,</span> <span class="n">actual_percents</span><span class="p">)</span>
-    
-    <span class="c1"># 4. Calculate PSI
-</span>    <span class="n">psi_values</span> <span class="o">=</span> <span class="p">(</span><span class="n">actual_percents</span> <span class="o">-</span> <span class="n">expected_percents</span><span class="p">)</span> <span class="o">*</span> \
-                 <span class="n">np</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="n">actual_percents</span> <span class="o">/</span> <span class="n">expected_percents</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">psi_values</span><span class="p">)</span>
+<p>def calculate_psi(expected, actual, buckets=10):
+ # 1. Define buckets (breakpoints) based on Expected distribution
+ breakpoints = np.percentile(expected, np.linspace(0, 100, buckets + 1))</p>
 
-<span class="c1"># Example
-</span><span class="n">train_data</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
-<span class="n">prod_data</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">normal</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span> <span class="c1"># Mean shifted
-</span><span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">PSI: </span><span class="si">{</span><span class="nf">calculate_psi</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">prod_data</span><span class="p">)</span><span class="si">:</span><span class="p">.</span><span class="mi">4</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p># 2. Calculate frequencies
+ expected_percents = np.histogram(expected, breakpoints)[0] / len(expected)
+ actual_percents = np.histogram(actual, breakpoints)[0] / len(actual)</p>
+
+<p># 3. Avoid division by zero
+ expected_percents = np.where(expected_percents == 0, 0.0001, expected_percents)
+ actual_percents = np.where(actual_percents == 0, 0.0001, actual_percents)</p>
+
+<p># 4. Calculate PSI
+ psi_values = (actual_percents - expected_percents) * <br />
+ np.log(actual_percents / expected_percents)</p>
+
+<p>return np.sum(psi_values)</p>
+
+<h1 id="example">Example</h1>
+<p>train_data = np.random.normal(0, 1, 1000)
+prod_data = np.random.normal(0.5, 1, 1000) # Mean shifted
+print(f”PSI: {calculate_psi(train_data, prod_data):.4f}”)
+``</p>
 
 <h2 id="production-engineering-async-vs-sync-monitoring">Production Engineering: Async vs. Sync Monitoring</h2>
 
@@ -445,41 +444,42 @@ You need “Protected Attributes” (Race, Gender) in your logs.
 
 <p>Let’s build a real-time monitor using <strong>FastAPI</strong> and <strong>Prometheus</strong>.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span>
-<span class="kn">from</span> <span class="n">prometheus_client</span> <span class="kn">import</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">,</span> <span class="n">make_asgi_app</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+from fastapi import FastAPI
+from prometheus_client import Counter, Histogram, make_asgi_app
+import numpy as np</p>
 
-<span class="n">app</span> <span class="o">=</span> <span class="nc">FastAPI</span><span class="p">()</span>
+<p>app = FastAPI()</p>
 
-<span class="c1"># Metrics
-</span><span class="n">PREDICTION_COUNTER</span> <span class="o">=</span> <span class="nc">Counter</span><span class="p">(</span><span class="sh">"</span><span class="s">model_predictions_total</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Total predictions</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">INPUT_VALUE_HIST</span> <span class="o">=</span> <span class="nc">Histogram</span><span class="p">(</span><span class="sh">"</span><span class="s">input_feature_value</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Distribution of input feature</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">DRIFT_GAUGE</span> <span class="o">=</span> <span class="nc">Gauge</span><span class="p">(</span><span class="sh">"</span><span class="s">model_drift_score</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Current PSI score</span><span class="sh">"</span><span class="p">)</span>
+<h1 id="metrics">Metrics</h1>
+<p>PREDICTION_COUNTER = Counter(“model_predictions_total”, “Total predictions”)
+INPUT_VALUE_HIST = Histogram(“input_feature_value”, “Distribution of input feature”)
+DRIFT_GAUGE = Gauge(“model_drift_score”, “Current PSI score”)</p>
 
-<span class="c1"># Reference Distribution (loaded from file)
-</span><span class="n">REF_DIST</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sh">"</span><span class="s">reference_dist.npy</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">CURRENT_WINDOW</span> <span class="o">=</span> <span class="p">[]</span>
+<h1 id="reference-distribution-loaded-from-file">Reference Distribution (loaded from file)</h1>
+<p>REF_DIST = np.load(“reference_dist.npy”)
+CURRENT_WINDOW = []</p>
 
-<span class="nd">@app.post</span><span class="p">(</span><span class="sh">"</span><span class="s">/predict</span><span class="sh">"</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
-    <span class="c1"># 1. Log Metric
-</span>    <span class="n">PREDICTION_COUNTER</span><span class="p">.</span><span class="nf">inc</span><span class="p">()</span>
-    <span class="n">INPUT_VALUE_HIST</span><span class="p">.</span><span class="nf">observe</span><span class="p">(</span><span class="n">features</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="c1"># Monitor 1st feature
-</span>    
-    <span class="c1"># 2. Add to Window for Drift Calc
-</span>    <span class="n">CURRENT_WINDOW</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">features</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">CURRENT_WINDOW</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">:</span>
-        <span class="n">score</span> <span class="o">=</span> <span class="nf">calculate_psi</span><span class="p">(</span><span class="n">REF_DIST</span><span class="p">,</span> <span class="n">CURRENT_WINDOW</span><span class="p">)</span>
-        <span class="n">DRIFT_GAUGE</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
-        <span class="n">CURRENT_WINDOW</span><span class="p">.</span><span class="nf">clear</span><span class="p">()</span>
-        
-    <span class="c1"># 3. Predict
-</span>    <span class="k">return</span> <span class="p">{</span><span class="sh">"</span><span class="s">prediction</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">}</span>
+<p>@app.post(“/predict”)
+def predict(features: list):
+ # 1. Log Metric
+ PREDICTION_COUNTER.inc()
+ INPUT_VALUE_HIST.observe(features[0]) # Monitor 1st feature</p>
 
-<span class="c1"># Expose /metrics endpoint for Prometheus
-</span><span class="n">metrics_app</span> <span class="o">=</span> <span class="nf">make_asgi_app</span><span class="p">()</span>
-<span class="n">app</span><span class="p">.</span><span class="nf">mount</span><span class="p">(</span><span class="sh">"</span><span class="s">/metrics</span><span class="sh">"</span><span class="p">,</span> <span class="n">metrics_app</span><span class="p">)</span>
-</code></pre></div></div>
+<p># 2. Add to Window for Drift Calc
+ CURRENT_WINDOW.append(features[0])
+ if len(CURRENT_WINDOW) &gt; 1000:
+ score = calculate_psi(REF_DIST, CURRENT_WINDOW)
+ DRIFT_GAUGE.set(score)
+ CURRENT_WINDOW.clear()</p>
+
+<p># 3. Predict
+ return {“prediction”: 0.9}</p>
+
+<h1 id="expose-metrics-endpoint-for-prometheus">Expose /metrics endpoint for Prometheus</h1>
+<p>metrics_app = make_asgi_app()
+app.mount(“/metrics”, metrics_app)
+``</p>
 
 <p><strong>Architecture:</strong></p>
 <ol>
@@ -535,16 +535,17 @@ An unsupervised algorithm that isolates anomalies.</p>
   <li>Anomalies are isolated quickly (short path length). Normal points require many splits (long path length).</li>
 </ol>
 
-<p><strong>Implementation:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">sklearn.ensemble</span> <span class="kn">import</span> <span class="n">IsolationForest</span>
+<p><strong>Implementation:</strong>
+``python
+from sklearn.ensemble import IsolationForest</p>
 
-<span class="c1"># Train on "Normal" data
-</span><span class="n">clf</span> <span class="o">=</span> <span class="nc">IsolationForest</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">).</span><span class="nf">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<h1 id="train-on-normal-data">Train on “Normal” data</h1>
+<p>clf = IsolationForest(random_state=0).fit(X_train)</p>
 
-<span class="c1"># Predict on new data
-# -1 = Outlier, 1 = Normal
-</span><span class="n">preds</span> <span class="o">=</span> <span class="n">clf</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">X_new</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="predict-on-new-data">Predict on new data</h1>
+<h1 id="-1--outlier-1--normal">-1 = Outlier, 1 = Normal</h1>
+<p>preds = clf.predict(X_new)
+``</p>
 
 <h2 id="deployment-strategies-ab-testing-vs-shadow-mode">Deployment Strategies: A/B Testing vs. Shadow Mode</h2>
 
@@ -806,27 +807,28 @@ Allows monitoring frequency of strings (e.g., URLs) without knowing who visited 
 <p>Don’t click around in the UI. Version control your dashboards.
 <strong>Jsonnet</strong> is the standard for generating Grafana JSON.</p>
 
-<div class="language-jsonnet highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">local</span> <span class="nx">grafana</span> <span class="p">=</span> <span class="k">import</span> <span class="s">'grafonnet/grafana.libsonnet'</span><span class="p">;</span>
-<span class="k">local</span> <span class="nx">dashboard</span> <span class="p">=</span> <span class="nx">grafana</span><span class="p">.</span><span class="nx">dashboard</span><span class="p">;</span>
-<span class="k">local</span> <span class="nx">graph</span> <span class="p">=</span> <span class="nx">grafana</span><span class="p">.</span><span class="nx">graphPanel</span><span class="p">;</span>
-<span class="k">local</span> <span class="nx">prometheus</span> <span class="p">=</span> <span class="nx">grafana</span><span class="p">.</span><span class="nx">prometheus</span><span class="p">;</span>
+<p>``jsonnet
+local grafana = import ‘grafonnet/grafana.libsonnet’;
+local dashboard = grafana.dashboard;
+local graph = grafana.graphPanel;
+local prometheus = grafana.prometheus;</p>
 
-<span class="nx">dashboard</span><span class="p">.</span><span class="nx">new</span><span class="p">(</span>
-  <span class="s">'Model Health'</span><span class="p">,</span>
-  <span class="nx">schemaVersion</span><span class="p">=</span><span class="mi">16</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="p">.</span><span class="nx">addPanel</span><span class="p">(</span>
-  <span class="nx">graph</span><span class="p">.</span><span class="nx">new</span><span class="p">(</span>
-    <span class="s">'Prediction Drift (PSI)'</span><span class="p">,</span>
-    <span class="nx">datasource</span><span class="p">=</span><span class="s">'Prometheus'</span><span class="p">,</span>
-  <span class="p">)</span>
-  <span class="p">.</span><span class="nx">addTarget</span><span class="p">(</span>
-    <span class="nx">prometheus</span><span class="p">.</span><span class="nx">target</span><span class="p">(</span>
-      <span class="s">'model_drift_score'</span><span class="p">,</span>
-    <span class="p">)</span>
-  <span class="p">)</span>
-<span class="p">)</span>
-</code></pre></div></div>
+<p>dashboard.new(
+ ‘Model Health’,
+ schemaVersion=16,
+)
+.addPanel(
+ graph.new(
+ ‘Prediction Drift (PSI)’,
+ datasource=’Prometheus’,
+ )
+ .addTarget(
+ prometheus.target(
+ ‘model_drift_score’,
+ )
+ )
+)
+``</p>
 
 <h2 id="appendix-e-the-human-in-the-loop">Appendix E: The Human-in-the-Loop</h2>
 
@@ -847,10 +849,10 @@ Allows monitoring frequency of strings (e.g., URLs) without knowing who visited 
 <ol>
   <li>
     <p><strong>Q:</strong> “How do you monitor a model that runs on a mobile device (Edge)?”
-<strong>A:</strong> You can’t send all data to the cloud (bandwidth). Use <strong>Federated Monitoring</strong>. Calculate histograms locally on the device, send only the histogram (small JSON) to the server for aggregation.</p>
+ <strong>A:</strong> You can’t send all data to the cloud (bandwidth). Use <strong>Federated Monitoring</strong>. Calculate histograms locally on the device, send only the histogram (small JSON) to the server for aggregation.</p>
   </li>
   <li><strong>Q:</strong> “What is the difference between Model Performance and Business Performance?”
-<strong>A:</strong>
+ <strong>A:</strong>
     <ul>
       <li><strong>Model:</strong> AUC, Accuracy, LogLoss.</li>
       <li><strong>Business:</strong> Revenue, Churn, CTR.</li>
@@ -858,7 +860,7 @@ Allows monitoring frequency of strings (e.g., URLs) without knowing who visited 
     </ul>
   </li>
   <li><strong>Q:</strong> “How do you distinguish between Data Drift and a Bug?”
-<strong>A:</strong>
+ <strong>A:</strong>
     <ul>
       <li><strong>Bug:</strong> Sudden step-change in metrics (usually after a deployment).</li>
       <li><strong>Drift:</strong> Gradual trend over days/weeks.</li>

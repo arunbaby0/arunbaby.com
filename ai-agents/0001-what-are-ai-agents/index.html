@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="What are AI Agents?">
     <meta itemprop="description" content="“From Passive Tools to Active Assistants: The Cognitive Revolution in Software.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -483,7 +483,7 @@
 <p>Researchers filled a virtual “Smallville” with 25 agents (John, Alice, Bob…).</p>
 <ul>
   <li><strong>The Life:</strong> They woke up, cooked breakfast, went to work, and gossiped.</li>
-  <li><strong>The Emergence:</strong> Users saw emergent behavior. One agent planned a Valentine’s Day party. It told another agent. That agent passed the invite on. On the day of the party, 5 agents showed up. <strong>No one programmed the party.</strong> It happened organically through the agents’ memory and planning interactions.</li>
+  <li><strong>The Emergence:</strong> Users saw emergent behavior. One agent planned a Valentine’s party. It told another agent. That agent passed the invite on. On the day of the party, 5 agents showed up. <strong>No one programmed the party.</strong> It happened organically through the agents’ memory and planning interactions.</li>
 </ul>
 
 <h3 id="54-devin-the-software-engineer">5.4 Devin: The Software Engineer</h3>
@@ -499,94 +499,95 @@
 
 <p>To demystify the magic, let’s build a functional ReAct agent in Python. This is a simplified version of what frameworks like LangChain do under the hood.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">json</span>
-<span class="kn">import</span> <span class="n">re</span>
+<p>``python
+import json
+import re</p>
 
-<span class="c1"># Mock LLM for the sake of the example
-# In reality, this would call OpenAI/Anthropic
-</span><span class="k">def</span> <span class="nf">call_llm</span><span class="p">(</span><span class="n">prompt</span><span class="p">):</span>
- <span class="sh">"""</span><span class="s">
+<h1 id="mock-llm-for-the-sake-of-the-example">Mock LLM for the sake of the example</h1>
+<h1 id="in-reality-this-would-call-openaianthropic">In reality, this would call OpenAI/Anthropic</h1>
+<p>def call_llm(prompt):
+ “””
  Simulated LLM response to demonstrate the ReAct loop.
- </span><span class="sh">"""</span>
- <span class="k">if</span> <span class="sh">"</span><span class="s">What is 20 * 15</span><span class="sh">"</span> <span class="ow">in</span> <span class="n">prompt</span> <span class="ow">and</span> <span class="sh">"</span><span class="s">Action</span><span class="sh">"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prompt</span><span class="p">:</span>
- <span class="k">return</span> <span class="sh">"</span><span class="s">Thought: I need to calculate 20 * 15. I have a calc tool.</span><span class="se">\n</span><span class="s">Action: calc(20, 15)</span><span class="sh">"</span>
+ “””
+ if “What is 20 * 15” in prompt and “Action” not in prompt:
+ return “Thought: I need to calculate 20 * 15. I have a calc tool.\nAction: calc(20, 15)”</p>
 
- <span class="k">if</span> <span class="sh">"</span><span class="s">Observation: 300</span><span class="sh">"</span> <span class="ow">in</span> <span class="n">prompt</span><span class="p">:</span>
- <span class="k">return</span> <span class="sh">"</span><span class="s">Thought: I have the answer.</span><span class="se">\n</span><span class="s">Final Answer: The result is 300.</span><span class="sh">"</span>
+<p>if “Observation: 300” in prompt:
+ return “Thought: I have the answer.\nFinal Answer: The result is 300.”</p>
 
- <span class="k">return</span> <span class="sh">"</span><span class="s">Thought: I</span><span class="sh">'</span><span class="s">m confused.</span><span class="sh">"</span>
+<p>return “Thought: I’m confused.”</p>
 
-<span class="k">class</span> <span class="nc">Tool</span><span class="p">:</span>
- <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
- <span class="n">self</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
- <span class="n">self</span><span class="p">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
+<p>class Tool:
+ def <strong>init</strong>(self, name, func):
+ self.name = name
+ self.func = func</p>
 
- <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
- <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+<p>def run(self, <em>args):
+ return self.func(</em>args)</p>
 
-<span class="c1"># Tools
-</span><span class="k">def</span> <span class="nf">multiply</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
- <span class="k">return</span> <span class="n">a</span> <span class="o">*</span> <span class="n">b</span>
+<h1 id="tools">Tools</h1>
+<p>def multiply(a, b):
+ return a * b</p>
 
-<span class="k">class</span> <span class="nc">Agent</span><span class="p">:</span>
- <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">system_prompt</span><span class="p">,</span> <span class="n">tools</span><span class="p">):</span>
- <span class="n">self</span><span class="p">.</span><span class="n">system_prompt</span> <span class="o">=</span> <span class="n">system_prompt</span>
- <span class="n">self</span><span class="p">.</span><span class="n">tools</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">.</span><span class="n">name</span><span class="p">:</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tools</span><span class="p">}</span>
- <span class="n">self</span><span class="p">.</span><span class="n">memory</span> <span class="o">=</span> <span class="p">[]</span>
+<p>class Agent:
+ def <strong>init</strong>(self, system_prompt, tools):
+ self.system_prompt = system_prompt
+ self.tools = {t.name: t for t in tools}
+ self.memory = []</p>
 
- <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">goal</span><span class="p">):</span>
- <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Goal: </span><span class="si">{</span><span class="n">goal</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
- <span class="n">self</span><span class="p">.</span><span class="n">memory</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">User: </span><span class="si">{</span><span class="n">goal</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p>def run(self, goal):
+ print(f”Goal: {goal}”)
+ self.memory.append(f”User: {goal}”)</p>
 
- <span class="n">step_count</span> <span class="o">=</span> <span class="mi">0</span>
- <span class="k">while</span> <span class="n">step_count</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span> <span class="c1"># Safety limit
-</span> <span class="c1"># 1. Construct Prompt
-</span> <span class="n">current_context</span> <span class="o">=</span> <span class="sh">"</span><span class="se">\n</span><span class="sh">"</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">memory</span><span class="p">)</span>
- <span class="n">full_prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">system_prompt</span><span class="si">}</span><span class="se">\n\n</span><span class="s">History:</span><span class="se">\n</span><span class="si">{</span><span class="n">current_context</span><span class="si">}</span><span class="sh">"</span>
+<p>step_count = 0
+ while step_count &lt; 5: # Safety limit
+ # 1. Construct Prompt
+ current_context = “\n”.join(self.memory)
+ full_prompt = f”{self.system_prompt}\n\nHistory:\n{current_context}”</p>
 
- <span class="c1"># 2. Get LLM Response
-</span> <span class="n">response_text</span> <span class="o">=</span> <span class="nf">call_llm</span><span class="p">(</span><span class="n">full_prompt</span><span class="p">)</span>
- <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">---</span><span class="se">\n</span><span class="s">Agent: </span><span class="si">{</span><span class="n">response_text</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
- <span class="n">self</span><span class="p">.</span><span class="n">memory</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">response_text</span><span class="p">)</span>
+<p># 2. Get LLM Response
+ response_text = call_llm(full_prompt)
+ print(f”—\nAgent: {response_text}”)
+ self.memory.append(response_text)</p>
 
- <span class="c1"># 3. Check for Final Answer
-</span> <span class="k">if</span> <span class="sh">"</span><span class="s">Final Answer:</span><span class="sh">"</span> <span class="ow">in</span> <span class="n">response_text</span><span class="p">:</span>
- <span class="k">return</span> <span class="n">response_text</span><span class="p">.</span><span class="nf">split</span><span class="p">(</span><span class="sh">"</span><span class="s">Final Answer:</span><span class="sh">"</span><span class="p">)[</span><span class="mi">1</span><span class="p">].</span><span class="nf">strip</span><span class="p">()</span>
+<p># 3. Check for Final Answer
+ if “Final Answer:” in response_text:
+ return response_text.split(“Final Answer:”)[1].strip()</p>
 
- <span class="c1"># 4. Parse Tool Action
-</span> <span class="c1"># Regex to find "Action: name(args)"
-</span> <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="p">.</span><span class="nf">search</span><span class="p">(</span><span class="sa">r</span><span class="sh">"</span><span class="s">Action: (\w+)\((.*)\)</span><span class="sh">"</span><span class="p">,</span> <span class="n">response_text</span><span class="p">)</span>
- <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
- <span class="n">tool_name</span> <span class="o">=</span> <span class="k">match</span><span class="p">.</span><span class="nf">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
- <span class="n">tool_args_str</span> <span class="o">=</span> <span class="k">match</span><span class="p">.</span><span class="nf">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
- <span class="k">try</span><span class="p">:</span>
- <span class="n">tool_args</span> <span class="o">=</span> <span class="p">[</span><span class="nf">int</span><span class="p">(</span><span class="n">x</span><span class="p">.</span><span class="nf">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tool_args_str</span><span class="p">.</span><span class="nf">split</span><span class="p">(</span><span class="sh">"</span><span class="s">,</span><span class="sh">"</span><span class="p">)]</span>
- <span class="k">except</span><span class="p">:</span>
- <span class="n">tool_args</span> <span class="o">=</span> <span class="p">[]</span>
+<p># 4. Parse Tool Action
+ # Regex to find “Action: name(args)”
+ match = re.search(r”Action: (\w+)((.*))”, response_text)
+ if match:
+ tool_name = match.group(1)
+ tool_args_str = match.group(2)
+ try:
+ tool_args = [int(x.strip()) for x in tool_args_str.split(“,”)]
+ except:
+ tool_args = []</p>
 
- <span class="c1"># 5. Execute Action
-</span> <span class="k">if</span> <span class="n">tool_name</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">tools</span><span class="p">:</span>
- <span class="n">result</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">tools</span><span class="p">[</span><span class="n">tool_name</span><span class="p">].</span><span class="nf">run</span><span class="p">(</span><span class="o">*</span><span class="n">tool_args</span><span class="p">)</span>
- <span class="n">observation</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Observation: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="sh">"</span>
- <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">System: </span><span class="si">{</span><span class="n">observation</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
- <span class="n">self</span><span class="p">.</span><span class="n">memory</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span>
- <span class="k">else</span><span class="p">:</span>
- <span class="n">self</span><span class="p">.</span><span class="n">memory</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Observation: Error - Tool </span><span class="si">{</span><span class="n">tool_name</span><span class="si">}</span><span class="s"> not found.</span><span class="sh">"</span><span class="p">)</span>
+<p># 5. Execute Action
+ if tool_name in self.tools:
+ result = self.tools[tool_name].run(*tool_args)
+ observation = f”Observation: {result}”
+ print(f”System: {observation}”)
+ self.memory.append(observation)
+ else:
+ self.memory.append(f”Observation: Error - Tool {tool_name} not found.”)</p>
 
- <span class="n">step_count</span> <span class="o">+=</span> <span class="mi">1</span>
+<p>step_count += 1</p>
 
- <span class="k">return</span> <span class="sh">"</span><span class="s">Failed to find answer.</span><span class="sh">"</span>
+<p>return “Failed to find answer.”</p>
 
-<span class="c1"># Run it
-</span><span class="n">calc_tool</span> <span class="o">=</span> <span class="nc">Tool</span><span class="p">(</span><span class="sh">"</span><span class="s">calc</span><span class="sh">"</span><span class="p">,</span> <span class="n">multiply</span><span class="p">)</span>
-<span class="n">agent</span> <span class="o">=</span> <span class="nc">Agent</span><span class="p">(</span>
- <span class="n">system_prompt</span><span class="o">=</span><span class="sh">"</span><span class="s">You are a helpful assistant. Use Format: Thought -&gt; Action -&gt; Observation.</span><span class="sh">"</span><span class="p">,</span>
- <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">calc_tool</span><span class="p">]</span>
-<span class="p">)</span>
+<h1 id="run-it">Run it</h1>
+<p>calc_tool = Tool(“calc”, multiply)
+agent = Agent(
+ system_prompt=”You are a helpful assistant. Use Format: Thought -&gt; Action -&gt; Observation.”,
+ tools=[calc_tool]
+)</p>
 
-<span class="n">result</span> <span class="o">=</span> <span class="n">agent</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span><span class="sh">"</span><span class="s">What is 20 * 15?</span><span class="sh">"</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Result: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>result = agent.run(“What is 20 * 15?”)
+print(f”Result: {result}”)
+``</p>
 
 <h3 id="analysis-of-the-code">Analysis of the Code</h3>
 <ol>
@@ -604,7 +605,7 @@
 
 <h3 id="71-reliability-the-95-problem">7.1 Reliability (The 95% Problem)</h3>
 <p>This is the math problem of agency.
-If an agent has to perform 10 sequential steps, and each step has a 95% success rate (which is very high for an LLM), the probability of the <em>entire</em> workflow succeeding is $0.95^{10} \approx 59\%$.
+If an agent has to perform 10 sequential steps, and each step has a 95% success rate (which is very high for an LLM), the probability of the <em>entire</em> workflow succeeding is <code class="language-plaintext highlighter-rouge">0.95^{10} \approx 59\%</code>.
 Agents are fragile. A small hallucination in Step 2 (“I think the file is named <code class="language-plaintext highlighter-rouge">data.txt</code>”) becomes a catastrophic failure in Step 10 (“File not found. Crash.”). Reliability engineering—adding retry logic, validation steps, and oversight—is 80% of the work in building agents.</p>
 
 <h3 id="72-infinite-loops">7.2 Infinite Loops</h3>
@@ -744,7 +745,7 @@ Agents are fragile. A small hallucination in Step 2 (“I think the file is name
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          27 minute read
+          28 minute read
         
       </span>
     

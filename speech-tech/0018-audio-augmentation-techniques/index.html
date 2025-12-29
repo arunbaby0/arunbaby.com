@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Audio Augmentation Techniques">
     <meta itemprop="description" content="Use audio augmentation techniques to make speech models robust to noise, accents, channels, and real-world conditions—built on the same matrix/tensor transformation principles as image rotation.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -326,7 +326,7 @@ to be robust at inference time.</p>
 <ul>
   <li>Waveform-level: 1D array transforms (convolution, resampling, mixing)</li>
   <li>Spectrogram-level: 2D matrix transforms (masking, warping) very similar to
-the 2D rotation and slicing you saw in matrix DSA problems.</li>
+ the 2D rotation and slicing you saw in matrix DSA problems.</li>
 </ul>
 
 <p>Understanding 2D index manipulations (like Rotate Image) gives intuition for
@@ -338,43 +338,44 @@ time-frequency transforms in spectrogram space.</p>
 
 <p>Add background noise at a specified <strong>Signal-to-Noise Ratio (SNR)</strong>:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+import numpy as np</p>
 
-<span class="k">def</span> <span class="nf">add_noise</span><span class="p">(</span>
-    <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">noise</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">snr_db</span><span class="p">:</span> <span class="nb">float</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-    \<span class="sh">"</span><span class="se">\"\"</span><span class="s">Add noise to audio at a given SNR (in dB).
+<p>def add_noise(
+ audio: np.ndarray,
+ noise: np.ndarray,
+ snr_db: float
+) -&gt; np.ndarray:
+ """Add noise to audio at a given SNR (in dB).</p>
 
-    Args:
-        audio: Clean audio waveform (float32, [-1, 1])
-        noise: Noise waveform (float32, [-1, 1])
-        snr_db: Desired SNR in decibels (e.g., 0–20 dB)
-    </span><span class="se">\"\"\"\n</span><span class="s">    # Match noise length
-    if len(noise) &lt; len(audio):
-        # Tile noise if too short
-        repeats = int(np.ceil(len(audio) / len(noise)))
-        noise = np.tile(noise, repeats)[:len(audio)]
-    else:
-        noise = noise[:len(audio)]
+<p>Args:
+ audio: Clean audio waveform (float32, [-1, 1])
+ noise: Noise waveform (float32, [-1, 1])
+ snr_db: Desired SNR in decibels (e.g., 0–20 dB)
+ """\n # Match noise length
+ if len(noise) &lt; len(audio):
+ # Tile noise if too short
+ repeats = int(np.ceil(len(audio) / len(noise)))
+ noise = np.tile(noise, repeats)[:len(audio)]
+ else:
+ noise = noise[:len(audio)]</p>
 
-    # Compute signal and noise power
-    sig_power = np.mean(audio ** 2) + 1e-8
-    noise_power = np.mean(noise ** 2) + 1e-8
+<p># Compute signal and noise power
+ sig_power = np.mean(audio ** 2) + 1e-8
+ noise_power = np.mean(noise ** 2) + 1e-8</p>
 
-    # Desired noise power for target SNR
-    snr_linear = 10 ** (snr_db / 10.0)
-    target_noise_power = sig_power / snr_linear
+<p># Desired noise power for target SNR
+ snr_linear = 10 ** (snr_db / 10.0)
+ target_noise_power = sig_power / snr_linear</p>
 
-    # Scale noise
-    noise_scaling = np.sqrt(target_noise_power / noise_power)
-    noisy = audio + noise_scaling * noise
+<p># Scale noise
+ noise_scaling = np.sqrt(target_noise_power / noise_power)
+ noisy = audio + noise_scaling * noise</p>
 
-    # Clip to valid range
-    noisy = np.clip(noisy, -1.0, 1.0)
-    return noisy
-</span></code></pre></div></div>
+<p># Clip to valid range
+ noisy = np.clip(noisy, -1.0, 1.0)
+ return noisy
+``</p>
 
 <p>Sources of noise:</p>
 
@@ -388,15 +389,16 @@ time-frequency transforms in spectrogram space.</p>
 
 <p>Simulate room acoustics using Room Impulse Responses (RIRs):</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">scipy.signal</span>
+<p>``python
+import scipy.signal</p>
 
-<span class="k">def</span> <span class="nf">apply_reverb</span><span class="p">(</span><span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">rir</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-    \<span class="sh">"</span><span class="se">\"\"</span><span class="s">Convolve audio with room impulse response.</span><span class="se">\"\"\"\n</span><span class="s">    reverbed = scipy.signal.fftconvolve(audio, rir, mode=</span><span class="sh">'</span><span class="s">full</span><span class="sh">'</span><span class="s">)
-    # Normalize and clip
-    reverbed = reverbed / (np.max(np.abs(reverbed)) + 1e-8)
-    reverbed = np.clip(reverbed, -1.0, 1.0)
-    return reverbed
-</span></code></pre></div></div>
+<p>def apply_reverb(audio: np.ndarray, rir: np.ndarray) -&gt; np.ndarray:
+ """Convolve audio with room impulse response."""\n reverbed = scipy.signal.fftconvolve(audio, rir, mode=’full’)
+ # Normalize and clip
+ reverbed = reverbed / (np.max(np.abs(reverbed)) + 1e-8)
+ reverbed = np.clip(reverbed, -1.0, 1.0)
+ return reverbed
+``</p>
 
 <p>RIR libraries (e.g., REVERB challenge data) are commonly used in ASR training.</p>
 
@@ -404,11 +406,12 @@ time-frequency transforms in spectrogram space.</p>
 
 <p>Change speed without changing pitch:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">librosa</span>
+<p>``python
+import librosa</p>
 
-<span class="k">def</span> <span class="nf">speed_perturb</span><span class="p">(</span><span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sr</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">speed</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-    \<span class="sh">"</span><span class="se">\"\"</span><span class="s">Time-stretch audio by a given factor (e.g., 0.9, 1.1).</span><span class="se">\"\"\"\n</span><span class="s">    return librosa.effects.time_stretch(audio, rate=speed)
-</span></code></pre></div></div>
+<p>def speed_perturb(audio: np.ndarray, sr: int, speed: float) -&gt; np.ndarray:
+ """Time-stretch audio by a given factor (e.g., 0.9, 1.1)."""\n return librosa.effects.time_stretch(audio, rate=speed)
+``</p>
 
 <p>Typical factors: 0.9x, 1.0x, 1.1x. This is widely used in ASR training:</p>
 
@@ -421,9 +424,10 @@ time-frequency transforms in spectrogram space.</p>
 
 <p>Change pitch without changing speed:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">pitch_shift</span><span class="p">(</span><span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sr</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_steps</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-    \<span class="sh">"</span><span class="se">\"\"</span><span class="s">Shift pitch by n_steps (semitones).</span><span class="se">\"\"\"\n</span><span class="s">    return librosa.effects.pitch_shift(audio, sr=sr, n_steps=n_steps)
-</span></code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">python
+def pitch_shift(audio: np.ndarray, sr: int, n_steps: float) -&gt; np.ndarray:
+ \"\"\"Shift pitch by n_steps (semitones).\"\"\"\n return librosa.effects.pitch_shift(audio, sr=sr, n_steps=n_steps)
+</code></p>
 
 <p>Useful for:</p>
 
@@ -439,36 +443,37 @@ SpecAugment-style transforms directly on the <strong>time-frequency matrix</stro
 
 <h3 id="1-time--frequency-masking-specaugment">1. Time &amp; Frequency Masking (SpecAugment)</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
+<p>``python
+import torch</p>
 
-<span class="k">def</span> <span class="nf">spec_augment</span><span class="p">(</span>
-    <span class="n">spec</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">,</span>
-    <span class="n">time_mask_param</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
-    <span class="n">freq_mask_param</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">13</span><span class="p">,</span>
-    <span class="n">num_time_masks</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="n">num_freq_masks</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">:</span>
-    \<span class="sh">"</span><span class="se">\"\"</span><span class="s">Apply SpecAugment to log-mel spectrogram.
+<p>def spec_augment(
+ spec: torch.Tensor,
+ time_mask_param: int = 30,
+ freq_mask_param: int = 13,
+ num_time_masks: int = 2,
+ num_freq_masks: int = 2
+) -&gt; torch.Tensor:
+ """Apply SpecAugment to log-mel spectrogram.</p>
 
-    Args:
-        spec: (freq, time) tensor
-    </span><span class="se">\"\"\"\n</span><span class="s">    augmented = spec.clone()
-    freq, time = augmented.shape
+<p>Args:
+ spec: (freq, time) tensor
+ """\n augmented = spec.clone()
+ freq, time = augmented.shape</p>
 
-    # Frequency masking
-    for _ in range(num_freq_masks):
-        f = torch.randint(0, freq_mask_param + 1, (1,)).item()
-        f0 = torch.randint(0, max(1, freq - f + 1), (1,)).item()
-        augmented[f0:f0+f, :] = 0.0
+<p># Frequency masking
+ for _ in range(num_freq_masks):
+ f = torch.randint(0, freq_mask_param + 1, (1,)).item()
+ f0 = torch.randint(0, max(1, freq - f + 1), (1,)).item()
+ augmented[f0:f0+f, :] = 0.0</p>
 
-    # Time masking
-    for _ in range(num_time_masks):
-        t = torch.randint(0, time_mask_param + 1, (1,)).item()
-        t0 = torch.randint(0, max(1, time - t + 1), (1,)).item()
-        augmented[:, t0:t0+t] = 0.0
+<p># Time masking
+ for _ in range(num_time_masks):
+ t = torch.randint(0, time_mask_param + 1, (1,)).item()
+ t0 = torch.randint(0, max(1, time - t + 1), (1,)).item()
+ augmented[:, t0:t0+t] = 0.0</p>
 
-    return augmented
-</span></code></pre></div></div>
+<p>return augmented
+``</p>
 
 <p>This is analogous to <strong>rectangle masking</strong> on images—like randomly zeroing out
 patches, but in time/frequency coordinates instead of x/y.</p>
@@ -486,72 +491,73 @@ patches, but in time/frequency coordinates instead of x/y.</p>
 
 <h3 id="1-pytorch-example">1. PyTorch Example</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">from</span> <span class="n">torch.utils.data</span> <span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">DataLoader</span>
+<p>``python
+import torch
+from torch.utils.data import Dataset, DataLoader</p>
 
+<p>class SpeechDataset(Dataset):
+ def <strong>init</strong>(self, items, sr=16000, augment_waveform=None, augment_spec=None):
+ self.items = items
+ self.sr = sr
+ self.augment_waveform = augment_waveform
+ self.augment_spec = augment_spec</p>
 
-<span class="k">class</span> <span class="nc">SpeechDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">augment_waveform</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">augment_spec</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">items</span> <span class="o">=</span> <span class="n">items</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sr</span> <span class="o">=</span> <span class="n">sr</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">augment_waveform</span> <span class="o">=</span> <span class="n">augment_waveform</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">augment_spec</span> <span class="o">=</span> <span class="n">augment_spec</span>
+<p>def <strong>len</strong>(self):
+ return len(self.items)</p>
 
-    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">items</span><span class="p">)</span>
+<p>def <strong>getitem</strong>(self, idx):
+ audio, text = self._load_item(self.items[idx])</p>
 
-    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
-        <span class="n">audio</span><span class="p">,</span> <span class="n">text</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_load_item</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">items</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+<p># Waveform-level augmentation
+ if self.augment_waveform:
+ audio = self.augment_waveform(audio, self.sr)</p>
 
-        <span class="c1"># Waveform-level augmentation
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">augment_waveform</span><span class="p">:</span>
-            <span class="n">audio</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">augment_waveform</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">sr</span><span class="p">)</span>
+<p># Feature extraction
+ spec = self._compute_logmel(audio)</p>
 
-        <span class="c1"># Feature extraction
-</span>        <span class="n">spec</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_compute_logmel</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+<p># Spectrogram-level augmentation
+ if self.augment_spec:
+ spec = self.augment_spec(spec)</p>
 
-        <span class="c1"># Spectrogram-level augmentation
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">augment_spec</span><span class="p">:</span>
-            <span class="n">spec</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">augment_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+<p># Tokenize text, pad, etc. (omitted)
+ return spec, text</p>
 
-        <span class="c1"># Tokenize text, pad, etc. (omitted)
-</span>        <span class="k">return</span> <span class="n">spec</span><span class="p">,</span> <span class="n">text</span>
+<p>def _load_item(self, item):
+ # Load from disk / shard index
+ raise NotImplementedError</p>
 
-    <span class="k">def</span> <span class="nf">_load_item</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
-        <span class="c1"># Load from disk / shard index
-</span>        <span class="k">raise</span> <span class="nb">NotImplementedError</span>
-
-    <span class="k">def</span> <span class="nf">_compute_logmel</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="c1"># Use torchaudio or librosa
-</span>        <span class="k">raise</span> <span class="nb">NotImplementedError</span>
-</code></pre></div></div>
+<p>def _compute_logmel(self, audio):
+ # Use torchaudio or librosa
+ raise NotImplementedError
+``</p>
 
 <h3 id="2-augmentation-policies">2. Augmentation Policies</h3>
 
 <p>Define different policies by composing functions:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">random</span>
+<p>``python
+import random</p>
 
-<span class="k">def</span> <span class="nf">build_waveform_augmenter</span><span class="p">(</span><span class="n">noise_bank</span><span class="p">,</span> <span class="n">rir_bank</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">augment</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">sr</span><span class="p">):</span>
-        <span class="c1"># Randomly choose which augmentations to apply
-</span>        <span class="k">if</span> <span class="n">random</span><span class="p">.</span><span class="nf">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">0.5</span><span class="p">:</span>
-            <span class="n">noise</span> <span class="o">=</span> <span class="n">random</span><span class="p">.</span><span class="nf">choice</span><span class="p">(</span><span class="n">noise_bank</span><span class="p">)</span>
-            <span class="n">snr</span> <span class="o">=</span> <span class="n">random</span><span class="p">.</span><span class="nf">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
-            <span class="n">audio</span> <span class="o">=</span> <span class="nf">add_noise</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">noise</span><span class="p">,</span> <span class="n">snr_db</span><span class="o">=</span><span class="n">snr</span><span class="p">)</span>
+<p>def build_waveform_augmenter(noise_bank, rir_bank):
+ def augment(audio, sr):
+ # Randomly choose which augmentations to apply
+ if random.random() &lt; 0.5:
+ noise = random.choice(noise_bank)
+ snr = random.uniform(0, 20)
+ audio = add_noise(audio, noise, snr_db=snr)</p>
 
-        <span class="k">if</span> <span class="n">random</span><span class="p">.</span><span class="nf">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">0.3</span><span class="p">:</span>
-            <span class="n">rir</span> <span class="o">=</span> <span class="n">random</span><span class="p">.</span><span class="nf">choice</span><span class="p">(</span><span class="n">rir_bank</span><span class="p">)</span>
-            <span class="n">audio</span> <span class="o">=</span> <span class="nf">apply_reverb</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">rir</span><span class="p">)</span>
+<p>if random.random() &lt; 0.3:
+ rir = random.choice(rir_bank)
+ audio = apply_reverb(audio, rir)</p>
 
-        <span class="k">if</span> <span class="n">random</span><span class="p">.</span><span class="nf">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">0.3</span><span class="p">:</span>
-            <span class="n">speed</span> <span class="o">=</span> <span class="n">random</span><span class="p">.</span><span class="nf">choice</span><span class="p">([</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">])</span>
-            <span class="n">audio</span> <span class="o">=</span> <span class="nf">speed_perturb</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">sr</span><span class="p">,</span> <span class="n">speed</span><span class="p">)</span>
+<p>if random.random() &lt; 0.3:
+ speed = random.choice([0.9, 1.0, 1.1])
+ audio = speed_perturb(audio, sr, speed)</p>
 
-        <span class="k">return</span> <span class="n">audio</span>
+<p>return audio</p>
 
-    <span class="k">return</span> <span class="n">augment</span>
-</code></pre></div></div>
+<p>return augment
+``</p>
 
 <h2 id="performance--scalability">Performance &amp; Scalability</h2>
 
@@ -578,12 +584,9 @@ patches, but in time/frequency coordinates instead of x/y.</p>
 <ul>
   <li>Shard noise/RIR banks across workers</li>
   <li>Use consistent randomness per worker (seed + rank)</li>
-  <li>For very large setups, you may:
-    <ul>
-      <li>Run augmentation as a separate service (e.g., gRPC microservice),</li>
-      <li>Or as a preprocessing cluster writing augmented data to storage.</li>
-    </ul>
-  </li>
+  <li>For very large setups, you may:</li>
+  <li>Run augmentation as a separate service (e.g., gRPC microservice),</li>
+  <li>Or as a preprocessing cluster writing augmented data to storage.</li>
 </ul>
 
 <h2 id="monitoring--debugging">Monitoring &amp; Debugging</h2>
@@ -594,12 +597,9 @@ patches, but in time/frequency coordinates instead of x/y.</p>
   <li><strong>Distribution of SNRs</strong> applied over the training set.</li>
   <li><strong>Distribution of speed/pitch factors</strong> (are you overusing extreme values?).</li>
   <li><strong>Fraction of samples</strong> that receive each augmentation type.</li>
-  <li><strong>Impact on WER/MOS</strong>:
-    <ul>
-      <li>Compare training with and without specific augmentations,</li>
-      <li>Track metric changes when you tweak augmentation configs.</li>
-    </ul>
-  </li>
+  <li><strong>Impact on WER/MOS</strong>:</li>
+  <li>Compare training with and without specific augmentations,</li>
+  <li>Track metric changes when you tweak augmentation configs.</li>
 </ul>
 
 <p>These should appear as first-class metrics in your monitoring stack, not just
@@ -608,21 +608,15 @@ as ad-hoc logs.</p>
 <h3 id="debug-techniques">Debug Techniques</h3>
 
 <ul>
-  <li>Build tools to visualize:
-    <ul>
-      <li>Waveforms and spectrograms <strong>before/after</strong> augmentation,</li>
-      <li>Overlays that highlight masked/warped regions on spectrograms.</li>
-    </ul>
-  </li>
-  <li>Add a small “inspection” mode:
-    <ul>
-      <li>Sample N utterances per epoch,</li>
-      <li>Save augmented audio and features,</li>
-      <li>Make them accessible via a lightweight web UI.</li>
-    </ul>
-  </li>
+  <li>Build tools to visualize:</li>
+  <li>Waveforms and spectrograms <strong>before/after</strong> augmentation,</li>
+  <li>Overlays that highlight masked/warped regions on spectrograms.</li>
+  <li>Add a small “inspection” mode:</li>
+  <li>Sample N utterances per epoch,</li>
+  <li>Save augmented audio and features,</li>
+  <li>Make them accessible via a lightweight web UI.</li>
   <li>Periodically <strong>listen to augmented audio</strong> across various tasks and languages
-to catch unnatural or damaging augmentations.</li>
+ to catch unnatural or damaging augmentations.</li>
 </ul>
 
 <h2 id="failure-modes--guardrails">Failure Modes &amp; Guardrails</h2>
@@ -630,67 +624,40 @@ to catch unnatural or damaging augmentations.</li>
 <p>Audio augmentation is powerful but easy to misuse. Common failure modes:</p>
 
 <ul>
-  <li><strong>Over-augmentation</strong>
-    <ul>
-      <li>Too much noise or distortion leads to:
-        <ul>
-          <li>Models that underfit clean data,</li>
-          <li>Unnatural spectrograms that don’t resemble deployment audio.</li>
-        </ul>
-      </li>
-      <li>Guardrails:
-        <ul>
-          <li>Cap augmentation strength (e.g., SNR ≥ 5 dB),</li>
-          <li>Use curriculum-style schedules (weaker early, stronger later).</li>
-        </ul>
-      </li>
-    </ul>
+  <li><strong>Over-augmentation</strong></li>
+  <li>Too much noise or distortion leads to:</li>
+  <li>Models that underfit clean data,</li>
+  <li>Unnatural spectrograms that don’t resemble deployment audio.</li>
+  <li>Guardrails:</li>
+  <li>Cap augmentation strength (e.g., SNR ≥ 5 dB),</li>
+  <li>
+    <p>Use curriculum-style schedules (weaker early, stronger later).</p>
   </li>
-  <li><strong>Label inconsistency</strong>
-    <ul>
-      <li>Augmentations that invalidate labels:
-        <ul>
-          <li>Trimming utterances that remove labeled content,</li>
-          <li>Heavy time warping that breaks alignments for CTC/RNN-T.</li>
-        </ul>
-      </li>
-      <li>Guardrails:
-        <ul>
-          <li>Make sure text/labels are updated (or augmentation is disabled) when
-transforms change time scale or content.</li>
-          <li>For alignments, prefer feature-space masking (SpecAugment) that preserves
-global timing.</li>
-        </ul>
-      </li>
-    </ul>
+  <li><strong>Label inconsistency</strong></li>
+  <li>Augmentations that invalidate labels:</li>
+  <li>Trimming utterances that remove labeled content,</li>
+  <li>Heavy time warping that breaks alignments for CTC/RNN-T.</li>
+  <li>Guardrails:</li>
+  <li>Make sure text/labels are updated (or augmentation is disabled) when
+ transforms change time scale or content.</li>
+  <li>
+    <p>For alignments, prefer feature-space masking (SpecAugment) that preserves
+ global timing.</p>
   </li>
-  <li><strong>Domain mismatch</strong>
-    <ul>
-      <li>Applying augmentations that are unrealistic for the target domain:
-        <ul>
-          <li>Adding car noise to smart speaker data that mostly comes from quiet homes,</li>
-          <li>Applying extreme reverberation where close-talk microphones dominate.</li>
-        </ul>
-      </li>
-      <li>Guardrails:
-        <ul>
-          <li>Build per-domain augmentation configs,</li>
-          <li>Validate with domain experts and real recordings.</li>
-        </ul>
-      </li>
-    </ul>
+  <li><strong>Domain mismatch</strong></li>
+  <li>Applying augmentations that are unrealistic for the target domain:</li>
+  <li>Adding car noise to smart speaker data that mostly comes from quiet homes,</li>
+  <li>Applying extreme reverberation where close-talk microphones dominate.</li>
+  <li>Guardrails:</li>
+  <li>Build per-domain augmentation configs,</li>
+  <li>
+    <p>Validate with domain experts and real recordings.</p>
   </li>
-  <li><strong>Hidden performance bottlenecks</strong>
-    <ul>
-      <li>Expensive augmentations (e.g., repeated FFTs, Python loops) running per sample.</li>
-      <li>Guardrails:
-        <ul>
-          <li>Benchmark augmentation CPU time separately,</li>
-          <li>Move repeated computations (e.g., RIR FFTs) offline or cache them.</li>
-        </ul>
-      </li>
-    </ul>
-  </li>
+  <li><strong>Hidden performance bottlenecks</strong></li>
+  <li>Expensive augmentations (e.g., repeated FFTs, Python loops) running per sample.</li>
+  <li>Guardrails:</li>
+  <li>Benchmark augmentation CPU time separately,</li>
+  <li>Move repeated computations (e.g., RIR FFTs) offline or cache them.</li>
 </ul>
 
 <p>Design your system so each augmentation has:</p>
@@ -737,20 +704,14 @@ and to improve generalization across recording conditions.</p>
 <p>Many of these augmentations can be viewed as <strong>matrix/tensor operations</strong>:</p>
 
 <ul>
-  <li>Waveform-level operations:
-    <ul>
-      <li>Convolution (with RIRs),</li>
-      <li>Additive mixing (noise),</li>
-      <li>Time warping (resampling).</li>
-    </ul>
-  </li>
-  <li>Spectrogram-level operations:
-    <ul>
-      <li>Masking (zeroing rectangles),</li>
-      <li>Warping (index remapping),</li>
-      <li>Cropping/padding (submatrix extraction/insertion).</li>
-    </ul>
-  </li>
+  <li>Waveform-level operations:</li>
+  <li>Convolution (with RIRs),</li>
+  <li>Additive mixing (noise),</li>
+  <li>Time warping (resampling).</li>
+  <li>Spectrogram-level operations:</li>
+  <li>Masking (zeroing rectangles),</li>
+  <li>Warping (index remapping),</li>
+  <li>Cropping/padding (submatrix extraction/insertion).</li>
 </ul>
 
 <p>The same skills you practice on DSA problems like Rotate Image (index mapping,

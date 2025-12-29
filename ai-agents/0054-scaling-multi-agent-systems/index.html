@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Scaling Multi-Agent Systems">
     <meta itemprop="description" content="“A single agent is a demo. Scaling agents is distributed systems with language models in the loop.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -410,22 +410,23 @@ compiled states + bounded execution beats “free-form loops”.</p>
 
 <h3 id="31-orchestrator--worker-pool">3.1 Orchestrator + worker pool</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         +-------------------+
-         | Orchestrator      |
-         | (planner+router)  |
-         +----+---------+----+
-              |         |
-              v         v
-        +-----------+  +-----------+
-        | Worker A  |  | Worker B  |
-        | (research)|  | (coding)  |
-        +-----------+  +-----------+
-              |
-              v
-        +-----------+
-        | Critic    |
-        +-----------+
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+ +-------------------+
+ | Orchestrator |
+ | (planner+router) |
+ +----+---------+----+
+ | |
+ v v
+ +-----------+ +-----------+
+ | Worker A | | Worker B |
+ | (research)| | (coding) |
+ +-----------+ +-----------+
+ |
+ v
+ +-----------+
+ | Critic |
+ +-----------+
+</code></p>
 
 <p>The orchestrator assigns tasks, enforces budgets, merges results, and triggers retries.</p>
 
@@ -458,25 +459,26 @@ compiled states + bounded execution beats “free-form loops”.</p>
 <h3 id="34-hierarchical-orchestration-team-lead--specialists">3.4 Hierarchical orchestration (team lead + specialists)</h3>
 <p>A common production topology is hierarchical:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         +--------------------+
-         | Lead/Planner Agent |
-         +---------+----------+
-                   |
-      +------------+------------+
-      |                         |
-      v                         v
- +-----------+             +-----------+
- | Specialist|             | Specialist|
- | (data)    |             | (infra)   |
- +-----+-----+             +-----+-----+
-       |                         |
-       +-----------+-------------+
-                   |
-                   v
-            +-------------+
-            | Critic/QA   |
-            +-------------+
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+ +--------------------+
+ | Lead/Planner Agent |
+ +---------+----------+
+ |
+ +------------+------------+
+ | |
+ v v
+ +-----------+ +-----------+
+ | Specialist| | Specialist|
+ | (data) | | (infra) |
+ +-----+-----+ +-----+-----+
+ | |
+ +-----------+-------------+
+ |
+ v
+ +-------------+
+ | Critic/QA |
+ +-------------+
+</code></p>
 
 <p>This keeps planning centralized (reduces coordination overhead) while still allowing parallel execution.</p>
 
@@ -610,40 +612,38 @@ You need:</p>
 
 <h2 id="5-code-examples-toy-dag-runner">5. Code Examples (Toy DAG Runner)</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Set</span>
+<p>``python
+from dataclasses import dataclass
+from typing import List, Dict, Set</p>
 
+<p>@dataclass
+class Task:
+ id: str
+ kind: str
+ deps: List[str]
+ payload: str</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">Task</span><span class="p">:</span>
-    <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">deps</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">payload</span><span class="p">:</span> <span class="nb">str</span>
+<p>def runnable(tasks: List[Task], done: Set[str]) -&gt; List[Task]:
+ return [t for t in tasks if t.id not in done and all(d in done for d in t.deps)]</p>
 
+<p>def execute_plan(tasks: List[Task]) -&gt; List[str]:
+ “””
+ Toy sequential executor that respects dependencies.
+ Production version would run runnable tasks in parallel with budgets and retries.
+ “””
+ done: Set[str] = set()
+ order: List[str] = []</p>
 
-<span class="k">def</span> <span class="nf">runnable</span><span class="p">(</span><span class="n">tasks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="n">done</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
-    <span class="k">return</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span> <span class="k">if</span> <span class="n">t</span><span class="p">.</span><span class="nb">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">done</span> <span class="ow">and</span> <span class="nf">all</span><span class="p">(</span><span class="n">d</span> <span class="ow">in</span> <span class="n">done</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">t</span><span class="p">.</span><span class="n">deps</span><span class="p">)]</span>
-
-
-<span class="k">def</span> <span class="nf">execute_plan</span><span class="p">(</span><span class="n">tasks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Task</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-    <span class="sh">"""</span><span class="s">
-    Toy sequential executor that respects dependencies.
-    Production version would run runnable tasks in parallel with budgets and retries.
-    </span><span class="sh">"""</span>
-    <span class="n">done</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nf">set</span><span class="p">()</span>
-    <span class="n">order</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-    <span class="k">while</span> <span class="nf">len</span><span class="p">(</span><span class="n">done</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nf">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">):</span>
-        <span class="n">ready</span> <span class="o">=</span> <span class="nf">runnable</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">done</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">ready</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sh">"</span><span class="s">Cycle or missing dependency detected</span><span class="sh">"</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ready</span><span class="p">:</span>
-            <span class="c1"># placeholder "execute"
-</span>            <span class="n">done</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="nb">id</span><span class="p">)</span>
-            <span class="n">order</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="nb">id</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">order</span>
-</code></pre></div></div>
+<p>while len(done) &lt; len(tasks):
+ ready = runnable(tasks, done)
+ if not ready:
+ raise ValueError(“Cycle or missing dependency detected”)
+ for t in ready:
+ # placeholder “execute”
+ done.add(t.id)
+ order.append(t.id)
+ return order
+``</p>
 
 <p>This highlights the core: dependency management is a first-class part of scaling.</p>
 
@@ -651,41 +651,39 @@ You need:</p>
 <p>Below is a conceptual sketch of what “budgeted execution” looks like.
 The important part is not the exact code; it’s the <strong>explicit accounting</strong> and <strong>explicit failure reasons</strong>.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+<p>``python
+from dataclasses import dataclass
+from typing import Dict, Optional</p>
 
+<p>@dataclass
+class Budget:
+ max_steps: int
+ max_tool_calls: int
+ steps: int = 0
+ tool_calls: int = 0</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">Budget</span><span class="p">:</span>
-    <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">max_tool_calls</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">tool_calls</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<p>class IdempotencyStore:
+ def <strong>init</strong>(self) -&gt; None:
+ self._seen: Dict[str, str] = {}</p>
 
+<p>def check_or_set(self, key: str, value: str) -&gt; Optional[str]:
+ “””
+ Returns existing value if key exists, else sets it and returns None.
+ “””
+ if key in self._seen:
+ return self._seen[key]
+ self._seen[key] = value
+ return None</p>
 
-<span class="k">class</span> <span class="nc">IdempotencyStore</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">_seen</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-
-    <span class="k">def</span> <span class="nf">check_or_set</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Returns existing value if key exists, else sets it and returns None.
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">_seen</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">_seen</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">_seen</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="k">return</span> <span class="bp">None</span>
-
-
-<span class="k">def</span> <span class="nf">enforce_budget</span><span class="p">(</span><span class="n">b</span><span class="p">:</span> <span class="n">Budget</span><span class="p">,</span> <span class="n">is_tool_call</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span><span class="p">:</span>
-    <span class="n">b</span><span class="p">.</span><span class="n">steps</span> <span class="o">+=</span> <span class="mi">1</span>
-    <span class="k">if</span> <span class="n">is_tool_call</span><span class="p">:</span>
-        <span class="n">b</span><span class="p">.</span><span class="n">tool_calls</span> <span class="o">+=</span> <span class="mi">1</span>
-    <span class="k">if</span> <span class="n">b</span><span class="p">.</span><span class="n">steps</span> <span class="o">&gt;</span> <span class="n">b</span><span class="p">.</span><span class="n">max_steps</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="nc">RuntimeError</span><span class="p">(</span><span class="sh">"</span><span class="s">budget_exhausted:steps</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">b</span><span class="p">.</span><span class="n">tool_calls</span> <span class="o">&gt;</span> <span class="n">b</span><span class="p">.</span><span class="n">max_tool_calls</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="nc">RuntimeError</span><span class="p">(</span><span class="sh">"</span><span class="s">budget_exhausted:tool_calls</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def enforce_budget(b: Budget, is_tool_call: bool) -&gt; None:
+ b.steps += 1
+ if is_tool_call:
+ b.tool_calls += 1
+ if b.steps &gt; b.max_steps:
+ raise RuntimeError(“budget_exhausted:steps”)
+ if b.tool_calls &gt; b.max_tool_calls:
+ raise RuntimeError(“budget_exhausted:tool_calls”)
+``</p>
 
 <p>In a real system:</p>
 <ul>
@@ -836,35 +834,29 @@ High-signal evals include:</p>
 <p>If you want reliability, persist state explicitly. A practical minimal schema:</p>
 
 <ul>
-  <li><strong>Job</strong>
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">job_id</code>, <code class="language-plaintext highlighter-rouge">tenant_id</code>, <code class="language-plaintext highlighter-rouge">created_at</code></li>
-      <li><code class="language-plaintext highlighter-rouge">goal</code> (sanitized), <code class="language-plaintext highlighter-rouge">bundle_version</code></li>
-      <li>budgets: <code class="language-plaintext highlighter-rouge">max_tokens</code>, <code class="language-plaintext highlighter-rouge">max_tool_calls</code>, <code class="language-plaintext highlighter-rouge">max_wall_time_s</code></li>
-      <li>status: <code class="language-plaintext highlighter-rouge">RUNNING | SUCCEEDED | FAILED | CANCELLED</code></li>
-    </ul>
+  <li><strong>Job</strong></li>
+  <li><code class="language-plaintext highlighter-rouge">job_id</code>, <code class="language-plaintext highlighter-rouge">tenant_id</code>, <code class="language-plaintext highlighter-rouge">created_at</code></li>
+  <li><code class="language-plaintext highlighter-rouge">goal</code> (sanitized), <code class="language-plaintext highlighter-rouge">bundle_version</code></li>
+  <li>budgets: <code class="language-plaintext highlighter-rouge">max_tokens</code>, <code class="language-plaintext highlighter-rouge">max_tool_calls</code>, <code class="language-plaintext highlighter-rouge">max_wall_time_s</code></li>
+  <li>
+    <p>status: <code class="language-plaintext highlighter-rouge">RUNNING | SUCCEEDED | FAILED | CANCELLED</code></p>
   </li>
-  <li><strong>Task</strong>
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">task_id</code>, <code class="language-plaintext highlighter-rouge">job_id</code>, <code class="language-plaintext highlighter-rouge">kind</code>, <code class="language-plaintext highlighter-rouge">deps</code></li>
-      <li>assigned agent role, attempt count, timestamps</li>
-      <li>status transitions with reason codes (<code class="language-plaintext highlighter-rouge">tool_timeout</code>, <code class="language-plaintext highlighter-rouge">budget_exhausted</code>, <code class="language-plaintext highlighter-rouge">policy_denied</code>)</li>
-    </ul>
+  <li><strong>Task</strong></li>
+  <li><code class="language-plaintext highlighter-rouge">task_id</code>, <code class="language-plaintext highlighter-rouge">job_id</code>, <code class="language-plaintext highlighter-rouge">kind</code>, <code class="language-plaintext highlighter-rouge">deps</code></li>
+  <li>assigned agent role, attempt count, timestamps</li>
+  <li>
+    <p>status transitions with reason codes (<code class="language-plaintext highlighter-rouge">tool_timeout</code>, <code class="language-plaintext highlighter-rouge">budget_exhausted</code>, <code class="language-plaintext highlighter-rouge">policy_denied</code>)</p>
   </li>
-  <li><strong>Artifact</strong>
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">artifact_id</code>, <code class="language-plaintext highlighter-rouge">task_id</code></li>
-      <li>versioning metadata (hash, diff, parent_version)</li>
-      <li>ownership lock state (single writer) or PR state (open/merged)</li>
-    </ul>
+  <li><strong>Artifact</strong></li>
+  <li><code class="language-plaintext highlighter-rouge">artifact_id</code>, <code class="language-plaintext highlighter-rouge">task_id</code></li>
+  <li>versioning metadata (hash, diff, parent_version)</li>
+  <li>
+    <p>ownership lock state (single writer) or PR state (open/merged)</p>
   </li>
-  <li><strong>Tool call</strong>
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">tool_call_id</code>, <code class="language-plaintext highlighter-rouge">task_id</code></li>
-      <li>tool name, args hash, latency, outcome</li>
-      <li><strong>idempotency_key</strong> for any write action</li>
-    </ul>
-  </li>
+  <li><strong>Tool call</strong></li>
+  <li><code class="language-plaintext highlighter-rouge">tool_call_id</code>, <code class="language-plaintext highlighter-rouge">task_id</code></li>
+  <li>tool name, args hash, latency, outcome</li>
+  <li><strong>idempotency_key</strong> for any write action</li>
 </ul>
 
 <p>Why this matters:</p>
@@ -878,31 +870,25 @@ High-signal evals include:</p>
 <p>When (not if) something goes wrong, you need fast, deterministic mitigations:</p>
 
 <ul>
-  <li><strong>Kill switches</strong>
-    <ul>
-      <li>disable high-risk tools instantly (email/send/deploy/delete)</li>
-      <li>force “draft-only” mode (no side effects)</li>
-    </ul>
+  <li><strong>Kill switches</strong></li>
+  <li>disable high-risk tools instantly (email/send/deploy/delete)</li>
+  <li>
+    <p>force “draft-only” mode (no side effects)</p>
   </li>
-  <li><strong>Degraded modes</strong>
-    <ul>
-      <li>reduce parallelism</li>
-      <li>reduce model size / shorten context</li>
-      <li>disable retrieval sources that are injecting bad content</li>
-    </ul>
+  <li><strong>Degraded modes</strong></li>
+  <li>reduce parallelism</li>
+  <li>reduce model size / shorten context</li>
+  <li>
+    <p>disable retrieval sources that are injecting bad content</p>
   </li>
-  <li><strong>Rollback</strong>
-    <ul>
-      <li>roll back the agent bundle (prompt + tools + policies + routing)</li>
-      <li>roll back tool schema versions if the executor is rejecting calls</li>
-    </ul>
+  <li><strong>Rollback</strong></li>
+  <li>roll back the agent bundle (prompt + tools + policies + routing)</li>
+  <li>
+    <p>roll back tool schema versions if the executor is rejecting calls</p>
   </li>
-  <li><strong>Audit workflow</strong>
-    <ul>
-      <li>list all tool calls in the incident window</li>
-      <li>verify idempotency (no duplicate side effects)</li>
-    </ul>
-  </li>
+  <li><strong>Audit workflow</strong></li>
+  <li>list all tool calls in the incident window</li>
+  <li>verify idempotency (no duplicate side effects)</li>
 </ul>
 
 <p>The critical mindset shift:</p>
@@ -967,34 +953,28 @@ But coordination has overhead:</p>
 <p>Before you allow agents to take real actions at scale:</p>
 
 <ul>
-  <li><strong>State and execution</strong>
-    <ul>
-      <li>durable task store (not chat logs)</li>
-      <li>explicit task state machine with bounded retries</li>
-      <li>idempotency keys for write tools</li>
-    </ul>
+  <li><strong>State and execution</strong></li>
+  <li>durable task store (not chat logs)</li>
+  <li>explicit task state machine with bounded retries</li>
+  <li>
+    <p>idempotency keys for write tools</p>
   </li>
-  <li><strong>Safety</strong>
-    <ul>
-      <li>per-role tool allowlists and RBAC</li>
-      <li>policy engine outside the model</li>
-      <li>HITL for high-risk actions</li>
-    </ul>
+  <li><strong>Safety</strong></li>
+  <li>per-role tool allowlists and RBAC</li>
+  <li>policy engine outside the model</li>
+  <li>
+    <p>HITL for high-risk actions</p>
   </li>
-  <li><strong>Observability</strong>
-    <ul>
-      <li>job/task/tool traces with stable IDs</li>
-      <li>cost metrics (tokens/tool calls per job)</li>
-      <li>dashboards by tenant/segment</li>
-    </ul>
+  <li><strong>Observability</strong></li>
+  <li>job/task/tool traces with stable IDs</li>
+  <li>cost metrics (tokens/tool calls per job)</li>
+  <li>
+    <p>dashboards by tenant/segment</p>
   </li>
-  <li><strong>Evaluation</strong>
-    <ul>
-      <li>golden workflows</li>
-      <li>adversarial/prompt-injection tests</li>
-      <li>tool failure simulation</li>
-    </ul>
-  </li>
+  <li><strong>Evaluation</strong></li>
+  <li>golden workflows</li>
+  <li>adversarial/prompt-injection tests</li>
+  <li>tool failure simulation</li>
 </ul>
 
 <p>If you can’t confidently say “we can roll back in minutes”, you’re not ready for high-autonomy actions.</p>

@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Neural Architecture Search (NAS) for Speech">
     <meta itemprop="description" content="“Hand-crafting speech architectures is reaching its limits. For the next generation of voice assistants, we don’t build the model—we define the search space and let the computer discover the most efficient physics of sound.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -231,7 +231,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          5 minute read
+          4 minute read
         
       </span>
     
@@ -262,7 +262,7 @@
 
 <p>Historically, humans designed “Mobile-Optimized” architectures like <strong>MobileNet</strong> or <strong>Cuside-Transformer</strong> by hand. However, sound is complex. The optimal architecture for a “Quiet Home” is different from an “Industrial Warehouse.”</p>
 
-<p><strong>Neural Architecture Search (NAS) for Speech</strong> is the automation of this discovery. It treats a model’s topology (number of heads, kernel sizes, dilation rates) as a <strong>Constraint Satisfaction Problem</strong> (connecting to our <strong>Sudoku Solver</strong> DSA topic). Today, we build the pipeline for discovering speech models that are “Pareto-Optimal”—better accuracy for less compute.</p>
+<p><strong>Neural Architecture Search (NAS) for Speech</strong> is the automation of this discovery. It treats a model’s topology (number of heads, kernel sizes, dilation rates) as a <strong>Constraint Satisfaction Problem</strong>. We explore the methods for discovering speech models that are “Pareto-Optimal”—better accuracy for less compute.</p>
 
 <hr />
 
@@ -294,12 +294,12 @@
 
 <h2 id="3-high-level-architecture-the-performance-aware-searcher">3. High-Level Architecture: The Performance-Aware Searcher</h2>
 
-<p>A production NAS system for speech (like Apple’s research into efficient ASR) follows a three-stage loop:</p>
+<p>A production NAS system for speech follows a three-stage loop:</p>
 
 <ol>
   <li><strong>Search Controller (The Agent)</strong>: Proposes a “Candidate Model” from the search space.</li>
-  <li><strong>Training &amp; Evaluation (The Trial)</strong>: Trains the candidate on a subset of the dataset (e.g., Librispeech-100) for a few epochs.</li>
-  <li><strong>Hardware Profiler</strong>: Measures the <strong>Latency</strong> on a specific target device (e.g., iPhone 15, Pixel 8) and the <strong>Power Consumption</strong>.</li>
+  <li><strong>Training &amp; Evaluation (The Trial)</strong>: Trains the candidate on a subset of the dataset (e.g., Librispeech) for a few epochs.</li>
+  <li><strong>Hardware Profiler</strong>: Measures the <strong>Latency</strong> on a specific target device and the <strong>Power Consumption</strong>.</li>
   <li><strong>Reward Function</strong>: Rewards candidates that have the best “WER-Latency” trade-off.</li>
 </ol>
 
@@ -311,9 +311,9 @@
 
 <h3 id="the-logic">The Logic</h3>
 <ol>
-  <li><strong>Train the Super-Net</strong>: Ensure that any “Slice” of the network (e.g., using only 4 heads instead of 8) is still functionally valid.</li>
+  <li><strong>Train the Super-Net</strong>: Ensure that any “Slice” of the network is still functionally valid.</li>
   <li><strong>Architectural Sampling</strong>: Randomly pick sub-networks during training and update their weights.</li>
-  <li><strong>The Result</strong>: At the end of training, you have a single set of weights from which you can “extract” the best model for any hardware constraint (one for a high-end server, one for a smartwatch) without re-training.</li>
+  <li><strong>The Result</strong>: At the end of training, you have a single set of weights from which you can “extract” the best model for any hardware constraint without re-training.</li>
 </ol>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SpeechSuperNet</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
@@ -335,13 +335,9 @@
 <h2 id="5-the-reward-function-the-efficiency-frontier">5. The Reward Function: The “Efficiency Frontier”</h2>
 
 <p>We don’t just want the lowest Word Error Rate (WER). We want to solve for:
-$Reward = -WER - \lambda \cdot \log(Latency)$</p>
+<code class="language-plaintext highlighter-rouge">Reward = -WER - lambda * log(Latency)</code></p>
 
-<p>Where $\lambda$ represents how much we value speed.</p>
-<ul>
-  <li>If $\lambda$ is high, the system will favor tiny, lightning-fast models.</li>
-  <li>If $\lambda$ is low, it will favor heavy, accurate models.</li>
-</ul>
+<p>Where <code class="language-plaintext highlighter-rouge">lambda</code> represents how much we value speed.</p>
 
 <hr />
 
@@ -349,9 +345,9 @@ $Reward = -WER - \lambda \cdot \log(Latency)$</p>
 
 <p>When an architecture is discovered, how is it deployed?</p>
 <ol>
-  <li><strong>Export to ONNX/CoreML</strong>: Convert the neural graph to a static format optimized for the mobile NPU (Neural Processing Unit).</li>
-  <li><strong>Quantization-Aware Discovery</strong>: The NAS system searches for models that perform well even when their weights are compressed from 32-bit floats to 8-bit integers.</li>
-  <li><strong>Phonetic Pruning</strong>: Prune layers that the NAS system identifies as redundant for specific acoustic environments.</li>
+  <li><strong>Export to ONNX/CoreML</strong>: Convert the neural graph to a format optimized for the mobile NPU.</li>
+  <li><strong>Quantization-Aware Discovery</strong>: Search for models that perform well with 8-bit integers.</li>
+  <li><strong>Phonetic Pruning</strong>: Prune redundant layers for specific acoustic environments.</li>
 </ol>
 
 <hr />
@@ -395,17 +391,17 @@ $Reward = -WER - \lambda \cdot \log(Latency)$</p>
 <h2 id="8-failure-modes-in-speech-nas">8. Failure Modes in Speech NAS</h2>
 
 <ol>
-  <li><strong>Invalid Topologies</strong>: The searcher proposes a model that is too deep to fit in the GPU’s memory.
+  <li><strong>Invalid Topologies</strong>: The searcher proposes a model that is too deep for target memory.
     <ul>
-      <li><em>Mitigation</em>: Implement “Soft Constraints” in the search controller that reject configurations exceeding a resource budget (The Sudoku Link).</li>
+      <li><em>Mitigation</em>: Implement “Soft Constraints” that reject configurations exceeding a budget.</li>
     </ul>
   </li>
-  <li><strong>The “Hardware Gap”</strong>: A model that is fast on a CPU might be slow on a DSP (Digital Signal Processor).
+  <li><strong>The “Hardware Gap”</strong>: A model fast on a CPU might be slow on a DSP.
     <ul>
-      <li><em>Mitigation</em>: Always perform evaluations on the <strong>Physical Hardware</strong>, not a simulator.</li>
+      <li><em>Mitigation</em>: Perform evaluations on the <strong>Physical Hardware</strong>.</li>
     </ul>
   </li>
-  <li><strong>Feature Mismatch</strong>: The NAS finds a great model for 16kHz audio, but the production system uses 8kHz.</li>
+  <li><strong>Feature Mismatch</strong>: The NAS finds a great model for 16kHz but the production uses 8kHz.</li>
 </ol>
 
 <hr />
@@ -414,8 +410,8 @@ $Reward = -WER - \lambda \cdot \log(Latency)$</p>
 
 <p>Google used NAS to design the “New Google Assistant” models.</p>
 <ul>
-  <li><strong>The Challenge</strong>: The model had to understand voice locally on a phone to eliminate latency.</li>
-  <li><strong>The Result</strong>: NAS discovered a “Hydra” architecture—a single shared convolutional trunk with multiple “Heads” for different tasks (ASR, Intent Detection). This reduced parameter count by 75% compared to the original design.</li>
+  <li><strong>The Challenge</strong>: The model had to understand voice locally on a phone.</li>
+  <li><strong>The Result</strong>: Discovered a “Hydra” architecture—a shared trunk with multiple heads for different tasks (ASR, Intent Detection). Reduced parameter count by 75%.</li>
 </ul>
 
 <hr />
@@ -423,10 +419,10 @@ $Reward = -WER - \lambda \cdot \log(Latency)$</p>
 <h2 id="10-key-takeaways">10. Key Takeaways</h2>
 
 <ol>
-  <li><strong>Search is the new Engineering</strong>: (The DSA Link) Automating the search for the “Correct digits in the grid” is the only way to achieve peak efficiency.</li>
+  <li><strong>Search is the new Engineering</strong>: Automating the search for the “Correct digits in the grid” is the only way to achieve peak efficiency.</li>
   <li><strong>Hardware-in-the-loop</strong>: A speech model is only as good as its speed on the target device.</li>
-  <li><strong>NAS is not just for WER</strong>: Use it to optimize for battery life, memory, and even privacy.</li>
-  <li><strong>Pruning starts in the Search phase</strong>: (The ML Link) Use AutoML principles to kill poor architectures early.</li>
+  <li><strong>NAS is not just for WER</strong>: Optimize for battery life, memory, and privacy.</li>
+  <li><strong>Pruning starts in the Search phase</strong>: Use AutoML principles to kill poor architectures early.</li>
 </ol>
 
 <hr />
@@ -526,7 +522,7 @@ $Reward = -WER - \lambda \cdot \log(Latency)$</p>
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          8 minute read
+          7 minute read
         
       </span>
     
@@ -563,7 +559,7 @@ $Reward = -WER - \lambda \cdot \log(Latency)$</p>
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          6 minute read
+          4 minute read
         
       </span>
     
@@ -600,7 +596,7 @@ $Reward = -WER - \lambda \cdot \log(Latency)$</p>
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          5 minute read
+          4 minute read
         
       </span>
     

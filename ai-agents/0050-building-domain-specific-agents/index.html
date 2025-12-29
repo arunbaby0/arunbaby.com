@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Building Domain-Specific Agents">
     <meta itemprop="description" content="“Don’t build a generalist. Build a specialist.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -332,7 +332,7 @@ They trade <strong>Breadth</strong> for <strong>Depth</strong> and <strong>Relia
 <h3 id="41-the-medical-scribe-pattern">4.1 The Medical Scribe Pattern</h3>
 <ol>
   <li><strong>Input</strong>: Doctor-Patient Audio.</li>
-  <li><strong>Specialized ASR</strong>: (Day 50 Speech).</li>
+  <li><strong>Specialized ASR</strong>: (Speech).</li>
   <li><strong>Extraction Agent</strong>: Extracts “Symptoms”, “Meds”.</li>
   <li><strong>Coding Agent</strong>: Maps Symptoms -&gt; ICD-10 Codes.
     <ul>
@@ -349,48 +349,51 @@ They trade <strong>Breadth</strong> for <strong>Depth</strong> and <strong>Relia
 
 <p>A simplified implementation using LangChain with a specialized tool and system prompt.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">langchain.chat_models</span> <span class="kn">import</span> <span class="n">ChatOpenAI</span>
-<span class="kn">from</span> <span class="n">langchain.agents</span> <span class="kn">import</span> <span class="n">initialize_agent</span><span class="p">,</span> <span class="n">Tool</span>
-<span class="kn">from</span> <span class="n">langchain.prompts</span> <span class="kn">import</span> <span class="n">SystemMessagePromptTemplate</span>
+<p>``python
+from langchain.chat_models import ChatOpenAI
+from langchain.agents import initialize_agent, Tool
+from langchain.prompts import SystemMessagePromptTemplate</p>
 
-<span class="c1"># 1. Specialized Tool (The "Hands")
-</span><span class="k">def</span> <span class="nf">search_case_law</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Searches the LexisNexis database for precedent.</span><span class="sh">"""</span>
-    <span class="c1"># Mock return
-</span>    <span class="k">return</span> <span class="sh">"</span><span class="s">Case 12-404: Smith v. Jones established that...</span><span class="sh">"</span>
+<h1 id="1-specialized-tool-the-hands">1. Specialized Tool (The “Hands”)</h1>
+<p>def search_case_law(query):
+ “"”Searches the LexisNexis database for precedent.”””
+ # Mock return
+ return “Case 12-404: Smith v. Jones established that…”</p>
 
-<span class="n">tools</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="nc">Tool</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="sh">"</span><span class="s">CaseLawSearch</span><span class="sh">"</span><span class="p">,</span>
-        <span class="n">func</span><span class="o">=</span><span class="n">search_case_law</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="sh">"</span><span class="s">Useful for finding legal precedents.</span><span class="sh">"</span>
-    <span class="p">)</span>
-<span class="p">]</span>
+<p>tools = [
+ Tool(
+ name=”CaseLawSearch”,
+ func=search_case_law,
+ description=”Useful for finding legal precedents.”
+ )
+]</p>
 
-<span class="c1"># 2. Specialized Persona (The "Brain")
-# This is where "Prompt Engineering" meets "Domain Expertise"
-</span><span class="n">legal_prompt</span> <span class="o">=</span> <span class="sh">"""</span><span class="s">
-You remain in character as a Senior Litigation Associate.
-- Never invent cases.
-- Always cite the Case ID.
-- Use </span><span class="sh">'</span><span class="s">IRAC</span><span class="sh">'</span><span class="s"> format (Issue, Rule, Application, Conclusion).
-- If uncertain, state </span><span class="sh">"</span><span class="s">Further research required</span><span class="sh">"</span><span class="s">.
-</span><span class="sh">"""</span>
+<h1 id="2-specialized-persona-the-brain">2. Specialized Persona (The “Brain”)</h1>
+<h1 id="this-is-where-prompt-engineering-meets-domain-expertise">This is where “Prompt Engineering” meets “Domain Expertise”</h1>
+<p>legal_prompt = “””
+You remain in character as a Senior Litigation Associate.</p>
+<ul>
+  <li>Never invent cases.</li>
+  <li>Always cite the Case ID.</li>
+  <li>Use ‘IRAC’ format (Issue, Rule, Application, Conclusion).</li>
+  <li>If uncertain, state “Further research required”.
+“””</li>
+</ul>
 
-<span class="c1"># 3. The Agent
-</span><span class="n">llm</span> <span class="o">=</span> <span class="nc">ChatOpenAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="sh">"</span><span class="s">gpt-4</span><span class="sh">"</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># Temp 0 for rigor
-</span><span class="n">agent</span> <span class="o">=</span> <span class="nf">initialize_agent</span><span class="p">(</span>
-    <span class="n">tools</span><span class="p">,</span> 
-    <span class="n">llm</span><span class="p">,</span> 
-    <span class="n">agent</span><span class="o">=</span><span class="sh">"</span><span class="s">zero-shot-react-description</span><span class="sh">"</span><span class="p">,</span>
-    <span class="n">agent_kwargs</span><span class="o">=</span><span class="p">{</span>
-        <span class="sh">"</span><span class="s">system_message</span><span class="sh">"</span><span class="p">:</span> <span class="n">SystemMessagePromptTemplate</span><span class="p">.</span><span class="nf">from_template</span><span class="p">(</span><span class="n">legal_prompt</span><span class="p">)</span>
-    <span class="p">}</span>
-<span class="p">)</span>
+<h1 id="3-the-agent">3. The Agent</h1>
+<p>llm = ChatOpenAI(model=”gpt-4”, temperature=0) # Temp 0 for rigor
+agent = initialize_agent(
+ tools, 
+ llm, 
+ agent=”zero-shot-react-description”,
+ agent_kwargs={
+ “system_message”: SystemMessagePromptTemplate.from_template(legal_prompt)
+ }
+)</p>
 
-<span class="c1"># 4. Execution
-</span><span class="n">agent</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span><span class="sh">"</span><span class="s">My landlord evicted me without notice. What are my rights in NY?</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="4-execution">4. Execution</h1>
+<p>agent.run(“My landlord evicted me without notice. What are my rights in NY?”)
+``</p>
 
 <hr />
 
@@ -441,7 +444,7 @@ UI Pattern: “Draft generated. <strong>[Approve]</strong> / <strong>[Edit]</str
 
 <h2 id="9-connections-to-other-topics">9. Connections to Other Topics</h2>
 
-<p>This connects to <strong>Alien Dictionary</strong> (DSA Day 50).</p>
+<p>This connects to <strong>Alien Dictionary</strong> (DSA ).</p>
 <ul>
   <li>To build a specialized agent, you must first learn the “Alien language” (Jargon) of the domain.</li>
   <li>You build the “Graph” of knowledge (Ontology) before you can traverse it.</li>

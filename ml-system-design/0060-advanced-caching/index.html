@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Advanced Caching for ML Systems">
     <meta itemprop="description" content="“In the world of high-scale machine learning, the fastest inference is the one you never had to compute. Caching is not just about saving time; it’s about making the impossible latency targets possible.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -231,7 +231,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          6 minute read
+          4 minute read
         
       </span>
     
@@ -261,7 +261,7 @@
   <li>Storing pre-computed features for 1 billion users requires Petabytes of storage.</li>
 </ul>
 
-<p><strong>Advanced Caching</strong> is the strategy of using a tiered memory hierarchy to “cheat” the latency-throughput-cost trade-off. It is the art of memorizing the results of expensive computations. Today, on Day 60, we look at the architecture of the world’s most sophisticated ML caching systems, connecting it to the theme of <strong>Complex Persistent State and Efficient Retrieval</strong>.</p>
+<p><strong>Advanced Caching</strong> is the strategy of using a tiered memory hierarchy to “cheat” the latency-throughput-cost trade-off. It is the art of memorizing the results of expensive computations. Today we look at the architecture of the world’s most sophisticated ML caching systems, connecting it to the theme of <strong>Complex Persistent State and Efficient Retrieval</strong>.</p>
 
 <hr />
 
@@ -271,7 +271,7 @@
 <ol>
   <li><strong>Embedding Storage</strong>: Storing high-dimensional vectors (e.g., 512-dim floats) representing users or items.</li>
   <li><strong>Partial Computation Caching</strong>: In a Transformer, the “K-V Cache” stores internal model states to speed up token generation.</li>
-  <li><strong>Semantic Caching</strong>: Using vector similarity to find “near-matches” for user queries (e.g., “What’s the weather?” matching “Show me the weather”).</li>
+  <li><strong>Semantic Caching</strong>: Using vector similarity to find “near-matches” for user queries.</li>
   <li><strong>Feature Hydration</strong>: Taking a list of 1,000 <code class="language-plaintext highlighter-rouge">item_ids</code> and “hydrating” them with their current price, stock, and popularity in &lt; 10ms.</li>
 </ol>
 
@@ -285,36 +285,35 @@
 <ul>
   <li><strong>Tech</strong>: Local RAM, LRU/LFU in Python/C++ memory.</li>
   <li><strong>Latency</strong>: 0.01ms - 0.1ms.</li>
-  <li><strong>Role</strong>: Store the “Hot 10,000” features. If a user is currently browsing, their profile stays in L1.</li>
+  <li><strong>Role</strong>: Store the “Hot 10,000” features.</li>
 </ul>
 
 <h3 id="layer-2-distributed-memory-cache-l2">Layer 2: Distributed Memory Cache (L2)</h3>
 <ul>
   <li><strong>Tech</strong>: Redis, Memcached, Amazon ElastiCache.</li>
   <li><strong>Latency</strong>: 1ms - 5ms.</li>
-  <li><strong>Role</strong>: The primary shared store. If Instance A computes a feature, Instance B can access it immediately.</li>
+  <li><strong>Role</strong>: The primary shared store.</li>
 </ul>
 
 <h3 id="layer-3-solid-state-cache--near-line-l3">Layer 3: Solid-State Cache / Near-line (L3)</h3>
 <ul>
   <li><strong>Tech</strong>: Aerospike, DynamoDB (DAX), ScyllaDB.</li>
   <li><strong>Latency</strong>: 10ms - 50ms.</li>
-  <li><strong>Role</strong>: Support for “Warm” data. This stores millions of user embeddings that are accessed frequently but don’t fit in RAM.</li>
+  <li><strong>Role</strong>: Support for “Warm” data.</li>
 </ul>
 
 <hr />
 
 <h2 id="4-implementation-the-consistent-hashing-problem">4. Implementation: The Consistent Hashing Problem</h2>
 
-<p>When you scale the cache to hundreds of Redis nodes, you cannot simply use <code class="language-plaintext highlighter-rouge">hash(key) % num_nodes</code>. Why? Because if one node fails, the denominator changes, and <strong>every single key in your cache moves</strong>, leading to a “Cache Stampede” that crashes your database.</p>
+<p>When you scale the cache to hundreds of Redis nodes, you cannot simply use <code class="language-plaintext highlighter-rouge">hash(key) % num_nodes</code>. If one node fails, the denominator changes, and <strong>every single key in your cache moves</strong>, leading to a “Cache Stampede.”</p>
 
 <h3 id="the-solution-consistent-hashing">The Solution: Consistent Hashing</h3>
-<p>We place nodes and keys on a logical “Ring” (the unit circle).</p>
+<p>We place nodes and keys on a logical “Ring.”</p>
 <ol>
   <li>Map nodes to positions on the ring using their IP.</li>
   <li>Map keys to positions using their hash.</li>
   <li>A key belongs to the <strong>first node found clockwise</strong> from its position.</li>
-  <li>If a node fails, only the keys belonging to that specific node move to the next one. The rest of the cache stays stable.</li>
 </ol>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">hashlib</span>
@@ -325,16 +324,14 @@
         <span class="n">self</span><span class="p">.</span><span class="n">sorted_keys</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">replicas</span><span class="p">):</span>
-                <span class="c1"># Create 'virtual nodes' to balance the load
-</span>                <span class="n">h</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">hashlib</span><span class="p">.</span><span class="nf">md5</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s">:</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="sh">"</span><span class="p">.</span><span class="nf">encode</span><span class="p">()).</span><span class="nf">hexdigest</span><span class="p">(),</span> <span class="mi">16</span><span class="p">)</span>
+                <span class="n">h</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">hashlib</span><span class="p">.</span><span class="nf">md5</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s">:</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="sh">"</span><span class="p">.</span><span class="nf">encode</span><span class="p">()).</span><span class="nf">hexdigest</span><span class="p">(),</span> <span class="mi">16</span><span class="p">)</span>
                 <span class="n">self</span><span class="p">.</span><span class="n">ring</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
                 <span class="n">self</span><span class="p">.</span><span class="n">sorted_keys</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
         <span class="n">self</span><span class="p">.</span><span class="n">sorted_keys</span><span class="p">.</span><span class="nf">sort</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">get_node</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="n">h</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">hashlib</span><span class="p">.</span><span class="nf">md5</span><span class="p">(</span><span class="n">key</span><span class="p">.</span><span class="nf">encode</span><span class="p">()).</span><span class="nf">hexdigest</span><span class="p">(),</span> <span class="mi">16</span><span class="p">)</span>
-        <span class="c1"># Find the first node clockwise
-</span>        <span class="kn">import</span> <span class="n">bisect</span>
+        <span class="kn">import</span> <span class="n">bisect</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">bisect</span><span class="p">.</span><span class="nf">bisect</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">sorted_keys</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">sorted_keys</span><span class="p">):</span>
             <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
@@ -345,14 +342,12 @@
 
 <h2 id="5-cache-strategy-lfu-vs-lru-in-ml">5. Cache Strategy: LFU vs. LRU in ML</h2>
 
-<p>In the <strong>DSA post</strong> today, we explored the <strong>LFU (Least Frequently Used)</strong> algorithm. Why is it important for ML?</p>
+<p>We often use <strong>LFU (Least Frequently Used)</strong> for ML systems:</p>
 <ul>
   <li><strong>The “Heavy Hitter” Problem</strong>: In a social network, 0.1% of users generate 90% of the traffic.</li>
-  <li><strong>LRU Flaw</strong>: If a burst of random bot traffic arrives, a standard LRU cache will “evict” the embeddings of your most valuable, frequent users.</li>
-  <li><strong>LFU Strength</strong>: LFU recognizes frequency over time. It keeps these high-value “Heavy Hitters” in the cache regardless of recent noise.</li>
+  <li><strong>LRU Flaw</strong>: If a burst of random bot traffic arrives, a standard LRU cache will “evict” the embeddings of your most valuable users.</li>
+  <li><strong>LFU Strength</strong>: LFU recognizes frequency over time.</li>
 </ul>
-
-<p><strong>Senior Design Tip</strong>: Use LFU for <strong>Static Feature Metadata</strong> (categories, item attributes) and LRU for <strong>User Session State</strong> (temporary intent).</p>
 
 <hr />
 
@@ -361,42 +356,39 @@
 <p>Traditional caches require an EXACT string match. Generative AI requires <strong>Semantic Match</strong>.</p>
 <ol>
   <li><strong>Ingress</strong>: User asks “How do I reset my password?”.</li>
-  <li><strong>Embedding</strong>: Convert the string to a vector using a small model (e.g., <code class="language-plaintext highlighter-rouge">all-MiniLM-L6-v2</code>).</li>
-  <li><strong>Vector Search</strong>: Query a cache of previous questions (e.g., in Faiss/RedisVL).</li>
-  <li><strong>Threshold</strong>: If a previous question exists with &gt; 0.98 cosine similarity, return its cached answer.</li>
-  <li><strong>Impact</strong>: This can reduce LLM API costs by 30-50% for customer support bots.</li>
+  <li><strong>Embedding</strong>: Convert the string to a vector using a small model.</li>
+  <li><strong>Vector Search</strong>: Query a cache of previous questions.</li>
+  <li><strong>Threshold</strong>: If a similar question exists, return its cached answer.</li>
 </ol>
 
 <hr />
 
 <h2 id="7-failure-modes-the-thundering-herd">7. Failure Modes: The “Thundering Herd”</h2>
 
-<p>When a popular cache key (e.g., “Trending_Items”) expires, 1,000 concurrent requests find a “Cache Miss” and all hit the database simultaneously to recompute it.</p>
+<p>When a popular cache key expires, many concurrent requests find a “Cache Miss” simultaneously.</p>
 <ul>
-  <li><strong>Solution A: Mutex Locking (Single-Flight)</strong>: Only a single request is allowed to recompute the key; others wait.</li>
-  <li><strong>Solution B: Probabilistic Expiry</strong>: Instead of a hard TTL of 3600s, use a random value between 3500 and 3700. This staggers the recomputations.</li>
-  <li><strong>Solution C: Soft TTL</strong>: Return the “Stale” value while a background thread updates the cache.</li>
+  <li><strong>Solution A: Mutex Locking (Single-Flight)</strong>: Only a single request is allowed to recompute the key.</li>
+  <li><strong>Solution B: Probabilistic Expiry</strong>: Stagger the recomputations.</li>
+  <li><strong>Solution C: Soft TTL</strong>: Return the “Stale” value while background thread updates.</li>
 </ul>
 
 <hr />
 
 <h2 id="8-real-world-case-study-netflix-evcache">8. Real-world Case Study: Netflix “EVCache”</h2>
 
-<p>Netflix developed EVCache (based on Memcached) to handle the extreme scale of global streaming.</p>
+<p>Netflix developed EVCache to handle the extreme scale of global streaming.</p>
 <ul>
-  <li><strong>Scale</strong>: Trillions of requests per day.</li>
-  <li><strong>Strategy</strong>: <strong>Cross-Region Replication</strong>. If a cache is updated in the “US-East” data center, it is asynchronously replicated to “EU-West” and “Asia-Pacific”.</li>
-  <li><strong>The Benefit</strong>: When a user travels from NY to London, their profile (L3) and recent history (L2) are already “warm” in the local European cache.</li>
+  <li><strong>Strategy</strong>: <strong>Cross-Region Replication</strong>.</li>
+  <li><strong>The Benefit</strong>: When a user travels, their profile is already “warm” in the local cache.</li>
 </ul>
 
 <hr />
 
 <h2 id="9-monitoring-and-cache-observability">9. Monitoring and Cache Observability</h2>
 
-<p>How do you know your cache is healthy?</p>
 <ul>
   <li><strong>Cache Hit Ratio (CHR)</strong>: Items Found / Total Lookups. Ideally &gt; 80%.</li>
-  <li><strong>Eviction Rate</strong>: If this is high, your cache is too small or your TTL is too low.</li>
+  <li><strong>Eviction Rate</strong>: If this is high, your cache is too small.</li>
   <li><strong>Request Latency (p99)</strong>: The network “tail” of distributed caching.</li>
 </ul>
 
@@ -405,10 +397,10 @@
 <h2 id="10-key-takeaways">10. Key Takeaways</h2>
 
 <ol>
-  <li><strong>Caching is the First Line of Defense</strong>: Protect your expensive GPU inference and Database layers with multiple tiers of memory.</li>
-  <li><strong>Consistency vs. Latency</strong>: In ML, it is often better to serve a stale prediction (eventual consistency) than to wait 200ms for a fresh one.</li>
-  <li><strong>Context Matters</strong>: (The DSA Link) Choose your eviction policy (LRU vs. LFU) based on the “intent” of the data.</li>
-  <li><strong>Semantic Search is the Future</strong>: Move beyond keys to vector similarity for Generative AI caching.</li>
+  <li><strong>Caching is the First Line of Defense</strong>: Protect your expensive GPU inference layers.</li>
+  <li><strong>Consistency vs. Latency</strong>: In ML, it is often better to serve a stale prediction (eventual consistency) than to wait.</li>
+  <li><strong>Context Matters</strong>: Choose your eviction policy based on the “intent” of the data.</li>
+  <li><strong>Semantic Search is the Future</strong>: Move beyond keys to vector similarity.</li>
 </ol>
 
 <hr />
@@ -508,7 +500,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          10 minute read
+          9 minute read
         
       </span>
     
@@ -545,7 +537,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          6 minute read
+          5 minute read
         
       </span>
     

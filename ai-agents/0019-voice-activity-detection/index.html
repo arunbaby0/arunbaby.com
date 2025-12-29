@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Voice Activity Detection (VAD)">
     <meta itemprop="description" content="“The art of knowing when to shut up.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -401,59 +401,60 @@ We use a small, fast Language Model (or a dedicated model like <strong>TurnGPT</
 
 <p>A robust Python wrapper for processing audio chunks.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+import torch
+import numpy as np</p>
 
-<span class="c1"># Load Silero (JIT)
-</span><span class="n">model</span><span class="p">,</span> <span class="n">utils</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">hub</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="n">repo_or_dir</span><span class="o">=</span><span class="sh">'</span><span class="s">snakers4/silero-vad</span><span class="sh">'</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="sh">'</span><span class="s">silero_vad</span><span class="sh">'</span><span class="p">)</span>
-<span class="p">(</span><span class="n">get_speech_timestamps</span><span class="p">,</span> <span class="n">save_audio</span><span class="p">,</span> <span class="n">read_audio</span><span class="p">,</span> <span class="n">VADIterator</span><span class="p">,</span> <span class="n">collect_chunks</span><span class="p">)</span> <span class="o">=</span> <span class="n">utils</span>
+<h1 id="load-silero-jit">Load Silero (JIT)</h1>
+<p>model, utils = torch.hub.load(repo_or_dir=’snakers4/silero-vad’, model=’silero_vad’)
+(get_speech_timestamps, save_audio, read_audio, VADIterator, collect_chunks) = utils</p>
 
-<span class="k">class</span> <span class="nc">VADState</span><span class="p">:</span>
- <span class="n">SILENCE</span> <span class="o">=</span> <span class="mi">0</span>
- <span class="n">SPEECH</span> <span class="o">=</span> <span class="mi">1</span>
+<p>class VADState:
+ SILENCE = 0
+ SPEECH = 1</p>
 
-<span class="k">class</span> <span class="nc">VADEngine</span><span class="p">:</span>
- <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">min_silence_duration_ms</span><span class="o">=</span><span class="mi">700</span><span class="p">):</span>
- <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
- <span class="n">self</span><span class="p">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">threshold</span>
- <span class="n">self</span><span class="p">.</span><span class="n">min_silence_samples</span> <span class="o">=</span> <span class="n">min_silence_duration_ms</span> <span class="o">*</span> <span class="mi">16</span> <span class="c1"># assuming 16khz
-</span> <span class="n">self</span><span class="p">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">VADState</span><span class="p">.</span><span class="n">SILENCE</span>
- <span class="n">self</span><span class="p">.</span><span class="n">silence_counter</span> <span class="o">=</span> <span class="mi">0</span>
+<p>class VADEngine:
+ def <strong>init</strong>(self, threshold=0.5, min_silence_duration_ms=700):
+ self.model = model
+ self.threshold = threshold
+ self.min_silence_samples = min_silence_duration_ms * 16 # assuming 16khz
+ self.state = VADState.SILENCE
+ self.silence_counter = 0</p>
 
- <span class="k">def</span> <span class="nf">process_chunk</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_chunk_bytes</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">):</span>
- <span class="sh">"""</span><span class="s">
+<p>def process_chunk(self, audio_chunk_bytes: bytes):
+ “””
  Input: 512 bytes of PCM Int16
  Output: Event (START, END, NONE)
- </span><span class="sh">"""</span>
- <span class="c1"># 1. Convert bytes to float32 tensor
-</span> <span class="c1"># Real implementation needs robust float conversion
-</span> <span class="n">audio_int16</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">frombuffer</span><span class="p">(</span><span class="n">audio_chunk_bytes</span><span class="p">,</span> <span class="n">np</span><span class="p">.</span><span class="n">int16</span><span class="p">)</span>
- <span class="c1"># Normalize to -1.0 to 1.0
-</span> <span class="n">audio_float32</span> <span class="o">=</span> <span class="n">audio_int16</span><span class="p">.</span><span class="nf">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">/</span> <span class="mf">32768.0</span>
- <span class="n">tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">from_numpy</span><span class="p">(</span><span class="n">audio_float32</span><span class="p">)</span>
+ “””
+ # 1. Convert bytes to float32 tensor
+ # Real implementation needs robust float conversion
+ audio_int16 = np.frombuffer(audio_chunk_bytes, np.int16)
+ # Normalize to -1.0 to 1.0
+ audio_float32 = audio_int16.astype(np.float32) / 32768.0
+ tensor = torch.from_numpy(audio_float32)</p>
 
- <span class="c1"># 2. Inference
-</span> <span class="n">speech_prob</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">model</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="mi">16000</span><span class="p">).</span><span class="nf">item</span><span class="p">()</span>
+<p># 2. Inference
+ speech_prob = self.model(tensor, 16000).item()</p>
 
- <span class="c1"># 3. State Machine
-</span> <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">VADState</span><span class="p">.</span><span class="n">SILENCE</span><span class="p">:</span>
- <span class="k">if</span> <span class="n">speech_prob</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">threshold</span><span class="p">:</span>
- <span class="n">self</span><span class="p">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">VADState</span><span class="p">.</span><span class="n">SPEECH</span>
- <span class="n">self</span><span class="p">.</span><span class="n">silence_counter</span> <span class="o">=</span> <span class="mi">0</span>
- <span class="k">return</span> <span class="sh">"</span><span class="s">SPEECH_START</span><span class="sh">"</span>
+<p># 3. State Machine
+ if self.state == VADState.SILENCE:
+ if speech_prob &gt; self.threshold:
+ self.state = VADState.SPEECH
+ self.silence_counter = 0
+ return “SPEECH_START”</p>
 
- <span class="k">elif</span> <span class="n">self</span><span class="p">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">VADState</span><span class="p">.</span><span class="n">SPEECH</span><span class="p">:</span>
- <span class="k">if</span> <span class="n">speech_prob</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">threshold</span><span class="p">:</span>
- <span class="n">self</span><span class="p">.</span><span class="n">silence_counter</span> <span class="o">+=</span> <span class="nf">len</span><span class="p">(</span><span class="n">audio_int16</span><span class="p">)</span> <span class="c1"># Add duration
-</span> <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">silence_counter</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">min_silence_samples</span><span class="p">:</span>
- <span class="n">self</span><span class="p">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">VADState</span><span class="p">.</span><span class="n">SILENCE</span>
- <span class="n">self</span><span class="p">.</span><span class="n">silence_counter</span> <span class="o">=</span> <span class="mi">0</span>
- <span class="k">return</span> <span class="sh">"</span><span class="s">SPEECH_END</span><span class="sh">"</span>
- <span class="k">else</span><span class="p">:</span>
- <span class="n">self</span><span class="p">.</span><span class="n">silence_counter</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># Reset if speech returns
-</span>
- <span class="k">return</span> <span class="sh">"</span><span class="s">NONE</span><span class="sh">"</span>
-</code></pre></div></div>
+<p>elif self.state == VADState.SPEECH:
+ if speech_prob &lt; self.threshold:
+ self.silence_counter += len(audio_int16) # Add duration
+ if self.silence_counter &gt; self.min_silence_samples:
+ self.state = VADState.SILENCE
+ self.silence_counter = 0
+ return “SPEECH_END”
+ else:
+ self.silence_counter = 0 # Reset if speech returns</p>
+
+<p>return “NONE”
+``</p>
 
 <hr />
 
@@ -606,7 +607,7 @@ We use a small, fast Language Model (or a dedicated model like <strong>TurnGPT</
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          13 minute read
+          14 minute read
         
       </span>
     

@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Planning and Decomposition">
     <meta itemprop="description" content="“If you fail to plan, you are planning to fail (and burn tokens).”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -384,7 +384,7 @@ We use a <strong>Recursive Tree Structure</strong>.</p>
       <li>Search flights.</li>
       <li>Filter results against constraints.</li>
       <li>If <code class="language-plaintext highlighter-rouge">results == 0</code>, <strong>Relax Constraint</strong>.</li>
-      <li>“No flights under $500. Searching under $600.”</li>
+      <li>“No flights under <code class="language-plaintext highlighter-rouge">500. Searching under </code>600.”</li>
     </ol>
   </li>
   <li>This feedback loop is critical for travel/booking agents.</li>
@@ -396,74 +396,77 @@ We use a <strong>Recursive Tree Structure</strong>.</p>
 
 <p>A conceptual implementation of a “Replanning Agent” that is self-healing.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">json</span>
+<p>``python
+import json</p>
 
-<span class="k">class</span> <span class="nc">PlannerAgent</span><span class="p">:</span>
- <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">goal</span><span class="p">,</span> <span class="n">llm</span><span class="p">,</span> <span class="n">executor</span><span class="p">):</span>
- <span class="n">self</span><span class="p">.</span><span class="n">goal</span> <span class="o">=</span> <span class="n">goal</span>
- <span class="n">self</span><span class="p">.</span><span class="n">llm</span> <span class="o">=</span> <span class="n">llm</span>
- <span class="n">self</span><span class="p">.</span><span class="n">executor</span> <span class="o">=</span> <span class="n">executor</span>
- <span class="n">self</span><span class="p">.</span><span class="n">plan</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># List of structs {id, desc, status}
-</span> <span class="n">self</span><span class="p">.</span><span class="n">completed_steps</span> <span class="o">=</span> <span class="p">[]</span>
+<p>class PlannerAgent:
+ def <strong>init</strong>(self, goal, llm, executor):
+ self.goal = goal
+ self.llm = llm
+ self.executor = executor
+ self.plan = [] # List of structs {id, desc, status}
+ self.completed_steps = []</p>
 
- <span class="k">def</span> <span class="nf">generate_initial_plan</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
- <span class="c1"># Enforce JSON Schema for the plan
-</span> <span class="n">context</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Goal: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">goal</span><span class="si">}</span><span class="s">. Create a detailed step-by-step plan.</span><span class="sh">"</span>
- <span class="n">response</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">llm</span><span class="p">.</span><span class="nf">generate_json</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">PLAN_SCHEMA</span><span class="p">)</span>
- <span class="n">self</span><span class="p">.</span><span class="n">plan</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="sh">'</span><span class="s">steps</span><span class="sh">'</span><span class="p">]</span>
- <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Initial Plan: </span><span class="si">{</span><span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="sh">'</span><span class="s">desc</span><span class="sh">'</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">plan</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p>def generate_initial_plan(self):
+ # Enforce JSON Schema for the plan
+ context = f”Goal: {self.goal}. Create a detailed step-by-step plan.”
+ response = self.llm.generate_json(context, schema=PLAN_SCHEMA)
+ self.plan = response[‘steps’]
+ print(f”Initial Plan: {[s[‘desc’] for s in self.plan]}”)</p>
 
- <span class="k">def</span> <span class="nf">execute_next</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
- <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">plan</span><span class="p">:</span>
- <span class="k">return</span> <span class="sh">"</span><span class="s">Done</span><span class="sh">"</span>
+<p>def execute_next(self):
+ if not self.plan:
+ return “Done”</p>
 
- <span class="n">current_step</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">plan</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
- <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Executing Step: </span><span class="si">{</span><span class="n">current_step</span><span class="p">[</span><span class="sh">'</span><span class="s">desc</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p>current_step = self.plan[0]
+ print(f”Executing Step: {current_step[‘desc’]}”)</p>
 
- <span class="c1"># 1. Handoff to Executor (The ReAct Agent)
-</span> <span class="c1"># We give the Executor the *Global Goal* context too
-</span> <span class="n">result</span><span class="p">,</span> <span class="n">success</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">executor</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span>
- <span class="n">task</span><span class="o">=</span><span class="n">current_step</span><span class="p">[</span><span class="sh">'</span><span class="s">desc</span><span class="sh">'</span><span class="p">],</span>
- <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="sh">"</span><span class="s">global_goal</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">goal</span><span class="p">}</span>
- <span class="p">)</span>
+<p># 1. Handoff to Executor (The ReAct Agent)
+ # We give the Executor the <em>Global Goal</em> context too
+ result, success = self.executor.run(
+ task=current_step[‘desc’],
+ context={“global_goal”: self.goal}
+ )</p>
 
- <span class="c1"># 2. Check Success
-</span> <span class="k">if</span> <span class="n">success</span><span class="p">:</span>
- <span class="n">self</span><span class="p">.</span><span class="n">completed_steps</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span><span class="sh">"</span><span class="s">step</span><span class="sh">"</span><span class="p">:</span> <span class="n">current_step</span><span class="p">,</span> <span class="sh">"</span><span class="s">result</span><span class="sh">"</span><span class="p">:</span> <span class="n">result</span><span class="p">})</span>
- <span class="n">self</span><span class="p">.</span><span class="n">plan</span><span class="p">.</span><span class="nf">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># Remove from Todo
-</span> <span class="k">else</span><span class="p">:</span>
- <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Step failed. Triggering Replanning...</span><span class="sh">"</span><span class="p">)</span>
- <span class="n">self</span><span class="p">.</span><span class="nf">replan</span><span class="p">(</span><span class="n">failed_step</span><span class="o">=</span><span class="n">current_step</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
+<p># 2. Check Success
+ if success:
+ self.completed_steps.append({“step”: current_step, “result”: result})
+ self.plan.pop(0) # Remove from Todo
+ else:
+ print(“Step failed. Triggering Replanning…”)
+ self.replan(failed_step=current_step, error=result)</p>
 
- <span class="k">def</span> <span class="nf">replan</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">failed_step</span><span class="p">,</span> <span class="n">error</span><span class="p">):</span>
- <span class="sh">"""</span><span class="s">
+<p>def replan(self, failed_step, error):
+ “””
  The Core Logic: Ask the Planner to fix the mess.
- </span><span class="sh">"""</span>
- <span class="n">context</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"""</span><span class="s">
- Goal: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">goal</span><span class="si">}</span><span class="s">
- Completed Steps: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">completed_steps</span><span class="si">}</span><span class="s">
+ “””
+ context = f”””
+ Goal: {self.goal}
+ Completed Steps: {self.completed_steps}</p>
 
- The Current Step FAILED.
- Step: </span><span class="si">{</span><span class="n">failed_step</span><span class="p">[</span><span class="sh">'</span><span class="s">desc</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">
- Error: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s">
+<p>The Current Step FAILED.
+ Step: {failed_step[‘desc’]}
+ Error: {error}</p>
 
- Remaining Plan: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">plan</span><span class="si">}</span><span class="s">
+<p>Remaining Plan: {self.plan}</p>
 
- INSTRUCTION: Update the plan. You can:
- 1. Break the failed step into smaller steps.
- 2. Propose a different way to achieve the goal.
- 3. Skip the step if it</span><span class="sh">'</span><span class="s">s optional.
- </span><span class="sh">"""</span>
- <span class="n">response</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">llm</span><span class="p">.</span><span class="nf">generate_json</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">PLAN_SCHEMA</span><span class="p">)</span>
- <span class="n">self</span><span class="p">.</span><span class="n">plan</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="sh">'</span><span class="s">steps</span><span class="sh">'</span><span class="p">]</span> <span class="c1"># Overwrite the queue
-</span> <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">New Plan: </span><span class="si">{</span><span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="sh">'</span><span class="s">desc</span><span class="sh">'</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">plan</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p>INSTRUCTION: Update the plan. You can:</p>
+<ol>
+  <li>Break the failed step into smaller steps.</li>
+  <li>Propose a different way to achieve the goal.</li>
+  <li>Skip the step if it’s optional.
+ “””
+ response = self.llm.generate_json(context, schema=PLAN_SCHEMA)
+ self.plan = response[‘steps’] # Overwrite the queue
+ print(f”New Plan: {[s[‘desc’] for s in self.plan]}”)</li>
+</ol>
 
-<span class="c1"># Usage Simulation
-# agent = PlannerAgent("Write a Weather App")
-# agent.generate_initial_plan()
-# while agent.plan:
-# agent.execute_next()
-</span></code></pre></div></div>
+<h1 id="usage-simulation">Usage Simulation</h1>
+<h1 id="agent--planneragentwrite-a-weather-app">agent = PlannerAgent(“Write a Weather App”)</h1>
+<h1 id="agentgenerate_initial_plan">agent.generate_initial_plan()</h1>
+<h1 id="while-agentplan">while agent.plan:</h1>
+<h1 id="agentexecute_next">agent.execute_next()</h1>
+<p>``</p>
 
 <hr />
 

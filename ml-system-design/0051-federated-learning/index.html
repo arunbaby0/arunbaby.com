@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Federated Learning">
     <meta itemprop="description" content="“If data can’t move, move the model—and design the system so the server never sees what matters.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -292,13 +292,10 @@ Federated learning is a distributed optimization algorithm under strict constrai
 <ul>
   <li>Train a global model over many client datasets without centralizing raw data.</li>
   <li>Periodically produce a new model version for serving (on-device or server-side).</li>
-  <li>Support multiple model types:
-    <ul>
-      <li>logistic regression / small neural nets</li>
-      <li>large embeddings</li>
-      <li>speech models (acoustic / personalization heads)</li>
-    </ul>
-  </li>
+  <li>Support multiple model types:</li>
+  <li>logistic regression / small neural nets</li>
+  <li>large embeddings</li>
+  <li>speech models (acoustic / personalization heads)</li>
   <li>Support experimentation: A/B testing between FL variants (FedAvg vs FedProx, compression choices, DP).</li>
 </ul>
 
@@ -332,39 +329,40 @@ Federated learning is a distributed optimization algorithm under strict constrai
 
 <h3 id="31-architecture-diagram-control--data-plane">3.1 Architecture diagram (control + data plane)</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                    +----------------------------------+
-                    |        FL Orchestrator           |
-                    | (round scheduler + policy engine)|
-                    +-------------------+--------------+
-                                        |
-                     (model + plan)     |    (eligibility + sampling)
-                                        v
-  +----------------------+     +----------------------+     +----------------------+
-  | Model Registry       |     | Client Selector      |     | Privacy / Security   |
-  | (versions, metadata) |     | (sampling, quotas)   |     | (DP params, SA keys) |
-  +----------+-----------+     +----------+-----------+     +----------+-----------+
-             |                                |                          |
-             |                                |                          |
-             v                                v                          v
-    +-------------------+           +-------------------+        +-------------------+
-    | Broadcast Service |---------&gt; |  Devices (clients)|------&gt; | Secure Aggregator |
-    | (CDN / gRPC)      |  model+   | local train,      | updates| (no raw updates)  |
-    +-------------------+  plan     | clip/noise,       |        +---------+---------+
-                                     | upload partials   |                  |
-                                     +---------+---------+                  |
-                                               |                            |
-                                               v                            v
-                                       +-------------------+      +-------------------+
-                                       | Telemetry         |      | Server Optimizer  |
-                                       | (metrics only)    |      | (FedAvg/FedOpt)   |
-                                       +-------------------+      +---------+---------+
-                                                                         |
-                                                                         v
-                                                                 +-------------------+
-                                                                 | Eval + Promotion  |
-                                                                 | (holdout + guard) |
-                                                                 +-------------------+
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+ +----------------------------------+
+ | FL Orchestrator |
+ | (round scheduler + policy engine)|
+ +-------------------+--------------+
+ |
+ (model + plan) | (eligibility + sampling)
+ v
+ +----------------------+ +----------------------+ +----------------------+
+ | Model Registry | | Client Selector | | Privacy / Security |
+ | (versions, metadata) | | (sampling, quotas) | | (DP params, SA keys) |
+ +----------+-----------+ +----------+-----------+ +----------+-----------+
+ | | |
+ | | |
+ v v v
+ +-------------------+ +-------------------+ +-------------------+
+ | Broadcast Service |---------&gt; | Devices (clients)|------&gt; | Secure Aggregator |
+ | (CDN / gRPC) | model+ | local train, | updates| (no raw updates) |
+ +-------------------+ plan | clip/noise, | +---------+---------+
+ | upload partials | |
+ +---------+---------+ |
+ | |
+ v v
+ +-------------------+ +-------------------+
+ | Telemetry | | Server Optimizer |
+ | (metrics only) | | (FedAvg/FedOpt) |
+ +-------------------+ +---------+---------+
+ |
+ v
+ +-------------------+
+ | Eval + Promotion |
+ | (holdout + guard) |
+ +-------------------+
+</code></p>
 
 <h3 id="32-key-responsibilities">3.2 Key responsibilities</h3>
 
@@ -607,12 +605,9 @@ You need a privacy accountant to track privacy loss across rounds.</p>
   </li>
   <li><strong>Broadcast</strong>
     <ul>
-      <li>Devices fetch:
-        <ul>
-          <li>model weights (CDN)</li>
-          <li>training plan (gRPC / config service)</li>
-        </ul>
-      </li>
+      <li>Devices fetch:</li>
+      <li>model weights (CDN)</li>
+      <li>training plan (gRPC / config service)</li>
     </ul>
   </li>
   <li><strong>Local training</strong>
@@ -638,12 +633,9 @@ You need a privacy accountant to track privacy loss across rounds.</p>
   </li>
   <li><strong>Evaluation</strong>
     <ul>
-      <li>Evaluate on:
-        <ul>
-          <li>server-side public/curated datasets</li>
-          <li>privacy-safe on-device eval (clients compute metrics and aggregate)</li>
-        </ul>
-      </li>
+      <li>Evaluate on:</li>
+      <li>server-side public/curated datasets</li>
+      <li>privacy-safe on-device eval (clients compute metrics and aggregate)</li>
     </ul>
   </li>
   <li><strong>Promotion</strong>
@@ -740,57 +732,55 @@ you’re effectively solving a global objective with local constraints and parti
 
 <p>This is a simplified simulation of FedAvg. In production, the core is the same conceptually, but wrapped in client runtimes, orchestration, and secure aggregation.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+from dataclasses import dataclass
+from typing import List, Tuple
+import numpy as np</p>
 
+<p>@dataclass
+class ClientUpdate:
+ n_examples: int
+ delta: np.ndarray # flattened weights delta</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">ClientUpdate</span><span class="p">:</span>
-    <span class="n">n_examples</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">delta</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span>  <span class="c1"># flattened weights delta
-</span>
+<p>def clip_update(delta: np.ndarray, clip_norm: float) -&gt; np.ndarray:
+ “"”L2 clip to bound sensitivity and reduce outliers.”””
+ norm = np.linalg.norm(delta)
+ if norm &lt;= clip_norm or norm == 0.0:
+ return delta
+ return delta * (clip_norm / norm)</p>
 
-<span class="k">def</span> <span class="nf">clip_update</span><span class="p">(</span><span class="n">delta</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">clip_norm</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">L2 clip to bound sensitivity and reduce outliers.</span><span class="sh">"""</span>
-    <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">norm</span> <span class="o">&lt;=</span> <span class="n">clip_norm</span> <span class="ow">or</span> <span class="n">norm</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">delta</span>
-    <span class="k">return</span> <span class="n">delta</span> <span class="o">*</span> <span class="p">(</span><span class="n">clip_norm</span> <span class="o">/</span> <span class="n">norm</span><span class="p">)</span>
+<p>def client_train_step(w: np.ndarray, data: Tuple[np.ndarray, np.ndarray]) -&gt; ClientUpdate:
+ “””
+ Toy local training:</p>
+<ul>
+  <li>pretend we run a couple of SGD steps and return a model delta
+ “””
+ x, y = data
+ # Fake gradient: (this is placeholder logic for illustration)
+ grad = x.T @ (x @ w - y) / max(1, len(y))
+ lr = 0.1
+ w_new = w - lr * grad
+ delta = w_new - w
+ return ClientUpdate(n_examples=len(y), delta=delta)</li>
+</ul>
 
+<p>def fedavg_aggregate(updates: List[ClientUpdate]) -&gt; np.ndarray:
+ “"”Weighted average of deltas.”””
+ total = sum(u.n_examples for u in updates)
+ if total == 0:
+ raise ValueError(“No examples aggregated”)
+ return sum((u.n_examples / total) * u.delta for u in updates)</p>
 
-<span class="k">def</span> <span class="nf">client_train_step</span><span class="p">(</span><span class="n">w</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ClientUpdate</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Toy local training:
-    - pretend we run a couple of SGD steps and return a model delta
-    </span><span class="sh">"""</span>
-    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">data</span>
-    <span class="c1"># Fake gradient: (this is placeholder logic for illustration)
-</span>    <span class="n">grad</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">x</span> <span class="o">@</span> <span class="n">w</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="nf">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
-    <span class="n">lr</span> <span class="o">=</span> <span class="mf">0.1</span>
-    <span class="n">w_new</span> <span class="o">=</span> <span class="n">w</span> <span class="o">-</span> <span class="n">lr</span> <span class="o">*</span> <span class="n">grad</span>
-    <span class="n">delta</span> <span class="o">=</span> <span class="n">w_new</span> <span class="o">-</span> <span class="n">w</span>
-    <span class="k">return</span> <span class="nc">ClientUpdate</span><span class="p">(</span><span class="n">n_examples</span><span class="o">=</span><span class="nf">len</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">delta</span><span class="o">=</span><span class="n">delta</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">fedavg_aggregate</span><span class="p">(</span><span class="n">updates</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ClientUpdate</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Weighted average of deltas.</span><span class="sh">"""</span>
-    <span class="n">total</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">u</span><span class="p">.</span><span class="n">n_examples</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">updates</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">total</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sh">"</span><span class="s">No examples aggregated</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nf">sum</span><span class="p">((</span><span class="n">u</span><span class="p">.</span><span class="n">n_examples</span> <span class="o">/</span> <span class="n">total</span><span class="p">)</span> <span class="o">*</span> <span class="n">u</span><span class="p">.</span><span class="n">delta</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">updates</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">federated_round</span><span class="p">(</span><span class="n">w</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">client_datas</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">]],</span> <span class="n">clip_norm</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">One round: local train -&gt; clip -&gt; aggregate.</span><span class="sh">"""</span>
-    <span class="n">updates</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">client_datas</span><span class="p">:</span>
-        <span class="n">upd</span> <span class="o">=</span> <span class="nf">client_train_step</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-        <span class="n">upd</span><span class="p">.</span><span class="n">delta</span> <span class="o">=</span> <span class="nf">clip_update</span><span class="p">(</span><span class="n">upd</span><span class="p">.</span><span class="n">delta</span><span class="p">,</span> <span class="n">clip_norm</span><span class="p">)</span>
-        <span class="n">updates</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">upd</span><span class="p">)</span>
-    <span class="n">agg_delta</span> <span class="o">=</span> <span class="nf">fedavg_aggregate</span><span class="p">(</span><span class="n">updates</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">w</span> <span class="o">+</span> <span class="n">agg_delta</span>
-</code></pre></div></div>
+<p>def federated_round(w: np.ndarray, client_datas: List[Tuple[np.ndarray, np.ndarray]], clip_norm: float) -&gt; np.ndarray:
+ “"”One round: local train -&gt; clip -&gt; aggregate.”””
+ updates = []
+ for data in client_datas:
+ upd = client_train_step(w, data)
+ upd.delta = clip_update(upd.delta, clip_norm)
+ updates.append(upd)
+ agg_delta = fedavg_aggregate(updates)
+ return w + agg_delta
+``</p>
 
 <p>What’s missing (intentionally) compared to real FL:</p>
 <ul>
@@ -1171,33 +1161,27 @@ Federated training moves a large part of compute to devices:</p>
 <p>If you’re reviewing a federated learning design, ask:</p>
 
 <ul>
-  <li><strong>Client policy</strong>
-    <ul>
-      <li>How do we decide eligibility (Wi‑Fi, charging, opt-in)?</li>
-      <li>What is the target sampling distribution (and how do we audit it)?</li>
-    </ul>
+  <li><strong>Client policy</strong></li>
+  <li>How do we decide eligibility (Wi‑Fi, charging, opt-in)?</li>
+  <li>
+    <p>What is the target sampling distribution (and how do we audit it)?</p>
   </li>
-  <li><strong>Privacy</strong>
-    <ul>
-      <li>Is secure aggregation enabled for sensitive models?</li>
-      <li>Do we clip updates? Where is the DP budget accounted and enforced?</li>
-      <li>What is the minimum cohort size per segment?</li>
-    </ul>
+  <li><strong>Privacy</strong></li>
+  <li>Is secure aggregation enabled for sensitive models?</li>
+  <li>Do we clip updates? Where is the DP budget accounted and enforced?</li>
+  <li>
+    <p>What is the minimum cohort size per segment?</p>
   </li>
-  <li><strong>Robustness</strong>
-    <ul>
-      <li>What aggregator do we use (FedAvg vs robust variants)?</li>
-      <li>How do we handle dropouts and stragglers?</li>
-      <li>What anti-poisoning mitigations exist?</li>
-    </ul>
+  <li><strong>Robustness</strong></li>
+  <li>What aggregator do we use (FedAvg vs robust variants)?</li>
+  <li>How do we handle dropouts and stragglers?</li>
+  <li>
+    <p>What anti-poisoning mitigations exist?</p>
   </li>
-  <li><strong>MLOps</strong>
-    <ul>
-      <li>Are plans versioned and validated before execution?</li>
-      <li>Can we canary/roll back both model and plan quickly?</li>
-      <li>What metrics exist without inspecting raw client data?</li>
-    </ul>
-  </li>
+  <li><strong>MLOps</strong></li>
+  <li>Are plans versioned and validated before execution?</li>
+  <li>Can we canary/roll back both model and plan quickly?</li>
+  <li>What metrics exist without inspecting raw client data?</li>
 </ul>
 
 <p>If these questions have crisp answers, you’re operating FL like a real distributed system instead of a research prototype.</p>

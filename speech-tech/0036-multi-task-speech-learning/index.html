@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Multi-task Speech Learning">
     <meta itemprop="description" content="“One model to rule them all: ASR, Translation, and Understanding.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -286,13 +286,10 @@
 <h3 id="2-token-based-task-specification-the-whisper-way">2. Token-Based Task Specification (The “Whisper” Way)</h3>
 <ul>
   <li><strong>Single Encoder-Decoder Transformer.</strong></li>
-  <li><strong>Task Tokens:</strong> The first token fed to the decoder tells it what to do.
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">&lt;|transcribe|&gt;</code> -&gt; Output English text.</li>
-      <li><code class="language-plaintext highlighter-rouge">&lt;|translate|&gt;</code> -&gt; Output French text.</li>
-      <li><code class="language-plaintext highlighter-rouge">&lt;|timestamps|&gt;</code> -&gt; Output time-aligned text.</li>
-    </ul>
-  </li>
+  <li><strong>Task Tokens:</strong> The first token fed to the decoder tells it what to do.</li>
+  <li><code class="language-plaintext highlighter-rouge">&lt;|transcribe|&gt;</code> -&gt; Output English text.</li>
+  <li><code class="language-plaintext highlighter-rouge">&lt;|translate|&gt;</code> -&gt; Output French text.</li>
+  <li><code class="language-plaintext highlighter-rouge">&lt;|timestamps|&gt;</code> -&gt; Output time-aligned text.</li>
   <li><strong>Pros:</strong> Extremely flexible. Zero-shot transfer.</li>
   <li><strong>Cons:</strong> Balancing tasks during training is tricky.</li>
 </ul>
@@ -300,10 +297,10 @@
 <h2 id="3-training-strategies">3. Training Strategies</h2>
 
 <h3 id="1-loss-weighting">1. Loss Weighting</h3>
-<p>\(L_{total} = \lambda_1 L_{ASR} + \lambda_2 L_{ST} + \lambda_3 L_{SLU}\)</p>
+<p><code class="language-plaintext highlighter-rouge">L_{total} = \lambda_1 L_{ASR} + \lambda_2 L_{ST} + \lambda_3 L_{SLU}</code></p>
 <ul>
-  <li><strong>Challenge:</strong> If $L_{ASR}$ is large, the model ignores ST.</li>
-  <li><strong>Solution:</strong> Dynamic Weight Averaging (DWA) or Uncertainty Weighting (learn $\lambda$ as parameters).</li>
+  <li><strong>Challenge:</strong> If <code class="language-plaintext highlighter-rouge">L_{ASR}</code> is large, the model ignores ST.</li>
+  <li><strong>Solution:</strong> Dynamic Weight Averaging (DWA) or Uncertainty Weighting (learn <code class="language-plaintext highlighter-rouge">\lambda</code> as parameters).</li>
 </ul>
 
 <h3 id="2-gradient-surgery">2. Gradient Surgery</h3>
@@ -334,7 +331,7 @@
   <li><strong>Architecture:</strong> Standard Transformer Encoder-Decoder.</li>
   <li><strong>Input:</strong> Log-Mel Spectrogram (30 seconds).</li>
   <li><strong>Decoder Prompt:</strong>
-<code class="language-plaintext highlighter-rouge">[&lt;|startoftranscript|&gt;, &lt;|en|&gt;, &lt;|transcribe|&gt;, &lt;|notimestamps|&gt;]</code></li>
+ <code class="language-plaintext highlighter-rouge">[&lt;|startoftranscript|&gt;, &lt;|en|&gt;, &lt;|transcribe|&gt;, &lt;|notimestamps|&gt;]</code></li>
 </ul>
 
 <p><strong>Key Insight:</strong> By training on 680k hours of weak supervision (internet audio), the model learns robust representations that generalize across tasks.</p>
@@ -424,35 +421,35 @@
 
 <p>When training on Task A (ASR) and Task B (Translation), the gradients might conflict.</p>
 <ul>
-  <li>$\nabla L_A$ says “increase weight $w$”.</li>
-  <li>$\nabla L_B$ says “decrease weight $w$”.</li>
+  <li><code class="language-plaintext highlighter-rouge">\nabla L_A</code> says “increase weight <code class="language-plaintext highlighter-rouge">w</code>”.</li>
+  <li><code class="language-plaintext highlighter-rouge">\nabla L_B</code> says “decrease weight <code class="language-plaintext highlighter-rouge">w</code>”.</li>
   <li>Result: They cancel out, or the model oscillates.</li>
 </ul>
 
 <p><strong>PCGrad Algorithm:</strong></p>
 <ol>
-  <li>Compute gradients $g_A$ and $g_B$ independently.</li>
-  <li>Check cosine similarity: if $g_A \cdot g_B &lt; 0$ (angle &gt; 90 degrees), they conflict.</li>
-  <li>Project $g_A$ onto the normal plane of $g_B$:
-\(g_A' = g_A - \frac{g_A \cdot g_B}{\|g_B\|^2} g_B\)</li>
-  <li>Do the same for $g_B$.</li>
-  <li>Update weights with $g_A’ + g_B’$.</li>
+  <li>Compute gradients <code class="language-plaintext highlighter-rouge">g_A</code> and <code class="language-plaintext highlighter-rouge">g_B</code> independently.</li>
+  <li>Check cosine similarity: if <code class="language-plaintext highlighter-rouge">g_A \cdot g_B &lt; 0</code> (angle &gt; 90 degrees), they conflict.</li>
+  <li>Project <code class="language-plaintext highlighter-rouge">g_A</code> onto the normal plane of <code class="language-plaintext highlighter-rouge">g_B</code>:
+ <code class="language-plaintext highlighter-rouge">g_A' = g_A - \frac{g_A \cdot g_B}{\|g_B\|^2} g_B</code></li>
+  <li>Do the same for <code class="language-plaintext highlighter-rouge">g_B</code>.</li>
+  <li>Update weights with <code class="language-plaintext highlighter-rouge">g_A' + g_B'</code>.</li>
 </ol>
 
 <p><strong>Effect:</strong> The optimization trajectory follows a “zigzag” path that satisfies both tasks without destructive interference.</p>
 
 <h2 id="10-deep-dive-uncertainty-weighting">10. Deep Dive: Uncertainty Weighting</h2>
 
-<p>How do we set $\lambda_1, \lambda_2$ in the loss function?
-\(L = \lambda_1 L_{ASR} + \lambda_2 L_{ST}\)</p>
+<p>How do we set <code class="language-plaintext highlighter-rouge">\lambda_1, \lambda_2</code> in the loss function?
+<code class="language-plaintext highlighter-rouge">L = \lambda_1 L_{ASR} + \lambda_2 L_{ST}</code></p>
 
 <p><strong>Homoscedastic Uncertainty:</strong></p>
 <ul>
   <li>Assume the task noise is constant.</li>
-  <li>Learn $\sigma_1, \sigma_2$ (variance) as trainable parameters.</li>
+  <li>Learn <code class="language-plaintext highlighter-rouge">\sigma_1, \sigma_2</code> (variance) as trainable parameters.</li>
   <li>Loss becomes:
-\(L = \frac{1}{2\sigma_1^2} L_{ASR} + \frac{1}{2\sigma_2^2} L_{ST} + \log \sigma_1 + \log \sigma_2\)</li>
-  <li>If a task is noisy (high loss), the model increases $\sigma$ to reduce its weight.</li>
+ <code class="language-plaintext highlighter-rouge">L = \frac{1}{2\sigma_1^2} L_{ASR} + \frac{1}{2\sigma_2^2} L_{ST} + \log \sigma_1 + \log \sigma_2</code></li>
+  <li>If a task is noisy (high loss), the model increases <code class="language-plaintext highlighter-rouge">\sigma</code> to reduce its weight.</li>
   <li><strong>Result:</strong> Automatic, dynamic balancing.</li>
 </ul>
 
@@ -498,50 +495,51 @@ Whisper trained on <strong>680,000 hours</strong> of internet audio.</p>
 
 <p>A simple implementation of a shared encoder with multiple heads.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">MultiTaskSpeechModel</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">,</span> <span class="n">num_intents</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="c1"># Shared Encoder (e.g., Conformer or LSTM)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTM</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="n">num_layers</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">bidirectional</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        
-        <span class="c1"># Task 1: ASR (CTC Head)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">asr_head</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">)</span>
-        
-        <span class="c1"># Task 2: Intent Classification (SLU Head)
-</span>        <span class="c1"># Use the last hidden state for classification
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">intent_head</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Sequential</span><span class="p">(</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">ReLU</span><span class="p">(),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="n">num_intents</span><span class="p">)</span>
-        <span class="p">)</span>
-        
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="c1"># x: (Batch, Time, Feats)
-</span>        <span class="n">encoder_out</span><span class="p">,</span> <span class="p">(</span><span class="n">h_n</span><span class="p">,</span> <span class="n">c_n</span><span class="p">)</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        
-        <span class="c1"># ASR Output: (Batch, Time, Vocab)
-</span>        <span class="n">asr_logits</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">asr_head</span><span class="p">(</span><span class="n">encoder_out</span><span class="p">)</span>
-        
-        <span class="c1"># Intent Output: (Batch, Num_Intents)
-</span>        <span class="c1"># Pool over time (e.g., take last state or mean)
-</span>        <span class="c1"># Here taking mean of encoder outputs
-</span>        <span class="n">context</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">encoder_out</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">intent_logits</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">intent_head</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">asr_logits</span><span class="p">,</span> <span class="n">intent_logits</span>
+<p>class MultiTaskSpeechModel(nn.Module):
+ def <strong>init</strong>(self, input_dim, vocab_size, num_intents):
+ super().<strong>init</strong>()</p>
 
-<span class="c1"># Loss Calculation
-</span><span class="k">def</span> <span class="nf">compute_loss</span><span class="p">(</span><span class="n">asr_logits</span><span class="p">,</span> <span class="n">asr_targets</span><span class="p">,</span> <span class="n">intent_logits</span><span class="p">,</span> <span class="n">intent_targets</span><span class="p">):</span>
-    <span class="n">loss_asr</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">CTCLoss</span><span class="p">()(</span><span class="n">asr_logits</span><span class="p">.</span><span class="nf">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">asr_targets</span><span class="p">,</span> <span class="p">...)</span>
-    <span class="n">loss_intent</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">CrossEntropyLoss</span><span class="p">()(</span><span class="n">intent_logits</span><span class="p">,</span> <span class="n">intent_targets</span><span class="p">)</span>
-    
-    <span class="c1"># Simple weighting
-</span>    <span class="k">return</span> <span class="n">loss_asr</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">loss_intent</span>
-</code></pre></div></div>
+<p># Shared Encoder (e.g., Conformer or LSTM)
+ self.encoder = nn.LSTM(input_dim, 512, num_layers=3, batch_first=True, bidirectional=True)</p>
+
+<p># Task 1: ASR (CTC Head)
+ self.asr_head = nn.Linear(1024, vocab_size)</p>
+
+<p># Task 2: Intent Classification (SLU Head)
+ # Use the last hidden state for classification
+ self.intent_head = nn.Sequential(
+ nn.Linear(1024, 256),
+ nn.ReLU(),
+ nn.Linear(256, num_intents)
+ )</p>
+
+<p>def forward(self, x):
+ # x: (Batch, Time, Feats)
+ encoder_out, (h_n, c_n) = self.encoder(x)</p>
+
+<p># ASR Output: (Batch, Time, Vocab)
+ asr_logits = self.asr_head(encoder_out)</p>
+
+<p># Intent Output: (Batch, Num_Intents)
+ # Pool over time (e.g., take last state or mean)
+ # Here taking mean of encoder outputs
+ context = torch.mean(encoder_out, dim=1)
+ intent_logits = self.intent_head(context)</p>
+
+<p>return asr_logits, intent_logits</p>
+
+<h1 id="loss-calculation">Loss Calculation</h1>
+<p>def compute_loss(asr_logits, asr_targets, intent_logits, intent_targets):
+ loss_asr = nn.CTCLoss()(asr_logits.transpose(0, 1), asr_targets, …)
+ loss_intent = nn.CrossEntropyLoss()(intent_logits, intent_targets)</p>
+
+<p># Simple weighting
+ return loss_asr + 0.5 * loss_intent
+``</p>
 
 <h2 id="14-system-design-real-time-translation-babelfish">14. System Design: Real-Time Translation (Babelfish)</h2>
 
@@ -559,7 +557,7 @@ Whisper trained on <strong>680,000 hours</strong> of internet audio.</p>
   </li>
   <li><strong>Streaming:</strong>
     <ul>
-      <li>Use <strong>Wait-k Policy</strong>: Wait for $k$ words before translating.</li>
+      <li>Use <strong>Wait-k Policy</strong>: Wait for <code class="language-plaintext highlighter-rouge">k</code> words before translating.</li>
       <li>Trade-off: Latency vs. Context (Accuracy).</li>
     </ul>
   </li>
@@ -581,9 +579,9 @@ Most modern ASR systems (ESPnet, WeNet) use <strong>Hybrid CTC/Attention</strong
 </ul>
 
 <p><strong>Training Objective:</strong>
-\(L = \alpha L_{CTC} + (1 - \alpha) L_{Attn}\)</p>
+<code class="language-plaintext highlighter-rouge">L = \alpha L_{CTC} + (1 - \alpha) L_{Attn}</code></p>
 <ul>
-  <li>Typically $\alpha = 0.3$.</li>
+  <li>Typically <code class="language-plaintext highlighter-rouge">\alpha = 0.3</code>.</li>
   <li>The Encoder is shared.</li>
   <li>The CTC head branches off the Encoder.</li>
   <li>The Attention Decoder sits on top of the Encoder.</li>
@@ -597,12 +595,9 @@ Most modern ASR systems (ESPnet, WeNet) use <strong>Hybrid CTC/Attention</strong
       <li>Rescore them using the Attention Decoder (accurate).</li>
     </ol>
   </li>
-  <li><strong>Joint Decoding:</strong>
-    <ul>
-      <li>Combine scores at each beam search step:
-\(Score = \lambda \log P_{CTC}(y|x) + (1-\lambda) \log P_{Attn}(y|x)\)</li>
-    </ul>
-  </li>
+  <li><strong>Joint Decoding:</strong></li>
+  <li>Combine scores at each beam search step:
+ <code class="language-plaintext highlighter-rouge">Score = \lambda \log P_{CTC}(y|x) + (1-\lambda) \log P_{Attn}(y|x)</code></li>
 </ul>
 
 <h2 id="16-deep-dive-multilingual-asr-as-multi-task-learning">16. Deep Dive: Multilingual ASR as Multi-task Learning</h2>
@@ -640,7 +635,7 @@ Most modern ASR systems (ESPnet, WeNet) use <strong>Hybrid CTC/Attention</strong
 <ul>
   <li><strong>Main Task:</strong> ASR (Seq2Seq).</li>
   <li><strong>Auxiliary Task:</strong> Frame-level binary classification (Speech vs. Silence).</li>
-  <li><strong>Loss:</strong> $L_{ASR} + \lambda L_{VAD}$.</li>
+  <li><strong>Loss:</strong> <code class="language-plaintext highlighter-rouge">L_{ASR} + \lambda L_{VAD}</code>.</li>
 </ul>
 
 <p><strong>Benefit:</strong></p>
@@ -719,23 +714,11 @@ Most modern ASR systems (ESPnet, WeNet) use <strong>Hybrid CTC/Attention</strong
 <ol>
   <li><strong>Data Loader (The “Mixer”):</strong>
     <ul>
-      <li>Samples batches from different datasets based on a probability distribution $p_i$.</li>
-      <li>
-        <table>
-          <tbody>
-            <tr>
-              <td><strong>Temperature Sampling:</strong> $p_i \propto</td>
-              <td>D_i</td>
-              <td>^{1/T}$.</td>
-            </tr>
-          </tbody>
-        </table>
-        <ul>
-          <li>$T=1$: Proportional to dataset size (starves small tasks).</li>
-          <li>$T=\infty$: Uniform sampling (overfits small tasks).</li>
-          <li>$T=5$: Good balance.</li>
-        </ul>
-      </li>
+      <li>Samples batches from different datasets based on a probability distribution <code class="language-plaintext highlighter-rouge">p_i</code>.</li>
+      <li><strong>Temperature Sampling:</strong> <code class="language-plaintext highlighter-rouge">p_i \propto |D_i|^{1/T}</code>.</li>
+      <li><code class="language-plaintext highlighter-rouge">T=1</code>: Proportional to dataset size (starves small tasks).</li>
+      <li><code class="language-plaintext highlighter-rouge">T=\infty</code>: Uniform sampling (overfits small tasks).</li>
+      <li><code class="language-plaintext highlighter-rouge">T=5</code>: Good balance.</li>
     </ul>
   </li>
   <li><strong>Bucketing:</strong>
@@ -782,44 +765,45 @@ Most modern ASR systems (ESPnet, WeNet) use <strong>Hybrid CTC/Attention</strong
 
 <p>Let’s implement the learnable loss weights in PyTorch.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">MultiTaskLoss</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">num_tasks</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="c1"># Learnable log variances (sigma^2)
-</span>        <span class="c1"># Initialize to 0 (variance = 1)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">log_vars</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">num_tasks</span><span class="p">))</span>
-        
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">losses</span><span class="p">):</span>
-        <span class="c1"># losses: list of scalar tensors [L1, L2, ...]
-</span>        <span class="n">total_loss</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">loss</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">losses</span><span class="p">):</span>
-            <span class="c1"># Precision = 1 / (2 * sigma^2)
-</span>            <span class="n">precision</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="p">.</span><span class="nf">exp</span><span class="p">(</span><span class="o">-</span><span class="n">self</span><span class="p">.</span><span class="n">log_vars</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-            
-            <span class="c1"># L = precision * loss + log(sigma)
-</span>            <span class="c1"># log(sigma) = 0.5 * log_var
-</span>            <span class="n">total_loss</span> <span class="o">+=</span> <span class="n">precision</span> <span class="o">*</span> <span class="n">loss</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">log_vars</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-            
-        <span class="k">return</span> <span class="n">total_loss</span>
+<p>class MultiTaskLoss(nn.Module):
+ def <strong>init</strong>(self, num_tasks):
+ super().<strong>init</strong>()
+ # Learnable log variances (sigma^2)
+ # Initialize to 0 (variance = 1)
+ self.log_vars = nn.Parameter(torch.zeros(num_tasks))</p>
 
-<span class="c1"># Usage
-</span><span class="n">mtl_criterion</span> <span class="o">=</span> <span class="nc">MultiTaskLoss</span><span class="p">(</span><span class="n">num_tasks</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">optim</span><span class="p">.</span><span class="nc">Adam</span><span class="p">(</span>
-    <span class="nf">list</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="nf">parameters</span><span class="p">())</span> <span class="o">+</span> <span class="nf">list</span><span class="p">(</span><span class="n">mtl_criterion</span><span class="p">.</span><span class="nf">parameters</span><span class="p">()),</span> 
-    <span class="n">lr</span><span class="o">=</span><span class="mf">1e-4</span>
-<span class="p">)</span>
+<p>def forward(self, losses):
+ # losses: list of scalar tensors [L1, L2, …]
+ total_loss = 0
+ for i, loss in enumerate(losses):
+ # Precision = 1 / (2 * sigma^2)
+ precision = 0.5 * torch.exp(-self.log_vars[i])</p>
 
-<span class="c1"># Training Loop
-</span><span class="n">loss_asr</span> <span class="o">=</span> <span class="nf">criterion_asr</span><span class="p">(</span><span class="n">pred_asr</span><span class="p">,</span> <span class="n">target_asr</span><span class="p">)</span>
-<span class="n">loss_st</span> <span class="o">=</span> <span class="nf">criterion_st</span><span class="p">(</span><span class="n">pred_st</span><span class="p">,</span> <span class="n">target_st</span><span class="p">)</span>
+<p># L = precision * loss + log(sigma)
+ # log(sigma) = 0.5 * log_var
+ total_loss += precision * loss + 0.5 * self.log_vars[i]</p>
 
-<span class="n">loss</span> <span class="o">=</span> <span class="nf">mtl_criterion</span><span class="p">([</span><span class="n">loss_asr</span><span class="p">,</span> <span class="n">loss_st</span><span class="p">])</span>
-<span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
-<span class="n">optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
-</code></pre></div></div>
+<p>return total_loss</p>
+
+<h1 id="usage">Usage</h1>
+<p>mtl_criterion = MultiTaskLoss(num_tasks=2)
+optimizer = torch.optim.Adam(
+ list(model.parameters()) + list(mtl_criterion.parameters()), 
+ lr=1e-4
+)</p>
+
+<h1 id="training-loop">Training Loop</h1>
+<p>loss_asr = criterion_asr(pred_asr, target_asr)
+loss_st = criterion_st(pred_st, target_st)</p>
+
+<p>loss = mtl_criterion([loss_asr, loss_st])
+loss.backward()
+optimizer.step()
+``</p>
 
 <h2 id="24-future-trends-foundation-models-speechllm">24. Future Trends: Foundation Models (SpeechLLM)</h2>
 
@@ -829,13 +813,10 @@ Most modern ASR systems (ESPnet, WeNet) use <strong>Hybrid CTC/Attention</strong
 <ul>
   <li><strong>Input:</strong> Audio Tokens + Text Tokens.</li>
   <li><strong>Output:</strong> Text Tokens (or Audio Tokens).</li>
-  <li><strong>Task Specification:</strong> Just a text prompt.
-    <ul>
-      <li>“Transcribe this audio.”</li>
-      <li>“Who is speaking?”</li>
-      <li>“Is the speaker angry?”</li>
-    </ul>
-  </li>
+  <li><strong>Task Specification:</strong> Just a text prompt.</li>
+  <li>“Transcribe this audio.”</li>
+  <li>“Who is speaking?”</li>
+  <li>“Is the speaker angry?”</li>
   <li><strong>Architecture:</strong> Decoder-only Transformer (GPT-4 style).</li>
   <li><strong>Training:</strong> Next-token prediction on massive mixed-modal data.</li>
 </ul>
@@ -917,66 +898,67 @@ Most modern ASR systems (ESPnet, WeNet) use <strong>Hybrid CTC/Attention</strong
 
 <p>Here is a simplified implementation of PCGrad in PyTorch.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">random</span>
+<p>``python
+import torch
+import random</p>
 
-<span class="k">class</span> <span class="nc">PCGradOptimizer</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer</span>
-        
-    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">objectives</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        objectives: list of losses [loss_task1, loss_task2]
-        </span><span class="sh">"""</span>
-        <span class="n">grads</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">optimizer</span><span class="p">.</span><span class="nf">zero_grad</span><span class="p">()</span>
-        
-        <span class="c1"># 1. Compute gradients for each task independently
-</span>        <span class="k">for</span> <span class="n">loss</span> <span class="ow">in</span> <span class="n">objectives</span><span class="p">:</span>
-            <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">(</span><span class="n">retain_graph</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-            <span class="n">grad_list</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">optimizer</span><span class="p">.</span><span class="n">param_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="sh">'</span><span class="s">params</span><span class="sh">'</span><span class="p">]:</span>
-                <span class="k">if</span> <span class="n">param</span><span class="p">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="n">grad_list</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">param</span><span class="p">.</span><span class="n">grad</span><span class="p">.</span><span class="nf">clone</span><span class="p">())</span>
-                    <span class="n">param</span><span class="p">.</span><span class="n">grad</span><span class="p">.</span><span class="nf">zero_</span><span class="p">()</span> <span class="c1"># Clear for next task
-</span>            <span class="n">grads</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">grad_list</span><span class="p">)</span>
-            
-        <span class="c1"># 2. Project conflicting gradients
-</span>        <span class="c1"># Shuffle order to avoid bias
-</span>        <span class="n">random</span><span class="p">.</span><span class="nf">shuffle</span><span class="p">(</span><span class="n">grads</span><span class="p">)</span>
-        
-        <span class="n">final_grads</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span><span class="p">[:]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">grads</span><span class="p">]</span> <span class="c1"># Deep copy
-</span>        
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">grads</span><span class="p">)):</span>
-            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">grads</span><span class="p">)):</span>
-                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">j</span><span class="p">:</span> <span class="k">continue</span>
-                
-                <span class="c1"># Flatten gradients to compute dot product
-</span>                <span class="n">g_i_flat</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span><span class="n">g</span><span class="p">.</span><span class="nf">flatten</span><span class="p">()</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">grads</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span>
-                <span class="n">g_j_flat</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span><span class="n">g</span><span class="p">.</span><span class="nf">flatten</span><span class="p">()</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">grads</span><span class="p">[</span><span class="n">j</span><span class="p">]])</span>
-                
-                <span class="n">dot_prod</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">dot</span><span class="p">(</span><span class="n">g_i_flat</span><span class="p">,</span> <span class="n">g_j_flat</span><span class="p">)</span>
-                
-                <span class="k">if</span> <span class="n">dot_prod</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># Conflict!
-</span>                    <span class="c1"># Project g_i onto normal plane of g_j
-</span>                    <span class="c1"># g_i = g_i - (g_i . g_j) / ||g_j||^2 * g_j
-</span>                    <span class="n">norm_sq</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">dot</span><span class="p">(</span><span class="n">g_j_flat</span><span class="p">,</span> <span class="n">g_j_flat</span><span class="p">)</span>
-                    <span class="n">scale</span> <span class="o">=</span> <span class="n">dot_prod</span> <span class="o">/</span> <span class="n">norm_sq</span>
-                    
-                    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">grads</span><span class="p">[</span><span class="n">i</span><span class="p">])):</span>
-                        <span class="n">final_grads</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">-=</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">grads</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">k</span><span class="p">]</span>
-                        
-        <span class="c1"># 3. Apply final gradients
-</span>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">optimizer</span><span class="p">.</span><span class="n">param_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="sh">'</span><span class="s">params</span><span class="sh">'</span><span class="p">]):</span>
-            <span class="k">if</span> <span class="n">param</span><span class="p">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="n">param</span><span class="p">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">zeros_like</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
-            
-            <span class="c1"># Sum projected gradients from all tasks
-</span>            <span class="k">for</span> <span class="n">task_idx</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">grads</span><span class="p">)):</span>
-                <span class="n">param</span><span class="p">.</span><span class="n">grad</span> <span class="o">+=</span> <span class="n">final_grads</span><span class="p">[</span><span class="n">task_idx</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
-                
-        <span class="n">self</span><span class="p">.</span><span class="n">optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
-</code></pre></div></div>
+<p>class PCGradOptimizer:
+ def <strong>init</strong>(self, optimizer):
+ self.optimizer = optimizer</p>
+
+<p>def step(self, objectives):
+ “””
+ objectives: list of losses [loss_task1, loss_task2]
+ “””
+ grads = []
+ self.optimizer.zero_grad()</p>
+
+<p># 1. Compute gradients for each task independently
+ for loss in objectives:
+ loss.backward(retain_graph=True)
+ grad_list = []
+ for param in self.optimizer.param_groups[0][‘params’]:
+ if param.grad is not None:
+ grad_list.append(param.grad.clone())
+ param.grad.zero_() # Clear for next task
+ grads.append(grad_list)</p>
+
+<p># 2. Project conflicting gradients
+ # Shuffle order to avoid bias
+ random.shuffle(grads)</p>
+
+<p>final_grads = [g[:] for g in grads] # Deep copy</p>
+
+<p>for i in range(len(grads)):
+ for j in range(len(grads)):
+ if i == j: continue</p>
+
+<p># Flatten gradients to compute dot product
+ g_i_flat = torch.cat([g.flatten() for g in grads[i]])
+ g_j_flat = torch.cat([g.flatten() for g in grads[j]])</p>
+
+<p>dot_prod = torch.dot(g_i_flat, g_j_flat)</p>
+
+<p>if dot_prod &lt; 0: # Conflict!
+ # Project g_i onto normal plane of g_j
+ # g_i = g_i - (g_i . g_j) / ||g_j||^2 * g_j
+ norm_sq = torch.dot(g_j_flat, g_j_flat)
+ scale = dot_prod / norm_sq</p>
+
+<p>for k in range(len(grads[i])):
+ final_grads[i][k] -= scale * grads[j][k]</p>
+
+<p># 3. Apply final gradients
+ for i, param in enumerate(self.optimizer.param_groups[0][‘params’]):
+ if param.grad is None:
+ param.grad = torch.zeros_like(param)</p>
+
+<p># Sum projected gradients from all tasks
+ for task_idx in range(len(grads)):
+ param.grad += final_grads[task_idx][i]</p>
+
+<p>self.optimizer.step()
+``</p>
 
 <h2 id="29-checklist-for-multi-task-training">29. Checklist for Multi-task Training</h2>
 
@@ -1061,7 +1043,7 @@ Most modern ASR systems (ESPnet, WeNet) use <strong>Hybrid CTC/Attention</strong
 <ol>
   <li><strong>Train:</strong> Train adapters for each task independently.</li>
   <li><strong>Fuse:</strong> Freeze adapters. Learn a <strong>Fusion Layer</strong> (Attention) that combines their outputs.
-\(h_{fused} = \text{Attn}(h_{enc}, [h_{ASR}, h_{ST}, h_{VAD}])\)</li>
+ <code class="language-plaintext highlighter-rouge">h_{fused} = \text{Attn}(h_{enc}, [h_{ASR}, h_{ST}, h_{VAD}])</code></li>
   <li><strong>Benefit:</strong> The model dynamically decides: “For this noisy frame, I’ll trust the VAD adapter more. For this clear speech, I’ll trust the ASR adapter.”</li>
 </ol>
 
@@ -1327,7 +1309,134 @@ Most modern ASR systems (ESPnet, WeNet) use <strong>Hybrid CTC/Attention</strong
         
       </footer>
 
+      <div class="page__related page__related--full">
+  <h2 class="page__related-title">Related across topics</h2>
+  <style>
+    /* Make section span full content width and use 2 equal columns */
+    .page__related--full { float: inline-start; width: 100%; padding: 0; }
+    .cross-related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+    @media (max-width: 768px) { .cross-related-grid { grid-template-columns: 1fr; } }
+    /* Ensure archive cards stretch nicely in the grid */
+    .cross-related-grid .list__item, .cross-related-grid .grid__item { width: auto; float: none; margin: 0; }
+  </style>
+  <div class="cross-related-grid">
+    
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
       
+        <a href="/dsa/0036-partition-equal-subset-sum/" rel="permalink">Partition Equal Subset Sum
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          19 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Can you split the treasure evenly?”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ml-system-design/0036-resource-partitioning/" rel="permalink">Resource Partitioning in ML Clusters
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          18 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“How to share a supercomputer without stepping on each other’s toes.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ai-agents/0036-web-browsing-agents/" rel="permalink">Web Browsing Agents
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          18 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Turn the open web into a reliable tool: browse, extract, verify, and cite—without getting prompt-injected.”
+</p>
+  </article>
+</div>
+
+  </div>
+</div>
 
       <section class="page__share">
   <h4 class="page__share-title">Share on</h4>

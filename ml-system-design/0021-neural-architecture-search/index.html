@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Neural Architecture Search">
     <meta itemprop="description" content="Design neural architecture search systems that automatically discover optimal model architectures using dynamic programming and path optimization—the same principles from grid path counting scaled to exponential search spaces.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -407,52 +407,53 @@
 
 <h2 id="high-level-architecture">High-Level Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────────┐
-│                Neural Architecture Search System                 │
-└─────────────────────────────────────────────────────────────────┘
+<p>``
+┌─────────────────────────────────────────────────────────────────┐
+│ Neural Architecture Search System │
+└─────────────────────────────────────────────────────────────────┘</p>
 
-                       Search Controller
-            ┌──────────────────────────────────┐
-            │  Strategy: RL / EA / DARTS       │
-            │  - Propose architectures         │
-            │  - Update based on performance   │
-            └──────────────┬───────────────────┘
-                           │
-                           ↓
-                  ┌────────────────┐
-                  │  Search Space  │
-                  │  - Layers      │
-                  │  - Operations  │
-                  │  - Connections │
-                  └────────┬───────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        │                  │                  │
+<p>Search Controller
+ ┌──────────────────────────────────┐
+ │ Strategy: RL / EA / DARTS │
+ │ - Propose architectures │
+ │ - Update based on performance │
+ └──────────────┬───────────────────┘
+ │
+ ↓
+ ┌────────────────┐
+ │ Search Space │
+ │ - Layers │
+ │ - Operations │
+ │ - Connections │
+ └────────┬───────┘
+ │
+ ┌──────────────────┼──────────────────┐
+ │ │ │
 ┌───────▼────────┐ ┌──────▼──────┐ ┌────────▼────────┐
-│  Architecture  │ │ Performance │ │  Multi-obj      │
-│  Evaluator     │ │ Predictor   │ │  Optimizer      │
-│                │ │             │ │                 │
-│ - Train model  │ │ - Surrogate │ │ - Pareto        │
-│ - Measure acc  │ │ - Skip bad  │ │ - Constraints   │
-│ - Measure lat  │ │   candidates│ │ - Trade-offs    │
+│ Architecture │ │ Performance │ │ Multi-obj │
+│ Evaluator │ │ Predictor │ │ Optimizer │
+│ │ │ │ │ │
+│ - Train model │ │ - Surrogate │ │ - Pareto │
+│ - Measure acc │ │ - Skip bad │ │ - Constraints │
+│ - Measure lat │ │ candidates│ │ - Trade-offs │
 └───────┬────────┘ └──────┬──────┘ └────────┬────────┘
-        │                  │                  │
-        └──────────────────┼──────────────────┘
-                           │
-                  ┌────────▼────────┐
-                  │  Distributed    │
-                  │  Training       │
-                  │  - Worker pool  │
-                  │  - GPU cluster  │
-                  └────────┬────────┘
-                           │
-                  ┌────────▼────────┐
-                  │  Results Store  │
-                  │  - Architectures│
-                  │  - Metrics      │
-                  │  - Models       │
-                  └─────────────────┘
-</code></pre></div></div>
+ │ │ │
+ └──────────────────┼──────────────────┘
+ │
+ ┌────────▼────────┐
+ │ Distributed │
+ │ Training │
+ │ - Worker pool │
+ │ - GPU cluster │
+ └────────┬────────┘
+ │
+ ┌────────▼────────┐
+ │ Results Store │
+ │ - Architectures│
+ │ - Metrics │
+ │ - Models │
+ └─────────────────┘
+``</p>
 
 <h3 id="key-components">Key Components</h3>
 
@@ -472,298 +473,304 @@
 
 <p>Define what architectures are possible:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span>
-<span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<p>``python
+from typing import List, Dict
+from dataclasses import dataclass</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">Operation</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">A single operation in the search space.</span><span class="sh">"""</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span>
+<p>@dataclass
+class Operation:
+ “"”A single operation in the search space.”””
+ name: str
+ params: Dict</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">SearchSpace</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    NAS search space definition.
-    
-    Similar to Unique Paths grid:
-    - Grid dimensions → num_layers, ops_per_layer
-    - Paths through grid → architectures through search space
-    </span><span class="sh">"""</span>
-    <span class="n">num_layers</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">operations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Operation</span><span class="p">]</span>
-    <span class="n">connections</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># "sequential", "skip", "dense"
-</span>    
-    <span class="k">def</span> <span class="nf">count_architectures</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Count total possible architectures.
-        
-        Like counting paths in Unique Paths:
-        - If sequential: ops_per_layer ^ num_layers
-        - If with skip connections: much larger
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">connections</span> <span class="o">==</span> <span class="sh">"</span><span class="s">sequential</span><span class="sh">"</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">operations</span><span class="p">)</span> <span class="o">**</span> <span class="n">self</span><span class="p">.</span><span class="n">num_layers</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># With skip connections, combinatorially larger
-</span>            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>  <span class="c1"># Too many to count exactly
-</span>
+<p>@dataclass
+class SearchSpace:
+ “””
+ NAS search space definition.</p>
 
-<span class="c1"># Example search space
-</span><span class="n">MOBILENET_SEARCH_SPACE</span> <span class="o">=</span> <span class="nc">SearchSpace</span><span class="p">(</span>
-    <span class="n">num_layers</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
-    <span class="n">operations</span><span class="o">=</span><span class="p">[</span>
-        <span class="nc">Operation</span><span class="p">(</span><span class="sh">"</span><span class="s">conv3x3</span><span class="sh">"</span><span class="p">,</span> <span class="p">{</span><span class="sh">"</span><span class="s">kernel_size</span><span class="sh">"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="sh">"</span><span class="s">stride</span><span class="sh">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
-        <span class="nc">Operation</span><span class="p">(</span><span class="sh">"</span><span class="s">conv5x5</span><span class="sh">"</span><span class="p">,</span> <span class="p">{</span><span class="sh">"</span><span class="s">kernel_size</span><span class="sh">"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="sh">"</span><span class="s">stride</span><span class="sh">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
-        <span class="nc">Operation</span><span class="p">(</span><span class="sh">"</span><span class="s">depthwise_conv3x3</span><span class="sh">"</span><span class="p">,</span> <span class="p">{</span><span class="sh">"</span><span class="s">kernel_size</span><span class="sh">"</span><span class="p">:</span> <span class="mi">3</span><span class="p">}),</span>
-        <span class="nc">Operation</span><span class="p">(</span><span class="sh">"</span><span class="s">depthwise_conv5x5</span><span class="sh">"</span><span class="p">,</span> <span class="p">{</span><span class="sh">"</span><span class="s">kernel_size</span><span class="sh">"</span><span class="p">:</span> <span class="mi">5</span><span class="p">}),</span>
-        <span class="nc">Operation</span><span class="p">(</span><span class="sh">"</span><span class="s">maxpool3x3</span><span class="sh">"</span><span class="p">,</span> <span class="p">{</span><span class="sh">"</span><span class="s">kernel_size</span><span class="sh">"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="sh">"</span><span class="s">stride</span><span class="sh">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
-        <span class="nc">Operation</span><span class="p">(</span><span class="sh">"</span><span class="s">skip</span><span class="sh">"</span><span class="p">,</span> <span class="p">{}),</span>
-    <span class="p">],</span>
-    <span class="n">connections</span><span class="o">=</span><span class="sh">"</span><span class="s">skip</span><span class="sh">"</span>
-<span class="p">)</span>
+<p>Similar to Unique Paths grid:</p>
+<ul>
+  <li>Grid dimensions → num_layers, ops_per_layer</li>
+  <li>Paths through grid → architectures through search space
+ “””
+ num_layers: int
+ operations: List[Operation]
+ connections: str # “sequential”, “skip”, “dense”</li>
+</ul>
 
+<p>def count_architectures(self) -&gt; int:
+ “””
+ Count total possible architectures.</p>
 
-<span class="k">def</span> <span class="nf">encode_architecture</span><span class="p">(</span><span class="n">arch_ops</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">search_space</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Encode architecture as string.
-    
-    Args:
-        arch_ops: List of operation names per layer
-        
-    Returns:
-        String encoding (for hashing/caching)
-    </span><span class="sh">"""</span>
-    <span class="k">return</span> <span class="sh">"</span><span class="s">-</span><span class="sh">"</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">arch_ops</span><span class="p">)</span>
+<p>Like counting paths in Unique Paths:</p>
+<ul>
+  <li>If sequential: ops_per_layer ^ num_layers</li>
+  <li>If with skip connections: much larger
+ “””
+ if self.connections == “sequential”:
+ return len(self.operations) ** self.num_layers
+ else:
+ # With skip connections, combinatorially larger
+ return -1 # Too many to count exactly</li>
+</ul>
 
+<h1 id="example-search-space">Example search space</h1>
+<p>MOBILENET_SEARCH_SPACE = SearchSpace(
+ num_layers=20,
+ operations=[
+ Operation(“conv3x3”, {“kernel_size”: 3, “stride”: 1}),
+ Operation(“conv5x5”, {“kernel_size”: 5, “stride”: 1}),
+ Operation(“depthwise_conv3x3”, {“kernel_size”: 3}),
+ Operation(“depthwise_conv5x5”, {“kernel_size”: 5}),
+ Operation(“maxpool3x3”, {“kernel_size”: 3, “stride”: 1}),
+ Operation(“skip”, {}),
+ ],
+ connections=”skip”
+)</p>
 
-<span class="k">def</span> <span class="nf">decode_architecture</span><span class="p">(</span><span class="n">arch_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-    <span class="sh">"""</span><span class="s">Decode architecture string to operation list.</span><span class="sh">"""</span>
-    <span class="k">return</span> <span class="n">arch_string</span><span class="p">.</span><span class="nf">split</span><span class="p">(</span><span class="sh">"</span><span class="s">-</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def encode_architecture(arch_ops: List[str], search_space: SearchSpace) -&gt; str:
+ “””
+ Encode architecture as string.</p>
+
+<p>Args:
+ arch_ops: List of operation names per layer</p>
+
+<p>Returns:
+ String encoding (for hashing/caching)
+ “””
+ return “-“.join(arch_ops)</p>
+
+<p>def decode_architecture(arch_string: str) -&gt; List[str]:
+ “"”Decode architecture string to operation list.”””
+ return arch_string.split(“-“)
+``</p>
 
 <h3 id="2-search-strategy---reinforcement-learning">2. Search Strategy - Reinforcement Learning</h3>
 
 <p>Use RL controller to generate architectures:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">NASController</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    RNN controller that generates architectures.
-    
-    Similar to DP in Unique Paths:
-    - Build architecture layer-by-layer
-    - Use previous decisions to inform next
-    - Optimize for high reward (accuracy)
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">num_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">num_operations</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">hidden_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>
-    <span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">num_layers</span> <span class="o">=</span> <span class="n">num_layers</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">num_operations</span> <span class="o">=</span> <span class="n">num_operations</span>
-        
-        <span class="c1"># RNN to track state across layers
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">rnn</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTM</span><span class="p">(</span>
-            <span class="n">input_size</span><span class="o">=</span><span class="n">num_operations</span><span class="p">,</span>
-            <span class="n">hidden_size</span><span class="o">=</span><span class="n">hidden_size</span><span class="p">,</span>
-            <span class="n">num_layers</span><span class="o">=</span><span class="mi">1</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Output layer: predict operation for next layer
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">num_operations</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Generate an architecture.
-        
-        Returns:
-            architecture: List of operation indices
-            log_probs: Log probabilities for REINFORCE
-        </span><span class="sh">"""</span>
-        <span class="n">architecture</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">log_probs</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># Initial input
-</span>        <span class="n">inputs</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">num_operations</span><span class="p">)</span>
-        <span class="n">hidden</span> <span class="o">=</span> <span class="bp">None</span>
-        
-        <span class="c1"># Generate layer-by-layer (like DP building solution)
-</span>        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">num_layers</span><span class="p">):</span>
-            <span class="c1"># RNN step
-</span>            <span class="n">output</span><span class="p">,</span> <span class="n">hidden</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">rnn</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">hidden</span><span class="p">)</span>
-            
-            <span class="c1"># Predict operation for this layer
-</span>            <span class="n">logits</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">fc</span><span class="p">(</span><span class="n">output</span><span class="p">.</span><span class="nf">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
-            <span class="n">probs</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-            
-            <span class="c1"># Sample operation
-</span>            <span class="n">dist</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">distributions</span><span class="p">.</span><span class="nc">Categorical</span><span class="p">(</span><span class="n">probs</span><span class="p">)</span>
-            <span class="n">action</span> <span class="o">=</span> <span class="n">dist</span><span class="p">.</span><span class="nf">sample</span><span class="p">()</span>
-            
-            <span class="n">architecture</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">action</span><span class="p">.</span><span class="nf">item</span><span class="p">())</span>
-            <span class="n">log_probs</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">dist</span><span class="p">.</span><span class="nf">log_prob</span><span class="p">(</span><span class="n">action</span><span class="p">))</span>
-            
-            <span class="c1"># Next input is one-hot of chosen operation
-</span>            <span class="n">inputs</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">num_operations</span><span class="p">)</span>
-            <span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">action</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
-        
-        <span class="k">return</span> <span class="n">architecture</span><span class="p">,</span> <span class="n">log_probs</span>
-    
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">log_probs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">reward</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Update controller using REINFORCE.
-        
-        Args:
-            log_probs: Log probabilities of sampled actions
-            reward: Accuracy of generated architecture
-            optimizer: Controller optimizer
-        </span><span class="sh">"""</span>
-        <span class="c1"># REINFORCE loss: -sum(log_prob * reward)
-</span>        <span class="n">policy_loss</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">log_prob</span> <span class="ow">in</span> <span class="n">log_probs</span><span class="p">:</span>
-            <span class="n">policy_loss</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="o">-</span><span class="n">log_prob</span> <span class="o">*</span> <span class="n">reward</span><span class="p">)</span>
-        
-        <span class="n">loss</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">stack</span><span class="p">(</span><span class="n">policy_loss</span><span class="p">).</span><span class="nf">sum</span><span class="p">()</span>
-        
-        <span class="c1"># Update controller
-</span>        <span class="n">optimizer</span><span class="p">.</span><span class="nf">zero_grad</span><span class="p">()</span>
-        <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
-        <span class="n">optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
+<p>class NASController(nn.Module):
+ “””
+ RNN controller that generates architectures.</p>
 
+<p>Similar to DP in Unique Paths:</p>
+<ul>
+  <li>Build architecture layer-by-layer</li>
+  <li>Use previous decisions to inform next</li>
+  <li>Optimize for high reward (accuracy)
+ “””</li>
+</ul>
 
-<span class="c1"># Training loop
-</span><span class="k">def</span> <span class="nf">train_nas_controller</span><span class="p">(</span>
-    <span class="n">controller</span><span class="p">:</span> <span class="n">NASController</span><span class="p">,</span>
-    <span class="n">search_space</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
-    <span class="n">num_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span>
-<span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Train NAS controller to generate good architectures.
-    </span><span class="sh">"""</span>
-    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">optim</span><span class="p">.</span><span class="nc">Adam</span><span class="p">(</span><span class="n">controller</span><span class="p">.</span><span class="nf">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">num_iterations</span><span class="p">):</span>
-        <span class="c1"># Generate architecture
-</span>        <span class="n">arch</span><span class="p">,</span> <span class="n">log_probs</span> <span class="o">=</span> <span class="nf">controller</span><span class="p">()</span>
-        
-        <span class="c1"># Evaluate architecture (train small model)
-</span>        <span class="n">reward</span> <span class="o">=</span> <span class="nf">evaluate_architecture</span><span class="p">(</span><span class="n">arch</span><span class="p">,</span> <span class="n">search_space</span><span class="p">)</span>
-        
-        <span class="c1"># Update controller
-</span>        <span class="n">controller</span><span class="p">.</span><span class="nf">update</span><span class="p">(</span><span class="n">log_probs</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">iteration</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Iteration </span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s">: Best reward = </span><span class="si">{</span><span class="n">reward</span><span class="si">:</span><span class="p">.</span><span class="mi">3</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def <strong>init</strong>(
+ self,
+ num_layers: int,
+ num_operations: int,
+ hidden_size: int = 100
+ ):
+ super().<strong>init</strong>()</p>
+
+<p>self.num_layers = num_layers
+ self.num_operations = num_operations</p>
+
+<p># RNN to track state across layers
+ self.rnn = nn.LSTM(
+ input_size=num_operations,
+ hidden_size=hidden_size,
+ num_layers=1
+ )</p>
+
+<p># Output layer: predict operation for next layer
+ self.fc = nn.Linear(hidden_size, num_operations)</p>
+
+<p>def forward(self):
+ “””
+ Generate an architecture.</p>
+
+<p>Returns:
+ architecture: List of operation indices
+ log_probs: Log probabilities for REINFORCE
+ “””
+ architecture = []
+ log_probs = []</p>
+
+<p># Initial input
+ inputs = torch.zeros(1, 1, self.num_operations)
+ hidden = None</p>
+
+<p># Generate layer-by-layer (like DP building solution)
+ for layer in range(self.num_layers):
+ # RNN step
+ output, hidden = self.rnn(inputs, hidden)</p>
+
+<p># Predict operation for this layer
+ logits = self.fc(output.squeeze(0))
+ probs = torch.softmax(logits, dim=-1)</p>
+
+<p># Sample operation
+ dist = torch.distributions.Categorical(probs)
+ action = dist.sample()</p>
+
+<p>architecture.append(action.item())
+ log_probs.append(dist.log_prob(action))</p>
+
+<p># Next input is one-hot of chosen operation
+ inputs = torch.zeros(1, 1, self.num_operations)
+ inputs[0, 0, action] = 1.0</p>
+
+<p>return architecture, log_probs</p>
+
+<p>def update(self, log_probs: List[torch.Tensor], reward: float, optimizer):
+ “””
+ Update controller using REINFORCE.</p>
+
+<p>Args:
+ log_probs: Log probabilities of sampled actions
+ reward: Accuracy of generated architecture
+ optimizer: Controller optimizer
+ “””
+ # REINFORCE loss: -sum(log_prob * reward)
+ policy_loss = []
+ for log_prob in log_probs:
+ policy_loss.append(-log_prob * reward)</p>
+
+<p>loss = torch.stack(policy_loss).sum()</p>
+
+<p># Update controller
+ optimizer.zero_grad()
+ loss.backward()
+ optimizer.step()</p>
+
+<h1 id="training-loop">Training loop</h1>
+<p>def train_nas_controller(
+ controller: NASController,
+ search_space: SearchSpace,
+ num_iterations: int = 1000
+):
+ “””
+ Train NAS controller to generate good architectures.
+ “””
+ optimizer = torch.optim.Adam(controller.parameters(), lr=0.001)</p>
+
+<p>for iteration in range(num_iterations):
+ # Generate architecture
+ arch, log_probs = controller()</p>
+
+<p># Evaluate architecture (train small model)
+ reward = evaluate_architecture(arch, search_space)</p>
+
+<p># Update controller
+ controller.update(log_probs, reward, optimizer)</p>
+
+<p>if iteration % 100 == 0:
+ print(f”Iteration {iteration}: Best reward = {reward:.3f}”)
+``</p>
 
 <h3 id="3-search-strategy---differentiable-nas-darts">3. Search Strategy - Differentiable NAS (DARTS)</h3>
 
 <p>DARTS makes architecture search differentiable:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">DARTSSearchSpace</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Differentiable architecture search.
-    
-    Key idea: Instead of discrete choice, use weighted combination.
-    Learn weights (architecture parameters) via gradient descent.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">operations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">]):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">num_layers</span> <span class="o">=</span> <span class="n">num_layers</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">operations</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ModuleList</span><span class="p">(</span><span class="n">operations</span><span class="p">)</span>
-        
-        <span class="c1"># Architecture parameters (learnable weights for each operation)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Parameter</span><span class="p">(</span>
-            <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="n">num_layers</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">operations</span><span class="p">))</span>
-        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Forward pass with weighted operations.
-        
-        Each layer computes weighted sum of all operations.
-        </span><span class="sh">"""</span>
-        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">num_layers</span><span class="p">):</span>
-            <span class="c1"># Get architecture weights for this layer
-</span>            <span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">alpha</span><span class="p">[</span><span class="n">layer</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-            
-            <span class="c1"># Compute weighted sum of operations
-</span>            <span class="n">layer_output</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span>
-                <span class="n">w</span> <span class="o">*</span> <span class="nf">op</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">w</span><span class="p">,</span> <span class="n">op</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">operations</span><span class="p">)</span>
-            <span class="p">)</span>
-            
-            <span class="n">x</span> <span class="o">=</span> <span class="n">layer_output</span>
-        
-        <span class="k">return</span> <span class="n">x</span>
-    
-    <span class="k">def</span> <span class="nf">get_best_architecture</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Extract discrete architecture from learned weights.
-        
-        Choose operation with highest weight per layer.
-        </span><span class="sh">"""</span>
-        <span class="n">architecture</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">num_layers</span><span class="p">):</span>
-            <span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">alpha</span><span class="p">[</span><span class="n">layer</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-            <span class="n">best_op</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">weights</span><span class="p">).</span><span class="nf">item</span><span class="p">()</span>
-            <span class="n">architecture</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">best_op</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">architecture</span>
+<p>``python
+class DARTSSearchSpace(nn.Module):
+ “””
+ Differentiable architecture search.</p>
 
+<p>Key idea: Instead of discrete choice, use weighted combination.
+ Learn weights (architecture parameters) via gradient descent.
+ “””</p>
 
-<span class="c1"># DARTS training (bi-level optimization)
-</span><span class="k">def</span> <span class="nf">train_darts</span><span class="p">(</span><span class="n">search_space</span><span class="p">:</span> <span class="n">DARTSSearchSpace</span><span class="p">,</span> <span class="n">train_data</span><span class="p">,</span> <span class="n">val_data</span><span class="p">,</span> <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Train DARTS to find optimal architecture.
-    
-    Bi-level optimization:
-    - Inner loop: optimize model weights
-    - Outer loop: optimize architecture parameters
-    </span><span class="sh">"""</span>
-    <span class="c1"># Model weights optimizer
-</span>    <span class="n">model_optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">optim</span><span class="p">.</span><span class="nc">SGD</span><span class="p">(</span>
-        <span class="n">search_space</span><span class="p">.</span><span class="nf">parameters</span><span class="p">(),</span>
-        <span class="n">lr</span><span class="o">=</span><span class="mf">0.025</span><span class="p">,</span>
-        <span class="n">momentum</span><span class="o">=</span><span class="mf">0.9</span>
-    <span class="p">)</span>
-    
-    <span class="c1"># Architecture parameters optimizer
-</span>    <span class="n">arch_optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">optim</span><span class="p">.</span><span class="nc">Adam</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">search_space</span><span class="p">.</span><span class="n">alpha</span><span class="p">],</span>
-        <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span>
-    <span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
-        <span class="c1"># Update model weights on train data
-</span>        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">train_data</span><span class="p">:</span>
-            <span class="n">model_optimizer</span><span class="p">.</span><span class="nf">zero_grad</span><span class="p">()</span>
-            <span class="n">loss</span> <span class="o">=</span> <span class="nf">compute_loss</span><span class="p">(</span><span class="nf">search_space</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">x</span><span class="sh">'</span><span class="p">]),</span> <span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">y</span><span class="sh">'</span><span class="p">])</span>
-            <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
-            <span class="n">model_optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
-        
-        <span class="c1"># Update architecture parameters on val data
-</span>        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">val_data</span><span class="p">:</span>
-            <span class="n">arch_optimizer</span><span class="p">.</span><span class="nf">zero_grad</span><span class="p">()</span>
-            <span class="n">loss</span> <span class="o">=</span> <span class="nf">compute_loss</span><span class="p">(</span><span class="nf">search_space</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">x</span><span class="sh">'</span><span class="p">]),</span> <span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">y</span><span class="sh">'</span><span class="p">])</span>
-            <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
-            <span class="n">arch_optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
-    
-    <span class="c1"># Extract final architecture
-</span>    <span class="n">best_arch</span> <span class="o">=</span> <span class="n">search_space</span><span class="p">.</span><span class="nf">get_best_architecture</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">best_arch</span>
-</code></pre></div></div>
+<p>def <strong>init</strong>(self, num_layers: int, operations: List[nn.Module]):
+ super().<strong>init</strong>()</p>
+
+<p>self.num_layers = num_layers
+ self.operations = nn.ModuleList(operations)</p>
+
+<p># Architecture parameters (learnable weights for each operation)
+ self.alpha = nn.Parameter(
+ torch.randn(num_layers, len(operations))
+ )</p>
+
+<p>def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+ “””
+ Forward pass with weighted operations.</p>
+
+<p>Each layer computes weighted sum of all operations.
+ “””
+ for layer in range(self.num_layers):
+ # Get architecture weights for this layer
+ weights = torch.softmax(self.alpha[layer], dim=0)</p>
+
+<p># Compute weighted sum of operations
+ layer_output = sum(
+ w * op(x)
+ for w, op in zip(weights, self.operations)
+ )</p>
+
+<p>x = layer_output</p>
+
+<p>return x</p>
+
+<p>def get_best_architecture(self) -&gt; List[int]:
+ “””
+ Extract discrete architecture from learned weights.</p>
+
+<p>Choose operation with highest weight per layer.
+ “””
+ architecture = []</p>
+
+<p>for layer in range(self.num_layers):
+ weights = torch.softmax(self.alpha[layer], dim=0)
+ best_op = torch.argmax(weights).item()
+ architecture.append(best_op)</p>
+
+<p>return architecture</p>
+
+<h1 id="darts-training-bi-level-optimization">DARTS training (bi-level optimization)</h1>
+<p>def train_darts(search_space: DARTSSearchSpace, train_data, val_data, epochs: int = 50):
+ “””
+ Train DARTS to find optimal architecture.</p>
+
+<p>Bi-level optimization:</p>
+<ul>
+  <li>Inner loop: optimize model weights</li>
+  <li>Outer loop: optimize architecture parameters
+ “””
+ # Model weights optimizer
+ model_optimizer = torch.optim.SGD(
+ search_space.parameters(),
+ lr=0.025,
+ momentum=0.9
+ )</li>
+</ul>
+
+<p># Architecture parameters optimizer
+ arch_optimizer = torch.optim.Adam(
+ [search_space.alpha],
+ lr=0.001
+ )</p>
+
+<p>for epoch in range(epochs):
+ # Update model weights on train data
+ for batch in train_data:
+ model_optimizer.zero_grad()
+ loss = compute_loss(search_space(batch[‘x’]), batch[‘y’])
+ loss.backward()
+ model_optimizer.step()</p>
+
+<p># Update architecture parameters on val data
+ for batch in val_data:
+ arch_optimizer.zero_grad()
+ loss = compute_loss(search_space(batch[‘x’]), batch[‘y’])
+ loss.backward()
+ arch_optimizer.step()</p>
+
+<p># Extract final architecture
+ best_arch = search_space.get_best_architecture()
+ return best_arch
+``</p>
 
 <h3 id="4-performance-estimation-strategies">4. Performance Estimation Strategies</h3>
 
@@ -773,277 +780,289 @@
 
 <p><strong>a) Early stopping:</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">evaluate_with_early_stopping</span><span class="p">(</span>
-    <span class="n">arch</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
-    <span class="n">train_data</span><span class="p">,</span>
-    <span class="n">val_data</span><span class="p">,</span>
-    <span class="n">max_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
-    <span class="n">patience</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
-<span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Train architecture with early stopping.
-    
-    Stop if validation accuracy doesn</span><span class="sh">'</span><span class="s">t improve for `patience` epochs.
-    </span><span class="sh">"""</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="nf">build_model_from_arch</span><span class="p">(</span><span class="n">arch</span><span class="p">)</span>
-    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">optim</span><span class="p">.</span><span class="nc">Adam</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="nf">parameters</span><span class="p">())</span>
-    
-    <span class="n">best_val_acc</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">epochs_without_improvement</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">max_epochs</span><span class="p">):</span>
-        <span class="c1"># Train
-</span>        <span class="nf">train_one_epoch</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_data</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
-        
-        <span class="c1"># Validate
-</span>        <span class="n">val_acc</span> <span class="o">=</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">val_data</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">val_acc</span> <span class="o">&gt;</span> <span class="n">best_val_acc</span><span class="p">:</span>
-            <span class="n">best_val_acc</span> <span class="o">=</span> <span class="n">val_acc</span>
-            <span class="n">epochs_without_improvement</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">epochs_without_improvement</span> <span class="o">+=</span> <span class="mi">1</span>
-        
-        <span class="c1"># Early stop
-</span>        <span class="k">if</span> <span class="n">epochs_without_improvement</span> <span class="o">&gt;=</span> <span class="n">patience</span><span class="p">:</span>
-            <span class="k">break</span>
-    
-    <span class="k">return</span> <span class="n">best_val_acc</span>
-</code></pre></div></div>
+<p>``python
+def evaluate_with_early_stopping(
+ arch: List[int],
+ train_data,
+ val_data,
+ max_epochs: int = 50,
+ patience: int = 5
+):
+ “””
+ Train architecture with early stopping.</p>
+
+<p>Stop if validation accuracy doesn’t improve for <code class="language-plaintext highlighter-rouge">patience</code> epochs.
+ “””
+ model = build_model_from_arch(arch)
+ optimizer = torch.optim.Adam(model.parameters())</p>
+
+<p>best_val_acc = 0.0
+ epochs_without_improvement = 0</p>
+
+<p>for epoch in range(max_epochs):
+ # Train
+ train_one_epoch(model, train_data, optimizer)</p>
+
+<p># Validate
+ val_acc = evaluate(model, val_data)</p>
+
+<p>if val_acc &gt; best_val_acc:
+ best_val_acc = val_acc
+ epochs_without_improvement = 0
+ else:
+ epochs_without_improvement += 1</p>
+
+<p># Early stop
+ if epochs_without_improvement &gt;= patience:
+ break</p>
+
+<p>return best_val_acc
+``</p>
 
 <p><strong>b) Weight sharing (ENAS):</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SuperNet</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Super-network containing all possible operations.
-    
-    Different architectures share weights.
-    Train once, evaluate many architectures quickly.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">search_space</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="c1"># Create all operations (shared across architectures)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">ops</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ModuleList</span><span class="p">([</span>
-            <span class="nf">create_operation</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">search_space</span><span class="p">.</span><span class="n">operations</span>
-        <span class="p">])</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">architecture</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Forward pass for specific architecture.
-        
-        Args:
-            x: Input
-            architecture: List of operation indices per layer
-        </span><span class="sh">"""</span>
-        <span class="k">for</span> <span class="n">layer</span><span class="p">,</span> <span class="n">op_idx</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">architecture</span><span class="p">):</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">ops</span><span class="p">[</span><span class="n">op_idx</span><span class="p">](</span><span class="n">x</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">x</span>
-    
-    <span class="k">def</span> <span class="nf">evaluate_architecture</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">arch</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">val_data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Evaluate architecture without training.
-        
-        Uses shared weights - much faster than training from scratch.
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
-        <span class="n">total_correct</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">total_samples</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">val_data</span><span class="p">:</span>
-                <span class="n">outputs</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">forward</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">x</span><span class="sh">'</span><span class="p">],</span> <span class="n">arch</span><span class="p">)</span>
-                <span class="n">preds</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                <span class="n">total_correct</span> <span class="o">+=</span> <span class="p">(</span><span class="n">preds</span> <span class="o">==</span> <span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">y</span><span class="sh">'</span><span class="p">]).</span><span class="nf">sum</span><span class="p">().</span><span class="nf">item</span><span class="p">()</span>
-                <span class="n">total_samples</span> <span class="o">+=</span> <span class="nf">len</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">y</span><span class="sh">'</span><span class="p">])</span>
-        
-        <span class="k">return</span> <span class="n">total_correct</span> <span class="o">/</span> <span class="n">total_samples</span>
-</code></pre></div></div>
+<p>``python
+class SuperNet(nn.Module):
+ “””
+ Super-network containing all possible operations.</p>
+
+<p>Different architectures share weights.
+ Train once, evaluate many architectures quickly.
+ “””</p>
+
+<p>def <strong>init</strong>(self, search_space: SearchSpace):
+ super().<strong>init</strong>()</p>
+
+<p># Create all operations (shared across architectures)
+ self.ops = nn.ModuleList([
+ create_operation(op)
+ for op in search_space.operations
+ ])</p>
+
+<p>def forward(self, x: torch.Tensor, architecture: List[int]) -&gt; torch.Tensor:
+ “””
+ Forward pass for specific architecture.</p>
+
+<p>Args:
+ x: Input
+ architecture: List of operation indices per layer
+ “””
+ for layer, op_idx in enumerate(architecture):
+ x = self.ops<a href="x">op_idx</a></p>
+
+<p>return x</p>
+
+<p>def evaluate_architecture(self, arch: List[int], val_data) -&gt; float:
+ “””
+ Evaluate architecture without training.</p>
+
+<p>Uses shared weights - much faster than training from scratch.
+ “””
+ self.eval()
+ total_correct = 0
+ total_samples = 0</p>
+
+<p>with torch.no_grad():
+ for batch in val_data:
+ outputs = self.forward(batch[‘x’], arch)
+ preds = outputs.argmax(dim=1)
+ total_correct += (preds == batch[‘y’]).sum().item()
+ total_samples += len(batch[‘y’])</p>
+
+<p>return total_correct / total_samples
+``</p>
 
 <p><strong>c) Performance prediction:</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">sklearn.ensemble</span> <span class="kn">import</span> <span class="n">RandomForestRegressor</span>
+<p>``python
+from sklearn.ensemble import RandomForestRegressor</p>
 
-<span class="k">class</span> <span class="nc">PerformancePredictor</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Predict architecture performance without training.
-    
-    Train a surrogate model: architecture features → accuracy.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="nc">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">trained</span> <span class="o">=</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">extract_features</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">arch</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Extract features from architecture.
-        
-        Features:
-        - Number of each operation type
-        - Depth (number of layers)
-        - Estimated FLOPs
-        - Estimated params
-        </span><span class="sh">"""</span>
-        <span class="n">features</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># Count each operation type
-</span>        <span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
-        <span class="n">op_counts</span> <span class="o">=</span> <span class="nc">Counter</span><span class="p">(</span><span class="n">arch</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">op_idx</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">max</span><span class="p">(</span><span class="n">arch</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="n">features</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">op_counts</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">op_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-        
-        <span class="c1"># Add depth
-</span>        <span class="n">features</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">arch</span><span class="p">))</span>
-        
-        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">architectures</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">accuracies</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
-        <span class="sh">"""</span><span class="s">Train predictor on evaluated architectures.</span><span class="sh">"""</span>
-        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="n">self</span><span class="p">.</span><span class="nf">extract_features</span><span class="p">(</span><span class="n">arch</span><span class="p">)</span> <span class="k">for</span> <span class="n">arch</span> <span class="ow">in</span> <span class="n">architectures</span><span class="p">])</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">accuracies</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">trained</span> <span class="o">=</span> <span class="bp">True</span>
-    
-    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">arch</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Predict accuracy for architecture.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">trained</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sh">"</span><span class="s">Predictor not trained</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="n">features</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">extract_features</span><span class="p">(</span><span class="n">arch</span><span class="p">).</span><span class="nf">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-</code></pre></div></div>
+<p>class PerformancePredictor:
+ “””
+ Predict architecture performance without training.</p>
+
+<p>Train a surrogate model: architecture features → accuracy.
+ “””</p>
+
+<p>def <strong>init</strong>(self):
+ self.model = RandomForestRegressor(n_estimators=100)
+ self.trained = False</p>
+
+<p>def extract_features(self, arch: List[int]) -&gt; np.ndarray:
+ “””
+ Extract features from architecture.</p>
+
+<p>Features:</p>
+<ul>
+  <li>Number of each operation type</li>
+  <li>Depth (number of layers)</li>
+  <li>Estimated FLOPs</li>
+  <li>Estimated params
+ “””
+ features = []</li>
+</ul>
+
+<p># Count each operation type
+ from collections import Counter
+ op_counts = Counter(arch)
+ for op_idx in range(max(arch) + 1):
+ features.append(op_counts.get(op_idx, 0))</p>
+
+<p># Add depth
+ features.append(len(arch))</p>
+
+<p>return np.array(features)</p>
+
+<p>def train(self, architectures: List[List[int]], accuracies: List[float]):
+ “"”Train predictor on evaluated architectures.”””
+ X = np.array([self.extract_features(arch) for arch in architectures])
+ y = np.array(accuracies)</p>
+
+<p>self.model.fit(X, y)
+ self.trained = True</p>
+
+<p>def predict(self, arch: List[int]) -&gt; float:
+ “"”Predict accuracy for architecture.”””
+ if not self.trained:
+ raise ValueError(“Predictor not trained”)</p>
+
+<p>features = self.extract_features(arch).reshape(1, -1)
+ return self.model.predict(features)[0]
+``</p>
 
 <h2 id="data-flow">Data Flow</h2>
 
 <h3 id="nas-pipeline">NAS Pipeline</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Initialize search
-   └─&gt; Define search space
-   └─&gt; Initialize controller (RL/EA/DARTS)
-   └─&gt; Set up distributed workers
-
-2. Search loop (1000-10000 iterations)
-   └─&gt; Controller proposes architecture
-   └─&gt; (Optional) Performance predictor filters bad candidates
-   └─&gt; Evaluate architecture:
-       - Train on subset of data
-       - Measure accuracy, latency, size
-   └─&gt; Update controller based on reward
-   └─&gt; Store results
-
-3. Post-processing
-   └─&gt; Identify Pareto frontier (best accuracy-latency trade-offs)
-   └─&gt; Retrain top candidates on full data
-   └─&gt; Final evaluation on test set
-
-4. Deployment
-   └─&gt; Export best architecture
-   └─&gt; Optimize for target hardware
-   └─&gt; Deploy to production
-</code></pre></div></div>
+<p>``</p>
+<ol>
+  <li>
+    <p>Initialize search
+ └─&gt; Define search space
+ └─&gt; Initialize controller (RL/EA/DARTS)
+ └─&gt; Set up distributed workers</p>
+  </li>
+  <li>Search loop (1000-10000 iterations)
+ └─&gt; Controller proposes architecture
+ └─&gt; (Optional) Performance predictor filters bad candidates
+ └─&gt; Evaluate architecture:
+    <ul>
+      <li>Train on subset of data</li>
+      <li>Measure accuracy, latency, size
+ └─&gt; Update controller based on reward
+ └─&gt; Store results</li>
+    </ul>
+  </li>
+  <li>
+    <p>Post-processing
+ └─&gt; Identify Pareto frontier (best accuracy-latency trade-offs)
+ └─&gt; Retrain top candidates on full data
+ └─&gt; Final evaluation on test set</p>
+  </li>
+  <li>Deployment
+ └─&gt; Export best architecture
+ └─&gt; Optimize for target hardware
+ └─&gt; Deploy to production
+``</li>
+</ol>
 
 <h2 id="scaling-strategies">Scaling Strategies</h2>
 
 <h3 id="distributed-architecture-evaluation">Distributed Architecture Evaluation</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">ray</span>
+<p>``python
+import ray</p>
 
-<span class="nd">@ray.remote</span><span class="p">(</span><span class="n">num_gpus</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">ArchitectureWorker</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Worker that evaluates architectures on GPU.</span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">search_space</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">search_space</span> <span class="o">=</span> <span class="n">search_space</span>
-    
-    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">arch</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">train_subset</span><span class="p">,</span> <span class="n">val_subset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Evaluate architecture.
-        
-        Returns:
-            Dictionary with accuracy, latency, params, flops
-        </span><span class="sh">"""</span>
-        <span class="c1"># Build model
-</span>        <span class="n">model</span> <span class="o">=</span> <span class="nf">build_model_from_arch</span><span class="p">(</span><span class="n">arch</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">search_space</span><span class="p">)</span>
-        
-        <span class="c1"># Train briefly
-</span>        <span class="nf">train_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_subset</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-        
-        <span class="c1"># Evaluate
-</span>        <span class="n">accuracy</span> <span class="o">=</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">val_subset</span><span class="p">)</span>
-        <span class="n">latency</span> <span class="o">=</span> <span class="nf">measure_latency</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-        <span class="n">params</span> <span class="o">=</span> <span class="nf">count_parameters</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-        <span class="n">flops</span> <span class="o">=</span> <span class="nf">estimate_flops</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">"</span><span class="s">accuracy</span><span class="sh">"</span><span class="p">:</span> <span class="n">accuracy</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">latency_ms</span><span class="sh">"</span><span class="p">:</span> <span class="n">latency</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">params</span><span class="sh">"</span><span class="p">:</span> <span class="n">params</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">flops</span><span class="sh">"</span><span class="p">:</span> <span class="n">flops</span>
-        <span class="p">}</span>
+<p>@ray.remote(num_gpus=1)
+class ArchitectureWorker:
+ “"”Worker that evaluates architectures on GPU.”””</p>
 
+<p>def <strong>init</strong>(self, search_space: SearchSpace):
+ self.search_space = search_space</p>
 
-<span class="k">class</span> <span class="nc">DistributedNAS</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Distributed NAS system.</span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">search_space</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">num_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">search_space</span> <span class="o">=</span> <span class="n">search_space</span>
-        
-        <span class="c1"># Create worker pool
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">workers</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">ArchitectureWorker</span><span class="p">.</span><span class="nf">remote</span><span class="p">(</span><span class="n">search_space</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">num_workers</span><span class="p">)</span>
-        <span class="p">]</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">num_workers</span> <span class="o">=</span> <span class="n">num_workers</span>
-    
-    <span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">controller</span><span class="p">:</span> <span class="n">NASController</span><span class="p">,</span> <span class="n">num_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Distributed NAS search.
-        
-        Args:
-            controller: Architecture generator
-            num_iterations: Number of architectures to try
-        </span><span class="sh">"""</span>
-        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># Process in batches (parallel evaluation)
-</span>        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">num_workers</span>
-        
-        <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_iterations</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
-            <span class="c1"># Generate batch of architectures
-</span>            <span class="n">architectures</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">log_probs_batch</span> <span class="o">=</span> <span class="p">[]</span>
-            
-            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">batch_size</span><span class="p">):</span>
-                <span class="n">arch</span><span class="p">,</span> <span class="n">log_probs</span> <span class="o">=</span> <span class="nf">controller</span><span class="p">()</span>
-                <span class="n">architectures</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">arch</span><span class="p">)</span>
-                <span class="n">log_probs_batch</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">log_probs</span><span class="p">)</span>
-            
-            <span class="c1"># Evaluate in parallel
-</span>            <span class="n">futures</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">workers</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="n">self</span><span class="p">.</span><span class="n">num_workers</span><span class="p">].</span><span class="n">evaluate</span><span class="p">.</span><span class="nf">remote</span><span class="p">(</span>
-                    <span class="n">architectures</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                    <span class="nf">get_train_subset</span><span class="p">(),</span>
-                    <span class="nf">get_val_subset</span><span class="p">()</span>
-                <span class="p">)</span>
-                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
-            <span class="p">]</span>
-            
-            <span class="n">eval_results</span> <span class="o">=</span> <span class="n">ray</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">futures</span><span class="p">)</span>
-            
-            <span class="c1"># Update controller with rewards
-</span>            <span class="k">for</span> <span class="n">arch</span><span class="p">,</span> <span class="n">log_probs</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">architectures</span><span class="p">,</span> <span class="n">log_probs_batch</span><span class="p">,</span> <span class="n">eval_results</span><span class="p">):</span>
-                <span class="n">reward</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">accuracy</span><span class="sh">'</span><span class="p">]</span>
-                <span class="n">controller</span><span class="p">.</span><span class="nf">update</span><span class="p">(</span><span class="n">log_probs</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">controller_optimizer</span><span class="p">)</span>
-                <span class="n">results</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">arch</span><span class="p">,</span> <span class="n">result</span><span class="p">))</span>
-        
-        <span class="k">return</span> <span class="n">results</span>
-</code></pre></div></div>
+<p>def evaluate(self, arch: List[int], train_subset, val_subset) -&gt; Dict:
+ “””
+ Evaluate architecture.</p>
+
+<p>Returns:
+ Dictionary with accuracy, latency, params, flops
+ “””
+ # Build model
+ model = build_model_from_arch(arch, self.search_space)</p>
+
+<p># Train briefly
+ train_model(model, train_subset, epochs=10)</p>
+
+<p># Evaluate
+ accuracy = evaluate(model, val_subset)
+ latency = measure_latency(model)
+ params = count_parameters(model)
+ flops = estimate_flops(model)</p>
+
+<p>return {
+ “accuracy”: accuracy,
+ “latency_ms”: latency,
+ “params”: params,
+ “flops”: flops
+ }</p>
+
+<p>class DistributedNAS:
+ “"”Distributed NAS system.”””</p>
+
+<p>def <strong>init</strong>(self, search_space: SearchSpace, num_workers: int = 8):
+ self.search_space = search_space</p>
+
+<p># Create worker pool
+ self.workers = [
+ ArchitectureWorker.remote(search_space)
+ for _ in range(num_workers)
+ ]</p>
+
+<p>self.num_workers = num_workers</p>
+
+<p>def search(self, controller: NASController, num_iterations: int = 1000):
+ “””
+ Distributed NAS search.</p>
+
+<p>Args:
+ controller: Architecture generator
+ num_iterations: Number of architectures to try
+ “””
+ results = []</p>
+
+<p># Process in batches (parallel evaluation)
+ batch_size = self.num_workers</p>
+
+<p>for iteration in range(0, num_iterations, batch_size):
+ # Generate batch of architectures
+ architectures = []
+ log_probs_batch = []</p>
+
+<p>for _ in range(batch_size):
+ arch, log_probs = controller()
+ architectures.append(arch)
+ log_probs_batch.append(log_probs)</p>
+
+<p># Evaluate in parallel
+ futures = [
+ self.workers[i % self.num_workers].evaluate.remote(
+ architectures[i],
+ get_train_subset(),
+ get_val_subset()
+ )
+ for i in range(batch_size)
+ ]</p>
+
+<p>eval_results = ray.get(futures)</p>
+
+<p># Update controller with rewards
+ for arch, log_probs, result in zip(architectures, log_probs_batch, eval_results):
+ reward = result[‘accuracy’]
+ controller.update(log_probs, reward, controller_optimizer)
+ results.append((arch, result))</p>
+
+<p>return results
+``</p>
 
 <h2 id="monitoring--metrics">Monitoring &amp; Metrics</h2>
 
@@ -1212,8 +1231,8 @@
 
 <p><strong>ROI Calculation:</strong></p>
 <ul>
-  <li>Manual design: 3 months engineer time ($60K) + 100 GPU days ($30K) = $90K</li>
-  <li>NAS: 1 month engineer time ($20K) + 200 GPU days ($60K) = $80K</li>
+  <li>Manual design: 3 months engineer time (<code class="language-plaintext highlighter-rouge">60K) + 100 GPU days (</code>30K) = $90K</li>
+  <li>NAS: 1 month engineer time (<code class="language-plaintext highlighter-rouge">20K) + 200 GPU days (</code>60K) = $80K</li>
   <li><strong>Savings:</strong> $10K + better model</li>
 </ul>
 
@@ -1223,98 +1242,103 @@
 
 <p>Train a single super-network that contains many sub-networks:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">OnceForAllNetwork</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Train once, deploy many architectures.
-    
-    Enables instant architecture selection without retraining.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">supernet</span> <span class="o">=</span> <span class="nf">create_supernet</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">trained</span> <span class="o">=</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">train_supernet</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">train_data</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Train supernet to support all sub-architectures.
-        
-        Progressive shrinking strategy:
-        - Train largest network first
-        - Progressively train smaller sub-networks
-        </span><span class="sh">"""</span>
-        <span class="c1"># Implementation details...
-</span>        <span class="k">pass</span>
-    
-    <span class="k">def</span> <span class="nf">extract_subnet</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">target_latency_ms</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Extract sub-network meeting latency constraint.
-        
-        No training needed!
-        </span><span class="sh">"""</span>
-        <span class="c1"># Search for subnet with latency &lt; target
-</span>        <span class="c1"># Use efficiency predictor
-</span>        <span class="k">pass</span>
-</code></pre></div></div>
+<p>``python
+class OnceForAllNetwork:
+ “””
+ Train once, deploy many architectures.</p>
+
+<p>Enables instant architecture selection without retraining.
+ “””</p>
+
+<p>def <strong>init</strong>(self):
+ self.supernet = create_supernet()
+ self.trained = False</p>
+
+<p>def train_supernet(self, train_data):
+ “””
+ Train supernet to support all sub-architectures.</p>
+
+<p>Progressive shrinking strategy:</p>
+<ul>
+  <li>Train largest network first</li>
+  <li>Progressively train smaller sub-networks
+ “””
+ # Implementation details…
+ pass</li>
+</ul>
+
+<p>def extract_subnet(self, target_latency_ms: float):
+ “””
+ Extract sub-network meeting latency constraint.</p>
+
+<p>No training needed!
+ “””
+ # Search for subnet with latency &lt; target
+ # Use efficiency predictor
+ pass
+``</p>
 
 <h3 id="2-hardware-aware-nas">2. Hardware-Aware NAS</h3>
 
 <p>Include hardware metrics in search:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">hardware_aware_nas</span><span class="p">(</span><span class="n">search_space</span><span class="p">,</span> <span class="n">target_hardware</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Search for architectures optimized for specific hardware.
-    
-    Args:
-        target_hardware: </span><span class="sh">"</span><span class="s">mobile</span><span class="sh">"</span><span class="s">, </span><span class="sh">"</span><span class="s">edge_tpu</span><span class="sh">"</span><span class="s">, </span><span class="sh">"</span><span class="s">nvidia_t4</span><span class="sh">"</span><span class="s">, etc.
-    </span><span class="sh">"""</span>
-    <span class="c1"># Measure latency on target hardware
-</span>    <span class="k">def</span> <span class="nf">measure_latency_on_target</span><span class="p">(</span><span class="n">arch</span><span class="p">):</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="nf">build_model</span><span class="p">(</span><span class="n">arch</span><span class="p">)</span>
-        <span class="c1"># Deploy to target, measure
-</span>        <span class="k">return</span> <span class="nf">measure_on_hardware</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">target_hardware</span><span class="p">)</span>
-    
-    <span class="c1"># Multi-objective: accuracy + latency on target
-</span>    <span class="k">def</span> <span class="nf">fitness</span><span class="p">(</span><span class="n">arch</span><span class="p">):</span>
-        <span class="n">acc</span> <span class="o">=</span> <span class="nf">evaluate_accuracy</span><span class="p">(</span><span class="n">arch</span><span class="p">)</span>
-        <span class="n">lat</span> <span class="o">=</span> <span class="nf">measure_latency_on_target</span><span class="p">(</span><span class="n">arch</span><span class="p">)</span>
-        
-        <span class="c1"># Combine (accuracy high, latency low)
-</span>        <span class="k">return</span> <span class="n">acc</span> <span class="o">-</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="n">lat</span>  <span class="c1"># Weight latency penalty
-</span></code></pre></div></div>
+<p>``python
+def hardware_aware_nas(search_space, target_hardware: str):
+ “””
+ Search for architectures optimized for specific hardware.</p>
+
+<p>Args:
+ target_hardware: “mobile”, “edge_tpu”, “nvidia_t4”, etc.
+ “””
+ # Measure latency on target hardware
+ def measure_latency_on_target(arch):
+ model = build_model(arch)
+ # Deploy to target, measure
+ return measure_on_hardware(model, target_hardware)</p>
+
+<p># Multi-objective: accuracy + latency on target
+ def fitness(arch):
+ acc = evaluate_accuracy(arch)
+ lat = measure_latency_on_target(arch)</p>
+
+<p># Combine (accuracy high, latency low)
+ return acc - 0.01 * lat # Weight latency penalty
+``</p>
 
 <h3 id="3-transfer-nas">3. Transfer NAS</h3>
 
 <p>Transfer architectures across tasks:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">transfer_nas</span><span class="p">(</span><span class="n">source_task</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target_task</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Transfer NAS results from source to target task.
-    
-    Example: ImageNet → COCO detection
-    </span><span class="sh">"""</span>
-    <span class="c1"># Load architectures found on source task
-</span>    <span class="n">source_archs</span> <span class="o">=</span> <span class="nf">load_nas_results</span><span class="p">(</span><span class="n">source_task</span><span class="p">)</span>
-    
-    <span class="c1"># Top-K from source
-</span>    <span class="n">top_archs</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">source_archs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="sh">'</span><span class="s">accuracy</span><span class="sh">'</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)[:</span><span class="mi">10</span><span class="p">]</span>
-    
-    <span class="c1"># Fine-tune on target task
-</span>    <span class="n">target_results</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">arch</span> <span class="ow">in</span> <span class="n">top_archs</span><span class="p">:</span>
-        <span class="c1"># Build model with source architecture
-</span>        <span class="n">model</span> <span class="o">=</span> <span class="nf">build_model_from_arch</span><span class="p">(</span><span class="n">arch</span><span class="p">[</span><span class="sh">'</span><span class="s">architecture</span><span class="sh">'</span><span class="p">])</span>
-        
-        <span class="c1"># Fine-tune on target task
-</span>        <span class="nf">fine_tune</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">target_task_data</span><span class="p">)</span>
-        
-        <span class="c1"># Evaluate
-</span>        <span class="n">target_acc</span> <span class="o">=</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">target_task_test_data</span><span class="p">)</span>
-        <span class="n">target_results</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">arch</span><span class="p">,</span> <span class="n">target_acc</span><span class="p">))</span>
-    
-    <span class="c1"># Best transferred architecture
-</span>    <span class="n">best</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">target_results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">best</span>
-</code></pre></div></div>
+<p>``python
+def transfer_nas(source_task: str, target_task: str):
+ “””
+ Transfer NAS results from source to target task.</p>
+
+<p>Example: ImageNet → COCO detection
+ “””
+ # Load architectures found on source task
+ source_archs = load_nas_results(source_task)</p>
+
+<p># Top-K from source
+ top_archs = sorted(source_archs, key=lambda x: x[‘accuracy’], reverse=True)[:10]</p>
+
+<p># Fine-tune on target task
+ target_results = []
+ for arch in top_archs:
+ # Build model with source architecture
+ model = build_model_from_arch(arch[‘architecture’])</p>
+
+<p># Fine-tune on target task
+ fine_tune(model, target_task_data)</p>
+
+<p># Evaluate
+ target_acc = evaluate(model, target_task_test_data)
+ target_results.append((arch, target_acc))</p>
+
+<p># Best transferred architecture
+ best = max(target_results, key=lambda x: x[1])
+ return best
+``</p>
 
 <h2 id="key-takeaways">Key Takeaways</h2>
 
@@ -1340,7 +1364,7 @@
 
 <h3 id="connection-to-thematic-link-dynamic-programming-and-path-optimization">Connection to Thematic Link: Dynamic Programming and Path Optimization</h3>
 
-<p>All three Day 21 topics use <strong>DP for path optimization</strong>:</p>
+<p>All three topics use <strong>DP for path optimization</strong>:</p>
 
 <p><strong>DSA (Unique Paths):</strong></p>
 <ul>

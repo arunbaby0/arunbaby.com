@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Structured Output Patterns">
     <meta itemprop="description" content="“Make agents predictable: enforce schemas, validate outputs, and recover automatically when the model slips.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -255,7 +255,7 @@
 <h2 id="1-introduction-the-ai-contract">1. Introduction: The “AI Contract”</h2>
 
 <h3 id="11-the-history-of-the-ai-contract">1.1 The History of the AI Contract</h3>
-<p>In the early days of LLMs (2020-2022), developers spent 80% of their time writing “Garbage Disposal” code—complex regex functions designed to clean up the conversation. You would ask for a list of fruits and get: <em>“Sure, I love fruits! Here they are: 1. Apple, 2. Banana… hope this helps!”</em>. This was the “Dark Ages” of agentic engineering. Today, we handle this through <strong>Hard Constraints</strong>.</p>
+<p>In the early days of LLMs (2020-2022), developers spent 80% of their time writing “Garbage Disposal” code—complex regex functions designed to clean up the conversation. You would ask for a list of fruits and get: <em>“Sure, I love fruits! Here they are: 1. Apple, 2. Banana… hope this helps!”</em>. This was the “Dark Ages” of agentic engineering. Today we handle this through <strong>Hard Constraints</strong>.</p>
 
 <h3 id="12-the-precisioncreativity-trade-off">1.2 The Precision/Creativity Trade-off</h3>
 <p>There is a fundamental tension in LLMs. The more you force them to follow a structure (Precision), the less “Creative” they become. For an agent checking a bank balance, you want 100.0% precision and 0.0% creativity. Structured output is the dial you use to turn down the model’s “hallucination engine” and turn up its “logic engine.”</p>
@@ -334,40 +334,43 @@ Use a library like <code class="language-plaintext highlighter-rouge">partialjso
 <p><strong>The Fix: The Reasoning Envelope.</strong>
 Include a <code class="language-plaintext highlighter-rouge">thought_process</code> field as the <strong>first</strong> key in your schema. Because LLMs process tokens sequentially, this forces the model to “explain” its logic <em>before</em> it picks the final value for the data fields.</p>
 
-<p><strong>Example Schema:</strong></p>
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
- </span><span class="nl">"thought_process"</span><span class="p">:</span><span class="w"> </span><span class="s2">"The user mentioned they are 25 but were born in 1998, which is consistent. They live in Paris, which is in France."</span><span class="p">,</span><span class="w">
- </span><span class="nl">"age"</span><span class="p">:</span><span class="w"> </span><span class="mi">25</span><span class="p">,</span><span class="w">
- </span><span class="nl">"country_code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"FR"</span><span class="p">,</span><span class="w">
- </span><span class="nl">"confidence_score"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.95</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
-<p>By allowing this “Internal Monologue,” you increase the accuracy of the structured data by up to 30%, especially for complex extraction tasks.</p>
+<p><strong>Example Schema:</strong>
+<code class="language-plaintext highlighter-rouge">json
+{
+ "thought_process": "The user mentioned they are 25 but were born in 1998, which is consistent. They live in Paris, which is in France.",
+ "age": 25,
+ "country_code": "FR",
+ "confidence_score": 0.95
+}
+</code>
+By allowing this “Internal Monologue,” you increase the accuracy of the structured data by up to 30%, especially for complex extraction tasks.</p>
 
 <hr />
 
 <h2 id="8-schema-design-patterns-for-agents">8. Schema Design Patterns for Agents</h2>
 
 <h3 id="31-the-envelope-pattern">3.1 The “Envelope” Pattern</h3>
-<p>Wrap your data in a metadata layer. This allows your code to distinguish between an “Agent Answer” and an “Agent Error” using the same consistent JSON structure.</p>
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
- </span><span class="nl">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"success"</span><span class="p">,</span><span class="w">
- </span><span class="nl">"payload"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">},</span><span class="w">
- </span><span class="nl">"error_msg"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
- </span><span class="nl">"execution_time_ms"</span><span class="p">:</span><span class="w"> </span><span class="mi">450</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
+<p>Wrap your data in a metadata layer. This allows your code to distinguish between an “Agent Answer” and an “Agent Error” using the same consistent JSON structure.
+<code class="language-plaintext highlighter-rouge">json
+{
+ "status": "success",
+ "payload": { ... },
+ "error_msg": null,
+ "execution_time_ms": 450
+}
+</code></p>
 
 <h3 id="32-the-polymorphic-tool">3.2 The “Polymorphic” Tool</h3>
 <p>Instead of having 10 different tools (which bloats the context window), use one <code class="language-plaintext highlighter-rouge">perform_action</code> tool that takes a <code class="language-plaintext highlighter-rouge">Union</code> of different types (e.g., <code class="language-plaintext highlighter-rouge">CreateUser</code>, <code class="language-plaintext highlighter-rouge">UpdateUser</code>).</p>
 
 <h3 id="33-the-recursive-schema-pattern">3.3 The “Recursive Schema” Pattern</h3>
-<p>For tasks like summarizing a document’s table of contents, use a schema that allows a node to have child nodes.</p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Header</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
- <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
- <span class="n">sub_headers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="sh">"</span><span class="s">Header</span><span class="sh">"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># Recursive!
-</span></code></pre></div></div>
-<p>This is essential for capturing hierarchical information without losing the parent-child relationships.</p>
+<p>For tasks like summarizing a document’s table of contents, use a schema that allows a node to have child nodes.
+<code class="language-plaintext highlighter-rouge">python
+class Header(BaseModel):
+ title: str
+ sub_headers: List["Header"] = [] # Recursive!
+</code>
+This is essential for capturing hierarchical information without losing the parent-child relationships.</p>
 
 <hr />
 
@@ -380,7 +383,7 @@ Include a <code class="language-plaintext highlighter-rouge">thought_process</co
 <ul>
   <li>Key <code class="language-plaintext highlighter-rouge">"account_balance_in_usd"</code> = 25 tokens.</li>
   <li>Key <code class="language-plaintext highlighter-rouge">"bal"</code> = 3 tokens.</li>
-  <li><strong>Savings:</strong> 22 tokens per request. Over 1M requests, that’s <strong>22 Million tokens</strong> saved. At $10 per million tokens, you just saved $220/day with a single rename.</li>
+  <li><strong>Savings:</strong> 22 tokens per request. Over 1M requests, that’s <strong>22 Million tokens</strong> saved. At <code class="language-plaintext highlighter-rouge">10 per million tokens, you just saved </code>220/day with a single rename.</li>
 </ul>
 
 <h3 id="42-the-schema-mapping-solution">4.2 The “Schema-Mapping” Solution</h3>
@@ -391,11 +394,12 @@ Include a <code class="language-plaintext highlighter-rouge">thought_process</co
 <p>Use <strong>Pydantic</strong> classes to define your schemas. Pydantic handles the translation to JSON-Schema (which the LLM actually sees) and ensures that the model’s output is parsed into a clean Python object with full type safety.</p>
 
 <p><strong>The Mini-Prompt Power:</strong>
-The <code class="language-plaintext highlighter-rouge">Field(description="...")</code> parameter in Pydantic is your most powerful tool.</p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">UserProfile</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
- <span class="n">mood</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="nc">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="sh">"</span><span class="s">One of [HAPPY, SAD, ANGRY]. Default to HAPPY if unclear.</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
-<p>The LLM provider (like OpenAI or Anthropic) takes these descriptions and injects them directly into the “System Instructions.” This is often more effective than writing a separate 5-page PDF of instructions because the instruction sits <strong>exactly where the model is deciding what to write</strong>.</p>
+The <code class="language-plaintext highlighter-rouge">Field(description="...")</code> parameter in Pydantic is your most powerful tool.
+<code class="language-plaintext highlighter-rouge">python
+class UserProfile(BaseModel):
+ mood: str = Field(description="One of [HAPPY, SAD, ANGRY]. Default to HAPPY if unclear.")
+</code>
+The LLM provider (like OpenAI or Anthropic) takes these descriptions and injects them directly into the “System Instructions.” This is often more effective than writing a separate 5-page PDF of instructions because the instruction sits <strong>exactly where the model is deciding what to write</strong>.</p>
 
 <hr />
 
@@ -483,17 +487,18 @@ By keeping both versions in code, you can use a <strong>Transformation Agent</st
 
 <p>For complex agents, you don’t just want one step. You want a <strong>Plan</strong>.</p>
 
-<p><strong>The DAG Schema:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Step</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
- <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
- <span class="n">tool</span><span class="p">:</span> <span class="nb">str</span>
- <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span>
- <span class="n">dependencies</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<p><strong>The DAG Schema:</strong>
+``python
+class Step(BaseModel):
+ id: int
+ tool: str
+ args: dict
+ dependencies: List[int] = []</p>
 
-<span class="k">class</span> <span class="nc">Plan</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
- <span class="n">steps</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Step</span><span class="p">]</span>
-</code></pre></div></div>
-<p>By structuring the plan as a <strong>Directed Acyclic Graph (DAG)</strong>, your orchestrator can look at the <code class="language-plaintext highlighter-rouge">dependencies</code> list and execute steps 1, 3, and 5 in parallel if they don’t depend on each other. This reduces your total task latency by up to 50%.</p>
+<p>class Plan(BaseModel):
+ steps: List[Step]
+``
+By structuring the plan as a <strong>Directed Acyclic Graph (DAG)</strong>, your orchestrator can look at the <code class="language-plaintext highlighter-rouge">dependencies</code> list and execute steps 1, 3, and 5 in parallel if they don’t depend on each other. This reduces your total task latency by up to 50%.</p>
 
 <hr />
 
@@ -534,10 +539,11 @@ By keeping both versions in code, you can use a <strong>Transformation Agent</st
 <p>Just because the output is JSON doesn’t mean it’s safe.</p>
 
 <p><strong>The Vulnerability:</strong>
-Imagine your agent outputs a JSON that you then pass directly into a SQL query:</p>
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="nl">"user_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"123; DROP TABLE users;"</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
-<p><strong>The Fix: Strict Validation.</strong>
+Imagine your agent outputs a JSON that you then pass directly into a SQL query:
+<code class="language-plaintext highlighter-rouge">json
+{"user_id": "123; DROP TABLE users;"}
+</code>
+<strong>The Fix: Strict Validation.</strong>
 In Pydantic, use <code class="language-plaintext highlighter-rouge">UUID</code> or <code class="language-plaintext highlighter-rouge">EmailStr</code> types instead of raw strings. This forces the parser to reject anything that doesn’t follow the exact format, killing injection attacks before they touch your database.</p>
 
 <hr />
@@ -593,13 +599,14 @@ A: This is often caused by “Leakage” from the model’s training data. If th
 
 <p>Let’s look at a production-grade schema for a ticket-routing agent.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Ticket</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
- <span class="n">thought</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="nc">Field</span><span class="p">(...,</span> <span class="n">description</span><span class="o">=</span><span class="sh">"</span><span class="s">Reasoning about the user</span><span class="sh">'</span><span class="s">s intent</span><span class="sh">"</span><span class="p">)</span>
- <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nc">Field</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
- <span class="n">category</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="sh">"</span><span class="s">Billing</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Technical</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Shipping</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">General</span><span class="sh">"</span><span class="p">]</span>
- <span class="n">entities</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nc">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="sh">"</span><span class="s">Extracted IDs, emails, etc</span><span class="sh">"</span><span class="p">)</span>
- <span class="n">next_step</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="nc">Field</span><span class="p">(...,</span> <span class="n">description</span><span class="o">=</span><span class="sh">"</span><span class="s">Action to take: [REPLY, ESCALATE, WAIT]</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">python
+class Ticket(BaseModel):
+ thought: str = Field(..., description="Reasoning about the user's intent")
+ priority: int = Field(1, ge=1, le=5)
+ category: Literal["Billing", "Technical", "Shipping", "General"]
+ entities: Dict[str, str] = Field(default_factory=dict, description="Extracted IDs, emails, etc")
+ next_step: str = Field(..., description="Action to take: [REPLY, ESCALATE, WAIT]")
+</code></p>
 
 <h3 id="301-why-this-works">30.1 Why this works</h3>
 <ol>
@@ -701,18 +708,19 @@ A: This is often caused by “Leakage” from the model’s training data. If th
 
 <p>As a junior engineer, your first <code class="language-plaintext highlighter-rouge">while</code> loop should be a <strong>JSON Recovery Loop</strong>.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">retries</span> <span class="o">=</span> <span class="mi">3</span>
-<span class="k">while</span> <span class="n">retries</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
- <span class="k">try</span><span class="p">:</span>
- <span class="n">raw_output</span> <span class="o">=</span> <span class="n">llm</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
- <span class="n">data</span> <span class="o">=</span> <span class="n">UserSchema</span><span class="p">.</span><span class="nf">model_validate_json</span><span class="p">(</span><span class="n">raw_output</span><span class="p">)</span>
- <span class="k">return</span> <span class="n">data</span> <span class="c1"># Success!
-</span> <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
- <span class="c1"># Pass the SPECIFIC pydantic error back to the model
-</span> <span class="n">prompt</span> <span class="o">+=</span> <span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">Error in your last JSON: </span><span class="si">{</span><span class="nf">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s">. Please correct it.</span><span class="sh">"</span>
- <span class="n">retries</span> <span class="o">-=</span> <span class="mi">1</span>
-</code></pre></div></div>
-<p>This simple loop increases your system’s reliability from 90% to 99.9%. By providing the model with the exact line and type of the error, you are giving it the “Map” it needs to fix itself.</p>
+<p><code class="language-plaintext highlighter-rouge">python
+retries = 3
+while retries &gt; 0:
+ try:
+ raw_output = llm.generate(prompt)
+ data = UserSchema.model_validate_json(raw_output)
+ return data # Success!
+ except ValidationError as e:
+ # Pass the SPECIFIC pydantic error back to the model
+ prompt += f"\nError in your last JSON: {str(e)}. Please correct it."
+ retries -= 1
+</code>
+This simple loop increases your system’s reliability from 90% to 99.9%. By providing the model with the exact line and type of the error, you are giving it the “Map” it needs to fix itself.</p>
 
 <hr />
 

@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Trie-Based Search Systems (Typeahead)">
     <meta itemprop="description" content="“The user knows what they want. Your job is to tell them before they finish typing.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -281,7 +281,7 @@
   <li>Prefix: “ja”</li>
   <li>Candidates: “java”, “japan”, “javascript”, “jacket”.</li>
   <li>We need to return top 5 sorted by <code class="language-plaintext highlighter-rouge">Score</code>.
-<code class="language-plaintext highlighter-rouge">Score = Transformation(Frequency, User_History, Location, Freshness)</code></li>
+ <code class="language-plaintext highlighter-rouge">Score = Transformation(Frequency, User_History, Location, Freshness)</code></li>
 </ul>
 
 <hr />
@@ -290,18 +290,19 @@
 
 <p>We need a dedicated <strong>Typeahead Service</strong> separate from the main Search Service.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[Browser]
-      | (GET /suggest?q=sys)
-      v
+<p><code class="language-plaintext highlighter-rouge">
+[Browser]
+ | (GET /suggest?q=sys)
+ v
 [Load Balancer] --&gt; [CDN (Caches popular: "fa"-&gt;"facebook")]
-      |
-      v
+ |
+ v
 [Typeahead Aggregator]
-      |
-      +---&gt; [Service Node 1 (A-C)]
-      +---&gt; [Service Node 2 (D-F)]
-      +---&gt; [Personalization Service (Reranking)]
-</code></pre></div></div>
+ |
+ +---&gt; [Service Node 1 (A-C)]
+ +---&gt; [Service Node 2 (D-F)]
+ +---&gt; [Personalization Service (Reranking)]
+</code></p>
 
 <hr />
 
@@ -318,22 +319,16 @@ Each Node contains:</p>
 <p><strong>Why Pre-compute Top-K?</strong>
 If we wait until runtime to traverse the whole subtree of “sys” to find “system”, “systolic”… it’s too slow.
 We aggregate scores offline. At node “s-y-s”, we store <code class="language-plaintext highlighter-rouge">["system", "sysadmin"]</code> directly.
-Time Complexity: $O(1)$ (Pointer chase + Return list).</p>
+Time Complexity: O(1) (Pointer chase + Return list).</p>
 
 <h3 id="42-data-sharding">4.2 Data Sharding</h3>
 <p>The Dictionary is too big for one machine.</p>
 <ul>
-  <li><strong>Option A: Range Partitioning (A-C, D-F)</strong>
-    <ul>
-      <li><em>Risk</em>: Hotspots. ‘S’ is popular. ‘X’ is quiet.</li>
-    </ul>
-  </li>
-  <li><strong>Option B: Hash Partitioning</strong>
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">ShardID = Hash(prefix) % 100</code>.</li>
-      <li><em>Risk</em>: We can only hash the <em>prefix</em>. If user types “s”, do we query all shards? No. Usually we shard by the first 2-3 characters.</li>
-    </ul>
-  </li>
+  <li><strong>Option A: Range Partitioning (A-C, D-F)</strong></li>
+  <li><em>Risk</em>: Hotspots. ‘S’ is popular. ‘X’ is quiet.</li>
+  <li><strong>Option B: Hash Partitioning</strong></li>
+  <li><code class="language-plaintext highlighter-rouge">ShardID = Hash(prefix) % 100</code>.</li>
+  <li><em>Risk</em>: We can only hash the <em>prefix</em>. If user types “s”, do we query all shards? No. Usually we shard by the first 2-3 characters.</li>
 </ul>
 
 <hr />
@@ -385,47 +380,48 @@ Or we sample 1% of traffic for analytics.</p>
 
 <h2 id="7-implementation-a-basic-typeahead-class">7. Implementation: A Basic Typeahead Class</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">TrieNode</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">children</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">top_candidates</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># Stores top 5 tuples (score, text)
-</span>
-    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">word</span><span class="p">,</span> <span class="n">score</span><span class="p">):</span>
-        <span class="c1"># Insert into cache if score is high enough
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">top_candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">score</span><span class="p">,</span> <span class="n">word</span><span class="p">))</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">top_candidates</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">top_candidates</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">top_candidates</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span>
+<p>``python
+class TrieNode:
+ def <strong>init</strong>(self):
+ self.children = {}
+ self.top_candidates = [] # Stores top 5 tuples (score, text)</p>
 
-<span class="k">class</span> <span class="nc">TypeaheadSystem</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">root</span> <span class="o">=</span> <span class="nc">TrieNode</span><span class="p">()</span>
-        
-    <span class="k">def</span> <span class="nf">add_query</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">score</span><span class="p">):</span>
-        <span class="n">node</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">root</span>
-        <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">query</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">char</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">:</span>
-                <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">[</span><span class="n">char</span><span class="p">]</span> <span class="o">=</span> <span class="nc">TrieNode</span><span class="p">()</span>
-            <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">[</span><span class="n">char</span><span class="p">]</span>
-            <span class="c1"># Crucial: Update the pre-computed top-k at every step
-</span>            <span class="n">node</span><span class="p">.</span><span class="nf">insert</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span>
-            
-    <span class="k">def</span> <span class="nf">suggest</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">):</span>
-        <span class="n">node</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">root</span>
-        <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">prefix</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">char</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">:</span>
-                <span class="k">return</span> <span class="p">[]</span>
-            <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">[</span><span class="n">char</span><span class="p">]</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">text</span> <span class="k">for</span> <span class="n">score</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">node</span><span class="p">.</span><span class="n">top_candidates</span><span class="p">]</span>
+<p>def insert(self, word, score):
+ # Insert into cache if score is high enough
+ self.top_candidates.append((score, word))
+ self.top_candidates.sort(key=lambda x: -x[0])
+ self.top_candidates = self.top_candidates[:5]</p>
 
-<span class="c1"># Usage
-</span><span class="n">ta</span> <span class="o">=</span> <span class="nc">TypeaheadSystem</span><span class="p">()</span>
-<span class="n">ta</span><span class="p">.</span><span class="nf">add_query</span><span class="p">(</span><span class="sh">"</span><span class="s">amazon</span><span class="sh">"</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
-<span class="n">ta</span><span class="p">.</span><span class="nf">add_query</span><span class="p">(</span><span class="sh">"</span><span class="s">amazing</span><span class="sh">"</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
-<span class="n">ta</span><span class="p">.</span><span class="nf">add_query</span><span class="p">(</span><span class="sh">"</span><span class="s">am</span><span class="sh">"</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<p>class TypeaheadSystem:
+ def <strong>init</strong>(self):
+ self.root = TrieNode()</p>
 
-<span class="nf">print</span><span class="p">(</span><span class="n">ta</span><span class="p">.</span><span class="nf">suggest</span><span class="p">(</span><span class="sh">"</span><span class="s">am</span><span class="sh">"</span><span class="p">))</span> 
-<span class="c1"># Returns ['amazon', 'amazing', 'am'] sorted by score (because we sorted on insert)
-</span></code></pre></div></div>
+<p>def add_query(self, query, score):
+ node = self.root
+ for char in query:
+ if char not in node.children:
+ node.children[char] = TrieNode()
+ node = node.children[char]
+ # Crucial: Update the pre-computed top-k at every step
+ node.insert(query, score)</p>
+
+<p>def suggest(self, prefix):
+ node = self.root
+ for char in prefix:
+ if char not in node.children:
+ return []
+ node = node.children[char]
+ return [text for score, text in node.top_candidates]</p>
+
+<h1 id="usage">Usage</h1>
+<p>ta = TypeaheadSystem()
+ta.add_query(“amazon”, 100)
+ta.add_query(“amazing”, 50)
+ta.add_query(“am”, 10)</p>
+
+<p>print(ta.suggest(“am”))</p>
+<h1 id="returns-amazon-amazing-am-sorted-by-score-because-we-sorted-on-insert">Returns [‘amazon’, ‘amazing’, ‘am’] sorted by score (because we sorted on insert)</h1>
+<p>``</p>
 
 <hr />
 

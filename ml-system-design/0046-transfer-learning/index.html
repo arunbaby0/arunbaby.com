@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Transfer Learning Systems">
     <meta itemprop="description" content="“Standing on the shoulders of giants isn’t just a metaphor—it’s an engineering requirement.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -256,7 +256,7 @@
 
 <p>In the modern ML landscape, training a model from scratch is rarely the answer.</p>
 <ul>
-  <li><strong>Cost</strong>: Training GPT-3 costs ~$4M-$12M.</li>
+  <li><strong>Cost</strong>: Training GPT-3 costs ~<code class="language-plaintext highlighter-rouge">4M-</code>12M.</li>
   <li><strong>Data</strong>: You rarely have the billions of tokens needed for pre-training.</li>
   <li><strong>Efficiency</strong>: Why relearn “grammar” or “edges” when open-source models already know them?</li>
 </ul>
@@ -314,26 +314,27 @@ Design a platform that allows enterprise customers to build custom classifiers (
 
 <p>We need a layered architecture that separates the “Heavy Lifting” (Base Models) from the “Specific Logic” (Heads/Adapters).</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[Request: {text: "Sue him!", model_id: "client_A_legal"}]
-        |
-        v
+<p><code class="language-plaintext highlighter-rouge">
+[Request: {text: "Sue him!", model_id: "client_A_legal"}]
+ |
+ v
 [Load Balancer / Gateway]
-        |
-        v
+ |
+ v
 [Model Serving Layer (Ray Serve / TorchServe)]
-        |
-   +----+--------------------------------+
-   |  GPU Worker (Shared Inference)      |
-   |                                     |
-   |  [ Base Model (BERT) - Frozen ]     |  &lt;-- Loaded Once (VRAM: 2GB)
-   |             |                       |
-   |             v                       |
-   |  [ Adapter Controller ]             |
-   |    /        |         \             |
-   | [LoRA A]  [LoRA B]  [LoRA C]        |  &lt;-- Swapped Dynamically
-   | (Client A)(Client B)(Client C)      |      (VRAM: 10MB each)
-   +-------------------------------------+
-</code></pre></div></div>
+ |
+ +----+--------------------------------+
+ | GPU Worker (Shared Inference) |
+ | |
+ | [ Base Model (BERT) - Frozen ] | &lt;-- Loaded Once (VRAM: 2GB)
+ | | |
+ | v |
+ | [ Adapter Controller ] |
+ | / | \ |
+ | [LoRA A] [LoRA B] [LoRA C] | &lt;-- Swapped Dynamically
+ | (Client A)(Client B)(Client C) | (VRAM: 10MB each)
+ +-------------------------------------+
+</code></p>
 
 <hr />
 
@@ -353,12 +354,9 @@ Design a platform that allows enterprise customers to build custom classifiers (
 <ul>
   <li><strong>Function</strong>: Matrix Multiplication routing.</li>
   <li>Instead of <code class="language-plaintext highlighter-rouge">Y = W * X</code> (Standard Linear), it computes <code class="language-plaintext highlighter-rouge">Y = W * X + (A * B) * X</code> where A and B are the low-rank adapter matrices.</li>
-  <li><strong>Optimization</strong>: Because <code class="language-plaintext highlighter-rouge">A</code> and <code class="language-plaintext highlighter-rouge">B</code> are small, we can batch requests from different clients together!
-    <ul>
-      <li>Request 1 (Client A), Request 2 (Client B) -&gt; Both run through BERT backbone together (Batch Size 2).</li>
-      <li>At the specific layer, split the computation or use specialized CUDA kernels (like <strong>LoRA-Serving</strong> or <strong>vLLM</strong>) to apply per-row adaptors.</li>
-    </ul>
-  </li>
+  <li><strong>Optimization</strong>: Because <code class="language-plaintext highlighter-rouge">A</code> and <code class="language-plaintext highlighter-rouge">B</code> are small, we can batch requests from different clients together!</li>
+  <li>Request 1 (Client A), Request 2 (Client B) -&gt; Both run through BERT backbone together (Batch Size 2).</li>
+  <li>At the specific layer, split the computation or use specialized CUDA kernels (like <strong>LoRA-Serving</strong> or <strong>vLLM</strong>) to apply per-row adaptors.</li>
 </ul>
 
 <hr />
@@ -410,39 +408,40 @@ When they return:</p>
 
 <h2 id="7-implementation-lora-injection-conceptual-code">7. Implementation: LoRA Injection Conceptual Code</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">LoRALayer</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">original_layer</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">original_layer</span> <span class="o">=</span> <span class="n">original_layer</span> <span class="c1"># Frozen
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">rank</span> <span class="o">=</span> <span class="n">rank</span>
-        
-        <span class="c1"># Low Rank Adaption matrices
-</span>        <span class="n">in_dim</span> <span class="o">=</span> <span class="n">original_layer</span><span class="p">.</span><span class="n">in_features</span>
-        <span class="n">out_dim</span> <span class="o">=</span> <span class="n">original_layer</span><span class="p">.</span><span class="n">out_features</span>
-        
-        <span class="c1"># A: Gaussian init, B: Zero init
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">lora_A</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="n">in_dim</span><span class="p">,</span> <span class="n">rank</span><span class="p">))</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">lora_B</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">out_dim</span><span class="p">))</span>
-        
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="c1"># Path 1: Frozen backbone
-</span>        <span class="c1"># The original weights don't change
-</span>        <span class="n">base_out</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">original_layer</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        
-        <span class="c1"># Path 2: Trainable low-rank branch
-</span>        <span class="c1"># B @ A is a low-rank matrix that approximates the weight update delta
-</span>        <span class="n">adapter_out</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">@</span> <span class="n">self</span><span class="p">.</span><span class="n">lora_A</span><span class="p">)</span> <span class="o">@</span> <span class="n">self</span><span class="p">.</span><span class="n">lora_B</span>
-        
-        <span class="k">return</span> <span class="n">base_out</span> <span class="o">+</span> <span class="n">adapter_out</span>
+<p>class LoRALayer(nn.Module):
+ def <strong>init</strong>(self, original_layer, rank=8):
+ super().<strong>init</strong>()
+ self.original_layer = original_layer # Frozen
+ self.rank = rank</p>
 
-<span class="c1"># Usage in System
-# To switch clients, we only update lora_A and lora_B
-</span><span class="k">def</span> <span class="nf">switch_context</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">new_client_weights</span><span class="p">):</span>
-    <span class="n">model</span><span class="p">.</span><span class="n">layer1</span><span class="p">.</span><span class="n">lora_A</span><span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">new_client_weights</span><span class="p">[</span><span class="sh">'</span><span class="s">params_A</span><span class="sh">'</span><span class="p">]</span>
-    <span class="n">model</span><span class="p">.</span><span class="n">layer1</span><span class="p">.</span><span class="n">lora_B</span><span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">new_client_weights</span><span class="p">[</span><span class="sh">'</span><span class="s">params_B</span><span class="sh">'</span><span class="p">]</span>
-</code></pre></div></div>
+<p># Low Rank Adaption matrices
+ in_dim = original_layer.in_features
+ out_dim = original_layer.out_features</p>
+
+<p># A: Gaussian init, B: Zero init
+ self.lora_A = nn.Parameter(torch.randn(in_dim, rank))
+ self.lora_B = nn.Parameter(torch.zeros(rank, out_dim))</p>
+
+<p>def forward(self, x):
+ # Path 1: Frozen backbone
+ # The original weights don’t change
+ base_out = self.original_layer(x)</p>
+
+<p># Path 2: Trainable low-rank branch
+ # B @ A is a low-rank matrix that approximates the weight update delta
+ adapter_out = (x @ self.lora_A) @ self.lora_B</p>
+
+<p>return base_out + adapter_out</p>
+
+<h1 id="usage-in-system">Usage in System</h1>
+<h1 id="to-switch-clients-we-only-update-lora_a-and-lora_b">To switch clients, we only update lora_A and lora_B</h1>
+<p>def switch_context(model, new_client_weights):
+ model.layer1.lora_A.data = new_client_weights[‘params_A’]
+ model.layer1.lora_B.data = new_client_weights[‘params_B’]
+``</p>
 
 <hr />
 

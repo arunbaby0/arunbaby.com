@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Real-time Audio Segmentation">
     <meta itemprop="description" content="Build production audio segmentation systems that detect boundaries in real-time using interval merging and temporal processing—the same principles from merge intervals and event stream processing.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -392,57 +392,58 @@
 
 <h2 id="high-level-architecture">High-Level Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────────┐
-│              Real-time Audio Segmentation System                 │
-└─────────────────────────────────────────────────────────────────┘
+<p>``
+┌─────────────────────────────────────────────────────────────────┐
+│ Real-time Audio Segmentation System │
+└─────────────────────────────────────────────────────────────────┘</p>
 
-        Audio Input (Streaming)
-        16kHz PCM, Real-time
-                ↓
-    ┌───────────────────────┐
-    │   Audio Buffering     │
-    │   - Ring buffer       │
-    │   - Overlap handling  │
-    └───────────┬───────────┘
-                │
-    ┌───────────▼───────────┐
-    │   Feature Extraction  │
-    │   - MFCCs            │
-    │   - Energy           │
-    │   - Zero crossings   │
-    └───────────┬───────────┘
-                │
-    ┌───────────▼───────────┐
-    │   VAD (Voice Activity)│
-    │   - WebRTC VAD       │
-    │   - ML-based VAD     │
-    └───────────┬───────────┘
-                │
-    ┌───────────▼───────────┐
-    │   Boundary Detection  │
-    │   - Energy changes   │
-    │   - Spectral changes │
-    │   - ML classifier    │
-    └───────────┬───────────┘
-                │
-    ┌───────────▼───────────┐
-    │   Segment Merging     │
-    │   (Like Merge         │
-    │    Intervals!)        │
-    │   - Min duration     │
-    │   - Max gap          │
-    └───────────┬───────────┘
-                │
-    ┌───────────▼───────────┐
-    │   Boundary Refinement │
-    │   - Smooth edges     │
-    │   - Snap to zero     │
-    │     crossings        │
-    └───────────┬───────────┘
-                │
-        Segmented Audio
-        [(start, end, label)]
-</code></pre></div></div>
+<p>Audio Input (Streaming)
+ 16kHz PCM, Real-time
+ ↓
+ ┌───────────────────────┐
+ │ Audio Buffering │
+ │ - Ring buffer │
+ │ - Overlap handling │
+ └───────────┬───────────┘
+ │
+ ┌───────────▼───────────┐
+ │ Feature Extraction │
+ │ - MFCCs │
+ │ - Energy │
+ │ - Zero crossings │
+ └───────────┬───────────┘
+ │
+ ┌───────────▼───────────┐
+ │ VAD (Voice Activity)│
+ │ - WebRTC VAD │
+ │ - ML-based VAD │
+ └───────────┬───────────┘
+ │
+ ┌───────────▼───────────┐
+ │ Boundary Detection │
+ │ - Energy changes │
+ │ - Spectral changes │
+ │ - ML classifier │
+ └───────────┬───────────┘
+ │
+ ┌───────────▼───────────┐
+ │ Segment Merging │
+ │ (Like Merge │
+ │ Intervals!) │
+ │ - Min duration │
+ │ - Max gap │
+ └───────────┬───────────┘
+ │
+ ┌───────────▼───────────┐
+ │ Boundary Refinement │
+ │ - Smooth edges │
+ │ - Snap to zero │
+ │ crossings │
+ └───────────┬───────────┘
+ │
+ Segmented Audio
+ [(start, end, label)]
+``</p>
 
 <h3 id="key-components">Key Components</h3>
 
@@ -460,869 +461,885 @@
 
 <p>The core algorithm is <strong>exactly merge intervals</strong>:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
-<span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">import</span> <span class="n">librosa</span>
+<p>``python
+import numpy as np
+from typing import List, Tuple, Optional
+from dataclasses import dataclass
+import librosa</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">AudioSegment</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Audio segment with time boundaries.
-    
-    Exactly like intervals in merge intervals problem:
-    - start: segment start time (seconds)
-    - end: segment end time (seconds)
-    - label: segment type (</span><span class="sh">"</span><span class="s">speech</span><span class="sh">"</span><span class="s">, </span><span class="sh">"</span><span class="s">silence</span><span class="sh">"</span><span class="s">, </span><span class="sh">"</span><span class="s">speaker_A</span><span class="sh">"</span><span class="s">, etc.)
-    </span><span class="sh">"""</span>
-    <span class="n">start</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">end</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">speech</span><span class="sh">"</span>
-    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
-    
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">duration</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">end</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">start</span>
-    
-    <span class="k">def</span> <span class="nf">overlaps</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="sh">'</span><span class="s">AudioSegment</span><span class="sh">'</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Check if this segment overlaps with another.
-        
-        Same as interval overlap check:
-        max(start1, start2) &lt;= min(end1, end2)
-        </span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="nf">max</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">start</span><span class="p">,</span> <span class="n">other</span><span class="p">.</span><span class="n">start</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="nf">min</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">end</span><span class="p">,</span> <span class="n">other</span><span class="p">.</span><span class="n">end</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="sh">'</span><span class="s">AudioSegment</span><span class="sh">'</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="sh">'</span><span class="s">AudioSegment</span><span class="sh">'</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Merge this segment with another.
-        
-        Same as merging intervals:
-        - New start = min of starts
-        - New end = max of ends
-        </span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="nc">AudioSegment</span><span class="p">(</span>
-            <span class="n">start</span><span class="o">=</span><span class="nf">min</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">start</span><span class="p">,</span> <span class="n">other</span><span class="p">.</span><span class="n">start</span><span class="p">),</span>
-            <span class="n">end</span><span class="o">=</span><span class="nf">max</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">end</span><span class="p">,</span> <span class="n">other</span><span class="p">.</span><span class="n">end</span><span class="p">),</span>
-            <span class="n">label</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">label</span><span class="p">,</span>
-            <span class="n">confidence</span><span class="o">=</span><span class="nf">min</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">confidence</span><span class="p">,</span> <span class="n">other</span><span class="p">.</span><span class="n">confidence</span><span class="p">)</span>
-        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">to_samples</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">Convert time to sample indices.</span><span class="sh">"""</span>
-        <span class="n">start_sample</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">start</span> <span class="o">*</span> <span class="n">sample_rate</span><span class="p">)</span>
-        <span class="n">end_sample</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">end</span> <span class="o">*</span> <span class="n">sample_rate</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">start_sample</span><span class="p">,</span> <span class="n">end_sample</span>
+<p>@dataclass
+class AudioSegment:
+ “””
+ Audio segment with time boundaries.</p>
 
+<p>Exactly like intervals in merge intervals problem:</p>
+<ul>
+  <li>start: segment start time (seconds)</li>
+  <li>end: segment end time (seconds)</li>
+  <li>label: segment type (“speech”, “silence”, “speaker_A”, etc.)
+ “””
+ start: float
+ end: float
+ label: str = “speech”
+ confidence: float = 1.0</li>
+</ul>
 
-<span class="k">class</span> <span class="nc">AudioSegmenter</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Audio segmentation using interval merging.
-    
-    This is the merge intervals algorithm applied to audio!
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">min_segment_duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span>
-        <span class="n">max_gap</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
-        <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16000</span>
-    <span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Initialize segmenter.
-        
-        Args:
-            min_segment_duration: Minimum segment length (seconds)
-            max_gap: Maximum gap to merge over (seconds)
-            sample_rate: Audio sample rate
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">min_segment_duration</span> <span class="o">=</span> <span class="n">min_segment_duration</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">max_gap</span> <span class="o">=</span> <span class="n">max_gap</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">sample_rate</span>
-    
-    <span class="k">def</span> <span class="nf">merge_segments</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">segments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Merge audio segments.
-        
-        This is EXACTLY the merge intervals algorithm!
-        
-        Steps:
-        1. Sort segments by start time
-        2. Merge overlapping/close segments
-        3. Filter short segments
-        
-        Args:
-            segments: List of audio segments
-            
-        Returns:
-            Merged segments
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">segments</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[]</span>
-        
-        <span class="c1"># Step 1: Sort by start time (like merge intervals)
-</span>        <span class="n">sorted_segments</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">segments</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="p">.</span><span class="n">start</span><span class="p">)</span>
-        
-        <span class="c1"># Step 2: Merge overlapping or close segments
-</span>        <span class="n">merged</span> <span class="o">=</span> <span class="p">[</span><span class="n">sorted_segments</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
-        
-        <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="n">sorted_segments</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
-            <span class="n">last</span> <span class="o">=</span> <span class="n">merged</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            
-            <span class="c1"># Check if should merge
-</span>            <span class="c1"># Overlap OR gap &lt;= max_gap
-</span>            <span class="n">gap</span> <span class="o">=</span> <span class="n">current</span><span class="p">.</span><span class="n">start</span> <span class="o">-</span> <span class="n">last</span><span class="p">.</span><span class="n">end</span>
-            
-            <span class="k">if</span> <span class="n">gap</span> <span class="o">&lt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">max_gap</span> <span class="ow">and</span> <span class="n">current</span><span class="p">.</span><span class="n">label</span> <span class="o">==</span> <span class="n">last</span><span class="p">.</span><span class="n">label</span><span class="p">:</span>
-                <span class="c1"># Merge (like merging intervals)
-</span>                <span class="n">merged</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">last</span><span class="p">.</span><span class="nf">merge</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># No merge - add new segment
-</span>                <span class="n">merged</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
-        
-        <span class="c1"># Step 3: Filter short segments
-</span>        <span class="n">filtered</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">seg</span> <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">merged</span>
-            <span class="k">if</span> <span class="n">seg</span><span class="p">.</span><span class="n">duration</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">min_segment_duration</span>
-        <span class="p">]</span>
-        
-        <span class="k">return</span> <span class="n">filtered</span>
-    
-    <span class="k">def</span> <span class="nf">segment_by_vad</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">vad_probs</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">frame_duration_ms</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Create segments from VAD probabilities.
-        
-        Args:
-            audio: Audio waveform
-            vad_probs: VAD probabilities per frame (0=silence, 1=speech)
-            frame_duration_ms: Duration of each VAD frame
-            
-        Returns:
-            List of speech segments
-        </span><span class="sh">"""</span>
-        <span class="n">frame_duration_sec</span> <span class="o">=</span> <span class="n">frame_duration_ms</span> <span class="o">/</span> <span class="mf">1000.0</span>
-        
-        <span class="c1"># Find speech frames (threshold at 0.5)
-</span>        <span class="n">speech_frames</span> <span class="o">=</span> <span class="n">vad_probs</span> <span class="o">&gt;</span> <span class="mf">0.5</span>
-        
-        <span class="c1"># Convert to segments
-</span>        <span class="n">segments</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">in_speech</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="n">segment_start</span> <span class="o">=</span> <span class="mf">0.0</span>
-        
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">is_speech</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">speech_frames</span><span class="p">):</span>
-            <span class="n">current_time</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">frame_duration_sec</span>
-            
-            <span class="k">if</span> <span class="n">is_speech</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">in_speech</span><span class="p">:</span>
-                <span class="c1"># Speech started
-</span>                <span class="n">segment_start</span> <span class="o">=</span> <span class="n">current_time</span>
-                <span class="n">in_speech</span> <span class="o">=</span> <span class="bp">True</span>
-            
-            <span class="k">elif</span> <span class="ow">not</span> <span class="n">is_speech</span> <span class="ow">and</span> <span class="n">in_speech</span><span class="p">:</span>
-                <span class="c1"># Speech ended
-</span>                <span class="n">segment_end</span> <span class="o">=</span> <span class="n">current_time</span>
-                <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">AudioSegment</span><span class="p">(</span>
-                    <span class="n">start</span><span class="o">=</span><span class="n">segment_start</span><span class="p">,</span>
-                    <span class="n">end</span><span class="o">=</span><span class="n">segment_end</span><span class="p">,</span>
-                    <span class="n">label</span><span class="o">=</span><span class="sh">"</span><span class="s">speech</span><span class="sh">"</span>
-                <span class="p">))</span>
-                <span class="n">in_speech</span> <span class="o">=</span> <span class="bp">False</span>
-        
-        <span class="c1"># Handle case where speech continues to end
-</span>        <span class="k">if</span> <span class="n">in_speech</span><span class="p">:</span>
-            <span class="n">segment_end</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">speech_frames</span><span class="p">)</span> <span class="o">*</span> <span class="n">frame_duration_sec</span>
-            <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">AudioSegment</span><span class="p">(</span>
-                <span class="n">start</span><span class="o">=</span><span class="n">segment_start</span><span class="p">,</span>
-                <span class="n">end</span><span class="o">=</span><span class="n">segment_end</span><span class="p">,</span>
-                <span class="n">label</span><span class="o">=</span><span class="sh">"</span><span class="s">speech</span><span class="sh">"</span>
-            <span class="p">))</span>
-        
-        <span class="c1"># Merge segments (interval merging!)
-</span>        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">merge_segments</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">find_gaps</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">segments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Find silence gaps between speech segments.
-        
-        Similar to finding gaps in merge intervals problem.
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[]</span>
-        
-        <span class="c1"># Sort segments
-</span>        <span class="n">sorted_segments</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">segments</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="p">.</span><span class="n">start</span><span class="p">)</span>
-        
-        <span class="n">gaps</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">sorted_segments</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="n">current_end</span> <span class="o">=</span> <span class="n">sorted_segments</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">end</span>
-            <span class="n">next_start</span> <span class="o">=</span> <span class="n">sorted_segments</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">].</span><span class="n">start</span>
-            
-            <span class="n">gap_duration</span> <span class="o">=</span> <span class="n">next_start</span> <span class="o">-</span> <span class="n">current_end</span>
-            
-            <span class="k">if</span> <span class="n">gap_duration</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">gaps</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">AudioSegment</span><span class="p">(</span>
-                    <span class="n">start</span><span class="o">=</span><span class="n">current_end</span><span class="p">,</span>
-                    <span class="n">end</span><span class="o">=</span><span class="n">next_start</span><span class="p">,</span>
-                    <span class="n">label</span><span class="o">=</span><span class="sh">"</span><span class="s">silence</span><span class="sh">"</span>
-                <span class="p">))</span>
-        
-        <span class="k">return</span> <span class="n">gaps</span>
-    
-    <span class="k">def</span> <span class="nf">refine_boundaries</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">segments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Refine segment boundaries by snapping to zero crossings.
-        
-        This reduces audio artifacts at boundaries.
-        </span><span class="sh">"""</span>
-        <span class="n">refined</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
-            <span class="c1"># Convert to samples
-</span>            <span class="n">start_sample</span><span class="p">,</span> <span class="n">end_sample</span> <span class="o">=</span> <span class="n">segment</span><span class="p">.</span><span class="nf">to_samples</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span><span class="p">)</span>
-            
-            <span class="c1"># Find nearest zero crossing for start
-</span>            <span class="n">start_refined</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_find_nearest_zero_crossing</span><span class="p">(</span>
-                <span class="n">audio</span><span class="p">,</span>
-                <span class="n">start_sample</span><span class="p">,</span>
-                <span class="n">search_window</span><span class="o">=</span><span class="nf">int</span><span class="p">(</span><span class="mf">0.01</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span><span class="p">)</span>  <span class="c1"># 10ms
-</span>            <span class="p">)</span>
-            
-            <span class="c1"># Find nearest zero crossing for end
-</span>            <span class="n">end_refined</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_find_nearest_zero_crossing</span><span class="p">(</span>
-                <span class="n">audio</span><span class="p">,</span>
-                <span class="n">end_sample</span><span class="p">,</span>
-                <span class="n">search_window</span><span class="o">=</span><span class="nf">int</span><span class="p">(</span><span class="mf">0.01</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span><span class="p">)</span>
-            <span class="p">)</span>
-            
-            <span class="c1"># Convert back to time
-</span>            <span class="n">refined_segment</span> <span class="o">=</span> <span class="nc">AudioSegment</span><span class="p">(</span>
-                <span class="n">start</span><span class="o">=</span><span class="n">start_refined</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span><span class="p">,</span>
-                <span class="n">end</span><span class="o">=</span><span class="n">end_refined</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span><span class="p">,</span>
-                <span class="n">label</span><span class="o">=</span><span class="n">segment</span><span class="p">.</span><span class="n">label</span><span class="p">,</span>
-                <span class="n">confidence</span><span class="o">=</span><span class="n">segment</span><span class="p">.</span><span class="n">confidence</span>
-            <span class="p">)</span>
-            
-            <span class="n">refined</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">refined_segment</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">refined</span>
-    
-    <span class="k">def</span> <span class="nf">_find_nearest_zero_crossing</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">sample_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">search_window</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">160</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Find nearest zero crossing to given sample.</span><span class="sh">"""</span>
-        <span class="n">start</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">sample_idx</span> <span class="o">-</span> <span class="n">search_window</span><span class="p">)</span>
-        <span class="n">end</span> <span class="o">=</span> <span class="nf">min</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="n">sample_idx</span> <span class="o">+</span> <span class="n">search_window</span><span class="p">)</span>
-        
-        <span class="c1"># Find zero crossings
-</span>        <span class="n">window</span> <span class="o">=</span> <span class="n">audio</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
-        <span class="n">zero_crossings</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">where</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">diff</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">sign</span><span class="p">(</span><span class="n">window</span><span class="p">)))[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">zero_crossings</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">sample_idx</span>
-        
-        <span class="c1"># Find closest to target
-</span>        <span class="n">target_pos</span> <span class="o">=</span> <span class="n">sample_idx</span> <span class="o">-</span> <span class="n">start</span>
-        <span class="n">closest_zc</span> <span class="o">=</span> <span class="n">zero_crossings</span><span class="p">[</span>
-            <span class="n">np</span><span class="p">.</span><span class="nf">argmin</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">abs</span><span class="p">(</span><span class="n">zero_crossings</span> <span class="o">-</span> <span class="n">target_pos</span><span class="p">))</span>
-        <span class="p">]</span>
-        
-        <span class="k">return</span> <span class="n">start</span> <span class="o">+</span> <span class="n">closest_zc</span>
-</code></pre></div></div>
+<p>@property
+ def duration(self) -&gt; float:
+ return self.end - self.start</p>
+
+<p>def overlaps(self, other: ‘AudioSegment’) -&gt; bool:
+ “””
+ Check if this segment overlaps with another.</p>
+
+<p>Same as interval overlap check:
+ max(start1, start2) &lt;= min(end1, end2)
+ “””
+ return max(self.start, other.start) &lt;= min(self.end, other.end)</p>
+
+<p>def merge(self, other: ‘AudioSegment’) -&gt; ‘AudioSegment’:
+ “””
+ Merge this segment with another.</p>
+
+<p>Same as merging intervals:</p>
+<ul>
+  <li>New start = min of starts</li>
+  <li>New end = max of ends
+ “””
+ return AudioSegment(
+ start=min(self.start, other.start),
+ end=max(self.end, other.end),
+ label=self.label,
+ confidence=min(self.confidence, other.confidence)
+ )</li>
+</ul>
+
+<p>def to_samples(self, sample_rate: int) -&gt; Tuple[int, int]:
+ “"”Convert time to sample indices.”””
+ start_sample = int(self.start * sample_rate)
+ end_sample = int(self.end * sample_rate)
+ return start_sample, end_sample</p>
+
+<p>class AudioSegmenter:
+ “””
+ Audio segmentation using interval merging.</p>
+
+<p>This is the merge intervals algorithm applied to audio!
+ “””</p>
+
+<p>def <strong>init</strong>(
+ self,
+ min_segment_duration: float = 0.3,
+ max_gap: float = 0.2,
+ sample_rate: int = 16000
+ ):
+ “””
+ Initialize segmenter.</p>
+
+<p>Args:
+ min_segment_duration: Minimum segment length (seconds)
+ max_gap: Maximum gap to merge over (seconds)
+ sample_rate: Audio sample rate
+ “””
+ self.min_segment_duration = min_segment_duration
+ self.max_gap = max_gap
+ self.sample_rate = sample_rate</p>
+
+<p>def merge_segments(self, segments: List[AudioSegment]) -&gt; List[AudioSegment]:
+ “””
+ Merge audio segments.</p>
+
+<p>This is EXACTLY the merge intervals algorithm!</p>
+
+<p>Steps:</p>
+<ol>
+  <li>Sort segments by start time</li>
+  <li>Merge overlapping/close segments</li>
+  <li>Filter short segments</li>
+</ol>
+
+<p>Args:
+ segments: List of audio segments</p>
+
+<p>Returns:
+ Merged segments
+ “””
+ if not segments:
+ return []</p>
+
+<p># Step 1: Sort by start time (like merge intervals)
+ sorted_segments = sorted(segments, key=lambda s: s.start)</p>
+
+<p># Step 2: Merge overlapping or close segments
+ merged = [sorted_segments[0]]</p>
+
+<p>for current in sorted_segments[1:]:
+ last = merged[-1]</p>
+
+<p># Check if should merge
+ # Overlap OR gap &lt;= max_gap
+ gap = current.start - last.end</p>
+
+<p>if gap &lt;= self.max_gap and current.label == last.label:
+ # Merge (like merging intervals)
+ merged[-1] = last.merge(current)
+ else:
+ # No merge - add new segment
+ merged.append(current)</p>
+
+<p># Step 3: Filter short segments
+ filtered = [
+ seg for seg in merged
+ if seg.duration &gt;= self.min_segment_duration
+ ]</p>
+
+<p>return filtered</p>
+
+<p>def segment_by_vad(
+ self,
+ audio: np.ndarray,
+ vad_probs: np.ndarray,
+ frame_duration_ms: float = 30.0
+ ) -&gt; List[AudioSegment]:
+ “””
+ Create segments from VAD probabilities.</p>
+
+<p>Args:
+ audio: Audio waveform
+ vad_probs: VAD probabilities per frame (0=silence, 1=speech)
+ frame_duration_ms: Duration of each VAD frame</p>
+
+<p>Returns:
+ List of speech segments
+ “””
+ frame_duration_sec = frame_duration_ms / 1000.0</p>
+
+<p># Find speech frames (threshold at 0.5)
+ speech_frames = vad_probs &gt; 0.5</p>
+
+<p># Convert to segments
+ segments = []
+ in_speech = False
+ segment_start = 0.0</p>
+
+<p>for i, is_speech in enumerate(speech_frames):
+ current_time = i * frame_duration_sec</p>
+
+<p>if is_speech and not in_speech:
+ # Speech started
+ segment_start = current_time
+ in_speech = True</p>
+
+<p>elif not is_speech and in_speech:
+ # Speech ended
+ segment_end = current_time
+ segments.append(AudioSegment(
+ start=segment_start,
+ end=segment_end,
+ label=”speech”
+ ))
+ in_speech = False</p>
+
+<p># Handle case where speech continues to end
+ if in_speech:
+ segment_end = len(speech_frames) * frame_duration_sec
+ segments.append(AudioSegment(
+ start=segment_start,
+ end=segment_end,
+ label=”speech”
+ ))</p>
+
+<p># Merge segments (interval merging!)
+ return self.merge_segments(segments)</p>
+
+<p>def find_gaps(self, segments: List[AudioSegment]) -&gt; List[AudioSegment]:
+ “””
+ Find silence gaps between speech segments.</p>
+
+<p>Similar to finding gaps in merge intervals problem.
+ “””
+ if len(segments) &lt; 2:
+ return []</p>
+
+<p># Sort segments
+ sorted_segments = sorted(segments, key=lambda s: s.start)</p>
+
+<p>gaps = []</p>
+
+<p>for i in range(len(sorted_segments) - 1):
+ current_end = sorted_segments[i].end
+ next_start = sorted_segments[i + 1].start</p>
+
+<p>gap_duration = next_start - current_end</p>
+
+<p>if gap_duration &gt; 0:
+ gaps.append(AudioSegment(
+ start=current_end,
+ end=next_start,
+ label=”silence”
+ ))</p>
+
+<p>return gaps</p>
+
+<p>def refine_boundaries(
+ self,
+ audio: np.ndarray,
+ segments: List[AudioSegment]
+ ) -&gt; List[AudioSegment]:
+ “””
+ Refine segment boundaries by snapping to zero crossings.</p>
+
+<p>This reduces audio artifacts at boundaries.
+ “””
+ refined = []</p>
+
+<p>for segment in segments:
+ # Convert to samples
+ start_sample, end_sample = segment.to_samples(self.sample_rate)</p>
+
+<p># Find nearest zero crossing for start
+ start_refined = self._find_nearest_zero_crossing(
+ audio,
+ start_sample,
+ search_window=int(0.01 * self.sample_rate) # 10ms
+ )</p>
+
+<p># Find nearest zero crossing for end
+ end_refined = self._find_nearest_zero_crossing(
+ audio,
+ end_sample,
+ search_window=int(0.01 * self.sample_rate)
+ )</p>
+
+<p># Convert back to time
+ refined_segment = AudioSegment(
+ start=start_refined / self.sample_rate,
+ end=end_refined / self.sample_rate,
+ label=segment.label,
+ confidence=segment.confidence
+ )</p>
+
+<p>refined.append(refined_segment)</p>
+
+<p>return refined</p>
+
+<p>def _find_nearest_zero_crossing(
+ self,
+ audio: np.ndarray,
+ sample_idx: int,
+ search_window: int = 160
+ ) -&gt; int:
+ “"”Find nearest zero crossing to given sample.”””
+ start = max(0, sample_idx - search_window)
+ end = min(len(audio), sample_idx + search_window)</p>
+
+<p># Find zero crossings
+ window = audio[start:end]
+ zero_crossings = np.where(np.diff(np.sign(window)))[0]</p>
+
+<p>if len(zero_crossings) == 0:
+ return sample_idx</p>
+
+<p># Find closest to target
+ target_pos = sample_idx - start
+ closest_zc = zero_crossings[
+ np.argmin(np.abs(zero_crossings - target_pos))
+ ]</p>
+
+<p>return start + closest_zc
+``</p>
 
 <h3 id="2-real-time-vad-with-webrtc">2. Real-time VAD with WebRTC</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">webrtcvad</span>
-<span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">deque</span>
+<p>``python
+import webrtcvad
+from collections import deque</p>
 
-<span class="k">class</span> <span class="nc">RealtimeVAD</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Real-time Voice Activity Detection.
-    
-    Uses WebRTC VAD for low-latency detection.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16000</span><span class="p">,</span>
-        <span class="n">frame_duration_ms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
-        <span class="n">aggressiveness</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
-    <span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Initialize VAD.
-        
-        Args:
-            sample_rate: Audio sample rate (8000, 16000, 32000, 48000)
-            frame_duration_ms: Frame duration (10, 20, 30 ms)
-            aggressiveness: VAD aggressiveness (0-3, higher = more aggressive)
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="n">webrtcvad</span><span class="p">.</span><span class="nc">Vad</span><span class="p">(</span><span class="n">aggressiveness</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">sample_rate</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">frame_duration_ms</span> <span class="o">=</span> <span class="n">frame_duration_ms</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="n">frame_duration_ms</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
-        
-        <span class="c1"># Buffer for incomplete frames
-</span>        <span class="n">self</span><span class="p">.</span><span class="nb">buffer</span> <span class="o">=</span> <span class="nf">bytearray</span><span class="p">()</span>
-        
-        <span class="c1"># Smoothing buffer
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">smoothing_window</span> <span class="o">=</span> <span class="mi">5</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">recent_results</span> <span class="o">=</span> <span class="nf">deque</span><span class="p">(</span><span class="n">maxlen</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">smoothing_window</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">process_chunk</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_chunk</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Process audio chunk and return VAD decisions.
-        
-        Args:
-            audio_chunk: Audio samples (int16)
-            
-        Returns:
-            List of VAD decisions (True = speech, False = silence)
-        </span><span class="sh">"""</span>
-        <span class="c1"># Convert to bytes
-</span>        <span class="n">audio_bytes</span> <span class="o">=</span> <span class="p">(</span><span class="n">audio_chunk</span> <span class="o">*</span> <span class="mi">32767</span><span class="p">).</span><span class="nf">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">int16</span><span class="p">).</span><span class="nf">tobytes</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">.</span><span class="nf">extend</span><span class="p">(</span><span class="n">audio_bytes</span><span class="p">)</span>
-        
-        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># Process complete frames
-</span>        <span class="n">frame_bytes</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span> <span class="o">*</span> <span class="mi">2</span>  <span class="c1"># 2 bytes per sample (int16)
-</span>        
-        <span class="k">while</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">frame_bytes</span><span class="p">:</span>
-            <span class="c1"># Extract frame
-</span>            <span class="n">frame</span> <span class="o">=</span> <span class="nf">bytes</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">[:</span><span class="n">frame_bytes</span><span class="p">])</span>
-            <span class="n">self</span><span class="p">.</span><span class="nb">buffer</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">[</span><span class="n">frame_bytes</span><span class="p">:]</span>
-            
-            <span class="c1"># Run VAD
-</span>            <span class="n">is_speech</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">is_speech</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span><span class="p">)</span>
-            
-            <span class="c1"># Apply smoothing
-</span>            <span class="n">self</span><span class="p">.</span><span class="n">recent_results</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">is_speech</span><span class="p">)</span>
-            <span class="n">smoothed</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">recent_results</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">recent_results</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
-            
-            <span class="n">results</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">smoothed</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">results</span>
+<p>class RealtimeVAD:
+ “””
+ Real-time Voice Activity Detection.</p>
 
+<p>Uses WebRTC VAD for low-latency detection.
+ “””</p>
 
-<span class="k">class</span> <span class="nc">StreamingSegmenter</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Streaming audio segmenter.
-    
-    Processes audio in real-time, emitting segments as they complete.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16000</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">sample_rate</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="nc">RealtimeVAD</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">segmenter</span> <span class="o">=</span> <span class="nc">AudioSegmenter</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">)</span>
-        
-        <span class="c1"># Streaming state
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">current_segment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">completed_segments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">current_time</span> <span class="o">=</span> <span class="mf">0.0</span>
-        
-        <span class="c1"># Buffering for boundary refinement
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">audio_buffer</span> <span class="o">=</span> <span class="nf">deque</span><span class="p">(</span><span class="n">maxlen</span><span class="o">=</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="mi">5</span><span class="p">)</span>  <span class="c1"># 5 seconds
-</span>    
-    <span class="k">def</span> <span class="nf">process_audio_chunk</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio_chunk</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">chunk_duration_ms</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.0</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Process audio chunk and return completed segments.
-        
-        Similar to processing events in stream processing:
-        - Buffer incoming data
-        - Detect boundaries
-        - Emit completed segments
-        
-        Args:
-            audio_chunk: Audio samples
-            chunk_duration_ms: Chunk duration
-            
-        Returns:
-            List of newly completed segments
-        </span><span class="sh">"""</span>
-        <span class="c1"># Add to buffer
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">audio_buffer</span><span class="p">.</span><span class="nf">extend</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-        
-        <span class="c1"># Run VAD
-</span>        <span class="n">vad_results</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">process_chunk</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-        
-        <span class="c1"># Update segments
-</span>        <span class="n">frame_duration</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="n">frame_duration_ms</span> <span class="o">/</span> <span class="mf">1000.0</span>
-        <span class="n">completed</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">is_speech</span> <span class="ow">in</span> <span class="n">vad_results</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">is_speech</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">current_segment</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="c1"># Start new segment
-</span>                    <span class="n">self</span><span class="p">.</span><span class="n">current_segment</span> <span class="o">=</span> <span class="nc">AudioSegment</span><span class="p">(</span>
-                        <span class="n">start</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">current_time</span><span class="p">,</span>
-                        <span class="n">end</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">current_time</span> <span class="o">+</span> <span class="n">frame_duration</span><span class="p">,</span>
-                        <span class="n">label</span><span class="o">=</span><span class="sh">"</span><span class="s">speech</span><span class="sh">"</span>
-                    <span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># Extend current segment
-</span>                    <span class="n">self</span><span class="p">.</span><span class="n">current_segment</span><span class="p">.</span><span class="n">end</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">current_time</span> <span class="o">+</span> <span class="n">frame_duration</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">current_segment</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="c1"># End current segment
-</span>                    <span class="c1"># Check if meets minimum duration
-</span>                    <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">current_segment</span><span class="p">.</span><span class="n">duration</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">segmenter</span><span class="p">.</span><span class="n">min_segment_duration</span><span class="p">:</span>
-                        <span class="n">completed</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">current_segment</span><span class="p">)</span>
-                    
-                    <span class="n">self</span><span class="p">.</span><span class="n">current_segment</span> <span class="o">=</span> <span class="bp">None</span>
-            
-            <span class="n">self</span><span class="p">.</span><span class="n">current_time</span> <span class="o">+=</span> <span class="n">frame_duration</span>
-        
-        <span class="k">return</span> <span class="n">completed</span>
-</code></pre></div></div>
+<p>def <strong>init</strong>(
+ self,
+ sample_rate: int = 16000,
+ frame_duration_ms: int = 30,
+ aggressiveness: int = 2
+ ):
+ “””
+ Initialize VAD.</p>
+
+<p>Args:
+ sample_rate: Audio sample rate (8000, 16000, 32000, 48000)
+ frame_duration_ms: Frame duration (10, 20, 30 ms)
+ aggressiveness: VAD aggressiveness (0-3, higher = more aggressive)
+ “””
+ self.vad = webrtcvad.Vad(aggressiveness)
+ self.sample_rate = sample_rate
+ self.frame_duration_ms = frame_duration_ms
+ self.frame_length = int(sample_rate * frame_duration_ms / 1000)</p>
+
+<p># Buffer for incomplete frames
+ self.buffer = bytearray()</p>
+
+<p># Smoothing buffer
+ self.smoothing_window = 5
+ self.recent_results = deque(maxlen=self.smoothing_window)</p>
+
+<p>def process_chunk(self, audio_chunk: np.ndarray) -&gt; List[bool]:
+ “””
+ Process audio chunk and return VAD decisions.</p>
+
+<p>Args:
+ audio_chunk: Audio samples (int16)</p>
+
+<p>Returns:
+ List of VAD decisions (True = speech, False = silence)
+ “””
+ # Convert to bytes
+ audio_bytes = (audio_chunk * 32767).astype(np.int16).tobytes()
+ self.buffer.extend(audio_bytes)</p>
+
+<p>results = []</p>
+
+<p># Process complete frames
+ frame_bytes = self.frame_length * 2 # 2 bytes per sample (int16)</p>
+
+<p>while len(self.buffer) &gt;= frame_bytes:
+ # Extract frame
+ frame = bytes(self.buffer[:frame_bytes])
+ self.buffer = self.buffer[frame_bytes:]</p>
+
+<p># Run VAD
+ is_speech = self.vad.is_speech(frame, self.sample_rate)</p>
+
+<p># Apply smoothing
+ self.recent_results.append(is_speech)
+ smoothed = sum(self.recent_results) &gt; len(self.recent_results) // 2</p>
+
+<p>results.append(smoothed)</p>
+
+<p>return results</p>
+
+<p>class StreamingSegmenter:
+ “””
+ Streaming audio segmenter.</p>
+
+<p>Processes audio in real-time, emitting segments as they complete.
+ “””</p>
+
+<p>def <strong>init</strong>(self, sample_rate: int = 16000):
+ self.sample_rate = sample_rate
+ self.vad = RealtimeVAD(sample_rate=sample_rate)
+ self.segmenter = AudioSegmenter(sample_rate=sample_rate)</p>
+
+<p># Streaming state
+ self.current_segment: Optional[AudioSegment] = None
+ self.completed_segments: List[AudioSegment] = []
+ self.current_time = 0.0</p>
+
+<p># Buffering for boundary refinement
+ self.audio_buffer = deque(maxlen=sample_rate * 5) # 5 seconds</p>
+
+<p>def process_audio_chunk(
+ self,
+ audio_chunk: np.ndarray,
+ chunk_duration_ms: float = 100.0
+ ) -&gt; List[AudioSegment]:
+ “””
+ Process audio chunk and return completed segments.</p>
+
+<p>Similar to processing events in stream processing:</p>
+<ul>
+  <li>Buffer incoming data</li>
+  <li>Detect boundaries</li>
+  <li>Emit completed segments</li>
+</ul>
+
+<p>Args:
+ audio_chunk: Audio samples
+ chunk_duration_ms: Chunk duration</p>
+
+<p>Returns:
+ List of newly completed segments
+ “””
+ # Add to buffer
+ self.audio_buffer.extend(audio_chunk)</p>
+
+<p># Run VAD
+ vad_results = self.vad.process_chunk(audio_chunk)</p>
+
+<p># Update segments
+ frame_duration = self.vad.frame_duration_ms / 1000.0
+ completed = []</p>
+
+<p>for is_speech in vad_results:
+ if is_speech:
+ if self.current_segment is None:
+ # Start new segment
+ self.current_segment = AudioSegment(
+ start=self.current_time,
+ end=self.current_time + frame_duration,
+ label=”speech”
+ )
+ else:
+ # Extend current segment
+ self.current_segment.end = self.current_time + frame_duration
+ else:
+ if self.current_segment is not None:
+ # End current segment
+ # Check if meets minimum duration
+ if self.current_segment.duration &gt;= self.segmenter.min_segment_duration:
+ completed.append(self.current_segment)</p>
+
+<p>self.current_segment = None</p>
+
+<p>self.current_time += frame_duration</p>
+
+<p>return completed
+``</p>
 
 <h3 id="3-speaker-change-detection">3. Speaker Change Detection</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">scipy.signal</span> <span class="kn">import</span> <span class="n">find_peaks</span>
+<p>``python
+from scipy.signal import find_peaks</p>
 
-<span class="k">class</span> <span class="nc">SpeakerChangeDetector</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Detect speaker change boundaries in audio.
-    
-    Uses spectral change detection + embedding similarity.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16000</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">sample_rate</span>
-    
-    <span class="k">def</span> <span class="nf">detect_speaker_changes</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">frame_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span>
-        <span class="n">hop_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Detect speaker change points.
-        
-        Algorithm:
-        1. Compute spectral features per frame
-        2. Calculate frame-to-frame distance
-        3. Find peaks in distance (speaker changes)
-        4. Return change point times
-        
-        Returns:
-            List of change point times (seconds)
-        </span><span class="sh">"""</span>
-        <span class="c1"># Compute MFCC features
-</span>        <span class="n">mfccs</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="n">feature</span><span class="p">.</span><span class="nf">mfcc</span><span class="p">(</span>
-            <span class="n">y</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span>
-            <span class="n">sr</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span><span class="p">,</span>
-            <span class="n">n_mfcc</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span>
-            <span class="n">n_fft</span><span class="o">=</span><span class="n">frame_size</span><span class="p">,</span>
-            <span class="n">hop_length</span><span class="o">=</span><span class="n">hop_length</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Compute frame-to-frame distance
-</span>        <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">mfccs</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">distances</span><span class="p">)):</span>
-            <span class="n">distances</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">mfccs</span><span class="p">[:,</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">mfccs</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
-        
-        <span class="c1"># Smooth distances
-</span>        <span class="kn">from</span> <span class="n">scipy.ndimage</span> <span class="kn">import</span> <span class="n">gaussian_filter1d</span>
-        <span class="n">distances_smooth</span> <span class="o">=</span> <span class="nf">gaussian_filter1d</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-        
-        <span class="c1"># Find peaks (speaker changes)
-</span>        <span class="n">peaks</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="nf">find_peaks</span><span class="p">(</span>
-            <span class="n">distances_smooth</span><span class="p">,</span>
-            <span class="n">height</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="nf">percentile</span><span class="p">(</span><span class="n">distances_smooth</span><span class="p">,</span> <span class="mi">75</span><span class="p">),</span>
-            <span class="n">distance</span><span class="o">=</span><span class="nf">int</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span> <span class="o">/</span> <span class="n">hop_length</span><span class="p">)</span>  <span class="c1"># Min 1 second apart
-</span>        <span class="p">)</span>
-        
-        <span class="c1"># Convert to times
-</span>        <span class="n">change_times</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">peak</span> <span class="o">*</span> <span class="n">hop_length</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span>
-            <span class="k">for</span> <span class="n">peak</span> <span class="ow">in</span> <span class="n">peaks</span>
-        <span class="p">]</span>
-        
-        <span class="k">return</span> <span class="n">change_times</span>
-    
-    <span class="k">def</span> <span class="nf">segment_by_speaker</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">change_points</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Create segments based on speaker changes.
-        
-        Args:
-            audio: Audio waveform
-            change_points: Speaker change times
-            
-        Returns:
-            List of speaker segments
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">change_points</span><span class="p">:</span>
-            <span class="c1"># Single speaker
-</span>            <span class="k">return</span> <span class="p">[</span><span class="nc">AudioSegment</span><span class="p">(</span>
-                <span class="n">start</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-                <span class="n">end</span><span class="o">=</span><span class="nf">len</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span><span class="p">,</span>
-                <span class="n">label</span><span class="o">=</span><span class="sh">"</span><span class="s">speaker_0</span><span class="sh">"</span>
-            <span class="p">)]</span>
-        
-        <span class="n">segments</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># First segment
-</span>        <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">AudioSegment</span><span class="p">(</span>
-            <span class="n">start</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-            <span class="n">end</span><span class="o">=</span><span class="n">change_points</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-            <span class="n">label</span><span class="o">=</span><span class="sh">"</span><span class="s">speaker_0</span><span class="sh">"</span>
-        <span class="p">))</span>
-        
-        <span class="c1"># Middle segments
-</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">change_points</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="n">speaker_id</span> <span class="o">=</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span>  <span class="c1"># Alternate speakers (simplified)
-</span>            <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">AudioSegment</span><span class="p">(</span>
-                <span class="n">start</span><span class="o">=</span><span class="n">change_points</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                <span class="n">end</span><span class="o">=</span><span class="n">change_points</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
-                <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="sh">"</span><span class="s">speaker_</span><span class="si">{</span><span class="n">speaker_id</span><span class="si">}</span><span class="sh">"</span>
-            <span class="p">))</span>
-        
-        <span class="c1"># Last segment
-</span>        <span class="n">last_speaker</span> <span class="o">=</span> <span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">change_points</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span>
-        <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">AudioSegment</span><span class="p">(</span>
-            <span class="n">start</span><span class="o">=</span><span class="n">change_points</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">end</span><span class="o">=</span><span class="nf">len</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span><span class="p">,</span>
-            <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="sh">"</span><span class="s">speaker_</span><span class="si">{</span><span class="n">last_speaker</span><span class="si">}</span><span class="sh">"</span>
-        <span class="p">))</span>
-        
-        <span class="k">return</span> <span class="n">segments</span>
-</code></pre></div></div>
+<p>class SpeakerChangeDetector:
+ “””
+ Detect speaker change boundaries in audio.</p>
+
+<p>Uses spectral change detection + embedding similarity.
+ “””</p>
+
+<p>def <strong>init</strong>(self, sample_rate: int = 16000):
+ self.sample_rate = sample_rate</p>
+
+<p>def detect_speaker_changes(
+ self,
+ audio: np.ndarray,
+ frame_size: int = 1024,
+ hop_length: int = 512
+ ) -&gt; List[float]:
+ “””
+ Detect speaker change points.</p>
+
+<p>Algorithm:</p>
+<ol>
+  <li>Compute spectral features per frame</li>
+  <li>Calculate frame-to-frame distance</li>
+  <li>Find peaks in distance (speaker changes)</li>
+  <li>Return change point times</li>
+</ol>
+
+<p>Returns:
+ List of change point times (seconds)
+ “””
+ # Compute MFCC features
+ mfccs = librosa.feature.mfcc(
+ y=audio,
+ sr=self.sample_rate,
+ n_mfcc=13,
+ n_fft=frame_size,
+ hop_length=hop_length
+ )</p>
+
+<p># Compute frame-to-frame distance
+ distances = np.zeros(mfccs.shape[1] - 1)</p>
+
+<p>for i in range(len(distances)):
+ distances[i] = np.linalg.norm(mfccs[:, i+1] - mfccs[:, i])</p>
+
+<p># Smooth distances
+ from scipy.ndimage import gaussian_filter1d
+ distances_smooth = gaussian_filter1d(distances, sigma=2)</p>
+
+<p># Find peaks (speaker changes)
+ peaks, _ = find_peaks(
+ distances_smooth,
+ height=np.percentile(distances_smooth, 75),
+ distance=int(1.0 * self.sample_rate / hop_length) # Min 1 second apart
+ )</p>
+
+<p># Convert to times
+ change_times = [
+ peak * hop_length / self.sample_rate
+ for peak in peaks
+ ]</p>
+
+<p>return change_times</p>
+
+<p>def segment_by_speaker(
+ self,
+ audio: np.ndarray,
+ change_points: List[float]
+ ) -&gt; List[AudioSegment]:
+ “””
+ Create segments based on speaker changes.</p>
+
+<p>Args:
+ audio: Audio waveform
+ change_points: Speaker change times</p>
+
+<p>Returns:
+ List of speaker segments
+ “””
+ if not change_points:
+ # Single speaker
+ return [AudioSegment(
+ start=0.0,
+ end=len(audio) / self.sample_rate,
+ label=”speaker_0”
+ )]</p>
+
+<p>segments = []</p>
+
+<p># First segment
+ segments.append(AudioSegment(
+ start=0.0,
+ end=change_points[0],
+ label=”speaker_0”
+ ))</p>
+
+<p># Middle segments
+ for i in range(len(change_points) - 1):
+ speaker_id = i % 2 # Alternate speakers (simplified)
+ segments.append(AudioSegment(
+ start=change_points[i],
+ end=change_points[i + 1],
+ label=f”speaker_{speaker_id}”
+ ))</p>
+
+<p># Last segment
+ last_speaker = (len(change_points) - 1) % 2
+ segments.append(AudioSegment(
+ start=change_points[-1],
+ end=len(audio) / self.sample_rate,
+ label=f”speaker_{last_speaker}”
+ ))</p>
+
+<p>return segments
+``</p>
 
 <h3 id="4-production-pipeline">4. Production Pipeline</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">logging</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
+<p>``python
+import logging
+from typing import Callable</p>
 
-<span class="k">class</span> <span class="nc">ProductionAudioSegmenter</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Production-ready audio segmentation system.
-    
-    Features:
-    - Real-time processing
-    - Multiple detection methods
-    - Segment merging (interval merging!)
-    - Boundary refinement
-    - Monitoring
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16000</span><span class="p">,</span>
-        <span class="n">enable_vad</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
-        <span class="n">enable_speaker_detection</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">sample_rate</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">enable_vad</span> <span class="o">=</span> <span class="n">enable_vad</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">enable_speaker_detection</span> <span class="o">=</span> <span class="n">enable_speaker_detection</span>
-        
-        <span class="c1"># Components
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">segmenter</span> <span class="o">=</span> <span class="nc">AudioSegmenter</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">streaming_segmenter</span> <span class="o">=</span> <span class="nc">StreamingSegmenter</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">speaker_detector</span> <span class="o">=</span> <span class="nc">SpeakerChangeDetector</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="p">.</span><span class="nf">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
-        
-        <span class="c1"># Metrics
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">segments_created</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">total_audio_processed_sec</span> <span class="o">=</span> <span class="mf">0.0</span>
-    
-    <span class="k">def</span> <span class="nf">segment_audio</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">batch</span><span class="sh">"</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Segment audio.
-        
-        Args:
-            audio: Audio waveform
-            mode: </span><span class="sh">"</span><span class="s">batch</span><span class="sh">"</span><span class="s"> or </span><span class="sh">"</span><span class="s">streaming</span><span class="sh">"</span><span class="s">
-            
-        Returns:
-            List of audio segments
-        </span><span class="sh">"""</span>
-        <span class="n">audio_duration</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">total_audio_processed_sec</span> <span class="o">+=</span> <span class="n">audio_duration</span>
-        
-        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="sh">"</span><span class="s">batch</span><span class="sh">"</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">_segment_batch</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">_segment_streaming</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_segment_batch</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">Batch segmentation.</span><span class="sh">"""</span>
-        <span class="n">segments</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># VAD segmentation
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">enable_vad</span><span class="p">:</span>
-            <span class="n">vad</span> <span class="o">=</span> <span class="nc">RealtimeVAD</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span><span class="p">)</span>
-            
-            <span class="c1"># Process audio in chunks
-</span>            <span class="n">chunk_size</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="mf">0.03</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span><span class="p">)</span>  <span class="c1"># 30ms
-</span>            <span class="n">vad_probs</span> <span class="o">=</span> <span class="p">[]</span>
-            
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">):</span>
-                <span class="n">chunk</span> <span class="o">=</span> <span class="n">audio</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">]</span>
-                <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">chunk_size</span><span class="p">:</span>
-                    <span class="c1"># Pad last chunk
-</span>                    <span class="n">chunk</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">pad</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">chunk_size</span> <span class="o">-</span> <span class="nf">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)))</span>
-                
-                <span class="n">results</span> <span class="o">=</span> <span class="n">vad</span><span class="p">.</span><span class="nf">process_chunk</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-                <span class="n">vad_probs</span><span class="p">.</span><span class="nf">extend</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
-            
-            <span class="n">vad_probs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">vad_probs</span><span class="p">)</span>
-            
-            <span class="c1"># Create segments from VAD
-</span>            <span class="n">segments</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">segmenter</span><span class="p">.</span><span class="nf">segment_by_vad</span><span class="p">(</span>
-                <span class="n">audio</span><span class="p">,</span>
-                <span class="n">vad_probs</span><span class="p">,</span>
-                <span class="n">frame_duration_ms</span><span class="o">=</span><span class="mf">30.0</span>
-            <span class="p">)</span>
-        
-        <span class="c1"># Speaker change detection
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">enable_speaker_detection</span><span class="p">:</span>
-            <span class="n">change_points</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">speaker_detector</span><span class="p">.</span><span class="nf">detect_speaker_changes</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-            <span class="n">speaker_segments</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">speaker_detector</span><span class="p">.</span><span class="nf">segment_by_speaker</span><span class="p">(</span>
-                <span class="n">audio</span><span class="p">,</span>
-                <span class="n">change_points</span>
-            <span class="p">)</span>
-            
-            <span class="c1"># Merge with VAD segments
-</span>            <span class="n">segments</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_merge_vad_and_speaker_segments</span><span class="p">(</span>
-                <span class="n">segments</span><span class="p">,</span>
-                <span class="n">speaker_segments</span>
-            <span class="p">)</span>
-        
-        <span class="c1"># Refine boundaries
-</span>        <span class="n">segments</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">segmenter</span><span class="p">.</span><span class="nf">refine_boundaries</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">segments</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">segments_created</span> <span class="o">+=</span> <span class="nf">len</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="s">Created </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span><span class="si">}</span><span class="s"> segments from </span><span class="sh">"</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span><span class="o">/</span><span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">s audio</span><span class="sh">"</span>
-        <span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">segments</span>
-    
-    <span class="k">def</span> <span class="nf">_segment_streaming</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">Streaming segmentation.</span><span class="sh">"""</span>
-        <span class="c1"># Process in chunks
-</span>        <span class="n">chunk_duration_ms</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># 100ms chunks
-</span>        <span class="n">chunk_size</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">chunk_duration_ms</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
-        
-        <span class="n">all_segments</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">):</span>
-            <span class="n">chunk</span> <span class="o">=</span> <span class="n">audio</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">]</span>
-            
-            <span class="c1"># Process chunk
-</span>            <span class="n">segments</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">streaming_segmenter</span><span class="p">.</span><span class="nf">process_audio_chunk</span><span class="p">(</span>
-                <span class="n">chunk</span><span class="p">,</span>
-                <span class="n">chunk_duration_ms</span>
-            <span class="p">)</span>
-            
-            <span class="n">all_segments</span><span class="p">.</span><span class="nf">extend</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">all_segments</span>
-    
-    <span class="k">def</span> <span class="nf">_merge_vad_and_speaker_segments</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">vad_segments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">],</span>
-        <span class="n">speaker_segments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Merge VAD and speaker segments.
-        
-        Strategy: Split VAD segments at speaker boundaries.
-        </span><span class="sh">"""</span>
-        <span class="n">merged</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">vad_seg</span> <span class="ow">in</span> <span class="n">vad_segments</span><span class="p">:</span>
-            <span class="c1"># Find speaker segments that overlap with VAD segment
-</span>            <span class="n">current_start</span> <span class="o">=</span> <span class="n">vad_seg</span><span class="p">.</span><span class="n">start</span>
-            
-            <span class="k">for</span> <span class="n">spk_seg</span> <span class="ow">in</span> <span class="n">speaker_segments</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">spk_seg</span><span class="p">.</span><span class="nf">overlaps</span><span class="p">(</span><span class="n">vad_seg</span><span class="p">):</span>
-                    <span class="c1"># Create segment for overlap
-</span>                    <span class="n">overlap_start</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">vad_seg</span><span class="p">.</span><span class="n">start</span><span class="p">,</span> <span class="n">spk_seg</span><span class="p">.</span><span class="n">start</span><span class="p">)</span>
-                    <span class="n">overlap_end</span> <span class="o">=</span> <span class="nf">min</span><span class="p">(</span><span class="n">vad_seg</span><span class="p">.</span><span class="n">end</span><span class="p">,</span> <span class="n">spk_seg</span><span class="p">.</span><span class="n">end</span><span class="p">)</span>
-                    
-                    <span class="k">if</span> <span class="n">overlap_end</span> <span class="o">&gt;</span> <span class="n">current_start</span><span class="p">:</span>
-                        <span class="n">merged</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">AudioSegment</span><span class="p">(</span>
-                            <span class="n">start</span><span class="o">=</span><span class="n">current_start</span><span class="p">,</span>
-                            <span class="n">end</span><span class="o">=</span><span class="n">overlap_end</span><span class="p">,</span>
-                            <span class="n">label</span><span class="o">=</span><span class="n">spk_seg</span><span class="p">.</span><span class="n">label</span>
-                        <span class="p">))</span>
-                        <span class="n">current_start</span> <span class="o">=</span> <span class="n">overlap_end</span>
-            
-            <span class="c1"># Handle remaining part
-</span>            <span class="k">if</span> <span class="n">current_start</span> <span class="o">&lt;</span> <span class="n">vad_seg</span><span class="p">.</span><span class="n">end</span><span class="p">:</span>
-                <span class="n">merged</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">AudioSegment</span><span class="p">(</span>
-                    <span class="n">start</span><span class="o">=</span><span class="n">current_start</span><span class="p">,</span>
-                    <span class="n">end</span><span class="o">=</span><span class="n">vad_seg</span><span class="p">.</span><span class="n">end</span><span class="p">,</span>
-                    <span class="n">label</span><span class="o">=</span><span class="sh">"</span><span class="s">speech</span><span class="sh">"</span>
-                <span class="p">))</span>
-        
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">segmenter</span><span class="p">.</span><span class="nf">merge_segments</span><span class="p">(</span><span class="n">merged</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">export_segments</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">segments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">],</span>
-        <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">rttm</span><span class="sh">"</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Export segments to standard format.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="sh">"</span><span class="s">rttm</span><span class="sh">"</span><span class="p">:</span>
-            <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
-                <span class="n">line</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="sa">f</span><span class="sh">"</span><span class="s">SPEAKER file 1 </span><span class="si">{</span><span class="n">seg</span><span class="p">.</span><span class="n">start</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s"> </span><span class="si">{</span><span class="n">seg</span><span class="p">.</span><span class="n">duration</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s"> </span><span class="sh">"</span>
-                    <span class="sa">f</span><span class="sh">"</span><span class="s">&lt;NA&gt; &lt;NA&gt; </span><span class="si">{</span><span class="n">seg</span><span class="p">.</span><span class="n">label</span><span class="si">}</span><span class="s"> &lt;NA&gt; &lt;NA&gt;</span><span class="sh">"</span>
-                <span class="p">)</span>
-                <span class="n">lines</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-            <span class="k">return</span> <span class="sh">'</span><span class="se">\n</span><span class="sh">'</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
-        
-        <span class="k">elif</span> <span class="nb">format</span> <span class="o">==</span> <span class="sh">"</span><span class="s">json</span><span class="sh">"</span><span class="p">:</span>
-            <span class="kn">import</span> <span class="n">json</span>
-            <span class="k">return</span> <span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">([</span>
-                <span class="p">{</span>
-                    <span class="sh">"</span><span class="s">start</span><span class="sh">"</span><span class="p">:</span> <span class="n">seg</span><span class="p">.</span><span class="n">start</span><span class="p">,</span>
-                    <span class="sh">"</span><span class="s">end</span><span class="sh">"</span><span class="p">:</span> <span class="n">seg</span><span class="p">.</span><span class="n">end</span><span class="p">,</span>
-                    <span class="sh">"</span><span class="s">duration</span><span class="sh">"</span><span class="p">:</span> <span class="n">seg</span><span class="p">.</span><span class="n">duration</span><span class="p">,</span>
-                    <span class="sh">"</span><span class="s">label</span><span class="sh">"</span><span class="p">:</span> <span class="n">seg</span><span class="p">.</span><span class="n">label</span>
-                <span class="p">}</span>
-                <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">segments</span>
-            <span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-        
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Unknown format: </span><span class="si">{</span><span class="nb">format</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">get_metrics</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Get processing metrics.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">"</span><span class="s">segments_created</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">segments_created</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">audio_processed_sec</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">total_audio_processed_sec</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">segments_per_second</span><span class="sh">"</span><span class="p">:</span> <span class="p">(</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">segments_created</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">total_audio_processed_sec</span>
-                <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">total_audio_processed_sec</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
-            <span class="p">)</span>
-        <span class="p">}</span>
+<p>class ProductionAudioSegmenter:
+ “””
+ Production-ready audio segmentation system.</p>
 
+<p>Features:</p>
+<ul>
+  <li>Real-time processing</li>
+  <li>Multiple detection methods</li>
+  <li>Segment merging (interval merging!)</li>
+  <li>Boundary refinement</li>
+  <li>Monitoring
+ “””</li>
+</ul>
 
-<span class="c1"># Example usage
-</span><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="sh">"</span><span class="s">__main__</span><span class="sh">"</span><span class="p">:</span>
-    <span class="n">logging</span><span class="p">.</span><span class="nf">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="p">.</span><span class="n">INFO</span><span class="p">)</span>
-    
-    <span class="c1"># Generate sample audio (or load real audio)
-</span>    <span class="n">sample_rate</span> <span class="o">=</span> <span class="mi">16000</span>
-    <span class="n">duration</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># seconds
-</span>    <span class="n">audio</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="n">duration</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>
-    
-    <span class="c1"># Create segmenter
-</span>    <span class="n">segmenter</span> <span class="o">=</span> <span class="nc">ProductionAudioSegmenter</span><span class="p">(</span>
-        <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span>
-        <span class="n">enable_vad</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-        <span class="n">enable_speaker_detection</span><span class="o">=</span><span class="bp">False</span>
-    <span class="p">)</span>
-    
-    <span class="c1"># Segment audio
-</span>    <span class="n">segments</span> <span class="o">=</span> <span class="n">segmenter</span><span class="p">.</span><span class="nf">segment_audio</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="sh">"</span><span class="s">batch</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">Segmentation Results:</span><span class="sh">"</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Audio duration: </span><span class="si">{</span><span class="n">duration</span><span class="si">}</span><span class="s">s</span><span class="sh">"</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Segments created: </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">Segments:</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">seg</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">segments</span><span class="p">):</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s">. [</span><span class="si">{</span><span class="n">seg</span><span class="p">.</span><span class="n">start</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s - </span><span class="si">{</span><span class="n">seg</span><span class="p">.</span><span class="n">end</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s] </span><span class="si">{</span><span class="n">seg</span><span class="p">.</span><span class="n">label</span><span class="si">}</span><span class="s"> (</span><span class="si">{</span><span class="n">seg</span><span class="p">.</span><span class="n">duration</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s)</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="c1"># Export
-</span>    <span class="n">rttm</span> <span class="o">=</span> <span class="n">segmenter</span><span class="p">.</span><span class="nf">export_segments</span><span class="p">(</span><span class="n">segments</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="sh">"</span><span class="s">rttm</span><span class="sh">"</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">RTTM format:</span><span class="se">\n</span><span class="si">{</span><span class="n">rttm</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="c1"># Metrics
-</span>    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">Metrics: </span><span class="si">{</span><span class="n">segmenter</span><span class="p">.</span><span class="nf">get_metrics</span><span class="p">()</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def <strong>init</strong>(
+ self,
+ sample_rate: int = 16000,
+ enable_vad: bool = True,
+ enable_speaker_detection: bool = False
+ ):
+ self.sample_rate = sample_rate
+ self.enable_vad = enable_vad
+ self.enable_speaker_detection = enable_speaker_detection</p>
+
+<p># Components
+ self.segmenter = AudioSegmenter(sample_rate=sample_rate)
+ self.streaming_segmenter = StreamingSegmenter(sample_rate=sample_rate)
+ self.speaker_detector = SpeakerChangeDetector(sample_rate=sample_rate)</p>
+
+<p>self.logger = logging.getLogger(<strong>name</strong>)</p>
+
+<p># Metrics
+ self.segments_created = 0
+ self.total_audio_processed_sec = 0.0</p>
+
+<p>def segment_audio(
+ self,
+ audio: np.ndarray,
+ mode: str = “batch”
+ ) -&gt; List[AudioSegment]:
+ “””
+ Segment audio.</p>
+
+<p>Args:
+ audio: Audio waveform
+ mode: “batch” or “streaming”</p>
+
+<p>Returns:
+ List of audio segments
+ “””
+ audio_duration = len(audio) / self.sample_rate
+ self.total_audio_processed_sec += audio_duration</p>
+
+<p>if mode == “batch”:
+ return self._segment_batch(audio)
+ else:
+ return self._segment_streaming(audio)</p>
+
+<p>def _segment_batch(self, audio: np.ndarray) -&gt; List[AudioSegment]:
+ “"”Batch segmentation.”””
+ segments = []</p>
+
+<p># VAD segmentation
+ if self.enable_vad:
+ vad = RealtimeVAD(sample_rate=self.sample_rate)</p>
+
+<p># Process audio in chunks
+ chunk_size = int(0.03 * self.sample_rate) # 30ms
+ vad_probs = []</p>
+
+<p>for i in range(0, len(audio), chunk_size):
+ chunk = audio[i:i + chunk_size]
+ if len(chunk) &lt; chunk_size:
+ # Pad last chunk
+ chunk = np.pad(chunk, (0, chunk_size - len(chunk)))</p>
+
+<p>results = vad.process_chunk(chunk)
+ vad_probs.extend(results)</p>
+
+<p>vad_probs = np.array(vad_probs)</p>
+
+<p># Create segments from VAD
+ segments = self.segmenter.segment_by_vad(
+ audio,
+ vad_probs,
+ frame_duration_ms=30.0
+ )</p>
+
+<p># Speaker change detection
+ if self.enable_speaker_detection:
+ change_points = self.speaker_detector.detect_speaker_changes(audio)
+ speaker_segments = self.speaker_detector.segment_by_speaker(
+ audio,
+ change_points
+ )</p>
+
+<p># Merge with VAD segments
+ segments = self._merge_vad_and_speaker_segments(
+ segments,
+ speaker_segments
+ )</p>
+
+<p># Refine boundaries
+ segments = self.segmenter.refine_boundaries(audio, segments)</p>
+
+<p>self.segments_created += len(segments)</p>
+
+<p>self.logger.info(
+ f”Created {len(segments)} segments from “
+ f”{len(audio)/self.sample_rate:.1f}s audio”
+ )</p>
+
+<p>return segments</p>
+
+<p>def _segment_streaming(self, audio: np.ndarray) -&gt; List[AudioSegment]:
+ “"”Streaming segmentation.”””
+ # Process in chunks
+ chunk_duration_ms = 100 # 100ms chunks
+ chunk_size = int(chunk_duration_ms * self.sample_rate / 1000)</p>
+
+<p>all_segments = []</p>
+
+<p>for i in range(0, len(audio), chunk_size):
+ chunk = audio[i:i + chunk_size]</p>
+
+<p># Process chunk
+ segments = self.streaming_segmenter.process_audio_chunk(
+ chunk,
+ chunk_duration_ms
+ )</p>
+
+<p>all_segments.extend(segments)</p>
+
+<p>return all_segments</p>
+
+<p>def _merge_vad_and_speaker_segments(
+ self,
+ vad_segments: List[AudioSegment],
+ speaker_segments: List[AudioSegment]
+ ) -&gt; List[AudioSegment]:
+ “””
+ Merge VAD and speaker segments.</p>
+
+<p>Strategy: Split VAD segments at speaker boundaries.
+ “””
+ merged = []</p>
+
+<p>for vad_seg in vad_segments:
+ # Find speaker segments that overlap with VAD segment
+ current_start = vad_seg.start</p>
+
+<p>for spk_seg in speaker_segments:
+ if spk_seg.overlaps(vad_seg):
+ # Create segment for overlap
+ overlap_start = max(vad_seg.start, spk_seg.start)
+ overlap_end = min(vad_seg.end, spk_seg.end)</p>
+
+<p>if overlap_end &gt; current_start:
+ merged.append(AudioSegment(
+ start=current_start,
+ end=overlap_end,
+ label=spk_seg.label
+ ))
+ current_start = overlap_end</p>
+
+<p># Handle remaining part
+ if current_start &lt; vad_seg.end:
+ merged.append(AudioSegment(
+ start=current_start,
+ end=vad_seg.end,
+ label=”speech”
+ ))</p>
+
+<p>return self.segmenter.merge_segments(merged)</p>
+
+<p>def export_segments(
+ self,
+ segments: List[AudioSegment],
+ format: str = “rttm”
+ ) -&gt; str:
+ “"”Export segments to standard format.”””
+ if format == “rttm”:
+ lines = []
+ for seg in segments:
+ line = (
+ f”SPEAKER file 1 {seg.start:.2f} {seg.duration:.2f} “
+ f”<NA> <NA> {seg.label} <NA> <NA>"
+ )
+ lines.append(line)
+ return '\n'.join(lines)</NA></NA></NA></NA></p>
+
+<p>elif format == “json”:
+ import json
+ return json.dumps([
+ {
+ “start”: seg.start,
+ “end”: seg.end,
+ “duration”: seg.duration,
+ “label”: seg.label
+ }
+ for seg in segments
+ ], indent=2)</p>
+
+<p>else:
+ raise ValueError(f”Unknown format: {format}”)</p>
+
+<p>def get_metrics(self) -&gt; dict:
+ “"”Get processing metrics.”””
+ return {
+ “segments_created”: self.segments_created,
+ “audio_processed_sec”: self.total_audio_processed_sec,
+ “segments_per_second”: (
+ self.segments_created / self.total_audio_processed_sec
+ if self.total_audio_processed_sec &gt; 0 else 0
+ )
+ }</p>
+
+<h1 id="example-usage">Example usage</h1>
+<p>if <strong>name</strong> == “<strong>main</strong>”:
+ logging.basicConfig(level=logging.INFO)</p>
+
+<p># Generate sample audio (or load real audio)
+ sample_rate = 16000
+ duration = 10 # seconds
+ audio = np.random.randn(sample_rate * duration) * 0.1</p>
+
+<p># Create segmenter
+ segmenter = ProductionAudioSegmenter(
+ sample_rate=sample_rate,
+ enable_vad=True,
+ enable_speaker_detection=False
+ )</p>
+
+<p># Segment audio
+ segments = segmenter.segment_audio(audio, mode=”batch”)</p>
+
+<p>print(f”\nSegmentation Results:”)
+ print(f”Audio duration: {duration}s”)
+ print(f”Segments created: {len(segments)}”)
+ print(f”\nSegments:”)
+ for i, seg in enumerate(segments):
+ print(f” {i+1}. [{seg.start:.2f}s - {seg.end:.2f}s] {seg.label} ({seg.duration:.2f}s)”)</p>
+
+<p># Export
+ rttm = segmenter.export_segments(segments, format=”rttm”)
+ print(f”\nRTTM format:\n{rttm}”)</p>
+
+<p># Metrics
+ print(f”\nMetrics: {segmenter.get_metrics()}”)
+``</p>
 
 <h2 id="evaluation-metrics">Evaluation Metrics</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">calculate_segmentation_metrics</span><span class="p">(</span>
-    <span class="n">reference</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">],</span>
-    <span class="n">hypothesis</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AudioSegment</span><span class="p">],</span>
-    <span class="n">collar</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Calculate segmentation accuracy metrics.
-    
-    Metrics:
-    - Precision: How many detected boundaries are correct?
-    - Recall: How many true boundaries were detected?
-    - F1-score: Harmonic mean of precision and recall
-    
-    Args:
-        reference: Ground truth segments
-        hypothesis: Detected segments
-        collar: Forgiveness window around boundaries (seconds)
-    </span><span class="sh">"""</span>
-    <span class="c1"># Extract boundary points
-</span>    <span class="n">ref_boundaries</span> <span class="o">=</span> <span class="nf">set</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">reference</span><span class="p">:</span>
-        <span class="n">ref_boundaries</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">seg</span><span class="p">.</span><span class="n">start</span><span class="p">)</span>
-        <span class="n">ref_boundaries</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">seg</span><span class="p">.</span><span class="n">end</span><span class="p">)</span>
-    
-    <span class="n">hyp_boundaries</span> <span class="o">=</span> <span class="nf">set</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">hypothesis</span><span class="p">:</span>
-        <span class="n">hyp_boundaries</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">seg</span><span class="p">.</span><span class="n">start</span><span class="p">)</span>
-        <span class="n">hyp_boundaries</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">seg</span><span class="p">.</span><span class="n">end</span><span class="p">)</span>
-    
-    <span class="c1"># Calculate matches
-</span>    <span class="n">true_positives</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="k">for</span> <span class="n">hyp_bound</span> <span class="ow">in</span> <span class="n">hyp_boundaries</span><span class="p">:</span>
-        <span class="c1"># Check if within collar of any reference boundary
-</span>        <span class="k">for</span> <span class="n">ref_bound</span> <span class="ow">in</span> <span class="n">ref_boundaries</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nf">abs</span><span class="p">(</span><span class="n">hyp_bound</span> <span class="o">-</span> <span class="n">ref_bound</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">collar</span><span class="p">:</span>
-                <span class="n">true_positives</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">break</span>
-    
-    <span class="c1"># Calculate metrics
-</span>    <span class="n">precision</span> <span class="o">=</span> <span class="n">true_positives</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">hyp_boundaries</span><span class="p">)</span> <span class="k">if</span> <span class="n">hyp_boundaries</span> <span class="k">else</span> <span class="mi">0</span>
-    <span class="n">recall</span> <span class="o">=</span> <span class="n">true_positives</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">ref_boundaries</span><span class="p">)</span> <span class="k">if</span> <span class="n">ref_boundaries</span> <span class="k">else</span> <span class="mi">0</span>
-    <span class="n">f1</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="mi">2</span> <span class="o">*</span> <span class="n">precision</span> <span class="o">*</span> <span class="n">recall</span> <span class="o">/</span> <span class="p">(</span><span class="n">precision</span> <span class="o">+</span> <span class="n">recall</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">precision</span> <span class="o">+</span> <span class="n">recall</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
-    <span class="p">)</span>
-    
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="sh">"</span><span class="s">precision</span><span class="sh">"</span><span class="p">:</span> <span class="n">precision</span><span class="p">,</span>
-        <span class="sh">"</span><span class="s">recall</span><span class="sh">"</span><span class="p">:</span> <span class="n">recall</span><span class="p">,</span>
-        <span class="sh">"</span><span class="s">f1_score</span><span class="sh">"</span><span class="p">:</span> <span class="n">f1</span><span class="p">,</span>
-        <span class="sh">"</span><span class="s">true_positives</span><span class="sh">"</span><span class="p">:</span> <span class="n">true_positives</span><span class="p">,</span>
-        <span class="sh">"</span><span class="s">false_positives</span><span class="sh">"</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">hyp_boundaries</span><span class="p">)</span> <span class="o">-</span> <span class="n">true_positives</span><span class="p">,</span>
-        <span class="sh">"</span><span class="s">false_negatives</span><span class="sh">"</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">ref_boundaries</span><span class="p">)</span> <span class="o">-</span> <span class="n">true_positives</span>
-    <span class="p">}</span>
-</code></pre></div></div>
+<p>``python
+def calculate_segmentation_metrics(
+ reference: List[AudioSegment],
+ hypothesis: List[AudioSegment],
+ collar: float = 0.2
+) -&gt; dict:
+ “””
+ Calculate segmentation accuracy metrics.</p>
+
+<p>Metrics:</p>
+<ul>
+  <li>Precision: How many detected boundaries are correct?</li>
+  <li>Recall: How many true boundaries were detected?</li>
+  <li>F1-score: Harmonic mean of precision and recall</li>
+</ul>
+
+<p>Args:
+ reference: Ground truth segments
+ hypothesis: Detected segments
+ collar: Forgiveness window around boundaries (seconds)
+ “””
+ # Extract boundary points
+ ref_boundaries = set()
+ for seg in reference:
+ ref_boundaries.add(seg.start)
+ ref_boundaries.add(seg.end)</p>
+
+<p>hyp_boundaries = set()
+ for seg in hypothesis:
+ hyp_boundaries.add(seg.start)
+ hyp_boundaries.add(seg.end)</p>
+
+<p># Calculate matches
+ true_positives = 0</p>
+
+<p>for hyp_bound in hyp_boundaries:
+ # Check if within collar of any reference boundary
+ for ref_bound in ref_boundaries:
+ if abs(hyp_bound - ref_bound) &lt;= collar:
+ true_positives += 1
+ break</p>
+
+<p># Calculate metrics
+ precision = true_positives / len(hyp_boundaries) if hyp_boundaries else 0
+ recall = true_positives / len(ref_boundaries) if ref_boundaries else 0
+ f1 = (
+ 2 * precision * recall / (precision + recall)
+ if precision + recall &gt; 0 else 0
+ )</p>
+
+<p>return {
+ “precision”: precision,
+ “recall”: recall,
+ “f1_score”: f1,
+ “true_positives”: true_positives,
+ “false_positives”: len(hyp_boundaries) - true_positives,
+ “false_negatives”: len(ref_boundaries) - true_positives
+ }
+``</p>
 
 <h2 id="real-world-case-study-zooms-audio-segmentation">Real-World Case Study: Zoom’s Audio Segmentation</h2>
 
@@ -1430,29 +1447,32 @@
 
 <p>All three topics use the same interval processing pattern:</p>
 
-<p><strong>DSA (Merge Intervals):</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Sort + merge overlapping intervals
-</span><span class="n">intervals</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="n">intervals</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">current</span><span class="p">.</span><span class="nf">overlaps</span><span class="p">(</span><span class="n">last</span><span class="p">):</span>
-        <span class="n">last</span> <span class="o">=</span> <span class="nf">merge</span><span class="p">(</span><span class="n">last</span><span class="p">,</span> <span class="n">current</span><span class="p">)</span>
-</code></pre></div></div>
+<p><strong>DSA (Merge Intervals):</strong>
+``python</p>
+<h1 id="sort--merge-overlapping-intervals">Sort + merge overlapping intervals</h1>
+<p>intervals.sort(key=lambda x: x[0])
+for current in intervals:
+ if current.overlaps(last):
+ last = merge(last, current)
+``</p>
 
-<p><strong>ML System Design (Event Streams):</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Sort events + merge event windows
-</span><span class="n">events</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="p">.</span><span class="n">timestamp</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">event</span><span class="p">.</span><span class="nf">in_window</span><span class="p">(</span><span class="n">last_window</span><span class="p">):</span>
-        <span class="n">last_window</span><span class="p">.</span><span class="nf">extend</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
-</code></pre></div></div>
+<p><strong>ML System Design (Event Streams):</strong>
+``python</p>
+<h1 id="sort-events--merge-event-windows">Sort events + merge event windows</h1>
+<p>events.sort(key=lambda e: e.timestamp)
+for event in events:
+ if event.in_window(last_window):
+ last_window.extend(event)
+``</p>
 
-<p><strong>Speech Tech (Audio Segmentation):</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Sort segments + merge audio boundaries
-</span><span class="n">segments</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="p">.</span><span class="n">start</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">segment</span><span class="p">.</span><span class="nf">gap</span><span class="p">(</span><span class="n">last</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">max_gap</span><span class="p">:</span>
-        <span class="n">last</span> <span class="o">=</span> <span class="nf">merge</span><span class="p">(</span><span class="n">last</span><span class="p">,</span> <span class="n">segment</span><span class="p">)</span>
-</code></pre></div></div>
+<p><strong>Speech Tech (Audio Segmentation):</strong>
+``python</p>
+<h1 id="sort-segments--merge-audio-boundaries">Sort segments + merge audio boundaries</h1>
+<p>segments.sort(key=lambda s: s.start)
+for segment in segments:
+ if segment.gap(last) &lt;= max_gap:
+ last = merge(last, segment)
+``</p>
 
 <p><strong>Universal pattern</strong> across all three:</p>
 <ol>
@@ -1469,78 +1489,53 @@ here are concrete tips you can apply when deploying real-time audio segmentation
 in products like meeting assistants, call-center analytics, or voice bots:</p>
 
 <ul>
-  <li><strong>Calibrate on real production audio, not just test clips:</strong>
-    <ul>
-      <li>Export a random sample of real calls/meetings,</li>
-      <li>Run your segmentation pipeline offline,</li>
-      <li>Have humans quickly label obvious errors (missed speech, false speech, bad
-boundaries),</li>
-      <li>Use those annotations to tune VAD thresholds, smoothing, and segment
-merging parameters.</li>
-    </ul>
+  <li><strong>Calibrate on real production audio, not just test clips:</strong></li>
+  <li>Export a random sample of real calls/meetings,</li>
+  <li>Run your segmentation pipeline offline,</li>
+  <li>Have humans quickly label obvious errors (missed speech, false speech, bad
+ boundaries),</li>
+  <li>
+    <p>Use those annotations to tune VAD thresholds, smoothing, and segment
+ merging parameters.</p>
   </li>
-  <li><strong>Design for graceful degradation:</strong>
-    <ul>
-      <li>In low-SNR environments (e.g., noisy cafes), segmentation will be noisy.</li>
-      <li>Make sure downstream systems (ASR, diarization, topic detection) can still
-function reasonably when the segmenter is imperfect:
-        <ul>
-          <li>Allow ASR to operate on slightly longer segments if boundaries look bad,</li>
-          <li>Fall back to simpler logic (e.g., treat entire utterance as one segment)
-when VAD confidence is low.</li>
-        </ul>
-      </li>
-    </ul>
+  <li><strong>Design for graceful degradation:</strong></li>
+  <li>In low-SNR environments (e.g., noisy cafes), segmentation will be noisy.</li>
+  <li>Make sure downstream systems (ASR, diarization, topic detection) can still
+ function reasonably when the segmenter is imperfect:</li>
+  <li>Allow ASR to operate on slightly longer segments if boundaries look bad,</li>
+  <li>
+    <p>Fall back to simpler logic (e.g., treat entire utterance as one segment)
+ when VAD confidence is low.</p>
   </li>
-  <li><strong>Log boundary decisions for later analysis:</strong>
-    <ul>
-      <li>For a small fraction of traffic (e.g., 0.1%), log:
-        <ul>
-          <li>Raw VAD scores,</li>
-          <li>Final speech/silence decisions,</li>
-          <li>Segment boundaries (start/end/label),</li>
-          <li>Simple audio statistics (RMS energy, SNR estimates).</li>
-        </ul>
-      </li>
-      <li>This gives you the data you need to debug regressions when models or
-thresholds change.</li>
-    </ul>
+  <li><strong>Log boundary decisions for later analysis:</strong></li>
+  <li>For a small fraction of traffic (e.g., 0.1%), log:</li>
+  <li>Raw VAD scores,</li>
+  <li>Final speech/silence decisions,</li>
+  <li>Segment boundaries (start/end/label),</li>
+  <li>Simple audio statistics (RMS energy, SNR estimates).</li>
+  <li>
+    <p>This gives you the data you need to debug regressions when models or
+ thresholds change.</p>
   </li>
-  <li><strong>Think about latency budget holistically:</strong>
-    <ul>
-      <li>Segmentation is only one piece of the pipeline:
-        <ul>
-          <li>Audio capture → VAD → Segmentation → ASR → NLU → Business logic.</li>
-        </ul>
-      </li>
-      <li>If your end-to-end budget is 300ms, you can’t spend 200ms just deciding
-where a segment starts or ends.</li>
-      <li>Measure and budget:
-        <ul>
-          <li>Per-chunk processing time,</li>
-          <li>Additional delay introduced by lookahead windows or smoothing.</li>
-        </ul>
-      </li>
-    </ul>
+  <li><strong>Think about latency budget holistically:</strong></li>
+  <li>Segmentation is only one piece of the pipeline:</li>
+  <li>Audio capture → VAD → Segmentation → ASR → NLU → Business logic.</li>
+  <li>If your end-to-end budget is 300ms, you can’t spend 200ms just deciding
+ where a segment starts or ends.</li>
+  <li>Measure and budget:</li>
+  <li>Per-chunk processing time,</li>
+  <li>
+    <p>Additional delay introduced by lookahead windows or smoothing.</p>
   </li>
-  <li><strong>Protect yourself with configuration flags:</strong>
-    <ul>
-      <li>Make all critical thresholds configurable:
-        <ul>
-          <li>VAD aggressiveness,</li>
-          <li>Minimum/maximum segment duration,</li>
-          <li>Gap thresholds for merging.</li>
-        </ul>
-      </li>
-      <li>This lets you roll out changes safely:
-        <ul>
-          <li>Canary new configs to 1% of traffic,</li>
-          <li>Compare metrics (segment count, average duration, ASR WER),</li>
-          <li>Gradually roll out to 100% if metrics look good.</li>
-        </ul>
-      </li>
-    </ul>
-  </li>
+  <li><strong>Protect yourself with configuration flags:</strong></li>
+  <li>Make all critical thresholds configurable:</li>
+  <li>VAD aggressiveness,</li>
+  <li>Minimum/maximum segment duration,</li>
+  <li>Gap thresholds for merging.</li>
+  <li>This lets you roll out changes safely:</li>
+  <li>Canary new configs to 1% of traffic,</li>
+  <li>Compare metrics (segment count, average duration, ASR WER),</li>
+  <li>Gradually roll out to 100% if metrics look good.</li>
 </ul>
 
 <p>Adding these operational considerations to your mental model bridges the gap

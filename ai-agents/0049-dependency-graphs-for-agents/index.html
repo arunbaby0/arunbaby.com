@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Dependency Graphs for Agents">
     <meta itemprop="description" content="“An Agent without a Plan is just a stochastic parrot reacting to noise.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -293,13 +293,14 @@ But complex tasks require parallel planning.
 
 <p><strong>LangGraph</strong> is a library designed specifically to define these state machines as graphs.</p>
 
-<pre><code class="language-mermaid">graph TD
-    Start --&gt; Planner
-    Planner --&gt; |Review| Critic
-    Critic -- "Bad" --&gt; Planner
-    Critic -- "Good" --&gt; Executor
-    Executor --&gt; End
-</code></pre>
+<p><code class="language-plaintext highlighter-rouge">mermaid
+graph TD
+ Start --&gt; Planner
+ Planner --&gt; |Review| Critic
+ Critic -- "Bad" --&gt; Planner
+ Critic -- "Good" --&gt; Executor
+ Executor --&gt; End
+</code></p>
 
 <hr />
 
@@ -326,48 +327,49 @@ But complex tasks require parallel planning.
 
 <p>A simplified implementation of a DAG runner for agents in Python.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">concurrent.futures</span>
+<p>``python
+import concurrent.futures</p>
 
-<span class="k">class</span> <span class="nc">Task</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">prompt</span><span class="p">,</span> <span class="n">deps</span><span class="o">=</span><span class="p">[]):</span>
-        <span class="n">self</span><span class="p">.</span><span class="nb">id</span> <span class="o">=</span> <span class="nb">id</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">deps</span> <span class="o">=</span> <span class="n">deps</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
+<p>class Task:
+ def <strong>init</strong>(self, id, prompt, deps=[]):
+ self.id = id
+ self.prompt = prompt
+ self.deps = deps
+ self.result = None</p>
 
-<span class="k">def</span> <span class="nf">execute_dag</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">llm_function</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Executes tasks in topological order, running independent tasks in parallel.
-    Uses a ThreadPool.
-    </span><span class="sh">"""</span>
-    <span class="n">completed</span> <span class="o">=</span> <span class="nf">set</span><span class="p">()</span>
-    <span class="k">with</span> <span class="n">concurrent</span><span class="p">.</span><span class="n">futures</span><span class="p">.</span><span class="nc">ThreadPoolExecutor</span><span class="p">()</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
-        <span class="n">futures</span> <span class="o">=</span> <span class="p">{}</span>
-        
-        <span class="k">while</span> <span class="nf">len</span><span class="p">(</span><span class="n">completed</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nf">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">):</span>
-            <span class="c1"># 1. Find runnable tasks
-</span>            <span class="n">runnable</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">t</span><span class="p">.</span><span class="nb">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">completed</span> <span class="ow">and</span> <span class="n">t</span><span class="p">.</span><span class="nb">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">futures</span><span class="p">:</span>
-                    <span class="c1"># Check dependencies
-</span>                    <span class="k">if</span> <span class="nf">all</span><span class="p">(</span><span class="n">d</span> <span class="ow">in</span> <span class="n">completed</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">t</span><span class="p">.</span><span class="n">deps</span><span class="p">):</span>
-                        <span class="n">runnable</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
-            
-            <span class="c1"># 2. Submit to workers
-</span>            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">runnable</span><span class="p">:</span>
-                <span class="c1"># Inject dependency results into context
-</span>                <span class="n">context</span> <span class="o">=</span> <span class="sh">"</span><span class="se">\n</span><span class="sh">"</span><span class="p">.</span><span class="nf">join</span><span class="p">([</span><span class="n">tasks</span><span class="p">[</span><span class="n">d</span><span class="p">].</span><span class="n">result</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">t</span><span class="p">.</span><span class="n">deps</span><span class="p">])</span>
-                <span class="n">full_prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Context: </span><span class="si">{</span><span class="n">context</span><span class="si">}</span><span class="se">\n</span><span class="s">Task: </span><span class="si">{</span><span class="n">t</span><span class="p">.</span><span class="n">prompt</span><span class="si">}</span><span class="sh">"</span>
-                <span class="n">futures</span><span class="p">[</span><span class="n">t</span><span class="p">.</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">executor</span><span class="p">.</span><span class="nf">submit</span><span class="p">(</span><span class="n">llm_function</span><span class="p">,</span> <span class="n">full_prompt</span><span class="p">)</span>
-            
-            <span class="c1"># 3. Wait for at least one to finish
-</span>            <span class="c1"># (In production, use as_completed)
-</span>            <span class="c1"># ... logic to harvest results and add to 'completed' set ...
-</span>            
-    <span class="k">return</span> <span class="n">tasks</span>
-</code></pre></div></div>
+<p>def execute_dag(tasks, llm_function):
+ “””
+ Executes tasks in topological order, running independent tasks in parallel.
+ Uses a ThreadPool.
+ “””
+ completed = set()
+ with concurrent.futures.ThreadPoolExecutor() as executor:
+ futures = {}</p>
 
-<p>This is fundamentally <strong>Kahn’s Algorithm</strong> (Day 49 DSA) applied to LLM calls.</p>
+<p>while len(completed) &lt; len(tasks):
+ # 1. Find runnable tasks
+ runnable = []
+ for t in tasks:
+ if t.id not in completed and t.id not in futures:
+ # Check dependencies
+ if all(d in completed for d in t.deps):
+ runnable.append(t)</p>
+
+<p># 2. Submit to workers
+ for t in runnable:
+ # Inject dependency results into context
+ context = “\n”.join([tasks[d].result for d in t.deps])
+ full_prompt = f”Context: {context}\nTask: {t.prompt}”
+ futures[t.id] = executor.submit(llm_function, full_prompt)</p>
+
+<p># 3. Wait for at least one to finish
+ # (In production, use as_completed)
+ # … logic to harvest results and add to ‘completed’ set …</p>
+
+<p>return tasks
+``</p>
+
+<p>This is fundamentally <strong>Kahn’s Algorithm</strong> (DSA) applied to LLM calls.</p>
 
 <hr />
 
@@ -380,7 +382,7 @@ If Task A and Task B run in parallel, and both try to update <code class="langua
 
 <h3 id="62-human-in-the-loop">6.2 Human-in-the-Loop</h3>
 <p>You might want a human to verify <code class="language-plaintext highlighter-rouge">Task 1</code> before <code class="language-plaintext highlighter-rouge">Task 2</code> starts.
-The Graph Executor must support <strong>Pause/Resume</strong>. This requires serializing the graph state (Day 47 Agents!) to a DB.</p>
+The Graph Executor must support <strong>Pause/Resume</strong>. This requires serializing the graph state (Agents!) to a DB.</p>
 
 <hr />
 
@@ -417,7 +419,7 @@ The Graph Executor must support <strong>Pause/Resume</strong>. This requires ser
 
 <h2 id="9-connections-to-other-topics">9. Connections to Other Topics</h2>
 
-<p>This connects to <strong>Course Schedule</strong> (DSA Day 49).</p>
+<p>This connects to <strong>Course Schedule</strong> (DSA ).</p>
 <ul>
   <li>The Agent <em>is</em> the student taking courses.</li>
   <li>The “Prerequisites” are the information dependencies.</li>
@@ -429,13 +431,10 @@ The Graph Executor must support <strong>Pause/Resume</strong>. This requires ser
 <h2 id="10-real-world-examples">10. Real-World Examples</h2>
 
 <ul>
-  <li><strong>GPT-Researcher</strong>: A popular open-source agent.
-    <ul>
-      <li>Generates 5 research questions.</li>
-      <li>Scrapes 5 websites in parallel.</li>
-      <li>Aggregates into one report.</li>
-    </ul>
-  </li>
+  <li><strong>GPT-Researcher</strong>: A popular open-source agent.</li>
+  <li>Generates 5 research questions.</li>
+  <li>Scrapes 5 websites in parallel.</li>
+  <li>Aggregates into one report.</li>
   <li><strong>OpenAI Deep Research</strong>: Uses heavy iterative branching to explore topics depth-first vs breadth-first.</li>
 </ul>
 
@@ -444,13 +443,10 @@ The Graph Executor must support <strong>Pause/Resume</strong>. This requires ser
 <h2 id="11-future-directions">11. Future Directions</h2>
 
 <ul>
-  <li><strong>Multi-Agent Graphs</strong>:
-    <ul>
-      <li>Node A is “Coder Agent”.</li>
-      <li>Node B is “Reviewer Agent”.</li>
-      <li>The graph defines the “Company Org Chart”.</li>
-    </ul>
-  </li>
+  <li><strong>Multi-Agent Graphs</strong>:</li>
+  <li>Node A is “Coder Agent”.</li>
+  <li>Node B is “Reviewer Agent”.</li>
+  <li>The graph defines the “Company Org Chart”.</li>
   <li><strong>Self-Modifying Graphs</strong>: The Agent realizes the plan is bad halfway through and re-writes the remaining graph nodes (Runtime Graph Modification).</li>
 </ul>
 

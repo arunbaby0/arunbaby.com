@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Online Learning Systems">
     <meta itemprop="description" content="Design online learning systems that adapt models in real-time using greedy updates—the same adaptive decision-making pattern from Jump Game applied to streaming data.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -387,54 +387,55 @@
 
 <h2 id="high-level-architecture">High-Level Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────────┐
-│                    Online Learning System                        │
-└─────────────────────────────────────────────────────────────────┘
+<p>``
+┌─────────────────────────────────────────────────────────────────┐
+│ Online Learning System │
+└─────────────────────────────────────────────────────────────────┘</p>
 
-                         Data Sources
-        ┌─────────────────────────────────────────┐
-        │  User interactions  │  Feedback loops   │
-        │  Event streams      │  Label corrections│
-        └──────────────┬──────────────────────────┘
-                       │
-                ┌──────▼──────┐
-                │    Kafka    │
-                │  (Events +  │
-                │   Labels)   │
-                └──────┬──────┘
-                       │
-        ┌──────────────┼──────────────┐
-        │              │              │
+<p>Data Sources
+ ┌─────────────────────────────────────────┐
+ │ User interactions │ Feedback loops │
+ │ Event streams │ Label corrections│
+ └──────────────┬──────────────────────────┘
+ │
+ ┌──────▼──────┐
+ │ Kafka │
+ │ (Events + │
+ │ Labels) │
+ └──────┬──────┘
+ │
+ ┌──────────────┼──────────────┐
+ │ │ │
 ┌───────▼────────┐ ┌──▼────┐ ┌──────▼──────┐
-│  Update        │ │Feature│ │  Drift      │
-│  Service       │ │Store  │ │  Detector   │
-│                │ │(Redis)│ │             │
-│ - Batch updates│ └───────┘ │ - Monitor   │
-│ - Gradient     │            │   metrics   │
-│   computation  │            │ - Alert     │
-└───────┬────────┘            └──────┬──────┘
-        │                            │
-        └──────────────┬─────────────┘
-                       │
-                ┌──────▼──────┐
-                │   Model     │
-                │   Store     │
-                │             │
-                │ - Current   │
-                │ - Versions  │
-                │ - Checkpts  │
-                └──────┬──────┘
-                       │
-        ┌──────────────┼──────────────┐
-        │              │              │
+│ Update │ │Feature│ │ Drift │
+│ Service │ │Store │ │ Detector │
+│ │ │(Redis)│ │ │
+│ - Batch updates│ └───────┘ │ - Monitor │
+│ - Gradient │ │ metrics │
+│ computation │ │ - Alert │
+└───────┬────────┘ └──────┬──────┘
+ │ │
+ └──────────────┬─────────────┘
+ │
+ ┌──────▼──────┐
+ │ Model │
+ │ Store │
+ │ │
+ │ - Current │
+ │ - Versions │
+ │ - Checkpts │
+ └──────┬──────┘
+ │
+ ┌──────────────┼──────────────┐
+ │ │ │
 ┌───────▼────────┐ ┌──▼────┐ ┌──────▼──────┐
-│  Inference     │ │Monitor│ │  A/B Test   │
-│  Service       │ │       │ │  Controller │
-│                │ │- Loss │ │             │
-│ - Predictions  │ │- Acc  │ │ - Traffic   │
-│ - Low latency  │ │- Drift│ │   split     │
+│ Inference │ │Monitor│ │ A/B Test │
+│ Service │ │ │ │ Controller │
+│ │ │- Loss │ │ │
+│ - Predictions │ │- Acc │ │ - Traffic │
+│ - Low latency │ │- Drift│ │ split │
 └────────────────┘ └───────┘ └─────────────┘
-</code></pre></div></div>
+``</p>
 
 <h3 id="key-components">Key Components</h3>
 
@@ -454,476 +455,503 @@
 
 <p><strong>Online Gradient Descent (for linear models):</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span>
+<p>``python
+import numpy as np
+from typing import Dict, Any</p>
 
-<span class="k">class</span> <span class="nc">OnlineLinearModel</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Online linear model with SGD updates.
-    
-    Similar to Jump Game:
-    - Each update </span><span class="sh">'</span><span class="s">extends reach</span><span class="sh">'</span><span class="s"> (improves model)
-    - Greedy: always update towards lower error
-    - Track </span><span class="sh">'</span><span class="s">max reach</span><span class="sh">'</span><span class="s"> (best performance so far)
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">n_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
-        <span class="n">regularization</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span>
-    <span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">n_features</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">bias</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="n">learning_rate</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">regularization</span> <span class="o">=</span> <span class="n">regularization</span>
-        
-        <span class="c1"># Metrics
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">update_count</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">cumulative_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
-    
-    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Make prediction.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">dot</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">bias</span>
-    
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Incremental update with one sample (online SGD).
-        
-        Greedy decision: move weights to reduce error on this sample.
-        Like Jump Game extending max_reach.
-        </span><span class="sh">"""</span>
-        <span class="c1"># Prediction
-</span>        <span class="n">pred</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-        
-        <span class="c1"># Error
-</span>        <span class="n">error</span> <span class="o">=</span> <span class="n">label</span> <span class="o">-</span> <span class="n">pred</span>
-        
-        <span class="c1"># Gradient descent update
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">weights</span> <span class="o">+=</span> <span class="n">self</span><span class="p">.</span><span class="n">learning_rate</span> <span class="o">*</span> <span class="n">error</span> <span class="o">*</span> <span class="n">features</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">weights</span> <span class="o">-=</span> <span class="n">self</span><span class="p">.</span><span class="n">learning_rate</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">regularization</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">weights</span>  <span class="c1"># L2 reg
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">bias</span> <span class="o">+=</span> <span class="n">self</span><span class="p">.</span><span class="n">learning_rate</span> <span class="o">*</span> <span class="n">error</span>
-        
-        <span class="c1"># Track metrics
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">update_count</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">cumulative_loss</span> <span class="o">+=</span> <span class="n">error</span> <span class="o">**</span> <span class="mi">2</span>
-    
-    <span class="k">def</span> <span class="nf">batch_update</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features_batch</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">labels_batch</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Update with mini-batch (more stable than single samples).</span><span class="sh">"""</span>
-        <span class="k">for</span> <span class="n">features</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">features_batch</span><span class="p">,</span> <span class="n">labels_batch</span><span class="p">):</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">update</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">get_state</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Get model state for checkpointing.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">"</span><span class="s">weights</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">weights</span><span class="p">.</span><span class="nf">tolist</span><span class="p">(),</span>
-            <span class="sh">"</span><span class="s">bias</span><span class="sh">"</span><span class="p">:</span> <span class="nf">float</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">bias</span><span class="p">),</span>
-            <span class="sh">"</span><span class="s">update_count</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">update_count</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">avg_loss</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">cumulative_loss</span> <span class="o">/</span> <span class="nf">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">update_count</span><span class="p">)</span>
-        <span class="p">}</span>
-    
-    <span class="k">def</span> <span class="nf">set_state</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Restore model from checkpoint.</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="sh">"</span><span class="s">weights</span><span class="sh">"</span><span class="p">])</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="sh">"</span><span class="s">bias</span><span class="sh">"</span><span class="p">]</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">update_count</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="sh">"</span><span class="s">update_count</span><span class="sh">"</span><span class="p">]</span>
-</code></pre></div></div>
+<p>class OnlineLinearModel:
+ “””
+ Online linear model with SGD updates.</p>
+
+<p>Similar to Jump Game:</p>
+<ul>
+  <li>Each update ‘extends reach’ (improves model)</li>
+  <li>Greedy: always update towards lower error</li>
+  <li>Track ‘max reach’ (best performance so far)
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(
+ self,
+ n_features: int,
+ learning_rate: float = 0.01,
+ regularization: float = 0.01
+ ):
+ self.weights = np.zeros(n_features)
+ self.bias = 0.0
+ self.learning_rate = learning_rate
+ self.regularization = regularization</p>
+
+<p># Metrics
+ self.update_count = 0
+ self.cumulative_loss = 0.0</p>
+
+<p>def predict(self, features: np.ndarray) -&gt; float:
+ “"”Make prediction.”””
+ return np.dot(self.weights, features) + self.bias</p>
+
+<p>def update(self, features: np.ndarray, label: float):
+ “””
+ Incremental update with one sample (online SGD).</p>
+
+<p>Greedy decision: move weights to reduce error on this sample.
+ Like Jump Game extending max_reach.
+ “””
+ # Prediction
+ pred = self.predict(features)</p>
+
+<p># Error
+ error = label - pred</p>
+
+<p># Gradient descent update
+ self.weights += self.learning_rate * error * features
+ self.weights -= self.learning_rate * self.regularization * self.weights # L2 reg
+ self.bias += self.learning_rate * error</p>
+
+<p># Track metrics
+ self.update_count += 1
+ self.cumulative_loss += error ** 2</p>
+
+<p>def batch_update(self, features_batch: np.ndarray, labels_batch: np.ndarray):
+ “"”Update with mini-batch (more stable than single samples).”””
+ for features, label in zip(features_batch, labels_batch):
+ self.update(features, label)</p>
+
+<p>def get_state(self) -&gt; Dict:
+ “"”Get model state for checkpointing.”””
+ return {
+ “weights”: self.weights.tolist(),
+ “bias”: float(self.bias),
+ “update_count”: self.update_count,
+ “avg_loss”: self.cumulative_loss / max(1, self.update_count)
+ }</p>
+
+<p>def set_state(self, state: Dict):
+ “"”Restore model from checkpoint.”””
+ self.weights = np.array(state[“weights”])
+ self.bias = state[“bias”]
+ self.update_count = state[“update_count”]
+``</p>
 
 <p><strong>Online Random Forest (Mondrian Forest):</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">OnlineRandomForest</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Online random forest using Mondrian trees.
-    
-    Supports incremental updates without full retraining.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">n_trees</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">n_trees</span> <span class="o">=</span> <span class="n">n_trees</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">trees</span> <span class="o">=</span> <span class="p">[</span><span class="nc">MondrianTree</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">n_trees</span><span class="p">)]</span>
-    
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Update all trees with new sample.</span><span class="sh">"""</span>
-        <span class="k">for</span> <span class="n">tree</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">trees</span><span class="p">:</span>
-            <span class="n">tree</span><span class="p">.</span><span class="nf">update</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Predict by majority vote.</span><span class="sh">"""</span>
-        <span class="n">predictions</span> <span class="o">=</span> <span class="p">[</span><span class="n">tree</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span> <span class="k">for</span> <span class="n">tree</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">trees</span><span class="p">]</span>
-        <span class="k">return</span> <span class="nf">max</span><span class="p">(</span><span class="nf">set</span><span class="p">(</span><span class="n">predictions</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="n">predictions</span><span class="p">.</span><span class="n">count</span><span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+class OnlineRandomForest:
+ “””
+ Online random forest using Mondrian trees.</p>
+
+<p>Supports incremental updates without full retraining.
+ “””</p>
+
+<p>def <strong>init</strong>(self, n_trees: int = 10):
+ self.n_trees = n_trees
+ self.trees = [MondrianTree() for _ in range(n_trees)]</p>
+
+<p>def update(self, features: np.ndarray, label: int):
+ “"”Update all trees with new sample.”””
+ for tree in self.trees:
+ tree.update(features, label)</p>
+
+<p>def predict(self, features: np.ndarray) -&gt; int:
+ “"”Predict by majority vote.”””
+ predictions = [tree.predict(features) for tree in self.trees]
+ return max(set(predictions), key=predictions.count)
+``</p>
 
 <h3 id="2-streaming-data-pipeline">2. Streaming Data Pipeline</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">kafka</span> <span class="kn">import</span> <span class="n">KafkaConsumer</span>
-<span class="kn">import</span> <span class="n">json</span>
-<span class="kn">from</span> <span class="n">queue</span> <span class="kn">import</span> <span class="n">Queue</span>
-<span class="kn">from</span> <span class="n">threading</span> <span class="kn">import</span> <span class="n">Thread</span>
+<p>``python
+from kafka import KafkaConsumer
+import json
+from queue import Queue
+from threading import Thread</p>
 
-<span class="k">class</span> <span class="nc">StreamingDataPipeline</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Ingest labeled samples from Kafka for online learning.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">kafka_brokers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-        <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
-        <span class="n">batch_timeout_sec</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
-    <span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">consumer</span> <span class="o">=</span> <span class="nc">KafkaConsumer</span><span class="p">(</span>
-            <span class="n">topic</span><span class="p">,</span>
-            <span class="n">bootstrap_servers</span><span class="o">=</span><span class="n">kafka_brokers</span><span class="p">,</span>
-            <span class="n">value_deserializer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">json</span><span class="p">.</span><span class="nf">loads</span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="nf">decode</span><span class="p">(</span><span class="sh">'</span><span class="s">utf-8</span><span class="sh">'</span><span class="p">))</span>
-        <span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">batch_timeout_sec</span> <span class="o">=</span> <span class="n">batch_timeout_sec</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sample_queue</span> <span class="o">=</span> <span class="nc">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">running</span> <span class="o">=</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Start consuming from Kafka.</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">running</span> <span class="o">=</span> <span class="bp">True</span>
-        <span class="nc">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">_consume_loop</span><span class="p">,</span> <span class="n">daemon</span><span class="o">=</span><span class="bp">True</span><span class="p">).</span><span class="nf">start</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">_consume_loop</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Consume samples from Kafka and queue them.</span><span class="sh">"""</span>
-        <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">consumer</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">running</span><span class="p">:</span>
-                <span class="k">break</span>
-            
-            <span class="n">sample</span> <span class="o">=</span> <span class="n">message</span><span class="p">.</span><span class="n">value</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">sample_queue</span><span class="p">.</span><span class="nf">put</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">get_batch</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">Get a batch of samples for model update.</span><span class="sh">"""</span>
-        <span class="n">batch</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="kn">import</span> <span class="n">time</span>
-        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-        
-        <span class="k">while</span> <span class="nf">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">batch_size</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">batch_timeout_sec</span><span class="p">:</span>
-                <span class="k">break</span>
-            
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_queue</span><span class="p">.</span><span class="nf">empty</span><span class="p">():</span>
-                <span class="n">batch</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">sample_queue</span><span class="p">.</span><span class="nf">get</span><span class="p">())</span>
-        
-        <span class="k">return</span> <span class="n">batch</span>
-</code></pre></div></div>
+<p>class StreamingDataPipeline:
+ “””
+ Ingest labeled samples from Kafka for online learning.
+ “””</p>
+
+<p>def <strong>init</strong>(
+ self,
+ kafka_brokers: List[str],
+ topic: str,
+ batch_size: int = 32,
+ batch_timeout_sec: float = 1.0
+ ):
+ self.consumer = KafkaConsumer(
+ topic,
+ bootstrap_servers=kafka_brokers,
+ value_deserializer=lambda m: json.loads(m.decode(‘utf-8’))
+ )</p>
+
+<p>self.batch_size = batch_size
+ self.batch_timeout_sec = batch_timeout_sec
+ self.sample_queue = Queue(maxsize=10000)</p>
+
+<p>self.running = False</p>
+
+<p>def start(self):
+ “"”Start consuming from Kafka.”””
+ self.running = True
+ Thread(target=self._consume_loop, daemon=True).start()</p>
+
+<p>def _consume_loop(self):
+ “"”Consume samples from Kafka and queue them.”””
+ for message in self.consumer:
+ if not self.running:
+ break</p>
+
+<p>sample = message.value
+ self.sample_queue.put(sample)</p>
+
+<p>def get_batch(self) -&gt; List[Dict]:
+ “"”Get a batch of samples for model update.”””
+ batch = []</p>
+
+<p>import time
+ start_time = time.time()</p>
+
+<p>while len(batch) &lt; self.batch_size:
+ if time.time() - start_time &gt; self.batch_timeout_sec:
+ break</p>
+
+<p>if not self.sample_queue.empty():
+ batch.append(self.sample_queue.get())</p>
+
+<p>return batch
+``</p>
 
 <h3 id="3-concept-drift-detection">3. Concept Drift Detection</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">deque</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+from collections import deque
+import numpy as np</p>
 
-<span class="k">class</span> <span class="nc">DriftDetector</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Detect concept drift using performance monitoring.
-    
-    Similar to Jump Game checking if we</span><span class="sh">'</span><span class="s">re </span><span class="sh">'</span><span class="s">stuck</span><span class="sh">'</span><span class="s">:
-    - Monitor if model performance is degrading
-    - Trigger adaptation/retraining if drift detected
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">window_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
-        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>
-    <span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">window_size</span> <span class="o">=</span> <span class="n">window_size</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">threshold</span>
-        
-        <span class="c1"># Recent performance
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">recent_errors</span> <span class="o">=</span> <span class="nf">deque</span><span class="p">(</span><span class="n">maxlen</span><span class="o">=</span><span class="n">window_size</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">baseline_error</span> <span class="o">=</span> <span class="bp">None</span>
-    
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">prediction</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Update with new prediction and label.</span><span class="sh">"""</span>
-        <span class="n">error</span> <span class="o">=</span> <span class="nf">abs</span><span class="p">(</span><span class="n">prediction</span> <span class="o">-</span> <span class="n">label</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">recent_errors</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
-        
-        <span class="c1"># Set baseline from first window
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">baseline_error</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">recent_errors</span><span class="p">)</span> <span class="o">==</span> <span class="n">self</span><span class="p">.</span><span class="n">window_size</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">baseline_error</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">recent_errors</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">detect_drift</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Check if concept drift has occurred.
-        
-        Returns:
-            True if drift detected, False otherwise
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">baseline_error</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">False</span>
-        
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">recent_errors</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">window_size</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">False</span>
-        
-        <span class="n">current_error</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">recent_errors</span><span class="p">)</span>
-        
-        <span class="c1"># Drift if error increased significantly
-</span>        <span class="k">return</span> <span class="n">current_error</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">baseline_error</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">threshold</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">reset_baseline</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Reset baseline after handling drift.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">recent_errors</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">baseline_error</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">recent_errors</span><span class="p">)</span>
-</code></pre></div></div>
+<p>class DriftDetector:
+ “””
+ Detect concept drift using performance monitoring.</p>
+
+<p>Similar to Jump Game checking if we’re ‘stuck’:</p>
+<ul>
+  <li>Monitor if model performance is degrading</li>
+  <li>Trigger adaptation/retraining if drift detected
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(
+ self,
+ window_size: int = 1000,
+ threshold: float = 0.1
+ ):
+ self.window_size = window_size
+ self.threshold = threshold</p>
+
+<p># Recent performance
+ self.recent_errors = deque(maxlen=window_size)
+ self.baseline_error = None</p>
+
+<p>def update(self, prediction: float, label: float):
+ “"”Update with new prediction and label.”””
+ error = abs(prediction - label)
+ self.recent_errors.append(error)</p>
+
+<p># Set baseline from first window
+ if self.baseline_error is None and len(self.recent_errors) == self.window_size:
+ self.baseline_error = np.mean(self.recent_errors)</p>
+
+<p>def detect_drift(self) -&gt; bool:
+ “””
+ Check if concept drift has occurred.</p>
+
+<p>Returns:
+ True if drift detected, False otherwise
+ “””
+ if self.baseline_error is None:
+ return False</p>
+
+<p>if len(self.recent_errors) &lt; self.window_size:
+ return False</p>
+
+<p>current_error = np.mean(self.recent_errors)</p>
+
+<p># Drift if error increased significantly
+ return current_error &gt; self.baseline_error * (1 + self.threshold)</p>
+
+<p>def reset_baseline(self):
+ “"”Reset baseline after handling drift.”””
+ if self.recent_errors:
+ self.baseline_error = np.mean(self.recent_errors)
+``</p>
 
 <h3 id="4-model-versioning">4. Model Versioning</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">time</span>
-<span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<p>``python
+import time
+from dataclasses import dataclass
+from typing import Optional</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">ModelVersion</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Metadata for a model version.</span><span class="sh">"""</span>
-    <span class="n">version_id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">timestamp</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">update_count</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">performance_metrics</span><span class="p">:</span> <span class="n">Dict</span>
-    <span class="n">model_state</span><span class="p">:</span> <span class="n">Dict</span>
+<p>@dataclass
+class ModelVersion:
+ “"”Metadata for a model version.”””
+ version_id: str
+ timestamp: float
+ update_count: int
+ performance_metrics: Dict
+ model_state: Dict</p>
 
-<span class="k">class</span> <span class="nc">ModelVersionManager</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Manage model versions for online learning.
-    
-    Features:
-    - Periodic checkpoints
-    - Performance-based versioning
-    - Rollback capability
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">checkpoint_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>  <span class="c1"># Updates between checkpoints
-</span>        <span class="n">max_versions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
-    <span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">checkpoint_interval</span> <span class="o">=</span> <span class="n">checkpoint_interval</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">max_versions</span> <span class="o">=</span> <span class="n">max_versions</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">versions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ModelVersion</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">current_version</span> <span class="o">=</span> <span class="bp">None</span>
-    
-    <span class="k">def</span> <span class="nf">should_checkpoint</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">update_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Check if we should create a checkpoint.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">update_count</span> <span class="o">%</span> <span class="n">self</span><span class="p">.</span><span class="n">checkpoint_interval</span> <span class="o">==</span> <span class="mi">0</span>
-    
-    <span class="k">def</span> <span class="nf">create_checkpoint</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">model_state</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
-        <span class="n">update_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">metrics</span><span class="p">:</span> <span class="n">Dict</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Create a new model checkpoint.
-        
-        Returns:
-            Version ID
-        </span><span class="sh">"""</span>
-        <span class="n">version_id</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">v_</span><span class="si">{</span><span class="n">update_count</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="nf">int</span><span class="p">(</span><span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">())</span><span class="si">}</span><span class="sh">"</span>
-        
-        <span class="n">version</span> <span class="o">=</span> <span class="nc">ModelVersion</span><span class="p">(</span>
-            <span class="n">version_id</span><span class="o">=</span><span class="n">version_id</span><span class="p">,</span>
-            <span class="n">timestamp</span><span class="o">=</span><span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">(),</span>
-            <span class="n">update_count</span><span class="o">=</span><span class="n">update_count</span><span class="p">,</span>
-            <span class="n">performance_metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
-            <span class="n">model_state</span><span class="o">=</span><span class="n">model_state</span>
-        <span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">versions</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">current_version</span> <span class="o">=</span> <span class="n">version</span>
-        
-        <span class="c1"># Keep only recent versions
-</span>        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">versions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">max_versions</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">versions</span><span class="p">.</span><span class="nf">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">version_id</span>
-    
-    <span class="k">def</span> <span class="nf">rollback</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">version_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Rollback to a previous version.
-        
-        Args:
-            version_id: Specific version to rollback to, or None for previous
-            
-        Returns:
-            Model state of the version
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">versions</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">None</span>
-        
-        <span class="k">if</span> <span class="n">version_id</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="c1"># Rollback to previous version
-</span>            <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">versions</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="n">target</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">versions</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">None</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Find specific version
-</span>            <span class="n">target</span> <span class="o">=</span> <span class="nf">next</span><span class="p">((</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">versions</span> <span class="k">if</span> <span class="n">v</span><span class="p">.</span><span class="n">version_id</span> <span class="o">==</span> <span class="n">version_id</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">None</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">current_version</span> <span class="o">=</span> <span class="n">target</span>
-        <span class="k">return</span> <span class="n">target</span><span class="p">.</span><span class="n">model_state</span>
-</code></pre></div></div>
+<p>class ModelVersionManager:
+ “””
+ Manage model versions for online learning.</p>
+
+<p>Features:</p>
+<ul>
+  <li>Periodic checkpoints</li>
+  <li>Performance-based versioning</li>
+  <li>Rollback capability
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(
+ self,
+ checkpoint_interval: int = 10000, # Updates between checkpoints
+ max_versions: int = 10
+ ):
+ self.checkpoint_interval = checkpoint_interval
+ self.max_versions = max_versions</p>
+
+<p>self.versions: List[ModelVersion] = []
+ self.current_version = None</p>
+
+<p>def should_checkpoint(self, update_count: int) -&gt; bool:
+ “"”Check if we should create a checkpoint.”””
+ return update_count % self.checkpoint_interval == 0</p>
+
+<p>def create_checkpoint(
+ self,
+ model_state: Dict,
+ update_count: int,
+ metrics: Dict
+ ) -&gt; str:
+ “””
+ Create a new model checkpoint.</p>
+
+<p>Returns:
+ Version ID
+ “””
+ version_id = f”v_{update_count}_{int(time.time())}”</p>
+
+<p>version = ModelVersion(
+ version_id=version_id,
+ timestamp=time.time(),
+ update_count=update_count,
+ performance_metrics=metrics,
+ model_state=model_state
+ )</p>
+
+<p>self.versions.append(version)
+ self.current_version = version</p>
+
+<p># Keep only recent versions
+ if len(self.versions) &gt; self.max_versions:
+ self.versions.pop(0)</p>
+
+<p>return version_id</p>
+
+<p>def rollback(self, version_id: Optional[str] = None) -&gt; Optional[Dict]:
+ “””
+ Rollback to a previous version.</p>
+
+<p>Args:
+ version_id: Specific version to rollback to, or None for previous</p>
+
+<p>Returns:
+ Model state of the version
+ “””
+ if not self.versions:
+ return None</p>
+
+<p>if version_id is None:
+ # Rollback to previous version
+ if len(self.versions) &gt;= 2:
+ target = self.versions[-2]
+ else:
+ return None
+ else:
+ # Find specific version
+ target = next((v for v in self.versions if v.version_id == version_id), None)
+ if not target:
+ return None</p>
+
+<p>self.current_version = target
+ return target.model_state
+``</p>
 
 <h2 id="data-flow">Data Flow</h2>
 
 <h3 id="online-learning-pipeline">Online Learning Pipeline</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Labeled sample arrives (via Kafka)
-   └─&gt; Feature extraction/enrichment
-   └─&gt; Add to update buffer
-
-2. Update Service (every N samples or T seconds)
-   └─&gt; Get batch from buffer
-   └─&gt; Compute gradients/updates
-   └─&gt; Apply updates to model
-   └─&gt; Update model version
-
-3. Inference Request
-   └─&gt; Load latest model version
-   └─&gt; Extract features
-   └─&gt; Make prediction
-   └─&gt; Log prediction for feedback loop
-
-4. Feedback Loop
-   └─&gt; Collect true labels (delayed or real-time)
-   └─&gt; Send to Kafka as new training samples
-   └─&gt; Monitor drift
-
-5. Drift Detection (continuous)
-   └─&gt; Compare recent performance to baseline
-   └─&gt; If drift detected: alert, increase update frequency, or trigger retraining
-</code></pre></div></div>
+<p>``</p>
+<ol>
+  <li>
+    <p>Labeled sample arrives (via Kafka)
+ └─&gt; Feature extraction/enrichment
+ └─&gt; Add to update buffer</p>
+  </li>
+  <li>
+    <p>Update Service (every N samples or T seconds)
+ └─&gt; Get batch from buffer
+ └─&gt; Compute gradients/updates
+ └─&gt; Apply updates to model
+ └─&gt; Update model version</p>
+  </li>
+  <li>
+    <p>Inference Request
+ └─&gt; Load latest model version
+ └─&gt; Extract features
+ └─&gt; Make prediction
+ └─&gt; Log prediction for feedback loop</p>
+  </li>
+  <li>
+    <p>Feedback Loop
+ └─&gt; Collect true labels (delayed or real-time)
+ └─&gt; Send to Kafka as new training samples
+ └─&gt; Monitor drift</p>
+  </li>
+  <li>
+    <p>Drift Detection (continuous)
+ └─&gt; Compare recent performance to baseline
+ └─&gt; If drift detected: alert, increase update frequency, or trigger retraining
+``</p>
+  </li>
+</ol>
 
 <h2 id="scaling-strategies">Scaling Strategies</h2>
 
 <h3 id="horizontal-scaling---distributed-online-learning">Horizontal Scaling - Distributed Online Learning</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">ray</span>
+<p>``python
+import ray</p>
 
-<span class="nd">@ray.remote</span>
-<span class="k">class</span> <span class="nc">DistributedOnlineLearner</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Distributed online learner using parameter server pattern.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">n_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="nc">OnlineLinearModel</span><span class="p">(</span><span class="n">n_features</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">lock</span> <span class="o">=</span> <span class="n">threading</span><span class="p">.</span><span class="nc">Lock</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Thread-safe update.</span><span class="sh">"""</span>
-        <span class="k">with</span> <span class="n">self</span><span class="p">.</span><span class="n">lock</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">update</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">get_weights</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Get current weights.</span><span class="sh">"""</span>
-        <span class="k">with</span> <span class="n">self</span><span class="p">.</span><span class="n">lock</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">weights</span><span class="p">.</span><span class="nf">copy</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Make prediction.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+<p>@ray.remote
+class DistributedOnlineLearner:
+ “””
+ Distributed online learner using parameter server pattern.
+ “””</p>
 
+<p>def <strong>init</strong>(self, n_features: int):
+ self.model = OnlineLinearModel(n_features)
+ self.lock = threading.Lock()</p>
 
-<span class="k">class</span> <span class="nc">ParameterServerSystem</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Parameter server for distributed online learning.
-    
-    Workers:
-    - Process incoming samples
-    - Compute gradients
-    - Send updates to parameter server
-    
-    Parameter Server:
-    - Aggregate updates from workers
-    - Maintain global model state
-    - Serve latest model for inference
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">n_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
-        <span class="c1"># Create parameter server
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">param_server</span> <span class="o">=</span> <span class="n">DistributedOnlineLearner</span><span class="p">.</span><span class="nf">remote</span><span class="p">(</span><span class="n">n_features</span><span class="p">)</span>
-        
-        <span class="c1"># Create workers
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">workers</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">DistributedOnlineLearner</span><span class="p">.</span><span class="nf">remote</span><span class="p">(</span><span class="n">n_features</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">n_workers</span><span class="p">)</span>
-        <span class="p">]</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">n_workers</span> <span class="o">=</span> <span class="n">n_workers</span>
-    
-    <span class="k">def</span> <span class="nf">update_distributed</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]):</span>
-        <span class="sh">"""</span><span class="s">
-        Distribute samples to workers for parallel updates.
-        </span><span class="sh">"""</span>
-        <span class="c1"># Distribute samples to workers
-</span>        <span class="n">chunk_size</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span> <span class="o">//</span> <span class="n">self</span><span class="p">.</span><span class="n">n_workers</span>
-        
-        <span class="n">futures</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">worker</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">workers</span><span class="p">):</span>
-            <span class="n">start</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">chunk_size</span>
-            <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">chunk_size</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">n_workers</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">else</span> <span class="nf">len</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
-            <span class="n">worker_samples</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
-            
-            <span class="c1"># Each worker computes local updates
-</span>            <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">worker_samples</span><span class="p">:</span>
-                <span class="n">futures</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span>
-                    <span class="n">worker</span><span class="p">.</span><span class="n">update</span><span class="p">.</span><span class="nf">remote</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="sh">'</span><span class="s">features</span><span class="sh">'</span><span class="p">],</span> <span class="n">sample</span><span class="p">[</span><span class="sh">'</span><span class="s">label</span><span class="sh">'</span><span class="p">])</span>
-                <span class="p">)</span>
-        
-        <span class="c1"># Wait for all updates
-</span>        <span class="n">ray</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">futures</span><span class="p">)</span>
-        
-        <span class="c1"># Sync workers with parameter server (simplified)
-</span>        <span class="c1"># In production: use all-reduce or async parameter server
-</span></code></pre></div></div>
+<p>def update(self, features: np.ndarray, label: float):
+ “"”Thread-safe update.”””
+ with self.lock:
+ self.model.update(features, label)</p>
+
+<p>def get_weights(self) -&gt; np.ndarray:
+ “"”Get current weights.”””
+ with self.lock:
+ return self.model.weights.copy()</p>
+
+<p>def predict(self, features: np.ndarray) -&gt; float:
+ “"”Make prediction.”””
+ return self.model.predict(features)</p>
+
+<p>class ParameterServerSystem:
+ “””
+ Parameter server for distributed online learning.</p>
+
+<p>Workers:</p>
+<ul>
+  <li>Process incoming samples</li>
+  <li>Compute gradients</li>
+  <li>Send updates to parameter server</li>
+</ul>
+
+<p>Parameter Server:</p>
+<ul>
+  <li>Aggregate updates from workers</li>
+  <li>Maintain global model state</li>
+  <li>Serve latest model for inference
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self, n_features: int, n_workers: int = 4):
+ # Create parameter server
+ self.param_server = DistributedOnlineLearner.remote(n_features)</p>
+
+<p># Create workers
+ self.workers = [
+ DistributedOnlineLearner.remote(n_features)
+ for _ in range(n_workers)
+ ]</p>
+
+<p>self.n_workers = n_workers</p>
+
+<p>def update_distributed(self, samples: List[Dict]):
+ “””
+ Distribute samples to workers for parallel updates.
+ “””
+ # Distribute samples to workers
+ chunk_size = len(samples) // self.n_workers</p>
+
+<p>futures = []
+ for i, worker in enumerate(self.workers):
+ start = i * chunk_size
+ end = start + chunk_size if i &lt; self.n_workers - 1 else len(samples)
+ worker_samples = samples[start:end]</p>
+
+<p># Each worker computes local updates
+ for sample in worker_samples:
+ futures.append(
+ worker.update.remote(sample[‘features’], sample[‘label’])
+ )</p>
+
+<p># Wait for all updates
+ ray.get(futures)</p>
+
+<p># Sync workers with parameter server (simplified)
+ # In production: use all-reduce or async parameter server
+``</p>
 
 <h3 id="model-update-strategies">Model Update Strategies</h3>
 
-<p><strong>1. Single-sample updates (pure online):</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
-    <span class="n">model</span><span class="p">.</span><span class="nf">update</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="sh">'</span><span class="s">features</span><span class="sh">'</span><span class="p">],</span> <span class="n">sample</span><span class="p">[</span><span class="sh">'</span><span class="s">label</span><span class="sh">'</span><span class="p">])</span>
-</code></pre></div></div>
+<p><strong>1. Single-sample updates (pure online):</strong>
+<code class="language-plaintext highlighter-rouge">python
+for sample in stream:
+ model.update(sample['features'], sample['label'])
+</code></p>
 <ul>
   <li>Pros: Fastest adaptation</li>
   <li>Cons: Noisy updates, unstable</li>
 </ul>
 
-<p><strong>2. Mini-batch updates:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">batch</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
-    <span class="n">batch</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">batch_size</span><span class="p">:</span>
-        <span class="n">model</span><span class="p">.</span><span class="nf">batch_update</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
-        <span class="n">batch</span> <span class="o">=</span> <span class="p">[]</span>
-</code></pre></div></div>
+<p><strong>2. Mini-batch updates:</strong>
+<code class="language-plaintext highlighter-rouge">python
+batch = []
+for sample in stream:
+ batch.append(sample)
+ if len(batch) &gt;= batch_size:
+ model.batch_update(batch)
+ batch = []
+</code></p>
 <ul>
   <li>Pros: More stable, better GPU utilization</li>
   <li>Cons: Slightly delayed adaptation</li>
 </ul>
 
-<p><strong>3. Timed updates:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">last_update</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-<span class="nb">buffer</span> <span class="o">=</span> <span class="p">[]</span>
+<p><strong>3. Timed updates:</strong>
+``python
+last_update = time.time()
+buffer = []</p>
 
-<span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
-    <span class="nb">buffer</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
-    
-    <span class="k">if</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">last_update</span> <span class="o">&gt;</span> <span class="n">update_interval_sec</span><span class="p">:</span>
-        <span class="n">model</span><span class="p">.</span><span class="nf">batch_update</span><span class="p">(</span><span class="nb">buffer</span><span class="p">)</span>
-        <span class="nb">buffer</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">last_update</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-</code></pre></div></div>
+<p>for sample in stream:
+ buffer.append(sample)</p>
+
+<p>if time.time() - last_update &gt; update_interval_sec:
+ model.batch_update(buffer)
+ buffer = []
+ last_update = time.time()
+``</p>
 <ul>
   <li>Pros: Predictable update schedule</li>
   <li>Cons: Variable batch sizes</li>
@@ -931,197 +959,201 @@
 
 <h2 id="implementation-complete-system">Implementation: Complete System</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">logging</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
-<span class="kn">import</span> <span class="n">time</span>
+<p>``python
+import logging
+from typing import List, Dict, Optional
+import time</p>
 
-<span class="k">class</span> <span class="nc">OnlineLearningSystem</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Complete online learning system.
-    
-    Features:
-    - Streaming data ingestion
-    - Incremental model updates
-    - Drift detection
-    - Model versioning
-    - Inference serving
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">n_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
-        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
-        <span class="n">checkpoint_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10000</span>
-    <span class="p">):</span>
-        <span class="c1"># Core model
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="nc">OnlineLinearModel</span><span class="p">(</span>
-            <span class="n">n_features</span><span class="o">=</span><span class="n">n_features</span><span class="p">,</span>
-            <span class="n">learning_rate</span><span class="o">=</span><span class="n">learning_rate</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Components
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">drift_detector</span> <span class="o">=</span> <span class="nc">DriftDetector</span><span class="p">(</span><span class="n">window_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">version_manager</span> <span class="o">=</span> <span class="nc">ModelVersionManager</span><span class="p">(</span>
-            <span class="n">checkpoint_interval</span><span class="o">=</span><span class="n">checkpoint_interval</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Update buffer
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">update_buffer</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="p">.</span><span class="nf">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
-        
-        <span class="c1"># Metrics
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">total_updates</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">total_predictions</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">drift_events</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Make prediction with current model.
-        
-        Args:
-            features: Input features
-            
-        Returns:
-            Prediction
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">total_predictions</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Queue sample for model update.
-        
-        Args:
-            features: Input features
-            label: True label (from feedback)
-        </span><span class="sh">"""</span>
-        <span class="c1"># Add to buffer
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">update_buffer</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span>
-            <span class="sh">"</span><span class="s">features</span><span class="sh">"</span><span class="p">:</span> <span class="n">features</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">label</span><span class="sh">"</span><span class="p">:</span> <span class="n">label</span>
-        <span class="p">})</span>
-        
-        <span class="c1"># Update model when batch is ready
-</span>        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">update_buffer</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">batch_size</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">_apply_updates</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">_apply_updates</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Apply batched updates to model.</span><span class="sh">"""</span>
-        <span class="n">batch</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">update_buffer</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">update_buffer</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># Apply updates
-</span>        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">update</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="sh">'</span><span class="s">features</span><span class="sh">'</span><span class="p">],</span> <span class="n">sample</span><span class="p">[</span><span class="sh">'</span><span class="s">label</span><span class="sh">'</span><span class="p">])</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">total_updates</span> <span class="o">+=</span> <span class="mi">1</span>
-            
-            <span class="c1"># Update drift detector
-</span>            <span class="n">pred</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="sh">'</span><span class="s">features</span><span class="sh">'</span><span class="p">])</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">drift_detector</span><span class="p">.</span><span class="nf">update</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">sample</span><span class="p">[</span><span class="sh">'</span><span class="s">label</span><span class="sh">'</span><span class="p">])</span>
-        
-        <span class="c1"># Check for drift
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">drift_detector</span><span class="p">.</span><span class="nf">detect_drift</span><span class="p">():</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">warning</span><span class="p">(</span><span class="sh">"</span><span class="s">Concept drift detected!</span><span class="sh">"</span><span class="p">)</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">_handle_drift</span><span class="p">()</span>
-        
-        <span class="c1"># Checkpoint if needed
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">version_manager</span><span class="p">.</span><span class="nf">should_checkpoint</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">total_updates</span><span class="p">):</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">_create_checkpoint</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">_handle_drift</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Handle concept drift.
-        
-        Strategies:
-        1. Increase learning rate temporarily
-        2. Reset model (if severe drift)
-        3. Trigger full retraining
-        4. Alert monitoring system
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">drift_events</span> <span class="o">+=</span> <span class="mi">1</span>
-        
-        <span class="c1"># Simple strategy: reset drift detector baseline
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">drift_detector</span><span class="p">.</span><span class="nf">reset_baseline</span><span class="p">()</span>
-        
-        <span class="c1"># Could also:
-</span>        <span class="c1"># - Increase learning rate
-</span>        <span class="c1"># - Trigger alert/page
-</span>        <span class="c1"># - Request full retrain from batch system
-</span>        
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Handled drift event #</span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">drift_events</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_create_checkpoint</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Create model checkpoint.</span><span class="sh">"""</span>
-        <span class="n">state</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">get_state</span><span class="p">()</span>
-        <span class="n">metrics</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="sh">"</span><span class="s">avg_loss</span><span class="sh">"</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="sh">"</span><span class="s">avg_loss</span><span class="sh">"</span><span class="p">],</span>
-            <span class="sh">"</span><span class="s">total_updates</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">total_updates</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">total_predictions</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">total_predictions</span>
-        <span class="p">}</span>
-        
-        <span class="n">version_id</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">version_manager</span><span class="p">.</span><span class="nf">create_checkpoint</span><span class="p">(</span>
-            <span class="n">model_state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
-            <span class="n">update_count</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">total_updates</span><span class="p">,</span>
-            <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span>
-        <span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Created checkpoint: </span><span class="si">{</span><span class="n">version_id</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">rollback</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">version_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Rollback to previous model version.</span><span class="sh">"""</span>
-        <span class="n">state</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">version_manager</span><span class="p">.</span><span class="nf">rollback</span><span class="p">(</span><span class="n">version_id</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">state</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">set_state</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Rolled back to version </span><span class="si">{</span><span class="n">version_id</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">error</span><span class="p">(</span><span class="sh">"</span><span class="s">Rollback failed</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">get_metrics</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Get system metrics.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">"</span><span class="s">total_updates</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">total_updates</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">total_predictions</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">total_predictions</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">drift_events</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">drift_events</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">current_version</span><span class="sh">"</span><span class="p">:</span> <span class="p">(</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">version_manager</span><span class="p">.</span><span class="n">current_version</span><span class="p">.</span><span class="n">version_id</span>
-                <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">version_manager</span><span class="p">.</span><span class="n">current_version</span>
-                <span class="k">else</span> <span class="bp">None</span>
-            <span class="p">),</span>
-            <span class="sh">"</span><span class="s">model_performance</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">get_state</span><span class="p">()[</span><span class="sh">"</span><span class="s">avg_loss</span><span class="sh">"</span><span class="p">]</span>
-        <span class="p">}</span>
+<p>class OnlineLearningSystem:
+ “””
+ Complete online learning system.</p>
 
+<p>Features:</p>
+<ul>
+  <li>Streaming data ingestion</li>
+  <li>Incremental model updates</li>
+  <li>Drift detection</li>
+  <li>Model versioning</li>
+  <li>Inference serving
+ “””</li>
+</ul>
 
-<span class="c1"># Example usage
-</span><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="sh">"</span><span class="s">__main__</span><span class="sh">"</span><span class="p">:</span>
-    <span class="n">logging</span><span class="p">.</span><span class="nf">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="p">.</span><span class="n">INFO</span><span class="p">)</span>
-    
-    <span class="c1"># Create system
-</span>    <span class="n">system</span> <span class="o">=</span> <span class="nc">OnlineLearningSystem</span><span class="p">(</span>
-        <span class="n">n_features</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-        <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
-        <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span>
-    <span class="p">)</span>
-    
-    <span class="c1"># Simulate streaming data
-</span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
-        <span class="c1"># Generate sample
-</span>        <span class="n">features</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-        <span class="n">label</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">dot</span><span class="p">([</span><span class="mf">0.5</span><span class="p">]</span> <span class="o">*</span> <span class="mi">10</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randn</span><span class="p">()</span> <span class="o">*</span> <span class="mf">0.1</span>
-        
-        <span class="c1"># Make prediction
-</span>        <span class="n">pred</span> <span class="o">=</span> <span class="n">system</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-        
-        <span class="c1"># Update model (with delay, simulating feedback loop)
-</span>        <span class="n">system</span><span class="p">.</span><span class="nf">update</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
-    
-    <span class="c1"># Get metrics
-</span>    <span class="n">metrics</span> <span class="o">=</span> <span class="n">system</span><span class="p">.</span><span class="nf">get_metrics</span><span class="p">()</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">System metrics: </span><span class="si">{</span><span class="n">metrics</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def <strong>init</strong>(
+ self,
+ n_features: int,
+ learning_rate: float = 0.01,
+ batch_size: int = 32,
+ checkpoint_interval: int = 10000
+ ):
+ # Core model
+ self.model = OnlineLinearModel(
+ n_features=n_features,
+ learning_rate=learning_rate
+ )</p>
+
+<p># Components
+ self.drift_detector = DriftDetector(window_size=1000)
+ self.version_manager = ModelVersionManager(
+ checkpoint_interval=checkpoint_interval
+ )</p>
+
+<p># Update buffer
+ self.batch_size = batch_size
+ self.update_buffer: List[Dict] = []</p>
+
+<p>self.logger = logging.getLogger(<strong>name</strong>)</p>
+
+<p># Metrics
+ self.total_updates = 0
+ self.total_predictions = 0
+ self.drift_events = 0</p>
+
+<p>def predict(self, features: np.ndarray) -&gt; float:
+ “””
+ Make prediction with current model.</p>
+
+<p>Args:
+ features: Input features</p>
+
+<p>Returns:
+ Prediction
+ “””
+ self.total_predictions += 1
+ return self.model.predict(features)</p>
+
+<p>def update(self, features: np.ndarray, label: float):
+ “””
+ Queue sample for model update.</p>
+
+<p>Args:
+ features: Input features
+ label: True label (from feedback)
+ “””
+ # Add to buffer
+ self.update_buffer.append({
+ “features”: features,
+ “label”: label
+ })</p>
+
+<p># Update model when batch is ready
+ if len(self.update_buffer) &gt;= self.batch_size:
+ self._apply_updates()</p>
+
+<p>def _apply_updates(self):
+ “"”Apply batched updates to model.”””
+ batch = self.update_buffer
+ self.update_buffer = []</p>
+
+<p># Apply updates
+ for sample in batch:
+ self.model.update(sample[‘features’], sample[‘label’])
+ self.total_updates += 1</p>
+
+<p># Update drift detector
+ pred = self.model.predict(sample[‘features’])
+ self.drift_detector.update(pred, sample[‘label’])</p>
+
+<p># Check for drift
+ if self.drift_detector.detect_drift():
+ self.logger.warning(“Concept drift detected!”)
+ self._handle_drift()</p>
+
+<p># Checkpoint if needed
+ if self.version_manager.should_checkpoint(self.total_updates):
+ self._create_checkpoint()</p>
+
+<p>def _handle_drift(self):
+ “””
+ Handle concept drift.</p>
+
+<p>Strategies:</p>
+<ol>
+  <li>Increase learning rate temporarily</li>
+  <li>Reset model (if severe drift)</li>
+  <li>Trigger full retraining</li>
+  <li>Alert monitoring system
+ “””
+ self.drift_events += 1</li>
+</ol>
+
+<p># Simple strategy: reset drift detector baseline
+ self.drift_detector.reset_baseline()</p>
+
+<p># Could also:
+ # - Increase learning rate
+ # - Trigger alert/page
+ # - Request full retrain from batch system</p>
+
+<p>self.logger.info(f”Handled drift event #{self.drift_events}”)</p>
+
+<p>def _create_checkpoint(self):
+ “"”Create model checkpoint.”””
+ state = self.model.get_state()
+ metrics = {
+ “avg_loss”: state[“avg_loss”],
+ “total_updates”: self.total_updates,
+ “total_predictions”: self.total_predictions
+ }</p>
+
+<p>version_id = self.version_manager.create_checkpoint(
+ model_state=state,
+ update_count=self.total_updates,
+ metrics=metrics
+ )</p>
+
+<p>self.logger.info(f”Created checkpoint: {version_id}”)</p>
+
+<p>def rollback(self, version_id: Optional[str] = None):
+ “"”Rollback to previous model version.”””
+ state = self.version_manager.rollback(version_id)</p>
+
+<p>if state:
+ self.model.set_state(state)
+ self.logger.info(f”Rolled back to version {version_id}”)
+ else:
+ self.logger.error(“Rollback failed”)</p>
+
+<p>def get_metrics(self) -&gt; Dict:
+ “"”Get system metrics.”””
+ return {
+ “total_updates”: self.total_updates,
+ “total_predictions”: self.total_predictions,
+ “drift_events”: self.drift_events,
+ “current_version”: (
+ self.version_manager.current_version.version_id
+ if self.version_manager.current_version
+ else None
+ ),
+ “model_performance”: self.model.get_state()[“avg_loss”]
+ }</p>
+
+<h1 id="example-usage">Example usage</h1>
+<p>if <strong>name</strong> == “<strong>main</strong>”:
+ logging.basicConfig(level=logging.INFO)</p>
+
+<p># Create system
+ system = OnlineLearningSystem(
+ n_features=10,
+ learning_rate=0.01,
+ batch_size=32
+ )</p>
+
+<p># Simulate streaming data
+ for i in range(1000):
+ # Generate sample
+ features = np.random.randn(10)
+ label = np.dot([0.5] * 10, features) + np.random.randn() * 0.1</p>
+
+<p># Make prediction
+ pred = system.predict(features)</p>
+
+<p># Update model (with delay, simulating feedback loop)
+ system.update(features, label)</p>
+
+<p># Get metrics
+ metrics = system.get_metrics()
+ print(f”\nSystem metrics: {metrics}”)
+``</p>
 
 <h2 id="monitoring--metrics">Monitoring &amp; Metrics</h2>
 
@@ -1293,8 +1325,8 @@
     <tr>
       <td><strong>Total</strong></td>
       <td> </td>
-      <td><strong>$2,253/month</strong></td>
-      <td><strong>$0.07 per 1K updates</strong></td>
+      <td><strong><code class="language-plaintext highlighter-rouge">2,253/month** | **</code>0.07 per 1K updates</strong></td>
+      <td> </td>
     </tr>
   </tbody>
 </table>
@@ -1331,7 +1363,7 @@
 
 <h3 id="connection-to-thematic-link-greedy-decisions-and-adaptive-strategies">Connection to Thematic Link: Greedy Decisions and Adaptive Strategies</h3>
 
-<p>All three Day 20 topics use <strong>greedy, adaptive optimization</strong>:</p>
+<p>All three topics use <strong>greedy, adaptive optimization</strong>:</p>
 
 <p><strong>DSA (Jump Game):</strong></p>
 <ul>

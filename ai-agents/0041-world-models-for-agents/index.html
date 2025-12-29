@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="World Models for Agents">
     <meta itemprop="description" content="“Agents become reliable when they carry an internal model of reality: state, uncertainty, and predictions—not just chat history.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -371,16 +371,17 @@
 
 <p>This is a JSON-like representation:</p>
 
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"user_intent"</span><span class="p">:</span><span class="w"> </span><span class="s2">"refund_status"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"order_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"…"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"facts"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nl">"k"</span><span class="p">:</span><span class="w"> </span><span class="s2">"status"</span><span class="p">,</span><span class="w"> </span><span class="nl">"v"</span><span class="p">:</span><span class="w"> </span><span class="s2">"shipped"</span><span class="p">,</span><span class="w"> </span><span class="nl">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"api:get_order"</span><span class="p">}],</span><span class="w">
-  </span><span class="nl">"unknowns"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"delivery_date"</span><span class="p">],</span><span class="w">
-  </span><span class="nl">"budget"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"steps_left"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">json
+{
+ "user_intent": "refund_status",
+ "order_id": "…",
+ "facts": [{"k": "status", "v": "shipped", "source": "api:get_order"}],
+ "unknowns": ["delivery_date"],
+ "budget": {"steps_left": 5}
+}
+</code></p>
 
-<p><strong>Pros:</strong> debuggable, easy to validate, easy to persist<br />
+<p><strong>Pros:</strong> debuggable, easy to validate, easy to persist 
 <strong>Cons:</strong> manual schema design</p>
 
 <p>If you’re building an agent product, start here.</p>
@@ -389,7 +390,7 @@
 
 <p>Instead of explicit fields, you maintain a latent vector representation of the environment and retrieve relevant memories via similarity search.</p>
 
-<p><strong>Pros:</strong> flexible, handles messy unstructured info<br />
+<p><strong>Pros:</strong> flexible, handles messy unstructured info 
 <strong>Cons:</strong> harder to debug, can hide contradictions</p>
 
 <p>This is useful for long-term memory retrieval, but it’s rarely sufficient alone for high-stakes action selection.</p>
@@ -398,7 +399,7 @@
 
 <p>This is a model that can predict “next state” given current state and action.</p>
 
-<p><strong>Pros:</strong> supports planning via rollouts<br />
+<p><strong>Pros:</strong> supports planning via rollouts 
 <strong>Cons:</strong> expensive, hard to train well, can be wrong in subtle ways</p>
 
 <p>This is common in robotics and reinforcement learning, and increasingly appears in digital environments (e.g., “simulate UI transitions”).</p>
@@ -410,21 +411,12 @@
 <p>In real systems, you rarely pick exactly one representation. A common hybrid setup is:</p>
 
 <ul>
-  <li><strong>Structured state</strong> for critical fields and decisions:
-    <ul>
-      <li>budgets, permissions, tool status, user identifiers</li>
-    </ul>
-  </li>
-  <li><strong>Retrieval memory</strong> (embeddings) for large text corpora:
-    <ul>
-      <li>policies, documentation, prior notes</li>
-    </ul>
-  </li>
-  <li><strong>Lightweight predictors</strong> for “next-step expectations”:
-    <ul>
-      <li>rate limit backoff, UI transition guesses, tool success probability</li>
-    </ul>
-  </li>
+  <li><strong>Structured state</strong> for critical fields and decisions:</li>
+  <li>budgets, permissions, tool status, user identifiers</li>
+  <li><strong>Retrieval memory</strong> (embeddings) for large text corpora:</li>
+  <li>policies, documentation, prior notes</li>
+  <li><strong>Lightweight predictors</strong> for “next-step expectations”:</li>
+  <li>rate limit backoff, UI transition guesses, tool success probability</li>
 </ul>
 
 <p>Why hybrid works:</p>
@@ -546,23 +538,21 @@
 
 <ul>
   <li>every key fact has a <code class="language-plaintext highlighter-rouge">confidence</code> and a <code class="language-plaintext highlighter-rouge">source</code></li>
-  <li>decisions have thresholds:
-    <ul>
-      <li>“If confidence &lt; 0.7, ask the user”</li>
-      <li>“If confidence &lt; 0.9 and action is write-risky, require approval”</li>
-    </ul>
-  </li>
+  <li>decisions have thresholds:</li>
+  <li>“If confidence &lt; 0.7, ask the user”</li>
+  <li>“If confidence &lt; 0.9 and action is write-risky, require approval”</li>
 </ul>
 
 <p>Example:</p>
 
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"facts"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="nl">"account_balance"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="mf">120.50</span><span class="p">,</span><span class="w"> </span><span class="nl">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"api:get_balance"</span><span class="p">,</span><span class="w"> </span><span class="nl">"confidence"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.95</span><span class="p">},</span><span class="w">
-    </span><span class="nl">"currency"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"USD"</span><span class="p">,</span><span class="w"> </span><span class="nl">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ocr:screenshot"</span><span class="p">,</span><span class="w"> </span><span class="nl">"confidence"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.60</span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">json
+{
+ "facts": {
+ "account_balance": {"value": 120.50, "source": "api:get_balance", "confidence": 0.95},
+ "currency": {"value": "USD", "source": "ocr:screenshot", "confidence": 0.60}
+ }
+}
+</code></p>
 
 <p>Here, the agent can proceed with balance but should re-verify currency before charging or displaying a final statement.</p>
 
@@ -624,10 +614,10 @@
 <p>World models become most powerful when combined with a planning architecture:</p>
 
 <ul>
-  <li><strong>Autonomous loop:</strong> belief update → plan → act → update<br />
-See <a href="/ai-agents/0038-autonomous-agent-architectures/">Autonomous Agent Architectures</a>.</li>
-  <li><strong>Hierarchical planning:</strong> plan at multiple levels using state and budgets<br />
-See <a href="/ai-agents/0040-hierarchical-planning/">Hierarchical Planning</a>.</li>
+  <li><strong>Autonomous loop:</strong> belief update → plan → act → update 
+ See <a href="/ai-agents/0038-autonomous-agent-architectures/">Autonomous Agent Architectures</a>.</li>
+  <li><strong>Hierarchical planning:</strong> plan at multiple levels using state and budgets 
+ See <a href="/ai-agents/0040-hierarchical-planning/">Hierarchical Planning</a>.</li>
 </ul>
 
 <p>The key connection is:</p>
@@ -643,27 +633,15 @@ See <a href="/ai-agents/0040-hierarchical-planning/">Hierarchical Planning</a>.<
 <p>Hierarchical planning works best when each layer reads a different slice of the world model:</p>
 
 <ul>
-  <li><strong>High-level planner</strong> needs:
-    <ul>
-      <li>objective, constraints, budgets, and major unknowns</li>
-    </ul>
-  </li>
-  <li><strong>Step planner</strong> needs:
-    <ul>
-      <li>current environment state (tool status, auth, rate limit)</li>
-      <li>evidence gaps for the current chunk</li>
-    </ul>
-  </li>
-  <li><strong>Executor</strong> needs:
-    <ul>
-      <li>the next action and strict tool constraints</li>
-    </ul>
-  </li>
-  <li><strong>Verifier</strong> needs:
-    <ul>
-      <li>evidence, conflicts, and checks to run</li>
-    </ul>
-  </li>
+  <li><strong>High-level planner</strong> needs:</li>
+  <li>objective, constraints, budgets, and major unknowns</li>
+  <li><strong>Step planner</strong> needs:</li>
+  <li>current environment state (tool status, auth, rate limit)</li>
+  <li>evidence gaps for the current chunk</li>
+  <li><strong>Executor</strong> needs:</li>
+  <li>the next action and strict tool constraints</li>
+  <li><strong>Verifier</strong> needs:</li>
+  <li>evidence, conflicts, and checks to run</li>
 </ul>
 
 <p>This is a performance and reliability win:</p>
@@ -679,33 +657,34 @@ See <a href="/ai-agents/0040-hierarchical-planning/">Hierarchical Planning</a>.<
 
 <h2 id="9-implementation-sketch-a-minimal-world-model-in-code-pseudocode">9. Implementation sketch: a minimal world model in code (pseudocode)</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">update_world_model</span><span class="p">(</span><span class="n">world</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">observation</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-    <span class="c1"># observation could come from a tool call: {type, source, payload, timestamp}
-</span>    <span class="n">world</span><span class="p">[</span><span class="sh">"</span><span class="s">observations</span><span class="sh">"</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span>
+<p>``python
+def update_world_model(world: dict, observation: dict) -&gt; dict:
+ # observation could come from a tool call: {type, source, payload, timestamp}
+ world[“observations”].append(observation)</p>
 
-    <span class="c1"># Example: update facts if observation is strong
-</span>    <span class="k">if</span> <span class="n">observation</span><span class="p">[</span><span class="sh">"</span><span class="s">type</span><span class="sh">"</span><span class="p">]</span> <span class="o">==</span> <span class="sh">"</span><span class="s">api_result</span><span class="sh">"</span> <span class="ow">and</span> <span class="n">observation</span><span class="p">[</span><span class="sh">"</span><span class="s">payload</span><span class="sh">"</span><span class="p">].</span><span class="nf">get</span><span class="p">(</span><span class="sh">"</span><span class="s">status</span><span class="sh">"</span><span class="p">):</span>
-        <span class="n">world</span><span class="p">[</span><span class="sh">"</span><span class="s">facts</span><span class="sh">"</span><span class="p">][</span><span class="sh">"</span><span class="s">status</span><span class="sh">"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="sh">"</span><span class="s">value</span><span class="sh">"</span><span class="p">:</span> <span class="n">observation</span><span class="p">[</span><span class="sh">"</span><span class="s">payload</span><span class="sh">"</span><span class="p">][</span><span class="sh">"</span><span class="s">status</span><span class="sh">"</span><span class="p">],</span>
-            <span class="sh">"</span><span class="s">source</span><span class="sh">"</span><span class="p">:</span> <span class="n">observation</span><span class="p">[</span><span class="sh">"</span><span class="s">source</span><span class="sh">"</span><span class="p">],</span>
-            <span class="sh">"</span><span class="s">ts</span><span class="sh">"</span><span class="p">:</span> <span class="n">observation</span><span class="p">[</span><span class="sh">"</span><span class="s">timestamp</span><span class="sh">"</span><span class="p">],</span>
-            <span class="sh">"</span><span class="s">confidence</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.9</span>
-        <span class="p">}</span>
+<p># Example: update facts if observation is strong
+ if observation[“type”] == “api_result” and observation[“payload”].get(“status”):
+ world[“facts”][“status”] = {
+ “value”: observation[“payload”][“status”],
+ “source”: observation[“source”],
+ “ts”: observation[“timestamp”],
+ “confidence”: 0.9
+ }</p>
 
-    <span class="c1"># Example: track unknowns / conflicts
-</span>    <span class="n">world</span> <span class="o">=</span> <span class="nf">recompute_unknowns</span><span class="p">(</span><span class="n">world</span><span class="p">)</span>
-    <span class="n">world</span> <span class="o">=</span> <span class="nf">detect_conflicts</span><span class="p">(</span><span class="n">world</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">world</span>
+<p># Example: track unknowns / conflicts
+ world = recompute_unknowns(world)
+ world = detect_conflicts(world)
+ return world</p>
 
-<span class="k">def</span> <span class="nf">decide_next_action</span><span class="p">(</span><span class="n">world</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">world</span><span class="p">[</span><span class="sh">"</span><span class="s">unknowns</span><span class="sh">"</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="p">{</span><span class="sh">"</span><span class="s">type</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">ASK_USER</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">question</span><span class="sh">"</span><span class="p">:</span> <span class="sa">f</span><span class="sh">"</span><span class="s">I need: </span><span class="si">{</span><span class="n">world</span><span class="p">[</span><span class="sh">'</span><span class="s">unknowns</span><span class="sh">'</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">}</span>
+<p>def decide_next_action(world: dict, constraints: list[str]) -&gt; dict:
+ if world[“unknowns”]:
+ return {“type”: “ASK_USER”, “question”: f”I need: {world[‘unknowns’][0]}”}</p>
 
-    <span class="k">if</span> <span class="n">world</span><span class="p">[</span><span class="sh">"</span><span class="s">facts</span><span class="sh">"</span><span class="p">].</span><span class="nf">get</span><span class="p">(</span><span class="sh">"</span><span class="s">auth_state</span><span class="sh">"</span><span class="p">,</span> <span class="p">{}).</span><span class="nf">get</span><span class="p">(</span><span class="sh">"</span><span class="s">value</span><span class="sh">"</span><span class="p">)</span> <span class="o">==</span> <span class="sh">"</span><span class="s">unauthenticated</span><span class="sh">"</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{</span><span class="sh">"</span><span class="s">type</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">TOOL_CALL</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">tool</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">login</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">args</span><span class="sh">"</span><span class="p">:</span> <span class="p">{}}</span>
+<p>if world[“facts”].get(“auth_state”, {}).get(“value”) == “unauthenticated”:
+ return {“type”: “TOOL_CALL”, “tool”: “login”, “args”: {}}</p>
 
-    <span class="k">return</span> <span class="p">{</span><span class="sh">"</span><span class="s">type</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">STOP</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">status</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">SUCCESS</span><span class="sh">"</span><span class="p">}</span>
-</code></pre></div></div>
+<p>return {“type”: “STOP”, “status”: “SUCCESS”}
+``</p>
 
 <p>The point is not this exact code—it’s the separation:</p>
 
@@ -733,15 +712,16 @@ See <a href="/ai-agents/0040-hierarchical-planning/">Hierarchical Planning</a>.<
 
 <p>Conceptual schema:</p>
 
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"observations"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
-  </span><span class="nl">"facts"</span><span class="p">:</span><span class="w"> </span><span class="p">{},</span><span class="w">
-  </span><span class="nl">"unknowns"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
-  </span><span class="nl">"conflicts"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">
-  </span><span class="nl">"budget"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"max_steps"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="nl">"steps_used"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">},</span><span class="w">
-  </span><span class="nl">"permissions"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"allow_writes"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nl">"allowed_domains"</span><span class="p">:</span><span class="w"> </span><span class="p">[]}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">json
+{
+ "observations": [],
+ "facts": {},
+ "unknowns": [],
+ "conflicts": [],
+ "budget": {"max_steps": 10, "steps_used": 0},
+ "permissions": {"allow_writes": false, "allowed_domains": []}
+}
+</code></p>
 
 <p>This is enough to build useful behavior. You can always extend later.</p>
 
@@ -799,12 +779,9 @@ See <a href="/ai-agents/0040-hierarchical-planning/">Hierarchical Planning</a>.<
 <ul>
   <li>Prefer sources with recent updates (when the question is time-sensitive).</li>
   <li>Downgrade or reject claims without quotes.</li>
-  <li>If conflicts exist, either:
-    <ul>
-      <li>fetch a primary source, or</li>
-      <li>surface disagreement explicitly instead of guessing.</li>
-    </ul>
-  </li>
+  <li>If conflicts exist, either:</li>
+  <li>fetch a primary source, or</li>
+  <li>surface disagreement explicitly instead of guessing.</li>
 </ul>
 
 <p>This turns browsing from “summarize search results” into “evidence-driven reasoning.”</p>
@@ -895,13 +872,10 @@ See <a href="/ai-agents/0040-hierarchical-planning/">Hierarchical Planning</a>.<
 
 <ul>
   <li>Define a JSON schema for <code class="language-plaintext highlighter-rouge">facts</code>, <code class="language-plaintext highlighter-rouge">unknowns</code>, <code class="language-plaintext highlighter-rouge">conflicts</code>, and <code class="language-plaintext highlighter-rouge">budget</code>.</li>
-  <li>Run 20 tasks and log:
-    <ul>
-      <li>repeated tool calls</li>
-      <li>number of clarifying questions</li>
-      <li>time-to-success</li>
-    </ul>
-  </li>
+  <li>Run 20 tasks and log:</li>
+  <li>repeated tool calls</li>
+  <li>number of clarifying questions</li>
+  <li>time-to-success</li>
 </ul>
 
 <p>Then add one improvement (conflict detection or a backoff state) and measure if metrics improve.</p>

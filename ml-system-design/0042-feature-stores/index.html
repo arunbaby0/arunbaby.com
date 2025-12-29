@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Feature Stores">
     <meta itemprop="description" content="“The centralized truth for machine learning features.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -287,30 +287,31 @@
 
 <h2 id="3-feature-store-architecture">3. Feature Store Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                    ┌─────────────────────┐
-                    │   Raw Data Sources  │
-                    │ (Kafka, S3, DBs)    │
-                    └─────────┬───────────┘
-                              │
-                    ┌─────────▼───────────┐
-                    │ Feature Transformation│
-                    │   (Spark, Flink)    │
-                    └─────────┬───────────┘
-                              │
-         ┌────────────────────┴────────────────────┐
-         │                                         │
-┌────────▼────────┐                      ┌────────▼────────┐
-│  Offline Store  │                      │  Online Store   │
-│  (BigQuery,     │                      │  (Redis,        │
-│   Snowflake)    │                      │   DynamoDB)     │
-└────────┬────────┘                      └────────┬────────┘
-         │                                         │
-         │                                         │
-┌────────▼────────┐                      ┌────────▼────────┐
-│ Training Pipeline│                      │ Serving Pipeline│
-│   (Batch)        │                      │   (Real-time)   │
-└─────────────────┘                      └─────────────────┘
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+ ┌─────────────────────┐
+ │ Raw Data Sources │
+ │ (Kafka, S3, DBs) │
+ └─────────┬───────────┘
+ │
+ ┌─────────▼───────────┐
+ │ Feature Transformation│
+ │ (Spark, Flink) │
+ └─────────┬───────────┘
+ │
+ ┌────────────────────┴────────────────────┐
+ │ │
+┌────────▼────────┐ ┌────────▼────────┐
+│ Offline Store │ │ Online Store │
+│ (BigQuery, │ │ (Redis, │
+│ Snowflake) │ │ DynamoDB) │
+└────────┬────────┘ └────────┬────────┘
+ │ │
+ │ │
+┌────────▼────────┐ ┌────────▼────────┐
+│ Training Pipeline│ │ Serving Pipeline│
+│ (Batch) │ │ (Real-time) │
+└─────────────────┘ └─────────────────┘
+</code></p>
 
 <h2 id="4-offline-vs-online-features">4. Offline vs Online Features</h2>
 
@@ -373,14 +374,15 @@
   <li>When creating training data, join on timestamp (point-in-time join).</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Point-in-time join
-</span><span class="k">def</span> <span class="nf">get_features_at_time</span><span class="p">(</span><span class="n">entity_id</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
-    <span class="c1"># Find the latest feature value before the timestamp
-</span>    <span class="k">return</span> <span class="n">feature_store</span><span class="p">.</span><span class="nf">query</span><span class="p">(</span>
-        <span class="n">entity_id</span><span class="o">=</span><span class="n">entity_id</span><span class="p">,</span>
-        <span class="n">timestamp_lte</span><span class="o">=</span><span class="n">timestamp</span>  <span class="c1"># Less than or equal
-</span>    <span class="p">).</span><span class="nf">order_by</span><span class="p">(</span><span class="sh">'</span><span class="s">timestamp</span><span class="sh">'</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="bp">True</span><span class="p">).</span><span class="nf">first</span><span class="p">()</span>
-</code></pre></div></div>
+<p>``python</p>
+<h1 id="point-in-time-join">Point-in-time join</h1>
+<p>def get_features_at_time(entity_id, timestamp):
+ # Find the latest feature value before the timestamp
+ return feature_store.query(
+ entity_id=entity_id,
+ timestamp_lte=timestamp # Less than or equal
+ ).order_by(‘timestamp’, desc=True).first()
+``</p>
 
 <h2 id="7-feature-store-components">7. Feature Store Components</h2>
 
@@ -418,15 +420,16 @@
   <li><strong>Delta Lake (Databricks)</strong></li>
 </ul>
 
-<p><strong>Schema:</strong></p>
-<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">user_features</span> <span class="p">(</span>
-    <span class="n">user_id</span> <span class="n">STRING</span><span class="p">,</span>
-    <span class="n">feature_timestamp</span> <span class="nb">TIMESTAMP</span><span class="p">,</span>
-    <span class="n">total_purchases_30d</span> <span class="nb">FLOAT</span><span class="p">,</span>
-    <span class="n">avg_order_value</span> <span class="nb">FLOAT</span><span class="p">,</span>
-    <span class="n">days_since_last_login</span> <span class="nb">INT</span>
-<span class="p">);</span>
-</code></pre></div></div>
+<p><strong>Schema:</strong>
+<code class="language-plaintext highlighter-rouge">sql
+CREATE TABLE user_features (
+ user_id STRING,
+ feature_timestamp TIMESTAMP,
+ total_purchases_30d FLOAT,
+ avg_order_value FLOAT,
+ days_since_last_login INT
+);
+</code></p>
 
 <h3 id="73-online-store">7.3. Online Store</h3>
 
@@ -447,11 +450,12 @@
   <li><strong>Availability:</strong> 99.99% uptime.</li>
 </ul>
 
-<p><strong>Schema (Redis):</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Key: user:12345:features
+<p><strong>Schema (Redis):</strong>
+<code class="language-plaintext highlighter-rouge">
+Key: user:12345:features
 Value: {"total_purchases_30d": 1500.0, "avg_order_value": 75.0}
 TTL: 24 hours
-</code></pre></div></div>
+</code></p>
 
 <h3 id="74-feature-transformation-engine">7.4. Feature Transformation Engine</h3>
 
@@ -465,18 +469,19 @@ TTL: 24 hours
   <li><strong>Apache Beam</strong></li>
 </ul>
 
-<p><strong>Example (Spark):</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">pyspark.sql</span> <span class="kn">import</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
+<p><strong>Example (Spark):</strong>
+``python
+from pyspark.sql import functions as F</p>
 
-<span class="c1"># Compute total purchases in last 30 days
-</span><span class="n">user_features</span> <span class="o">=</span> <span class="n">orders_df</span> \
-    <span class="p">.</span><span class="nf">filter</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span><span class="sh">"</span><span class="s">order_date</span><span class="sh">"</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">F</span><span class="p">.</span><span class="nf">current_date</span><span class="p">()</span> <span class="o">-</span> <span class="mi">30</span><span class="p">)</span> \
-    <span class="p">.</span><span class="nf">groupBy</span><span class="p">(</span><span class="sh">"</span><span class="s">user_id</span><span class="sh">"</span><span class="p">)</span> \
-    <span class="p">.</span><span class="nf">agg</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="sh">"</span><span class="s">amount</span><span class="sh">"</span><span class="p">).</span><span class="nf">alias</span><span class="p">(</span><span class="sh">"</span><span class="s">total_purchases_30d</span><span class="sh">"</span><span class="p">))</span>
+<h1 id="compute-total-purchases-in-last-30-days">Compute total purchases in last 30 days</h1>
+<p>user_features = orders_df <br />
+ .filter(F.col(“order_date”) &gt;= F.current_date() - 30) <br />
+ .groupBy(“user_id”) <br />
+ .agg(F.sum(“amount”).alias(“total_purchases_30d”))</p>
 
-<span class="c1"># Write to offline store
-</span><span class="n">user_features</span><span class="p">.</span><span class="n">write</span><span class="p">.</span><span class="nf">mode</span><span class="p">(</span><span class="sh">"</span><span class="s">overwrite</span><span class="sh">"</span><span class="p">).</span><span class="nf">saveAsTable</span><span class="p">(</span><span class="sh">"</span><span class="s">user_features</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="write-to-offline-store">Write to offline store</h1>
+<p>user_features.write.mode(“overwrite”).saveAsTable(“user_features”)
+``</p>
 
 <h2 id="8-popular-feature-stores">8. Popular Feature Stores</h2>
 
@@ -489,23 +494,24 @@ TTL: 24 hours
   <li>Integrates with GCP, AWS, local.</li>
 </ul>
 
-<p><strong>Example:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">feast</span> <span class="kn">import</span> <span class="n">FeatureStore</span>
+<p><strong>Example:</strong>
+``python
+from feast import FeatureStore</p>
 
-<span class="n">store</span> <span class="o">=</span> <span class="nc">FeatureStore</span><span class="p">(</span><span class="n">repo_path</span><span class="o">=</span><span class="sh">"</span><span class="s">.</span><span class="sh">"</span><span class="p">)</span>
+<p>store = FeatureStore(repo_path=”.”)</p>
 
-<span class="c1"># Get training data
-</span><span class="n">training_df</span> <span class="o">=</span> <span class="n">store</span><span class="p">.</span><span class="nf">get_historical_features</span><span class="p">(</span>
-    <span class="n">entity_df</span><span class="o">=</span><span class="n">entity_df</span><span class="p">,</span>  <span class="c1"># DataFrame with entity IDs and timestamps
-</span>    <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="sh">"</span><span class="s">user_features:total_purchases_30d</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">user_features:avg_order_value</span><span class="sh">"</span><span class="p">]</span>
-<span class="p">).</span><span class="nf">to_df</span><span class="p">()</span>
+<h1 id="get-training-data">Get training data</h1>
+<p>training_df = store.get_historical_features(
+ entity_df=entity_df, # DataFrame with entity IDs and timestamps
+ features=[“user_features:total_purchases_30d”, “user_features:avg_order_value”]
+).to_df()</p>
 
-<span class="c1"># Get online features
-</span><span class="n">feature_vector</span> <span class="o">=</span> <span class="n">store</span><span class="p">.</span><span class="nf">get_online_features</span><span class="p">(</span>
-    <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="sh">"</span><span class="s">user_features:total_purchases_30d</span><span class="sh">"</span><span class="p">],</span>
-    <span class="n">entity_rows</span><span class="o">=</span><span class="p">[{</span><span class="sh">"</span><span class="s">user_id</span><span class="sh">"</span><span class="p">:</span> <span class="mi">12345</span><span class="p">}]</span>
-<span class="p">).</span><span class="nf">to_dict</span><span class="p">()</span>
-</code></pre></div></div>
+<h1 id="get-online-features">Get online features</h1>
+<p>feature_vector = store.get_online_features(
+ features=[“user_features:total_purchases_30d”],
+ entity_rows=[{“user_id”: 12345}]
+).to_dict()
+``</p>
 
 <h3 id="82-tecton">8.2. Tecton</h3>
 
@@ -602,15 +608,16 @@ TTL: 24 hours
   <li>Write to online store.</li>
 </ol>
 
-<p><strong>Example (Flink):</strong></p>
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">DataStream</span><span class="o">&lt;</span><span class="nc">TripEvent</span><span class="o">&gt;</span> <span class="n">trips</span> <span class="o">=</span> <span class="o">...;</span>
+<p><strong>Example (Flink):</strong>
+``java
+DataStream<TripEvent> trips = ...;</TripEvent></p>
 
-<span class="n">trips</span>
-    <span class="o">.</span><span class="na">keyBy</span><span class="o">(</span><span class="nl">TripEvent:</span><span class="o">:</span><span class="n">getDriverId</span><span class="o">)</span>
-    <span class="o">.</span><span class="na">window</span><span class="o">(</span><span class="nc">SlidingEventTimeWindows</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="nc">Time</span><span class="o">.</span><span class="na">minutes</span><span class="o">(</span><span class="mi">5</span><span class="o">),</span> <span class="nc">Time</span><span class="o">.</span><span class="na">minutes</span><span class="o">(</span><span class="mi">1</span><span class="o">)))</span>
-    <span class="o">.</span><span class="na">aggregate</span><span class="o">(</span><span class="k">new</span> <span class="nc">TripCountAggregator</span><span class="o">())</span>
-    <span class="o">.</span><span class="na">addSink</span><span class="o">(</span><span class="k">new</span> <span class="nc">RedisSink</span><span class="o">(...));</span>
-</code></pre></div></div>
+<p>trips
+ .keyBy(TripEvent::getDriverId)
+ .window(SlidingEventTimeWindows.of(Time.minutes(5), Time.minutes(1)))
+ .aggregate(new TripCountAggregator())
+ .addSink(new RedisSink(…));
+``</p>
 
 <h2 id="11-feature-freshness">11. Feature Freshness</h2>
 
@@ -679,13 +686,14 @@ TTL: 24 hours
   <li><strong>Deprecation Policy:</strong> Notify users before removing features.</li>
 </ul>
 
-<p><strong>Example:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Feature definition with version
-</span><span class="nd">@feature</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">user_total_purchases</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span>
-    <span class="c1"># V2: Include refunds
-</span>    <span class="k">return</span> <span class="n">total_purchases</span> <span class="o">-</span> <span class="n">refunds</span>
-</code></pre></div></div>
+<p><strong>Example:</strong>
+``python</p>
+<h1 id="feature-definition-with-version">Feature definition with version</h1>
+<p>@feature(version=2)
+def user_total_purchases(user_id):
+ # V2: Include refunds
+ return total_purchases - refunds
+``</p>
 
 <h2 id="16-deep-dive-feature-lineage">16. Deep Dive: Feature Lineage</h2>
 
@@ -771,22 +779,23 @@ TTL: 24 hours
   <li><strong>Caching:</strong> Cache frequently accessed embeddings.</li>
 </ul>
 
-<p><strong>Example (Storing User Embeddings):</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Feast feature definition for embeddings
-</span><span class="kn">from</span> <span class="n">feast</span> <span class="kn">import</span> <span class="n">Entity</span><span class="p">,</span> <span class="n">Feature</span><span class="p">,</span> <span class="n">FeatureView</span><span class="p">,</span> <span class="n">ValueType</span>
+<p><strong>Example (Storing User Embeddings):</strong>
+``python</p>
+<h1 id="feast-feature-definition-for-embeddings">Feast feature definition for embeddings</h1>
+<p>from feast import Entity, Feature, FeatureView, ValueType</p>
 
-<span class="n">user</span> <span class="o">=</span> <span class="nc">Entity</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sh">"</span><span class="s">user_id</span><span class="sh">"</span><span class="p">,</span> <span class="n">value_type</span><span class="o">=</span><span class="n">ValueType</span><span class="p">.</span><span class="n">INT64</span><span class="p">)</span>
+<p>user = Entity(name=”user_id”, value_type=ValueType.INT64)</p>
 
-<span class="n">user_embedding_view</span> <span class="o">=</span> <span class="nc">FeatureView</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="sh">"</span><span class="s">user_embeddings</span><span class="sh">"</span><span class="p">,</span>
-    <span class="n">entities</span><span class="o">=</span><span class="p">[</span><span class="sh">"</span><span class="s">user_id</span><span class="sh">"</span><span class="p">],</span>
-    <span class="n">features</span><span class="o">=</span><span class="p">[</span>
-        <span class="nc">Feature</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sh">"</span><span class="s">embedding</span><span class="sh">"</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ValueType</span><span class="p">.</span><span class="n">FLOAT_LIST</span><span class="p">)</span>
-    <span class="p">],</span>
-    <span class="n">online</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="n">batch_source</span><span class="o">=</span><span class="n">user_embedding_source</span>
-<span class="p">)</span>
-</code></pre></div></div>
+<p>user_embedding_view = FeatureView(
+ name=”user_embeddings”,
+ entities=[“user_id”],
+ features=[
+ Feature(name=”embedding”, dtype=ValueType.FLOAT_LIST)
+ ],
+ online=True,
+ batch_source=user_embedding_source
+)
+``</p>
 
 <h2 id="20-ml-specific-data-types">20. ML-Specific Data Types</h2>
 
@@ -817,7 +826,7 @@ TTL: 24 hours
 <ul>
   <li><strong>Pros:</strong> Managed, scalable, support.</li>
   <li><strong>Cons:</strong> Cost, vendor lock-in.</li>
-  <li><strong>Cost:</strong> $10K-$100K/month depending on scale.</li>
+  <li><strong>Cost:</strong> <code class="language-plaintext highlighter-rouge">10K-</code>100K/month depending on scale.</li>
 </ul>
 
 <p><strong>Decision Matrix:</strong>
@@ -1121,7 +1130,134 @@ TTL: 24 hours
         
       </footer>
 
+      <div class="page__related page__related--full">
+  <h2 class="page__related-title">Related across topics</h2>
+  <style>
+    /* Make section span full content width and use 2 equal columns */
+    .page__related--full { float: inline-start; width: 100%; padding: 0; }
+    .cross-related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+    @media (max-width: 768px) { .cross-related-grid { grid-template-columns: 1fr; } }
+    /* Ensure archive cards stretch nicely in the grid */
+    .cross-related-grid .list__item, .cross-related-grid .grid__item { width: auto; float: none; margin: 0; }
+  </style>
+  <div class="cross-related-grid">
+    
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
       
+        <a href="/dsa/0042-merge-k-sorted-lists/" rel="permalink">Merge K Sorted Lists
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Combining order from chaos, one element at a time.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/speech-tech/0042-asr-decoding/" rel="permalink">Automatic Speech Recognition (ASR) Decoding
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          8 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Turning acoustic probabilities into coherent text.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ai-agents/0042-agent-evaluation-frameworks/" rel="permalink">Agent Evaluation Frameworks
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“If you can’t measure an agent, you can’t improve it: build evals for success, safety, cost, and regressions.”
+</p>
+  </article>
+</div>
+
+  </div>
+</div>
 
       <section class="page__share">
   <h4 class="page__share-title">Share on</h4>

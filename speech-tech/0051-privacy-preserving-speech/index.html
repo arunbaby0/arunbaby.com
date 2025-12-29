@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Privacy-preserving Speech">
     <meta itemprop="description" content="“Speech is biometric. Treat every waveform like a password—design systems that learn without listening.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -382,32 +382,33 @@ This is usually insufficient because transcripts often contain:</p>
 
 <h3 id="31-architecture-diagram">3.1 Architecture diagram</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                 +------------------------------+
-                 |  On-Device Speech Runtime    |
-                 | (ASR / KWS / Personalization)|
-                 +---------------+--------------+
-                                 |
-                                 | (local features / local gradients)
-                                 v
-       +-------------------+  +-------------------+  +-------------------+
-       | Local Storage     |  | Local Trainer     |  | Privacy Layer     |
-       | (encrypted)       |  | (few steps)       |  | (clip + noise)    |
-       +---------+---------+  +---------+---------+  +---------+---------+
-                 |                      |                      |
-                 |                      | masked update shares  |
-                 |                      v                      v
-                 |               +-------------------+  +-------------------+
-                 |               | Update Uploader   |  | Secure Aggregation|
-                 |               | (wifi+charging)   |  | (server sees sum) |
-                 |               +---------+---------+  +---------+---------+
-                 |                         \                    /
-                 |                          \                  /
-                 v                           v                v
-          +-------------------+       +----------------------------+
-          | Local Inference   |       | Server: Aggregator + MLOps |
-          | (low latency)     |       | eval, gating, rollout      |
-          +-------------------+       +----------------------------+
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+ +------------------------------+
+ | On-Device Speech Runtime |
+ | (ASR / KWS / Personalization)|
+ +---------------+--------------+
+ |
+ | (local features / local gradients)
+ v
+ +-------------------+ +-------------------+ +-------------------+
+ | Local Storage | | Local Trainer | | Privacy Layer |
+ | (encrypted) | | (few steps) | | (clip + noise) |
+ +---------+---------+ +---------+---------+ +---------+---------+
+ | | |
+ | | masked update shares |
+ | v v
+ | +-------------------+ +-------------------+
+ | | Update Uploader | | Secure Aggregation|
+ | | (wifi+charging) | | (server sees sum) |
+ | +---------+---------+ +---------+---------+
+ | \ /
+ | \ /
+ v v v
+ +-------------------+ +----------------------------+
+ | Local Inference | | Server: Aggregator + MLOps |
+ | (low latency) | | eval, gating, rollout |
+ +-------------------+ +----------------------------+
+</code></p>
 
 <h3 id="32-key-design-principle">3.2 Key design principle</h3>
 
@@ -444,12 +445,9 @@ If anything leaves the device, it should be:</p>
 <p>Typical production compromise:</p>
 <ul>
   <li>keep base ASR model fixed</li>
-  <li>personalize via:
-    <ul>
-      <li>biasing list (contacts) locally</li>
-      <li>lightweight adapters trained on device</li>
-    </ul>
-  </li>
+  <li>personalize via:</li>
+  <li>biasing list (contacts) locally</li>
+  <li>lightweight adapters trained on device</li>
 </ul>
 
 <h3 id="43-speaker-recognition">4.3 Speaker recognition</h3>
@@ -584,18 +582,12 @@ Sometimes you want aggregate statistics, for example:</p>
 <p>When you must export anything (even features), minimize sensitivity:</p>
 
 <ul>
-  <li><strong>PII redaction</strong> (local):
-    <ul>
-      <li>detect phone numbers, emails, addresses in transcripts</li>
-      <li>replace with placeholders before any aggregation</li>
-    </ul>
-  </li>
-  <li><strong>feature minimization</strong>:
-    <ul>
-      <li>avoid exporting speaker embeddings (biometric identifiers)</li>
-      <li>prefer task-specific features that are harder to invert</li>
-    </ul>
-  </li>
+  <li><strong>PII redaction</strong> (local):</li>
+  <li>detect phone numbers, emails, addresses in transcripts</li>
+  <li>replace with placeholders before any aggregation</li>
+  <li><strong>feature minimization</strong>:</li>
+  <li>avoid exporting speaker embeddings (biometric identifiers)</li>
+  <li>prefer task-specific features that are harder to invert</li>
 </ul>
 
 <p>Important reality:
@@ -635,33 +627,31 @@ The engineering work is choosing thresholds that meet both privacy and product g
 <p>This code shows the conceptual mechanics: clip an update and add Gaussian noise.
 In real systems, you’d apply this to a structured parameter set (layer-wise, per-tensor) and coordinate with secure aggregation.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+import numpy as np</p>
 
+<p>def l2_clip(vec: np.ndarray, clip_norm: float) -&gt; np.ndarray:
+ “"”Clip a vector to have L2 norm at most clip_norm.”””
+ norm = np.linalg.norm(vec)
+ if norm == 0.0 or norm &lt;= clip_norm:
+ return vec
+ return vec * (clip_norm / norm)</p>
 
-<span class="k">def</span> <span class="nf">l2_clip</span><span class="p">(</span><span class="n">vec</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">clip_norm</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Clip a vector to have L2 norm at most clip_norm.</span><span class="sh">"""</span>
-    <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">vec</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">norm</span> <span class="o">==</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">norm</span> <span class="o">&lt;=</span> <span class="n">clip_norm</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">vec</span>
-    <span class="k">return</span> <span class="n">vec</span> <span class="o">*</span> <span class="p">(</span><span class="n">clip_norm</span> <span class="o">/</span> <span class="n">norm</span><span class="p">)</span>
+<p>def add_gaussian_noise(vec: np.ndarray, clip_norm: float, noise_multiplier: float, rng: np.random.Generator) -&gt; np.ndarray:
+ “””
+ Adds Gaussian noise for DP.
+ noise_multiplier (sigma) controls noise scale relative to clip_norm.
+ “””
+ sigma = noise_multiplier * clip_norm
+ noise = rng.normal(loc=0.0, scale=sigma, size=vec.shape)
+ return vec + noise</p>
 
-
-<span class="k">def</span> <span class="nf">add_gaussian_noise</span><span class="p">(</span><span class="n">vec</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">clip_norm</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">Generator</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Adds Gaussian noise for DP.
-    noise_multiplier (sigma) controls noise scale relative to clip_norm.
-    </span><span class="sh">"""</span>
-    <span class="n">sigma</span> <span class="o">=</span> <span class="n">noise_multiplier</span> <span class="o">*</span> <span class="n">clip_norm</span>
-    <span class="n">noise</span> <span class="o">=</span> <span class="n">rng</span><span class="p">.</span><span class="nf">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">vec</span><span class="p">.</span><span class="n">shape</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">vec</span> <span class="o">+</span> <span class="n">noise</span>
-
-
-<span class="k">def</span> <span class="nf">privatize_client_update</span><span class="p">(</span><span class="n">delta</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">clip_norm</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">noise_multiplier</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-    <span class="n">clipped</span> <span class="o">=</span> <span class="nf">l2_clip</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">clip_norm</span><span class="p">)</span>
-    <span class="n">noised</span> <span class="o">=</span> <span class="nf">add_gaussian_noise</span><span class="p">(</span><span class="n">clipped</span><span class="p">,</span> <span class="n">clip_norm</span><span class="p">,</span> <span class="n">noise_multiplier</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">noised</span>
-</code></pre></div></div>
+<p>def privatize_client_update(delta: np.ndarray, clip_norm: float, noise_multiplier: float, seed: int = 0) -&gt; np.ndarray:
+ rng = np.random.default_rng(seed)
+ clipped = l2_clip(delta, clip_norm)
+ noised = add_gaussian_noise(clipped, clip_norm, noise_multiplier, rng)
+ return noised
+``</p>
 
 <h3 id="why-this-matters">Why this matters</h3>
 <p>The <strong>clip norm</strong> (C) is a boundary: too low and you destroy signal; too high and privacy degrades.
@@ -702,19 +692,13 @@ Even if you never upload it, you still pay:</p>
 
 <p>Examples:</p>
 <ul>
-  <li>For wake word tuning, you might only need:
-    <ul>
-      <li>false accept/false reject counts</li>
-      <li>confidence score distributions</li>
-      <li>coarse environment buckets (quiet/noisy) computed locally</li>
-    </ul>
-  </li>
-  <li>For command personalization, you might only need:
-    <ul>
-      <li>aggregated confusion matrices (intent A mistaken for intent B)</li>
-      <li>counts of “user corrected” events per intent</li>
-    </ul>
-  </li>
+  <li>For wake word tuning, you might only need:</li>
+  <li>false accept/false reject counts</li>
+  <li>confidence score distributions</li>
+  <li>coarse environment buckets (quiet/noisy) computed locally</li>
+  <li>For command personalization, you might only need:</li>
+  <li>aggregated confusion matrices (intent A mistaken for intent B)</li>
+  <li>counts of “user corrected” events per intent</li>
 </ul>
 
 <p>The system design trick is to separate:</p>
@@ -1080,32 +1064,26 @@ Expect more investment in:</p>
 <p>If you’re reviewing a privacy-preserving speech system, ask:</p>
 
 <ul>
-  <li><strong>Data handling</strong>
-    <ul>
-      <li>Does raw audio ever leave the device by default? If yes, why?</li>
-      <li>Is there a TTL and deletion path for stored audio/features?</li>
-      <li>Are consent states enforced at ingestion time?</li>
-    </ul>
+  <li><strong>Data handling</strong></li>
+  <li>Does raw audio ever leave the device by default? If yes, why?</li>
+  <li>Is there a TTL and deletion path for stored audio/features?</li>
+  <li>
+    <p>Are consent states enforced at ingestion time?</p>
   </li>
-  <li><strong>Learning signals</strong>
-    <ul>
-      <li>Are updates protected by secure aggregation?</li>
-      <li>Is there clipping + (when needed) DP noise?</li>
-      <li>Are cohorts large enough to avoid “small crowd” leakage?</li>
-    </ul>
+  <li><strong>Learning signals</strong></li>
+  <li>Are updates protected by secure aggregation?</li>
+  <li>Is there clipping + (when needed) DP noise?</li>
+  <li>
+    <p>Are cohorts large enough to avoid “small crowd” leakage?</p>
   </li>
-  <li><strong>Observability</strong>
-    <ul>
-      <li>Can we measure quality by segment without collecting transcripts?</li>
-      <li>Do we have a federated evaluation plan mechanism?</li>
-    </ul>
+  <li><strong>Observability</strong></li>
+  <li>Can we measure quality by segment without collecting transcripts?</li>
+  <li>
+    <p>Do we have a federated evaluation plan mechanism?</p>
   </li>
-  <li><strong>Product safety</strong>
-    <ul>
-      <li>Are high-risk actions gated (unlock/confirm/human approval)?</li>
-      <li>Can we roll back quickly if personalization regresses?</li>
-    </ul>
-  </li>
+  <li><strong>Product safety</strong></li>
+  <li>Are high-risk actions gated (unlock/confirm/human approval)?</li>
+  <li>Can we roll back quickly if personalization regresses?</li>
 </ul>
 
 <p>This checklist is the difference between “privacy-themed slide deck” and a production system.</p>

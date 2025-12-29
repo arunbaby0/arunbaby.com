@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Streaming ASR Architecture">
     <meta itemprop="description" content="Why batch ASR won’t work for voice assistants, and how streaming models transcribe speech as you speak in under 200ms.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -374,20 +374,21 @@
 
 <h3 id="batch-asr-eg-whisper">Batch ASR (e.g., Whisper)</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">batch_asr</span><span class="p">(</span><span class="n">audio</span><span class="p">):</span>
-    <span class="c1"># Wait for complete audio
-</span>    <span class="n">complete_audio</span> <span class="o">=</span> <span class="nf">wait_for_end_of_speech</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-    
-    <span class="c1"># Process entire sequence at once
-</span>    <span class="c1"># Can use bidirectional models, look at future context
-</span>    <span class="n">features</span> <span class="o">=</span> <span class="nf">extract_features</span><span class="p">(</span><span class="n">complete_audio</span><span class="p">)</span>
-    <span class="n">transcript</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>  <span class="c1"># Has access to all frames
-</span>    
-    <span class="k">return</span> <span class="n">transcript</span>
+<p>``python
+def batch_asr(audio):
+ # Wait for complete audio
+ complete_audio = wait_for_end_of_speech(audio)</p>
 
-<span class="c1"># Latency: duration + processing time
-# For 10-second audio: 10 seconds + 2 seconds = 12 seconds
-</span></code></pre></div></div>
+<p># Process entire sequence at once
+ # Can use bidirectional models, look at future context
+ features = extract_features(complete_audio)
+ transcript = model(features) # Has access to all frames</p>
+
+<p>return transcript</p>
+
+<h1 id="latency-duration--processing-time">Latency: duration + processing time</h1>
+<h1 id="for-10-second-audio-10-seconds--2-seconds--12-seconds">For 10-second audio: 10 seconds + 2 seconds = 12 seconds</h1>
+<p>``</p>
 
 <p><strong>Pros:</strong></p>
 <ul>
@@ -405,24 +406,25 @@
 
 <h3 id="streaming-asr">Streaming ASR</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">streaming_asr</span><span class="p">(</span><span class="n">audio_stream</span><span class="p">):</span>
-    <span class="n">state</span> <span class="o">=</span> <span class="nf">initialize_state</span><span class="p">()</span>
-    
-    <span class="k">for</span> <span class="n">audio_chunk</span> <span class="ow">in</span> <span class="n">audio_stream</span><span class="p">:</span>  <span class="c1"># Process 100ms chunks
-</span>        <span class="c1"># Can only look at past + limited future
-</span>        <span class="n">features</span> <span class="o">=</span> <span class="nf">extract_features</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-        <span class="n">tokens</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>  <span class="c1"># Causal processing
-</span>        
-        <span class="k">if</span> <span class="n">tokens</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="n">tokens</span>  <span class="c1"># Emit immediately
-</span>    
-    <span class="c1"># Finalize
-</span>    <span class="n">final_tokens</span> <span class="o">=</span> <span class="nf">finalize</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-    <span class="k">yield</span> <span class="n">final_tokens</span>
+<p>``python
+def streaming_asr(audio_stream):
+ state = initialize_state()</p>
 
-<span class="c1"># Latency: ~200ms for first token, ~100ms per subsequent token
-# For 10-second audio: 200ms + (tokens * 100ms) ≈ 2-3 seconds total
-</span></code></pre></div></div>
+<p>for audio_chunk in audio_stream: # Process 100ms chunks
+ # Can only look at past + limited future
+ features = extract_features(audio_chunk)
+ tokens, state = model(features, state) # Causal processing</p>
+
+<p>if tokens:
+ yield tokens # Emit immediately</p>
+
+<p># Finalize
+ final_tokens = finalize(state)
+ yield final_tokens</p>
+
+<h1 id="latency-200ms-for-first-token-100ms-per-subsequent-token">Latency: ~200ms for first token, ~100ms per subsequent token</h1>
+<h1 id="for-10-second-audio-200ms--tokens--100ms--2-3-seconds-total">For 10-second audio: 200ms + (tokens * 100ms) ≈ 2-3 seconds total</h1>
+<p>``</p>
 
 <p><strong>Pros:</strong></p>
 <ul>
@@ -442,34 +444,35 @@
 
 <h2 id="architecture-overview">Architecture Overview</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Audio Input (100ms chunks @ 16kHz)
-    ↓
+<p><code class="language-plaintext highlighter-rouge">
+Audio Input (100ms chunks @ 16kHz)
+ ↓
 Voice Activity Detection (VAD)
-    ├─ Speech detected → Continue
-    └─ Silence detected → Skip processing
-    ↓
+ ├─ Speech detected → Continue
+ └─ Silence detected → Skip processing
+ ↓
 Feature Extraction
-    ├─ Mel Filterbank (80 dims)
-    ├─ Normalization
-    └─ Delta features (optional)
-    ↓
+ ├─ Mel Filterbank (80 dims)
+ ├─ Normalization
+ └─ Delta features (optional)
+ ↓
 Streaming Acoustic Model
-    ├─ Encoder (Conformer/RNN)
-    ├─ Prediction Network
-    └─ Joint Network
-    ↓
+ ├─ Encoder (Conformer/RNN)
+ ├─ Prediction Network
+ └─ Joint Network
+ ↓
 Decoder (Beam Search)
-    ├─ Language Model Fusion
-    ├─ Beam Management
-    └─ Token Emission
-    ↓
+ ├─ Language Model Fusion
+ ├─ Beam Management
+ └─ Token Emission
+ ↓
 Post-Processing
-    ├─ Punctuation
-    ├─ Capitalization
-    └─ Inverse Text Normalization
-    ↓
+ ├─ Punctuation
+ ├─ Capitalization
+ └─ Inverse Text Normalization
+ ↓
 Transcription Output
-</code></pre></div></div>
+</code></p>
 
 <hr />
 
@@ -481,119 +484,123 @@ Transcription Output
 
 <p><strong>Solution:</strong> Filter out non-speech audio before expensive ASR processing.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Without VAD
-</span><span class="n">total_audio</span> <span class="o">=</span> <span class="mi">10</span> <span class="n">seconds</span>
-<span class="n">speech</span> <span class="o">=</span> <span class="mi">3</span> <span class="nf">seconds </span><span class="p">(</span><span class="mi">30</span><span class="o">%</span><span class="p">)</span>
-<span class="n">silence</span> <span class="o">=</span> <span class="mi">7</span> <span class="nf">seconds </span><span class="p">(</span><span class="mi">70</span><span class="o">%</span> <span class="n">wasted</span> <span class="n">compute</span><span class="p">)</span>
+<p>``python</p>
+<h1 id="without-vad">Without VAD</h1>
+<p>total_audio = 10 seconds
+speech = 3 seconds (30%)
+silence = 7 seconds (70% wasted compute)</p>
 
-<span class="c1"># With VAD
-</span><span class="n">processed_audio</span> <span class="o">=</span> <span class="mi">3</span> <span class="nf">seconds </span><span class="p">(</span><span class="n">save</span> <span class="mi">70</span><span class="o">%</span> <span class="n">compute</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="with-vad">With VAD</h1>
+<p>processed_audio = 3 seconds (save 70% compute)
+``</p>
 
 <h3 id="vad-approaches">VAD Approaches</h3>
 
 <p><strong>Option 1: Energy-Based (Simple)</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">energy_vad</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Classify based on audio energy
-    </span><span class="sh">"""</span>
-    <span class="n">energy</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">audio_chunk</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">energy</span> <span class="o">&gt;</span> <span class="n">threshold</span>
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">python
+def energy_vad(audio_chunk, threshold=0.01):
+ """
+ Classify based on audio energy
+ """
+ energy = np.sum(audio_chunk ** 2) / len(audio_chunk)
+ return energy &gt; threshold
+</code></p>
 
-<p><strong>Pros:</strong> Fast (&lt; 1ms), no model needed<br />
+<p><strong>Pros:</strong> Fast (&lt; 1ms), no model needed 
 <strong>Cons:</strong> Fails in noisy environments, no semantic understanding</p>
 
 <p><strong>Option 2: ML-Based (Robust)</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SileroVAD</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Using Silero VAD (open-source, production-ready)
-    Model size: 1MB, Latency: ~2ms
-    </span><span class="sh">"""</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">utils</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">hub</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span>
-            <span class="n">repo_or_dir</span><span class="o">=</span><span class="sh">'</span><span class="s">snakers4/silero-vad</span><span class="sh">'</span><span class="p">,</span>
-            <span class="n">model</span><span class="o">=</span><span class="sh">'</span><span class="s">silero_vad</span><span class="sh">'</span>
-        <span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">get_speech_timestamps</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">utils</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    
-    <span class="k">def</span> <span class="nf">is_speech</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="o">=</span><span class="mi">16000</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Args:
-            audio: torch.Tensor, shape (samples,)
-            sampling_rate: int
-        
-        Returns:
-            bool: True if speech detected
-        </span><span class="sh">"""</span>
-        <span class="n">speech_timestamps</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">get_speech_timestamps</span><span class="p">(</span>
-            <span class="n">audio</span><span class="p">,</span> 
-            <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">,</span>
-            <span class="n">sampling_rate</span><span class="o">=</span><span class="n">sampling_rate</span><span class="p">,</span>
-            <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span>
-        <span class="p">)</span>
-        
-        <span class="k">return</span> <span class="nf">len</span><span class="p">(</span><span class="n">speech_timestamps</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+<p>``python
+class SileroVAD:
+ “””
+ Using Silero VAD (open-source, production-ready)
+ Model size: 1MB, Latency: ~2ms
+ “””
+ def <strong>init</strong>(self):
+ self.model, self.utils = torch.hub.load(
+ repo_or_dir=’snakers4/silero-vad’,
+ model=’silero_vad’
+ )
+ self.get_speech_timestamps = self.utils[0]</p>
 
-<span class="c1"># Usage
-</span><span class="n">vad</span> <span class="o">=</span> <span class="nc">SileroVAD</span><span class="p">()</span>
+<p>def is_speech(self, audio, sampling_rate=16000):
+ “””
+ Args:
+ audio: torch.Tensor, shape (samples,)
+ sampling_rate: int</p>
 
-<span class="k">for</span> <span class="n">audio_chunk</span> <span class="ow">in</span> <span class="n">audio_stream</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">vad</span><span class="p">.</span><span class="nf">is_speech</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">):</span>
-        <span class="c1"># Process with ASR
-</span>        <span class="nf">process_asr</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># Skip, save compute
-</span>        <span class="k">continue</span>
-</code></pre></div></div>
+<p>Returns:
+ bool: True if speech detected
+ “””
+ speech_timestamps = self.get_speech_timestamps(
+ audio, 
+ self.model,
+ sampling_rate=sampling_rate,
+ threshold=0.5
+ )</p>
 
-<p><strong>Pros:</strong> Robust to noise, semantic understanding<br />
+<p>return len(speech_timestamps) &gt; 0</p>
+
+<h1 id="usage">Usage</h1>
+<p>vad = SileroVAD()</p>
+
+<p>for audio_chunk in audio_stream:
+ if vad.is_speech(audio_chunk):
+ # Process with ASR
+ process_asr(audio_chunk)
+ else:
+ # Skip, save compute
+ continue
+``</p>
+
+<p><strong>Pros:</strong> Robust to noise, semantic understanding 
 <strong>Cons:</strong> Adds 2ms latency, requires model</p>
 
 <h3 id="production-vad-pipeline">Production VAD Pipeline</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ProductionVAD</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="nc">SileroVAD</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">speech_buffer</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">silence_frames</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">max_silence_frames</span> <span class="o">=</span> <span class="mi">30</span>  <span class="c1"># 300ms of silence
-</span>    
-    <span class="k">def</span> <span class="nf">process_chunk</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_chunk</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Buffer management with hysteresis
-        </span><span class="sh">"""</span>
-        <span class="n">is_speech</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">is_speech</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">is_speech</span><span class="p">:</span>
-            <span class="c1"># Reset silence counter
-</span>            <span class="n">self</span><span class="p">.</span><span class="n">silence_frames</span> <span class="o">=</span> <span class="mi">0</span>
-            
-            <span class="c1"># Add to buffer
-</span>            <span class="n">self</span><span class="p">.</span><span class="n">speech_buffer</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-            
-            <span class="k">return</span> <span class="sh">'</span><span class="s">speech</span><span class="sh">'</span><span class="p">,</span> <span class="n">audio_chunk</span>
-        
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Increment silence counter
-</span>            <span class="n">self</span><span class="p">.</span><span class="n">silence_frames</span> <span class="o">+=</span> <span class="mi">1</span>
-            
-            <span class="c1"># Keep buffering for a bit (hysteresis)
-</span>            <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">silence_frames</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">max_silence_frames</span><span class="p">:</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">speech_buffer</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-                <span class="k">return</span> <span class="sh">'</span><span class="s">speech</span><span class="sh">'</span><span class="p">,</span> <span class="n">audio_chunk</span>
-            
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># End of utterance
-</span>                <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">speech_buffer</span><span class="p">:</span>
-                    <span class="n">complete_utterance</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">concatenate</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">speech_buffer</span><span class="p">)</span>
-                    <span class="n">self</span><span class="p">.</span><span class="n">speech_buffer</span> <span class="o">=</span> <span class="p">[]</span>
-                    <span class="k">return</span> <span class="sh">'</span><span class="s">end_of_utterance</span><span class="sh">'</span><span class="p">,</span> <span class="n">complete_utterance</span>
-                
-                <span class="k">return</span> <span class="sh">'</span><span class="s">silence</span><span class="sh">'</span><span class="p">,</span> <span class="bp">None</span>
-</code></pre></div></div>
+<p>``python
+class ProductionVAD:
+ def <strong>init</strong>(self):
+ self.vad = SileroVAD()
+ self.speech_buffer = []
+ self.silence_frames = 0
+ self.max_silence_frames = 30 # 300ms of silence</p>
+
+<p>def process_chunk(self, audio_chunk):
+ “””
+ Buffer management with hysteresis
+ “””
+ is_speech = self.vad.is_speech(audio_chunk)</p>
+
+<p>if is_speech:
+ # Reset silence counter
+ self.silence_frames = 0</p>
+
+<p># Add to buffer
+ self.speech_buffer.append(audio_chunk)</p>
+
+<p>return ‘speech’, audio_chunk</p>
+
+<p>else:
+ # Increment silence counter
+ self.silence_frames += 1</p>
+
+<p># Keep buffering for a bit (hysteresis)
+ if self.silence_frames &lt; self.max_silence_frames:
+ self.speech_buffer.append(audio_chunk)
+ return ‘speech’, audio_chunk</p>
+
+<p>else:
+ # End of utterance
+ if self.speech_buffer:
+ complete_utterance = np.concatenate(self.speech_buffer)
+ self.speech_buffer = []
+ return ‘end_of_utterance’, complete_utterance</p>
+
+<p>return ‘silence’, None
+``</p>
 
 <p><strong>Key design decisions:</strong></p>
 <ul>
@@ -610,71 +617,73 @@ Transcription Output
 
 <p><strong>Why Mel scale?</strong> Human perception of pitch is logarithmic, not linear.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">extract_mel_features</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">n_mels</span><span class="o">=</span><span class="mi">80</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Extract 80-dimensional log mel filterbank features
-    
-    Args:
-        audio: np.array, shape (samples,)
-        sr: sampling rate (Hz)
-        n_mels: number of mel bands
-    
-    Returns:
-        features: np.array, shape (time, n_mels)
-    </span><span class="sh">"""</span>
-    <span class="c1"># Frame audio: 25ms window, 10ms stride
-</span>    <span class="n">frame_length</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="mf">0.025</span> <span class="o">*</span> <span class="n">sr</span><span class="p">)</span>  <span class="c1"># 400 samples
-</span>    <span class="n">hop_length</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="mf">0.010</span> <span class="o">*</span> <span class="n">sr</span><span class="p">)</span>     <span class="c1"># 160 samples
-</span>    
-    <span class="c1"># Short-Time Fourier Transform
-</span>    <span class="n">stft</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">stft</span><span class="p">(</span>
-        <span class="n">audio</span><span class="p">,</span>
-        <span class="n">n_fft</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
-        <span class="n">hop_length</span><span class="o">=</span><span class="n">hop_length</span><span class="p">,</span>
-        <span class="n">win_length</span><span class="o">=</span><span class="n">frame_length</span><span class="p">,</span>
-        <span class="n">window</span><span class="o">=</span><span class="sh">'</span><span class="s">hann</span><span class="sh">'</span>
-    <span class="p">)</span>
-    
-    <span class="c1"># Magnitude spectrum
-</span>    <span class="n">magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">abs</span><span class="p">(</span><span class="n">stft</span><span class="p">)</span>
-    
-    <span class="c1"># Mel filterbank
-</span>    <span class="n">mel_basis</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="n">filters</span><span class="p">.</span><span class="nf">mel</span><span class="p">(</span>
-        <span class="n">sr</span><span class="o">=</span><span class="n">sr</span><span class="p">,</span>
-        <span class="n">n_fft</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
-        <span class="n">n_mels</span><span class="o">=</span><span class="n">n_mels</span><span class="p">,</span>
-        <span class="n">fmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">fmax</span><span class="o">=</span><span class="n">sr</span><span class="o">/</span><span class="mi">2</span>
-    <span class="p">)</span>
-    
-    <span class="c1"># Apply mel filters
-</span>    <span class="n">mel_spec</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">dot</span><span class="p">(</span><span class="n">mel_basis</span><span class="p">,</span> <span class="n">magnitude</span><span class="p">)</span>
-    
-    <span class="c1"># Log compression (humans perceive loudness logarithmically)
-</span>    <span class="n">log_mel</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="n">mel_spec</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">)</span>
-    
-    <span class="c1"># Transpose to (time, frequency)
-</span>    <span class="k">return</span> <span class="n">log_mel</span><span class="p">.</span><span class="n">T</span>
-</code></pre></div></div>
+<p>``python
+def extract_mel_features(audio, sr=16000, n_mels=80):
+ “””
+ Extract 80-dimensional log mel filterbank features</p>
+
+<p>Args:
+ audio: np.array, shape (samples,)
+ sr: sampling rate (Hz)
+ n_mels: number of mel bands</p>
+
+<p>Returns:
+ features: np.array, shape (time, n_mels)
+ “””
+ # Frame audio: 25ms window, 10ms stride
+ frame_length = int(0.025 * sr) # 400 samples
+ hop_length = int(0.010 * sr) # 160 samples</p>
+
+<p># Short-Time Fourier Transform
+ stft = librosa.stft(
+ audio,
+ n_fft=512,
+ hop_length=hop_length,
+ win_length=frame_length,
+ window=’hann’
+ )</p>
+
+<p># Magnitude spectrum
+ magnitude = np.abs(stft)</p>
+
+<p># Mel filterbank
+ mel_basis = librosa.filters.mel(
+ sr=sr,
+ n_fft=512,
+ n_mels=n_mels,
+ fmin=0,
+ fmax=sr/2
+ )</p>
+
+<p># Apply mel filters
+ mel_spec = np.dot(mel_basis, magnitude)</p>
+
+<p># Log compression (humans perceive loudness logarithmically)
+ log_mel = np.log(mel_spec + 1e-6)</p>
+
+<p># Transpose to (time, frequency)
+ return log_mel.T
+``</p>
 
 <p><strong>Output:</strong> 100 frames per second (one every 10ms), each with 80 dimensions</p>
 
 <h3 id="normalization">Normalization</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">normalize_features</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Normalize to zero mean, unit variance
-    
-    Can use global statistics or per-utterance
-    </span><span class="sh">"""</span>
-    <span class="k">if</span> <span class="n">mean</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">std</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">std</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    
-    <span class="n">normalized</span> <span class="o">=</span> <span class="p">(</span><span class="n">features</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">std</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">normalized</span>
-</code></pre></div></div>
+<p>``python
+def normalize_features(features, mean=None, std=None):
+ “””
+ Normalize to zero mean, unit variance</p>
+
+<p>Can use global statistics or per-utterance
+ “””
+ if mean is None:
+ mean = np.mean(features, axis=0, keepdims=True)
+ if std is None:
+ std = np.std(features, axis=0, keepdims=True)</p>
+
+<p>normalized = (features - mean) / (std + 1e-6)
+ return normalized
+``</p>
 
 <p><strong>Global vs Per-Utterance:</strong></p>
 <ul>
@@ -684,23 +693,24 @@ Transcription Output
 
 <h3 id="specaugment-training-only">SpecAugment (Training Only)</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">spec_augment</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">time_mask_max</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">freq_mask_max</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Data augmentation for training
-    Randomly mask time and frequency bands
-    </span><span class="sh">"""</span>
-    <span class="c1"># Time masking
-</span>    <span class="n">t_mask_len</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">time_mask_max</span><span class="p">)</span>
-    <span class="n">t_mask_start</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">features</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">t_mask_len</span><span class="p">)</span>
-    <span class="n">features</span><span class="p">[</span><span class="n">t_mask_start</span><span class="p">:</span><span class="n">t_mask_start</span><span class="o">+</span><span class="n">t_mask_len</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="c1"># Frequency masking
-</span>    <span class="n">f_mask_len</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">freq_mask_max</span><span class="p">)</span>
-    <span class="n">f_mask_start</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">features</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">f_mask_len</span><span class="p">)</span>
-    <span class="n">features</span><span class="p">[:,</span> <span class="n">f_mask_start</span><span class="p">:</span><span class="n">f_mask_start</span><span class="o">+</span><span class="n">f_mask_len</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="k">return</span> <span class="n">features</span>
-</code></pre></div></div>
+<p>``python
+def spec_augment(features, time_mask_max=30, freq_mask_max=10):
+ “””
+ Data augmentation for training
+ Randomly mask time and frequency bands
+ “””
+ # Time masking
+ t_mask_len = np.random.randint(0, time_mask_max)
+ t_mask_start = np.random.randint(0, features.shape[0] - t_mask_len)
+ features[t_mask_start:t_mask_start+t_mask_len, :] = 0</p>
+
+<p># Frequency masking
+ f_mask_len = np.random.randint(0, freq_mask_max)
+ f_mask_start = np.random.randint(0, features.shape[1] - f_mask_len)
+ features[:, f_mask_start:f_mask_start+f_mask_len] = 0</p>
+
+<p>return features
+``</p>
 
 <p><strong>Impact:</strong> Improves robustness by 10-20% relative WER reduction</p>
 
@@ -719,179 +729,182 @@ Transcription Output
 
 <p><strong>Architecture:</strong></p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>     Encoder (processes audio)
-           ↓
-     h_enc[t] (acoustic embedding)
-           ↓
-     Prediction Network (processes previous tokens)
-           ↓
-     h_pred[u] (linguistic embedding)
-           ↓
-     Joint Network (combines both)
-           ↓
-     Softmax over vocabulary + blank
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+ Encoder (processes audio)
+ ↓
+ h_enc[t] (acoustic embedding)
+ ↓
+ Prediction Network (processes previous tokens)
+ ↓
+ h_pred[u] (linguistic embedding)
+ ↓
+ Joint Network (combines both)
+ ↓
+ Softmax over vocabulary + blank
+</code></p>
 
 <p><strong>Implementation:</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">StreamingRNNT</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">vocab_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">enc_dim</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">pred_dim</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">joint_dim</span><span class="o">=</span><span class="mi">512</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="c1"># Encoder: audio features → acoustic representation
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="nc">ConformerEncoder</span><span class="p">(</span>
-            <span class="n">input_dim</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
-            <span class="n">output_dim</span><span class="o">=</span><span class="n">enc_dim</span><span class="p">,</span>
-            <span class="n">num_layers</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span>
-            <span class="n">num_heads</span><span class="o">=</span><span class="mi">8</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Prediction network: previous tokens → linguistic representation
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">prediction_net</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTM</span><span class="p">(</span>
-            <span class="n">input_size</span><span class="o">=</span><span class="n">vocab_size</span><span class="p">,</span>
-            <span class="n">hidden_size</span><span class="o">=</span><span class="n">pred_dim</span><span class="p">,</span>
-            <span class="n">num_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-            <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Joint network: combine acoustic + linguistic
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">joint_net</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Sequential</span><span class="p">(</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">enc_dim</span> <span class="o">+</span> <span class="n">pred_dim</span><span class="p">,</span> <span class="n">joint_dim</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Tanh</span><span class="p">(),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">joint_dim</span><span class="p">,</span> <span class="n">vocab_size</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># +1 for blank token
-</span>        <span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">blank_idx</span> <span class="o">=</span> <span class="n">vocab_size</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_features</span><span class="p">,</span> <span class="n">prev_tokens</span><span class="p">,</span> <span class="n">encoder_state</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">predictor_state</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Args:
-            audio_features: (batch, time, 80)
-            prev_tokens: (batch, seq_len)
-            encoder_state: hidden state from previous chunk
-            predictor_state: (h, c) from previous tokens
-        
-        Returns:
-            logits: (batch, time, seq_len, vocab_size+1)
-            new_encoder_state: updated encoder state
-            new_predictor_state: updated predictor state
-        </span><span class="sh">"""</span>
-        <span class="c1"># Encode audio
-</span>        <span class="n">h_enc</span><span class="p">,</span> <span class="n">new_encoder_state</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span><span class="n">audio_features</span><span class="p">,</span> <span class="n">encoder_state</span><span class="p">)</span>
-        <span class="c1"># h_enc: (batch, time, enc_dim)
-</span>        
-        <span class="c1"># Encode previous tokens
-</span>        <span class="c1"># Convert tokens to one-hot
-</span>        <span class="n">prev_tokens_onehot</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">one_hot</span><span class="p">(</span><span class="n">prev_tokens</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">prediction_net</span><span class="p">.</span><span class="n">input_size</span><span class="p">)</span>
-        <span class="n">h_pred</span><span class="p">,</span> <span class="n">new_predictor_state</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">prediction_net</span><span class="p">(</span>
-            <span class="n">prev_tokens_onehot</span><span class="p">.</span><span class="nf">float</span><span class="p">(),</span>
-            <span class="n">predictor_state</span>
-        <span class="p">)</span>
-        <span class="c1"># h_pred: (batch, seq_len, pred_dim)
-</span>        
-        <span class="c1"># Joint network: combine all pairs of (time, token_history)
-</span>        <span class="c1"># Expand dimensions for broadcasting
-</span>        <span class="n">h_enc_exp</span> <span class="o">=</span> <span class="n">h_enc</span><span class="p">.</span><span class="nf">unsqueeze</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># (batch, time, 1, enc_dim)
-</span>        <span class="n">h_pred_exp</span> <span class="o">=</span> <span class="n">h_pred</span><span class="p">.</span><span class="nf">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (batch, 1, seq_len, pred_dim)
-</span>        
-        <span class="c1"># Concatenate
-</span>        <span class="n">h_joint</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span>
-            <span class="n">h_enc_exp</span><span class="p">.</span><span class="nf">expand</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">h_pred</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
-            <span class="n">h_pred_exp</span><span class="p">.</span><span class="nf">expand</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">h_enc</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="c1"># h_joint: (batch, time, seq_len, enc_dim+pred_dim)
-</span>        
-        <span class="c1"># Project to vocabulary
-</span>        <span class="n">logits</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">joint_net</span><span class="p">(</span><span class="n">h_joint</span><span class="p">)</span>
-        <span class="c1"># logits: (batch, time, seq_len, vocab_size+1)
-</span>        
-        <span class="k">return</span> <span class="n">logits</span><span class="p">,</span> <span class="n">new_encoder_state</span><span class="p">,</span> <span class="n">new_predictor_state</span>
-</code></pre></div></div>
+<p>class StreamingRNNT(nn.Module):
+ def <strong>init</strong>(self, vocab_size=1000, enc_dim=512, pred_dim=256, joint_dim=512):
+ super().<strong>init</strong>()</p>
+
+<p># Encoder: audio features → acoustic representation
+ self.encoder = ConformerEncoder(
+ input_dim=80,
+ output_dim=enc_dim,
+ num_layers=18,
+ num_heads=8
+ )</p>
+
+<p># Prediction network: previous tokens → linguistic representation
+ self.prediction_net = nn.LSTM(
+ input_size=vocab_size,
+ hidden_size=pred_dim,
+ num_layers=2,
+ batch_first=True
+ )</p>
+
+<p># Joint network: combine acoustic + linguistic
+ self.joint_net = nn.Sequential(
+ nn.Linear(enc_dim + pred_dim, joint_dim),
+ nn.Tanh(),
+ nn.Linear(joint_dim, vocab_size + 1) # +1 for blank token
+ )</p>
+
+<p>self.blank_idx = vocab_size</p>
+
+<p>def forward(self, audio_features, prev_tokens, encoder_state=None, predictor_state=None):
+ “””
+ Args:
+ audio_features: (batch, time, 80)
+ prev_tokens: (batch, seq_len)
+ encoder_state: hidden state from previous chunk
+ predictor_state: (h, c) from previous tokens</p>
+
+<p>Returns:
+ logits: (batch, time, seq_len, vocab_size+1)
+ new_encoder_state: updated encoder state
+ new_predictor_state: updated predictor state
+ “””
+ # Encode audio
+ h_enc, new_encoder_state = self.encoder(audio_features, encoder_state)
+ # h_enc: (batch, time, enc_dim)</p>
+
+<p># Encode previous tokens
+ # Convert tokens to one-hot
+ prev_tokens_onehot = F.one_hot(prev_tokens, num_classes=self.prediction_net.input_size)
+ h_pred, new_predictor_state = self.prediction_net(
+ prev_tokens_onehot.float(),
+ predictor_state
+ )
+ # h_pred: (batch, seq_len, pred_dim)</p>
+
+<p># Joint network: combine all pairs of (time, token_history)
+ # Expand dimensions for broadcasting
+ h_enc_exp = h_enc.unsqueeze(2) # (batch, time, 1, enc_dim)
+ h_pred_exp = h_pred.unsqueeze(1) # (batch, 1, seq_len, pred_dim)</p>
+
+<p># Concatenate
+ h_joint = torch.cat([
+ h_enc_exp.expand(-1, -1, h_pred.size(1), -1),
+ h_pred_exp.expand(-1, h_enc.size(1), -1, -1)
+ ], dim=-1)
+ # h_joint: (batch, time, seq_len, enc_dim+pred_dim)</p>
+
+<p># Project to vocabulary
+ logits = self.joint_net(h_joint)
+ # logits: (batch, time, seq_len, vocab_size+1)</p>
+
+<p>return logits, new_encoder_state, new_predictor_state
+``</p>
 
 <h3 id="conformer-encoder">Conformer Encoder</h3>
 
 <p><strong>Why Conformer?</strong> Combines convolution (local patterns) + self-attention (long-range dependencies)</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ConformerEncoder</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">output_dim</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">num_layers</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">num_heads</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="c1"># Subsampling: 4x downsampling to reduce sequence length
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">subsampling</span> <span class="o">=</span> <span class="nc">Conv2dSubsampling</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">,</span> <span class="n">factor</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-        
-        <span class="c1"># Conformer blocks
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">conformer_blocks</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ModuleList</span><span class="p">([</span>
-            <span class="nc">ConformerBlock</span><span class="p">(</span><span class="n">output_dim</span><span class="p">,</span> <span class="n">num_heads</span><span class="p">)</span> 
-            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">num_layers</span><span class="p">)</span>
-        <span class="p">])</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="c1"># x: (batch, time, input_dim)
-</span>        
-        <span class="c1"># Subsampling
-</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">subsampling</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="c1"># x: (batch, time//4, output_dim)
-</span>        
-        <span class="c1"># Conformer blocks
-</span>        <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">conformer_blocks</span><span class="p">:</span>
-            <span class="n">x</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="nf">block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">state</span>
+<p>``python
+class ConformerEncoder(nn.Module):
+ def <strong>init</strong>(self, input_dim=80, output_dim=512, num_layers=18, num_heads=8):
+ super().<strong>init</strong>()</p>
 
-<span class="k">class</span> <span class="nc">ConformerBlock</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">num_heads</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="c1"># Feed-forward module 1
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">ff1</span> <span class="o">=</span> <span class="nc">FeedForwardModule</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
-        
-        <span class="c1"># Multi-head self-attention
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">attention</span> <span class="o">=</span> <span class="nc">MultiHeadSelfAttention</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">num_heads</span><span class="p">)</span>
-        
-        <span class="c1"># Convolution module
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">conv</span> <span class="o">=</span> <span class="nc">ConvolutionModule</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">31</span><span class="p">)</span>
-        
-        <span class="c1"># Feed-forward module 2
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">ff2</span> <span class="o">=</span> <span class="nc">FeedForwardModule</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
-        
-        <span class="c1"># Layer norms
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">norm_ff1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LayerNorm</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">norm_att</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LayerNorm</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">norm_conv</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LayerNorm</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">norm_ff2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LayerNorm</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">norm_out</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LayerNorm</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="c1"># Feed-forward 1 (half-step residual)
-</span>        <span class="n">residual</span> <span class="o">=</span> <span class="n">x</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">norm_ff1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="nf">ff1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        
-        <span class="c1"># Self-attention
-</span>        <span class="n">residual</span> <span class="o">=</span> <span class="n">x</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">norm_att</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">x</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">attention</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">+</span> <span class="n">x</span>
-        
-        <span class="c1"># Convolution
-</span>        <span class="n">residual</span> <span class="o">=</span> <span class="n">x</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">norm_conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">+</span> <span class="n">x</span>
-        
-        <span class="c1"># Feed-forward 2 (half-step residual)
-</span>        <span class="n">residual</span> <span class="o">=</span> <span class="n">x</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">norm_ff2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="nf">ff2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        
-        <span class="c1"># Final norm
-</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">norm_out</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">state</span>
-</code></pre></div></div>
+<p># Subsampling: 4x downsampling to reduce sequence length
+ self.subsampling = Conv2dSubsampling(input_dim, output_dim, factor=4)</p>
+
+<p># Conformer blocks
+ self.conformer_blocks = nn.ModuleList([
+ ConformerBlock(output_dim, num_heads) 
+ for _ in range(num_layers)
+ ])</p>
+
+<p>def forward(self, x, state=None):
+ # x: (batch, time, input_dim)</p>
+
+<p># Subsampling
+ x = self.subsampling(x)
+ # x: (batch, time//4, output_dim)</p>
+
+<p># Conformer blocks
+ for block in self.conformer_blocks:
+ x, state = block(x, state)</p>
+
+<p>return x, state</p>
+
+<p>class ConformerBlock(nn.Module):
+ def <strong>init</strong>(self, dim, num_heads):
+ super().<strong>init</strong>()</p>
+
+<p># Feed-forward module 1
+ self.ff1 = FeedForwardModule(dim)</p>
+
+<p># Multi-head self-attention
+ self.attention = MultiHeadSelfAttention(dim, num_heads)</p>
+
+<p># Convolution module
+ self.conv = ConvolutionModule(dim, kernel_size=31)</p>
+
+<p># Feed-forward module 2
+ self.ff2 = FeedForwardModule(dim)</p>
+
+<p># Layer norms
+ self.norm_ff1 = nn.LayerNorm(dim)
+ self.norm_att = nn.LayerNorm(dim)
+ self.norm_conv = nn.LayerNorm(dim)
+ self.norm_ff2 = nn.LayerNorm(dim)
+ self.norm_out = nn.LayerNorm(dim)</p>
+
+<p>def forward(self, x, state=None):
+ # Feed-forward 1 (half-step residual)
+ residual = x
+ x = self.norm_ff1(x)
+ x = residual + 0.5 * self.ff1(x)</p>
+
+<p># Self-attention
+ residual = x
+ x = self.norm_att(x)
+ x, state = self.attention(x, state)
+ x = residual + x</p>
+
+<p># Convolution
+ residual = x
+ x = self.norm_conv(x)
+ x = self.conv(x)
+ x = residual + x</p>
+
+<p># Feed-forward 2 (half-step residual)
+ residual = x
+ x = self.norm_ff2(x)
+ x = residual + 0.5 * self.ff2(x)</p>
+
+<p># Final norm
+ x = self.norm_out(x)</p>
+
+<p>return x, state
+``</p>
 
 <p><strong>Key features:</strong></p>
 <ul>
@@ -906,56 +919,59 @@ Transcription Output
 
 <p><strong>Solution:</strong> Limited lookahead window</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">StreamingAttention</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">num_heads</span><span class="p">,</span> <span class="n">left_context</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">right_context</span><span class="o">=</span><span class="mi">32</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">attention</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">MultiheadAttention</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">num_heads</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">left_context</span> <span class="o">=</span> <span class="n">left_context</span>   <span class="c1"># Look at past 10 seconds
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">right_context</span> <span class="o">=</span> <span class="n">right_context</span>  <span class="c1"># Look ahead 320ms
-</span>    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="c1"># x: (batch, time, dim)
-</span>        
-        <span class="k">if</span> <span class="n">cache</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="c1"># Concatenate with cached past frames
-</span>            <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span><span class="n">cache</span><span class="p">,</span> <span class="n">x</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        
-        <span class="c1"># Apply attention with limited context
-</span>        <span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">shape</span>
-        
-        <span class="c1"># Create attention mask for causal attention with limited right context
-</span>        <span class="c1"># PyTorch expects attn_mask shape (target_len, source_len)
-</span>        <span class="n">mask</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">create_streaming_mask</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">right_context</span><span class="p">).</span><span class="nf">to</span><span class="p">(</span><span class="n">x</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
-        
-        <span class="c1"># Attention
-</span>        <span class="c1"># nn.MultiheadAttention expects (time, batch, dim)
-</span>        <span class="n">x_tbf</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="nf">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">x_att_tbf</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">attention</span><span class="p">(</span><span class="n">x_tbf</span><span class="p">,</span> <span class="n">x_tbf</span><span class="p">,</span> <span class="n">x_tbf</span><span class="p">,</span> <span class="n">attn_mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
-        <span class="n">x_att</span> <span class="o">=</span> <span class="n">x_att_tbf</span><span class="p">.</span><span class="nf">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        
-        <span class="c1"># Cache for next chunk
-</span>        <span class="n">new_cache</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="o">-</span><span class="n">self</span><span class="p">.</span><span class="n">left_context</span><span class="p">:,</span> <span class="p">:]</span>
-        
-        <span class="c1"># Return only new frames (not cached ones)
-</span>        <span class="k">if</span> <span class="n">cache</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">x_att</span> <span class="o">=</span> <span class="n">x_att</span><span class="p">[:,</span> <span class="n">cache</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">1</span><span class="p">):,</span> <span class="p">:]</span>
-        
-        <span class="k">return</span> <span class="n">x_att</span><span class="p">,</span> <span class="n">new_cache</span>
-    
-    <span class="k">def</span> <span class="nf">create_streaming_mask</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">right_context</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Create mask where each position can attend to:
-        - All past positions
-        - Up to right_context future positions
-        </span><span class="sh">"""</span>
-        <span class="c1"># Start with upper-triangular ones (disallow future)
-</span>        <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">triu</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">ones</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">),</span> <span class="n">diagonal</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="c1"># Allow limited lookahead: zero-out first right_context super-diagonals
-</span>        <span class="k">if</span> <span class="n">right_context</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">triu</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">ones</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">),</span> <span class="n">diagonal</span><span class="o">=</span><span class="mi">1</span><span class="o">+</span><span class="n">right_context</span><span class="p">)</span>
-        <span class="c1"># Convert to bool mask where True = disallow
-</span>        <span class="k">return</span> <span class="n">mask</span><span class="p">.</span><span class="nf">bool</span><span class="p">()</span>
-</code></pre></div></div>
+<p>``python
+class StreamingAttention(nn.Module):
+ def <strong>init</strong>(self, dim, num_heads, left_context=1000, right_context=32):
+ super().<strong>init</strong>()
+ self.attention = nn.MultiheadAttention(dim, num_heads)
+ self.left_context = left_context # Look at past 10 seconds
+ self.right_context = right_context # Look ahead 320ms</p>
+
+<p>def forward(self, x, cache=None):
+ # x: (batch, time, dim)</p>
+
+<p>if cache is not None:
+ # Concatenate with cached past frames
+ x = torch.cat([cache, x], dim=1)</p>
+
+<p># Apply attention with limited context
+ batch_size, seq_len, dim = x.shape</p>
+
+<p># Create attention mask for causal attention with limited right context
+ # PyTorch expects attn_mask shape (target_len, source_len)
+ mask = self.create_streaming_mask(seq_len, self.right_context).to(x.device)</p>
+
+<p># Attention
+ # nn.MultiheadAttention expects (time, batch, dim)
+ x_tbf = x.transpose(0, 1)
+ x_att_tbf, _ = self.attention(x_tbf, x_tbf, x_tbf, attn_mask=mask)
+ x_att = x_att_tbf.transpose(0, 1)</p>
+
+<p># Cache for next chunk
+ new_cache = x[:, -self.left_context:, :]</p>
+
+<p># Return only new frames (not cached ones)
+ if cache is not None:
+ x_att = x_att[:, cache.size(1):, :]</p>
+
+<p>return x_att, new_cache</p>
+
+<p>def create_streaming_mask(self, seq_len, right_context):
+ “””
+ Create mask where each position can attend to:</p>
+<ul>
+  <li>All past positions</li>
+  <li>Up to right_context future positions
+ “””
+ # Start with upper-triangular ones (disallow future)
+ mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1)
+ # Allow limited lookahead: zero-out first right_context super-diagonals
+ if right_context &gt; 0:
+ mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1+right_context)
+ # Convert to bool mask where True = disallow
+ return mask.bool()
+``</li>
+</ul>
 
 <hr />
 
@@ -963,81 +979,83 @@ Transcription Output
 
 <h3 id="greedy-decoding-fast-suboptimal">Greedy Decoding (Fast, Suboptimal)</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">greedy_decode</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">audio_features</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Always pick highest-probability token
-    Fast but misses better hypotheses
-    </span><span class="sh">"""</span>
-    <span class="n">tokens</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">state</span> <span class="o">=</span> <span class="bp">None</span>
-    
-    <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">audio_features</span><span class="p">:</span>
-        <span class="n">logits</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-        <span class="n">best_token</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">best_token</span> <span class="o">!=</span> <span class="n">BLANK</span><span class="p">:</span>
-            <span class="n">tokens</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">best_token</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">tokens</span>
-</code></pre></div></div>
+<p>``python
+def greedy_decode(model, audio_features):
+ “””
+ Always pick highest-probability token
+ Fast but misses better hypotheses
+ “””
+ tokens = []
+ state = None</p>
 
-<p><strong>Pros:</strong> O(T) time, minimal memory<br />
+<p>for frame in audio_features:
+ logits, state = model(frame, tokens, state)
+ best_token = torch.argmax(logits)</p>
+
+<p>if best_token != BLANK:
+ tokens.append(best_token)</p>
+
+<p>return tokens
+``</p>
+
+<p><strong>Pros:</strong> O(T) time, minimal memory 
 <strong>Cons:</strong> Can’t recover from mistakes, 10-20% worse WER</p>
 
 <h3 id="beam-search-better-accuracy">Beam Search (Better Accuracy)</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">BeamSearchDecoder</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">beam_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">blank_idx</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">beam_size</span> <span class="o">=</span> <span class="n">beam_size</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">blank_idx</span> <span class="o">=</span> <span class="n">blank_idx</span>
-    
-    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">audio_features</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Maintain top-k hypotheses at each time step
-        </span><span class="sh">"""</span>
-        <span class="c1"># Initial beam: empty hypothesis
-</span>        <span class="n">beams</span> <span class="o">=</span> <span class="p">[</span><span class="nc">Hypothesis</span><span class="p">(</span><span class="n">tokens</span><span class="o">=</span><span class="p">[],</span> <span class="n">score</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">)]</span>
-        
-        <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">audio_features</span><span class="p">:</span>
-            <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
-            
-            <span class="k">for</span> <span class="n">beam</span> <span class="ow">in</span> <span class="n">beams</span><span class="p">:</span>
-                <span class="c1"># Get logits for this beam
-</span>                <span class="n">logits</span><span class="p">,</span> <span class="n">new_state</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">beam</span><span class="p">.</span><span class="n">tokens</span><span class="p">,</span> <span class="n">beam</span><span class="p">.</span><span class="n">state</span><span class="p">)</span>
-                <span class="n">log_probs</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">log_softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-                
-                <span class="c1"># Extend with each possible token
-</span>                <span class="k">for</span> <span class="n">token_idx</span><span class="p">,</span> <span class="n">log_prob</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">log_probs</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">token_idx</span> <span class="o">==</span> <span class="n">self</span><span class="p">.</span><span class="n">blank_idx</span><span class="p">:</span>
-                        <span class="c1"># Blank: don't emit token, just update score
-</span>                        <span class="n">candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">Hypothesis</span><span class="p">(</span>
-                            <span class="n">tokens</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">tokens</span><span class="p">,</span>
-                            <span class="n">score</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">score</span> <span class="o">+</span> <span class="n">log_prob</span><span class="p">,</span>
-                            <span class="n">state</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">state</span>
-                        <span class="p">))</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="c1"># Non-blank: emit token
-</span>                        <span class="n">candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">Hypothesis</span><span class="p">(</span>
-                            <span class="n">tokens</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">tokens</span> <span class="o">+</span> <span class="p">[</span><span class="n">token_idx</span><span class="p">],</span>
-                            <span class="n">score</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">score</span> <span class="o">+</span> <span class="n">log_prob</span><span class="p">,</span>
-                            <span class="n">state</span><span class="o">=</span><span class="n">new_state</span>
-                        <span class="p">))</span>
-            
-            <span class="c1"># Prune to top beam_size hypotheses
-</span>            <span class="n">candidates</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">h</span><span class="p">:</span> <span class="n">h</span><span class="p">.</span><span class="n">score</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-            <span class="n">beams</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[:</span><span class="n">self</span><span class="p">.</span><span class="n">beam_size</span><span class="p">]</span>
-        
-        <span class="c1"># Return best hypothesis
-</span>        <span class="k">return</span> <span class="n">beams</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">tokens</span>
+<p>``python
+class BeamSearchDecoder:
+ def <strong>init</strong>(self, beam_size=10, blank_idx=0):
+ self.beam_size = beam_size
+ self.blank_idx = blank_idx</p>
 
-<span class="k">class</span> <span class="nc">Hypothesis</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">,</span> <span class="n">score</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">tokens</span> <span class="o">=</span> <span class="n">tokens</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">score</span> <span class="o">=</span> <span class="n">score</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">state</span>
-</code></pre></div></div>
+<p>def decode(self, model, audio_features):
+ “””
+ Maintain top-k hypotheses at each time step
+ “””
+ # Initial beam: empty hypothesis
+ beams = [Hypothesis(tokens=[], score=0.0, state=None)]</p>
 
-<p><strong>Complexity:</strong> O(T × B × V) where T=time, B=beam size, V=vocabulary size<br />
+<p>for frame in audio_features:
+ candidates = []</p>
+
+<p>for beam in beams:
+ # Get logits for this beam
+ logits, new_state = model(frame, beam.tokens, beam.state)
+ log_probs = F.log_softmax(logits, dim=-1)</p>
+
+<p># Extend with each possible token
+ for token_idx, log_prob in enumerate(log_probs):
+ if token_idx == self.blank_idx:
+ # Blank: don’t emit token, just update score
+ candidates.append(Hypothesis(
+ tokens=beam.tokens,
+ score=beam.score + log_prob,
+ state=beam.state
+ ))
+ else:
+ # Non-blank: emit token
+ candidates.append(Hypothesis(
+ tokens=beam.tokens + [token_idx],
+ score=beam.score + log_prob,
+ state=new_state
+ ))</p>
+
+<p># Prune to top beam_size hypotheses
+ candidates.sort(key=lambda h: h.score, reverse=True)
+ beams = candidates[:self.beam_size]</p>
+
+<p># Return best hypothesis
+ return beams[0].tokens</p>
+
+<p>class Hypothesis:
+ def <strong>init</strong>(self, tokens, score, state):
+ self.tokens = tokens
+ self.score = score
+ self.state = state
+``</p>
+
+<p><strong>Complexity:</strong> O(T × B × V) where T=time, B=beam size, V=vocabulary size 
 <strong>Typical parameters:</strong> B=10, V=1000 → manageable</p>
 
 <h3 id="language-model-fusion">Language Model Fusion</h3>
@@ -1046,50 +1064,51 @@ Transcription Output
 
 <p><strong>Solution:</strong> Integrate language model (LM) scores</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">beam_search_with_lm</span><span class="p">(</span><span class="n">acoustic_model</span><span class="p">,</span> <span class="n">lm</span><span class="p">,</span> <span class="n">audio_features</span><span class="p">,</span> <span class="n">lm_weight</span><span class="o">=</span><span class="mf">0.3</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Combine acoustic model + language model scores
-    </span><span class="sh">"""</span>
-    <span class="n">beams</span> <span class="o">=</span> <span class="p">[</span><span class="nc">Hypothesis</span><span class="p">(</span><span class="n">tokens</span><span class="o">=</span><span class="p">[],</span> <span class="n">score</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">)]</span>
-    
-    <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">audio_features</span><span class="p">:</span>
-        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">beam</span> <span class="ow">in</span> <span class="n">beams</span><span class="p">:</span>
-            <span class="n">logits</span><span class="p">,</span> <span class="n">new_state</span> <span class="o">=</span> <span class="nf">acoustic_model</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">beam</span><span class="p">.</span><span class="n">tokens</span><span class="p">,</span> <span class="n">beam</span><span class="p">.</span><span class="n">state</span><span class="p">)</span>
-            <span class="n">acoustic_log_probs</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">log_softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-            
-            <span class="k">for</span> <span class="n">token_idx</span><span class="p">,</span> <span class="n">acoustic_log_prob</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">acoustic_log_probs</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">token_idx</span> <span class="o">==</span> <span class="n">BLANK</span><span class="p">:</span>
-                    <span class="c1"># Blank token
-</span>                    <span class="n">combined_score</span> <span class="o">=</span> <span class="n">beam</span><span class="p">.</span><span class="n">score</span> <span class="o">+</span> <span class="n">acoustic_log_prob</span>
-                    <span class="n">candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">Hypothesis</span><span class="p">(</span>
-                        <span class="n">tokens</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">tokens</span><span class="p">,</span>
-                        <span class="n">score</span><span class="o">=</span><span class="n">combined_score</span><span class="p">,</span>
-                        <span class="n">state</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">state</span>
-                    <span class="p">))</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># Get LM score for this token
-</span>                    <span class="n">lm_log_prob</span> <span class="o">=</span> <span class="n">lm</span><span class="p">.</span><span class="nf">score</span><span class="p">(</span><span class="n">beam</span><span class="p">.</span><span class="n">tokens</span> <span class="o">+</span> <span class="p">[</span><span class="n">token_idx</span><span class="p">])</span>
-                    
-                    <span class="c1"># Combine scores
-</span>                    <span class="n">combined_score</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="n">beam</span><span class="p">.</span><span class="n">score</span> <span class="o">+</span>
-                        <span class="n">acoustic_log_prob</span> <span class="o">+</span>
-                        <span class="n">lm_weight</span> <span class="o">*</span> <span class="n">lm_log_prob</span>
-                    <span class="p">)</span>
-                    
-                    <span class="n">candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">Hypothesis</span><span class="p">(</span>
-                        <span class="n">tokens</span><span class="o">=</span><span class="n">beam</span><span class="p">.</span><span class="n">tokens</span> <span class="o">+</span> <span class="p">[</span><span class="n">token_idx</span><span class="p">],</span>
-                        <span class="n">score</span><span class="o">=</span><span class="n">combined_score</span><span class="p">,</span>
-                        <span class="n">state</span><span class="o">=</span><span class="n">new_state</span>
-                    <span class="p">))</span>
-            
-        <span class="n">candidates</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">h</span><span class="p">:</span> <span class="n">h</span><span class="p">.</span><span class="n">score</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="n">beams</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[:</span><span class="n">beam_size</span><span class="p">]</span>
-    
-    <span class="k">return</span> <span class="n">beams</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">tokens</span>
-</code></pre></div></div>
+<p>``python
+def beam_search_with_lm(acoustic_model, lm, audio_features, lm_weight=0.3):
+ “””
+ Combine acoustic model + language model scores
+ “””
+ beams = [Hypothesis(tokens=[], score=0.0, state=None)]</p>
+
+<p>for frame in audio_features:
+ candidates = []</p>
+
+<p>for beam in beams:
+ logits, new_state = acoustic_model(frame, beam.tokens, beam.state)
+ acoustic_log_probs = F.log_softmax(logits, dim=-1)</p>
+
+<p>for token_idx, acoustic_log_prob in enumerate(acoustic_log_probs):
+ if token_idx == BLANK:
+ # Blank token
+ combined_score = beam.score + acoustic_log_prob
+ candidates.append(Hypothesis(
+ tokens=beam.tokens,
+ score=combined_score,
+ state=beam.state
+ ))
+ else:
+ # Get LM score for this token
+ lm_log_prob = lm.score(beam.tokens + [token_idx])</p>
+
+<p># Combine scores
+ combined_score = (
+ beam.score +
+ acoustic_log_prob +
+ lm_weight * lm_log_prob
+ )</p>
+
+<p>candidates.append(Hypothesis(
+ tokens=beam.tokens + [token_idx],
+ score=combined_score,
+ state=new_state
+ ))</p>
+
+<p>candidates.sort(key=lambda h: h.score, reverse=True)
+ beams = candidates[:beam_size]</p>
+
+<p>return beams[0].tokens
+``</p>
 
 <p><strong>LM types:</strong></p>
 <ul>
@@ -1105,47 +1124,49 @@ Transcription Output
 
 <h3 id="target-breakdown">Target Breakdown</h3>
 
-<p><strong>Total latency budget: 200ms</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>VAD:                    2ms
-Feature extraction:     5ms
-Encoder forward:       80ms  ← Bottleneck
+<p><strong>Total latency budget: 200ms</strong>
+<code class="language-plaintext highlighter-rouge">
+VAD: 2ms
+Feature extraction: 5ms
+Encoder forward: 80ms ← Bottleneck
 Decoder (beam search): 10ms
-Post-processing:        3ms
-Network overhead:      20ms
-Total:               120ms ✓ (60ms margin)
-</code></pre></div></div>
+Post-processing: 3ms
+Network overhead: 20ms
+Total: 120ms ✓ (60ms margin)
+</code></p>
 
 <h3 id="technique-1-model-quantization">Technique 1: Model Quantization</h3>
 
 <p><strong>INT8 Quantization:</strong> Convert float32 weights to int8</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch.quantization</span> <span class="k">as</span> <span class="n">quantization</span>
+<p>``python
+import torch.quantization as quantization</p>
 
-<span class="c1"># Post-training quantization (easiest)
-</span><span class="n">model_fp32</span> <span class="o">=</span> <span class="nf">load_model</span><span class="p">()</span>
-<span class="n">model_fp32</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
+<h1 id="post-training-quantization-easiest">Post-training quantization (easiest)</h1>
+<p>model_fp32 = load_model()
+model_fp32.eval()</p>
 
-<span class="c1"># Fuse operations (Conv+BN+ReLU → single op)
-</span><span class="n">model_fused</span> <span class="o">=</span> <span class="n">quantization</span><span class="p">.</span><span class="nf">fuse_modules</span><span class="p">(</span>
-    <span class="n">model_fp32</span><span class="p">,</span>
-    <span class="p">[[</span><span class="sh">'</span><span class="s">conv</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">bn</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">relu</span><span class="sh">'</span><span class="p">]]</span>
-<span class="p">)</span>
+<h1 id="fuse-operations-convbnrelu--single-op">Fuse operations (Conv+BN+ReLU → single op)</h1>
+<p>model_fused = quantization.fuse_modules(
+ model_fp32,
+ [[‘conv’, ‘bn’, ‘relu’]]
+)</p>
 
-<span class="c1"># Quantize
-</span><span class="n">model_int8</span> <span class="o">=</span> <span class="n">quantization</span><span class="p">.</span><span class="nf">quantize_dynamic</span><span class="p">(</span>
-    <span class="n">model_fused</span><span class="p">,</span>
-    <span class="p">{</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">,</span> <span class="n">nn</span><span class="p">.</span><span class="n">LSTM</span><span class="p">,</span> <span class="n">nn</span><span class="p">.</span><span class="n">Conv2d</span><span class="p">},</span>
-    <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">qint8</span>
-<span class="p">)</span>
+<h1 id="quantize">Quantize</h1>
+<p>model_int8 = quantization.quantize_dynamic(
+ model_fused,
+ {nn.Linear, nn.LSTM, nn.Conv2d},
+ dtype=torch.qint8
+)</p>
 
-<span class="c1"># Save
-</span><span class="n">torch</span><span class="p">.</span><span class="nf">save</span><span class="p">(</span><span class="n">model_int8</span><span class="p">.</span><span class="nf">state_dict</span><span class="p">(),</span> <span class="sh">'</span><span class="s">model_int8.pth</span><span class="sh">'</span><span class="p">)</span>
+<h1 id="save">Save</h1>
+<p>torch.save(model_int8.state_dict(), ‘model_int8.pth’)</p>
 
-<span class="c1"># Results:
-# - Model size: 200MB → 50MB (4x smaller)
-# - Inference speed: 80ms → 30ms (2.7x faster)
-# - Accuracy: WER 5.2% → 5.4% (0.2% degradation)
-</span></code></pre></div></div>
+<h1 id="results">Results:</h1>
+<h1 id="--model-size-200mb--50mb-4x-smaller">- Model size: 200MB → 50MB (4x smaller)</h1>
+<h1 id="--inference-speed-80ms--30ms-27x-faster">- Inference speed: 80ms → 30ms (2.7x faster)</h1>
+<h1 id="--accuracy-wer-52--54-02-degradation">- Accuracy: WER 5.2% → 5.4% (0.2% degradation)</h1>
+<p>``</p>
 
 <p><strong>Why quantization works:</strong></p>
 <ul>
@@ -1158,104 +1179,107 @@ Total:               120ms ✓ (60ms margin)
 
 <p><strong>Train small model to mimic large model</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">distillation_loss</span><span class="p">(</span><span class="n">student_logits</span><span class="p">,</span> <span class="n">teacher_logits</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">3.0</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Soft targets from teacher help student learn better
-    </span><span class="sh">"""</span>
-    <span class="c1"># Soften probabilities with temperature
-</span>    <span class="n">student_soft</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">log_softmax</span><span class="p">(</span><span class="n">student_logits</span> <span class="o">/</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">teacher_soft</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">teacher_logits</span> <span class="o">/</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-    
-    <span class="c1"># KL divergence
-</span>    <span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">kl_div</span><span class="p">(</span><span class="n">student_soft</span><span class="p">,</span> <span class="n">teacher_soft</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="sh">'</span><span class="s">batchmean</span><span class="sh">'</span><span class="p">)</span>
-    <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">*</span> <span class="p">(</span><span class="n">temperature</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">loss</span>
+<p>``python
+def distillation_loss(student_logits, teacher_logits, temperature=3.0):
+ “””
+ Soft targets from teacher help student learn better
+ “””
+ # Soften probabilities with temperature
+ student_soft = F.log_softmax(student_logits / temperature, dim=-1)
+ teacher_soft = F.softmax(teacher_logits / temperature, dim=-1)</p>
 
-<span class="c1"># Training
-</span><span class="n">teacher</span> <span class="o">=</span> <span class="n">large_model</span>  <span class="c1"># 18 layers, 80ms inference
-</span><span class="n">student</span> <span class="o">=</span> <span class="n">small_model</span>  <span class="c1"># 8 layers, 30ms inference
-</span>
-<span class="k">for</span> <span class="n">audio</span><span class="p">,</span> <span class="n">transcript</span> <span class="ow">in</span> <span class="n">training_data</span><span class="p">:</span>
-    <span class="c1"># Get teacher predictions (no backprop)
-</span>    <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
-        <span class="n">teacher_logits</span> <span class="o">=</span> <span class="nf">teacher</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-    
-    <span class="c1"># Student predictions
-</span>    <span class="n">student_logits</span> <span class="o">=</span> <span class="nf">student</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-    
-    <span class="c1"># Distillation loss
-</span>    <span class="n">loss</span> <span class="o">=</span> <span class="nf">distillation_loss</span><span class="p">(</span><span class="n">student_logits</span><span class="p">,</span> <span class="n">teacher_logits</span><span class="p">)</span>
-    
-    <span class="c1"># Optimize
-</span>    <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
-    <span class="n">optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
+<p># KL divergence
+ loss = F.kl_div(student_soft, teacher_soft, reduction=’batchmean’)
+ loss = loss * (temperature ** 2)</p>
 
-<span class="c1"># Results:
-# - Student (8 layers): 30ms, WER 5.8%
-# - Teacher (18 layers): 80ms, WER 5.0%
-# - Without distillation: 30ms, WER 7.2%
-# → Distillation closes the gap!
-</span></code></pre></div></div>
+<p>return loss</p>
+
+<h1 id="training">Training</h1>
+<p>teacher = large_model # 18 layers, 80ms inference
+student = small_model # 8 layers, 30ms inference</p>
+
+<p>for audio, transcript in training_data:
+ # Get teacher predictions (no backprop)
+ with torch.no_grad():
+ teacher_logits = teacher(audio)</p>
+
+<p># Student predictions
+ student_logits = student(audio)</p>
+
+<p># Distillation loss
+ loss = distillation_loss(student_logits, teacher_logits)</p>
+
+<p># Optimize
+ loss.backward()
+ optimizer.step()</p>
+
+<h1 id="results-1">Results:</h1>
+<h1 id="--student-8-layers-30ms-wer-58">- Student (8 layers): 30ms, WER 5.8%</h1>
+<h1 id="--teacher-18-layers-80ms-wer-50">- Teacher (18 layers): 80ms, WER 5.0%</h1>
+<h1 id="--without-distillation-30ms-wer-72">- Without distillation: 30ms, WER 7.2%</h1>
+<h1 id="-distillation-closes-the-gap">→ Distillation closes the gap!</h1>
+<p>``</p>
 
 <h3 id="technique-3-pruning">Technique 3: Pruning</h3>
 
 <p><strong>Remove unimportant weights</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch.nn.utils.prune</span> <span class="k">as</span> <span class="n">prune</span>
+<p>``python
+import torch.nn.utils.prune as prune</p>
 
-<span class="k">def</span> <span class="nf">prune_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="mf">0.4</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Remove 40% of weights with minimal accuracy loss
-    </span><span class="sh">"""</span>
-    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">model</span><span class="p">.</span><span class="nf">named_modules</span><span class="p">():</span>
-        <span class="k">if</span> <span class="nf">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">nn</span><span class="p">.</span><span class="n">Conv2d</span><span class="p">)</span> <span class="ow">or</span> <span class="nf">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">):</span>
-            <span class="c1"># L1 unstructured pruning
-</span>            <span class="n">prune</span><span class="p">.</span><span class="nf">l1_unstructured</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sh">'</span><span class="s">weight</span><span class="sh">'</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="n">amount</span><span class="p">)</span>
-            
-            <span class="c1"># Remove pruning reparameterization
-</span>            <span class="n">prune</span><span class="p">.</span><span class="nf">remove</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="sh">'</span><span class="s">weight</span><span class="sh">'</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">model</span>
+<p>def prune_model(model, amount=0.4):
+ “””
+ Remove 40% of weights with minimal accuracy loss
+ “””
+ for name, module in model.named_modules():
+ if isinstance(module, nn.Conv2d) or isinstance(module, nn.Linear):
+ # L1 unstructured pruning
+ prune.l1_unstructured(module, name=’weight’, amount=amount)</p>
 
-<span class="c1"># Results:
-# - 40% pruning: WER 5.0% → 5.3%, Speed +20%
-# - 60% pruning: WER 5.0% → 6.2%, Speed +40%
-</span></code></pre></div></div>
+<p># Remove pruning reparameterization
+ prune.remove(module, ‘weight’)</p>
+
+<p>return model</p>
+
+<h1 id="results-2">Results:</h1>
+<h1 id="--40-pruning-wer-50--53-speed-20">- 40% pruning: WER 5.0% → 5.3%, Speed +20%</h1>
+<h1 id="--60-pruning-wer-50--62-speed-40">- 60% pruning: WER 5.0% → 6.2%, Speed +40%</h1>
+<p>``</p>
 
 <h3 id="technique-4-caching">Technique 4: Caching</h3>
 
 <p><strong>Cache intermediate results across chunks</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">StreamingASRWithCache</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span> <span class="o">=</span> <span class="bp">None</span>
-    
-    <span class="k">def</span> <span class="nf">process_chunk</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_chunk</span><span class="p">):</span>
-        <span class="c1"># Extract features (no caching needed, fast)
-</span>        <span class="n">features</span> <span class="o">=</span> <span class="nf">extract_features</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-        
-        <span class="c1"># Encoder: reuse cached hidden states
-</span>        <span class="n">encoder_out</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span>
-            <span class="n">features</span><span class="p">,</span>
-            <span class="n">cache</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Decoder: maintain beam state
-</span>        <span class="n">tokens</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">decoder</span><span class="p">(</span>
-            <span class="n">encoder_out</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span>
-        <span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">tokens</span>
-    
-    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Call at end of utterance</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span> <span class="o">=</span> <span class="bp">None</span>
-</code></pre></div></div>
+<p>``python
+class StreamingASRWithCache:
+ def <strong>init</strong>(self, model):
+ self.model = model
+ self.encoder_cache = None
+ self.decoder_state = None</p>
+
+<p>def process_chunk(self, audio_chunk):
+ # Extract features (no caching needed, fast)
+ features = extract_features(audio_chunk)</p>
+
+<p># Encoder: reuse cached hidden states
+ encoder_out, self.encoder_cache = self.model.encoder(
+ features,
+ cache=self.encoder_cache
+ )</p>
+
+<p># Decoder: maintain beam state
+ tokens, self.decoder_state = self.model.decoder(
+ encoder_out,
+ state=self.decoder_state
+ )</p>
+
+<p>return tokens</p>
+
+<p>def reset(self):
+ “"”Call at end of utterance”””
+ self.encoder_cache = None
+ self.decoder_state = None
+``</p>
 
 <p><strong>Savings:</strong></p>
 <ul>
@@ -1285,7 +1309,7 @@ Total:               120ms ✓ (60ms margin)
 <p><strong>For 10M concurrent streams:</strong></p>
 <ul>
   <li>GPUs needed: 10M / 200 = 50,000 GPUs</li>
-  <li>Cost @ $0.50/hr: $25k/hour = $18M/month</li>
+  <li>Cost @ <code class="language-plaintext highlighter-rouge">0.50/hr: </code>25k/hour = $18M/month</li>
 </ul>
 
 <p><strong>Way too expensive!</strong> Need further optimization.</p>
@@ -1294,43 +1318,45 @@ Total:               120ms ✓ (60ms margin)
 
 <p><strong>Batch multiple streams together</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">batch_inference</span><span class="p">(</span><span class="n">audio_chunks</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Process 32 streams simultaneously on GPU
-    </span><span class="sh">"""</span>
-    <span class="c1"># Pad to same length
-</span>    <span class="n">max_len</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">audio_chunks</span><span class="p">)</span>
-    <span class="n">padded</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">np</span><span class="p">.</span><span class="nf">pad</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_len</span> <span class="o">-</span> <span class="nf">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)))</span>
-        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">audio_chunks</span>
-    <span class="p">]</span>
-    
-    <span class="c1"># Stack into batch
-</span>    <span class="n">batch</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">(</span><span class="n">padded</span><span class="p">)</span>  <span class="c1"># (32, max_len, 80)
-</span>    
-    <span class="c1"># Single forward pass
-</span>    <span class="n">outputs</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>  <span class="c1"># ~40ms for 32 streams
-</span>    
-    <span class="k">return</span> <span class="n">outputs</span>
+<p>``python
+def batch_inference(audio_chunks, batch_size=32):
+ “””
+ Process 32 streams simultaneously on GPU
+ “””
+ # Pad to same length
+ max_len = max(len(chunk) for chunk in audio_chunks)
+ padded = [
+ np.pad(chunk, (0, max_len - len(chunk)))
+ for chunk in audio_chunks
+ ]</p>
 
-<span class="c1"># Results:
-# - Without batching: 40ms per stream
-# - With batching (32): 40ms / 32 = 1.25ms per stream (32x speedup)
-# - GPU needed: 10M / (200 × 32) = 1,562 GPUs
-# - Cost: $0.78M/month (23x cheaper!)
-</span></code></pre></div></div>
+<p># Stack into batch
+ batch = torch.tensor(padded) # (32, max_len, 80)</p>
+
+<p># Single forward pass
+ outputs = model(batch) # ~40ms for 32 streams</p>
+
+<p>return outputs</p>
+
+<h1 id="results-3">Results:</h1>
+<h1 id="--without-batching-40ms-per-stream">- Without batching: 40ms per stream</h1>
+<h1 id="--with-batching-32-40ms--32--125ms-per-stream-32x-speedup">- With batching (32): 40ms / 32 = 1.25ms per stream (32x speedup)</h1>
+<h1 id="--gpu-needed-10m--200--32--1562-gpus">- GPU needed: 10M / (200 × 32) = 1,562 GPUs</h1>
+<h1 id="--cost-078mmonth-23x-cheaper">- Cost: $0.78M/month (23x cheaper!)</h1>
+<p>``</p>
 
 <h3 id="strategy-2-regional-deployment">Strategy 2: Regional Deployment</h3>
 
 <p><strong>Deploy closer to users to reduce latency</strong></p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>North America: 3M users → 500 GPUs → 3 data centers
+<p>``
+North America: 3M users → 500 GPUs → 3 data centers
 Europe: 2M users → 330 GPUs → 2 data centers
 Asia: 4M users → 660 GPUs → 4 data centers
-...
+…</p>
 
-Total: ~1,500 GPUs globally
-</code></pre></div></div>
+<p>Total: ~1,500 GPUs globally
+``</p>
 
 <p><strong>Benefits:</strong></p>
 <ul>
@@ -1343,17 +1369,18 @@ Total: ~1,500 GPUs globally
 
 <p><strong>Run simple queries on-device, complex queries on cloud</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">route_request</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">user_context</span><span class="p">):</span>
-    <span class="c1"># Estimate query complexity
-</span>    <span class="k">if</span> <span class="nf">is_simple_command</span><span class="p">(</span><span class="n">audio</span><span class="p">):</span>  <span class="c1"># "play music", "set timer"
-</span>        <span class="k">return</span> <span class="nf">on_device_asr</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>  <span class="c1"># 30ms, free, offline
-</span>    
-    <span class="k">elif</span> <span class="nf">is_dictation</span><span class="p">(</span><span class="n">audio</span><span class="p">):</span>  <span class="c1"># Long-form transcription
-</span>        <span class="k">return</span> <span class="nf">cloud_asr</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>  <span class="c1"># 80ms, $0.01/min, high accuracy
-</span>    
-    <span class="k">else</span><span class="p">:</span>  <span class="c1"># Conversational query
-</span>        <span class="k">return</span> <span class="nf">cloud_asr</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>  <span class="c1"># Best quality for complex queries
-</span></code></pre></div></div>
+<p>``python
+def route_request(audio, user_context):
+ # Estimate query complexity
+ if is_simple_command(audio): # “play music”, “set timer”
+ return on_device_asr(audio) # 30ms, free, offline</p>
+
+<p>elif is_dictation(audio): # Long-form transcription
+ return cloud_asr(audio) # 80ms, $0.01/min, high accuracy</p>
+
+<p>else: # Conversational query
+ return cloud_asr(audio) # Best quality for complex queries
+``</p>
 
 <p><strong>Distribution:</strong></p>
 <ul>
@@ -1366,159 +1393,160 @@ Total: ~1,500 GPUs globally
 
 <h2 id="production-example-putting-it-all-together">Production Example: Putting It All Together</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">asyncio</span>
-<span class="kn">import</span> <span class="n">websockets</span>
-<span class="kn">import</span> <span class="n">torch</span>
+<p>``python
+import asyncio
+import websockets
+import torch</p>
 
-<span class="k">class</span> <span class="nc">ProductionStreamingASR</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="c1"># Load optimized model
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">load_optimized_model</span><span class="p">()</span>
-        
-        <span class="c1"># VAD
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="nc">SileroVAD</span><span class="p">()</span>
-        
-        <span class="c1"># Session management
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">sessions</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># session_id → StreamingSession
-</span>        
-        <span class="c1"># Metrics
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="nc">Metrics</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">load_optimized_model</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Load quantized, pruned model</span><span class="sh">"""</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="nc">StreamingRNNT</span><span class="p">(</span><span class="n">vocab_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-        
-        <span class="c1"># Load pre-trained weights
-</span>        <span class="n">checkpoint</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sh">'</span><span class="s">rnnt_optimized.pth</span><span class="sh">'</span><span class="p">)</span>
-        <span class="n">model</span><span class="p">.</span><span class="nf">load_state_dict</span><span class="p">(</span><span class="n">checkpoint</span><span class="p">)</span>
-        
-        <span class="c1"># Quantize
-</span>        <span class="n">model_quantized</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">quantization</span><span class="p">.</span><span class="nf">quantize_dynamic</span><span class="p">(</span>
-            <span class="n">model</span><span class="p">,</span>
-            <span class="p">{</span><span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">,</span> <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">LSTM</span><span class="p">},</span>
-            <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">qint8</span>
-        <span class="p">)</span>
-        
-        <span class="n">model_quantized</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">model_quantized</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">handle_stream</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Handle websocket connection from client</span><span class="sh">"""</span>
-        <span class="n">session_id</span> <span class="o">=</span> <span class="nf">generate_session_id</span><span class="p">()</span>
-        <span class="n">session</span> <span class="o">=</span> <span class="nc">StreamingSession</span><span class="p">(</span><span class="n">session_id</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sessions</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">session</span>
-        
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">async</span> <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">websocket</span><span class="p">:</span>
-                <span class="c1"># Receive audio chunk (binary, 100ms @ 16kHz)
-</span>                <span class="n">audio_bytes</span> <span class="o">=</span> <span class="n">message</span>
-                <span class="n">audio_array</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">frombuffer</span><span class="p">(</span><span class="n">audio_bytes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">int16</span><span class="p">)</span>
-                <span class="n">audio_float</span> <span class="o">=</span> <span class="n">audio_array</span><span class="p">.</span><span class="nf">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">/</span> <span class="mf">32768.0</span>
-                
-                <span class="c1"># Process
-</span>                <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="p">.</span><span class="nf">process_chunk</span><span class="p">(</span><span class="n">audio_float</span><span class="p">)</span>
-                <span class="n">latency</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>  <span class="c1"># ms
-</span>                
-                <span class="c1"># Send partial transcript
-</span>                <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
-                    <span class="k">await</span> <span class="n">websocket</span><span class="p">.</span><span class="nf">send</span><span class="p">(</span><span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">({</span>
-                        <span class="sh">'</span><span class="s">type</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">partial</span><span class="sh">'</span><span class="p">,</span>
-                        <span class="sh">'</span><span class="s">transcript</span><span class="sh">'</span><span class="p">:</span> <span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">],</span>
-                        <span class="sh">'</span><span class="s">tokens</span><span class="sh">'</span><span class="p">:</span> <span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">tokens</span><span class="sh">'</span><span class="p">],</span>
-                        <span class="sh">'</span><span class="s">is_final</span><span class="sh">'</span><span class="p">:</span> <span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">is_final</span><span class="sh">'</span><span class="p">]</span>
-                    <span class="p">}))</span>
-                
-                <span class="c1"># Track metrics
-</span>                <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="nf">record_latency</span><span class="p">(</span><span class="n">latency</span><span class="p">)</span>
-        
-        <span class="k">except</span> <span class="n">websockets</span><span class="p">.</span><span class="n">ConnectionClosed</span><span class="p">:</span>
-            <span class="c1"># Finalize session
-</span>            <span class="n">final_transcript</span> <span class="o">=</span> <span class="n">session</span><span class="p">.</span><span class="nf">finalize</span><span class="p">()</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Session </span><span class="si">{</span><span class="n">session_id</span><span class="si">}</span><span class="s"> ended: </span><span class="si">{</span><span class="n">final_transcript</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">finally</span><span class="p">:</span>
-            <span class="c1"># Cleanup
-</span>            <span class="k">del</span> <span class="n">self</span><span class="p">.</span><span class="n">sessions</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span>
-    
-    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="sh">'</span><span class="s">0.0.0.0</span><span class="sh">'</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">8765</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Start WebSocket server</span><span class="sh">"""</span>
-        <span class="n">start_server</span> <span class="o">=</span> <span class="n">websockets</span><span class="p">.</span><span class="nf">serve</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">handle_stream</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
-        <span class="n">asyncio</span><span class="p">.</span><span class="nf">get_event_loop</span><span class="p">().</span><span class="nf">run_until_complete</span><span class="p">(</span><span class="n">start_server</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Streaming ASR server running on ws://</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s">:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        <span class="n">asyncio</span><span class="p">.</span><span class="nf">get_event_loop</span><span class="p">().</span><span class="nf">run_forever</span><span class="p">()</span>
+<p>class ProductionStreamingASR:
+ def <strong>init</strong>(self):
+ # Load optimized model
+ self.model = self.load_optimized_model()</p>
 
-<span class="k">class</span> <span class="nc">StreamingSession</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">session_id</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">vad</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">session_id</span> <span class="o">=</span> <span class="n">session_id</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="n">vad</span>
-        
-        <span class="c1"># State
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">partial_transcript</span> <span class="o">=</span> <span class="sh">""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">audio_buffer</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">def</span> <span class="nf">process_chunk</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="c1"># VAD check
-</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">is_speech</span><span class="p">(</span><span class="n">audio</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">None</span>
-        
-        <span class="c1"># Extract features
-</span>        <span class="n">features</span> <span class="o">=</span> <span class="nf">extract_mel_features</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        
-        <span class="c1"># Encode
-</span>        <span class="n">encoder_out</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span>
-            <span class="n">features</span><span class="p">,</span>
-            <span class="n">cache</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Decode (beam search)
-</span>        <span class="n">tokens</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">decoder</span><span class="p">(</span>
-            <span class="n">encoder_out</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span><span class="p">,</span>
-            <span class="n">beam_size</span><span class="o">=</span><span class="mi">5</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Convert tokens to text
-</span>        <span class="n">new_text</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">tokenizer</span><span class="p">.</span><span class="nf">decode</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">partial_transcript</span> <span class="o">+=</span> <span class="n">new_text</span>
-        
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">:</span> <span class="n">new_text</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">tokens</span><span class="sh">'</span><span class="p">:</span> <span class="n">tokens</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">is_final</span><span class="sh">'</span><span class="p">:</span> <span class="bp">False</span>
-        <span class="p">}</span>
-    
-    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">End of utterance processing</span><span class="sh">"""</span>
-        <span class="c1"># Post-processing
-</span>        <span class="n">final_transcript</span> <span class="o">=</span> <span class="nf">post_process</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">partial_transcript</span><span class="p">)</span>
-        
-        <span class="c1"># Reset state
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">encoder_cache</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">decoder_state</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">partial_transcript</span> <span class="o">=</span> <span class="sh">""</span>
-        
-        <span class="k">return</span> <span class="n">final_transcript</span>
+<p># VAD
+ self.vad = SileroVAD()</p>
 
-<span class="c1"># Run server
-</span><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="sh">'</span><span class="s">__main__</span><span class="sh">'</span><span class="p">:</span>
-    <span class="n">server</span> <span class="o">=</span> <span class="nc">ProductionStreamingASR</span><span class="p">()</span>
-    <span class="n">server</span><span class="p">.</span><span class="nf">run</span><span class="p">()</span>
-</code></pre></div></div>
+<p># Session management
+ self.sessions = {} # session_id → StreamingSession</p>
+
+<p># Metrics
+ self.metrics = Metrics()</p>
+
+<p>def load_optimized_model(self):
+ “"”Load quantized, pruned model”””
+ model = StreamingRNNT(vocab_size=1000)</p>
+
+<p># Load pre-trained weights
+ checkpoint = torch.load(‘rnnt_optimized.pth’)
+ model.load_state_dict(checkpoint)</p>
+
+<p># Quantize
+ model_quantized = torch.quantization.quantize_dynamic(
+ model,
+ {torch.nn.Linear, torch.nn.LSTM},
+ dtype=torch.qint8
+ )</p>
+
+<p>model_quantized.eval()
+ return model_quantized</p>
+
+<p>async def handle_stream(self, websocket, path):
+ “"”Handle websocket connection from client”””
+ session_id = generate_session_id()
+ session = StreamingSession(session_id, self.model, self.vad)
+ self.sessions[session_id] = session</p>
+
+<p>try:
+ async for message in websocket:
+ # Receive audio chunk (binary, 100ms @ 16kHz)
+ audio_bytes = message
+ audio_array = np.frombuffer(audio_bytes, dtype=np.int16)
+ audio_float = audio_array.astype(np.float32) / 32768.0</p>
+
+<p># Process
+ start_time = time.time()
+ result = session.process_chunk(audio_float)
+ latency = (time.time() - start_time) * 1000 # ms</p>
+
+<p># Send partial transcript
+ if result:
+ await websocket.send(json.dumps({
+ ‘type’: ‘partial’,
+ ‘transcript’: result[‘text’],
+ ‘tokens’: result[‘tokens’],
+ ‘is_final’: result[‘is_final’]
+ }))</p>
+
+<p># Track metrics
+ self.metrics.record_latency(latency)</p>
+
+<p>except websockets.ConnectionClosed:
+ # Finalize session
+ final_transcript = session.finalize()
+ print(f”Session {session_id} ended: {final_transcript}”)</p>
+
+<p>finally:
+ # Cleanup
+ del self.sessions[session_id]</p>
+
+<p>def run(self, host=’0.0.0.0’, port=8765):
+ “"”Start WebSocket server”””
+ start_server = websockets.serve(self.handle_stream, host, port)
+ asyncio.get_event_loop().run_until_complete(start_server)
+ print(f”Streaming ASR server running on ws://{host}:{port}”)
+ asyncio.get_event_loop().run_forever()</p>
+
+<p>class StreamingSession:
+ def <strong>init</strong>(self, session_id, model, vad):
+ self.session_id = session_id
+ self.model = model
+ self.vad = vad</p>
+
+<p># State
+ self.encoder_cache = None
+ self.decoder_state = None
+ self.partial_transcript = “”
+ self.audio_buffer = []</p>
+
+<p>def process_chunk(self, audio):
+ # VAD check
+ if not self.vad.is_speech(audio):
+ return None</p>
+
+<p># Extract features
+ features = extract_mel_features(audio)</p>
+
+<p># Encode
+ encoder_out, self.encoder_cache = self.model.encoder(
+ features,
+ cache=self.encoder_cache
+ )</p>
+
+<p># Decode (beam search)
+ tokens, self.decoder_state = self.model.decoder(
+ encoder_out,
+ state=self.decoder_state,
+ beam_size=5
+ )</p>
+
+<p># Convert tokens to text
+ new_text = self.model.tokenizer.decode(tokens)
+ self.partial_transcript += new_text</p>
+
+<p>return {
+ ‘text’: new_text,
+ ‘tokens’: tokens,
+ ‘is_final’: False
+ }</p>
+
+<p>def finalize(self):
+ “"”End of utterance processing”””
+ # Post-processing
+ final_transcript = post_process(self.partial_transcript)</p>
+
+<p># Reset state
+ self.encoder_cache = None
+ self.decoder_state = None
+ self.partial_transcript = “”</p>
+
+<p>return final_transcript</p>
+
+<h1 id="run-server">Run server</h1>
+<p>if <strong>name</strong> == ‘<strong>main</strong>’:
+ server = ProductionStreamingASR()
+ server.run()
+``</p>
 
 <hr />
 
 <h2 id="key-takeaways">Key Takeaways</h2>
 
-<p>✅ <strong>RNN-T architecture</strong> enables true streaming without future context<br />
-✅ <strong>Conformer encoder</strong> combines convolution + attention for best accuracy<br />
-✅ <strong>State management</strong> critical for maintaining context across chunks<br />
-✅ <strong>Quantization + pruning</strong> achieve 4x compression, 3x speedup, &lt; 1% WER loss<br />
-✅ <strong>Batching</strong> provides 32x throughput improvement on GPUs<br />
-✅ <strong>Hybrid cloud-edge</strong> reduces cloud load by 70%<br />
+<p>✅ <strong>RNN-T architecture</strong> enables true streaming without future context 
+✅ <strong>Conformer encoder</strong> combines convolution + attention for best accuracy 
+✅ <strong>State management</strong> critical for maintaining context across chunks 
+✅ <strong>Quantization + pruning</strong> achieve 4x compression, 3x speedup, &lt; 1% WER loss 
+✅ <strong>Batching</strong> provides 32x throughput improvement on GPUs 
+✅ <strong>Hybrid cloud-edge</strong> reduces cloud load by 70% 
 ✅ <strong>VAD</strong> saves 50-70% compute by filtering silence</p>
 
 <hr />
@@ -1653,7 +1681,7 @@ Total: ~1,500 GPUs globally
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          27 minute read
+          28 minute read
         
       </span>
     

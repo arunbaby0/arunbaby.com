@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Multi-Step Reasoning">
     <meta itemprop="description" content="“Thinking Fast and Slow: How to make LLMs stop guessing and start solving.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -371,13 +371,13 @@ If the model makes a mistake at Step B (e.g., <code class="language-plaintext hi
 <ul>
   <li><strong>Prompt:</strong> “Roger has 5 balls…”</li>
   <li><strong>PAL Output:</strong>
-    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">balls_initial</span> <span class="o">=</span> <span class="mi">5</span>
- <span class="n">cans</span> <span class="o">=</span> <span class="mi">2</span>
- <span class="n">balls_per_can</span> <span class="o">=</span> <span class="mi">3</span>
- <span class="n">total</span> <span class="o">=</span> <span class="n">balls_initial</span> <span class="o">+</span> <span class="p">(</span><span class="n">cans</span> <span class="o">*</span> <span class="n">balls_per_can</span><span class="p">)</span>
- <span class="nf">print</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
-</code></pre></div>    </div>
-  </li>
+ <code class="language-plaintext highlighter-rouge">python
+ balls_initial = 5
+ cans = 2
+ balls_per_can = 3
+ total = balls_initial + (cans * balls_per_can)
+ print(total)
+</code></li>
   <li><strong>Execution:</strong> The runtime executes the Python code.</li>
   <li><strong>Result:</strong> Exact precision.</li>
   <li><strong>Agent Takeaway:</strong> Always offload deterministic logic (Math, Date handling, String manipulation) to <strong>Tools/Code</strong>, never rely on the LLM’s weights.</li>
@@ -399,7 +399,7 @@ If the model makes a mistake at Step B (e.g., <code class="language-plaintext hi
 
 <h3 id="62-the-paradigm-shift">6.2 The Paradigm Shift</h3>
 <ul>
-  <li><strong>Inference-Time Compute:</strong> We used to think inference was constant cost ($O(N)$). Now, we treat inference like search. We can spend more time (and money) to get a better answer.</li>
+  <li><strong>Inference-Time Compute:</strong> We used to think inference was constant cost (O(N)). Now, we treat inference like search. We can spend more time (and money) to get a better answer.</li>
   <li><strong>The “Thinking” Placeholder:</strong> While o1 is processing, it shows “Thinking…”. This is actually the model generating hidden tokens.</li>
   <li><strong>Implication:</strong> We are moving from “Prompt Engineering Reason” to “Buying Reason.” We pay for the compute time of the model’s reflection.</li>
 </ul>
@@ -410,60 +410,61 @@ If the model makes a mistake at Step B (e.g., <code class="language-plaintext hi
 
 <p>A robust Python pattern to perform voting on reasoning chains.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
-<span class="kn">import</span> <span class="n">re</span>
-<span class="kn">import</span> <span class="n">openai</span>
+<p>``python
+from collections import Counter
+import re
+import openai</p>
 
-<span class="k">def</span> <span class="nf">generate_self_consistency_answer</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
- <span class="sh">"""</span><span class="s">
+<p>def generate_self_consistency_answer(prompt, n=5):
+ “””
  Generates N responses and returns the most common numeric answer.
- </span><span class="sh">"""</span>
- <span class="n">answers</span> <span class="o">=</span> <span class="p">[]</span>
- <span class="n">reasoning_traces</span> <span class="o">=</span> <span class="p">[]</span>
+ “””
+ answers = []
+ reasoning_traces = []</p>
 
- <span class="c1"># Run N parallel requests (or one request with n=5 if supported)
-</span> <span class="c1"># High temperature is key for diversity
-</span> <span class="n">responses</span> <span class="o">=</span> <span class="n">openai</span><span class="p">.</span><span class="n">chat</span><span class="p">.</span><span class="n">completions</span><span class="p">.</span><span class="nf">create</span><span class="p">(</span>
- <span class="n">model</span><span class="o">=</span><span class="sh">"</span><span class="s">gpt-4o</span><span class="sh">"</span><span class="p">,</span>
- <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="sh">"</span><span class="s">role</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">user</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">content</span><span class="sh">"</span><span class="p">:</span> <span class="n">prompt</span> <span class="o">+</span> <span class="sh">"</span><span class="se">\n</span><span class="s">Let</span><span class="sh">'</span><span class="s">s think step by step.</span><span class="sh">"</span><span class="p">}],</span>
- <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span>
- <span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span>
- <span class="p">)</span>
+<p># Run N parallel requests (or one request with n=5 if supported)
+ # High temperature is key for diversity
+ responses = openai.chat.completions.create(
+ model=”gpt-4o”,
+ messages=[{“role”: “user”, “content”: prompt + “\nLet’s think step by step.”}],
+ n=n,
+ temperature=0.7
+ )</p>
 
- <span class="k">for</span> <span class="n">choice</span> <span class="ow">in</span> <span class="n">responses</span><span class="p">.</span><span class="n">choices</span><span class="p">:</span>
- <span class="n">text</span> <span class="o">=</span> <span class="n">choice</span><span class="p">.</span><span class="n">message</span><span class="p">.</span><span class="n">content</span>
- <span class="n">reasoning_traces</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<p>for choice in responses.choices:
+ text = choice.message.content
+ reasoning_traces.append(text)</p>
 
- <span class="c1"># Simple extraction logic (in production, use structured output)
-</span> <span class="c1"># Find the last number in the text
-</span> <span class="n">numbers</span> <span class="o">=</span> <span class="n">re</span><span class="p">.</span><span class="nf">findall</span><span class="p">(</span><span class="sa">r</span><span class="sh">"</span><span class="s">[-+]?\d*\.\d+|\d+</span><span class="sh">"</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
- <span class="k">if</span> <span class="n">numbers</span><span class="p">:</span>
- <span class="n">answers</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">numbers</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<p># Simple extraction logic (in production, use structured output)
+ # Find the last number in the text
+ numbers = re.findall(r”[-+]?\d*.\d+|\d+”, text)
+ if numbers:
+ answers.append(numbers[-1])</p>
 
- <span class="c1"># Voting
-</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">answers</span><span class="p">:</span>
- <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="n">reasoning_traces</span>
+<p># Voting
+ if not answers:
+ return None, reasoning_traces</p>
 
- <span class="n">vote_counts</span> <span class="o">=</span> <span class="nc">Counter</span><span class="p">(</span><span class="n">answers</span><span class="p">)</span>
- <span class="n">most_common</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="n">vote_counts</span><span class="p">.</span><span class="nf">most_common</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
- <span class="n">confidence</span> <span class="o">=</span> <span class="n">count</span> <span class="o">/</span> <span class="n">n</span>
+<p>vote_counts = Counter(answers)
+ most_common, count = vote_counts.most_common(1)[0]
+ confidence = count / n</p>
 
- <span class="k">return</span> <span class="p">{</span>
- <span class="sh">"</span><span class="s">final_answer</span><span class="sh">"</span><span class="p">:</span> <span class="n">most_common</span><span class="p">,</span>
- <span class="sh">"</span><span class="s">confidence</span><span class="sh">"</span><span class="p">:</span> <span class="n">confidence</span><span class="p">,</span>
- <span class="sh">"</span><span class="s">votes</span><span class="sh">"</span><span class="p">:</span> <span class="nf">dict</span><span class="p">(</span><span class="n">vote_counts</span><span class="p">),</span>
- <span class="sh">"</span><span class="s">traces</span><span class="sh">"</span><span class="p">:</span> <span class="n">reasoning_traces</span>
- <span class="p">}</span>
+<p>return {
+ “final_answer”: most_common,
+ “confidence”: confidence,
+ “votes”: dict(vote_counts),
+ “traces”: reasoning_traces
+ }</p>
 
-<span class="c1"># Usage
-</span><span class="n">prompt</span> <span class="o">=</span> <span class="sh">"</span><span class="s">If I have 3 apples and buy 2 dozen more, then eat 5, how many do I have?</span><span class="sh">"</span>
-<span class="n">result</span> <span class="o">=</span> <span class="nf">generate_self_consistency_answer</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
+<h1 id="usage">Usage</h1>
+<p>prompt = “If I have 3 apples and buy 2 dozen more, then eat 5, how many do I have?”
+result = generate_self_consistency_answer(prompt)</p>
 
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Consensus Answer: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">final_answer</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Confidence: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">confidence</span><span class="sh">'</span><span class="p">]</span><span class="o">*</span><span class="mi">100</span><span class="si">}</span><span class="s">%</span><span class="sh">"</span><span class="p">)</span>
-<span class="c1"># Output: 22 (Confidence 100%)
-# Logic: 3 + 24 - 5 = 22.
-</span></code></pre></div></div>
+<p>print(f”Consensus Answer: {result[‘final_answer’]}”)
+print(f”Confidence: {result[‘confidence’]*100}%”)</p>
+<h1 id="output-22-confidence-100">Output: 22 (Confidence 100%)</h1>
+<h1 id="logic-3--24---5--22">Logic: 3 + 24 - 5 = 22.</h1>
+<p>``</p>
 
 <hr />
 

@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Voice Agent Frameworks: LiveKit &amp; Pipecat">
     <meta itemprop="description" content="“Don’t build the phone network. Just build the app.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -318,64 +318,66 @@ But if you want to run a Voice Agent in a browser (Chrome/Safari), connect to a 
 <h3 id="32-the-pipeline">3.2 The Pipeline</h3>
 <p>You define a synchronous list of processors. Data flows through them conceptually like a pipe.</p>
 
-<pre><code class="language-mermaid">graph LR
+<p><code class="language-plaintext highlighter-rouge">mermaid
+graph LR
  Transport(WebRTC) --&gt; VAD
  VAD --&gt; Context(Aggregator)
  Context --&gt; LLM(OpenAI)
  LLM --&gt; TTS(ElevenLabs)
  TTS --&gt; Transport(WebRTC)
-</code></pre>
+</code></p>
 
 <h3 id="33-pipecat-code-walkthrough">3.3 Pipecat Code Walkthrough</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># A simple Pipecat Bot
-</span><span class="kn">import</span> <span class="n">asyncio</span>
-<span class="kn">from</span> <span class="n">pipecat.pipeline.pipeline</span> <span class="kn">import</span> <span class="n">Pipeline</span>
-<span class="kn">from</span> <span class="n">pipecat.pipeline.task</span> <span class="kn">import</span> <span class="n">PipelineTask</span>
-<span class="kn">from</span> <span class="n">pipecat.services.openai</span> <span class="kn">import</span> <span class="n">OpenAILLMService</span>
-<span class="kn">from</span> <span class="n">pipecat.services.deepgram</span> <span class="kn">import</span> <span class="n">DeepgramSTTService</span>
-<span class="kn">from</span> <span class="n">pipecat.services.elevenlabs</span> <span class="kn">import</span> <span class="n">ElevenLabsTTSService</span>
-<span class="kn">from</span> <span class="n">pipecat.transports.services.daily</span> <span class="kn">import</span> <span class="n">DailyTransport</span> <span class="c1"># Or LiveKitTransport
-</span>
-<span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
- <span class="c1"># 1. Transport Layer (The Phone Line)
-</span> <span class="c1"># This connects to the Room
-</span> <span class="n">transport</span> <span class="o">=</span> <span class="nc">DailyTransport</span><span class="p">(</span>
- <span class="n">room_url</span><span class="o">=</span><span class="sh">"</span><span class="s">https://demo.daily.co/test_room</span><span class="sh">"</span><span class="p">,</span>
- <span class="n">token</span><span class="o">=</span><span class="sh">"</span><span class="s">meet_token</span><span class="sh">"</span>
- <span class="p">)</span>
+<p>``python</p>
+<h1 id="a-simple-pipecat-bot">A simple Pipecat Bot</h1>
+<p>import asyncio
+from pipecat.pipeline.pipeline import Pipeline
+from pipecat.pipeline.task import PipelineTask
+from pipecat.services.openai import OpenAILLMService
+from pipecat.services.deepgram import DeepgramSTTService
+from pipecat.services.elevenlabs import ElevenLabsTTSService
+from pipecat.transports.services.daily import DailyTransport # Or LiveKitTransport</p>
 
- <span class="c1"># 2. Services (The Organs)
-</span> <span class="c1"># We instantiate the services we need.
-</span> <span class="n">stt</span> <span class="o">=</span> <span class="nc">DeepgramSTTService</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="sh">"</span><span class="s">...</span><span class="sh">"</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="sh">"</span><span class="s">nova-2</span><span class="sh">"</span><span class="p">)</span>
- <span class="n">llm</span> <span class="o">=</span> <span class="nc">OpenAILLMService</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="sh">"</span><span class="s">...</span><span class="sh">"</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="sh">"</span><span class="s">gpt-4o</span><span class="sh">"</span><span class="p">)</span>
- <span class="n">tts</span> <span class="o">=</span> <span class="nc">ElevenLabsTTSService</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="sh">"</span><span class="s">...</span><span class="sh">"</span><span class="p">,</span> <span class="n">voice_id</span><span class="o">=</span><span class="sh">"</span><span class="s">...</span><span class="sh">"</span><span class="p">)</span>
+<p>async def main():
+ # 1. Transport Layer (The Phone Line)
+ # This connects to the Room
+ transport = DailyTransport(
+ room_url=”https://demo.daily.co/test_room”,
+ token=”meet_token”
+ )</p>
 
- <span class="c1"># 3. Message Handling (The Logic)
-</span> <span class="c1"># Define what happens when context is updated
-</span> <span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
- <span class="p">{</span><span class="sh">"</span><span class="s">role</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">system</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">content</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">You are a helpful assistant.</span><span class="sh">"</span><span class="p">}</span>
- <span class="p">]</span>
+<p># 2. Services (The Organs)
+ # We instantiate the services we need.
+ stt = DeepgramSTTService(api_key=”…”, model=”nova-2”)
+ llm = OpenAILLMService(api_key=”…”, model=”gpt-4o”)
+ tts = ElevenLabsTTSService(api_key=”…”, voice_id=”…”)</p>
 
- <span class="c1"># 4. The Pipeline Definition
-</span> <span class="c1"># Flow: Mic -&gt; STT -&gt; LLM -&gt; TTS -&gt; Speaker
-</span> <span class="n">pipeline</span> <span class="o">=</span> <span class="nc">Pipeline</span><span class="p">([</span>
- <span class="n">transport</span><span class="p">.</span><span class="nf">input</span><span class="p">(),</span> <span class="c1"># Microphone Input
-</span> <span class="n">stt</span><span class="p">,</span> <span class="c1"># Converts Audio Frame -&gt; Text Frame
-</span> <span class="n">llm</span><span class="p">,</span> <span class="c1"># Converts Text Frame -&gt; Text Frame (Response)
-</span> <span class="n">tts</span><span class="p">,</span> <span class="c1"># Converts Text Frame -&gt; Audio Frame
-</span> <span class="n">transport</span><span class="p">.</span><span class="nf">output</span><span class="p">()</span> <span class="c1"># Speaker Output
-</span> <span class="p">])</span>
+<p># 3. Message Handling (The Logic)
+ # Define what happens when context is updated
+ messages = [
+ {“role”: “system”, “content”: “You are a helpful assistant.”}
+ ]</p>
 
- <span class="n">task</span> <span class="o">=</span> <span class="nc">PipelineTask</span><span class="p">(</span><span class="n">pipeline</span><span class="p">)</span>
+<p># 4. The Pipeline Definition
+ # Flow: Mic -&gt; STT -&gt; LLM -&gt; TTS -&gt; Speaker
+ pipeline = Pipeline([
+ transport.input(), # Microphone Input
+ stt, # Converts Audio Frame -&gt; Text Frame
+ llm, # Converts Text Frame -&gt; Text Frame (Response)
+ tts, # Converts Text Frame -&gt; Audio Frame
+ transport.output() # Speaker Output
+ ])</p>
 
- <span class="c1"># 5. Run the Event Loop
-</span> <span class="c1"># This automatically handles the VAD interrupting the TTS
-</span> <span class="k">await</span> <span class="n">task</span><span class="p">.</span><span class="nf">run</span><span class="p">()</span>
+<p>task = PipelineTask(pipeline)</p>
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="sh">"</span><span class="s">__main__</span><span class="sh">"</span><span class="p">:</span>
- <span class="n">asyncio</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span><span class="nf">main</span><span class="p">())</span>
-</code></pre></div></div>
+<p># 5. Run the Event Loop
+ # This automatically handles the VAD interrupting the TTS
+ await task.run()</p>
+
+<p>if <strong>name</strong> == “<strong>main</strong>”:
+ asyncio.run(main())
+``</p>
 
 <p><strong>Key Magic:</strong> The <code class="language-plaintext highlighter-rouge">Pipeline</code> class handles <strong>Interruption</strong>. If <code class="language-plaintext highlighter-rouge">stt</code> emits a <code class="language-plaintext highlighter-rouge">UserStartedSpeakingFrame</code>, the pipeline automatically cancels any pending tasks in <code class="language-plaintext highlighter-rouge">llm</code> and <code class="language-plaintext highlighter-rouge">tts</code> to stop the bot from talking.</p>
 
@@ -474,9 +476,15 @@ How do you connect your cool Python Agent to a +1-800 number?</p>
     
       <a href="/tags/#pipecat" class="page__taxonomy-item p-category" rel="tag">pipecat</a><span class="sep">, </span>
     
+      <a href="/tags/#retell" class="page__taxonomy-item p-category" rel="tag">retell</a><span class="sep">, </span>
+    
       <a href="/tags/#sfu" class="page__taxonomy-item p-category" rel="tag">sfu</a><span class="sep">, </span>
     
       <a href="/tags/#sip" class="page__taxonomy-item p-category" rel="tag">sip</a><span class="sep">, </span>
+    
+      <a href="/tags/#stun-turn" class="page__taxonomy-item p-category" rel="tag">stun-turn</a><span class="sep">, </span>
+    
+      <a href="/tags/#vapi" class="page__taxonomy-item p-category" rel="tag">vapi</a><span class="sep">, </span>
     
       <a href="/tags/#webrtc" class="page__taxonomy-item p-category" rel="tag">webrtc</a>
     
@@ -589,6 +597,43 @@ How do you connect your cool Python Agent to a +1-800 number?</p>
 
     <p class="archive__item-excerpt" itemprop="description">Design a robust data augmentation pipeline that applies rich transformations to large-scale datasets without becoming the training bottleneck.
 </p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/speech-tech/0018-audio-augmentation-techniques/" rel="permalink">Audio Augmentation Techniques
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          9 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Use audio augmentation techniques to make speech models robust to noise, accents, channels, and real-world conditions—built on the same matrix/tensor transfo...</p>
   </article>
 </div>
 

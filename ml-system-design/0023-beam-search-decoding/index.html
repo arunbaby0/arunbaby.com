@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Beam Search Decoding">
     <meta itemprop="description" content="The industry-standard algorithm for converting probabilistic model outputs into coherent text sequences.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -284,25 +284,26 @@
 
 <h2 id="high-level-architecture-the-beam-search-pipeline">High-Level Architecture: The Beam Search Pipeline</h2>
 
-<pre><code class="language-ascii">+-----------+     +------------+     +-----------------+
-| Input Seq | --&gt; |  Encoder   | --&gt; |  Hidden States  |
-+-----------+     +------------+     +-----------------+
-                                            |
-                                            v
-                                   +-----------------+
-                                   |     Decoder     | &lt;--- (KV Cache)
-                                   +-----------------+
-                                            |
-                                            v
-                                   +-----------------+
-                                   |   Logits (V)    |
-                                   +-----------------+
-                                            |
-                                            v
-                                   +-----------------+
-                                   |   Beam Search   | --&gt; Top-K Sequences
-                                   +-----------------+
-</code></pre>
+<p><code class="language-plaintext highlighter-rouge">ascii
++-----------+ +------------+ +-----------------+
+| Input Seq | --&gt; | Encoder | --&gt; | Hidden States |
++-----------+ +------------+ +-----------------+
+ |
+ v
+ +-----------------+
+ | Decoder | &lt;--- (KV Cache)
+ +-----------------+
+ |
+ v
+ +-----------------+
+ | Logits (V) |
+ +-----------------+
+ |
+ v
+ +-----------------+
+ | Beam Search | --&gt; Top-K Sequences
+ +-----------------+
+</code></p>
 
 <h2 id="strategy-1-greedy-search">Strategy 1: Greedy Search</h2>
 
@@ -318,21 +319,18 @@
 
 <p><strong>Pros:</strong></p>
 <ul>
-  <li>Fast (<code class="language-plaintext highlighter-rouge">O(T)</code>).</li>
+  <li>Fast (O(T)).</li>
   <li>Simple to implement.</li>
 </ul>
 
 <p><strong>Cons:</strong></p>
 <ul>
   <li><strong>Short-sighted:</strong> It makes locally optimal decisions that might lead to a dead end.</li>
-  <li><strong>Example:</strong>
-    <ul>
-      <li>Step 1: “The” (0.4), “A” (0.3). Greedy picks “The”.</li>
-      <li>Step 2: “The” -&gt; “dog” (0.1). Total score: 0.4 * 0.1 = 0.04.</li>
-      <li>Alternative: “A” -&gt; “cat” (0.9). Total score: 0.3 * 0.9 = 0.27.</li>
-      <li>Greedy missed the better path because it committed too early.</li>
-    </ul>
-  </li>
+  <li><strong>Example:</strong></li>
+  <li>Step 1: “The” (0.4), “A” (0.3). Greedy picks “The”.</li>
+  <li>Step 2: “The” -&gt; “dog” (0.1). Total score: 0.4 * 0.1 = 0.04.</li>
+  <li>Alternative: “A” -&gt; “cat” (0.9). Total score: 0.3 * 0.9 = 0.27.</li>
+  <li>Greedy missed the better path because it committed too early.</li>
 </ul>
 
 <h2 id="strategy-2-beam-search">Strategy 2: Beam Search</h2>
@@ -365,65 +363,66 @@
 
 <p>Let’s implement a clean, production-ready Beam Search.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn.functional</span> <span class="k">as</span> <span class="n">F</span>
-<span class="kn">import</span> <span class="n">math</span>
+<p>``python
+import torch
+import torch.nn.functional as F
+import math</p>
 
-<span class="k">def</span> <span class="nf">beam_search_decoder</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">start_token</span><span class="p">,</span> <span class="n">end_token</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
-    <span class="c1"># Hypothesis: (score, sequence)
-</span>    <span class="c1"># Start with one hypothesis
-</span>    <span class="n">hypotheses</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="p">[</span><span class="n">start_token</span><span class="p">])]</span>
-    
-    <span class="c1"># Final completed sequences
-</span>    <span class="n">completed_hypotheses</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">max_len</span><span class="p">):</span>
-        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># 1. Expand each hypothesis
-</span>        <span class="k">for</span> <span class="n">score</span><span class="p">,</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">hypotheses</span><span class="p">:</span>
-            <span class="c1"># If this hypothesis is already done, don't expand
-</span>            <span class="k">if</span> <span class="n">seq</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">end_token</span><span class="p">:</span>
-                <span class="n">completed_hypotheses</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">score</span><span class="p">,</span> <span class="n">seq</span><span class="p">))</span>
-                <span class="k">continue</span>
-                
-            <span class="c1"># Get model prediction for the next token
-</span>            <span class="c1"># (In reality, you'd cache the hidden state!)
-</span>            <span class="n">input_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([</span><span class="n">seq</span><span class="p">])</span>
-            <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
-                <span class="n">logits</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">)</span> <span class="c1"># Shape: [1, seq_len, vocab_size]
-</span>                
-            <span class="c1"># Get log probabilities of the last step
-</span>            <span class="n">log_probs</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">log_softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-            
-            <span class="c1"># 2. Get Top-K candidates for this branch
-</span>            <span class="n">top_k_log_probs</span><span class="p">,</span> <span class="n">top_k_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">topk</span><span class="p">(</span><span class="n">log_probs</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
-            
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
-                <span class="n">token_idx</span> <span class="o">=</span> <span class="n">top_k_indices</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="nf">item</span><span class="p">()</span>
-                <span class="n">token_prob</span> <span class="o">=</span> <span class="n">top_k_log_probs</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="nf">item</span><span class="p">()</span>
-                
-                <span class="n">new_score</span> <span class="o">=</span> <span class="n">score</span> <span class="o">+</span> <span class="n">token_prob</span>
-                <span class="n">new_seq</span> <span class="o">=</span> <span class="n">seq</span> <span class="o">+</span> <span class="p">[</span><span class="n">token_idx</span><span class="p">]</span>
-                <span class="n">candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">new_score</span><span class="p">,</span> <span class="n">new_seq</span><span class="p">))</span>
-        
-        <span class="c1"># 3. Prune: Keep only global Top-K
-</span>        <span class="c1"># Sort by score (descending)
-</span>        <span class="n">ordered</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="n">hypotheses</span> <span class="o">=</span> <span class="n">ordered</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span>
-        
-        <span class="c1"># Early stopping: If all K hypotheses are done
-</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">hypotheses</span><span class="p">:</span>
-            <span class="k">break</span>
-            
-    <span class="c1"># Add any remaining running hypotheses to completed
-</span>    <span class="n">completed_hypotheses</span><span class="p">.</span><span class="nf">extend</span><span class="p">(</span><span class="n">hypotheses</span><span class="p">)</span>
-    
-    <span class="c1"># Sort final results
-</span>    <span class="n">completed_hypotheses</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">completed_hypotheses</span>
-</code></pre></div></div>
+<p>def beam_search_decoder(model, start_token, end_token, k=3, max_len=20):
+ # Hypothesis: (score, sequence)
+ # Start with one hypothesis
+ hypotheses = [(0.0, [start_token])]</p>
+
+<p># Final completed sequences
+ completed_hypotheses = []</p>
+
+<p>for step in range(max_len):
+ candidates = []</p>
+
+<p># 1. Expand each hypothesis
+ for score, seq in hypotheses:
+ # If this hypothesis is already done, don’t expand
+ if seq[-1] == end_token:
+ completed_hypotheses.append((score, seq))
+ continue</p>
+
+<p># Get model prediction for the next token
+ # (In reality, you’d cache the hidden state!)
+ input_tensor = torch.tensor([seq])
+ with torch.no_grad():
+ logits = model(input_tensor) # Shape: [1, seq_len, vocab_size]</p>
+
+<p># Get log probabilities of the last step
+ log_probs = F.log_softmax(logits[0, -1, :], dim=-1)</p>
+
+<p># 2. Get Top-K candidates for this branch
+ top_k_log_probs, top_k_indices = torch.topk(log_probs, k)</p>
+
+<p>for i in range(k):
+ token_idx = top_k_indices[i].item()
+ token_prob = top_k_log_probs[i].item()</p>
+
+<p>new_score = score + token_prob
+ new_seq = seq + [token_idx]
+ candidates.append((new_score, new_seq))</p>
+
+<p># 3. Prune: Keep only global Top-K
+ # Sort by score (descending)
+ ordered = sorted(candidates, key=lambda x: x[0], reverse=True)
+ hypotheses = ordered[:k]</p>
+
+<p># Early stopping: If all K hypotheses are done
+ if not hypotheses:
+ break</p>
+
+<p># Add any remaining running hypotheses to completed
+ completed_hypotheses.extend(hypotheses)</p>
+
+<p># Sort final results
+ completed_hypotheses.sort(key=lambda x: x[0], reverse=True)</p>
+
+<p>return completed_hypotheses
+``</p>
 
 <h3 id="complexity-analysis">Complexity Analysis</h3>
 <ul>
@@ -515,48 +514,49 @@ For <strong>Translation/ASR</strong>, Beam Search is king. We want the <em>corre
 
 <p>In production, Python is too slow. We implement Beam Search in C++ using <code class="language-plaintext highlighter-rouge">std::priority_queue</code>.</p>
 
-<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include</span> <span class="cpf">&lt;queue&gt;</span><span class="cp">
-#include</span> <span class="cpf">&lt;vector&gt;</span><span class="cp">
-#include</span> <span class="cpf">&lt;cmath&gt;</span><span class="cp">
-#include</span> <span class="cpf">&lt;algorithm&gt;</span><span class="cp">
-</span>
-<span class="k">struct</span> <span class="nc">Hypothesis</span> <span class="p">{</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">sequence</span><span class="p">;</span>
-    <span class="kt">float</span> <span class="n">score</span><span class="p">;</span>
-    
-    <span class="kt">bool</span> <span class="k">operator</span><span class="o">&lt;</span><span class="p">(</span><span class="k">const</span> <span class="n">Hypothesis</span><span class="o">&amp;</span> <span class="n">other</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="n">score</span> <span class="o">&lt;</span> <span class="n">other</span><span class="p">.</span><span class="n">score</span><span class="p">;</span> <span class="c1">// Max-heap</span>
-    <span class="p">}</span>
-<span class="p">};</span>
+<p>``cpp
+#include <queue>
+#include <vector>
+#include <cmath>
+#include <algorithm></algorithm></cmath></vector></queue></p>
 
-<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Hypothesis</span><span class="o">&gt;</span> <span class="n">beam_search</span><span class="p">(</span><span class="k">const</span> <span class="n">Model</span><span class="o">&amp;</span> <span class="n">model</span><span class="p">,</span> <span class="kt">int</span> <span class="n">k</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">priority_queue</span><span class="o">&lt;</span><span class="n">Hypothesis</span><span class="o">&gt;</span> <span class="n">beam</span><span class="p">;</span>
-    <span class="n">beam</span><span class="p">.</span><span class="n">push</span><span class="p">({</span> <span class="p">{</span><span class="n">START_TOKEN</span><span class="p">},</span> <span class="mf">0.0</span> <span class="p">});</span>
-    
-    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">MAX_LEN</span><span class="p">;</span> <span class="o">++</span><span class="n">t</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">priority_queue</span><span class="o">&lt;</span><span class="n">Hypothesis</span><span class="o">&gt;</span> <span class="n">next_beam</span><span class="p">;</span>
-        
-        <span class="c1">// We only pop K times</span>
-        <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-        <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">beam</span><span class="p">.</span><span class="n">empty</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">count</span> <span class="o">&lt;</span> <span class="n">k</span><span class="p">)</span> <span class="p">{</span>
-            <span class="n">Hypothesis</span> <span class="n">h</span> <span class="o">=</span> <span class="n">beam</span><span class="p">.</span><span class="n">top</span><span class="p">();</span>
-            <span class="n">beam</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
-            <span class="n">count</span><span class="o">++</span><span class="p">;</span>
-            
-            <span class="c1">// Expand</span>
-            <span class="k">auto</span> <span class="n">logits</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">forward</span><span class="p">(</span><span class="n">h</span><span class="p">.</span><span class="n">sequence</span><span class="p">);</span>
-            <span class="k">auto</span> <span class="n">top_k_tokens</span> <span class="o">=</span> <span class="n">get_top_k</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">k</span><span class="p">);</span>
-            
-            <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="n">token</span> <span class="o">:</span> <span class="n">top_k_tokens</span><span class="p">)</span> <span class="p">{</span>
-                <span class="kt">float</span> <span class="n">new_score</span> <span class="o">=</span> <span class="n">h</span><span class="p">.</span><span class="n">score</span> <span class="o">+</span> <span class="n">std</span><span class="o">::</span><span class="n">log</span><span class="p">(</span><span class="n">token</span><span class="p">.</span><span class="n">prob</span><span class="p">);</span>
-                <span class="n">next_beam</span><span class="p">.</span><span class="n">push</span><span class="p">({</span> <span class="n">h</span><span class="p">.</span><span class="n">sequence</span> <span class="o">+</span> <span class="n">token</span><span class="p">.</span><span class="n">id</span><span class="p">,</span> <span class="n">new_score</span> <span class="p">});</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-        <span class="n">beam</span> <span class="o">=</span> <span class="n">next_beam</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="c1">// ... return top results</span>
-<span class="p">}</span>
-</code></pre></div></div>
+<p>struct Hypothesis {
+ std::vector<int> sequence;
+ float score;</int></p>
+
+<p>bool operator&lt;(const Hypothesis&amp; other) const {
+ return score &lt; other.score; // Max-heap
+ }
+};</p>
+
+<p>std::vector<Hypothesis> beam_search(const Model&amp; model, int k) {
+ std::priority_queue<Hypothesis> beam;
+ beam.push({ {START_TOKEN}, 0.0 });</Hypothesis></Hypothesis></p>
+
+<p>for (int t = 0; t &lt; MAX_LEN; ++t) {
+ std::priority_queue<Hypothesis> next_beam;</Hypothesis></p>
+
+<p>// We only pop K times
+ int count = 0;
+ while (!beam.empty() &amp;&amp; count &lt; k) {
+ Hypothesis h = beam.top();
+ beam.pop();
+ count++;</p>
+
+<p>// Expand
+ auto logits = model.forward(h.sequence);
+ auto top_k_tokens = get_top_k(logits, k);</p>
+
+<p>for (auto token : top_k_tokens) {
+ float new_score = h.score + std::log(token.prob);
+ next_beam.push({ h.sequence + token.id, new_score });
+ }
+ }
+ beam = next_beam;
+ }
+ // … return top results
+}
+``</p>
 
 <h3 id="kv-caching--memory-bandwidth">KV Caching &amp; Memory Bandwidth</h3>
 
@@ -602,91 +602,92 @@ Every step, we need to read the entire model weights from VRAM.</p>
 
 <p>Here is a more complete example using <code class="language-plaintext highlighter-rouge">LibTorch</code> (PyTorch C++ API).</p>
 
-<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include</span> <span class="cpf">&lt;torch/torch.h&gt;</span><span class="cp">
-#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
-#include</span> <span class="cpf">&lt;vector&gt;</span><span class="cp">
-#include</span> <span class="cpf">&lt;queue&gt;</span><span class="cp">
-</span>
-<span class="c1">// Define a Hypothesis struct</span>
-<span class="k">struct</span> <span class="nc">Hypothesis</span> <span class="p">{</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int64_t</span><span class="o">&gt;</span> <span class="n">tokens</span><span class="p">;</span>
-    <span class="kt">double</span> <span class="n">score</span><span class="p">;</span>
-    
-    <span class="c1">// For min-heap (we want to pop the lowest score to keep top-k)</span>
-    <span class="kt">bool</span> <span class="k">operator</span><span class="o">&gt;</span><span class="p">(</span><span class="k">const</span> <span class="n">Hypothesis</span><span class="o">&amp;</span> <span class="n">other</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="n">score</span> <span class="o">&gt;</span> <span class="n">other</span><span class="p">.</span><span class="n">score</span><span class="p">;</span>
-    <span class="p">}</span>
-<span class="p">};</span>
+<p>``cpp
+#include &lt;torch/torch.h&gt;
+#include <iostream>
+#include <vector>
+#include <queue></queue></vector></iostream></p>
 
-<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int64_t</span><span class="o">&gt;</span> <span class="n">beam_search_decode</span><span class="p">(</span>
-    <span class="n">torch</span><span class="o">::</span><span class="n">jit</span><span class="o">::</span><span class="n">script</span><span class="o">::</span><span class="n">Module</span><span class="o">&amp;</span> <span class="n">model</span><span class="p">,</span> 
-    <span class="kt">int64_t</span> <span class="n">start_token</span><span class="p">,</span> 
-    <span class="kt">int64_t</span> <span class="n">end_token</span><span class="p">,</span> 
-    <span class="kt">int</span> <span class="n">k</span><span class="p">,</span> 
-    <span class="kt">int</span> <span class="n">max_len</span>
-<span class="p">)</span> <span class="p">{</span>
-    <span class="c1">// Current beam: List of hypotheses</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Hypothesis</span><span class="o">&gt;</span> <span class="n">beam</span><span class="p">;</span>
-    <span class="n">beam</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span> <span class="p">{</span><span class="n">start_token</span><span class="p">},</span> <span class="mf">0.0</span> <span class="p">});</span>
-    
-    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">step</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">step</span> <span class="o">&lt;</span> <span class="n">max_len</span><span class="p">;</span> <span class="o">++</span><span class="n">step</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Hypothesis</span><span class="o">&gt;</span> <span class="n">candidates</span><span class="p">;</span>
-        
-        <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">h</span> <span class="o">:</span> <span class="n">beam</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">h</span><span class="p">.</span><span class="n">tokens</span><span class="p">.</span><span class="n">back</span><span class="p">()</span> <span class="o">==</span> <span class="n">end_token</span><span class="p">)</span> <span class="p">{</span>
-                <span class="n">candidates</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">h</span><span class="p">);</span>
-                <span class="k">continue</span><span class="p">;</span>
-            <span class="p">}</span>
-            
-            <span class="c1">// Prepare input tensor</span>
-            <span class="k">auto</span> <span class="n">input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">::</span><span class="n">tensor</span><span class="p">(</span><span class="n">h</span><span class="p">.</span><span class="n">tokens</span><span class="p">).</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span> <span class="c1">// [1, seq_len]</span>
-            
-            <span class="c1">// Run model (Forward)</span>
-            <span class="c1">// In real life, use KV cache!</span>
-            <span class="k">auto</span> <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">forward</span><span class="p">({</span><span class="n">input</span><span class="p">}).</span><span class="n">toTensor</span><span class="p">();</span>
-            <span class="k">auto</span> <span class="n">logits</span> <span class="o">=</span> <span class="n">output</span><span class="p">.</span><span class="n">select</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span> <span class="c1">// Last step: [1, vocab_size]</span>
-            <span class="k">auto</span> <span class="n">log_probs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">::</span><span class="n">log_softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
-            
-            <span class="c1">// Get Top-K</span>
-            <span class="k">auto</span> <span class="n">top_k</span> <span class="o">=</span> <span class="n">log_probs</span><span class="p">.</span><span class="n">topk</span><span class="p">(</span><span class="n">k</span><span class="p">);</span>
-            <span class="k">auto</span> <span class="n">top_k_scores</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">get</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">top_k</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-            <span class="k">auto</span> <span class="n">top_k_indices</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">get</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">top_k</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-            
-            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">k</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
-                <span class="kt">double</span> <span class="n">score</span> <span class="o">=</span> <span class="n">top_k_scores</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">item</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">();</span>
-                <span class="kt">int64_t</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">top_k_indices</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">item</span><span class="o">&lt;</span><span class="kt">int64_t</span><span class="o">&gt;</span><span class="p">();</span>
-                
-                <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int64_t</span><span class="o">&gt;</span> <span class="n">new_tokens</span> <span class="o">=</span> <span class="n">h</span><span class="p">.</span><span class="n">tokens</span><span class="p">;</span>
-                <span class="n">new_tokens</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">idx</span><span class="p">);</span>
-                
-                <span class="n">candidates</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span> <span class="n">new_tokens</span><span class="p">,</span> <span class="n">h</span><span class="p">.</span><span class="n">score</span> <span class="o">+</span> <span class="n">score</span> <span class="p">});</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-        
-        <span class="c1">// Sort and Prune</span>
-        <span class="n">std</span><span class="o">::</span><span class="n">sort</span><span class="p">(</span><span class="n">candidates</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">candidates</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="p">[](</span><span class="k">const</span> <span class="n">Hypothesis</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="k">const</span> <span class="n">Hypothesis</span><span class="o">&amp;</span> <span class="n">b</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="n">a</span><span class="p">.</span><span class="n">score</span> <span class="o">&gt;</span> <span class="n">b</span><span class="p">.</span><span class="n">score</span><span class="p">;</span> <span class="c1">// Descending</span>
-        <span class="p">});</span>
-        
-        <span class="k">if</span> <span class="p">(</span><span class="n">candidates</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">k</span><span class="p">)</span> <span class="p">{</span>
-            <span class="n">candidates</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">k</span><span class="p">);</span>
-        <span class="p">}</span>
-        <span class="n">beam</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">;</span>
-        
-        <span class="c1">// Check if all finished</span>
-        <span class="kt">bool</span> <span class="n">all_finished</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
-        <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">h</span> <span class="o">:</span> <span class="n">beam</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">h</span><span class="p">.</span><span class="n">tokens</span><span class="p">.</span><span class="n">back</span><span class="p">()</span> <span class="o">!=</span> <span class="n">end_token</span><span class="p">)</span> <span class="p">{</span>
-                <span class="n">all_finished</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
-                <span class="k">break</span><span class="p">;</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">all_finished</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
-    <span class="p">}</span>
-    
-    <span class="k">return</span> <span class="n">beam</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">tokens</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre></div></div>
+<p>// Define a Hypothesis struct
+struct Hypothesis {
+ std::vector<int64_t> tokens;
+ double score;</int64_t></p>
+
+<p>// For min-heap (we want to pop the lowest score to keep top-k)
+ bool operator&gt;(const Hypothesis&amp; other) const {
+ return score &gt; other.score;
+ }
+};</p>
+
+<p>std::vector<int64_t> beam_search_decode(
+ torch::jit::script::Module&amp; model, 
+ int64_t start_token, 
+ int64_t end_token, 
+ int k, 
+ int max_len
+) {
+ // Current beam: List of hypotheses
+ std::vector<Hypothesis> beam;
+ beam.push_back({ {start_token}, 0.0 });</Hypothesis></int64_t></p>
+
+<p>for (int step = 0; step &lt; max_len; ++step) {
+ std::vector<Hypothesis> candidates;</Hypothesis></p>
+
+<p>for (const auto&amp; h : beam) {
+ if (h.tokens.back() == end_token) {
+ candidates.push_back(h);
+ continue;
+ }</p>
+
+<p>// Prepare input tensor
+ auto input = torch::tensor(h.tokens).unsqueeze(0); // [1, seq_len]</p>
+
+<p>// Run model (Forward)
+ // In real life, use KV cache!
+ auto output = model.forward({input}).toTensor();
+ auto logits = output.select(1, -1); // Last step: [1, vocab_size]
+ auto log_probs = torch::log_softmax(logits, 1);</p>
+
+<p>// Get Top-K
+ auto top_k = log_probs.topk(k);
+ auto top_k_scores = std::get&lt;0&gt;(top_k)[0];
+ auto top_k_indices = std::get&lt;1&gt;(top_k)[0];</p>
+
+<p>for (int i = 0; i &lt; k; ++i) {
+ double score = top_k_scores[i].item<double>();
+ int64_t idx = top_k_indices[i].item<int64_t>();</int64_t></double></p>
+
+<p>std::vector<int64_t> new_tokens = h.tokens;
+ new_tokens.push_back(idx);</int64_t></p>
+
+<p>candidates.push_back({ new_tokens, h.score + score });
+ }
+ }</p>
+
+<p>// Sort and Prune
+ std::sort(candidates.begin(), candidates.end(), <a href="const Hypothesis&amp; a, const Hypothesis&amp; b"></a> {
+ return a.score &gt; b.score; // Descending
+ });</p>
+
+<p>if (candidates.size() &gt; k) {
+ candidates.resize(k);
+ }
+ beam = candidates;</p>
+
+<p>// Check if all finished
+ bool all_finished = true;
+ for (const auto&amp; h : beam) {
+ if (h.tokens.back() != end_token) {
+ all_finished = false;
+ break;
+ }
+ }
+ if (all_finished) break;
+ }</p>
+
+<p>return beam[0].tokens;
+}
+``</p>
 
 <h2 id="appendix-b-the-ultimate-decoding-glossary">Appendix B: The Ultimate Decoding Glossary</h2>
 
@@ -737,45 +738,46 @@ Every step, we need to read the entire model weights from VRAM.</p>
 
 <p>While Beam Search is great for accuracy, Nucleus Sampling is the gold standard for creativity (chatbots).</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn.functional</span> <span class="k">as</span> <span class="n">F</span>
+<p>``python
+import torch
+import torch.nn.functional as F</p>
 
-<span class="k">def</span> <span class="nf">top_p_sampling</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    logits: [batch_size, vocab_size]
-    p: cumulative probability threshold (e.g., 0.9)
-    temperature: softmax temperature
-    </span><span class="sh">"""</span>
-    <span class="c1"># 1. Apply Temperature
-</span>    <span class="n">logits</span> <span class="o">=</span> <span class="n">logits</span> <span class="o">/</span> <span class="n">temperature</span>
-    
-    <span class="c1"># 2. Sort logits in descending order
-</span>    <span class="n">sorted_logits</span><span class="p">,</span> <span class="n">sorted_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    
-    <span class="c1"># 3. Compute cumulative probabilities
-</span>    <span class="n">cumulative_probs</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cumsum</span><span class="p">(</span><span class="n">F</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">sorted_logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-    
-    <span class="c1"># 4. Create a mask for tokens to remove
-</span>    <span class="c1"># We want to keep tokens where cumulative_prob &lt;= p
-</span>    <span class="c1"># But we must always keep the first token (even if its prob &gt; p)
-</span>    <span class="n">sorted_indices_to_remove</span> <span class="o">=</span> <span class="n">cumulative_probs</span> <span class="o">&gt;</span> <span class="n">p</span>
-    
-    <span class="c1"># Shift the mask to the right to keep the first token above the threshold
-</span>    <span class="n">sorted_indices_to_remove</span><span class="p">[...,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">sorted_indices_to_remove</span><span class="p">[...,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="nf">clone</span><span class="p">()</span>
-    <span class="n">sorted_indices_to_remove</span><span class="p">[...,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="c1"># 5. Scatter the mask back to the original indices
-</span>    <span class="n">indices_to_remove</span> <span class="o">=</span> <span class="n">sorted_indices_to_remove</span><span class="p">.</span><span class="nf">scatter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">sorted_indices</span><span class="p">,</span> <span class="n">sorted_indices_to_remove</span><span class="p">)</span>
-    
-    <span class="c1"># 6. Set logits of removed tokens to -infinity
-</span>    <span class="n">logits</span><span class="p">[</span><span class="n">indices_to_remove</span><span class="p">]</span> <span class="o">=</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">)</span>
-    
-    <span class="c1"># 7. Sample from the filtered distribution
-</span>    <span class="n">probs</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">next_token</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">multinomial</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">next_token</span>
-</code></pre></div></div>
+<p>def top_p_sampling(logits, p=0.9, temperature=1.0):
+ “””
+ logits: [batch_size, vocab_size]
+ p: cumulative probability threshold (e.g., 0.9)
+ temperature: softmax temperature
+ “””
+ # 1. Apply Temperature
+ logits = logits / temperature</p>
+
+<p># 2. Sort logits in descending order
+ sorted_logits, sorted_indices = torch.sort(logits, descending=True)</p>
+
+<p># 3. Compute cumulative probabilities
+ cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)</p>
+
+<p># 4. Create a mask for tokens to remove
+ # We want to keep tokens where cumulative_prob &lt;= p
+ # But we must always keep the first token (even if its prob &gt; p)
+ sorted_indices_to_remove = cumulative_probs &gt; p</p>
+
+<p># Shift the mask to the right to keep the first token above the threshold
+ sorted_indices_to_remove[…, 1:] = sorted_indices_to_remove[…, :-1].clone()
+ sorted_indices_to_remove[…, 0] = 0</p>
+
+<p># 5. Scatter the mask back to the original indices
+ indices_to_remove = sorted_indices_to_remove.scatter(1, sorted_indices, sorted_indices_to_remove)</p>
+
+<p># 6. Set logits of removed tokens to -infinity
+ logits[indices_to_remove] = float(‘-inf’)</p>
+
+<p># 7. Sample from the filtered distribution
+ probs = F.softmax(logits, dim=-1)
+ next_token = torch.multinomial(probs, num_samples=1)</p>
+
+<p>return next_token
+``</p>
 
 <h2 id="conclusion">Conclusion</h2>
 

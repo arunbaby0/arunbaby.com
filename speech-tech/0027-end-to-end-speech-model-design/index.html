@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="End-to-End Speech Model Design">
     <meta itemprop="description" content="Goodbye HMMs. Goodbye Phonemes. Goodbye Lexicons. We are teaching the machine to Listen, Attend, and Spell.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -301,22 +301,23 @@ Optimize a single loss function.</p>
 
 <p>LAS (Google, 2015) was the breakthrough that proved E2E could match Hybrid systems.</p>
 
-<pre><code class="language-ascii">       [ "C", "A", "T" ]  &lt;-- Output
-             ^
-             |
-      +-------------+
-      |   Speller   |  (Decoder / RNN)
-      | (Attention) |
-      +-------------+
-             ^
-             | Context Vector
-      +-------------+
-      |  Listener   |  (Encoder / Pyramidal RNN)
-      +-------------+
-             ^
-             |
-      [ Spectrogram ]  &lt;-- Input
-</code></pre>
+<p><code class="language-plaintext highlighter-rouge">ascii
+ [ "C", "A", "T" ] &lt;-- Output
+ ^
+ |
+ +-------------+
+ | Speller | (Decoder / RNN)
+ | (Attention) |
+ +-------------+
+ ^
+ | Context Vector
+ +-------------+
+ | Listener | (Encoder / Pyramidal RNN)
+ +-------------+
+ ^
+ |
+ [ Spectrogram ] &lt;-- Input
+</code></p>
 
 <h3 id="the-listener-encoder">The Listener (Encoder)</h3>
 <p>A deep LSTM (or Conformer) that converts low-level features (Filterbanks) into high-level acoustic features.
@@ -333,31 +334,32 @@ It uses (c_i) and the previous character (y_{i-1}) to predict (y_i).</p>
 
 <p>RNN-T is the industry standard for <strong>Streaming ASR</strong> (Siri, Assistant).</p>
 
-<pre><code class="language-ascii">                      [ Softmax ]
-                           ^
-                           |
-                    +-------------+
-                    | Joint Net   |  (Feed Forward)
-                    +-------------+
-                     ^           ^
-                     |           |
-      +-------------+     +-------------+
-      |   Encoder   |     | Prediction  |
-      |  (Audio)    |     |   Network   |
-      +-------------+     |   (Text)    |
-             ^            +-------------+
-             |                   ^
-      [ Spectrogram ]            |
-                          [ Previous Token ]
-</code></pre>
+<p><code class="language-plaintext highlighter-rouge">ascii
+ [ Softmax ]
+ ^
+ |
+ +-------------+
+ | Joint Net | (Feed Forward)
+ +-------------+
+ ^ ^
+ | |
+ +-------------+ +-------------+
+ | Encoder | | Prediction |
+ | (Audio) | | Network |
+ +-------------+ | (Text) |
+ ^ +-------------+
+ | ^
+ [ Spectrogram ] |
+ [ Previous Token ]
+</code></p>
 
 <h3 id="the-components">The Components</h3>
 <ol>
   <li><strong>Encoder (Transcription Network):</strong> Analogous to the Acoustic Model. Processes audio.</li>
   <li><strong>Prediction Network:</strong> Analogous to the Language Model. Processes the history of non-blank tokens.</li>
   <li><strong>Joint Network:</strong> Combines them.
-[ J(t, u) = \text{ReLU}(W_e h_t + W_p g_u) ]
-[ P(y | t, u) = \text{Softmax}(W_o J(t, u)) ]</li>
+ [ J(t, u) = \text{ReLU}(W_e h_t + W_p g_u) ]
+ [ P(y | t, u) = \text{Softmax}(W_o J(t, u)) ]</li>
 </ol>
 
 <p><strong>Why it wins:</strong> It is <strong>monotonic</strong>. It can only move forward in time. This makes it perfect for streaming.</p>
@@ -450,7 +452,7 @@ By combining them, we fix homophone errors.</p>
     </ul>
   </li>
   <li><strong>Update:</strong> We backpropagate the <strong>minimum</strong> of Loss A and Loss B.
-[ L = \min(\text{Loss A}, \text{Loss B}) ]</li>
+ [ L = \min(\text{Loss A}, \text{Loss B}) ]</li>
 </ol>
 
 <p>This teaches the model to separate the speakers without forcing it to assign “Speaker 1” to a specific output channel.</p>
@@ -460,12 +462,9 @@ By combining them, we fix homophone errors.</p>
 <p>The core difficulty in ASR is that we don’t know which audio frame corresponds to which character.</p>
 <ul>
   <li><strong>HMM-GMM (Old):</strong> Used <strong>Viterbi Alignment</strong> (Hard alignment). We explicitly assigned <code class="language-plaintext highlighter-rouge">frame_5</code> to phoneme <code class="language-plaintext highlighter-rouge">/k/</code>.</li>
-  <li><strong>E2E (New):</strong> Uses <strong>Soft Alignment</strong> (Attention/CTC). The model learns a probability distribution over alignments.
-    <ul>
-      <li><strong>CTC:</strong> Sums over all valid monotonic alignments.</li>
-      <li><strong>Attention:</strong> Computes a “Soft” weight vector for every output step.</li>
-    </ul>
-  </li>
+  <li><strong>E2E (New):</strong> Uses <strong>Soft Alignment</strong> (Attention/CTC). The model learns a probability distribution over alignments.</li>
+  <li><strong>CTC:</strong> Sums over all valid monotonic alignments.</li>
+  <li><strong>Attention:</strong> Computes a “Soft” weight vector for every output step.</li>
 </ul>
 
 <h2 id="deep-dive-connectionist-temporal-classification-ctc">Deep Dive: Connectionist Temporal Classification (CTC)</h2>
@@ -479,7 +478,7 @@ It predicts a probability distribution over <code class="language-plaintext high
 <p><strong>Decoding Rules:</strong></p>
 <ol>
   <li><strong>Collapse Repeats:</strong> <code class="language-plaintext highlighter-rouge">aa</code> -&gt; <code class="language-plaintext highlighter-rouge">a</code>.</li>
-  <li><strong>Remove Blanks:</strong> <code class="language-plaintext highlighter-rouge">-</code> -&gt; ``.</li>
+  <li><strong>Remove Blanks:</strong> <code class="language-plaintext highlighter-rouge">-</code> -&gt; `.</li>
 </ol>
 
 <p><strong>Example:</strong></p>
@@ -577,84 +576,85 @@ Google introduced the <strong>Conformer</strong>, combining the best of both wor
 
 <h2 id="implementation-a-conformer-block-in-pytorch">Implementation: A Conformer Block in PyTorch</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">ConformerBlock</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">n_head</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="c1"># 1. Feed Forward (Half Step)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">ff1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Sequential</span><span class="p">(</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">LayerNorm</span><span class="p">(</span><span class="n">d_model</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span> <span class="o">*</span> <span class="mi">4</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">SiLU</span><span class="p">(),</span> <span class="c1"># Swish
-</span>            <span class="n">nn</span><span class="p">.</span><span class="nc">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">d_model</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="n">d_model</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># 2. Self-Attention
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">attn_norm</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LayerNorm</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">MultiheadAttention</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">n_head</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">)</span>
-        
-        <span class="c1"># 3. Convolution Module
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">conv_module</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Sequential</span><span class="p">(</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">LayerNorm</span><span class="p">(</span><span class="n">d_model</span><span class="p">),</span>
-            <span class="c1"># Pointwise
-</span>            <span class="n">nn</span><span class="p">.</span><span class="nc">Conv1d</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> 
-            <span class="n">nn</span><span class="p">.</span><span class="nc">GLU</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-            <span class="c1"># Depthwise
-</span>            <span class="n">nn</span><span class="p">.</span><span class="nc">Conv1d</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="n">d_model</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">kernel_size</span><span class="o">//</span><span class="mi">2</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">BatchNorm1d</span><span class="p">(</span><span class="n">d_model</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">SiLU</span><span class="p">(),</span>
-            <span class="c1"># Pointwise
-</span>            <span class="n">nn</span><span class="p">.</span><span class="nc">Conv1d</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># 4. Feed Forward (Half Step)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">ff2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Sequential</span><span class="p">(</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">LayerNorm</span><span class="p">(</span><span class="n">d_model</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">d_model</span><span class="p">,</span> <span class="n">d_model</span> <span class="o">*</span> <span class="mi">4</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">SiLU</span><span class="p">(),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">d_model</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="n">d_model</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span>
-        <span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">final_norm</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LayerNorm</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span>
+<p>class ConformerBlock(nn.Module):
+ def <strong>init</strong>(self, d_model, n_head, kernel_size, dropout=0.1):
+ super().<strong>init</strong>()</p>
 
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="c1"># x: [Time, Batch, Dim]
-</span>        
-        <span class="c1"># Macaron Style: 0.5 * FF1
-</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="nf">ff1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        
-        <span class="c1"># Attention
-</span>        <span class="n">residual</span> <span class="o">=</span> <span class="n">x</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">attn_norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">x</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">attn</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">+</span> <span class="n">x</span>
-        
-        <span class="c1"># Convolution (Requires [Batch, Dim, Time])
-</span>        <span class="n">residual</span> <span class="o">=</span> <span class="n">x</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="nf">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="c1"># T, B, D -&gt; B, D, T
-</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">conv_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="nf">permute</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="c1"># B, D, T -&gt; T, B, D
-</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">+</span> <span class="n">x</span>
-        
-        <span class="c1"># Macaron Style: 0.5 * FF2
-</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="nf">ff2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">final_norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<p># 1. Feed Forward (Half Step)
+ self.ff1 = nn.Sequential(
+ nn.LayerNorm(d_model),
+ nn.Linear(d_model, d_model * 4),
+ nn.SiLU(), # Swish
+ nn.Dropout(dropout),
+ nn.Linear(d_model * 4, d_model),
+ nn.Dropout(dropout)
+ )</p>
 
-<span class="c1"># Test
-</span><span class="n">block</span> <span class="o">=</span> <span class="nc">ConformerBlock</span><span class="p">(</span><span class="n">d_model</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">n_head</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">31</span><span class="p">)</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span> <span class="c1"># Time=100, Batch=8, Dim=256
-</span><span class="n">y</span> <span class="o">=</span> <span class="nf">block</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="n">y</span><span class="p">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1"># torch.Size([100, 8, 256])
-</span></code></pre></div></div>
+<p># 2. Self-Attention
+ self.attn_norm = nn.LayerNorm(d_model)
+ self.attn = nn.MultiheadAttention(d_model, n_head, dropout=dropout)</p>
+
+<p># 3. Convolution Module
+ self.conv_module = nn.Sequential(
+ nn.LayerNorm(d_model),
+ # Pointwise
+ nn.Conv1d(d_model, d_model * 2, 1), 
+ nn.GLU(dim=1),
+ # Depthwise
+ nn.Conv1d(d_model, d_model, kernel_size, groups=d_model, padding=kernel_size//2),
+ nn.BatchNorm1d(d_model),
+ nn.SiLU(),
+ # Pointwise
+ nn.Conv1d(d_model, d_model, 1),
+ nn.Dropout(dropout)
+ )</p>
+
+<p># 4. Feed Forward (Half Step)
+ self.ff2 = nn.Sequential(
+ nn.LayerNorm(d_model),
+ nn.Linear(d_model, d_model * 4),
+ nn.SiLU(),
+ nn.Dropout(dropout),
+ nn.Linear(d_model * 4, d_model),
+ nn.Dropout(dropout)
+ )</p>
+
+<p>self.final_norm = nn.LayerNorm(d_model)</p>
+
+<p>def forward(self, x):
+ # x: [Time, Batch, Dim]</p>
+
+<p># Macaron Style: 0.5 * FF1
+ x = x + 0.5 * self.ff1(x)</p>
+
+<p># Attention
+ residual = x
+ x = self.attn_norm(x)
+ x, _ = self.attn(x, x, x)
+ x = residual + x</p>
+
+<p># Convolution (Requires [Batch, Dim, Time])
+ residual = x
+ x = x.permute(1, 2, 0) # T, B, D -&gt; B, D, T
+ x = self.conv_module(x)
+ x = x.permute(2, 0, 1) # B, D, T -&gt; T, B, D
+ x = residual + x</p>
+
+<p># Macaron Style: 0.5 * FF2
+ x = x + 0.5 * self.ff2(x)</p>
+
+<p>return self.final_norm(x)</p>
+
+<h1 id="test">Test</h1>
+<p>block = ConformerBlock(d_model=256, n_head=4, kernel_size=31)
+x = torch.randn(100, 8, 256) # Time=100, Batch=8, Dim=256
+y = block(x)
+print(y.shape) # torch.Size([100, 8, 256])
+``</p>
 
 <h2 id="deep-dive-streaming-constraints-the-lookahead">Deep Dive: Streaming Constraints (The Lookahead)</h2>
 
@@ -702,7 +702,7 @@ Uses <strong>Block Processing</strong>.</p>
 <ul>
   <li><strong>Inference Time Only.</strong></li>
   <li>We linearly interpolate the scores during Beam Search.
-[ \text{Score}(y) = \log P_{ASR}(y|x) + \lambda \log P_{LM}(y) ]</li>
+ [ \text{Score}(y) = \log P_{ASR}(y|x) + \lambda \log P_{LM}(y) ]</li>
   <li><strong>Pros:</strong> Simple. No retraining of ASR.</li>
   <li><strong>Cons:</strong> The ASR model doesn’t know about the LM.</li>
 </ul>
@@ -731,25 +731,19 @@ Uses <strong>Block Processing</strong>.</p>
 <ul>
   <li><strong>Algorithm:</strong> At each step, pick the token with the highest probability.</li>
   <li><strong>Problem:</strong> It makes local decisions. It can’t backtrack.</li>
-  <li><strong>Example:</strong> Audio sounds like “The red…”.
-    <ul>
-      <li>Greedy: “The read” (because ‘read’ is more common).</li>
-      <li>Next word is “apple”.</li>
-      <li>Greedy is stuck with “The read apple”.</li>
-    </ul>
-  </li>
+  <li><strong>Example:</strong> Audio sounds like “The red…”.</li>
+  <li>Greedy: “The read” (because ‘read’ is more common).</li>
+  <li>Next word is “apple”.</li>
+  <li>Greedy is stuck with “The read apple”.</li>
 </ul>
 
 <h3 id="2-beam-search">2. Beam Search</h3>
 <ul>
   <li><strong>Algorithm:</strong> Keep the top (K) (Beam Width) most likely hypotheses at each step.</li>
-  <li><strong>Example (K=2):</strong>
-    <ul>
-      <li>Step 1: [“The”, “A”]</li>
-      <li>Step 2: [“The red”, “The read”, “A red”, “A read”] -&gt; Prune to top 2 -&gt; [“The red”, “The read”]</li>
-      <li>Step 3: [“The red apple”, …]</li>
-    </ul>
-  </li>
+  <li><strong>Example (K=2):</strong></li>
+  <li>Step 1: [“The”, “A”]</li>
+  <li>Step 2: [“The red”, “The read”, “A red”, “A read”] -&gt; Prune to top 2 -&gt; [“The red”, “The read”]</li>
+  <li>Step 3: [“The red apple”, …]</li>
   <li><strong>Result:</strong> Finds the global optimum (mostly).</li>
 </ul>
 
@@ -855,41 +849,42 @@ Instead of augmenting the waveform (speed, noise), we augment the <strong>Spectr
 
 <p>Training E2E models requires handling variable length sequences. We use <code class="language-plaintext highlighter-rouge">pad_sequence</code> and <code class="language-plaintext highlighter-rouge">pack_padded_sequence</code>.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torchaudio</span>
+<p>``python
+import torchaudio</p>
 
-<span class="k">def</span> <span class="nf">train_ctc</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">):</span>
-    <span class="n">model</span><span class="p">.</span><span class="nf">train</span><span class="p">()</span>
-    <span class="n">ctc_loss</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">CTCLoss</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">zero_infinity</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">batch_idx</span><span class="p">,</span> <span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="n">valid_lengths</span><span class="p">,</span> <span class="n">transcripts</span><span class="p">,</span> <span class="n">transcript_lengths</span><span class="p">)</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">train_loader</span><span class="p">):</span>
-        <span class="c1"># waveform: [Batch, Time, Channels]
-</span>        <span class="c1"># transcripts: [Batch, Max_Len]
-</span>        
-        <span class="n">optimizer</span><span class="p">.</span><span class="nf">zero_grad</span><span class="p">()</span>
-        
-        <span class="c1"># 1. Forward Pass
-</span>        <span class="c1"># output: [Time, Batch, Vocab] (Required by PyTorch CTCLoss)
-</span>        <span class="n">output</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">waveform</span><span class="p">)</span> 
-        <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="p">.</span><span class="nf">log_softmax</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-        
-        <span class="c1"># 2. Calculate Loss
-</span>        <span class="c1"># input_lengths must be the length of the output after subsampling
-</span>        <span class="n">input_lengths</span> <span class="o">=</span> <span class="n">valid_lengths</span> <span class="o">//</span> <span class="mi">4</span> <span class="c1"># Assuming 4x subsampling
-</span>        
-        <span class="n">loss</span> <span class="o">=</span> <span class="nf">ctc_loss</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">transcripts</span><span class="p">,</span> <span class="n">input_lengths</span><span class="p">,</span> <span class="n">transcript_lengths</span><span class="p">)</span>
-        
-        <span class="c1"># 3. Backward
-</span>        <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
-        
-        <span class="c1"># 4. Gradient Clipping (Crucial for RNNs/Transformers)
-</span>        <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">utils</span><span class="p">.</span><span class="nf">clip_grad_norm_</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="nf">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="mf">5.0</span><span class="p">)</span>
-        
-        <span class="n">optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
-        
-        <span class="k">if</span> <span class="n">batch_idx</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="si">}</span><span class="s"> | Batch </span><span class="si">{</span><span class="n">batch_idx</span><span class="si">}</span><span class="s"> | Loss </span><span class="si">{</span><span class="n">loss</span><span class="p">.</span><span class="nf">item</span><span class="p">()</span><span class="si">:</span><span class="p">.</span><span class="mi">4</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p>def train_ctc(model, train_loader, optimizer, epoch):
+ model.train()
+ ctc_loss = nn.CTCLoss(blank=0, zero_infinity=True)</p>
 
-</code></pre></div></div>
+<p>for batch_idx, (waveform, valid_lengths, transcripts, transcript_lengths) in enumerate(train_loader):
+ # waveform: [Batch, Time, Channels]
+ # transcripts: [Batch, Max_Len]</p>
+
+<p>optimizer.zero_grad()</p>
+
+<p># 1. Forward Pass
+ # output: [Time, Batch, Vocab] (Required by PyTorch CTCLoss)
+ output = model(waveform) 
+ output = output.log_softmax(2)</p>
+
+<p># 2. Calculate Loss
+ # input_lengths must be the length of the output after subsampling
+ input_lengths = valid_lengths // 4 # Assuming 4x subsampling</p>
+
+<p>loss = ctc_loss(output, transcripts, input_lengths, transcript_lengths)</p>
+
+<p># 3. Backward
+ loss.backward()</p>
+
+<p># 4. Gradient Clipping (Crucial for RNNs/Transformers)
+ torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5.0)</p>
+
+<p>optimizer.step()</p>
+
+<p>if batch_idx % 100 == 0:
+ print(f”Epoch {epoch} | Batch {batch_idx} | Loss {loss.item():.4f}”)</p>
+
+<p>``</p>
 
 <h2 id="top-interview-questions">Top Interview Questions</h2>
 
@@ -970,26 +965,27 @@ Conformer combines both. A pure Transformer needs many layers to learn local pat
 
 <p><strong>Python Implementation:</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">calculate_wer</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
-    <span class="n">r</span> <span class="o">=</span> <span class="n">reference</span><span class="p">.</span><span class="nf">split</span><span class="p">()</span>
-    <span class="n">h</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="p">.</span><span class="nf">split</span><span class="p">()</span>
-    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">zeros</span><span class="p">((</span><span class="nf">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-    
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
-    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span> <span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">j</span>
-    
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">h</span><span class="p">[</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
-                <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">sub</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
-                <span class="n">ins</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
-                <span class="n">dele</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
-                <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nf">min</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="n">ins</span><span class="p">,</span> <span class="n">dele</span><span class="p">)</span>
-                
-    <span class="k">return</span> <span class="n">d</span><span class="p">[</span><span class="nf">len</span><span class="p">(</span><span class="n">r</span><span class="p">)][</span><span class="nf">len</span><span class="p">(</span><span class="n">h</span><span class="p">)]</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+def calculate_wer(reference, hypothesis):
+ r = reference.split()
+ h = hypothesis.split()
+ d = np.zeros((len(r) + 1, len(h) + 1))</p>
+
+<p>for i in range(len(r) + 1): d[i][0] = i
+ for j in range(len(h) + 1): d[0][j] = j</p>
+
+<p>for i in range(1, len(r) + 1):
+ for j in range(1, len(h) + 1):
+ if r[i-1] == h[j-1]:
+ d[i][j] = d[i-1][j-1]
+ else:
+ sub = d[i-1][j-1] + 1
+ ins = d[i][j-1] + 1
+ dele = d[i-1][j] + 1
+ d[i][j] = min(sub, ins, dele)</p>
+
+<p>return d[len(r)][len(h)] / len(r)
+``</p>
 
 <p><strong>Note:</strong> WER can be &gt; 100% if the model inserts many hallucinations.</p>
 
@@ -1156,7 +1152,7 @@ Conformer combines both. A pure Transformer needs many layers to learn local pat
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          22 minute read
+          23 minute read
         
       </span>
     

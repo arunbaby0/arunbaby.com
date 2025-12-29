@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Group Anagrams">
     <meta itemprop="description" content="Master hash-based grouping to solve anagrams—the foundation of clustering systems and speaker diarization in production ML.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -260,20 +260,23 @@
 
 <h3 id="examples">Examples</h3>
 
-<p><strong>Example 1:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Input: strs = ["eat","tea","tan","ate","nat","bat"]
+<p><strong>Example 1:</strong>
+<code class="language-plaintext highlighter-rouge">
+Input: strs = ["eat","tea","tan","ate","nat","bat"]
 Output: [["bat"],["nat","tan"],["ate","eat","tea"]]
-</code></pre></div></div>
+</code></p>
 
-<p><strong>Example 2:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Input: strs = [""]
+<p><strong>Example 2:</strong>
+<code class="language-plaintext highlighter-rouge">
+Input: strs = [""]
 Output: [[""]]
-</code></pre></div></div>
+</code></p>
 
-<p><strong>Example 3:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Input: strs = ["a"]
+<p><strong>Example 3:</strong>
+<code class="language-plaintext highlighter-rouge">
+Input: strs = ["a"]
 Output: [["a"]]
-</code></pre></div></div>
+</code></p>
 
 <h3 id="constraints">Constraints</h3>
 
@@ -372,62 +375,66 @@ Output: [["a"]]
 
 <h3 id="implementation">Implementation</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span>
-<span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<p>``python
+from typing import List
+from collections import defaultdict</p>
 
-<span class="k">def</span> <span class="nf">groupAnagrams_bruteforce</span><span class="p">(</span><span class="n">strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-    <span class="sh">"""</span><span class="s">
-    Brute force: compare all pairs.
-    
-    Time: O(N^2 × K) where N = number of strings, K = max string length
-    Space: O(NK)
-    
-    Why this approach?
-    - Simple to understand
-    - Shows the naive solution
-    - Demonstrates need for optimization
-    
-    Problem:
-    - Too slow for large inputs
-    - Redundant comparisons
-    </span><span class="sh">"""</span>
-    <span class="k">def</span> <span class="nf">are_anagrams</span><span class="p">(</span><span class="n">s1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">s2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Check if two strings are anagrams.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span> <span class="o">!=</span> <span class="nf">len</span><span class="p">(</span><span class="n">s2</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">False</span>
-        
-        <span class="c1"># Count characters in each string
-</span>        <span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
-        <span class="k">return</span> <span class="nc">Counter</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span> <span class="o">==</span> <span class="nc">Counter</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
-    
-    <span class="c1"># Track which strings have been grouped
-</span>    <span class="n">grouped</span> <span class="o">=</span> <span class="p">[</span><span class="bp">False</span><span class="p">]</span> <span class="o">*</span> <span class="nf">len</span><span class="p">(</span><span class="n">strs</span><span class="p">)</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">strs</span><span class="p">)):</span>
-        <span class="k">if</span> <span class="n">grouped</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
-            <span class="k">continue</span>
-        
-        <span class="c1"># Start new group with current string
-</span>        <span class="n">group</span> <span class="o">=</span> <span class="p">[</span><span class="n">strs</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
-        <span class="n">grouped</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
-        
-        <span class="c1"># Find all anagrams of current string
-</span>        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">strs</span><span class="p">)):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">grouped</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="ow">and</span> <span class="nf">are_anagrams</span><span class="p">(</span><span class="n">strs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">strs</span><span class="p">[</span><span class="n">j</span><span class="p">]):</span>
-                <span class="n">group</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">strs</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
-                <span class="n">grouped</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
-        
-        <span class="n">result</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">result</span>
+<p>def groupAnagrams_bruteforce(strs: List[str]) -&gt; List[List[str]]:
+ “””
+ Brute force: compare all pairs.</p>
 
+<p>Time: O(N^2 × K) where N = number of strings, K = max string length
+ Space: O(NK)</p>
 
-<span class="c1"># Test
-</span><span class="n">test_input</span> <span class="o">=</span> <span class="p">[</span><span class="sh">"</span><span class="s">eat</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">tea</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">tan</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">ate</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">nat</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">bat</span><span class="sh">"</span><span class="p">]</span>
-<span class="nf">print</span><span class="p">(</span><span class="nf">groupAnagrams_bruteforce</span><span class="p">(</span><span class="n">test_input</span><span class="p">))</span>
-<span class="c1"># Output: [['eat', 'tea', 'ate'], ['tan', 'nat'], ['bat']]
-</span></code></pre></div></div>
+<p>Why this approach?</p>
+<ul>
+  <li>Simple to understand</li>
+  <li>Shows the naive solution</li>
+  <li>Demonstrates need for optimization</li>
+</ul>
+
+<p>Problem:</p>
+<ul>
+  <li>Too slow for large inputs</li>
+  <li>Redundant comparisons
+ “””
+ def are_anagrams(s1: str, s2: str) -&gt; bool:
+ “"”Check if two strings are anagrams.”””
+ if len(s1) != len(s2):
+ return False</li>
+</ul>
+
+<p># Count characters in each string
+ from collections import Counter
+ return Counter(s1) == Counter(s2)</p>
+
+<p># Track which strings have been grouped
+ grouped = [False] * len(strs)
+ result = []</p>
+
+<p>for i in range(len(strs)):
+ if grouped[i]:
+ continue</p>
+
+<p># Start new group with current string
+ group = [strs[i]]
+ grouped[i] = True</p>
+
+<p># Find all anagrams of current string
+ for j in range(i + 1, len(strs)):
+ if not grouped[j] and are_anagrams(strs[i], strs[j]):
+ group.append(strs[j])
+ grouped[j] = True</p>
+
+<p>result.append(group)</p>
+
+<p>return result</p>
+
+<h1 id="test">Test</h1>
+<p>test_input = [“eat”,”tea”,”tan”,”ate”,”nat”,”bat”]
+print(groupAnagrams_bruteforce(test_input))</p>
+<h1 id="output-eat-tea-ate-tan-nat-bat">Output: [[‘eat’, ‘tea’, ‘ate’], [‘tan’, ‘nat’], [‘bat’]]</h1>
+<p>``</p>
 
 <h3 id="analysis">Analysis</h3>
 
@@ -464,89 +471,94 @@ Output: [["a"]]
 
 <h3 id="implementation-1">Implementation</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<p>``python
+from collections import defaultdict
+from typing import List</p>
 
-<span class="k">def</span> <span class="nf">groupAnagrams</span><span class="p">(</span><span class="n">strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-    <span class="sh">"""</span><span class="s">
-    Optimal solution using sorted string as hash key.
-    
-    Time: O(N × K log K) where N = number of strings, K = max string length
-    Space: O(NK)
-    
-    Algorithm:
-    1. For each string, create hash key by sorting it
-    2. Use hash table to group strings with same key
-    3. Return groups as list
-    
-    Why this works:
-    - Sorting is canonical representation of anagram
-    - Hash table provides O(1) lookup
-    - Single pass through all strings
-    </span><span class="sh">"""</span>
-    <span class="c1"># Hash table: sorted_string -&gt; list of original strings
-</span>    <span class="n">anagram_map</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strs</span><span class="p">:</span>
-        <span class="c1"># Sort the string to create hash key
-</span>        <span class="c1"># "eat" -&gt; ['a', 'e', 't'] -&gt; "aet"
-</span>        <span class="n">sorted_str</span> <span class="o">=</span> <span class="sh">''</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="nf">sorted</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
-        
-        <span class="c1"># Group by sorted key
-</span>        <span class="n">anagram_map</span><span class="p">[</span><span class="n">sorted_str</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-    
-    <span class="c1"># Return all groups
-</span>    <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="n">anagram_map</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
+<p>def groupAnagrams(strs: List[str]) -&gt; List[List[str]]:
+ “””
+ Optimal solution using sorted string as hash key.</p>
 
+<p>Time: O(N × K log K) where N = number of strings, K = max string length
+ Space: O(NK)</p>
 
-<span class="c1"># Test cases
-</span><span class="n">test_cases</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="p">[</span><span class="sh">"</span><span class="s">eat</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">tea</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">tan</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">ate</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">nat</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">bat</span><span class="sh">"</span><span class="p">],</span>
-    <span class="p">[</span><span class="sh">""</span><span class="p">],</span>
-    <span class="p">[</span><span class="sh">"</span><span class="s">a</span><span class="sh">"</span><span class="p">],</span>
-    <span class="p">[</span><span class="sh">"</span><span class="s">abc</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">bca</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">cab</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">xyz</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">zyx</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">yxz</span><span class="sh">"</span><span class="p">],</span>
-<span class="p">]</span>
+<p>Algorithm:</p>
+<ol>
+  <li>For each string, create hash key by sorting it</li>
+  <li>Use hash table to group strings with same key</li>
+  <li>Return groups as list</li>
+</ol>
 
-<span class="k">for</span> <span class="n">test</span> <span class="ow">in</span> <span class="n">test_cases</span><span class="p">:</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="nf">groupAnagrams</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Input: </span><span class="si">{</span><span class="n">test</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Output: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="se">\n</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>Why this works:</p>
+<ul>
+  <li>Sorting is canonical representation of anagram</li>
+  <li>Hash table provides O(1) lookup</li>
+  <li>Single pass through all strings
+ “””
+ # Hash table: sorted_string -&gt; list of original strings
+ anagram_map = defaultdict(list)</li>
+</ul>
+
+<p>for s in strs:
+ # Sort the string to create hash key
+ # “eat” -&gt; [‘a’, ‘e’, ‘t’] -&gt; “aet”
+ sorted_str = ‘‘.join(sorted(s))</p>
+
+<p># Group by sorted key
+ anagram_map[sorted_str].append(s)</p>
+
+<p># Return all groups
+ return list(anagram_map.values())</p>
+
+<h1 id="test-cases">Test cases</h1>
+<p>test_cases = [
+ [“eat”,”tea”,”tan”,”ate”,”nat”,”bat”],
+ [””],
+ [“a”],
+ [“abc”, “bca”, “cab”, “xyz”, “zyx”, “yxz”],
+]</p>
+
+<p>for test in test_cases:
+ result = groupAnagrams(test)
+ print(f”Input: {test}”)
+ print(f”Output: {result}\n”)
+``</p>
 
 <h3 id="step-by-step-visualization">Step-by-Step Visualization</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Input: ["eat","tea","tan","ate","nat","bat"]
+<p>``
+Input: [“eat”,”tea”,”tan”,”ate”,”nat”,”bat”]</p>
 
-Step 1: Process "eat"
-  sorted("eat") = "aet"
-  anagram_map = {"aet": ["eat"]}
+<p>Step 1: Process “eat”
+ sorted(“eat”) = “aet”
+ anagram_map = {“aet”: [“eat”]}</p>
 
-Step 2: Process "tea"
-  sorted("tea") = "aet"
-  anagram_map = {"aet": ["eat", "tea"]}
+<p>Step 2: Process “tea”
+ sorted(“tea”) = “aet”
+ anagram_map = {“aet”: [“eat”, “tea”]}</p>
 
-Step 3: Process "tan"
-  sorted("tan") = "ant"
-  anagram_map = {"aet": ["eat", "tea"], "ant": ["tan"]}
+<p>Step 3: Process “tan”
+ sorted(“tan”) = “ant”
+ anagram_map = {“aet”: [“eat”, “tea”], “ant”: [“tan”]}</p>
 
-Step 4: Process "ate"
-  sorted("ate") = "aet"
-  anagram_map = {"aet": ["eat", "tea", "ate"], "ant": ["tan"]}
+<p>Step 4: Process “ate”
+ sorted(“ate”) = “aet”
+ anagram_map = {“aet”: [“eat”, “tea”, “ate”], “ant”: [“tan”]}</p>
 
-Step 5: Process "nat"
-  sorted("nat") = "ant"
-  anagram_map = {"aet": ["eat", "tea", "ate"], "ant": ["tan", "nat"]}
+<p>Step 5: Process “nat”
+ sorted(“nat”) = “ant”
+ anagram_map = {“aet”: [“eat”, “tea”, “ate”], “ant”: [“tan”, “nat”]}</p>
 
-Step 6: Process "bat"
-  sorted("bat") = "abt"
-  anagram_map = {
-    "aet": ["eat", "tea", "ate"],
-    "ant": ["tan", "nat"],
-    "abt": ["bat"]
-  }
+<p>Step 6: Process “bat”
+ sorted(“bat”) = “abt”
+ anagram_map = {
+ “aet”: [“eat”, “tea”, “ate”],
+ “ant”: [“tan”, “nat”],
+ “abt”: [“bat”]
+ }</p>
 
-Output: [["eat","tea","ate"], ["tan","nat"], ["bat"]]
-</code></pre></div></div>
+<p>Output: [[“eat”,”tea”,”ate”], [“tan”,”nat”], [“bat”]]
+``</p>
 
 <h2 id="approach-3-character-count-as-hash-key-optimal-for-large-k">Approach 3: Character Count as Hash Key (Optimal for Large K)</h2>
 
@@ -558,393 +570,400 @@ Output: [["eat","tea","ate"], ["tan","nat"], ["bat"]]
 
 <h3 id="implementation-2">Implementation</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<p>``python
+from collections import defaultdict
+from typing import List</p>
 
-<span class="k">def</span> <span class="nf">groupAnagrams_count</span><span class="p">(</span><span class="n">strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-    <span class="sh">"""</span><span class="s">
-    Use character count as hash key.
-    
-    Time: O(NK) where N = number of strings, K = max string length
-    Space: O(NK)
-    
-    Advantage over sorting:
-    - O(K) instead of O(K log K) per string
-    - Better for very long strings
-    
-    Hash key format:
-    - Tuple of 26 integers (a-z counts)
-    - e.g., </span><span class="sh">"</span><span class="s">aab</span><span class="sh">"</span><span class="s"> -&gt; (2, 1, 0, 0, ..., 0)
-    </span><span class="sh">"""</span>
-    <span class="n">anagram_map</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strs</span><span class="p">:</span>
-        <span class="c1"># Count characters (a-z)
-</span>        <span class="n">count</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">26</span>
-        
-        <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
-            <span class="n">count</span><span class="p">[</span><span class="nf">ord</span><span class="p">(</span><span class="n">char</span><span class="p">)</span> <span class="o">-</span> <span class="nf">ord</span><span class="p">(</span><span class="sh">'</span><span class="s">a</span><span class="sh">'</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
-        
-        <span class="c1"># Use tuple as hash key (lists aren't hashable)
-</span>        <span class="n">key</span> <span class="o">=</span> <span class="nf">tuple</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
-        
-        <span class="n">anagram_map</span><span class="p">[</span><span class="n">key</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="n">anagram_map</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
+<p>def groupAnagrams_count(strs: List[str]) -&gt; List[List[str]]:
+ “””
+ Use character count as hash key.</p>
 
+<p>Time: O(NK) where N = number of strings, K = max string length
+ Space: O(NK)</p>
 
-<span class="c1"># Test
-</span><span class="n">test</span> <span class="o">=</span> <span class="p">[</span><span class="sh">"</span><span class="s">eat</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">tea</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">tan</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">ate</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">nat</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">bat</span><span class="sh">"</span><span class="p">]</span>
-<span class="n">result</span> <span class="o">=</span> <span class="nf">groupAnagrams_count</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Result: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>Advantage over sorting:</p>
+<ul>
+  <li>O(K) instead of O(K log K) per string</li>
+  <li>Better for very long strings</li>
+</ul>
+
+<p>Hash key format:</p>
+<ul>
+  <li>Tuple of 26 integers (a-z counts)</li>
+  <li>e.g., “aab” -&gt; (2, 1, 0, 0, …, 0)
+ “””
+ anagram_map = defaultdict(list)</li>
+</ul>
+
+<p>for s in strs:
+ # Count characters (a-z)
+ count = [0] * 26</p>
+
+<p>for char in s:
+ count[ord(char) - ord(‘a’)] += 1</p>
+
+<p># Use tuple as hash key (lists aren’t hashable)
+ key = tuple(count)</p>
+
+<p>anagram_map[key].append(s)</p>
+
+<p>return list(anagram_map.values())</p>
+
+<h1 id="test-1">Test</h1>
+<p>test = [“eat”,”tea”,”tan”,”ate”,”nat”,”bat”]
+result = groupAnagrams_count(test)
+print(f”Result: {result}”)
+``</p>
 
 <h3 id="character-count-visualization">Character Count Visualization</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"eat" -&gt; count array:
-Index:  0  1  2  3  4  5  ... 19 20 21 ...
-Char:   a  b  c  d  e  f  ... t  u  v  ...
-Count: [1, 0, 0, 0, 1, 0, ... 1, 0, 0, ...]
-       (a=1, e=1, t=1)
+<p>``
+“eat” -&gt; count array:
+Index: 0 1 2 3 4 5 … 19 20 21 …
+Char: a b c d e f … t u v …
+Count: [1, 0, 0, 0, 1, 0, … 1, 0, 0, …]
+ (a=1, e=1, t=1)</p>
 
-Key = (1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0)
+<p>Key = (1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0)</p>
 
-"tea" -&gt; same count array -&gt; same key!
-"tan" -&gt; different count array -&gt; different key
-</code></pre></div></div>
+<p>“tea” -&gt; same count array -&gt; same key!
+“tan” -&gt; different count array -&gt; different key
+``</p>
 
 <h2 id="implementation-production-grade-solution">Implementation: Production-Grade Solution</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
-<span class="kn">import</span> <span class="n">logging</span>
-<span class="kn">from</span> <span class="n">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<p>``python
+from collections import defaultdict
+from typing import List, Dict, Optional
+import logging
+from enum import Enum</p>
 
-<span class="k">class</span> <span class="nc">GroupingStrategy</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Strategy for creating hash keys.</span><span class="sh">"""</span>
-    <span class="n">SORTED</span> <span class="o">=</span> <span class="sh">"</span><span class="s">sorted</span><span class="sh">"</span>
-    <span class="n">COUNT</span> <span class="o">=</span> <span class="sh">"</span><span class="s">count</span><span class="sh">"</span>
-    <span class="n">PRIME</span> <span class="o">=</span> <span class="sh">"</span><span class="s">prime</span><span class="sh">"</span>  <span class="c1"># Advanced: prime number hash
-</span>
-<span class="k">class</span> <span class="nc">AnagramGrouper</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Production-ready anagram grouper with multiple strategies.
-    
-    Features:
-    - Multiple grouping strategies
-    - Input validation
-    - Performance metrics
-    - Detailed logging
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">strategy</span><span class="p">:</span> <span class="n">GroupingStrategy</span> <span class="o">=</span> <span class="n">GroupingStrategy</span><span class="p">.</span><span class="n">SORTED</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Initialize grouper.
-        
-        Args:
-            strategy: Grouping strategy to use
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">strategy</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="p">.</span><span class="nf">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
-        
-        <span class="c1"># Metrics
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">comparisons</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">groups_created</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="k">def</span> <span class="nf">group_anagrams</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="sh">"""</span><span class="s">
-        Group anagrams using selected strategy.
-        
-        Args:
-            strs: List of strings to group
-            
-        Returns:
-            List of groups (each group is a list of anagrams)
-            
-        Raises:
-            ValueError: If input is invalid
-        </span><span class="sh">"""</span>
-        <span class="c1"># Validate input
-</span>        <span class="k">if</span> <span class="ow">not</span> <span class="nf">isinstance</span><span class="p">(</span><span class="n">strs</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sh">"</span><span class="s">Input must be a list of strings</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="ow">not</span> <span class="nf">all</span><span class="p">(</span><span class="nf">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strs</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sh">"</span><span class="s">All elements must be strings</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="c1"># Reset metrics
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">comparisons</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">groups_created</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="c1"># Choose strategy
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="n">GroupingStrategy</span><span class="p">.</span><span class="n">SORTED</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_group_by_sorted</span><span class="p">(</span><span class="n">strs</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">self</span><span class="p">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="n">GroupingStrategy</span><span class="p">.</span><span class="n">COUNT</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_group_by_count</span><span class="p">(</span><span class="n">strs</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">self</span><span class="p">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="n">GroupingStrategy</span><span class="p">.</span><span class="n">PRIME</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_group_by_prime</span><span class="p">(</span><span class="n">strs</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Unknown strategy: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">strategy</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">groups_created</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="s">Grouped </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">strs</span><span class="p">)</span><span class="si">}</span><span class="s"> strings into </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">groups_created</span><span class="si">}</span><span class="s"> groups </span><span class="sh">"</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="s">using </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">strategy</span><span class="p">.</span><span class="n">value</span><span class="si">}</span><span class="s"> strategy</span><span class="sh">"</span>
-        <span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">result</span>
-    
-    <span class="k">def</span> <span class="nf">_group_by_sorted</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="sh">"""</span><span class="s">Group using sorted string as key.</span><span class="sh">"""</span>
-        <span class="n">anagram_map</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strs</span><span class="p">:</span>
-            <span class="n">key</span> <span class="o">=</span> <span class="sh">''</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="nf">sorted</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
-            <span class="n">anagram_map</span><span class="p">[</span><span class="n">key</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">comparisons</span> <span class="o">+=</span> <span class="mi">1</span>
-        
-        <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="n">anagram_map</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
-    
-    <span class="k">def</span> <span class="nf">_group_by_count</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="sh">"""</span><span class="s">Group using character count as key.</span><span class="sh">"""</span>
-        <span class="n">anagram_map</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strs</span><span class="p">:</span>
-            <span class="c1"># Count characters
-</span>            <span class="n">count</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">26</span>
-            <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
-                <span class="k">if</span> <span class="sh">'</span><span class="s">a</span><span class="sh">'</span> <span class="o">&lt;=</span> <span class="n">char</span> <span class="o">&lt;=</span> <span class="sh">'</span><span class="s">z</span><span class="sh">'</span><span class="p">:</span>
-                    <span class="n">count</span><span class="p">[</span><span class="nf">ord</span><span class="p">(</span><span class="n">char</span><span class="p">)</span> <span class="o">-</span> <span class="nf">ord</span><span class="p">(</span><span class="sh">'</span><span class="s">a</span><span class="sh">'</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># Handle uppercase or non-alphabetic
-</span>                    <span class="n">char_lower</span> <span class="o">=</span> <span class="n">char</span><span class="p">.</span><span class="nf">lower</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="sh">'</span><span class="s">a</span><span class="sh">'</span> <span class="o">&lt;=</span> <span class="n">char_lower</span> <span class="o">&lt;=</span> <span class="sh">'</span><span class="s">z</span><span class="sh">'</span><span class="p">:</span>
-                        <span class="n">count</span><span class="p">[</span><span class="nf">ord</span><span class="p">(</span><span class="n">char_lower</span><span class="p">)</span> <span class="o">-</span> <span class="nf">ord</span><span class="p">(</span><span class="sh">'</span><span class="s">a</span><span class="sh">'</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
-            
-            <span class="n">key</span> <span class="o">=</span> <span class="nf">tuple</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
-            <span class="n">anagram_map</span><span class="p">[</span><span class="n">key</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">comparisons</span> <span class="o">+=</span> <span class="mi">1</span>
-        
-        <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="n">anagram_map</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
-    
-    <span class="k">def</span> <span class="nf">_group_by_prime</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="sh">"""</span><span class="s">
-        Group using prime number hash.
-        
-        Assign each letter a prime number:
-        a=2, b=3, c=5, d=7, e=11, ...
-        
-        Hash = product of primes for each character.
-        
-        Advantage: Unique hash for each anagram group
-        Disadvantage: Can overflow for long strings
-        </span><span class="sh">"""</span>
-        <span class="c1"># Prime numbers for a-z
-</span>        <span class="n">primes</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">29</span><span class="p">,</span>
-            <span class="mi">31</span><span class="p">,</span> <span class="mi">37</span><span class="p">,</span> <span class="mi">41</span><span class="p">,</span> <span class="mi">43</span><span class="p">,</span> <span class="mi">47</span><span class="p">,</span> <span class="mi">53</span><span class="p">,</span> <span class="mi">59</span><span class="p">,</span> <span class="mi">61</span><span class="p">,</span> <span class="mi">67</span><span class="p">,</span> <span class="mi">71</span><span class="p">,</span>
-            <span class="mi">73</span><span class="p">,</span> <span class="mi">79</span><span class="p">,</span> <span class="mi">83</span><span class="p">,</span> <span class="mi">89</span><span class="p">,</span> <span class="mi">97</span><span class="p">,</span> <span class="mi">101</span>
-        <span class="p">]</span>
-        
-        <span class="n">anagram_map</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strs</span><span class="p">:</span>
-            <span class="c1"># Calculate prime product
-</span>            <span class="n">hash_value</span> <span class="o">=</span> <span class="mi">1</span>
-            
-            <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
-                <span class="k">if</span> <span class="sh">'</span><span class="s">a</span><span class="sh">'</span> <span class="o">&lt;=</span> <span class="n">char</span> <span class="o">&lt;=</span> <span class="sh">'</span><span class="s">z</span><span class="sh">'</span><span class="p">:</span>
-                    <span class="n">hash_value</span> <span class="o">*=</span> <span class="n">primes</span><span class="p">[</span><span class="nf">ord</span><span class="p">(</span><span class="n">char</span><span class="p">)</span> <span class="o">-</span> <span class="nf">ord</span><span class="p">(</span><span class="sh">'</span><span class="s">a</span><span class="sh">'</span><span class="p">)]</span>
-            
-            <span class="n">anagram_map</span><span class="p">[</span><span class="n">hash_value</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">comparisons</span> <span class="o">+=</span> <span class="mi">1</span>
-        
-        <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="n">anagram_map</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
-    
-    <span class="k">def</span> <span class="nf">find_anagrams_of</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Find all anagrams of a target string in a list.
-        
-        Args:
-            target: Target string
-            strs: List of strings to search
-            
-        Returns:
-            List of strings that are anagrams of target
-        </span><span class="sh">"""</span>
-        <span class="c1"># Get hash key for target
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="n">GroupingStrategy</span><span class="p">.</span><span class="n">SORTED</span><span class="p">:</span>
-            <span class="n">target_key</span> <span class="o">=</span> <span class="sh">''</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="nf">sorted</span><span class="p">(</span><span class="n">target</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="n">self</span><span class="p">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="n">GroupingStrategy</span><span class="p">.</span><span class="n">COUNT</span><span class="p">:</span>
-            <span class="n">count</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">26</span>
-            <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">target</span><span class="p">:</span>
-                <span class="k">if</span> <span class="sh">'</span><span class="s">a</span><span class="sh">'</span> <span class="o">&lt;=</span> <span class="n">char</span> <span class="o">&lt;=</span> <span class="sh">'</span><span class="s">z</span><span class="sh">'</span><span class="p">:</span>
-                    <span class="n">count</span><span class="p">[</span><span class="nf">ord</span><span class="p">(</span><span class="n">char</span><span class="p">)</span> <span class="o">-</span> <span class="nf">ord</span><span class="p">(</span><span class="sh">'</span><span class="s">a</span><span class="sh">'</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">target_key</span> <span class="o">=</span> <span class="nf">tuple</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">target_key</span> <span class="o">=</span> <span class="bp">None</span>
-        
-        <span class="c1"># Find matching strings
-</span>        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strs</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="n">GroupingStrategy</span><span class="p">.</span><span class="n">SORTED</span><span class="p">:</span>
-                <span class="n">key</span> <span class="o">=</span> <span class="sh">''</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="nf">sorted</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
-            <span class="k">elif</span> <span class="n">self</span><span class="p">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="n">GroupingStrategy</span><span class="p">.</span><span class="n">COUNT</span><span class="p">:</span>
-                <span class="n">count</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">26</span>
-                <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="sh">'</span><span class="s">a</span><span class="sh">'</span> <span class="o">&lt;=</span> <span class="n">char</span> <span class="o">&lt;=</span> <span class="sh">'</span><span class="s">z</span><span class="sh">'</span><span class="p">:</span>
-                        <span class="n">count</span><span class="p">[</span><span class="nf">ord</span><span class="p">(</span><span class="n">char</span><span class="p">)</span> <span class="o">-</span> <span class="nf">ord</span><span class="p">(</span><span class="sh">'</span><span class="s">a</span><span class="sh">'</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">key</span> <span class="o">=</span> <span class="nf">tuple</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
-            
-            <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="n">target_key</span><span class="p">:</span>
-                <span class="n">result</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">result</span>
-    
-    <span class="k">def</span> <span class="nf">get_stats</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Get performance statistics.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">"</span><span class="s">strategy</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">strategy</span><span class="p">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">comparisons</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">comparisons</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">groups_created</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">groups_created</span><span class="p">,</span>
-        <span class="p">}</span>
+<p>class GroupingStrategy(Enum):
+ “"”Strategy for creating hash keys.”””
+ SORTED = “sorted”
+ COUNT = “count”
+ PRIME = “prime” # Advanced: prime number hash</p>
 
+<p>class AnagramGrouper:
+ “””
+ Production-ready anagram grouper with multiple strategies.</p>
 
-<span class="c1"># Example usage
-</span><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="sh">"</span><span class="s">__main__</span><span class="sh">"</span><span class="p">:</span>
-    <span class="n">logging</span><span class="p">.</span><span class="nf">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="p">.</span><span class="n">INFO</span><span class="p">)</span>
-    
-    <span class="c1"># Test data
-</span>    <span class="n">test_strs</span> <span class="o">=</span> <span class="p">[</span><span class="sh">"</span><span class="s">eat</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">tea</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">tan</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">ate</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">nat</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">bat</span><span class="sh">"</span><span class="p">]</span>
-    
-    <span class="c1"># Test different strategies
-</span>    <span class="k">for</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="n">GroupingStrategy</span><span class="p">:</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">=== Testing </span><span class="si">{</span><span class="n">strategy</span><span class="p">.</span><span class="n">value</span><span class="si">}</span><span class="s"> strategy ===</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="n">grouper</span> <span class="o">=</span> <span class="nc">AnagramGrouper</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span><span class="p">)</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">grouper</span><span class="p">.</span><span class="nf">group_anagrams</span><span class="p">(</span><span class="n">test_strs</span><span class="p">)</span>
-        
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Result: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Stats: </span><span class="si">{</span><span class="n">grouper</span><span class="p">.</span><span class="nf">get_stats</span><span class="p">()</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="c1"># Test finding anagrams
-</span>        <span class="n">anagrams_of_eat</span> <span class="o">=</span> <span class="n">grouper</span><span class="p">.</span><span class="nf">find_anagrams_of</span><span class="p">(</span><span class="sh">"</span><span class="s">eat</span><span class="sh">"</span><span class="p">,</span> <span class="n">test_strs</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Anagrams of </span><span class="sh">'</span><span class="s">eat</span><span class="sh">'</span><span class="s">: </span><span class="si">{</span><span class="n">anagrams_of_eat</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>Features:</p>
+<ul>
+  <li>Multiple grouping strategies</li>
+  <li>Input validation</li>
+  <li>Performance metrics</li>
+  <li>Detailed logging
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self, strategy: GroupingStrategy = GroupingStrategy.SORTED):
+ “””
+ Initialize grouper.</p>
+
+<p>Args:
+ strategy: Grouping strategy to use
+ “””
+ self.strategy = strategy
+ self.logger = logging.getLogger(<strong>name</strong>)</p>
+
+<p># Metrics
+ self.comparisons = 0
+ self.groups_created = 0</p>
+
+<p>def group_anagrams(self, strs: List[str]) -&gt; List[List[str]]:
+ “””
+ Group anagrams using selected strategy.</p>
+
+<p>Args:
+ strs: List of strings to group</p>
+
+<p>Returns:
+ List of groups (each group is a list of anagrams)</p>
+
+<p>Raises:
+ ValueError: If input is invalid
+ “””
+ # Validate input
+ if not isinstance(strs, list):
+ raise ValueError(“Input must be a list of strings”)</p>
+
+<p>if not all(isinstance(s, str) for s in strs):
+ raise ValueError(“All elements must be strings”)</p>
+
+<p># Reset metrics
+ self.comparisons = 0
+ self.groups_created = 0</p>
+
+<p># Choose strategy
+ if self.strategy == GroupingStrategy.SORTED:
+ result = self._group_by_sorted(strs)
+ elif self.strategy == GroupingStrategy.COUNT:
+ result = self._group_by_count(strs)
+ elif self.strategy == GroupingStrategy.PRIME:
+ result = self._group_by_prime(strs)
+ else:
+ raise ValueError(f”Unknown strategy: {self.strategy}”)</p>
+
+<p>self.groups_created = len(result)</p>
+
+<p>self.logger.info(
+ f”Grouped {len(strs)} strings into {self.groups_created} groups “
+ f”using {self.strategy.value} strategy”
+ )</p>
+
+<p>return result</p>
+
+<p>def _group_by_sorted(self, strs: List[str]) -&gt; List[List[str]]:
+ “"”Group using sorted string as key.”””
+ anagram_map = defaultdict(list)</p>
+
+<p>for s in strs:
+ key = ‘‘.join(sorted(s))
+ anagram_map[key].append(s)
+ self.comparisons += 1</p>
+
+<p>return list(anagram_map.values())</p>
+
+<p>def _group_by_count(self, strs: List[str]) -&gt; List[List[str]]:
+ “"”Group using character count as key.”””
+ anagram_map = defaultdict(list)</p>
+
+<p>for s in strs:
+ # Count characters
+ count = [0] * 26
+ for char in s:
+ if ‘a’ &lt;= char &lt;= ‘z’:
+ count[ord(char) - ord(‘a’)] += 1
+ else:
+ # Handle uppercase or non-alphabetic
+ char_lower = char.lower()
+ if ‘a’ &lt;= char_lower &lt;= ‘z’:
+ count[ord(char_lower) - ord(‘a’)] += 1</p>
+
+<p>key = tuple(count)
+ anagram_map[key].append(s)
+ self.comparisons += 1</p>
+
+<p>return list(anagram_map.values())</p>
+
+<p>def _group_by_prime(self, strs: List[str]) -&gt; List[List[str]]:
+ “””
+ Group using prime number hash.</p>
+
+<p>Assign each letter a prime number:
+ a=2, b=3, c=5, d=7, e=11, …</p>
+
+<p>Hash = product of primes for each character.</p>
+
+<p>Advantage: Unique hash for each anagram group
+ Disadvantage: Can overflow for long strings
+ “””
+ # Prime numbers for a-z
+ primes = [
+ 2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
+ 31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
+ 73, 79, 83, 89, 97, 101
+ ]</p>
+
+<p>anagram_map = defaultdict(list)</p>
+
+<p>for s in strs:
+ # Calculate prime product
+ hash_value = 1</p>
+
+<p>for char in s:
+ if ‘a’ &lt;= char &lt;= ‘z’:
+ hash_value *= primes[ord(char) - ord(‘a’)]</p>
+
+<p>anagram_map[hash_value].append(s)
+ self.comparisons += 1</p>
+
+<p>return list(anagram_map.values())</p>
+
+<p>def find_anagrams_of(self, target: str, strs: List[str]) -&gt; List[str]:
+ “””
+ Find all anagrams of a target string in a list.</p>
+
+<p>Args:
+ target: Target string
+ strs: List of strings to search</p>
+
+<p>Returns:
+ List of strings that are anagrams of target
+ “””
+ # Get hash key for target
+ if self.strategy == GroupingStrategy.SORTED:
+ target_key = ‘‘.join(sorted(target))
+ elif self.strategy == GroupingStrategy.COUNT:
+ count = [0] * 26
+ for char in target:
+ if ‘a’ &lt;= char &lt;= ‘z’:
+ count[ord(char) - ord(‘a’)] += 1
+ target_key = tuple(count)
+ else:
+ target_key = None</p>
+
+<p># Find matching strings
+ result = []</p>
+
+<p>for s in strs:
+ if self.strategy == GroupingStrategy.SORTED:
+ key = ‘‘.join(sorted(s))
+ elif self.strategy == GroupingStrategy.COUNT:
+ count = [0] * 26
+ for char in s:
+ if ‘a’ &lt;= char &lt;= ‘z’:
+ count[ord(char) - ord(‘a’)] += 1
+ key = tuple(count)</p>
+
+<p>if key == target_key:
+ result.append(s)</p>
+
+<p>return result</p>
+
+<p>def get_stats(self) -&gt; Dict:
+ “"”Get performance statistics.”””
+ return {
+ “strategy”: self.strategy.value,
+ “comparisons”: self.comparisons,
+ “groups_created”: self.groups_created,
+ }</p>
+
+<h1 id="example-usage">Example usage</h1>
+<p>if <strong>name</strong> == “<strong>main</strong>”:
+ logging.basicConfig(level=logging.INFO)</p>
+
+<p># Test data
+ test_strs = [“eat”,”tea”,”tan”,”ate”,”nat”,”bat”]</p>
+
+<p># Test different strategies
+ for strategy in GroupingStrategy:
+ print(f”\n=== Testing {strategy.value} strategy ===”)</p>
+
+<p>grouper = AnagramGrouper(strategy=strategy)
+ result = grouper.group_anagrams(test_strs)</p>
+
+<p>print(f”Result: {result}”)
+ print(f”Stats: {grouper.get_stats()}”)</p>
+
+<p># Test finding anagrams
+ anagrams_of_eat = grouper.find_anagrams_of(“eat”, test_strs)
+ print(f”Anagrams of ‘eat’: {anagrams_of_eat}”)
+``</p>
 
 <h2 id="testing">Testing</h2>
 
 <h3 id="comprehensive-test-suite">Comprehensive Test Suite</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">pytest</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<p>``python
+import pytest
+from typing import List</p>
 
-<span class="k">class</span> <span class="nc">TestAnagramGrouper</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Comprehensive test suite for anagram grouping.</span><span class="sh">"""</span>
-    
-    <span class="nd">@pytest.fixture</span>
-    <span class="k">def</span> <span class="nf">grouper</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nc">AnagramGrouper</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="n">GroupingStrategy</span><span class="p">.</span><span class="n">SORTED</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">test_basic_examples</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">grouper</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Test basic examples from problem.</span><span class="sh">"""</span>
-        <span class="c1"># Example 1
-</span>        <span class="n">result</span> <span class="o">=</span> <span class="n">grouper</span><span class="p">.</span><span class="nf">group_anagrams</span><span class="p">([</span><span class="sh">"</span><span class="s">eat</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">tea</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">tan</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">ate</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">nat</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">bat</span><span class="sh">"</span><span class="p">])</span>
-        
-        <span class="c1"># Convert to sets for comparison (order doesn't matter)
-</span>        <span class="n">result_sets</span> <span class="o">=</span> <span class="p">[</span><span class="nf">set</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span>
-        <span class="n">expected_sets</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">{</span><span class="sh">"</span><span class="s">eat</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">tea</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">ate</span><span class="sh">"</span><span class="p">},</span>
-            <span class="p">{</span><span class="sh">"</span><span class="s">tan</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">nat</span><span class="sh">"</span><span class="p">},</span>
-            <span class="p">{</span><span class="sh">"</span><span class="s">bat</span><span class="sh">"</span><span class="p">}</span>
-        <span class="p">]</span>
-        
-        <span class="k">assert</span> <span class="nf">len</span><span class="p">(</span><span class="n">result_sets</span><span class="p">)</span> <span class="o">==</span> <span class="nf">len</span><span class="p">(</span><span class="n">expected_sets</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">expected</span> <span class="ow">in</span> <span class="n">expected_sets</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">expected</span> <span class="ow">in</span> <span class="n">result_sets</span>
-    
-    <span class="k">def</span> <span class="nf">test_empty_string</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">grouper</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Test with empty string.</span><span class="sh">"""</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">grouper</span><span class="p">.</span><span class="nf">group_anagrams</span><span class="p">([</span><span class="sh">""</span><span class="p">])</span>
-        <span class="k">assert</span> <span class="n">result</span> <span class="o">==</span> <span class="p">[[</span><span class="sh">""</span><span class="p">]]</span>
-    
-    <span class="k">def</span> <span class="nf">test_single_string</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">grouper</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Test with single string.</span><span class="sh">"""</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">grouper</span><span class="p">.</span><span class="nf">group_anagrams</span><span class="p">([</span><span class="sh">"</span><span class="s">a</span><span class="sh">"</span><span class="p">])</span>
-        <span class="k">assert</span> <span class="n">result</span> <span class="o">==</span> <span class="p">[[</span><span class="sh">"</span><span class="s">a</span><span class="sh">"</span><span class="p">]]</span>
-    
-    <span class="k">def</span> <span class="nf">test_no_anagrams</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">grouper</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Test when no strings are anagrams.</span><span class="sh">"""</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">grouper</span><span class="p">.</span><span class="nf">group_anagrams</span><span class="p">([</span><span class="sh">"</span><span class="s">abc</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">def</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">ghi</span><span class="sh">"</span><span class="p">])</span>
-        <span class="k">assert</span> <span class="nf">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
-        <span class="k">assert</span> <span class="nf">all</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">result</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">test_all_anagrams</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">grouper</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Test when all strings are anagrams.</span><span class="sh">"""</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">grouper</span><span class="p">.</span><span class="nf">group_anagrams</span><span class="p">([</span><span class="sh">"</span><span class="s">abc</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">bca</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">cab</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">acb</span><span class="sh">"</span><span class="p">])</span>
-        <span class="k">assert</span> <span class="nf">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
-        <span class="k">assert</span> <span class="nf">len</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">4</span>
-    
-    <span class="k">def</span> <span class="nf">test_long_strings</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">grouper</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Test with long strings.</span><span class="sh">"""</span>
-        <span class="n">long1</span> <span class="o">=</span> <span class="sh">"</span><span class="s">a</span><span class="sh">"</span> <span class="o">*</span> <span class="mi">100</span>
-        <span class="n">long2</span> <span class="o">=</span> <span class="sh">"</span><span class="s">a</span><span class="sh">"</span> <span class="o">*</span> <span class="mi">100</span>
-        <span class="n">long3</span> <span class="o">=</span> <span class="sh">"</span><span class="s">b</span><span class="sh">"</span> <span class="o">*</span> <span class="mi">100</span>
-        
-        <span class="n">result</span> <span class="o">=</span> <span class="n">grouper</span><span class="p">.</span><span class="nf">group_anagrams</span><span class="p">([</span><span class="n">long1</span><span class="p">,</span> <span class="n">long2</span><span class="p">,</span> <span class="n">long3</span><span class="p">])</span>
-        <span class="k">assert</span> <span class="nf">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
-    
-    <span class="k">def</span> <span class="nf">test_strategy_equivalence</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Test that all strategies produce equivalent results.</span><span class="sh">"""</span>
-        <span class="n">test_input</span> <span class="o">=</span> <span class="p">[</span><span class="sh">"</span><span class="s">eat</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">tea</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">tan</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">ate</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">nat</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">bat</span><span class="sh">"</span><span class="p">]</span>
-        
-        <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
-        
-        <span class="k">for</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="n">GroupingStrategy</span><span class="p">:</span>
-            <span class="n">grouper</span> <span class="o">=</span> <span class="nc">AnagramGrouper</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span><span class="p">)</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">grouper</span><span class="p">.</span><span class="nf">group_anagrams</span><span class="p">(</span><span class="n">test_input</span><span class="p">)</span>
-            
-            <span class="c1"># Convert to frozensets for comparison
-</span>            <span class="n">result_sets</span> <span class="o">=</span> <span class="nf">frozenset</span><span class="p">(</span>
-                <span class="nf">frozenset</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">result</span>
-            <span class="p">)</span>
-            <span class="n">results</span><span class="p">[</span><span class="n">strategy</span><span class="p">]</span> <span class="o">=</span> <span class="n">result_sets</span>
-        
-        <span class="c1"># All strategies should produce same groupings
-</span>        <span class="k">assert</span> <span class="nf">len</span><span class="p">(</span><span class="nf">set</span><span class="p">(</span><span class="n">results</span><span class="p">.</span><span class="nf">values</span><span class="p">()))</span> <span class="o">==</span> <span class="mi">1</span>
-    
-    <span class="k">def</span> <span class="nf">test_case_insensitive</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Test case handling.</span><span class="sh">"""</span>
-        <span class="n">grouper</span> <span class="o">=</span> <span class="nc">AnagramGrouper</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="n">GroupingStrategy</span><span class="p">.</span><span class="n">COUNT</span><span class="p">)</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">grouper</span><span class="p">.</span><span class="nf">group_anagrams</span><span class="p">([</span><span class="sh">"</span><span class="s">Eat</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Tea</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">eat</span><span class="sh">"</span><span class="p">])</span>
-        
-        <span class="c1"># Should group regardless of case
-</span>        <span class="k">assert</span> <span class="nf">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span>  <span class="c1"># Depends on implementation
-</span>    
-    <span class="k">def</span> <span class="nf">test_invalid_input</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">grouper</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Test input validation.</span><span class="sh">"""</span>
-        <span class="k">with</span> <span class="n">pytest</span><span class="p">.</span><span class="nf">raises</span><span class="p">(</span><span class="nb">ValueError</span><span class="p">):</span>
-            <span class="n">grouper</span><span class="p">.</span><span class="nf">group_anagrams</span><span class="p">(</span><span class="sh">"</span><span class="s">not a list</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">with</span> <span class="n">pytest</span><span class="p">.</span><span class="nf">raises</span><span class="p">(</span><span class="nb">ValueError</span><span class="p">):</span>
-            <span class="n">grouper</span><span class="p">.</span><span class="nf">group_anagrams</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
-    
-    <span class="k">def</span> <span class="nf">test_find_anagrams</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">grouper</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Test finding specific anagrams.</span><span class="sh">"""</span>
-        <span class="n">strs</span> <span class="o">=</span> <span class="p">[</span><span class="sh">"</span><span class="s">eat</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">tea</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">tan</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">ate</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">nat</span><span class="sh">"</span><span class="p">,</span><span class="sh">"</span><span class="s">bat</span><span class="sh">"</span><span class="p">]</span>
-        
-        <span class="n">anagrams</span> <span class="o">=</span> <span class="n">grouper</span><span class="p">.</span><span class="nf">find_anagrams_of</span><span class="p">(</span><span class="sh">"</span><span class="s">eat</span><span class="sh">"</span><span class="p">,</span> <span class="n">strs</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="nf">set</span><span class="p">(</span><span class="n">anagrams</span><span class="p">)</span> <span class="o">==</span> <span class="p">{</span><span class="sh">"</span><span class="s">eat</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">tea</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">ate</span><span class="sh">"</span><span class="p">}</span>
-        
-        <span class="n">anagrams</span> <span class="o">=</span> <span class="n">grouper</span><span class="p">.</span><span class="nf">find_anagrams_of</span><span class="p">(</span><span class="sh">"</span><span class="s">tan</span><span class="sh">"</span><span class="p">,</span> <span class="n">strs</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="nf">set</span><span class="p">(</span><span class="n">anagrams</span><span class="p">)</span> <span class="o">==</span> <span class="p">{</span><span class="sh">"</span><span class="s">tan</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">nat</span><span class="sh">"</span><span class="p">}</span>
+<p>class TestAnagramGrouper:
+ “"”Comprehensive test suite for anagram grouping.”””</p>
 
+<p>@pytest.fixture
+ def grouper(self):
+ return AnagramGrouper(strategy=GroupingStrategy.SORTED)</p>
 
-<span class="c1"># Run tests
-</span><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="sh">"</span><span class="s">__main__</span><span class="sh">"</span><span class="p">:</span>
-    <span class="n">pytest</span><span class="p">.</span><span class="nf">main</span><span class="p">([</span><span class="n">__file__</span><span class="p">,</span> <span class="sh">"</span><span class="s">-v</span><span class="sh">"</span><span class="p">])</span>
-</code></pre></div></div>
+<p>def test_basic_examples(self, grouper):
+ “"”Test basic examples from problem.”””
+ # Example 1
+ result = grouper.group_anagrams([“eat”,”tea”,”tan”,”ate”,”nat”,”bat”])</p>
+
+<p># Convert to sets for comparison (order doesn’t matter)
+ result_sets = [set(group) for group in result]
+ expected_sets = [
+ {“eat”, “tea”, “ate”},
+ {“tan”, “nat”},
+ {“bat”}
+ ]</p>
+
+<p>assert len(result_sets) == len(expected_sets)
+ for expected in expected_sets:
+ assert expected in result_sets</p>
+
+<p>def test_empty_string(self, grouper):
+ “"”Test with empty string.”””
+ result = grouper.group_anagrams([””])
+ assert result == [[””]]</p>
+
+<p>def test_single_string(self, grouper):
+ “"”Test with single string.”””
+ result = grouper.group_anagrams([“a”])
+ assert result == [[“a”]]</p>
+
+<p>def test_no_anagrams(self, grouper):
+ “"”Test when no strings are anagrams.”””
+ result = grouper.group_anagrams([“abc”, “def”, “ghi”])
+ assert len(result) == 3
+ assert all(len(group) == 1 for group in result)</p>
+
+<p>def test_all_anagrams(self, grouper):
+ “"”Test when all strings are anagrams.”””
+ result = grouper.group_anagrams([“abc”, “bca”, “cab”, “acb”])
+ assert len(result) == 1
+ assert len(result[0]) == 4</p>
+
+<p>def test_long_strings(self, grouper):
+ “"”Test with long strings.”””
+ long1 = “a” * 100
+ long2 = “a” * 100
+ long3 = “b” * 100</p>
+
+<p>result = grouper.group_anagrams([long1, long2, long3])
+ assert len(result) == 2</p>
+
+<p>def test_strategy_equivalence(self):
+ “"”Test that all strategies produce equivalent results.”””
+ test_input = [“eat”,”tea”,”tan”,”ate”,”nat”,”bat”]</p>
+
+<p>results = {}</p>
+
+<p>for strategy in GroupingStrategy:
+ grouper = AnagramGrouper(strategy=strategy)
+ result = grouper.group_anagrams(test_input)</p>
+
+<p># Convert to frozensets for comparison
+ result_sets = frozenset(
+ frozenset(group) for group in result
+ )
+ results[strategy] = result_sets</p>
+
+<p># All strategies should produce same groupings
+ assert len(set(results.values())) == 1</p>
+
+<p>def test_case_insensitive(self):
+ “"”Test case handling.”””
+ grouper = AnagramGrouper(strategy=GroupingStrategy.COUNT)
+ result = grouper.group_anagrams([“Eat”, “Tea”, “eat”])</p>
+
+<p># Should group regardless of case
+ assert len(result) &lt;= 2 # Depends on implementation</p>
+
+<p>def test_invalid_input(self, grouper):
+ “"”Test input validation.”””
+ with pytest.raises(ValueError):
+ grouper.group_anagrams(“not a list”)</p>
+
+<p>with pytest.raises(ValueError):
+ grouper.group_anagrams([1, 2, 3])</p>
+
+<p>def test_find_anagrams(self, grouper):
+ “"”Test finding specific anagrams.”””
+ strs = [“eat”,”tea”,”tan”,”ate”,”nat”,”bat”]</p>
+
+<p>anagrams = grouper.find_anagrams_of(“eat”, strs)
+ assert set(anagrams) == {“eat”, “tea”, “ate”}</p>
+
+<p>anagrams = grouper.find_anagrams_of(“tan”, strs)
+ assert set(anagrams) == {“tan”, “nat”}</p>
+
+<h1 id="run-tests">Run tests</h1>
+<p>if <strong>name</strong> == “<strong>main</strong>”:
+ pytest.main([<strong>file</strong>, “-v”])
+``</p>
 
 <h2 id="complexity-analysis">Complexity Analysis</h2>
 
@@ -1024,159 +1043,163 @@ Key = (1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0)
 
 <h3 id="1-unicode-support">1. Unicode Support</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">group_anagrams_unicode</span><span class="p">(</span><span class="n">strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-    <span class="sh">"""</span><span class="s">
-    Group anagrams with full Unicode support.
-    
-    Handles:
-    - Non-ASCII characters
-    - Emojis
-    - Accented characters
-    </span><span class="sh">"""</span>
-    <span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
-    
-    <span class="n">anagram_map</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strs</span><span class="p">:</span>
-        <span class="c1"># Use Counter for Unicode-safe counting
-</span>        <span class="c1"># Convert to frozenset of items for hashing
-</span>        <span class="n">key</span> <span class="o">=</span> <span class="nf">tuple</span><span class="p">(</span><span class="nf">sorted</span><span class="p">(</span><span class="nc">Counter</span><span class="p">(</span><span class="n">s</span><span class="p">).</span><span class="nf">items</span><span class="p">()))</span>
-        <span class="n">anagram_map</span><span class="p">[</span><span class="n">key</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="n">anagram_map</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
+<p>``python
+def group_anagrams_unicode(strs: List[str]) -&gt; List[List[str]]:
+ “””
+ Group anagrams with full Unicode support.</p>
 
+<p>Handles:</p>
+<ul>
+  <li>Non-ASCII characters</li>
+  <li>Emojis</li>
+  <li>Accented characters
+ “””
+ from collections import Counter</li>
+</ul>
 
-<span class="c1"># Test with Unicode
-</span><span class="n">unicode_strs</span> <span class="o">=</span> <span class="p">[</span><span class="sh">"</span><span class="s">café</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">éfac</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">hello</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">हेलो</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">😀😁</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">😁😀</span><span class="sh">"</span><span class="p">]</span>
-<span class="n">result</span> <span class="o">=</span> <span class="nf">group_anagrams_unicode</span><span class="p">(</span><span class="n">unicode_strs</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</code></pre></div></div>
+<p>anagram_map = defaultdict(list)</p>
+
+<p>for s in strs:
+ # Use Counter for Unicode-safe counting
+ # Convert to frozenset of items for hashing
+ key = tuple(sorted(Counter(s).items()))
+ anagram_map[key].append(s)</p>
+
+<p>return list(anagram_map.values())</p>
+
+<h1 id="test-with-unicode">Test with Unicode</h1>
+<p>unicode_strs = [“café”, “éfac”, “hello”, “हेलो”, “😀😁”, “😁😀”]
+result = group_anagrams_unicode(unicode_strs)
+print(result)
+``</p>
 
 <h3 id="2-case-insensitive-grouping">2. Case-Insensitive Grouping</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">group_anagrams_case_insensitive</span><span class="p">(</span><span class="n">strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-    <span class="sh">"""</span><span class="s">Group anagrams ignoring case.</span><span class="sh">"""</span>
-    <span class="n">anagram_map</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strs</span><span class="p">:</span>
-        <span class="c1"># Normalize to lowercase before sorting
-</span>        <span class="n">key</span> <span class="o">=</span> <span class="sh">''</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="nf">sorted</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="nf">lower</span><span class="p">()))</span>
-        <span class="n">anagram_map</span><span class="p">[</span><span class="n">key</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="n">anagram_map</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
+<p>``python
+def group_anagrams_case_insensitive(strs: List[str]) -&gt; List[List[str]]:
+ “"”Group anagrams ignoring case.”””
+ anagram_map = defaultdict(list)</p>
 
+<p>for s in strs:
+ # Normalize to lowercase before sorting
+ key = ‘‘.join(sorted(s.lower()))
+ anagram_map[key].append(s)</p>
 
-<span class="c1"># Test
-</span><span class="n">result</span> <span class="o">=</span> <span class="nf">group_anagrams_case_insensitive</span><span class="p">([</span><span class="sh">"</span><span class="s">Eat</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Tea</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">eat</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">tea</span><span class="sh">"</span><span class="p">])</span>
-<span class="nf">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>  <span class="c1"># All in one group
-</span></code></pre></div></div>
+<p>return list(anagram_map.values())</p>
+
+<h1 id="test-2">Test</h1>
+<p>result = group_anagrams_case_insensitive([“Eat”, “Tea”, “eat”, “tea”])
+print(result) # All in one group
+``</p>
 
 <h3 id="3-streaming--online-grouping">3. Streaming / Online Grouping</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">StreamingAnagramGrouper</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Group anagrams in streaming fashion.
-    
-    Useful when:
-    - Data doesn</span><span class="sh">'</span><span class="s">t fit in memory
-    - Processing real-time stream
-    - Need incremental results
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">groups</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">group_ids</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">next_id</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="k">def</span> <span class="nf">add_string</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Add string to grouping.
-        
-        Returns:
-            Group ID for this string
-        </span><span class="sh">"""</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="sh">''</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="nf">sorted</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
-        
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">group_ids</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">group_ids</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">next_id</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">next_id</span> <span class="o">+=</span> <span class="mi">1</span>
-        
-        <span class="n">group_id</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">group_ids</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">groups</span><span class="p">[</span><span class="n">group_id</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">group_id</span>
-    
-    <span class="k">def</span> <span class="nf">get_group</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">group_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">Get strings in a specific group.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">groups</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">group_id</span><span class="p">,</span> <span class="p">[])</span>
-    
-    <span class="k">def</span> <span class="nf">get_all_groups</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="sh">"""</span><span class="s">Get all groups.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">groups</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
+<p>``python
+class StreamingAnagramGrouper:
+ “””
+ Group anagrams in streaming fashion.</p>
 
+<p>Useful when:</p>
+<ul>
+  <li>Data doesn’t fit in memory</li>
+  <li>Processing real-time stream</li>
+  <li>Need incremental results
+ “””</li>
+</ul>
 
-<span class="c1"># Usage
-</span><span class="n">streamer</span> <span class="o">=</span> <span class="nc">StreamingAnagramGrouper</span><span class="p">()</span>
+<p>def <strong>init</strong>(self):
+ self.groups = defaultdict(list)
+ self.group_ids = {}
+ self.next_id = 0</p>
 
-<span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="p">[</span><span class="sh">"</span><span class="s">eat</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">tea</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">tan</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">ate</span><span class="sh">"</span><span class="p">]:</span>
-    <span class="n">group_id</span> <span class="o">=</span> <span class="n">streamer</span><span class="p">.</span><span class="nf">add_string</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"'</span><span class="si">{</span><span class="n">word</span><span class="si">}</span><span class="sh">'</span><span class="s"> -&gt; group </span><span class="si">{</span><span class="n">group_id</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p>def add_string(self, s: str) -&gt; int:
+ “””
+ Add string to grouping.</p>
 
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Final groups: </span><span class="si">{</span><span class="n">streamer</span><span class="p">.</span><span class="nf">get_all_groups</span><span class="p">()</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>Returns:
+ Group ID for this string
+ “””
+ key = ‘‘.join(sorted(s))</p>
+
+<p>if key not in self.group_ids:
+ self.group_ids[key] = self.next_id
+ self.next_id += 1</p>
+
+<p>group_id = self.group_ids[key]
+ self.groups[group_id].append(s)</p>
+
+<p>return group_id</p>
+
+<p>def get_group(self, group_id: int) -&gt; List[str]:
+ “"”Get strings in a specific group.”””
+ return self.groups.get(group_id, [])</p>
+
+<p>def get_all_groups(self) -&gt; List[List[str]]:
+ “"”Get all groups.”””
+ return list(self.groups.values())</p>
+
+<h1 id="usage">Usage</h1>
+<p>streamer = StreamingAnagramGrouper()</p>
+
+<p>for word in [“eat”, “tea”, “tan”, “ate”]:
+ group_id = streamer.add_string(word)
+ print(f”‘{word}’ -&gt; group {group_id}”)</p>
+
+<p>print(f”Final groups: {streamer.get_all_groups()}”)
+``</p>
 
 <h3 id="4-performance-monitoring">4. Performance Monitoring</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">time</span>
-<span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<p>``python
+import time
+from dataclasses import dataclass</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">PerformanceMetrics</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Performance metrics for grouping operation.</span><span class="sh">"""</span>
-    <span class="n">total_strings</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">total_groups</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">execution_time_ms</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">avg_group_size</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">largest_group_size</span><span class="p">:</span> <span class="nb">int</span>
-    
-    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="nf">return </span><span class="p">(</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="s">Performance Metrics:</span><span class="se">\n</span><span class="sh">"</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="s">  Strings processed: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">total_strings</span><span class="si">}</span><span class="se">\n</span><span class="sh">"</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="s">  Groups created: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">total_groups</span><span class="si">}</span><span class="se">\n</span><span class="sh">"</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="s">  Execution time: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">execution_time_ms</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">ms</span><span class="se">\n</span><span class="sh">"</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="s">  Avg group size: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">avg_group_size</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="se">\n</span><span class="sh">"</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="s">  Largest group: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">largest_group_size</span><span class="si">}</span><span class="sh">"</span>
-        <span class="p">)</span>
+<p>@dataclass
+class PerformanceMetrics:
+ “"”Performance metrics for grouping operation.”””
+ total_strings: int
+ total_groups: int
+ execution_time_ms: float
+ avg_group_size: float
+ largest_group_size: int</p>
 
+<p>def <strong>str</strong>(self):
+ return (
+ f”Performance Metrics:\n”
+ f” Strings processed: {self.total_strings}\n”
+ f” Groups created: {self.total_groups}\n”
+ f” Execution time: {self.execution_time_ms:.2f}ms\n”
+ f” Avg group size: {self.avg_group_size:.2f}\n”
+ f” Largest group: {self.largest_group_size}”
+ )</p>
 
-<span class="k">def</span> <span class="nf">group_anagrams_with_metrics</span><span class="p">(</span><span class="n">strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="n">PerformanceMetrics</span><span class="p">]:</span>
-    <span class="sh">"""</span><span class="s">Group anagrams and return performance metrics.</span><span class="sh">"""</span>
-    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">perf_counter</span><span class="p">()</span>
-    
-    <span class="c1"># Group anagrams
-</span>    <span class="n">anagram_map</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strs</span><span class="p">:</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="sh">''</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="nf">sorted</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
-        <span class="n">anagram_map</span><span class="p">[</span><span class="n">key</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-    
-    <span class="n">result</span> <span class="o">=</span> <span class="nf">list</span><span class="p">(</span><span class="n">anagram_map</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
-    
-    <span class="c1"># Calculate metrics
-</span>    <span class="n">execution_time</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="p">.</span><span class="nf">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
-    
-    <span class="n">group_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="nf">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span>
-    
-    <span class="n">metrics</span> <span class="o">=</span> <span class="nc">PerformanceMetrics</span><span class="p">(</span>
-        <span class="n">total_strings</span><span class="o">=</span><span class="nf">len</span><span class="p">(</span><span class="n">strs</span><span class="p">),</span>
-        <span class="n">total_groups</span><span class="o">=</span><span class="nf">len</span><span class="p">(</span><span class="n">result</span><span class="p">),</span>
-        <span class="n">execution_time_ms</span><span class="o">=</span><span class="n">execution_time</span><span class="p">,</span>
-        <span class="n">avg_group_size</span><span class="o">=</span><span class="nf">sum</span><span class="p">(</span><span class="n">group_sizes</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">group_sizes</span><span class="p">)</span> <span class="k">if</span> <span class="n">group_sizes</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="n">largest_group_size</span><span class="o">=</span><span class="nf">max</span><span class="p">(</span><span class="n">group_sizes</span><span class="p">)</span> <span class="k">if</span> <span class="n">group_sizes</span> <span class="k">else</span> <span class="mi">0</span>
-    <span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="n">metrics</span>
-</code></pre></div></div>
+<p>def group_anagrams_with_metrics(strs: List[str]) -&gt; tuple[List[List[str]], PerformanceMetrics]:
+ “"”Group anagrams and return performance metrics.”””
+ start_time = time.perf_counter()</p>
+
+<p># Group anagrams
+ anagram_map = defaultdict(list)
+ for s in strs:
+ key = ‘‘.join(sorted(s))
+ anagram_map[key].append(s)</p>
+
+<p>result = list(anagram_map.values())</p>
+
+<p># Calculate metrics
+ execution_time = (time.perf_counter() - start_time) * 1000</p>
+
+<p>group_sizes = [len(group) for group in result]</p>
+
+<p>metrics = PerformanceMetrics(
+ total_strings=len(strs),
+ total_groups=len(result),
+ execution_time_ms=execution_time,
+ avg_group_size=sum(group_sizes) / len(group_sizes) if group_sizes else 0,
+ largest_group_size=max(group_sizes) if group_sizes else 0
+ )</p>
+
+<p>return result, metrics
+``</p>
 
 <h2 id="connections-to-ml-systems">Connections to ML Systems</h2>
 
@@ -1190,159 +1213,167 @@ Key = (1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0)
   <li><strong>Clustering:</strong> Group data points by feature similarity</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
-<span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<p>``python
+import numpy as np
+from collections import defaultdict</p>
 
-<span class="k">class</span> <span class="nc">SimpleClusterer</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Simple clustering using hash-based grouping.
-    
-    Similar to anagram grouping:
-    - Hash key: quantized feature vector
-    - Grouping: points with same hash go to same cluster
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">num_bins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">num_bins</span> <span class="o">=</span> <span class="n">num_bins</span>
-    
-    <span class="k">def</span> <span class="nf">cluster</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">points</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
-        <span class="sh">"""</span><span class="s">
-        Cluster points using locality-sensitive hashing.
-        
-        Args:
-            points: Array of shape (n_samples, n_features)
-            
-        Returns:
-            List of clusters (each cluster is list of point indices)
-        </span><span class="sh">"""</span>
-        <span class="n">clusters</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">point</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">points</span><span class="p">):</span>
-            <span class="c1"># Create hash key by quantizing features
-</span>            <span class="c1"># (similar to sorting characters in anagram)
-</span>            <span class="n">hash_key</span> <span class="o">=</span> <span class="nf">tuple</span><span class="p">(</span>
-                <span class="nf">int</span><span class="p">(</span><span class="n">feature</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">num_bins</span><span class="p">)</span> <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">point</span>
-            <span class="p">)</span>
-            
-            <span class="n">clusters</span><span class="p">[</span><span class="n">hash_key</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="n">clusters</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
+<p>class SimpleClusterer:
+ “””
+ Simple clustering using hash-based grouping.</p>
 
+<p>Similar to anagram grouping:</p>
+<ul>
+  <li>Hash key: quantized feature vector</li>
+  <li>Grouping: points with same hash go to same cluster
+ “””</li>
+</ul>
 
-<span class="c1"># Example: Cluster 2D points
-</span><span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span>
-    <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">],</span>  <span class="c1"># Cluster 1
-</span>    <span class="p">[</span><span class="mf">0.12</span><span class="p">,</span> <span class="mf">0.11</span><span class="p">],</span>  <span class="c1"># Cluster 1
-</span>    <span class="p">[</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">],</span>  <span class="c1"># Cluster 2
-</span>    <span class="p">[</span><span class="mf">0.82</span><span class="p">,</span> <span class="mf">0.88</span><span class="p">],</span>  <span class="c1"># Cluster 2
-</span><span class="p">])</span>
+<p>def <strong>init</strong>(self, num_bins: int = 10):
+ self.num_bins = num_bins</p>
 
-<span class="n">clusterer</span> <span class="o">=</span> <span class="nc">SimpleClusterer</span><span class="p">(</span><span class="n">num_bins</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-<span class="n">clusters</span> <span class="o">=</span> <span class="n">clusterer</span><span class="p">.</span><span class="nf">cluster</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Clusters: </span><span class="si">{</span><span class="n">clusters</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def cluster(self, points: np.ndarray) -&gt; List[List[int]]:
+ “””
+ Cluster points using locality-sensitive hashing.</p>
+
+<p>Args:
+ points: Array of shape (n_samples, n_features)</p>
+
+<p>Returns:
+ List of clusters (each cluster is list of point indices)
+ “””
+ clusters = defaultdict(list)</p>
+
+<p>for idx, point in enumerate(points):
+ # Create hash key by quantizing features
+ # (similar to sorting characters in anagram)
+ hash_key = tuple(
+ int(feature * self.num_bins) for feature in point
+ )</p>
+
+<p>clusters[hash_key].append(idx)</p>
+
+<p>return list(clusters.values())</p>
+
+<h1 id="example-cluster-2d-points">Example: Cluster 2D points</h1>
+<p>points = np.array([
+ [0.1, 0.1], # Cluster 1
+ [0.12, 0.11], # Cluster 1
+ [0.8, 0.9], # Cluster 2
+ [0.82, 0.88], # Cluster 2
+])</p>
+
+<p>clusterer = SimpleClusterer(num_bins=10)
+clusters = clusterer.cluster(points)
+print(f”Clusters: {clusters}”)
+``</p>
 
 <h3 id="2-duplicate-detection">2. Duplicate Detection</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">DocumentDeduplicator</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Detect duplicate or near-duplicate documents.
-    
-    Uses same pattern as anagram grouping:
-    - Hash key: document signature
-    - Grouping: similar documents
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">doc_groups</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">add_document</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">doc_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Add document to deduplication system.</span><span class="sh">"""</span>
-        <span class="c1"># Create signature (like anagram key)
-</span>        <span class="n">signature</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_create_signature</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">doc_groups</span><span class="p">[</span><span class="n">signature</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">doc_id</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_create_signature</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Create document signature.
-        
-        Methods:
-        1. Word frequency (like character count)
-        2. N-gram hashing
-        3. MinHash
-        </span><span class="sh">"""</span>
-        <span class="c1"># Simple: use sorted bag of words
-</span>        <span class="n">words</span> <span class="o">=</span> <span class="n">text</span><span class="p">.</span><span class="nf">lower</span><span class="p">().</span><span class="nf">split</span><span class="p">()</span>
-        <span class="k">return</span> <span class="sh">'</span><span class="s"> </span><span class="sh">'</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="nf">sorted</span><span class="p">(</span><span class="n">words</span><span class="p">))</span>
-    
-    <span class="k">def</span> <span class="nf">find_duplicates</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="sh">"""</span><span class="s">Find groups of duplicate documents.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="p">[</span>
-            <span class="n">group</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">doc_groups</span><span class="p">.</span><span class="nf">values</span><span class="p">()</span>
-            <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
-        <span class="p">]</span>
+<p>``python
+class DocumentDeduplicator:
+ “””
+ Detect duplicate or near-duplicate documents.</p>
 
+<p>Uses same pattern as anagram grouping:</p>
+<ul>
+  <li>Hash key: document signature</li>
+  <li>Grouping: similar documents
+ “””</li>
+</ul>
 
-<span class="c1"># Usage
-</span><span class="n">dedup</span> <span class="o">=</span> <span class="nc">DocumentDeduplicator</span><span class="p">()</span>
-<span class="n">dedup</span><span class="p">.</span><span class="nf">add_document</span><span class="p">(</span><span class="sh">"</span><span class="s">doc1</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">the quick brown fox</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">dedup</span><span class="p">.</span><span class="nf">add_document</span><span class="p">(</span><span class="sh">"</span><span class="s">doc2</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">quick brown fox the</span><span class="sh">"</span><span class="p">)</span>  <span class="c1"># Duplicate!
-</span><span class="n">dedup</span><span class="p">.</span><span class="nf">add_document</span><span class="p">(</span><span class="sh">"</span><span class="s">doc3</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">hello world</span><span class="sh">"</span><span class="p">)</span>
+<p>def <strong>init</strong>(self):
+ self.doc_groups = defaultdict(list)</p>
 
-<span class="n">duplicates</span> <span class="o">=</span> <span class="n">dedup</span><span class="p">.</span><span class="nf">find_duplicates</span><span class="p">()</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Duplicate groups: </span><span class="si">{</span><span class="n">duplicates</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def add_document(self, doc_id: str, text: str):
+ “"”Add document to deduplication system.”””
+ # Create signature (like anagram key)
+ signature = self._create_signature(text)
+ self.doc_groups[signature].append(doc_id)</p>
+
+<p>def _create_signature(self, text: str) -&gt; str:
+ “””
+ Create document signature.</p>
+
+<p>Methods:</p>
+<ol>
+  <li>Word frequency (like character count)</li>
+  <li>N-gram hashing</li>
+  <li>MinHash
+ “””
+ # Simple: use sorted bag of words
+ words = text.lower().split()
+ return ‘ ‘.join(sorted(words))</li>
+</ol>
+
+<p>def find_duplicates(self) -&gt; List[List[str]]:
+ “"”Find groups of duplicate documents.”””
+ return [
+ group for group in self.doc_groups.values()
+ if len(group) &gt; 1
+ ]</p>
+
+<h1 id="usage-1">Usage</h1>
+<p>dedup = DocumentDeduplicator()
+dedup.add_document(“doc1”, “the quick brown fox”)
+dedup.add_document(“doc2”, “quick brown fox the”) # Duplicate!
+dedup.add_document(“doc3”, “hello world”)</p>
+
+<p>duplicates = dedup.find_duplicates()
+print(f”Duplicate groups: {duplicates}”)
+``</p>
 
 <h3 id="3-feature-hashing">3. Feature Hashing</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">FeatureHasher</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Hash high-dimensional features to lower dimensions.
-    
-    Similar to anagram grouping:
-    - Hash collisions group similar features
-    - Dimensionality reduction via hashing
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">n_features</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">n_features</span> <span class="o">=</span> <span class="n">n_features</span>
-    
-    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">feature_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Transform feature dictionary to fixed-size vector.
-        
-        Args:
-            feature_dict: {feature_name: value}
-            
-        Returns:
-            Dense feature vector
-        </span><span class="sh">"""</span>
-        <span class="c1"># Initialize vector
-</span>        <span class="n">vector</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">n_features</span><span class="p">)</span>
-        
-        <span class="c1"># Hash each feature to a bin
-</span>        <span class="k">for</span> <span class="n">feature_name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">feature_dict</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-            <span class="c1"># Hash feature name to index
-</span>            <span class="c1"># (like sorting string to create key)
-</span>            <span class="n">hash_idx</span> <span class="o">=</span> <span class="nf">hash</span><span class="p">(</span><span class="n">feature_name</span><span class="p">)</span> <span class="o">%</span> <span class="n">self</span><span class="p">.</span><span class="n">n_features</span>
-            <span class="n">vector</span><span class="p">[</span><span class="n">hash_idx</span><span class="p">]</span> <span class="o">+=</span> <span class="n">value</span>
-        
-        <span class="k">return</span> <span class="n">vector</span>
+<p>``python
+class FeatureHasher:
+ “””
+ Hash high-dimensional features to lower dimensions.</p>
 
+<p>Similar to anagram grouping:</p>
+<ul>
+  <li>Hash collisions group similar features</li>
+  <li>Dimensionality reduction via hashing
+ “””</li>
+</ul>
 
-<span class="c1"># Example: Text features
-</span><span class="n">hasher</span> <span class="o">=</span> <span class="nc">FeatureHasher</span><span class="p">(</span><span class="n">n_features</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<p>def <strong>init</strong>(self, n_features: int = 100):
+ self.n_features = n_features</p>
 
-<span class="n">doc1_features</span> <span class="o">=</span> <span class="p">{</span><span class="sh">"</span><span class="s">word_cat</span><span class="sh">"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="sh">"</span><span class="s">word_dog</span><span class="sh">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="sh">"</span><span class="s">word_house</span><span class="sh">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
-<span class="n">doc2_features</span> <span class="o">=</span> <span class="p">{</span><span class="sh">"</span><span class="s">word_cat</span><span class="sh">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="sh">"</span><span class="s">word_dog</span><span class="sh">"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="sh">"</span><span class="s">word_car</span><span class="sh">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+<p>def transform(self, feature_dict: Dict[str, float]) -&gt; np.ndarray:
+ “””
+ Transform feature dictionary to fixed-size vector.</p>
 
-<span class="n">vec1</span> <span class="o">=</span> <span class="n">hasher</span><span class="p">.</span><span class="nf">transform</span><span class="p">(</span><span class="n">doc1_features</span><span class="p">)</span>
-<span class="n">vec2</span> <span class="o">=</span> <span class="n">hasher</span><span class="p">.</span><span class="nf">transform</span><span class="p">(</span><span class="n">doc2_features</span><span class="p">)</span>
+<p>Args:
+ feature_dict: {feature_name: value}</p>
 
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Vector 1: </span><span class="si">{</span><span class="n">vec1</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Vector 2: </span><span class="si">{</span><span class="n">vec2</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Similarity: </span><span class="si">{</span><span class="n">np</span><span class="p">.</span><span class="nf">dot</span><span class="p">(</span><span class="n">vec1</span><span class="p">,</span> <span class="n">vec2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">vec1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">vec2</span><span class="p">))</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>Returns:
+ Dense feature vector
+ “””
+ # Initialize vector
+ vector = np.zeros(self.n_features)</p>
+
+<p># Hash each feature to a bin
+ for feature_name, value in feature_dict.items():
+ # Hash feature name to index
+ # (like sorting string to create key)
+ hash_idx = hash(feature_name) % self.n_features
+ vector[hash_idx] += value</p>
+
+<p>return vector</p>
+
+<h1 id="example-text-features">Example: Text features</h1>
+<p>hasher = FeatureHasher(n_features=10)</p>
+
+<p>doc1_features = {“word_cat”: 2, “word_dog”: 1, “word_house”: 1}
+doc2_features = {“word_cat”: 1, “word_dog”: 2, “word_car”: 1}</p>
+
+<p>vec1 = hasher.transform(doc1_features)
+vec2 = hasher.transform(doc2_features)</p>
+
+<p>print(f”Vector 1: {vec1}”)
+print(f”Vector 2: {vec2}”)
+print(f”Similarity: {np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))}”)
+``</p>
 
 <h3 id="key-parallels">Key Parallels</h3>
 
@@ -1381,27 +1412,34 @@ Key = (1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0)
 
 <h3 id="how-to-approach-in-an-interview">How to Approach in an Interview</h3>
 
-<p><strong>1. Clarify (1 min)</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- Are all strings lowercase? (Yes, per constraints)
-- Can strings be empty? (Yes)
-- Does order of output matter? (No)
-- Memory constraints? (Reasonable for N ≤ 10^4)
-</code></pre></div></div>
+<p><strong>1. Clarify (1 min)</strong>
+``</p>
+<ul>
+  <li>Are all strings lowercase? (Yes, per constraints)</li>
+  <li>Can strings be empty? (Yes)</li>
+  <li>Does order of output matter? (No)</li>
+  <li>Memory constraints? (Reasonable for N ≤ 10^4)
+``</li>
+</ul>
 
-<p><strong>2. Explain Intuition (2 min)</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"Anagrams have the same characters, just rearranged. If we sort
+<p><strong>2. Explain Intuition (2 min)</strong>
+<code class="language-plaintext highlighter-rouge">
+"Anagrams have the same characters, just rearranged. If we sort
 each string, anagrams become identical. We can use this sorted
 string as a hash key to group them together in O(1) time per lookup."
-</code></pre></div></div>
+</code></p>
 
-<p><strong>3. Discuss Approaches (2 min)</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Brute force: Compare all pairs - O(N²K)
-2. Sorting as key: Sort each string - O(NK log K)
-3. Count as key: Count characters - O(NK)
+<p><strong>3. Discuss Approaches (2 min)</strong>
+``</p>
+<ol>
+  <li>Brute force: Compare all pairs - O(N²K)</li>
+  <li>Sorting as key: Sort each string - O(NK log K)</li>
+  <li>Count as key: Count characters - O(NK)</li>
+</ol>
 
-I'll implement approach 2 (sorting) as it's simpler and efficient
+<p>I’ll implement approach 2 (sorting) as it’s simpler and efficient
 enough for the constraints.
-</code></pre></div></div>
+``</p>
 
 <p><strong>4. Code (10 min)</strong></p>
 <ul>
@@ -1425,91 +1463,106 @@ enough for the constraints.
 
 <ol>
   <li><strong>Forgetting to handle empty strings</strong>
-    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Wrong: crashes on empty string
-</span><span class="n">key</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">s</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-   
-<span class="c1"># Correct: works for empty
-</span><span class="n">key</span> <span class="o">=</span> <span class="sh">''</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="nf">sorted</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
-</code></pre></div>    </div>
-  </li>
+ ``python
+ # Wrong: crashes on empty string
+ key = sorted(s)[0]</li>
+</ol>
+
+<p># Correct: works for empty
+ key = ‘‘.join(sorted(s))
+ ``</p>
+
+<ol>
   <li><strong>Using list as hash key</strong>
-    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Wrong: lists aren't hashable
-</span><span class="n">key</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>  <span class="c1"># Returns list
-</span>   
-<span class="c1"># Correct: convert to string or tuple
-</span><span class="n">key</span> <span class="o">=</span> <span class="sh">''</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="nf">sorted</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
-<span class="n">key</span> <span class="o">=</span> <span class="nf">tuple</span><span class="p">(</span><span class="nf">sorted</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
-</code></pre></div>    </div>
-  </li>
+ ``python
+ # Wrong: lists aren’t hashable
+ key = sorted(s) # Returns list</li>
+</ol>
+
+<p># Correct: convert to string or tuple
+ key = ‘‘.join(sorted(s))
+ key = tuple(sorted(s))
+ ``</p>
+
+<ol>
   <li><strong>Not considering case sensitivity</strong>
     <ul>
       <li>Problem says lowercase only, but clarify in interview</li>
     </ul>
   </li>
   <li><strong>Inefficient anagram checking in brute force</strong>
-    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Inefficient
-</span><span class="k">def</span> <span class="nf">are_anagrams</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">):</span>
-    <span class="k">return</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span> <span class="o">==</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
-   
-<span class="c1"># Better: use Counter
-</span><span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
-<span class="k">return</span> <span class="nc">Counter</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span> <span class="o">==</span> <span class="nc">Counter</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
-</code></pre></div>    </div>
-  </li>
+ ``python
+ # Inefficient
+ def are_anagrams(s1, s2):
+ return sorted(s1) == sorted(s2)</li>
 </ol>
+
+<p># Better: use Counter
+ from collections import Counter
+ return Counter(s1) == Counter(s2)
+ ``</p>
 
 <h3 id="follow-up-questions">Follow-up Questions</h3>
 
-<p><strong>Q1: How would you find the largest group of anagrams?</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">find_largest_anagram_group</span><span class="p">(</span><span class="n">strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-    <span class="sh">"""</span><span class="s">Find the group with most anagrams.</span><span class="sh">"""</span>
-    <span class="n">anagram_map</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strs</span><span class="p">:</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="sh">''</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="nf">sorted</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
-        <span class="n">anagram_map</span><span class="p">[</span><span class="n">key</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-    
-    <span class="c1"># Return largest group
-</span>    <span class="k">return</span> <span class="nf">max</span><span class="p">(</span><span class="n">anagram_map</span><span class="p">.</span><span class="nf">values</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">)</span>
-</code></pre></div></div>
+<p><strong>Q1: How would you find the largest group of anagrams?</strong>
+``python
+def find_largest_anagram_group(strs: List[str]) -&gt; List[str]:
+ “"”Find the group with most anagrams.”””
+ anagram_map = defaultdict(list)</p>
+
+<p>for s in strs:
+ key = ‘‘.join(sorted(s))
+ anagram_map[key].append(s)</p>
+
+<p># Return largest group
+ return max(anagram_map.values(), key=len)
+``</p>
 
 <p><strong>Q2: Can you do this without sorting?</strong></p>
 
 <p>Yes! Use character count (shown in Approach 3).</p>
 
-<p><strong>Q3: How would you handle very large datasets?</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="sh">"""</span><span class="s">
-For datasets that don</span><span class="sh">'</span><span class="s">t fit in memory:
-1. Use external sorting / MapReduce
-2. Process in batches
-3. Use database with hash index
-4. Stream processing with approximate grouping
-</span><span class="sh">"""</span>
+<p><strong>Q3: How would you handle very large datasets?</strong>
+``python
+“””
+For datasets that don’t fit in memory:</p>
+<ol>
+  <li>Use external sorting / MapReduce</li>
+  <li>Process in batches</li>
+  <li>Use database with hash index</li>
+  <li>Stream processing with approximate grouping
+“””</li>
+</ol>
 
-<span class="k">def</span> <span class="nf">group_anagrams_distributed</span><span class="p">(</span><span class="n">strs_iterator</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Process large dataset in streaming fashion.
-    
-    MapReduce approach:
-    - Map: (string -&gt; (sorted_key, string))
-    - Reduce: Group by sorted_key
-    </span><span class="sh">"""</span>
-    <span class="k">pass</span>
-</code></pre></div></div>
+<p>def group_anagrams_distributed(strs_iterator):
+ “””
+ Process large dataset in streaming fashion.</p>
 
-<p><strong>Q4: What if we want fuzzy matching (allow 1-2 character differences)?</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">group_similar_strings</span><span class="p">(</span><span class="n">strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">max_diff</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-    <span class="sh">"""</span><span class="s">
-    Group strings that are similar (not exact anagrams).
-    
-    This requires different approach:
-    - Locality-sensitive hashing
-    - Edit distance clustering
-    - N-gram similarity
-    </span><span class="sh">"""</span>
-    <span class="c1"># More complex - would need LSH or edit distance
-</span>    <span class="k">pass</span>
-</code></pre></div></div>
+<p>MapReduce approach:</p>
+<ul>
+  <li>Map: (string -&gt; (sorted_key, string))</li>
+  <li>Reduce: Group by sorted_key
+ “””
+ pass
+``</li>
+</ul>
+
+<p><strong>Q4: What if we want fuzzy matching (allow 1-2 character differences)?</strong>
+``python
+def group_similar_strings(strs: List[str], max_diff: int = 1) -&gt; List[List[str]]:
+ “””
+ Group strings that are similar (not exact anagrams).</p>
+
+<p>This requires different approach:</p>
+<ul>
+  <li>Locality-sensitive hashing</li>
+  <li>Edit distance clustering</li>
+  <li>N-gram similarity
+ “””
+ # More complex - would need LSH or edit distance
+ pass
+``</li>
+</ul>
 
 <h2 id="key-takeaways">Key Takeaways</h2>
 
@@ -1549,39 +1602,28 @@ For datasets that don</span><span class="sh">'</span><span class="s">t fit in me
 <p>If you want to deepen your understanding and move closer to production use cases, here are some structured follow-ups:</p>
 
 <ul>
-  <li><strong>Variant 1 – Top-K Anagram Groups:</strong>
-    <ul>
-      <li>Given a list of words, return only the <strong>K largest</strong> anagram groups.</li>
-      <li>Forces you to combine grouping with <strong>heap / sorting</strong> logic.</li>
-      <li>Think about how to stream this when the vocabulary is huge.</li>
-    </ul>
+  <li><strong>Variant 1 – Top-K Anagram Groups:</strong></li>
+  <li>Given a list of words, return only the <strong>K largest</strong> anagram groups.</li>
+  <li>Forces you to combine grouping with <strong>heap / sorting</strong> logic.</li>
+  <li>
+    <p>Think about how to stream this when the vocabulary is huge.</p>
   </li>
-  <li><strong>Variant 2 – Online Anagram Service:</strong>
-    <ul>
-      <li>Build an HTTP service with two endpoints:
-        <ul>
-          <li><code class="language-plaintext highlighter-rouge">POST /word</code> to insert a new word into the system.</li>
-          <li><code class="language-plaintext highlighter-rouge">GET /anagrams?word=...</code> to retrieve all known anagrams of a given word.</li>
-        </ul>
-      </li>
-      <li>Internally, you still use the same <strong>signature → list-of-words</strong> hash map,
-but now you must think about:
-        <ul>
-          <li>Concurrency (multiple writers/readers),</li>
-          <li>Persistence (Redis / database),</li>
-          <li>Eviction or TTLs if memory is constrained.</li>
-        </ul>
-      </li>
-    </ul>
+  <li><strong>Variant 2 – Online Anagram Service:</strong></li>
+  <li>Build an HTTP service with two endpoints:</li>
+  <li><code class="language-plaintext highlighter-rouge">POST /word</code> to insert a new word into the system.</li>
+  <li><code class="language-plaintext highlighter-rouge">GET /anagrams?word=...</code> to retrieve all known anagrams of a given word.</li>
+  <li>Internally, you still use the same <strong>signature → list-of-words</strong> hash map,
+ but now you must think about:</li>
+  <li>Concurrency (multiple writers/readers),</li>
+  <li>Persistence (Redis / database),</li>
+  <li>
+    <p>Eviction or TTLs if memory is constrained.</p>
   </li>
-  <li><strong>Variant 3 – Fuzzy Anagrams:</strong>
-    <ul>
-      <li>Allow up to 1 character insertion/deletion/substitution (edit distance 1).</li>
-      <li>You can still start from the exact-anagram hash grouping,
-but now you need a <strong>secondary similarity check</strong> inside each bucket.</li>
-      <li>This parallels approximate matching in search systems and LSH in clustering.</li>
-    </ul>
-  </li>
+  <li><strong>Variant 3 – Fuzzy Anagrams:</strong></li>
+  <li>Allow up to 1 character insertion/deletion/substitution (edit distance 1).</li>
+  <li>You can still start from the exact-anagram hash grouping,
+ but now you need a <strong>secondary similarity check</strong> inside each bucket.</li>
+  <li>This parallels approximate matching in search systems and LSH in clustering.</li>
 </ul>
 
 <p>Beyond interviews, this problem is a good mental model for any system where you:</p>

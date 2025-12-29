@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Memory Architectures">
     <meta itemprop="description" content="“The difference between a Chatbot and a Partner is Memory.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -284,7 +284,7 @@ But for an <strong>Autonomous Agent</strong> running for days, handling thousand
 <p>This tracks the <em>current</em> conversation or active task. It holds the “Scratchpad” of thoughts.</p>
 <ul>
   <li><strong>The Challenge:</strong> The “Context Stuffing” problem.</li>
-  <li><strong>Strategy 1: Sliding Window.</strong> Keep last $N$ turns. Simple, but forgets the beginning of the plan.</li>
+  <li><strong>Strategy 1: Sliding Window.</strong> Keep last <code class="language-plaintext highlighter-rouge">N</code> turns. Simple, but forgets the beginning of the plan.</li>
   <li><strong>Strategy 2: Summarization.</strong> As the window fills, call the LLM to summarize the oldest 10 turns into a paragraph (“I successfully downloaded the data and cleaned it”). Inject this summary and drop the raw logs.</li>
   <li><strong>Strategy 3: Entity Extraction.</strong> Extract specific variables (“User Name: Alice”, “Goal: Fix Bug”) and store them in a state dictionary, reducing the text needed to purely essential facts.</li>
 </ul>
@@ -327,12 +327,12 @@ Their memory architecture is the blueprint for <strong>Human-Like Memory</strong
 
 <h3 id="32-the-retrieval-function">3.2 The Retrieval Function</h3>
 <p>How do we decide what to remember? They used a weighted score of 3 factors to retrieve top memories for a given query:
-\(Score = \alpha \cdot \text{Recency} + \beta \cdot \text{Importance} + \gamma \cdot \text{Relevance}\)</p>
+` Score = \alpha \cdot \text{Recency} + \beta \cdot \text{Importance} + \gamma \cdot \text{Relevance} `</p>
 
 <ol>
   <li><strong>Recency:</strong> Exponential decay. I care about what happened 5 minutes ago more than 5 years ago.
     <ul>
-      <li>$Score = 0.99^{\text{decay_hours}}$</li>
+      <li><code class="language-plaintext highlighter-rouge">Score = 0.99^{\text{decay\_hours}}</code></li>
     </ul>
   </li>
   <li><strong>Importance:</strong> A static score separating “Noise” from “Signal”. “Ate toast” (1/10). “House on fire” (10/10).
@@ -384,35 +384,36 @@ Their memory architecture is the blueprint for <strong>Human-Like Memory</strong
 
 <p>The formula for the Stanford retrieval function.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">retrieve_memories</span><span class="p">(</span><span class="n">query_vector</span><span class="p">,</span> <span class="n">memory_stream</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
- <span class="sh">"""</span><span class="s">
+<p>``python
+def retrieve_memories(query_vector, memory_stream, alpha=1, beta=1, gamma=1):
+ “””
  Ranks memories by Recency, Importance, and Relevance.
- </span><span class="sh">"""</span>
- <span class="n">scored_memories</span> <span class="o">=</span> <span class="p">[]</span>
+ “””
+ scored_memories = []</p>
 
- <span class="n">current_time</span> <span class="o">=</span> <span class="nf">now</span><span class="p">()</span>
+<p>current_time = now()</p>
 
- <span class="k">for</span> <span class="n">memory</span> <span class="ow">in</span> <span class="n">memory_stream</span><span class="p">:</span>
- <span class="c1"># 1. Relevance: Cosine Similarity
-</span> <span class="n">relevance</span> <span class="o">=</span> <span class="nf">cosine_similarity</span><span class="p">(</span><span class="n">query_vector</span><span class="p">,</span> <span class="n">memory</span><span class="p">.</span><span class="n">vector</span><span class="p">)</span>
+<p>for memory in memory_stream:
+ # 1. Relevance: Cosine Similarity
+ relevance = cosine_similarity(query_vector, memory.vector)</p>
 
- <span class="c1"># 2. Recency: Exponential Decay
-</span> <span class="n">time_diff</span> <span class="o">=</span> <span class="n">current_time</span> <span class="o">-</span> <span class="n">memory</span><span class="p">.</span><span class="n">timestamp</span>
- <span class="n">recency</span> <span class="o">=</span> <span class="mf">0.99</span> <span class="o">**</span> <span class="n">time_diff</span><span class="p">.</span><span class="n">hours</span>
+<p># 2. Recency: Exponential Decay
+ time_diff = current_time - memory.timestamp
+ recency = 0.99 ** time_diff.hours</p>
 
- <span class="c1"># 3. Importance: Pre-calculated static score (1-10)
-</span> <span class="n">importance</span> <span class="o">=</span> <span class="n">memory</span><span class="p">.</span><span class="n">importance_score</span> <span class="o">/</span> <span class="mf">10.0</span>
+<p># 3. Importance: Pre-calculated static score (1-10)
+ importance = memory.importance_score / 10.0</p>
 
- <span class="c1"># Combined Score
-</span> <span class="n">total_score</span> <span class="o">=</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">recency</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">beta</span> <span class="o">*</span> <span class="n">importance</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">gamma</span> <span class="o">*</span> <span class="n">relevance</span><span class="p">)</span>
+<p># Combined Score
+ total_score = (alpha * recency) + (beta * importance) + (gamma * relevance)</p>
 
- <span class="n">scored_memories</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">total_score</span><span class="p">,</span> <span class="n">memory</span><span class="p">))</span>
+<p>scored_memories.append((total_score, memory))</p>
 
- <span class="c1"># Python's sort is stable
-</span> <span class="n">scored_memories</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<p># Python’s sort is stable
+ scored_memories.sort(key=lambda x: x[0], reverse=True)</p>
 
- <span class="k">return</span> <span class="p">[</span><span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">scored_memories</span><span class="p">[:</span><span class="mi">3</span><span class="p">]]</span>
-</code></pre></div></div>
+<p>return [m[1] for m in scored_memories[:3]]
+``</p>
 
 <hr />
 

@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Batch Processing Pipelines">
     <meta itemprop="description" content="Not everything needs to be real-time. Sometimes, “tomorrow morning” is fast enough.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -279,43 +279,45 @@ But 90% of ML workloads are still Batch.</p>
 
 <h2 id="high-level-architecture-the-modern-data-stack">High-Level Architecture: The Modern Data Stack</h2>
 
-<pre><code class="language-ascii">+-----------+     +------------+     +-------------+     +-------------+
-|  Sources  | --&gt; | Ingestion  | --&gt; |  Data Lake  | --&gt; |  Warehouse  |
-+-----------+     +------------+     +-------------+     +-------------+
-(Postgres)        (Fivetran)         (S3 / GCS)          (Snowflake)
-                                                               |
-                                                               v
-+-----------+     +------------+     +-------------+     +-------------+
-| Dashboard | &lt;-- | Serving    | &lt;-- | Transform   | &lt;-- | Orchestrator|
-+-----------+     +------------+     +-------------+     +-------------+
-(Tableau)         (Redis/API)        (dbt / Spark)       (Airflow)
-</code></pre>
+<p><code class="language-plaintext highlighter-rouge">ascii
++-----------+ +------------+ +-------------+ +-------------+
+| Sources | --&gt; | Ingestion | --&gt; | Data Lake | --&gt; | Warehouse |
++-----------+ +------------+ +-------------+ +-------------+
+(Postgres) (Fivetran) (S3 / GCS) (Snowflake)
+ |
+ v
++-----------+ +------------+ +-------------+ +-------------+
+| Dashboard | &lt;-- | Serving | &lt;-- | Transform | &lt;-- | Orchestrator|
++-----------+ +------------+ +-------------+ +-------------+
+(Tableau) (Redis/API) (dbt / Spark) (Airflow)
+</code></p>
 
 <h2 id="deep-dive-apache-airflow-orchestration">Deep Dive: Apache Airflow (Orchestration)</h2>
 
 <p>Airflow allows you to define pipelines as code (Python).
 <strong>DAG (Directed Acyclic Graph):</strong> A collection of tasks with dependencies.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">airflow</span> <span class="kn">import</span> <span class="n">DAG</span>
-<span class="kn">from</span> <span class="n">airflow.operators.python</span> <span class="kn">import</span> <span class="n">PythonOperator</span>
-<span class="kn">from</span> <span class="n">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<p>``python
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from datetime import datetime</p>
 
-<span class="k">def</span> <span class="nf">extract</span><span class="p">():</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Extracting data from S3...</span><span class="sh">"</span><span class="p">)</span>
+<p>def extract():
+ print(“Extracting data from S3…”)</p>
 
-<span class="k">def</span> <span class="nf">transform</span><span class="p">():</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Running Spark Job...</span><span class="sh">"</span><span class="p">)</span>
+<p>def transform():
+ print(“Running Spark Job…”)</p>
 
-<span class="k">def</span> <span class="nf">load</span><span class="p">():</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Loading into Feature Store...</span><span class="sh">"</span><span class="p">)</span>
+<p>def load():
+ print(“Loading into Feature Store…”)</p>
 
-<span class="k">with</span> <span class="nc">DAG</span><span class="p">(</span><span class="sh">"</span><span class="s">daily_training_pipeline</span><span class="sh">"</span><span class="p">,</span> <span class="n">start_date</span><span class="o">=</span><span class="nf">datetime</span><span class="p">(</span><span class="mi">2023</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="k">as</span> <span class="n">dag</span><span class="p">:</span>
-    <span class="n">t1</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">"</span><span class="s">extract</span><span class="sh">"</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">extract</span><span class="p">)</span>
-    <span class="n">t2</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">"</span><span class="s">transform</span><span class="sh">"</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">transform</span><span class="p">)</span>
-    <span class="n">t3</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">"</span><span class="s">load</span><span class="sh">"</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">load</span><span class="p">)</span>
+<p>with DAG(“daily_training_pipeline”, start_date=datetime(2023, 1, 1)) as dag:
+ t1 = PythonOperator(task_id=”extract”, python_callable=extract)
+ t2 = PythonOperator(task_id=”transform”, python_callable=transform)
+ t3 = PythonOperator(task_id=”load”, python_callable=load)</p>
 
-    <span class="n">t1</span> <span class="o">&gt;&gt;</span> <span class="n">t2</span> <span class="o">&gt;&gt;</span> <span class="n">t3</span> <span class="c1"># Define dependencies
-</span></code></pre></div></div>
+<p>t1 » t2 » t3 # Define dependencies
+``</p>
 
 <p><strong>Key Concepts:</strong></p>
 <ul>
@@ -338,19 +340,20 @@ Spark is a <strong>Distributed Computing Engine</strong>.</p>
 
 <p><strong>PySpark Example:</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">pyspark.sql</span> <span class="kn">import</span> <span class="n">SparkSession</span>
+<p>``python
+from pyspark.sql import SparkSession</p>
 
-<span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="p">.</span><span class="n">builder</span><span class="p">.</span><span class="nf">appName</span><span class="p">(</span><span class="sh">"</span><span class="s">FeatureEng</span><span class="sh">"</span><span class="p">).</span><span class="nf">getOrCreate</span><span class="p">()</span>
+<p>spark = SparkSession.builder.appName(“FeatureEng”).getOrCreate()</p>
 
-<span class="c1"># Read 1TB of logs
-</span><span class="n">df</span> <span class="o">=</span> <span class="n">spark</span><span class="p">.</span><span class="n">read</span><span class="p">.</span><span class="nf">json</span><span class="p">(</span><span class="sh">"</span><span class="s">s3://bucket/logs/*.json</span><span class="sh">"</span><span class="p">)</span>
+<h1 id="read-1tb-of-logs">Read 1TB of logs</h1>
+<p>df = spark.read.json(“s3://bucket/logs/*.json”)</p>
 
-<span class="c1"># Group By User and Count Clicks
-</span><span class="n">user_features</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="nf">groupBy</span><span class="p">(</span><span class="sh">"</span><span class="s">user_id</span><span class="sh">"</span><span class="p">).</span><span class="nf">count</span><span class="p">()</span>
+<h1 id="group-by-user-and-count-clicks">Group By User and Count Clicks</h1>
+<p>user_features = df.groupBy(“user_id”).count()</p>
 
-<span class="c1"># Write to Parquet
-</span><span class="n">user_features</span><span class="p">.</span><span class="n">write</span><span class="p">.</span><span class="nf">parquet</span><span class="p">(</span><span class="sh">"</span><span class="s">s3://bucket/features/</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="write-to-parquet">Write to Parquet</h1>
+<p>user_features.write.parquet(“s3://bucket/features/”)
+``</p>
 
 <h2 id="system-design-retraining-pipeline">System Design: Retraining Pipeline</h2>
 
@@ -476,20 +479,21 @@ Your Spark job crashes at 3 AM.</p>
 <p><strong>Solution: Circuit Breakers.</strong>
 Use <strong>Great Expectations</strong> to validate data <em>before</em> processing.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">great_expectations</span> <span class="k">as</span> <span class="n">ge</span>
+<p>``python
+import great_expectations as ge</p>
 
-<span class="n">df</span> <span class="o">=</span> <span class="n">ge</span><span class="p">.</span><span class="nf">read_parquet</span><span class="p">(</span><span class="sh">"</span><span class="s">s3://bucket/input/</span><span class="sh">"</span><span class="p">)</span>
+<p>df = ge.read_parquet(“s3://bucket/input/”)</p>
 
-<span class="c1"># Define expectations
-</span><span class="n">df</span><span class="p">.</span><span class="nf">expect_column_values_to_be_not_null</span><span class="p">(</span><span class="sh">"</span><span class="s">user_id</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">df</span><span class="p">.</span><span class="nf">expect_column_values_to_be_between</span><span class="p">(</span><span class="sh">"</span><span class="s">age</span><span class="sh">"</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
-<span class="n">df</span><span class="p">.</span><span class="nf">expect_table_row_count_to_be_between</span><span class="p">(</span><span class="mi">10000</span><span class="p">,</span> <span class="mi">100000</span><span class="p">)</span>
+<h1 id="define-expectations">Define expectations</h1>
+<p>df.expect_column_values_to_be_not_null(“user_id”)
+df.expect_column_values_to_be_between(“age”, 0, 120)
+df.expect_table_row_count_to_be_between(10000, 100000)</p>
 
-<span class="c1"># Validate
-</span><span class="n">results</span> <span class="o">=</span> <span class="n">df</span><span class="p">.</span><span class="nf">validate</span><span class="p">()</span>
-<span class="k">if</span> <span class="ow">not</span> <span class="n">results</span><span class="p">[</span><span class="sh">"</span><span class="s">success</span><span class="sh">"</span><span class="p">]:</span>
-    <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sh">"</span><span class="s">Data Quality Check Failed!</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="validate">Validate</h1>
+<p>results = df.validate()
+if not results[“success”]:
+ raise ValueError(“Data Quality Check Failed!”)
+``</p>
 
 <h2 id="appendix-b-workflow-orchestration-wars">Appendix B: Workflow Orchestration Wars</h2>
 
@@ -516,17 +520,17 @@ Use <strong>Great Expectations</strong> to validate data <em>before</em> process
 <ol>
   <li>
     <p><strong>Q:</strong> “What is the difference between Transformation and Action in Spark?”
-<strong>A:</strong> Transformations (Map, Filter) are lazy (build the DAG). Actions (Count, Collect) trigger execution.</p>
+ <strong>A:</strong> Transformations (Map, Filter) are lazy (build the DAG). Actions (Count, Collect) trigger execution.</p>
   </li>
   <li><strong>Q:</strong> “How do you handle Skewed Data in a Join?”
-<strong>A:</strong>
+ <strong>A:</strong>
     <ul>
       <li><strong>Salting:</strong> Add a random number (salt) to the skewed key to split it.</li>
       <li><strong>Broadcast Join:</strong> If one table is small, broadcast it to all nodes.</li>
     </ul>
   </li>
   <li><strong>Q:</strong> “Explain the difference between Data Warehouse and Data Lake.”
-<strong>A:</strong>
+ <strong>A:</strong>
     <ul>
       <li><strong>Warehouse (Snowflake):</strong> Structured, Schema-on-Write, SQL, Expensive.</li>
       <li><strong>Lake (S3):</strong> Unstructured/Semi-structured, Schema-on-Read, Files, Cheap.</li>
@@ -649,16 +653,16 @@ If the dashboard breaks, you trace it back to the source.</p>
 <ol>
   <li>
     <p><strong>Q:</strong> “What is the difference between <code class="language-plaintext highlighter-rouge">repartition()</code> and <code class="language-plaintext highlighter-rouge">coalesce()</code>?”
-<strong>A:</strong> <code class="language-plaintext highlighter-rouge">repartition</code> does a full shuffle (network I/O). <code class="language-plaintext highlighter-rouge">coalesce</code> just merges local partitions (no shuffle). Use <code class="language-plaintext highlighter-rouge">coalesce</code> to reduce file count.</p>
+ <strong>A:</strong> <code class="language-plaintext highlighter-rouge">repartition</code> does a full shuffle (network I/O). <code class="language-plaintext highlighter-rouge">coalesce</code> just merges local partitions (no shuffle). Use <code class="language-plaintext highlighter-rouge">coalesce</code> to reduce file count.</p>
   </li>
   <li><strong>Q:</strong> “How do you handle a Hot Key in a Join?”
-<strong>A:</strong> If “Justin Bieber” has 100M clicks, the node processing him will OOM.
+ <strong>A:</strong> If “Justin Bieber” has 100M clicks, the node processing him will OOM.
     <ul>
       <li><strong>Solution:</strong> Salt the key. <code class="language-plaintext highlighter-rouge">key = key + random(1, 100)</code>. Explode the other table 100 times.</li>
     </ul>
   </li>
   <li><strong>Q:</strong> “What is a Broadcast Variable?”
-<strong>A:</strong> A read-only variable cached on every machine. Used to send a small lookup table (Country Codes) to all workers to avoid a Shuffle Join.</li>
+ <strong>A:</strong> A read-only variable cached on every machine. Used to send a small lookup table (Country Codes) to all workers to avoid a Shuffle Join.</li>
 </ol>
 
 <h2 id="deep-dive-bloom-filters-probabilistic-data-structures">Deep Dive: Bloom Filters (Probabilistic Data Structures)</h2>
@@ -848,7 +852,7 @@ While Real-Time is sexy, Batch is reliable, replayable, and easy to debug.
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          19 minute read
+          20 minute read
         
       </span>
     

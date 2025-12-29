@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Speech Experiment Management">
     <meta itemprop="description" content="Design experiment management systems tailored for speech research—tracking audio data, models, metrics, and multi-dimensional experiments at scale.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -372,69 +372,61 @@
 <p>Just like <strong>Spiral Matrix</strong> systematically explores a 2D grid:</p>
 
 <ul>
-  <li><strong>Speech experiment management</strong> explores multi-dimensional spaces:
-    <ul>
-      <li>Model (architecture, size) × Data (language, domain, augmentation) × Hyperparameters (LR, batch size) × Decoding (beam, LM weight)</li>
-    </ul>
-  </li>
-  <li>Both require <strong>state tracking</strong>:
-    <ul>
-      <li>Spiral: track boundaries and current position</li>
-      <li>Experiments: track which configs have been tried, which are running, which failed</li>
-    </ul>
-  </li>
-  <li>Both enable <strong>resumability</strong>:
-    <ul>
-      <li>Spiral: pause and resume traversal from any boundary state</li>
-      <li>Experiments: resume training from checkpoints, resume hyperparameter sweeps</li>
-    </ul>
-  </li>
+  <li><strong>Speech experiment management</strong> explores multi-dimensional spaces:</li>
+  <li>Model (architecture, size) × Data (language, domain, augmentation) × Hyperparameters (LR, batch size) × Decoding (beam, LM weight)</li>
+  <li>Both require <strong>state tracking</strong>:</li>
+  <li>Spiral: track boundaries and current position</li>
+  <li>Experiments: track which configs have been tried, which are running, which failed</li>
+  <li>Both enable <strong>resumability</strong>:</li>
+  <li>Spiral: pause and resume traversal from any boundary state</li>
+  <li>Experiments: resume training from checkpoints, resume hyperparameter sweeps</li>
 </ul>
 
 <h2 id="high-level-architecture">High-Level Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────────┐
-│              Speech Experiment Management System                │
-└─────────────────────────────────────────────────────────────────┘
+<p>``
+┌─────────────────────────────────────────────────────────────────┐
+│ Speech Experiment Management System │
+└─────────────────────────────────────────────────────────────────┘</p>
 
-                          Client Layer
-        ┌────────────────────────────────────────────┐
-        │  Python SDK  │  CLI  │  Web UI  │  API    │
-        │  (ESPnet /   │       │          │         │
-        │   SpeechBrain│       │          │         │
-        │   integration)│      │          │         │
-        └─────────────────────┬──────────────────────┘
-                              │
-                       API Gateway
-                ┌──────────────┴──────────────┐
-                │  - Auth &amp; access control     │
-                │  - Request routing           │
-                │  - Metrics &amp; logging         │
-                └──────────────┬──────────────┘
-                               │
-              ┌────────────────┼────────────────┐
-              │                │                │
-      ┌───────▼────────┐ ┌────▼─────┐ ┌───────▼────────┐
-      │  Metadata      │ │  Metrics │ │  Artifact      │
-      │  Service       │ │  Service │ │  Service       │
-      │                │ │          │ │                │
-      │ - Experiments  │ │ - WER    │ │ - Models       │
-      │ - Runs         │ │ - Loss   │ │ - Checkpoints  │
-      │ - Data configs │ │ - Curves │ │ - Spectrograms │
-      │ - Model configs│ │ - Tables │ │ - Decoded logs │
-      │ - Speaker info │ │ - Speaker│ │ - Audio files  │
-      │                │ │   metrics│ │   (references) │
-      └───────┬────────┘ └────┬─────┘ └───────┬────────┘
-              │               │                │
-      ┌───────▼────────┐ ┌────▼─────┐ ┌───────▼────────┐
-      │  SQL DB        │ │  Time-   │ │  Object Store │
-      │  (Postgres)    │ │  Series  │ │  + Data Lake  │
-      │                │ │  DB      │ │                │
-      │ - Experiments  │ │ - Metrics│ │ - Models       │
-      │ - Runs         │ │ - Fast   │ │ - Audio refs   │
-      │ - Configs      │ │   queries│ │ - Spectrograms │
-      └────────────────┘ └──────────┘ └────────────────┘
-</code></pre></div></div>
+<p>Client Layer
+ ┌────────────────────────────────────────────┐
+ │ Python SDK │ CLI │ Web UI │ API │
+ │ (ESPnet / │ │ │ │
+ │ SpeechBrain│ │ │ │
+ │ integration)│ │ │ │
+ └─────────────────────┬──────────────────────┘
+ │
+ API Gateway
+ ┌──────────────┴──────────────┐
+ │ - Auth &amp; access control │
+ │ - Request routing │
+ │ - Metrics &amp; logging │
+ └──────────────┬──────────────┘
+ │
+ ┌────────────────┼────────────────┐
+ │ │ │
+ ┌───────▼────────┐ ┌────▼─────┐ ┌───────▼────────┐
+ │ Metadata │ │ Metrics │ │ Artifact │
+ │ Service │ │ Service │ │ Service │
+ │ │ │ │ │ │
+ │ - Experiments │ │ - WER │ │ - Models │
+ │ - Runs │ │ - Loss │ │ - Checkpoints │
+ │ - Data configs │ │ - Curves │ │ - Spectrograms │
+ │ - Model configs│ │ - Tables │ │ - Decoded logs │
+ │ - Speaker info │ │ - Speaker│ │ - Audio files │
+ │ │ │ metrics│ │ (references) │
+ └───────┬────────┘ └────┬─────┘ └───────┬────────┘
+ │ │ │
+ ┌───────▼────────┐ ┌────▼─────┐ ┌───────▼────────┐
+ │ SQL DB │ │ Time- │ │ Object Store │
+ │ (Postgres) │ │ Series │ │ + Data Lake │
+ │ │ │ DB │ │ │
+ │ - Experiments │ │ - Metrics│ │ - Models │
+ │ - Runs │ │ - Fast │ │ - Audio refs │
+ │ - Configs │ │ queries│ │ - Spectrograms │
+ └────────────────┘ └──────────┘ └────────────────┘
+``</p>
 
 <h3 id="key-components">Key Components</h3>
 
@@ -483,297 +475,302 @@
 
 <p>Extend general experiment tracking schema with speech-specific fields:</p>
 
-<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">speech_experiments</span> <span class="p">(</span>
-    <span class="n">experiment_id</span> <span class="n">UUID</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span>
-    <span class="n">name</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>
-    <span class="n">task</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span>  <span class="c1">-- 'asr', 'tts', 'diarization', 'kws'</span>
-    <span class="n">description</span> <span class="nb">TEXT</span><span class="p">,</span>
-    <span class="n">created_at</span> <span class="nb">TIMESTAMP</span><span class="p">,</span>
-    <span class="n">user_id</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span>
-<span class="p">);</span>
+<p>``sql
+CREATE TABLE speech_experiments (
+ experiment_id UUID PRIMARY KEY,
+ name VARCHAR(255),
+ task VARCHAR(50), – ‘asr’, ‘tts’, ‘diarization’, ‘kws’
+ description TEXT,
+ created_at TIMESTAMP,
+ user_id VARCHAR(255)
+);</p>
 
-<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">speech_runs</span> <span class="p">(</span>
-    <span class="n">run_id</span> <span class="n">UUID</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span>
-    <span class="n">experiment_id</span> <span class="n">UUID</span> <span class="k">REFERENCES</span> <span class="n">speech_experiments</span><span class="p">(</span><span class="n">experiment_id</span><span class="p">),</span>
-    <span class="n">name</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>
-    <span class="n">status</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span>  <span class="c1">-- 'running', 'completed', 'failed'</span>
-    <span class="n">start_time</span> <span class="nb">TIMESTAMP</span><span class="p">,</span>
-    <span class="n">end_time</span> <span class="nb">TIMESTAMP</span><span class="p">,</span>
-    <span class="n">user_id</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>
-    
-    <span class="c1">-- Model config</span>
-    <span class="n">model_type</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>  <span class="c1">-- 'conformer', 'transformer', 'rnn-t'</span>
-    <span class="n">num_params</span> <span class="nb">BIGINT</span><span class="p">,</span>
-    <span class="n">encoder_layers</span> <span class="nb">INT</span><span class="p">,</span>
-    <span class="n">decoder_layers</span> <span class="nb">INT</span><span class="p">,</span>
-    
-    <span class="c1">-- Data config</span>
-    <span class="n">train_dataset</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>
-    <span class="n">train_hours</span> <span class="nb">FLOAT</span><span class="p">,</span>
-    <span class="n">languages</span> <span class="nb">TEXT</span><span class="p">[],</span>  <span class="c1">-- array of language codes</span>
-    <span class="n">domains</span> <span class="nb">TEXT</span><span class="p">[],</span>    <span class="c1">-- ['broadcast', 'conversational']</span>
-    <span class="n">sample_rate</span> <span class="nb">INT</span><span class="p">,</span>   <span class="c1">-- 16000, 8000, etc.</span>
-    
-    <span class="c1">-- Feature config</span>
-    <span class="n">feature_type</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span>  <span class="c1">-- 'log-mel', 'mfcc', 'fbank'</span>
-    <span class="n">n_mels</span> <span class="nb">INT</span><span class="p">,</span>
-    <span class="n">hop_length</span> <span class="nb">INT</span><span class="p">,</span>
-    <span class="n">win_length</span> <span class="nb">INT</span><span class="p">,</span>
-    
-    <span class="c1">-- Augmentation config</span>
-    <span class="n">augmentation_policy</span> <span class="n">JSONB</span><span class="p">,</span>  <span class="c1">-- SpecAugment, noise, speed</span>
-    
-    <span class="c1">-- Training config</span>
-    <span class="n">optimizer</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span>
-    <span class="n">learning_rate</span> <span class="nb">FLOAT</span><span class="p">,</span>
-    <span class="n">batch_size</span> <span class="nb">INT</span><span class="p">,</span>
-    <span class="n">epochs</span> <span class="nb">INT</span><span class="p">,</span>
-    
-    <span class="c1">-- Environment</span>
-    <span class="n">git_commit</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">40</span><span class="p">),</span>
-    <span class="n">docker_image</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>
-    <span class="n">num_gpus</span> <span class="nb">INT</span>
-<span class="p">);</span>
+<p>CREATE TABLE speech_runs (
+ run_id UUID PRIMARY KEY,
+ experiment_id UUID REFERENCES speech_experiments(experiment_id),
+ name VARCHAR(255),
+ status VARCHAR(50), – ‘running’, ‘completed’, ‘failed’
+ start_time TIMESTAMP,
+ end_time TIMESTAMP,
+ user_id VARCHAR(255),</p>
 
-<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">speech_metrics</span> <span class="p">(</span>
-    <span class="n">run_id</span> <span class="n">UUID</span> <span class="k">REFERENCES</span> <span class="n">speech_runs</span><span class="p">(</span><span class="n">run_id</span><span class="p">),</span>
-    <span class="n">test_set</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>  <span class="c1">-- 'librispeech-test-clean', 'common-voice-en'</span>
-    <span class="n">metric</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span>     <span class="c1">-- 'wer', 'cer', 'rtf', 'latency'</span>
-    <span class="n">value</span> <span class="nb">FLOAT</span><span class="p">,</span>
-    <span class="n">speaker_id</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>  <span class="c1">-- optional, for per-speaker metrics</span>
-    <span class="n">utterance_id</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>  <span class="c1">-- optional, for per-utterance metrics</span>
-    <span class="nb">timestamp</span> <span class="nb">TIMESTAMP</span><span class="p">,</span>
-    <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="n">run_id</span><span class="p">,</span> <span class="n">test_set</span><span class="p">,</span> <span class="n">metric</span><span class="p">,</span> <span class="n">speaker_id</span><span class="p">,</span> <span class="n">utterance_id</span><span class="p">)</span>
-<span class="p">);</span>
+<p>– Model config
+ model_type VARCHAR(100), – ‘conformer’, ‘transformer’, ‘rnn-t’
+ num_params BIGINT,
+ encoder_layers INT,
+ decoder_layers INT,</p>
 
-<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">speech_artifacts</span> <span class="p">(</span>
-    <span class="n">artifact_id</span> <span class="n">UUID</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span>
-    <span class="n">run_id</span> <span class="n">UUID</span> <span class="k">REFERENCES</span> <span class="n">speech_runs</span><span class="p">(</span><span class="n">run_id</span><span class="p">),</span>
-    <span class="k">type</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span>  <span class="c1">-- 'model', 'checkpoint', 'attention_plot', 'decoded_text'</span>
-    <span class="n">path</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">1024</span><span class="p">),</span>
-    <span class="n">size_bytes</span> <span class="nb">BIGINT</span><span class="p">,</span>
-    <span class="n">content_hash</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">64</span><span class="p">),</span>
-    <span class="n">storage_uri</span> <span class="nb">TEXT</span><span class="p">,</span>
-    <span class="n">epoch</span> <span class="nb">INT</span><span class="p">,</span>  <span class="c1">-- optional, for checkpoints</span>
-    <span class="n">step</span> <span class="nb">INT</span><span class="p">,</span>   <span class="c1">-- optional, for checkpoints</span>
-    <span class="n">created_at</span> <span class="nb">TIMESTAMP</span>
-<span class="p">);</span>
-</code></pre></div></div>
+<p>– Data config
+ train_dataset VARCHAR(255),
+ train_hours FLOAT,
+ languages TEXT[], – array of language codes
+ domains TEXT[], – [‘broadcast’, ‘conversational’]
+ sample_rate INT, – 16000, 8000, etc.</p>
+
+<p>– Feature config
+ feature_type VARCHAR(50), – ‘log-mel’, ‘mfcc’, ‘fbank’
+ n_mels INT,
+ hop_length INT,
+ win_length INT,</p>
+
+<p>– Augmentation config
+ augmentation_policy JSONB, – SpecAugment, noise, speed</p>
+
+<p>– Training config
+ optimizer VARCHAR(50),
+ learning_rate FLOAT,
+ batch_size INT,
+ epochs INT,</p>
+
+<p>– Environment
+ git_commit VARCHAR(40),
+ docker_image VARCHAR(255),
+ num_gpus INT
+);</p>
+
+<p>CREATE TABLE speech_metrics (
+ run_id UUID REFERENCES speech_runs(run_id),
+ test_set VARCHAR(255), – ‘librispeech-test-clean’, ‘common-voice-en’
+ metric VARCHAR(50), – ‘wer’, ‘cer’, ‘rtf’, ‘latency’
+ value FLOAT,
+ speaker_id VARCHAR(255), – optional, for per-speaker metrics
+ utterance_id VARCHAR(255), – optional, for per-utterance metrics
+ timestamp TIMESTAMP,
+ PRIMARY KEY (run_id, test_set, metric, speaker_id, utterance_id)
+);</p>
+
+<p>CREATE TABLE speech_artifacts (
+ artifact_id UUID PRIMARY KEY,
+ run_id UUID REFERENCES speech_runs(run_id),
+ type VARCHAR(50), – ‘model’, ‘checkpoint’, ‘attention_plot’, ‘decoded_text’
+ path VARCHAR(1024),
+ size_bytes BIGINT,
+ content_hash VARCHAR(64),
+ storage_uri TEXT,
+ epoch INT, – optional, for checkpoints
+ step INT, – optional, for checkpoints
+ created_at TIMESTAMP
+);
+``</p>
 
 <h3 id="2-python-sdk-integration-espnet-example">2. Python SDK Integration (ESPnet Example)</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">speech_experiment_tracker</span> <span class="k">as</span> <span class="nb">set</span>
+<p>``python
+import speech_experiment_tracker as set</p>
 
-<span class="c1"># Initialize client
-</span><span class="n">client</span> <span class="o">=</span> <span class="nb">set</span><span class="p">.</span><span class="nc">Client</span><span class="p">(</span><span class="n">api_url</span><span class="o">=</span><span class="sh">"</span><span class="s">https://speech-tracking.example.com</span><span class="sh">"</span><span class="p">,</span> <span class="n">api_key</span><span class="o">=</span><span class="sh">"</span><span class="s">...</span><span class="sh">"</span><span class="p">)</span>
+<h1 id="initialize-client">Initialize client</h1>
+<p>client = set.Client(api_url=”https://speech-tracking.example.com”, api_key=”…”)</p>
 
-<span class="c1"># Create experiment
-</span><span class="n">experiment</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="nf">create_experiment</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="sh">"</span><span class="s">Conformer ASR - LibriSpeech + Common Voice</span><span class="sh">"</span><span class="p">,</span>
-    <span class="n">task</span><span class="o">=</span><span class="sh">"</span><span class="s">asr</span><span class="sh">"</span><span class="p">,</span>
-    <span class="n">description</span><span class="o">=</span><span class="sh">"</span><span class="s">Multi-dataset training with SpecAugment</span><span class="sh">"</span>
-<span class="p">)</span>
+<h1 id="create-experiment">Create experiment</h1>
+<p>experiment = client.create_experiment(
+ name=”Conformer ASR - LibriSpeech + Common Voice”,
+ task=”asr”,
+ description=”Multi-dataset training with SpecAugment”
+)</p>
 
-<span class="c1"># Start a run
-</span><span class="n">run</span> <span class="o">=</span> <span class="n">experiment</span><span class="p">.</span><span class="nf">start_run</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="sh">"</span><span class="s">conformer_12layers_specaug</span><span class="sh">"</span><span class="p">,</span>
-    <span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="sh">"</span><span class="s">language</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">en</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">domain</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">read_speech</span><span class="sh">"</span><span class="p">}</span>
-<span class="p">)</span>
+<h1 id="start-a-run">Start a run</h1>
+<p>run = experiment.start_run(
+ name=”conformer_12layers_specaug”,
+ tags={“language”: “en”, “domain”: “read_speech”}
+)</p>
 
-<span class="c1"># Log model and data configs
-</span><span class="n">run</span><span class="p">.</span><span class="nf">log_config</span><span class="p">({</span>
-    <span class="sh">"</span><span class="s">model_type</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">conformer</span><span class="sh">"</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">encoder_layers</span><span class="sh">"</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">decoder_layers</span><span class="sh">"</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">num_params</span><span class="sh">"</span><span class="p">:</span> <span class="mi">120_000_000</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">train_dataset</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">librispeech-960h + common-voice-en</span><span class="sh">"</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">train_hours</span><span class="sh">"</span><span class="p">:</span> <span class="mi">1200</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">languages</span><span class="sh">"</span><span class="p">:</span> <span class="p">[</span><span class="sh">"</span><span class="s">en</span><span class="sh">"</span><span class="p">],</span>
-    <span class="sh">"</span><span class="s">sample_rate</span><span class="sh">"</span><span class="p">:</span> <span class="mi">16000</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">feature_type</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">log-mel</span><span class="sh">"</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">n_mels</span><span class="sh">"</span><span class="p">:</span> <span class="mi">80</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">hop_length</span><span class="sh">"</span><span class="p">:</span> <span class="mi">160</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">augmentation_policy</span><span class="sh">"</span><span class="p">:</span> <span class="p">{</span>
-        <span class="sh">"</span><span class="s">spec_augment</span><span class="sh">"</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
-        <span class="sh">"</span><span class="s">time_mask</span><span class="sh">"</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>
-        <span class="sh">"</span><span class="s">freq_mask</span><span class="sh">"</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span>
-        <span class="sh">"</span><span class="s">speed_perturb</span><span class="sh">"</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">]</span>
-    <span class="p">},</span>
-    <span class="sh">"</span><span class="s">optimizer</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">adam</span><span class="sh">"</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">learning_rate</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">batch_size</span><span class="sh">"</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">epochs</span><span class="sh">"</span><span class="p">:</span> <span class="mi">100</span>
-<span class="p">})</span>
+<h1 id="log-model-and-data-configs">Log model and data configs</h1>
+<p>run.log_config({
+ “model_type”: “conformer”,
+ “encoder_layers”: 12,
+ “decoder_layers”: 6,
+ “num_params”: 120_000_000,
+ “train_dataset”: “librispeech-960h + common-voice-en”,
+ “train_hours”: 1200,
+ “languages”: [“en”],
+ “sample_rate”: 16000,
+ “feature_type”: “log-mel”,
+ “n_mels”: 80,
+ “hop_length”: 160,
+ “augmentation_policy”: {
+ “spec_augment”: True,
+ “time_mask”: 30,
+ “freq_mask”: 13,
+ “speed_perturb”: [0.9, 1.0, 1.1]
+ },
+ “optimizer”: “adam”,
+ “learning_rate”: 0.001,
+ “batch_size”: 32,
+ “epochs”: 100
+})</p>
 
-<span class="c1"># Training loop
-</span><span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
-    <span class="n">train_loss</span> <span class="o">=</span> <span class="nf">train_one_epoch</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">)</span>
-    <span class="n">val_wer</span> <span class="o">=</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">val_loader</span><span class="p">)</span>
-    
-    <span class="c1"># Log training metrics
-</span>    <span class="n">run</span><span class="p">.</span><span class="nf">log_metrics</span><span class="p">({</span>
-        <span class="sh">"</span><span class="s">train_loss</span><span class="sh">"</span><span class="p">:</span> <span class="n">train_loss</span><span class="p">,</span>
-        <span class="sh">"</span><span class="s">val_wer</span><span class="sh">"</span><span class="p">:</span> <span class="n">val_wer</span>
-    <span class="p">},</span> <span class="n">step</span><span class="o">=</span><span class="n">epoch</span><span class="p">)</span>
-    
-    <span class="c1"># Save checkpoint
-</span>    <span class="k">if</span> <span class="n">epoch</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">checkpoints/epoch</span><span class="si">{</span><span class="n">epoch</span><span class="si">}</span><span class="s">.pt</span><span class="sh">"</span>
-        <span class="nf">save_checkpoint</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">checkpoint_path</span><span class="p">)</span>
-        <span class="n">run</span><span class="p">.</span><span class="nf">log_artifact</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="sh">"</span><span class="s">checkpoint</span><span class="sh">"</span><span class="p">,</span> <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">)</span>
+<h1 id="training-loop">Training loop</h1>
+<p>for epoch in range(100):
+ train_loss = train_one_epoch(model, train_loader)
+ val_wer = evaluate(model, val_loader)</p>
 
-<span class="c1"># Final evaluation on multiple test sets
-</span><span class="n">test_sets</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="sh">"</span><span class="s">librispeech-test-clean</span><span class="sh">"</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">librispeech-test-other</span><span class="sh">"</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">common-voice-en-test</span><span class="sh">"</span>
-<span class="p">]</span>
+<p># Log training metrics
+ run.log_metrics({
+ “train_loss”: train_loss,
+ “val_wer”: val_wer
+ }, step=epoch)</p>
 
-<span class="k">for</span> <span class="n">test_set</span> <span class="ow">in</span> <span class="n">test_sets</span><span class="p">:</span>
-    <span class="n">wer</span><span class="p">,</span> <span class="n">cer</span> <span class="o">=</span> <span class="nf">evaluate_on_test_set</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_set</span><span class="p">)</span>
-    <span class="n">run</span><span class="p">.</span><span class="nf">log_metrics</span><span class="p">({</span>
-        <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">test_set</span><span class="si">}</span><span class="s">_wer</span><span class="sh">"</span><span class="p">:</span> <span class="n">wer</span><span class="p">,</span>
-        <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">test_set</span><span class="si">}</span><span class="s">_cer</span><span class="sh">"</span><span class="p">:</span> <span class="n">cer</span>
-    <span class="p">})</span>
+<p># Save checkpoint
+ if epoch % 10 == 0:
+ checkpoint_path = f”checkpoints/epoch{epoch}.pt”
+ save_checkpoint(model, optimizer, checkpoint_path)
+ run.log_artifact(checkpoint_path, type=”checkpoint”, epoch=epoch)</p>
 
-<span class="c1"># Save final model
-</span><span class="n">run</span><span class="p">.</span><span class="nf">log_artifact</span><span class="p">(</span><span class="sh">"</span><span class="s">final_model.pt</span><span class="sh">"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="sh">"</span><span class="s">model</span><span class="sh">"</span><span class="p">)</span>
+<h1 id="final-evaluation-on-multiple-test-sets">Final evaluation on multiple test sets</h1>
+<p>test_sets = [
+ “librispeech-test-clean”,
+ “librispeech-test-other”,
+ “common-voice-en-test”
+]</p>
 
-<span class="c1"># Mark run as complete
-</span><span class="n">run</span><span class="p">.</span><span class="nf">finish</span><span class="p">()</span>
-</code></pre></div></div>
+<p>for test_set in test_sets:
+ wer, cer = evaluate_on_test_set(model, test_set)
+ run.log_metrics({
+ f”{test_set}_wer”: wer,
+ f”{test_set}_cer”: cer
+ })</p>
+
+<h1 id="save-final-model">Save final model</h1>
+<p>run.log_artifact(“final_model.pt”, type=”model”)</p>
+
+<h1 id="mark-run-as-complete">Mark run as complete</h1>
+<p>run.finish()
+``</p>
 
 <h3 id="3-multi-test-set-evaluation-tracking">3. Multi-Test-Set Evaluation Tracking</h3>
 
 <p>A key speech-specific need: evaluate on multiple test sets and track per-test-set metrics.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">evaluate_and_log</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_sets</span><span class="p">,</span> <span class="n">run</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Evaluate model on multiple test sets and log detailed metrics.</span><span class="sh">"""</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
-    
-    <span class="k">for</span> <span class="n">test_set</span> <span class="ow">in</span> <span class="n">test_sets</span><span class="p">:</span>
-        <span class="n">loader</span> <span class="o">=</span> <span class="nf">get_test_loader</span><span class="p">(</span><span class="n">test_set</span><span class="p">)</span>
-        <span class="n">total_words</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">total_errors</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="n">utterance_results</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">loader</span><span class="p">:</span>
-            <span class="n">hyps</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">decode</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">audio</span><span class="sh">'</span><span class="p">])</span>
-            <span class="n">refs</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">]</span>
-            
-            <span class="k">for</span> <span class="n">hyp</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">utt_id</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">hyps</span><span class="p">,</span> <span class="n">refs</span><span class="p">,</span> <span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">utterance_ids</span><span class="sh">'</span><span class="p">]):</span>
-                <span class="n">errors</span><span class="p">,</span> <span class="n">words</span> <span class="o">=</span> <span class="nf">compute_wer_details</span><span class="p">(</span><span class="n">hyp</span><span class="p">,</span> <span class="n">ref</span><span class="p">)</span>
-                <span class="n">total_errors</span> <span class="o">+=</span> <span class="n">errors</span>
-                <span class="n">total_words</span> <span class="o">+=</span> <span class="n">words</span>
-                
-                <span class="n">utterance_results</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span>
-                    <span class="sh">"</span><span class="s">utterance_id</span><span class="sh">"</span><span class="p">:</span> <span class="n">utt_id</span><span class="p">,</span>
-                    <span class="sh">"</span><span class="s">wer</span><span class="sh">"</span><span class="p">:</span> <span class="n">errors</span> <span class="o">/</span> <span class="nf">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">words</span><span class="p">),</span>
-                    <span class="sh">"</span><span class="s">hyp</span><span class="sh">"</span><span class="p">:</span> <span class="n">hyp</span><span class="p">,</span>
-                    <span class="sh">"</span><span class="s">ref</span><span class="sh">"</span><span class="p">:</span> <span class="n">ref</span>
-                <span class="p">})</span>
-        
-        <span class="n">wer</span> <span class="o">=</span> <span class="n">total_errors</span> <span class="o">/</span> <span class="nf">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">total_words</span><span class="p">)</span>
-        <span class="n">results</span><span class="p">[</span><span class="n">test_set</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="sh">"</span><span class="s">wer</span><span class="sh">"</span><span class="p">:</span> <span class="n">wer</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">utterances</span><span class="sh">"</span><span class="p">:</span> <span class="n">utterance_results</span>
-        <span class="p">}</span>
-        
-        <span class="c1"># Log aggregate metric
-</span>        <span class="n">run</span><span class="p">.</span><span class="nf">log_metric</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">test_set</span><span class="si">}</span><span class="s">_wer</span><span class="sh">"</span><span class="p">,</span> <span class="n">wer</span><span class="p">)</span>
-        
-        <span class="c1"># Log per-utterance results as artifact
-</span>        <span class="n">run</span><span class="p">.</span><span class="nf">log_json</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">results/</span><span class="si">{</span><span class="n">test_set</span><span class="si">}</span><span class="s">_utterances.json</span><span class="sh">"</span><span class="p">,</span> <span class="n">utterance_results</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">results</span>
-</code></pre></div></div>
+<p>``python
+def evaluate_and_log(model, test_sets, run):
+ “"”Evaluate model on multiple test sets and log detailed metrics.”””
+ results = {}</p>
+
+<p>for test_set in test_sets:
+ loader = get_test_loader(test_set)
+ total_words = 0
+ total_errors = 0</p>
+
+<p>utterance_results = []</p>
+
+<p>for batch in loader:
+ hyps = model.decode(batch[‘audio’])
+ refs = batch[‘text’]</p>
+
+<p>for hyp, ref, utt_id in zip(hyps, refs, batch[‘utterance_ids’]):
+ errors, words = compute_wer_details(hyp, ref)
+ total_errors += errors
+ total_words += words</p>
+
+<p>utterance_results.append({
+ “utterance_id”: utt_id,
+ “wer”: errors / max(1, words),
+ “hyp”: hyp,
+ “ref”: ref
+ })</p>
+
+<p>wer = total_errors / max(1, total_words)
+ results[test_set] = {
+ “wer”: wer,
+ “utterances”: utterance_results
+ }</p>
+
+<p># Log aggregate metric
+ run.log_metric(f”{test_set}_wer”, wer)</p>
+
+<p># Log per-utterance results as artifact
+ run.log_json(f”results/{test_set}_utterances.json”, utterance_results)</p>
+
+<p>return results
+``</p>
 
 <h3 id="4-data-versioning-for-speech">4. Data Versioning for Speech</h3>
 
 <p>Track dataset versions by hashing audio file lists + preprocessing configs:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">hashlib</span>
-<span class="kn">import</span> <span class="n">json</span>
+<p>``python
+import hashlib
+import json</p>
 
-<span class="k">def</span> <span class="nf">compute_dataset_hash</span><span class="p">(</span><span class="n">audio_file_list</span><span class="p">,</span> <span class="n">preprocessing_config</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Compute a deterministic hash for a dataset.
-    
-    Args:
-        audio_file_list: List of audio file paths
-        preprocessing_config: Dict with sample_rate, n_mels, etc.
-    </span><span class="sh">"""</span>
-    <span class="c1"># Sort file list for determinism
-</span>    <span class="n">sorted_files</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">audio_file_list</span><span class="p">)</span>
-    
-    <span class="c1"># Combine file list + config
-</span>    <span class="n">content</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="sh">"</span><span class="s">files</span><span class="sh">"</span><span class="p">:</span> <span class="n">sorted_files</span><span class="p">,</span>
-        <span class="sh">"</span><span class="s">preprocessing</span><span class="sh">"</span><span class="p">:</span> <span class="n">preprocessing_config</span>
-    <span class="p">}</span>
-    
-    <span class="c1"># Compute hash
-</span>    <span class="n">content_str</span> <span class="o">=</span> <span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="n">dataset_hash</span> <span class="o">=</span> <span class="n">hashlib</span><span class="p">.</span><span class="nf">sha256</span><span class="p">(</span><span class="n">content_str</span><span class="p">.</span><span class="nf">encode</span><span class="p">()).</span><span class="nf">hexdigest</span><span class="p">()</span>
-    
-    <span class="k">return</span> <span class="n">dataset_hash</span>
+<p>def compute_dataset_hash(audio_file_list, preprocessing_config):
+ “””
+ Compute a deterministic hash for a dataset.</p>
 
-<span class="c1"># Usage
-</span><span class="n">train_files</span> <span class="o">=</span> <span class="n">glob</span><span class="p">.</span><span class="nf">glob</span><span class="p">(</span><span class="sh">"</span><span class="s">/data/librispeech/train-960h/**/*.flac</span><span class="sh">"</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="n">preprocessing_config</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="sh">"</span><span class="s">sample_rate</span><span class="sh">"</span><span class="p">:</span> <span class="mi">16000</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">n_mels</span><span class="sh">"</span><span class="p">:</span> <span class="mi">80</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">hop_length</span><span class="sh">"</span><span class="p">:</span> <span class="mi">160</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">win_length</span><span class="sh">"</span><span class="p">:</span> <span class="mi">400</span>
-<span class="p">}</span>
+<p>Args:
+ audio_file_list: List of audio file paths
+ preprocessing_config: Dict with sample_rate, n_mels, etc.
+ “””
+ # Sort file list for determinism
+ sorted_files = sorted(audio_file_list)</p>
 
-<span class="n">dataset_hash</span> <span class="o">=</span> <span class="nf">compute_dataset_hash</span><span class="p">(</span><span class="n">train_files</span><span class="p">,</span> <span class="n">preprocessing_config</span><span class="p">)</span>
+<p># Combine file list + config
+ content = {
+ “files”: sorted_files,
+ “preprocessing”: preprocessing_config
+ }</p>
 
-<span class="n">run</span><span class="p">.</span><span class="nf">log_config</span><span class="p">({</span>
-    <span class="sh">"</span><span class="s">train_dataset_hash</span><span class="sh">"</span><span class="p">:</span> <span class="n">dataset_hash</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">train_dataset_files</span><span class="sh">"</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">train_files</span><span class="p">),</span>
-    <span class="sh">"</span><span class="s">preprocessing</span><span class="sh">"</span><span class="p">:</span> <span class="n">preprocessing_config</span>
-<span class="p">})</span>
-</code></pre></div></div>
+<p># Compute hash
+ content_str = json.dumps(content, sort_keys=True)
+ dataset_hash = hashlib.sha256(content_str.encode()).hexdigest()</p>
+
+<p>return dataset_hash</p>
+
+<h1 id="usage">Usage</h1>
+<p>train_files = glob.glob(“/data/librispeech/train-960h/<em>*/</em>.flac”, recursive=True)
+preprocessing_config = {
+ “sample_rate”: 16000,
+ “n_mels”: 80,
+ “hop_length”: 160,
+ “win_length”: 400
+}</p>
+
+<p>dataset_hash = compute_dataset_hash(train_files, preprocessing_config)</p>
+
+<p>run.log_config({
+ “train_dataset_hash”: dataset_hash,
+ “train_dataset_files”: len(train_files),
+ “preprocessing”: preprocessing_config
+})
+``</p>
 
 <h3 id="5-decoding-hyperparameter-sweeps">5. Decoding Hyperparameter Sweeps</h3>
 
 <p>ASR decoding often involves sweeping beam width and language model weight:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">decode_sweep</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_set</span><span class="p">,</span> <span class="n">run</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Sweep decoding hyperparameters and log results.
-    </span><span class="sh">"""</span>
-    <span class="n">beam_widths</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">]</span>
-    <span class="n">lm_weights</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>
-    
-    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">for</span> <span class="n">beam</span> <span class="ow">in</span> <span class="n">beam_widths</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">lm_weight</span> <span class="ow">in</span> <span class="n">lm_weights</span><span class="p">:</span>
-            <span class="n">wer</span> <span class="o">=</span> <span class="nf">evaluate_with_decoding_params</span><span class="p">(</span>
-                <span class="n">model</span><span class="p">,</span> <span class="n">test_set</span><span class="p">,</span> <span class="n">beam_width</span><span class="o">=</span><span class="n">beam</span><span class="p">,</span> <span class="n">lm_weight</span><span class="o">=</span><span class="n">lm_weight</span>
-            <span class="p">)</span>
-            
-            <span class="n">results</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span>
-                <span class="sh">"</span><span class="s">beam_width</span><span class="sh">"</span><span class="p">:</span> <span class="n">beam</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">lm_weight</span><span class="sh">"</span><span class="p">:</span> <span class="n">lm_weight</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">wer</span><span class="sh">"</span><span class="p">:</span> <span class="n">wer</span>
-            <span class="p">})</span>
-            
-            <span class="c1"># Log each config
-</span>            <span class="n">run</span><span class="p">.</span><span class="nf">log_metrics</span><span class="p">({</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="s">wer_beam</span><span class="si">{</span><span class="n">beam</span><span class="si">}</span><span class="s">_lm</span><span class="si">{</span><span class="n">lm_weight</span><span class="si">}</span><span class="sh">"</span><span class="p">:</span> <span class="n">wer</span>
-            <span class="p">})</span>
-    
-    <span class="c1"># Find best config
-</span>    <span class="n">best</span> <span class="o">=</span> <span class="nf">min</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="sh">'</span><span class="s">wer</span><span class="sh">'</span><span class="p">])</span>
-    <span class="n">run</span><span class="p">.</span><span class="nf">log_config</span><span class="p">({</span><span class="sh">"</span><span class="s">best_decoding_config</span><span class="sh">"</span><span class="p">:</span> <span class="n">best</span><span class="p">})</span>
-    
-    <span class="c1"># Log full sweep results as artifact
-</span>    <span class="n">run</span><span class="p">.</span><span class="nf">log_json</span><span class="p">(</span><span class="sh">"</span><span class="s">decoding_sweep.json</span><span class="sh">"</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+def decode_sweep(model, test_set, run):
+ “””
+ Sweep decoding hyperparameters and log results.
+ “””
+ beam_widths = [1, 5, 10, 20]
+ lm_weights = [0.0, 0.3, 0.5, 0.7, 1.0]</p>
+
+<p>results = []</p>
+
+<p>for beam in beam_widths:
+ for lm_weight in lm_weights:
+ wer = evaluate_with_decoding_params(
+ model, test_set, beam_width=beam, lm_weight=lm_weight
+ )</p>
+
+<p>results.append({
+ “beam_width”: beam,
+ “lm_weight”: lm_weight,
+ “wer”: wer
+ })</p>
+
+<p># Log each config
+ run.log_metrics({
+ f”wer_beam{beam}_lm{lm_weight}”: wer
+ })</p>
+
+<p># Find best config
+ best = min(results, key=lambda x: x[‘wer’])
+ run.log_config({“best_decoding_config”: best})</p>
+
+<p># Log full sweep results as artifact
+ run.log_json(“decoding_sweep.json”, results)
+``</p>
 
 <h2 id="scaling-strategies">Scaling Strategies</h2>
 
@@ -789,15 +786,16 @@
   <li><strong>Use hashing for deduplication</strong>: If multiple experiments use the same dataset, hash it once.</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Don't do this:
-</span><span class="n">run</span><span class="p">.</span><span class="nf">log_artifact</span><span class="p">(</span><span class="sh">"</span><span class="s">train_audio.tar.gz</span><span class="sh">"</span><span class="p">)</span>  <span class="c1"># 100 GB upload per experiment!
-</span>
-<span class="c1"># Do this:
-</span><span class="n">run</span><span class="p">.</span><span class="nf">log_config</span><span class="p">({</span>
-    <span class="sh">"</span><span class="s">train_audio_path</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">s3://speech-data/librispeech/train-960h/</span><span class="sh">"</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">train_audio_hash</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">sha256:abc123...</span><span class="sh">"</span>
-<span class="p">})</span>
-</code></pre></div></div>
+<p>``python</p>
+<h1 id="dont-do-this">Don’t do this:</h1>
+<p>run.log_artifact(“train_audio.tar.gz”) # 100 GB upload per experiment!</p>
+
+<h1 id="do-this">Do this:</h1>
+<p>run.log_config({
+ “train_audio_path”: “s3://speech-data/librispeech/train-960h/”,
+ “train_audio_hash”: “sha256:abc123…”
+})
+``</p>
 
 <h3 id="2-checkpoint-deduplication">2. Checkpoint Deduplication</h3>
 
@@ -821,23 +819,24 @@
   <li>Aggregate results and log back to experiment tracker.</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">ray</span>
+<p>``python
+import ray</p>
 
-<span class="nd">@ray.remote</span>
-<span class="k">def</span> <span class="nf">evaluate_test_set</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">test_set</span><span class="p">):</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="nf">load_model</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
-    <span class="n">wer</span> <span class="o">=</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_set</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">test_set</span><span class="p">,</span> <span class="n">wer</span>
+<p>@ray.remote
+def evaluate_test_set(model_path, test_set):
+ model = load_model(model_path)
+ wer = evaluate(model, test_set)
+ return test_set, wer</p>
 
-<span class="c1"># Distribute evaluation
-</span><span class="n">test_sets</span> <span class="o">=</span> <span class="p">[</span><span class="sh">"</span><span class="s">test_clean</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">test_other</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">cv_en</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">cv_es</span><span class="sh">"</span><span class="p">,</span> <span class="p">...]</span>
-<span class="n">futures</span> <span class="o">=</span> <span class="p">[</span><span class="n">evaluate_test_set</span><span class="p">.</span><span class="nf">remote</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">ts</span><span class="p">)</span> <span class="k">for</span> <span class="n">ts</span> <span class="ow">in</span> <span class="n">test_sets</span><span class="p">]</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">ray</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">futures</span><span class="p">)</span>
+<h1 id="distribute-evaluation">Distribute evaluation</h1>
+<p>test_sets = [“test_clean”, “test_other”, “cv_en”, “cv_es”, …]
+futures = [evaluate_test_set.remote(model_path, ts) for ts in test_sets]
+results = ray.get(futures)</p>
 
-<span class="c1"># Log all results
-</span><span class="k">for</span> <span class="n">test_set</span><span class="p">,</span> <span class="n">wer</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-    <span class="n">run</span><span class="p">.</span><span class="nf">log_metric</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">test_set</span><span class="si">}</span><span class="s">_wer</span><span class="sh">"</span><span class="p">,</span> <span class="n">wer</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="log-all-results">Log all results</h1>
+<p>for test_set, wer in results:
+ run.log_metric(f”{test_set}_wer”, wer)
+``</p>
 
 <h2 id="monitoring--observability">Monitoring &amp; Observability</h2>
 
@@ -1012,87 +1011,90 @@
 
 <p>ESPnet is a popular speech toolkit. Integrate experiment tracking:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># In ESPnet training script
-</span><span class="kn">import</span> <span class="n">speech_experiment_tracker</span> <span class="k">as</span> <span class="nb">set</span>
+<p>``python</p>
+<h1 id="in-espnet-training-script">In ESPnet training script</h1>
+<p>import speech_experiment_tracker as set</p>
 
-<span class="c1"># Initialize tracker
-</span><span class="n">client</span> <span class="o">=</span> <span class="nb">set</span><span class="p">.</span><span class="nc">Client</span><span class="p">(...)</span>
-<span class="n">run</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="nf">start_run</span><span class="p">(...)</span>
+<h1 id="initialize-tracker">Initialize tracker</h1>
+<p>client = set.Client(…)
+run = client.start_run(…)</p>
 
-<span class="c1"># Log ESPnet config
-</span><span class="n">run</span><span class="p">.</span><span class="nf">log_config</span><span class="p">(</span><span class="nf">vars</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>  <span class="c1"># args from argparse
-</span>
-<span class="c1"># Hook into ESPnet trainer
-</span><span class="k">class</span> <span class="nc">TrackerCallback</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">on_epoch_end</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">metrics</span><span class="p">):</span>
-        <span class="n">run</span><span class="p">.</span><span class="nf">log_metrics</span><span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">epoch</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">on_checkpoint_save</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">checkpoint_path</span><span class="p">):</span>
-        <span class="n">run</span><span class="p">.</span><span class="nf">log_artifact</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="sh">"</span><span class="s">checkpoint</span><span class="sh">"</span><span class="p">,</span> <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">)</span>
+<h1 id="log-espnet-config">Log ESPnet config</h1>
+<p>run.log_config(vars(args)) # args from argparse</p>
 
-<span class="n">trainer</span><span class="p">.</span><span class="nf">add_callback</span><span class="p">(</span><span class="nc">TrackerCallback</span><span class="p">())</span>
-</code></pre></div></div>
+<h1 id="hook-into-espnet-trainer">Hook into ESPnet trainer</h1>
+<p>class TrackerCallback:
+ def on_epoch_end(self, epoch, metrics):
+ run.log_metrics(metrics, step=epoch)</p>
+
+<p>def on_checkpoint_save(self, epoch, checkpoint_path):
+ run.log_artifact(checkpoint_path, type=”checkpoint”, epoch=epoch)</p>
+
+<p>trainer.add_callback(TrackerCallback())
+``</p>
 
 <h3 id="2-attention-map-visualization">2. Attention Map Visualization</h3>
 
 <p>For Transformer-based ASR, log and visualize attention maps:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<p>``python
+import matplotlib.pyplot as plt</p>
 
-<span class="k">def</span> <span class="nf">plot_attention</span><span class="p">(</span><span class="n">attention_weights</span><span class="p">,</span> <span class="n">hyp_tokens</span><span class="p">,</span> <span class="n">ref_tokens</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Plot attention matrix.</span><span class="sh">"""</span>
-    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="nf">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
-    <span class="n">ax</span><span class="p">.</span><span class="nf">imshow</span><span class="p">(</span><span class="n">attention_weights</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="sh">'</span><span class="s">Blues</span><span class="sh">'</span><span class="p">)</span>
-    <span class="n">ax</span><span class="p">.</span><span class="nf">set_xticks</span><span class="p">(</span><span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">ref_tokens</span><span class="p">)))</span>
-    <span class="n">ax</span><span class="p">.</span><span class="nf">set_xticklabels</span><span class="p">(</span><span class="n">ref_tokens</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>
-    <span class="n">ax</span><span class="p">.</span><span class="nf">set_yticks</span><span class="p">(</span><span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">hyp_tokens</span><span class="p">)))</span>
-    <span class="n">ax</span><span class="p">.</span><span class="nf">set_yticklabels</span><span class="p">(</span><span class="n">hyp_tokens</span><span class="p">)</span>
-    <span class="n">ax</span><span class="p">.</span><span class="nf">set_xlabel</span><span class="p">(</span><span class="sh">"</span><span class="s">Reference Tokens</span><span class="sh">"</span><span class="p">)</span>
-    <span class="n">ax</span><span class="p">.</span><span class="nf">set_ylabel</span><span class="p">(</span><span class="sh">"</span><span class="s">Hypothesis Tokens</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">fig</span>
+<p>def plot_attention(attention_weights, hyp_tokens, ref_tokens):
+ “"”Plot attention matrix.”””
+ fig, ax = plt.subplots(figsize=(10, 10))
+ ax.imshow(attention_weights, cmap=’Blues’)
+ ax.set_xticks(range(len(ref_tokens)))
+ ax.set_xticklabels(ref_tokens, rotation=90)
+ ax.set_yticks(range(len(hyp_tokens)))
+ ax.set_yticklabels(hyp_tokens)
+ ax.set_xlabel(“Reference Tokens”)
+ ax.set_ylabel(“Hypothesis Tokens”)
+ return fig</p>
 
-<span class="c1"># During evaluation
-</span><span class="n">attention_weights</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">get_attention_weights</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-<span class="n">fig</span> <span class="o">=</span> <span class="nf">plot_attention</span><span class="p">(</span><span class="n">attention_weights</span><span class="p">,</span> <span class="n">hyp_tokens</span><span class="p">,</span> <span class="n">ref_tokens</span><span class="p">)</span>
-<span class="n">run</span><span class="p">.</span><span class="nf">log_figure</span><span class="p">(</span><span class="sh">"</span><span class="s">attention_plot.png</span><span class="sh">"</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="during-evaluation">During evaluation</h1>
+<p>attention_weights = model.get_attention_weights(audio)
+fig = plot_attention(attention_weights, hyp_tokens, ref_tokens)
+run.log_figure(“attention_plot.png”, fig)
+``</p>
 
 <h3 id="3-speaker-level-analysis">3. Speaker-Level Analysis</h3>
 
 <p>Track per-speaker WER to identify performance gaps:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">speaker_level_analysis</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_set</span><span class="p">,</span> <span class="n">run</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Compute and log per-speaker WER.</span><span class="sh">"""</span>
-    <span class="n">speaker_stats</span> <span class="o">=</span> <span class="p">{}</span>
-    
-    <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">test_loader</span><span class="p">:</span>
-        <span class="n">hyps</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">decode</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">audio</span><span class="sh">'</span><span class="p">])</span>
-        <span class="n">refs</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">]</span>
-        <span class="n">speakers</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">speaker_ids</span><span class="sh">'</span><span class="p">]</span>
-        
-        <span class="k">for</span> <span class="n">hyp</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">speaker</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">hyps</span><span class="p">,</span> <span class="n">refs</span><span class="p">,</span> <span class="n">speakers</span><span class="p">):</span>
-            <span class="n">errors</span><span class="p">,</span> <span class="n">words</span> <span class="o">=</span> <span class="nf">compute_wer_details</span><span class="p">(</span><span class="n">hyp</span><span class="p">,</span> <span class="n">ref</span><span class="p">)</span>
-            
-            <span class="k">if</span> <span class="n">speaker</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">speaker_stats</span><span class="p">:</span>
-                <span class="n">speaker_stats</span><span class="p">[</span><span class="n">speaker</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="sh">"</span><span class="s">errors</span><span class="sh">"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="sh">"</span><span class="s">words</span><span class="sh">"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
-            
-            <span class="n">speaker_stats</span><span class="p">[</span><span class="n">speaker</span><span class="p">][</span><span class="sh">"</span><span class="s">errors</span><span class="sh">"</span><span class="p">]</span> <span class="o">+=</span> <span class="n">errors</span>
-            <span class="n">speaker_stats</span><span class="p">[</span><span class="n">speaker</span><span class="p">][</span><span class="sh">"</span><span class="s">words</span><span class="sh">"</span><span class="p">]</span> <span class="o">+=</span> <span class="n">words</span>
-    
-    <span class="c1"># Compute per-speaker WER
-</span>    <span class="k">for</span> <span class="n">speaker</span><span class="p">,</span> <span class="n">stats</span> <span class="ow">in</span> <span class="n">speaker_stats</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-        <span class="n">wer</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="sh">"</span><span class="s">errors</span><span class="sh">"</span><span class="p">]</span> <span class="o">/</span> <span class="nf">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">stats</span><span class="p">[</span><span class="sh">"</span><span class="s">words</span><span class="sh">"</span><span class="p">])</span>
-        <span class="n">run</span><span class="p">.</span><span class="nf">log_metric</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">speaker_</span><span class="si">{</span><span class="n">speaker</span><span class="si">}</span><span class="s">_wer</span><span class="sh">"</span><span class="p">,</span> <span class="n">wer</span><span class="p">)</span>
-    
-    <span class="c1"># Log summary statistics
-</span>    <span class="n">wers</span> <span class="o">=</span> <span class="p">[</span><span class="n">stats</span><span class="p">[</span><span class="sh">"</span><span class="s">errors</span><span class="sh">"</span><span class="p">]</span> <span class="o">/</span> <span class="nf">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">stats</span><span class="p">[</span><span class="sh">"</span><span class="s">words</span><span class="sh">"</span><span class="p">])</span> <span class="k">for</span> <span class="n">stats</span> <span class="ow">in</span> <span class="n">speaker_stats</span><span class="p">.</span><span class="nf">values</span><span class="p">()]</span>
-    <span class="n">run</span><span class="p">.</span><span class="nf">log_metrics</span><span class="p">({</span>
-        <span class="sh">"</span><span class="s">avg_speaker_wer</span><span class="sh">"</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">wers</span><span class="p">),</span>
-        <span class="sh">"</span><span class="s">median_speaker_wer</span><span class="sh">"</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">median</span><span class="p">(</span><span class="n">wers</span><span class="p">),</span>
-        <span class="sh">"</span><span class="s">worst_speaker_wer</span><span class="sh">"</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="n">wers</span><span class="p">),</span>
-        <span class="sh">"</span><span class="s">best_speaker_wer</span><span class="sh">"</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">min</span><span class="p">(</span><span class="n">wers</span><span class="p">)</span>
-    <span class="p">})</span>
-</code></pre></div></div>
+<p>``python
+def speaker_level_analysis(model, test_set, run):
+ “"”Compute and log per-speaker WER.”””
+ speaker_stats = {}</p>
+
+<p>for batch in test_loader:
+ hyps = model.decode(batch[‘audio’])
+ refs = batch[‘text’]
+ speakers = batch[‘speaker_ids’]</p>
+
+<p>for hyp, ref, speaker in zip(hyps, refs, speakers):
+ errors, words = compute_wer_details(hyp, ref)</p>
+
+<p>if speaker not in speaker_stats:
+ speaker_stats[speaker] = {“errors”: 0, “words”: 0}</p>
+
+<p>speaker_stats[speaker][“errors”] += errors
+ speaker_stats[speaker][“words”] += words</p>
+
+<p># Compute per-speaker WER
+ for speaker, stats in speaker_stats.items():
+ wer = stats[“errors”] / max(1, stats[“words”])
+ run.log_metric(f”speaker_{speaker}_wer”, wer)</p>
+
+<p># Log summary statistics
+ wers = [stats[“errors”] / max(1, stats[“words”]) for stats in speaker_stats.values()]
+ run.log_metrics({
+ “avg_speaker_wer”: np.mean(wers),
+ “median_speaker_wer”: np.median(wers),
+ “worst_speaker_wer”: np.max(wers),
+ “best_speaker_wer”: np.min(wers)
+ })
+``</p>
 
 <h2 id="practical-operations-checklist">Practical Operations Checklist</h2>
 
@@ -1135,7 +1137,7 @@
 
 <h3 id="connection-to-thematic-link-systematic-iteration-and-state-tracking">Connection to Thematic Link: Systematic Iteration and State Tracking</h3>
 
-<p>All three Day 19 topics converge on <strong>systematic, stateful exploration</strong>:</p>
+<p>All three topics converge on <strong>systematic, stateful exploration</strong>:</p>
 
 <p><strong>DSA (Spiral Matrix):</strong></p>
 <ul>
@@ -1296,7 +1298,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          13 minute read
+          14 minute read
         
       </span>
     

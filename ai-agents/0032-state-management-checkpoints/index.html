@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="State Management and Checkpoints">
     <meta itemprop="description" content="“Agents that don’t forget: Building reliability through state persistence.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -446,7 +446,7 @@
 <p>Instead of keeping 1,000 messages, every 10 steps, you trigger a “Janitor” agent. It takes the last 10 messages and turns them into a 1-paragraph summary. The raw messages are archived, and the “Live State” now only contains the summary.</p>
 
 <h3 id="92-the-sliding-window-strategy">9.2 The “Sliding Window” Strategy</h3>
-<p>Keep only the $N$ most recent messages (e.g., the last 15). For anything older, rely on <strong>RAG (Retrieval Augmented Generation)</strong> to pull specific facts back into the state ONLY when they are mentioned.</p>
+<p>Keep only the <code class="language-plaintext highlighter-rouge">N</code> most recent messages (e.g., the last 15). For anything older, rely on <strong>RAG (Retrieval Augmented Generation)</strong> to pull specific facts back into the state ONLY when they are mentioned.</p>
 
 <h3 id="93-state-differential-diffs">9.3 State Differential (Diffs)</h3>
 <p>Instead of saving the entire 1MB history blob every time, save only the <strong>Diff</strong>. For example, record: <em>“Added message #24”</em> rather than resaving messages #1 through #24. This reduces your database I/O by 95% for long-running agents.</p>
@@ -500,15 +500,16 @@
 </ol>
 
 <p><strong>The Fix: The “Tool Result Cache”.</strong>
-In your checkpointer, store a hash of the tool name and its arguments.</p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">checkpoint</span> <span class="o">=</span> <span class="p">{</span>
- <span class="sh">"</span><span class="s">history</span><span class="sh">"</span><span class="p">:</span> <span class="p">[...],</span>
- <span class="sh">"</span><span class="s">tool_cache</span><span class="sh">"</span><span class="p">:</span> <span class="p">{</span>
- <span class="sh">"</span><span class="s">hash_ab123</span><span class="sh">"</span><span class="p">:</span> <span class="p">{</span><span class="sh">"</span><span class="s">result</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">Found 5 hotels</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">timestamp</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">2023-10-01T10:00:00Z</span><span class="sh">"</span><span class="p">}</span>
- <span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div></div>
-<p>When the agent tries to call a tool, the orchestrator first checks the <code class="language-plaintext highlighter-rouge">tool_cache</code>. If the hash exists, it returns the cached result <em>without</em> executing the code. This makes your agents <strong>Idempotent</strong> and saves a fortune in API costs.</p>
+In your checkpointer, store a hash of the tool name and its arguments.
+<code class="language-plaintext highlighter-rouge">python
+checkpoint = {
+ "history": [...],
+ "tool_cache": {
+ "hash_ab123": {"result": "Found 5 hotels", "timestamp": "2023-10-01T10:00:00Z"}
+ }
+}
+</code>
+When the agent tries to call a tool, the orchestrator first checks the <code class="language-plaintext highlighter-rouge">tool_cache</code>. If the hash exists, it returns the cached result <em>without</em> executing the code. This makes your agents <strong>Idempotent</strong> and saves a fortune in API costs.</p>
 
 <hr />
 

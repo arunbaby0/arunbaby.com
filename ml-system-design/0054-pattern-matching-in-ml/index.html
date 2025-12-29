@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Pattern Matching in ML">
     <meta itemprop="description" content="“Most ML pipelines are quietly powered by pattern matching—rules, validators, and weak labels before the model ever trains.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -325,28 +325,19 @@ Once you see matching as “compiled states + bounded execution”, you can desi
 
 <h3 id="21-functional-requirements">2.1 Functional requirements</h3>
 <ul>
-  <li>Support multiple pattern types:
-    <ul>
-      <li>literals and wildcards</li>
-      <li>regex</li>
-      <li>dictionary/allowlist rules</li>
-      <li>structured templates (e.g., URL patterns)</li>
-    </ul>
-  </li>
-  <li>Provide match outputs:
-    <ul>
-      <li>boolean match</li>
-      <li>captured groups (when needed)</li>
-      <li>match reason codes (rule IDs)</li>
-    </ul>
-  </li>
-  <li>Provide governance:
-    <ul>
-      <li>rule versioning</li>
-      <li>rollout and rollback</li>
-      <li>ownership and approvals</li>
-    </ul>
-  </li>
+  <li>Support multiple pattern types:</li>
+  <li>literals and wildcards</li>
+  <li>regex</li>
+  <li>dictionary/allowlist rules</li>
+  <li>structured templates (e.g., URL patterns)</li>
+  <li>Provide match outputs:</li>
+  <li>boolean match</li>
+  <li>captured groups (when needed)</li>
+  <li>match reason codes (rule IDs)</li>
+  <li>Provide governance:</li>
+  <li>rule versioning</li>
+  <li>rollout and rollback</li>
+  <li>ownership and approvals</li>
 </ul>
 
 <h3 id="22-non-functional-requirements">2.2 Non-functional requirements</h3>
@@ -361,24 +352,19 @@ Once you see matching as “compiled states + bounded execution”, you can desi
 <p>Different use cases imply different budgets:</p>
 
 <ul>
-  <li><strong>Streaming inference features</strong>
-    <ul>
-      <li>p95 rule evaluation: single-digit milliseconds</li>
-      <li>strict tail latency: avoid worst-case patterns</li>
-    </ul>
+  <li><strong>Streaming inference features</strong></li>
+  <li>p95 rule evaluation: single-digit milliseconds</li>
+  <li>
+    <p>strict tail latency: avoid worst-case patterns</p>
   </li>
-  <li><strong>Log processing / batch ETL</strong>
-    <ul>
-      <li>throughput dominates (TB/day)</li>
-      <li>latency per record can be higher, but total CPU cost matters</li>
-    </ul>
+  <li><strong>Log processing / batch ETL</strong></li>
+  <li>throughput dominates (TB/day)</li>
+  <li>
+    <p>latency per record can be higher, but total CPU cost matters</p>
   </li>
-  <li><strong>Safety / PII filters</strong>
-    <ul>
-      <li>false negatives are expensive (compliance risk)</li>
-      <li>explainability and audit logs matter as much as latency</li>
-    </ul>
-  </li>
+  <li><strong>Safety / PII filters</strong></li>
+  <li>false negatives are expensive (compliance risk)</li>
+  <li>explainability and audit logs matter as much as latency</li>
 </ul>
 
 <p>At 10B events/day, you’re roughly in the regime where:</p>
@@ -404,50 +390,47 @@ Once you see matching as “compiled states + bounded execution”, you can desi
 
 <h2 id="3-high-level-architecture">3. High-Level Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            +-------------------+
-            | Rule Authoring    |
-            | (Git, UI, PRs)    |
-            +---------+---------+
-                      |
-                      v
-            +-------------------+
-            | Rule Compiler     |
-            | (regex → automata |
-            |  wildcard → DP)   |
-            +---------+---------+
-                      |
-                      v
-            +-------------------+      +-------------------+
-            | Rule Registry     | ---&gt; | Runtime Evaluator |
-            | (versions, ACLs)  |      | (stream + batch)  |
-            +---------+---------+      +---------+---------+
-                      |                          |
-                      v                          v
-            +-------------------+      +-------------------+
-            | Observability     |      | Downstream        |
-            | (matches, stats)  |      | (labels, filters) |
-            +-------------------+      +-------------------+
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+ +-------------------+
+ | Rule Authoring |
+ | (Git, UI, PRs) |
+ +---------+---------+
+ |
+ v
+ +-------------------+
+ | Rule Compiler |
+ | (regex → automata |
+ | wildcard → DP) |
+ +---------+---------+
+ |
+ v
+ +-------------------+ +-------------------+
+ | Rule Registry | ---&gt; | Runtime Evaluator |
+ | (versions, ACLs) | | (stream + batch) |
+ +---------+---------+ +---------+---------+
+ | |
+ v v
+ +-------------------+ +-------------------+
+ | Observability | | Downstream |
+ | (matches, stats) | | (labels, filters) |
+ +-------------------+ +-------------------+
+</code></p>
 
 <h3 id="31-control-plane-vs-data-plane-the-operability-split">3.1 Control plane vs data plane (the operability split)</h3>
 <p>Pattern matching systems typically split into:</p>
 
 <ul>
-  <li><strong>Control plane</strong>
-    <ul>
-      <li>rule authoring UX + approvals</li>
-      <li>compilation and validation (linting, safety checks)</li>
-      <li>versioning, rollout, rollback</li>
-      <li>ownership and audit logs</li>
-    </ul>
+  <li><strong>Control plane</strong></li>
+  <li>rule authoring UX + approvals</li>
+  <li>compilation and validation (linting, safety checks)</li>
+  <li>versioning, rollout, rollback</li>
+  <li>
+    <p>ownership and audit logs</p>
   </li>
-  <li><strong>Data plane</strong>
-    <ul>
-      <li>low-latency evaluator (streaming and/or serving)</li>
-      <li>batch evaluator (Spark/Flink jobs)</li>
-      <li>caching and rate limiting</li>
-    </ul>
-  </li>
+  <li><strong>Data plane</strong></li>
+  <li>low-latency evaluator (streaming and/or serving)</li>
+  <li>batch evaluator (Spark/Flink jobs)</li>
+  <li>caching and rate limiting</li>
 </ul>
 
 <p>This split is important because it lets you:</p>
@@ -535,22 +518,17 @@ A more production-friendly approach is to define a small rule language with:</p>
 You want to compile patterns into runtime artifacts:</p>
 
 <ul>
-  <li><strong>Wildcards</strong>
-    <ul>
-      <li>compile to automata where possible</li>
-      <li>or use a safe matching algorithm (DP or greedy) with bounded runtime</li>
-    </ul>
+  <li><strong>Wildcards</strong></li>
+  <li>compile to automata where possible</li>
+  <li>
+    <p>or use a safe matching algorithm (DP or greedy) with bounded runtime</p>
   </li>
-  <li><strong>Multiple literal patterns</strong>
-    <ul>
-      <li>compile into a trie / Aho-Corasick automaton (multi-pattern substring matching)</li>
-    </ul>
+  <li><strong>Multiple literal patterns</strong></li>
+  <li>
+    <p>compile into a trie / Aho-Corasick automaton (multi-pattern substring matching)</p>
   </li>
-  <li><strong>Regex</strong>
-    <ul>
-      <li>compile into NFA/DFA-like machines (or use a guaranteed-linear engine like RE2)</li>
-    </ul>
-  </li>
+  <li><strong>Regex</strong></li>
+  <li>compile into NFA/DFA-like machines (or use a guaranteed-linear engine like RE2)</li>
 </ul>
 
 <p>This is the same conceptual move as the DSA “Wildcard Matching” problem:
@@ -668,24 +646,19 @@ Without governance, rule systems fail in predictable ways:</p>
 So they need the same testing stack you expect for production code:</p>
 
 <ul>
-  <li><strong>Golden tests</strong>
-    <ul>
-      <li>small curated examples with expected match outputs</li>
-      <li>should include edge cases and “near misses”</li>
-    </ul>
+  <li><strong>Golden tests</strong></li>
+  <li>small curated examples with expected match outputs</li>
+  <li>
+    <p>should include edge cases and “near misses”</p>
   </li>
-  <li><strong>Property-based tests</strong>
-    <ul>
-      <li>fuzz around boundaries (e.g., URL templates, Unicode, whitespace)</li>
-      <li>catch unexpected over-matching</li>
-    </ul>
+  <li><strong>Property-based tests</strong></li>
+  <li>fuzz around boundaries (e.g., URL templates, Unicode, whitespace)</li>
+  <li>
+    <p>catch unexpected over-matching</p>
   </li>
-  <li><strong>Replay tests</strong>
-    <ul>
-      <li>run against sampled production logs (privacy-safe)</li>
-      <li>diff match rates and top rule matches by segment</li>
-    </ul>
-  </li>
+  <li><strong>Replay tests</strong></li>
+  <li>run against sampled production logs (privacy-safe)</li>
+  <li>diff match rates and top rule matches by segment</li>
 </ul>
 
 <h3 id="46-explainability-ux-what-teams-actually-want">4.6 Explainability UX (what teams actually want)</h3>
@@ -748,26 +721,27 @@ shadow → canary → ramp → rollback.</p>
 
 <p>Here’s an example of wildcard matching used inside a data pipeline (conceptual):</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">wildcard_match</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="c1"># Same DP idea as the DSA wildcard problem; simplified for illustration.
-</span>    <span class="n">m</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="nf">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
-    <span class="n">dp</span> <span class="o">=</span> <span class="p">[</span><span class="bp">False</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">dp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
-    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="n">dp</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">dp</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="sh">"</span><span class="s">*</span><span class="sh">"</span> <span class="k">else</span> <span class="bp">False</span>
+<p>``python
+def wildcard_match(s: str, p: str) -&gt; bool:
+ # Same DP idea as the DSA wildcard problem; simplified for illustration.
+ m, n = len(s), len(p)
+ dp = [False] * (n + 1)
+ dp[0] = True
+ for j in range(1, n + 1):
+ dp[j] = dp[j - 1] if p[j - 1] == “*” else False</p>
 
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">m</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="n">prev_diag</span> <span class="o">=</span> <span class="n">dp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">dp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="n">tmp</span> <span class="o">=</span> <span class="n">dp</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="sh">"</span><span class="s">*</span><span class="sh">"</span><span class="p">:</span>
-                <span class="n">dp</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">dp</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="ow">or</span> <span class="n">dp</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">dp</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">prev_diag</span> <span class="ow">and</span> <span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="sh">"</span><span class="s">?</span><span class="sh">"</span> <span class="ow">or</span> <span class="n">p</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
-            <span class="n">prev_diag</span> <span class="o">=</span> <span class="n">tmp</span>
-    <span class="k">return</span> <span class="n">dp</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
-</code></pre></div></div>
+<p>for i in range(1, m + 1):
+ prev_diag = dp[0]
+ dp[0] = False
+ for j in range(1, n + 1):
+ tmp = dp[j]
+ if p[j - 1] == “*”:
+ dp[j] = dp[j] or dp[j - 1]
+ else:
+ dp[j] = prev_diag and (p[j - 1] == “?” or p[j - 1] == s[i - 1])
+ prev_diag = tmp
+ return dp[n]
+``</p>
 
 <p>In production, you’d compile wildcard patterns once and run them many times, rather than DP per event.</p>
 
@@ -940,13 +914,10 @@ If you want the system to improve, design a feedback loop:</p>
 <ul>
   <li>allow downstream teams to label matches as correct/incorrect</li>
   <li>store those judgments with rule_id + version</li>
-  <li>use them to drive:
-    <ul>
-      <li>rule updates (narrow/broaden)</li>
-      <li>training data for learned verifiers</li>
-      <li>regression tests (golden cases)</li>
-    </ul>
-  </li>
+  <li>use them to drive:</li>
+  <li>rule updates (narrow/broaden)</li>
+  <li>training data for learned verifiers</li>
+  <li>regression tests (golden cases)</li>
 </ul>
 
 <p>This is why the system needs stable IDs and versioning: feedback is meaningless if rules can’t be referenced precisely.</p>

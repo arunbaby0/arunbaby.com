@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Boundary Detection in ML">
     <meta itemprop="description" content="“Defining where one object ends and another begins.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -255,16 +255,10 @@
 <h2 id="1-the-problem-edges-vs-boundaries">1. The Problem: Edges vs. Boundaries</h2>
 
 <ul>
-  <li><strong>Edge Detection:</strong> Finding sharp changes in pixel intensity (low-level).
-    <ul>
-      <li>Example: A checkerboard pattern has many edges.</li>
-    </ul>
-  </li>
-  <li><strong>Boundary Detection:</strong> Finding semantically meaningful contours of objects (high-level).
-    <ul>
-      <li>Example: The outline of a “Dog” or “Car”.</li>
-    </ul>
-  </li>
+  <li><strong>Edge Detection:</strong> Finding sharp changes in pixel intensity (low-level).</li>
+  <li>Example: A checkerboard pattern has many edges.</li>
+  <li><strong>Boundary Detection:</strong> Finding semantically meaningful contours of objects (high-level).</li>
+  <li>Example: The outline of a “Dog” or “Car”.</li>
 </ul>
 
 <p><strong>Applications:</strong></p>
@@ -282,7 +276,7 @@
 <p>The gold standard for decades.</p>
 <ol>
   <li><strong>Gaussian Blur:</strong> Remove noise.</li>
-  <li><strong>Gradient Calculation:</strong> Find intensity change ($\nabla I$) using Sobel filters.</li>
+  <li><strong>Gradient Calculation:</strong> Find intensity change (<code class="language-plaintext highlighter-rouge">\nabla I</code>) using Sobel filters.</li>
   <li><strong>Non-Maximum Suppression:</strong> Thin out edges to 1-pixel width.</li>
   <li><strong>Hysteresis Thresholding:</strong> Keep strong edges, and weak edges connected to strong ones.</li>
 </ol>
@@ -312,7 +306,7 @@
 <ul>
   <li>Not just “is this an edge?”, but “is this a Dog edge or a Car edge?”.</li>
   <li><strong>Architecture:</strong> ResNet-101 with multi-label loss.</li>
-  <li><strong>Output:</strong> $K$ channels, one for each class boundary.</li>
+  <li><strong>Output:</strong> <code class="language-plaintext highlighter-rouge">K</code> channels, one for each class boundary.</li>
 </ul>
 
 <h2 id="4-deep-dive-u-net-for-boundary-detection">4. Deep Dive: U-Net for Boundary Detection</h2>
@@ -329,8 +323,8 @@
 <p><strong>Loss Function for Thin Boundaries:</strong>
 Standard Cross-Entropy produces thick, blurry boundaries.
 <strong>Solution:</strong> <strong>Dice Loss</strong> or <strong>Tversky Loss</strong>.
-\(Dice = \frac{2 |P \cap G|}{|P| + |G|}\)
-Where $P$ is prediction, $G$ is ground truth.</p>
+<code class="language-plaintext highlighter-rouge">Dice = \frac{2 |P \cap G|}{|P| + |G|}</code>
+Where <code class="language-plaintext highlighter-rouge">P</code> is prediction, <code class="language-plaintext highlighter-rouge">G</code> is ground truth.</p>
 
 <h2 id="5-system-design-lane-detection-system">5. System Design: Lane Detection System</h2>
 
@@ -347,7 +341,7 @@ Where $P$ is prediction, $G$ is ground truth.</p>
   </li>
   <li><strong>Post-processing:</strong>
     <ul>
-      <li>Curve Fitting: Fit a 2nd or 3rd degree polynomial ($y = ax^2 + bx + c$) to the points.</li>
+      <li>Curve Fitting: Fit a 2nd or 3rd degree polynomial (<code class="language-plaintext highlighter-rouge">y = ax^2 + bx + c</code>) to the points.</li>
       <li>Kalman Filter: Smooth predictions over time (lanes don’t jump).</li>
     </ul>
   </li>
@@ -367,12 +361,9 @@ Where $P$ is prediction, $G$ is ground truth.</p>
 <p><strong>Concept:</strong></p>
 <ul>
   <li>Define a curve (snake) around the object.</li>
-  <li>Define an <strong>Energy Function</strong>:
-    <ul>
-      <li>$E_{internal}$: Smoothness (don’t bend too sharply).</li>
-      <li>$E_{external}$: Image forces (snap to high gradients).</li>
-    </ul>
-  </li>
+  <li>Define an <strong>Energy Function</strong>:</li>
+  <li><code class="language-plaintext highlighter-rouge">E_{internal}</code>: Smoothness (don’t bend too sharply).</li>
+  <li><code class="language-plaintext highlighter-rouge">E_{external}</code>: Image forces (snap to high gradients).</li>
   <li>Minimize energy iteratively. The snake “shrinks-wraps” the object.</li>
 </ul>
 
@@ -445,83 +436,84 @@ Where $P$ is prediction, $G$ is ground truth.</p>
 
 <p>Let’s implement a production-ready U-Net in PyTorch.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">DoubleConv</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Sequential</span><span class="p">(</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">BatchNorm2d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Conv2d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">BatchNorm2d</span><span class="p">(</span><span class="n">out_channels</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<p>class DoubleConv(nn.Module):
+ def <strong>init</strong>(self, in_channels, out_channels):
+ super().<strong>init</strong>()
+ self.conv = nn.Sequential(
+ nn.Conv2d(in_channels, out_channels, 3, padding=1),
+ nn.BatchNorm2d(out_channels),
+ nn.ReLU(inplace=True),
+ nn.Conv2d(out_channels, out_channels, 3, padding=1),
+ nn.BatchNorm2d(out_channels),
+ nn.ReLU(inplace=True)
+ )</p>
 
-<span class="k">class</span> <span class="nc">UNet</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="c1"># Encoder
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">enc1</span> <span class="o">=</span> <span class="nc">DoubleConv</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">enc2</span> <span class="o">=</span> <span class="nc">DoubleConv</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">enc3</span> <span class="o">=</span> <span class="nc">DoubleConv</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">enc4</span> <span class="o">=</span> <span class="nc">DoubleConv</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">pool</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">MaxPool2d</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-        
-        <span class="c1"># Bottleneck
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">bottleneck</span> <span class="o">=</span> <span class="nc">DoubleConv</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">1024</span><span class="p">)</span>
-        
-        <span class="c1"># Decoder
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">upconv4</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ConvTranspose2d</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">dec4</span> <span class="o">=</span> <span class="nc">DoubleConv</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="mi">512</span><span class="p">)</span>  <span class="c1"># 1024 = 512 (upconv) + 512 (skip)
-</span>        
-        <span class="n">self</span><span class="p">.</span><span class="n">upconv3</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ConvTranspose2d</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">dec3</span> <span class="o">=</span> <span class="nc">DoubleConv</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">upconv2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ConvTranspose2d</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">dec2</span> <span class="o">=</span> <span class="nc">DoubleConv</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">128</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">upconv1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ConvTranspose2d</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">dec1</span> <span class="o">=</span> <span class="nc">DoubleConv</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">out</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Conv2d</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="c1"># Encoder
-</span>        <span class="n">e1</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">enc1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">e2</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">enc2</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nf">pool</span><span class="p">(</span><span class="n">e1</span><span class="p">))</span>
-        <span class="n">e3</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">enc3</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nf">pool</span><span class="p">(</span><span class="n">e2</span><span class="p">))</span>
-        <span class="n">e4</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">enc4</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nf">pool</span><span class="p">(</span><span class="n">e3</span><span class="p">))</span>
-        
-        <span class="c1"># Bottleneck
-</span>        <span class="n">b</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">bottleneck</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nf">pool</span><span class="p">(</span><span class="n">e4</span><span class="p">))</span>
-        
-        <span class="c1"># Decoder with skip connections
-</span>        <span class="n">d4</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">upconv4</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
-        <span class="n">d4</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span><span class="n">d4</span><span class="p">,</span> <span class="n">e4</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">d4</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">dec4</span><span class="p">(</span><span class="n">d4</span><span class="p">)</span>
-        
-        <span class="n">d3</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">upconv3</span><span class="p">(</span><span class="n">d4</span><span class="p">)</span>
-        <span class="n">d3</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span><span class="n">d3</span><span class="p">,</span> <span class="n">e3</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">d3</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">dec3</span><span class="p">(</span><span class="n">d3</span><span class="p">)</span>
-        
-        <span class="n">d2</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">upconv2</span><span class="p">(</span><span class="n">d3</span><span class="p">)</span>
-        <span class="n">d2</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span><span class="n">d2</span><span class="p">,</span> <span class="n">e2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">d2</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">dec2</span><span class="p">(</span><span class="n">d2</span><span class="p">)</span>
-        
-        <span class="n">d1</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">upconv1</span><span class="p">(</span><span class="n">d2</span><span class="p">)</span>
-        <span class="n">d1</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span><span class="n">d1</span><span class="p">,</span> <span class="n">e1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">d1</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">dec1</span><span class="p">(</span><span class="n">d1</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">torch</span><span class="p">.</span><span class="nf">sigmoid</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nf">out</span><span class="p">(</span><span class="n">d1</span><span class="p">))</span>
-</code></pre></div></div>
+<p>def forward(self, x):
+ return self.conv(x)</p>
+
+<p>class UNet(nn.Module):
+ def <strong>init</strong>(self, in_channels=3, out_channels=1):
+ super().<strong>init</strong>()</p>
+
+<p># Encoder
+ self.enc1 = DoubleConv(in_channels, 64)
+ self.enc2 = DoubleConv(64, 128)
+ self.enc3 = DoubleConv(128, 256)
+ self.enc4 = DoubleConv(256, 512)</p>
+
+<p>self.pool = nn.MaxPool2d(2)</p>
+
+<p># Bottleneck
+ self.bottleneck = DoubleConv(512, 1024)</p>
+
+<p># Decoder
+ self.upconv4 = nn.ConvTranspose2d(1024, 512, 2, stride=2)
+ self.dec4 = DoubleConv(1024, 512) # 1024 = 512 (upconv) + 512 (skip)</p>
+
+<p>self.upconv3 = nn.ConvTranspose2d(512, 256, 2, stride=2)
+ self.dec3 = DoubleConv(512, 256)</p>
+
+<p>self.upconv2 = nn.ConvTranspose2d(256, 128, 2, stride=2)
+ self.dec2 = DoubleConv(256, 128)</p>
+
+<p>self.upconv1 = nn.ConvTranspose2d(128, 64, 2, stride=2)
+ self.dec1 = DoubleConv(128, 64)</p>
+
+<p>self.out = nn.Conv2d(64, out_channels, 1)</p>
+
+<p>def forward(self, x):
+ # Encoder
+ e1 = self.enc1(x)
+ e2 = self.enc2(self.pool(e1))
+ e3 = self.enc3(self.pool(e2))
+ e4 = self.enc4(self.pool(e3))</p>
+
+<p># Bottleneck
+ b = self.bottleneck(self.pool(e4))</p>
+
+<p># Decoder with skip connections
+ d4 = self.upconv4(b)
+ d4 = torch.cat([d4, e4], dim=1)
+ d4 = self.dec4(d4)</p>
+
+<p>d3 = self.upconv3(d4)
+ d3 = torch.cat([d3, e3], dim=1)
+ d3 = self.dec3(d3)</p>
+
+<p>d2 = self.upconv2(d3)
+ d2 = torch.cat([d2, e2], dim=1)
+ d2 = self.dec2(d2)</p>
+
+<p>d1 = self.upconv1(d2)
+ d1 = torch.cat([d1, e1], dim=1)
+ d1 = self.dec1(d1)</p>
+
+<p>return torch.sigmoid(self.out(d1))
+``</p>
 
 <h2 id="11-deep-dive-loss-functions-for-boundary-detection">11. Deep Dive: Loss Functions for Boundary Detection</h2>
 
@@ -530,108 +522,114 @@ Where $P$ is prediction, $G$ is ground truth.</p>
 <h3 id="1-weighted-bce-class-imbalance">1. Weighted BCE (Class Imbalance)</h3>
 <p>Boundary pixels are rare (&lt; 5% of image). Weight them higher.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">weighted_bce_loss</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">pos_weight</span><span class="o">=</span><span class="mf">10.0</span><span class="p">):</span>
-    <span class="n">bce</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">BCEWithLogitsLoss</span><span class="p">(</span><span class="n">pos_weight</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([</span><span class="n">pos_weight</span><span class="p">]))</span>
-    <span class="k">return</span> <span class="nf">bce</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">python
+def weighted_bce_loss(pred, target, pos_weight=10.0):
+ bce = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight]))
+ return bce(pred, target)
+</code></p>
 
 <h3 id="2-dice-loss-overlap-metric">2. Dice Loss (Overlap Metric)</h3>
 <p>Directly optimizes for IoU.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">dice_loss</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
-    <span class="n">pred</span> <span class="o">=</span> <span class="n">pred</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">target</span> <span class="o">=</span> <span class="n">target</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-    
-    <span class="n">intersection</span> <span class="o">=</span> <span class="p">(</span><span class="n">pred</span> <span class="o">*</span> <span class="n">target</span><span class="p">).</span><span class="nf">sum</span><span class="p">()</span>
-    <span class="n">dice</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.</span> <span class="o">*</span> <span class="n">intersection</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">pred</span><span class="p">.</span><span class="nf">sum</span><span class="p">()</span> <span class="o">+</span> <span class="n">target</span><span class="p">.</span><span class="nf">sum</span><span class="p">()</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">dice</span>
-</code></pre></div></div>
+<p>``python
+def dice_loss(pred, target, smooth=1.0):
+ pred = pred.view(-1)
+ target = target.view(-1)</p>
+
+<p>intersection = (pred * target).sum()
+ dice = (2. * intersection + smooth) / (pred.sum() + target.sum() + smooth)</p>
+
+<p>return 1 - dice
+``</p>
 
 <h3 id="3-tversky-loss-precisionrecall-trade-off">3. Tversky Loss (Precision/Recall Trade-off)</h3>
 <p>Generalization of Dice. Control false positives vs. false negatives.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">tversky_loss</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
-    <span class="n">pred</span> <span class="o">=</span> <span class="n">pred</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">target</span> <span class="o">=</span> <span class="n">target</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-    
-    <span class="n">TP</span> <span class="o">=</span> <span class="p">(</span><span class="n">pred</span> <span class="o">*</span> <span class="n">target</span><span class="p">).</span><span class="nf">sum</span><span class="p">()</span>
-    <span class="n">FP</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">target</span><span class="p">)</span> <span class="o">*</span> <span class="n">pred</span><span class="p">).</span><span class="nf">sum</span><span class="p">()</span>
-    <span class="n">FN</span> <span class="o">=</span> <span class="p">(</span><span class="n">target</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">pred</span><span class="p">)).</span><span class="nf">sum</span><span class="p">()</span>
-    
-    <span class="n">tversky</span> <span class="o">=</span> <span class="p">(</span><span class="n">TP</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">TP</span> <span class="o">+</span> <span class="n">alpha</span><span class="o">*</span><span class="n">FP</span> <span class="o">+</span> <span class="n">beta</span><span class="o">*</span><span class="n">FN</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">)</span>
-    <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">tversky</span>
-</code></pre></div></div>
+<p>``python
+def tversky_loss(pred, target, alpha=0.7, beta=0.3, smooth=1.0):
+ pred = pred.view(-1)
+ target = target.view(-1)</p>
+
+<p>TP = (pred * target).sum()
+ FP = ((1 - target) * pred).sum()
+ FN = (target * (1 - pred)).sum()</p>
+
+<p>tversky = (TP + smooth) / (TP + alpha<em>FP + beta</em>FN + smooth)
+ return 1 - tversky
+``</p>
 
 <h3 id="4-focal-loss-hard-examples">4. Focal Loss (Hard Examples)</h3>
 <p>Down-weight easy examples, focus on hard ones.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">focal_loss</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">2.0</span><span class="p">):</span>
-    <span class="n">bce</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="nf">binary_cross_entropy</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="sh">'</span><span class="s">none</span><span class="sh">'</span><span class="p">)</span>
-    <span class="n">pt</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">exp</span><span class="p">(</span><span class="o">-</span><span class="n">bce</span><span class="p">)</span>
-    <span class="n">focal</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">pt</span><span class="p">)</span> <span class="o">**</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">bce</span>
-    <span class="k">return</span> <span class="n">focal</span><span class="p">.</span><span class="nf">mean</span><span class="p">()</span>
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">python
+def focal_loss(pred, target, alpha=0.25, gamma=2.0):
+ bce = nn.functional.binary_cross_entropy(pred, target, reduction='none')
+ pt = torch.exp(-bce)
+ focal = alpha * (1 - pt) ** gamma * bce
+ return focal.mean()
+</code></p>
 
 <h2 id="12-deep-dive-post-processing-techniques">12. Deep Dive: Post-Processing Techniques</h2>
 
 <p>Raw model output is noisy. Refine it.</p>
 
 <h3 id="1-morphological-operations">1. Morphological Operations</h3>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">cv2</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+import cv2
+import numpy as np</p>
 
-<span class="k">def</span> <span class="nf">post_process_boundary</span><span class="p">(</span><span class="n">mask</span><span class="p">):</span>
-    <span class="c1"># Convert to uint8
-</span>    <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">mask</span> <span class="o">*</span> <span class="mi">255</span><span class="p">).</span><span class="nf">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">uint8</span><span class="p">)</span>
-    
-    <span class="c1"># Morphological closing (fill small gaps)
-</span>    <span class="n">kernel</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">np</span><span class="p">.</span><span class="n">uint8</span><span class="p">)</span>
-    <span class="n">mask</span> <span class="o">=</span> <span class="n">cv2</span><span class="p">.</span><span class="nf">morphologyEx</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">cv2</span><span class="p">.</span><span class="n">MORPH_CLOSE</span><span class="p">,</span> <span class="n">kernel</span><span class="p">)</span>
-    
-    <span class="c1"># Skeletonization (thin to 1-pixel width)
-</span>    <span class="n">mask</span> <span class="o">=</span> <span class="n">cv2</span><span class="p">.</span><span class="n">ximgproc</span><span class="p">.</span><span class="nf">thinning</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">mask</span>
-</code></pre></div></div>
+<p>def post_process_boundary(mask):
+ # Convert to uint8
+ mask = (mask * 255).astype(np.uint8)</p>
+
+<p># Morphological closing (fill small gaps)
+ kernel = np.ones((3, 3), np.uint8)
+ mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)</p>
+
+<p># Skeletonization (thin to 1-pixel width)
+ mask = cv2.ximgproc.thinning(mask)</p>
+
+<p>return mask
+``</p>
 
 <h3 id="2-non-maximum-suppression-nms">2. Non-Maximum Suppression (NMS)</h3>
 <p>Keep only local maxima along the gradient direction.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">non_max_suppression</span><span class="p">(</span><span class="n">edge_map</span><span class="p">,</span> <span class="n">gradient_direction</span><span class="p">):</span>
-    <span class="n">M</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="n">edge_map</span><span class="p">.</span><span class="n">shape</span>
-    <span class="n">suppressed</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">zeros</span><span class="p">((</span><span class="n">M</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
-    
-    <span class="n">angle</span> <span class="o">=</span> <span class="n">gradient_direction</span> <span class="o">*</span> <span class="mf">180.</span> <span class="o">/</span> <span class="n">np</span><span class="p">.</span><span class="n">pi</span>
-    <span class="n">angle</span><span class="p">[</span><span class="n">angle</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">180</span>
-    
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">M</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
-            <span class="n">q</span> <span class="o">=</span> <span class="mi">255</span>
-            <span class="n">r</span> <span class="o">=</span> <span class="mi">255</span>
-            
-            <span class="c1"># Angle 0
-</span>            <span class="nf">if </span><span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">angle</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">22.5</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="mf">157.5</span> <span class="o">&lt;=</span> <span class="n">angle</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">180</span><span class="p">):</span>
-                <span class="n">q</span> <span class="o">=</span> <span class="n">edge_map</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
-                <span class="n">r</span> <span class="o">=</span> <span class="n">edge_map</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="c1"># Angle 45
-</span>            <span class="nf">elif </span><span class="p">(</span><span class="mf">22.5</span> <span class="o">&lt;=</span> <span class="n">angle</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">67.5</span><span class="p">):</span>
-                <span class="n">q</span> <span class="o">=</span> <span class="n">edge_map</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-                <span class="n">r</span> <span class="o">=</span> <span class="n">edge_map</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
-            <span class="c1"># Angle 90
-</span>            <span class="nf">elif </span><span class="p">(</span><span class="mf">67.5</span> <span class="o">&lt;=</span> <span class="n">angle</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">112.5</span><span class="p">):</span>
-                <span class="n">q</span> <span class="o">=</span> <span class="n">edge_map</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
-                <span class="n">r</span> <span class="o">=</span> <span class="n">edge_map</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
-            <span class="c1"># Angle 135
-</span>            <span class="nf">elif </span><span class="p">(</span><span class="mf">112.5</span> <span class="o">&lt;=</span> <span class="n">angle</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">157.5</span><span class="p">):</span>
-                <span class="n">q</span> <span class="o">=</span> <span class="n">edge_map</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-                <span class="n">r</span> <span class="o">=</span> <span class="n">edge_map</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
-            
-            <span class="nf">if </span><span class="p">(</span><span class="n">edge_map</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">q</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">edge_map</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">r</span><span class="p">):</span>
-                <span class="n">suppressed</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">edge_map</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span>
-    
-    <span class="k">return</span> <span class="n">suppressed</span>
-</code></pre></div></div>
+<p>``python
+def non_max_suppression(edge_map, gradient_direction):
+ M, N = edge_map.shape
+ suppressed = np.zeros((M, N))</p>
+
+<p>angle = gradient_direction * 180. / np.pi
+ angle[angle &lt; 0] += 180</p>
+
+<p>for i in range(1, M-1):
+ for j in range(1, N-1):
+ q = 255
+ r = 255</p>
+
+<p># Angle 0
+ if (0 &lt;= angle[i,j] &lt; 22.5) or (157.5 &lt;= angle[i,j] &lt;= 180):
+ q = edge_map[i, j+1]
+ r = edge_map[i, j-1]
+ # Angle 45
+ elif (22.5 &lt;= angle[i,j] &lt; 67.5):
+ q = edge_map[i+1, j-1]
+ r = edge_map[i-1, j+1]
+ # Angle 90
+ elif (67.5 &lt;= angle[i,j] &lt; 112.5):
+ q = edge_map[i+1, j]
+ r = edge_map[i-1, j]
+ # Angle 135
+ elif (112.5 &lt;= angle[i,j] &lt; 157.5):
+ q = edge_map[i-1, j-1]
+ r = edge_map[i+1, j+1]</p>
+
+<p>if (edge_map[i,j] &gt;= q) and (edge_map[i,j] &gt;= r):
+ suppressed[i,j] = edge_map[i,j]</p>
+
+<p>return suppressed
+``</p>
 
 <h2 id="13-deep-dive-real-time-deployment-optimizations">13. Deep Dive: Real-Time Deployment Optimizations</h2>
 
@@ -640,107 +638,112 @@ Where $P$ is prediction, $G$ is ground truth.</p>
 <h3 id="1-model-quantization">1. Model Quantization</h3>
 <p>Convert FP32 to INT8.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch.quantization</span>
+<p>``python
+import torch.quantization</p>
 
-<span class="n">model_fp32</span> <span class="o">=</span> <span class="nc">UNet</span><span class="p">()</span>
-<span class="n">model_fp32</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
+<p>model_fp32 = UNet()
+model_fp32.eval()</p>
 
-<span class="c1"># Post-training static quantization
-</span><span class="n">model_int8</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">quantization</span><span class="p">.</span><span class="nf">quantize_dynamic</span><span class="p">(</span>
-    <span class="n">model_fp32</span><span class="p">,</span>
-    <span class="p">{</span><span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Conv2d</span><span class="p">,</span> <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">},</span>
-    <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">qint8</span>
-<span class="p">)</span>
+<h1 id="post-training-static-quantization">Post-training static quantization</h1>
+<p>model_int8 = torch.quantization.quantize_dynamic(
+ model_fp32,
+ {torch.nn.Conv2d, torch.nn.Linear},
+ dtype=torch.qint8
+)</p>
 
-<span class="c1"># Speedup: 3-4x on CPU
-</span></code></pre></div></div>
+<h1 id="speedup-3-4x-on-cpu">Speedup: 3-4x on CPU</h1>
+<p>``</p>
 
 <h3 id="2-tensorrt-optimization">2. TensorRT Optimization</h3>
 <p>NVIDIA’s inference optimizer.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">tensorrt</span> <span class="k">as</span> <span class="n">trt</span>
+<p>``python
+import tensorrt as trt</p>
 
-<span class="c1"># Convert PyTorch model to ONNX
-</span><span class="n">torch</span><span class="p">.</span><span class="n">onnx</span><span class="p">.</span><span class="nf">export</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dummy_input</span><span class="p">,</span> <span class="sh">"</span><span class="s">unet.onnx</span><span class="sh">"</span><span class="p">)</span>
+<h1 id="convert-pytorch-model-to-onnx">Convert PyTorch model to ONNX</h1>
+<p>torch.onnx.export(model, dummy_input, “unet.onnx”)</p>
 
-<span class="c1"># Build TensorRT engine
-</span><span class="n">TRT_LOGGER</span> <span class="o">=</span> <span class="n">trt</span><span class="p">.</span><span class="nc">Logger</span><span class="p">(</span><span class="n">trt</span><span class="p">.</span><span class="n">Logger</span><span class="p">.</span><span class="n">WARNING</span><span class="p">)</span>
-<span class="n">builder</span> <span class="o">=</span> <span class="n">trt</span><span class="p">.</span><span class="nc">Builder</span><span class="p">(</span><span class="n">TRT_LOGGER</span><span class="p">)</span>
-<span class="n">network</span> <span class="o">=</span> <span class="n">builder</span><span class="p">.</span><span class="nf">create_network</span><span class="p">()</span>
-<span class="n">parser</span> <span class="o">=</span> <span class="n">trt</span><span class="p">.</span><span class="nc">OnnxParser</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">TRT_LOGGER</span><span class="p">)</span>
+<h1 id="build-tensorrt-engine">Build TensorRT engine</h1>
+<p>TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
+builder = trt.Builder(TRT_LOGGER)
+network = builder.create_network()
+parser = trt.OnnxParser(network, TRT_LOGGER)</p>
 
-<span class="k">with</span> <span class="nf">open</span><span class="p">(</span><span class="sh">"</span><span class="s">unet.onnx</span><span class="sh">"</span><span class="p">,</span> <span class="sh">'</span><span class="s">rb</span><span class="sh">'</span><span class="p">)</span> <span class="k">as</span> <span class="n">model_file</span><span class="p">:</span>
-    <span class="n">parser</span><span class="p">.</span><span class="nf">parse</span><span class="p">(</span><span class="n">model_file</span><span class="p">.</span><span class="nf">read</span><span class="p">())</span>
+<p>with open(“unet.onnx”, ‘rb’) as model_file:
+ parser.parse(model_file.read())</p>
 
-<span class="n">config</span> <span class="o">=</span> <span class="n">builder</span><span class="p">.</span><span class="nf">create_builder_config</span><span class="p">()</span>
-<span class="n">config</span><span class="p">.</span><span class="n">max_workspace_size</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">30</span>  <span class="c1"># 1GB
-</span><span class="n">config</span><span class="p">.</span><span class="nf">set_flag</span><span class="p">(</span><span class="n">trt</span><span class="p">.</span><span class="n">BuilderFlag</span><span class="p">.</span><span class="n">FP16</span><span class="p">)</span>  <span class="c1"># Use FP16
-</span>
-<span class="n">engine</span> <span class="o">=</span> <span class="n">builder</span><span class="p">.</span><span class="nf">build_engine</span><span class="p">(</span><span class="n">network</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+<p>config = builder.create_builder_config()
+config.max_workspace_size = 1 « 30 # 1GB
+config.set_flag(trt.BuilderFlag.FP16) # Use FP16</p>
 
-<span class="c1"># Speedup: 5-10x on GPU
-</span></code></pre></div></div>
+<p>engine = builder.build_engine(network, config)</p>
+
+<h1 id="speedup-5-10x-on-gpu">Speedup: 5-10x on GPU</h1>
+<p>``</p>
 
 <h3 id="3-spatial-pyramid-pooling">3. Spatial Pyramid Pooling</h3>
 <p>Process multiple scales simultaneously.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SPPLayer</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">num_levels</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">num_levels</span> <span class="o">=</span> <span class="n">num_levels</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="n">batch_size</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="nf">size</span><span class="p">()</span>
-        <span class="n">pooled</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">num_levels</span><span class="p">):</span>
-            <span class="n">level</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
-            <span class="n">kernel_size</span> <span class="o">=</span> <span class="p">(</span><span class="n">h</span> <span class="o">//</span> <span class="n">level</span><span class="p">,</span> <span class="n">w</span> <span class="o">//</span> <span class="n">level</span><span class="p">)</span>
-            <span class="n">stride</span> <span class="o">=</span> <span class="n">kernel_size</span>
-            <span class="n">pooling</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">AdaptiveMaxPool2d</span><span class="p">((</span><span class="n">level</span><span class="p">,</span> <span class="n">level</span><span class="p">))</span>
-            <span class="n">tensor</span> <span class="o">=</span> <span class="nf">pooling</span><span class="p">(</span><span class="n">x</span><span class="p">).</span><span class="nf">view</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">pooled</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">(</span><span class="n">pooled</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+class SPPLayer(nn.Module):
+ def <strong>init</strong>(self, num_levels=3):
+ super().<strong>init</strong>()
+ self.num_levels = num_levels</p>
+
+<p>def forward(self, x):
+ batch_size, channels, h, w = x.size()
+ pooled = []</p>
+
+<p>for i in range(self.num_levels):
+ level = i + 1
+ kernel_size = (h // level, w // level)
+ stride = kernel_size
+ pooling = nn.AdaptiveMaxPool2d((level, level))
+ tensor = pooling(x).view(batch_size, channels, -1)
+ pooled.append(tensor)</p>
+
+<p>return torch.cat(pooled, dim=2)
+``</p>
 
 <h2 id="14-deep-dive-data-augmentation-for-boundary-detection">14. Deep Dive: Data Augmentation for Boundary Detection</h2>
 
 <p>Boundaries are thin. Augmentation must preserve them.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">albumentations</span> <span class="k">as</span> <span class="n">A</span>
+<p>``python
+import albumentations as A</p>
 
-<span class="n">transform</span> <span class="o">=</span> <span class="n">A</span><span class="p">.</span><span class="nc">Compose</span><span class="p">([</span>
-    <span class="n">A</span><span class="p">.</span><span class="nc">RandomRotate90</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
-    <span class="n">A</span><span class="p">.</span><span class="nc">Flip</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
-    <span class="n">A</span><span class="p">.</span><span class="nc">ShiftScaleRotate</span><span class="p">(</span><span class="n">shift_limit</span><span class="o">=</span><span class="mf">0.0625</span><span class="p">,</span> <span class="n">scale_limit</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">rotate_limit</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
-    <span class="n">A</span><span class="p">.</span><span class="nc">OneOf</span><span class="p">([</span>
-        <span class="n">A</span><span class="p">.</span><span class="nc">ElasticTransform</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">120</span> <span class="o">*</span> <span class="mf">0.05</span><span class="p">,</span> <span class="n">alpha_affine</span><span class="o">=</span><span class="mi">120</span> <span class="o">*</span> <span class="mf">0.03</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
-        <span class="n">A</span><span class="p">.</span><span class="nc">GridDistortion</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
-        <span class="n">A</span><span class="p">.</span><span class="nc">OpticalDistortion</span><span class="p">(</span><span class="n">distort_limit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">shift_limit</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
-    <span class="p">],</span> <span class="n">p</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
-    <span class="n">A</span><span class="p">.</span><span class="nc">RandomBrightnessContrast</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
-<span class="p">])</span>
+<p>transform = A.Compose([
+ A.RandomRotate90(p=0.5),
+ A.Flip(p=0.5),
+ A.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.1, rotate_limit=15, p=0.5),
+ A.OneOf([
+ A.ElasticTransform(alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03, p=0.5),
+ A.GridDistortion(p=0.5),
+ A.OpticalDistortion(distort_limit=1, shift_limit=0.5, p=0.5),
+ ], p=0.3),
+ A.RandomBrightnessContrast(p=0.3),
+])</p>
 
-<span class="c1"># Apply to both image and mask
-</span><span class="n">augmented</span> <span class="o">=</span> <span class="nf">transform</span><span class="p">(</span><span class="n">image</span><span class="o">=</span><span class="n">image</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">boundary_mask</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="apply-to-both-image-and-mask">Apply to both image and mask</h1>
+<p>augmented = transform(image=image, mask=boundary_mask)
+``</p>
 
 <h2 id="15-deep-dive-multi-task-learning">15. Deep Dive: Multi-Task Learning</h2>
 
 <p>Instead of just boundaries, predict boundaries + segmentation + depth.</p>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        Shared Encoder
-              |
-    ┌─────────┼─────────┐
-    |         |         |
-Boundary   Segment   Depth
-  Head      Head      Head
-</code></pre></div></div>
+<p><strong>Architecture:</strong>
+<code class="language-plaintext highlighter-rouge">
+ Shared Encoder
+ |
+ ┌─────────┼─────────┐
+ | | |
+Boundary Segment Depth
+ Head Head Head
+</code></p>
 
 <p><strong>Loss:</strong>
-\(L_{total} = \lambda_1 L_{boundary} + \lambda_2 L_{segment} + \lambda_3 L_{depth}\)</p>
+<code class="language-plaintext highlighter-rouge">L_{total} = \lambda_1 L_{boundary} + \lambda_2 L_{segment} + \lambda_3 L_{depth}</code></p>
 
 <p><strong>Benefit:</strong> Shared features improve all tasks. Segmentation provides context for boundaries.</p>
 
@@ -785,45 +788,46 @@ Boundary   Segment   Depth
 <p><strong>Dense CRF (Fully Connected CRF):</strong></p>
 <ul>
   <li>Every pixel is connected to every other pixel.</li>
-  <li><strong>Unary Potential:</strong> CNN prediction for pixel $i$.</li>
+  <li><strong>Unary Potential:</strong> CNN prediction for pixel <code class="language-plaintext highlighter-rouge">i</code>.</li>
   <li><strong>Pairwise Potential:</strong> Encourages similar pixels to have similar labels.</li>
 </ul>
 
-\[E(x) = \sum_i \psi_u(x_i) + \sum_{i&lt;j} \psi_p(x_i, x_j)\]
+<p><code class="language-plaintext highlighter-rouge">E(x) = \sum_i \psi_u(x_i) + \sum_{i&lt;j} \psi_p(x_i, x_j)</code></p>
 
 <p>Where:</p>
 <ul>
-  <li>$\psi_u(x_i) = -\log P(x_i)$ (from CNN).</li>
-  <li>$\psi_p(x_i, x_j) = \mu(x_i, x_j) \cdot k(f_i, f_j)$ (similarity kernel based on color and position).</li>
+  <li><code class="language-plaintext highlighter-rouge">\psi_u(x_i) = -\log P(x_i)</code> (from CNN).</li>
+  <li><code class="language-plaintext highlighter-rouge">\psi_p(x_i, x_j) = \mu(x_i, x_j) \cdot k(f_i, f_j)</code> (similarity kernel based on color and position).</li>
 </ul>
 
-<p><strong>Implementation (PyDenseCRF):</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">pydensecrf.densecrf</span> <span class="k">as</span> <span class="n">dcrf</span>
-<span class="kn">from</span> <span class="n">pydensecrf.utils</span> <span class="kn">import</span> <span class="n">unary_from_softmax</span>
+<p><strong>Implementation (PyDenseCRF):</strong>
+``python
+import pydensecrf.densecrf as dcrf
+from pydensecrf.utils import unary_from_softmax</p>
 
-<span class="k">def</span> <span class="nf">crf_refine</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">prob_map</span><span class="p">):</span>
-    <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">image</span><span class="p">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
-    
-    <span class="c1"># Create CRF
-</span>    <span class="n">d</span> <span class="o">=</span> <span class="n">dcrf</span><span class="p">.</span><span class="nc">DenseCRF2D</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># 2 classes: boundary/non-boundary
-</span>    
-    <span class="c1"># Unary potential
-</span>    <span class="n">U</span> <span class="o">=</span> <span class="nf">unary_from_softmax</span><span class="p">(</span><span class="n">prob_map</span><span class="p">)</span>
-    <span class="n">d</span><span class="p">.</span><span class="nf">setUnaryEnergy</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
-    
-    <span class="c1"># Pairwise potentials
-</span>    <span class="c1"># Appearance kernel (color similarity)
-</span>    <span class="n">d</span><span class="p">.</span><span class="nf">addPairwiseGaussian</span><span class="p">(</span><span class="n">sxy</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">compat</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-    
-    <span class="c1"># Smoothness kernel (spatial proximity)
-</span>    <span class="n">d</span><span class="p">.</span><span class="nf">addPairwiseBilateral</span><span class="p">(</span><span class="n">sxy</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">srgb</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span> <span class="n">rgbim</span><span class="o">=</span><span class="n">image</span><span class="p">,</span> <span class="n">compat</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-    
-    <span class="c1"># Inference
-</span>    <span class="n">Q</span> <span class="o">=</span> <span class="n">d</span><span class="p">.</span><span class="nf">inference</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>  <span class="c1"># 5 iterations
-</span>    <span class="n">refined</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">).</span><span class="nf">reshape</span><span class="p">((</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">))</span>
-    
-    <span class="k">return</span> <span class="n">refined</span>
-</code></pre></div></div>
+<p>def crf_refine(image, prob_map):
+ h, w = image.shape[:2]</p>
+
+<p># Create CRF
+ d = dcrf.DenseCRF2D(w, h, 2) # 2 classes: boundary/non-boundary</p>
+
+<p># Unary potential
+ U = unary_from_softmax(prob_map)
+ d.setUnaryEnergy(U)</p>
+
+<p># Pairwise potentials
+ # Appearance kernel (color similarity)
+ d.addPairwiseGaussian(sxy=3, compat=3)</p>
+
+<p># Smoothness kernel (spatial proximity)
+ d.addPairwiseBilateral(sxy=80, srgb=13, rgbim=image, compat=10)</p>
+
+<p># Inference
+ Q = d.inference(5) # 5 iterations
+ refined = np.argmax(Q, axis=0).reshape((h, w))</p>
+
+<p>return refined
+``</p>
 
 <p><strong>Result:</strong> Sharp, clean boundaries aligned with object edges.</p>
 
@@ -831,45 +835,47 @@ Boundary   Segment   Depth
 
 <p><strong>Observation:</strong> Not all regions are equally important. Focus on boundary regions.</p>
 
-<p><strong>Spatial Attention:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SpatialAttention</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">7</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Conv2d</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">kernel_size</span><span class="o">//</span><span class="mi">2</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sigmoid</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Sigmoid</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="c1"># Aggregate across channels
-</span>        <span class="n">avg_out</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="n">max_out</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        
-        <span class="c1"># Concatenate and convolve
-</span>        <span class="n">attention</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span><span class="n">avg_out</span><span class="p">,</span> <span class="n">max_out</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">attention</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">conv</span><span class="p">(</span><span class="n">attention</span><span class="p">)</span>
-        <span class="n">attention</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">sigmoid</span><span class="p">(</span><span class="n">attention</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="n">attention</span>
-</code></pre></div></div>
+<p><strong>Spatial Attention:</strong>
+``python
+class SpatialAttention(nn.Module):
+ def <strong>init</strong>(self, kernel_size=7):
+ super().<strong>init</strong>()
+ self.conv = nn.Conv2d(2, 1, kernel_size, padding=kernel_size//2)
+ self.sigmoid = nn.Sigmoid()</p>
 
-<p><strong>Channel Attention (SE Block):</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SEBlock</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="mi">16</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Sequential</span><span class="p">(</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">channels</span> <span class="o">//</span> <span class="n">reduction</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">ReLU</span><span class="p">(),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">channels</span> <span class="o">//</span> <span class="n">reduction</span><span class="p">,</span> <span class="n">channels</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Sigmoid</span><span class="p">()</span>
-        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="nf">size</span><span class="p">()</span>
-        <span class="c1"># Global average pooling
-</span>        <span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">).</span><span class="nf">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-        <span class="c1"># Excitation
-</span>        <span class="n">y</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">fc</span><span class="p">(</span><span class="n">y</span><span class="p">).</span><span class="nf">view</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="n">y</span><span class="p">.</span><span class="nf">expand_as</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def forward(self, x):
+ # Aggregate across channels
+ avg_out = torch.mean(x, dim=1, keepdim=True)
+ max_out, _ = torch.max(x, dim=1, keepdim=True)</p>
+
+<p># Concatenate and convolve
+ attention = torch.cat([avg_out, max_out], dim=1)
+ attention = self.conv(attention)
+ attention = self.sigmoid(attention)</p>
+
+<p>return x * attention
+``</p>
+
+<p><strong>Channel Attention (SE Block):</strong>
+``python
+class SEBlock(nn.Module):
+ def <strong>init</strong>(self, channels, reduction=16):
+ super().<strong>init</strong>()
+ self.fc = nn.Sequential(
+ nn.Linear(channels, channels // reduction),
+ nn.ReLU(),
+ nn.Linear(channels // reduction, channels),
+ nn.Sigmoid()
+ )</p>
+
+<p>def forward(self, x):
+ b, c, _, _ = x.size()
+ # Global average pooling
+ y = x.view(b, c, -1).mean(dim=2)
+ # Excitation
+ y = self.fc(y).view(b, c, 1, 1)
+ return x * y.expand_as(x)
+``</p>
 
 <h2 id="19-case-study-instance-segmentation-mask-r-cnn">19. Case Study: Instance Segmentation (Mask R-CNN)</h2>
 
@@ -896,28 +902,29 @@ Boundary   Segment   Depth
   <li>Use <code class="language-plaintext highlighter-rouge">cv2.findContours()</code> to extract boundary polygon.</li>
 </ul>
 
-<p><strong>Production Optimization:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">detectron2</span>
-<span class="kn">from</span> <span class="n">detectron2.engine</span> <span class="kn">import</span> <span class="n">DefaultPredictor</span>
-<span class="kn">from</span> <span class="n">detectron2.config</span> <span class="kn">import</span> <span class="n">get_cfg</span>
+<p><strong>Production Optimization:</strong>
+``python
+import detectron2
+from detectron2.engine import DefaultPredictor
+from detectron2.config import get_cfg</p>
 
-<span class="n">cfg</span> <span class="o">=</span> <span class="nf">get_cfg</span><span class="p">()</span>
-<span class="n">cfg</span><span class="p">.</span><span class="nf">merge_from_file</span><span class="p">(</span><span class="sh">"</span><span class="s">mask_rcnn_R_50_FPN_3x.yaml</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">cfg</span><span class="p">.</span><span class="n">MODEL</span><span class="p">.</span><span class="n">WEIGHTS</span> <span class="o">=</span> <span class="sh">"</span><span class="s">model_final.pth</span><span class="sh">"</span>
-<span class="n">cfg</span><span class="p">.</span><span class="n">MODEL</span><span class="p">.</span><span class="n">ROI_HEADS</span><span class="p">.</span><span class="n">SCORE_THRESH_TEST</span> <span class="o">=</span> <span class="mf">0.7</span>
+<p>cfg = get_cfg()
+cfg.merge_from_file(“mask_rcnn_R_50_FPN_3x.yaml”)
+cfg.MODEL.WEIGHTS = “model_final.pth”
+cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7</p>
 
-<span class="n">predictor</span> <span class="o">=</span> <span class="nc">DefaultPredictor</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+<p>predictor = DefaultPredictor(cfg)</p>
 
-<span class="c1"># Inference
-</span><span class="n">outputs</span> <span class="o">=</span> <span class="nf">predictor</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
-<span class="n">instances</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="sh">"</span><span class="s">instances</span><span class="sh">"</span><span class="p">]</span>
+<h1 id="inference">Inference</h1>
+<p>outputs = predictor(image)
+instances = outputs[“instances”]</p>
 
-<span class="c1"># Extract boundaries
-</span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">instances</span><span class="p">)):</span>
-    <span class="n">mask</span> <span class="o">=</span> <span class="n">instances</span><span class="p">.</span><span class="n">pred_masks</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="nf">cpu</span><span class="p">().</span><span class="nf">numpy</span><span class="p">()</span>
-    <span class="n">contours</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">cv2</span><span class="p">.</span><span class="nf">findContours</span><span class="p">(</span><span class="n">mask</span><span class="p">.</span><span class="nf">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">uint8</span><span class="p">),</span> <span class="n">cv2</span><span class="p">.</span><span class="n">RETR_EXTERNAL</span><span class="p">,</span> <span class="n">cv2</span><span class="p">.</span><span class="n">CHAIN_APPROX_SIMPLE</span><span class="p">)</span>
-    <span class="c1"># contours[0] is the boundary polygon
-</span></code></pre></div></div>
+<h1 id="extract-boundaries">Extract boundaries</h1>
+<p>for i in range(len(instances)):
+ mask = instances.pred_masks[i].cpu().numpy()
+ contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+ # contours[0] is the boundary polygon
+``</p>
 
 <h2 id="20-advanced-differentiable-rendering-for-boundary-optimization">20. Advanced: Differentiable Rendering for Boundary Optimization</h2>
 
@@ -931,33 +938,34 @@ Boundary   Segment   Depth
   <li><strong>Backprop:</strong> Gradients flow through the renderer to update the mesh.</li>
 </ol>
 
-<p><strong>Code Sketch:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">pytorch3d.renderer</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">MeshRenderer</span><span class="p">,</span> <span class="n">MeshRasterizer</span><span class="p">,</span> <span class="n">SoftSilhouetteShader</span><span class="p">,</span>
-    <span class="n">RasterizationSettings</span><span class="p">,</span> <span class="n">PerspectiveCameras</span>
-<span class="p">)</span>
+<p><strong>Code Sketch:</strong>
+``python
+from pytorch3d.renderer import (
+ MeshRenderer, MeshRasterizer, SoftSilhouetteShader,
+ RasterizationSettings, PerspectiveCameras
+)</p>
 
-<span class="c1"># Define mesh
-</span><span class="n">verts</span><span class="p">,</span> <span class="n">faces</span> <span class="o">=</span> <span class="nf">load_mesh</span><span class="p">()</span>
+<h1 id="define-mesh">Define mesh</h1>
+<p>verts, faces = load_mesh()</p>
 
-<span class="c1"># Differentiable renderer
-</span><span class="n">cameras</span> <span class="o">=</span> <span class="nc">PerspectiveCameras</span><span class="p">()</span>
-<span class="n">raster_settings</span> <span class="o">=</span> <span class="nc">RasterizationSettings</span><span class="p">(</span><span class="n">image_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">blur_radius</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
-<span class="n">renderer</span> <span class="o">=</span> <span class="nc">MeshRenderer</span><span class="p">(</span>
-    <span class="n">rasterizer</span><span class="o">=</span><span class="nc">MeshRasterizer</span><span class="p">(</span><span class="n">cameras</span><span class="o">=</span><span class="n">cameras</span><span class="p">,</span> <span class="n">raster_settings</span><span class="o">=</span><span class="n">raster_settings</span><span class="p">),</span>
-    <span class="n">shader</span><span class="o">=</span><span class="nc">SoftSilhouetteShader</span><span class="p">()</span>
-<span class="p">)</span>
+<h1 id="differentiable-renderer">Differentiable renderer</h1>
+<p>cameras = PerspectiveCameras()
+raster_settings = RasterizationSettings(image_size=512, blur_radius=1e-5)
+renderer = MeshRenderer(
+ rasterizer=MeshRasterizer(cameras=cameras, raster_settings=raster_settings),
+ shader=SoftSilhouetteShader()
+)</p>
 
-<span class="c1"># Render
-</span><span class="n">silhouette</span> <span class="o">=</span> <span class="nf">renderer</span><span class="p">(</span><span class="n">meshes</span><span class="p">)</span>
+<h1 id="render">Render</h1>
+<p>silhouette = renderer(meshes)</p>
 
-<span class="c1"># Loss
-</span><span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">mse_loss</span><span class="p">(</span><span class="n">silhouette</span><span class="p">,</span> <span class="n">target_boundary</span><span class="p">)</span>
-<span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
+<h1 id="loss">Loss</h1>
+<p>loss = F.mse_loss(silhouette, target_boundary)
+loss.backward()</p>
 
-<span class="c1"># Update mesh vertices
-</span><span class="n">optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
-</code></pre></div></div>
+<h1 id="update-mesh-vertices">Update mesh vertices</h1>
+<p>optimizer.step()
+``</p>
 
 <p><strong>Use Case:</strong> 3D reconstruction from 2D images (e.g., NeRF, 3D Gaussian Splatting).</p>
 
@@ -1026,24 +1034,25 @@ Boundary   Segment   Depth
   <li><strong>Error Cases:</strong> Log images where Dice &lt; 0.5.</li>
 </ol>
 
-<p><strong>Debugging Tools:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">wandb</span>
+<p><strong>Debugging Tools:</strong>
+``python
+import wandb</p>
 
-<span class="c1"># Log predictions
-</span><span class="n">wandb</span><span class="p">.</span><span class="nf">log</span><span class="p">({</span>
-    <span class="sh">"</span><span class="s">prediction</span><span class="sh">"</span><span class="p">:</span> <span class="n">wandb</span><span class="p">.</span><span class="nc">Image</span><span class="p">(</span><span class="n">pred_mask</span><span class="p">),</span>
-    <span class="sh">"</span><span class="s">ground_truth</span><span class="sh">"</span><span class="p">:</span> <span class="n">wandb</span><span class="p">.</span><span class="nc">Image</span><span class="p">(</span><span class="n">gt_mask</span><span class="p">),</span>
-    <span class="sh">"</span><span class="s">dice_score</span><span class="sh">"</span><span class="p">:</span> <span class="n">dice</span><span class="p">,</span>
-    <span class="sh">"</span><span class="s">inference_time_ms</span><span class="sh">"</span><span class="p">:</span> <span class="n">latency</span>
-<span class="p">})</span>
+<h1 id="log-predictions">Log predictions</h1>
+<p>wandb.log({
+ “prediction”: wandb.Image(pred_mask),
+ “ground_truth”: wandb.Image(gt_mask),
+ “dice_score”: dice,
+ “inference_time_ms”: latency
+})</p>
 
-<span class="c1"># Alert if performance degrades
-</span><span class="k">if</span> <span class="n">dice</span> <span class="o">&lt;</span> <span class="mf">0.7</span><span class="p">:</span>
-    <span class="n">wandb</span><span class="p">.</span><span class="nf">alert</span><span class="p">(</span>
-        <span class="n">title</span><span class="o">=</span><span class="sh">"</span><span class="s">Low Dice Score</span><span class="sh">"</span><span class="p">,</span>
-        <span class="n">text</span><span class="o">=</span><span class="sa">f</span><span class="sh">"</span><span class="s">Dice = </span><span class="si">{</span><span class="n">dice</span><span class="si">}</span><span class="s"> on image </span><span class="si">{</span><span class="n">image_id</span><span class="si">}</span><span class="sh">"</span>
-    <span class="p">)</span>
-</code></pre></div></div>
+<h1 id="alert-if-performance-degrades">Alert if performance degrades</h1>
+<p>if dice &lt; 0.7:
+ wandb.alert(
+ title=”Low Dice Score”,
+ text=f”Dice = {dice} on image {image_id}”
+ )
+``</p>
 
 <p><strong>A/B Testing:</strong></p>
 <ul>
@@ -1088,61 +1097,64 @@ Boundary   Segment   Depth
 
 <p>Standard augmentation (rotation, flip) isn’t enough for thin boundaries.</p>
 
-<p><strong>Elastic Deformation:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">elasticdeform</span>
+<p><strong>Elastic Deformation:</strong>
+``python
+import elasticdeform</p>
 
-<span class="c1"># Deform image and mask together
-</span><span class="p">[</span><span class="n">image_deformed</span><span class="p">,</span> <span class="n">mask_deformed</span><span class="p">]</span> <span class="o">=</span> <span class="n">elasticdeform</span><span class="p">.</span><span class="nf">deform_random_grid</span><span class="p">(</span>
-    <span class="p">[</span><span class="n">image</span><span class="p">,</span> <span class="n">mask</span><span class="p">],</span>
-    <span class="n">sigma</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span>  <span class="c1"># Deformation strength
-</span>    <span class="n">points</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>  <span class="c1"># Grid resolution
-</span>    <span class="n">order</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>  <span class="c1"># Interpolation order (cubic for image, nearest for mask)
-</span>    <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="p">)</span>
-</code></pre></div></div>
+<h1 id="deform-image-and-mask-together">Deform image and mask together</h1>
+<p>[image_deformed, mask_deformed] = elasticdeform.deform_random_grid(
+ [image, mask],
+ sigma=25, # Deformation strength
+ points=3, # Grid resolution
+ order=[3, 0], # Interpolation order (cubic for image, nearest for mask)
+ axis=(0, 1)
+)
+``</p>
 
-<p><strong>Boundary-Specific Augmentation:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">augment_boundary</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">dilation_range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)):</span>
-    <span class="c1"># Randomly dilate or erode boundary
-</span>    <span class="n">kernel_size</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randint</span><span class="p">(</span><span class="o">*</span><span class="n">dilation_range</span><span class="p">)</span>
-    <span class="n">kernel</span> <span class="o">=</span> <span class="n">cv2</span><span class="p">.</span><span class="nf">getStructuringElement</span><span class="p">(</span><span class="n">cv2</span><span class="p">.</span><span class="n">MORPH_ELLIPSE</span><span class="p">,</span> <span class="p">(</span><span class="n">kernel_size</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">))</span>
-    
-    <span class="k">if</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">rand</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">cv2</span><span class="p">.</span><span class="nf">dilate</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">kernel</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">cv2</span><span class="p">.</span><span class="nf">erode</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">kernel</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">mask</span>
-</code></pre></div></div>
+<p><strong>Boundary-Specific Augmentation:</strong>
+``python
+def augment_boundary(mask, dilation_range=(1, 3)):
+ # Randomly dilate or erode boundary
+ kernel_size = np.random.randint(*dilation_range)
+ kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))</p>
+
+<p>if np.random.rand() &gt; 0.5:
+ mask = cv2.dilate(mask, kernel)
+ else:
+ mask = cv2.erode(mask, kernel)</p>
+
+<p>return mask
+``</p>
 
 <h2 id="26-advanced-multi-scale-boundary-detection">26. Advanced: Multi-Scale Boundary Detection</h2>
 
 <p>Objects have boundaries at different scales (fine hair vs. body outline).</p>
 
-<p><strong>Laplacian Pyramid:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">build_laplacian_pyramid</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
-    <span class="n">gaussian_pyramid</span> <span class="o">=</span> <span class="p">[</span><span class="n">image</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">levels</span><span class="p">):</span>
-        <span class="n">image</span> <span class="o">=</span> <span class="n">cv2</span><span class="p">.</span><span class="nf">pyrDown</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
-        <span class="n">gaussian_pyramid</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
-    
-    <span class="n">laplacian_pyramid</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">levels</span><span class="p">):</span>
-        <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="n">gaussian_pyramid</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">gaussian_pyramid</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">expanded</span> <span class="o">=</span> <span class="n">cv2</span><span class="p">.</span><span class="nf">pyrUp</span><span class="p">(</span><span class="n">gaussian_pyramid</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">dstsize</span><span class="o">=</span><span class="n">size</span><span class="p">)</span>
-        <span class="n">laplacian</span> <span class="o">=</span> <span class="n">cv2</span><span class="p">.</span><span class="nf">subtract</span><span class="p">(</span><span class="n">gaussian_pyramid</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">expanded</span><span class="p">)</span>
-        <span class="n">laplacian_pyramid</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">laplacian</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">laplacian_pyramid</span>
+<p><strong>Laplacian Pyramid:</strong>
+``python
+def build_laplacian_pyramid(image, levels=4):
+ gaussian_pyramid = [image]
+ for i in range(levels):
+ image = cv2.pyrDown(image)
+ gaussian_pyramid.append(image)</p>
 
-<span class="c1"># Process each scale
-</span><span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">laplacian_pyramid</span><span class="p">:</span>
-    <span class="n">boundary_map</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
-    <span class="c1"># Fuse multi-scale outputs
-</span></code></pre></div></div>
+<p>laplacian_pyramid = []
+ for i in range(levels):
+ size = (gaussian_pyramid[i].shape[1], gaussian_pyramid[i].shape[0])
+ expanded = cv2.pyrUp(gaussian_pyramid[i+1], dstsize=size)
+ laplacian = cv2.subtract(gaussian_pyramid[i], expanded)
+ laplacian_pyramid.append(laplacian)</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Fuse multi-scale outputs ```
-</code></pre></div></div>
+<p>return laplacian_pyramid</p>
+
+<h1 id="process-each-scale">Process each scale</h1>
+<p>for level in laplacian_pyramid:
+ boundary_map = model(level)
+ # Fuse multi-scale outputs
+``</p>
+
+<p># Fuse multi-scale outputs
+``</p>
 
 <h2 id="27-hardware-considerations-for-real-time-boundary-detection">27. Hardware Considerations for Real-Time Boundary Detection</h2>
 
@@ -1173,25 +1185,26 @@ Boundary   Segment   Depth
   </li>
 </ol>
 
-<p><strong>Optimization for Edge:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Model pruning
-</span><span class="kn">import</span> <span class="n">torch.nn.utils.prune</span> <span class="k">as</span> <span class="n">prune</span>
+<p><strong>Optimization for Edge:</strong>
+``python</p>
+<h1 id="model-pruning">Model pruning</h1>
+<p>import torch.nn.utils.prune as prune</p>
 
-<span class="c1"># Prune 30% of weights
-</span><span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">model</span><span class="p">.</span><span class="nf">modules</span><span class="p">():</span>
-    <span class="k">if</span> <span class="nf">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">nn</span><span class="p">.</span><span class="n">Conv2d</span><span class="p">):</span>
-        <span class="n">prune</span><span class="p">.</span><span class="nf">l1_unstructured</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sh">'</span><span class="s">weight</span><span class="sh">'</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<h1 id="prune-30-of-weights">Prune 30% of weights</h1>
+<p>for module in model.modules():
+ if isinstance(module, nn.Conv2d):
+ prune.l1_unstructured(module, name=’weight’, amount=0.3)</p>
 
-<span class="c1"># Knowledge distillation
-</span><span class="n">teacher</span> <span class="o">=</span> <span class="nc">UNet</span><span class="p">(</span><span class="n">channels</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>  <span class="c1"># Large model
-</span><span class="n">student</span> <span class="o">=</span> <span class="nc">UNet</span><span class="p">(</span><span class="n">channels</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>  <span class="c1"># Small model
-</span>
-<span class="c1"># Train student to mimic teacher
-</span><span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">mse_loss</span><span class="p">(</span><span class="nf">student</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="nf">teacher</span><span class="p">(</span><span class="n">x</span><span class="p">).</span><span class="nf">detach</span><span class="p">())</span>
-</code></pre></div></div>
+<h1 id="knowledge-distillation">Knowledge distillation</h1>
+<p>teacher = UNet(channels=64) # Large model
+student = UNet(channels=16) # Small model</p>
+
+<h1 id="train-student-to-mimic-teacher">Train student to mimic teacher</h1>
+<p>loss = F.mse_loss(student(x), teacher(x).detach())
+``</p>
 
 <p>loss = F.mse_loss(student(x), teacher(x).detach())
-```</p>
+``</p>
 
 <p><strong>Performance Benchmarks (1080p Image):</strong></p>
 
@@ -1367,7 +1380,134 @@ Boundary   Segment   Depth
         
       </footer>
 
+      <div class="page__related page__related--full">
+  <h2 class="page__related-title">Related across topics</h2>
+  <style>
+    /* Make section span full content width and use 2 equal columns */
+    .page__related--full { float: inline-start; width: 100%; padding: 0; }
+    .cross-related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+    @media (max-width: 768px) { .cross-related-grid { grid-template-columns: 1fr; } }
+    /* Ensure archive cards stretch nicely in the grid */
+    .cross-related-grid .list__item, .cross-related-grid .grid__item { width: auto; float: none; margin: 0; }
+  </style>
+  <div class="cross-related-grid">
+    
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
       
+        <a href="/dsa/0035-surrounded-regions/" rel="permalink">Surrounded Regions (DFS/BFS)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Capturing regions by identifying safe boundaries.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/speech-tech/0035-speech-boundary-detection/" rel="permalink">Speech Boundary Detection
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Knowing when to listen and when to stop.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ai-agents/0035-structured-output-patterns/" rel="permalink">Structured Output Patterns
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Make agents predictable: enforce schemas, validate outputs, and recover automatically when the model slips.”
+</p>
+  </article>
+</div>
+
+  </div>
+</div>
 
       <section class="page__share">
   <h4 class="page__share-title">Share on</h4>

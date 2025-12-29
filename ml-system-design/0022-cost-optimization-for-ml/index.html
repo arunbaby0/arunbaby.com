@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Cost Optimization for ML">
     <meta itemprop="description" content="A comprehensive guide to FinOps for Machine Learning: reducing TCO without compromising accuracy or latency.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -270,7 +270,7 @@
   <li><strong>CAPEX (Capital Expenditure):</strong> Upfront money spent on buying physical servers (e.g., buying 100 H100s for your own data center).</li>
   <li><strong>OPEX (Operational Expenditure):</strong> Ongoing money spent on cloud services (e.g., renting AWS EC2 instances). Most modern ML is OPEX.</li>
   <li><strong>TCO (Total Cost of Ownership):</strong> The sum of all costs (compute + storage + networking + engineering salaries + maintenance) over the life of the project.</li>
-  <li><strong>ROI (Return on Investment):</strong> (Revenue - Cost) / Cost. If your model costs $100 to run and generates $110 in value, the ROI is 10%.</li>
+  <li><strong>ROI (Return on Investment):</strong> (Revenue - Cost) / Cost. If your model costs <code class="language-plaintext highlighter-rouge">100 to run and generates </code>110 in value, the ROI is 10%.</li>
   <li><strong>Unit Economics:</strong> The cost to serve <em>one</em> unit of value (e.g., “Cost per 1000 predictions”). This is the most important metric for scaling.</li>
   <li><strong>Commitment Savings Plan (CSP):</strong> A contract where you promise to spend $X/hour for 1-3 years in exchange for a 30-50% discount.</li>
 </ul>
@@ -302,27 +302,28 @@
 
 <h2 id="high-level-architecture-the-cost-aware-pipeline">High-Level Architecture: The Cost-Aware Pipeline</h2>
 
-<pre><code class="language-ascii">+----------------+       +------------------+       +-------------------+
-|  User Request  | ----&gt; |  Load Balancer   | ----&gt; |  Inference Router |
-+----------------+       +------------------+       +-------------------+
-                                                            |
-                                         +------------------+------------------+
-                                         |                                     |
-                                 (High Confidence?)                     (Low Confidence?)
-                                         |                                     |
-                                         v                                     v
-                                +----------------+                    +----------------+
-                                |  CPU Cluster   |                    |  GPU Cluster   |
-                                | (DistilBERT)   |                    | (BERT-Large)   |
-                                +----------------+                    +----------------+
-                                         |                                     |
-                                         +------------------+------------------+
-                                                            |
-                                                            v
-                                                   +----------------+
-                                                   |    Response    |
-                                                   +----------------+
-</code></pre>
+<p><code class="language-plaintext highlighter-rouge">ascii
++----------------+ +------------------+ +-------------------+
+| User Request | ----&gt; | Load Balancer | ----&gt; | Inference Router |
++----------------+ +------------------+ +-------------------+
+ |
+ +------------------+------------------+
+ | |
+ (High Confidence?) (Low Confidence?)
+ | |
+ v v
+ +----------------+ +----------------+
+ | CPU Cluster | | GPU Cluster |
+ | (DistilBERT) | | (BERT-Large) |
+ +----------------+ +----------------+
+ | |
+ +------------------+------------------+
+ |
+ v
+ +----------------+
+ | Response |
+ +----------------+
+</code></p>
 
 <h2 id="strategy-1-the-spot-instance-revolution">Strategy 1: The Spot Instance Revolution</h2>
 
@@ -466,22 +467,28 @@
 <h3 id="2-taints-and-tolerations">2. Taints and Tolerations</h3>
 <p>Prevent non-critical pods from stealing expensive GPU nodes.</p>
 
-<p><strong>Node Configuration:</strong></p>
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># On the GPU node</span>
-<span class="na">taints</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">key</span><span class="pi">:</span> <span class="s2">"</span><span class="s">accelerator"</span>
-    <span class="na">value</span><span class="pi">:</span> <span class="s2">"</span><span class="s">nvidia-tesla-t4"</span>
-    <span class="na">effect</span><span class="pi">:</span> <span class="s2">"</span><span class="s">NoSchedule"</span>
-</code></pre></div></div>
+<p><strong>Node Configuration:</strong>
+``yaml</p>
+<h1 id="on-the-gpu-node">On the GPU node</h1>
+<p>taints:</p>
+<ul>
+  <li>key: “accelerator”
+ value: “nvidia-tesla-t4”
+ effect: “NoSchedule”
+``</li>
+</ul>
 
-<p><strong>Pod Configuration:</strong></p>
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># In your Inference Deployment</span>
-<span class="na">tolerations</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">key</span><span class="pi">:</span> <span class="s2">"</span><span class="s">accelerator"</span>
-    <span class="na">operator</span><span class="pi">:</span> <span class="s2">"</span><span class="s">Equal"</span>
-    <span class="na">value</span><span class="pi">:</span> <span class="s2">"</span><span class="s">nvidia-tesla-t4"</span>
-    <span class="na">effect</span><span class="pi">:</span> <span class="s2">"</span><span class="s">NoSchedule"</span>
-</code></pre></div></div>
+<p><strong>Pod Configuration:</strong>
+``yaml</p>
+<h1 id="in-your-inference-deployment">In your Inference Deployment</h1>
+<p>tolerations:</p>
+<ul>
+  <li>key: “accelerator”
+ operator: “Equal”
+ value: “nvidia-tesla-t4”
+ effect: “NoSchedule”
+``</li>
+</ul>
 
 <h3 id="3-resource-requests--limits">3. Resource Requests &amp; Limits</h3>
 <p>If you don’t set these, one pod can eat the whole node.</p>
@@ -498,7 +505,7 @@
 You work at a startup. You have a sentiment analysis model (BERT-Base) that processes 1 million user reviews per day.</p>
 <ul>
   <li><strong>Current Setup:</strong> 5 x <code class="language-plaintext highlighter-rouge">g4dn.xlarge</code> (NVIDIA T4) instances running 24/7.</li>
-  <li><strong>Cost:</strong> $0.526/hr * 24 hrs * 30 days * 5 instances = <strong>$1,893 / month</strong>.</li>
+  <li><strong>Cost:</strong> <code class="language-plaintext highlighter-rouge">0.526/hr * 24 hrs * 30 days * 5 instances = **</code>1,893 / month**.</li>
 </ul>
 
 <p><strong>The Junior Engineer’s Optimization Plan:</strong></p>
@@ -508,14 +515,14 @@ Traffic isn’t constant. It peaks at 9 AM and drops at 2 AM.</p>
 <ul>
   <li>You implement Kubernetes HPA.</li>
   <li>Average instance count drops from 5 to 3.</li>
-  <li><strong>New Cost:</strong> $1,135 / month. (<strong>Saved $758</strong>)</li>
+  <li><strong>New Cost:</strong> <code class="language-plaintext highlighter-rouge">1,135 / month. (**Saved </code>758**)</li>
 </ul>
 
 <p><strong>Step 2: Spot Instances</strong>
 You switch the node pool to Spot instances.</p>
 <ul>
   <li>Spot price for <code class="language-plaintext highlighter-rouge">g4dn.xlarge</code> is ~$0.15/hr (approx 70% discount).</li>
-  <li><strong>New Cost:</strong> $0.15 * 24 * 30 * 3 = $324 / month. (<strong>Saved $811</strong>)</li>
+  <li><strong>New Cost:</strong> <code class="language-plaintext highlighter-rouge">0.15 * 24 * 30 * 3 = </code>324 / month. (<strong>Saved $811</strong>)</li>
 </ul>
 
 <p><strong>Step 3: Quantization &amp; CPU Migration</strong>
@@ -524,50 +531,51 @@ You quantize the model to INT8 using ONNX Runtime. It now runs fast enough on a 
   <li>You switch to <code class="language-plaintext highlighter-rouge">c6i.large</code> (Compute Optimized CPU) instances.</li>
   <li>Spot price for <code class="language-plaintext highlighter-rouge">c6i.large</code> is ~$0.03/hr.</li>
   <li>Because CPU is slower than GPU, you need 6 instances instead of 3 to handle the load.</li>
-  <li><strong>New Cost:</strong> $0.03 * 24 * 30 * 6 = $129 / month. (<strong>Saved $195</strong>)</li>
+  <li><strong>New Cost:</strong> <code class="language-plaintext highlighter-rouge">0.03 * 24 * 30 * 6 = </code>129 / month. (<strong>Saved $195</strong>)</li>
 </ul>
 
 <p><strong>Total Savings:</strong>
-From <strong>$1,893</strong> to <strong>$129</strong> per month. That is a <strong>93% reduction</strong> in cost.
+From <strong><code class="language-plaintext highlighter-rouge">1,893** to **</code>129</strong> per month. That is a <strong>93% reduction</strong> in cost.
 This is the power of system design.</p>
 
 <h2 id="implementation-cost-aware-router">Implementation: Cost-Aware Router</h2>
 
 <p>Let’s look at code for a “Cascade” router. This is a pattern where you try a cheap model first, and only call the expensive model if the cheap one is unsure.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">requests</span>
+<p>``python
+import requests</p>
 
-<span class="k">class</span> <span class="nc">ModelCascade</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">cheap_model_url</span> <span class="o">=</span> <span class="sh">"</span><span class="s">http://cpu-service/predict</span><span class="sh">"</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">expensive_model_url</span> <span class="o">=</span> <span class="sh">"</span><span class="s">http://gpu-service/predict</span><span class="sh">"</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">confidence_threshold</span> <span class="o">=</span> <span class="mf">0.85</span>
+<p>class ModelCascade:
+ def <strong>init</strong>(self):
+ self.cheap_model_url = “http://cpu-service/predict”
+ self.expensive_model_url = “http://gpu-service/predict”
+ self.confidence_threshold = 0.85</p>
 
-    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">input_text</span><span class="p">):</span>
-        <span class="c1"># Step 1: Call the Cheap Model (DistilBERT on CPU)
-</span>        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="p">.</span><span class="nf">post</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">cheap_model_url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">:</span> <span class="n">input_text</span><span class="p">})</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">response</span><span class="p">.</span><span class="nf">json</span><span class="p">()</span>
-        
-        <span class="n">confidence</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">confidence</span><span class="sh">'</span><span class="p">]</span>
-        <span class="n">prediction</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">label</span><span class="sh">'</span><span class="p">]</span>
-        
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Cheap Model Confidence: </span><span class="si">{</span><span class="n">confidence</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p>def predict(self, input_text):
+ # Step 1: Call the Cheap Model (DistilBERT on CPU)
+ response = requests.post(self.cheap_model_url, json={“text”: input_text})
+ result = response.json()</p>
 
-        <span class="c1"># Step 2: Check Confidence
-</span>        <span class="k">if</span> <span class="n">confidence</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">confidence_threshold</span><span class="p">:</span>
-            <span class="c1"># Good enough! Return early.
-</span>            <span class="k">return</span> <span class="n">prediction</span>
-        
-        <span class="c1"># Step 3: Fallback to Expensive Model (GPT-4 / Large BERT on GPU)
-</span>        <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Confidence too low. Calling Expensive Model...</span><span class="sh">"</span><span class="p">)</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="p">.</span><span class="nf">post</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">expensive_model_url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">:</span> <span class="n">input_text</span><span class="p">})</span>
-        <span class="k">return</span> <span class="n">response</span><span class="p">.</span><span class="nf">json</span><span class="p">()[</span><span class="sh">'</span><span class="s">label</span><span class="sh">'</span><span class="p">]</span>
+<p>confidence = result[‘confidence’]
+ prediction = result[‘label’]</p>
 
-<span class="c1"># Usage
-</span><span class="n">cascade</span> <span class="o">=</span> <span class="nc">ModelCascade</span><span class="p">()</span>
-<span class="c1"># "I love this product!" -&gt; Cheap model is 99% sure. Returns. Cost: $0.0001
-# "The nuance of the texture was..." -&gt; Cheap model is 60% sure. Calls GPU. Cost: $0.01
-</span></code></pre></div></div>
+<p>print(f”Cheap Model Confidence: {confidence}”)</p>
+
+<p># Step 2: Check Confidence
+ if confidence &gt;= self.confidence_threshold:
+ # Good enough! Return early.
+ return prediction</p>
+
+<p># Step 3: Fallback to Expensive Model (GPT-4 / Large BERT on GPU)
+ print(“Confidence too low. Calling Expensive Model…”)
+ response = requests.post(self.expensive_model_url, json={“text”: input_text})
+ return response.json()[‘label’]</p>
+
+<h1 id="usage">Usage</h1>
+<p>cascade = ModelCascade()</p>
+<h1 id="i-love-this-product---cheap-model-is-99-sure-returns-cost-00001">“I love this product!” -&gt; Cheap model is 99% sure. Returns. Cost: $0.0001</h1>
+<h1 id="the-nuance-of-the-texture-was---cheap-model-is-60-sure-calls-gpu-cost-001">“The nuance of the texture was…” -&gt; Cheap model is 60% sure. Calls GPU. Cost: $0.01</h1>
+<p>``</p>
 
 <h2 id="monitoring--metrics-the-finops-dashboard">Monitoring &amp; Metrics: The FinOps Dashboard</h2>
 

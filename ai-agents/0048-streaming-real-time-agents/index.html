@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Streaming Real-Time Agents">
     <meta itemprop="description" content="“Waiting 10 seconds for a thoughtful answer is okay. Waiting 10 seconds for a blank screen is broken.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -287,16 +287,17 @@ Early LLM applications waited for the full generation (Stop Token) to complete b
 
 <p>We need an architecture that transforms raw LLM tokens into structured Agent Events.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[LLM (OpenAI)]
-    | (Stream of Tokens)
-    v
+<p><code class="language-plaintext highlighter-rouge">
+[LLM (OpenAI)]
+ | (Stream of Tokens)
+ v
 [Agent Parser Parsers logic]
-    | Detects: "Action: Search" -&gt; WAIT
-    | Detects: "Observation: 42" -&gt; WAIT
-    | Detects: "Final Answer: The..." -&gt; STREAM
-    v
+ | Detects: "Action: Search" -&gt; WAIT
+ | Detects: "Observation: 42" -&gt; WAIT
+ | Detects: "Final Answer: The..." -&gt; STREAM
+ v
 [Frontend (React)]
-</code></pre></div></div>
+</code></p>
 
 <p>The key challenge: <strong>Leakage</strong>. We don’t want to stream the raw JSON braces of a tool call to the user. We only want to stream the “final_answer”.</p>
 
@@ -307,41 +308,43 @@ Early LLM applications waited for the full generation (Stop Token) to complete b
 <h3 id="41-the-generator-pattern-python">4.1 The Generator Pattern (Python)</h3>
 <p>Python <code class="language-plaintext highlighter-rouge">yield</code> is perfect for this.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">async</span> <span class="k">def</span> <span class="nf">agent_stream</span><span class="p">(</span><span class="n">prompt</span><span class="p">):</span>
-    <span class="c1"># 1. Start LLM Stream
-</span>    <span class="n">stream</span> <span class="o">=</span> <span class="k">await</span> <span class="n">openai</span><span class="p">.</span><span class="n">ChatCompletion</span><span class="p">.</span><span class="nf">create</span><span class="p">(...,</span> <span class="n">stream</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    
-    <span class="nb">buffer</span> <span class="o">=</span> <span class="sh">""</span>
-    <span class="n">in_tool_mode</span> <span class="o">=</span> <span class="bp">False</span>
-    
-    <span class="k">async</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
-        <span class="n">token</span> <span class="o">=</span> <span class="n">chunk</span><span class="p">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">delta</span><span class="p">.</span><span class="n">content</span>
-        <span class="nb">buffer</span> <span class="o">+=</span> <span class="n">token</span>
-        
-        <span class="c1"># 2. Logic to detect Tool Usage
-</span>        <span class="k">if</span> <span class="sh">"</span><span class="s">&lt;tool&gt;</span><span class="sh">"</span> <span class="ow">in</span> <span class="nb">buffer</span><span class="p">:</span>
-            <span class="n">in_tool_mode</span> <span class="o">=</span> <span class="bp">True</span>
-            <span class="k">yield</span> <span class="nf">event</span><span class="p">(</span><span class="sh">"</span><span class="s">status</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Thinking...</span><span class="sh">"</span><span class="p">)</span>
-            
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">in_tool_mode</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="nf">event</span><span class="p">(</span><span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+async def agent_stream(prompt):
+ # 1. Start LLM Stream
+ stream = await openai.ChatCompletion.create(…, stream=True)</p>
+
+<p>buffer = “”
+ in_tool_mode = False</p>
+
+<p>async for chunk in stream:
+ token = chunk.choices[0].delta.content
+ buffer += token</p>
+
+<p># 2. Logic to detect Tool Usage
+ if “<tool>" in buffer:
+ in_tool_mode = True
+ yield event("status", "Thinking...")</tool></p>
+
+<p>if not in_tool_mode:
+ yield event(“text”, token)
+``</p>
 
 <h3 id="42-the-client-consumer-react">4.2 The Client Consumer (React)</h3>
 <p>Using <code class="language-plaintext highlighter-rouge">fetch</code> with a <code class="language-plaintext highlighter-rouge">ReadableStream</code>.</p>
 
-<div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">response</span> <span class="o">=</span> <span class="k">await</span> <span class="nf">fetch</span><span class="p">(</span><span class="dl">'</span><span class="s1">/api/agent</span><span class="dl">'</span><span class="p">);</span>
-<span class="kd">const</span> <span class="nx">reader</span> <span class="o">=</span> <span class="nx">response</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nf">getReader</span><span class="p">();</span>
-<span class="kd">const</span> <span class="nx">decoder</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">TextDecoder</span><span class="p">();</span>
+<p>``javascript
+const response = await fetch(‘/api/agent’);
+const reader = response.body.getReader();
+const decoder = new TextDecoder();</p>
 
-<span class="k">while </span><span class="p">(</span><span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
-  <span class="kd">const</span> <span class="p">{</span> <span class="nx">done</span><span class="p">,</span> <span class="nx">value</span> <span class="p">}</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">reader</span><span class="p">.</span><span class="nf">read</span><span class="p">();</span>
-  <span class="k">if </span><span class="p">(</span><span class="nx">done</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
-  <span class="kd">const</span> <span class="nx">chunk</span> <span class="o">=</span> <span class="nx">decoder</span><span class="p">.</span><span class="nf">decode</span><span class="p">(</span><span class="nx">value</span><span class="p">);</span>
-  <span class="c1">// Parse "event: text\ndata: hello"</span>
-  <span class="nf">handleSSE</span><span class="p">(</span><span class="nx">chunk</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre></div></div>
+<p>while (true) {
+ const { done, value } = await reader.read();
+ if (done) break;
+ const chunk = decoder.decode(value);
+ // Parse “event: text\ndata: hello”
+ handleSSE(chunk);
+}
+``</p>
 
 <hr />
 
@@ -349,35 +352,36 @@ Early LLM applications waited for the full generation (Stop Token) to complete b
 
 <p>Here is a robust backend implementation using <code class="language-plaintext highlighter-rouge">ssep</code> format.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span>
-<span class="kn">from</span> <span class="n">fastapi.responses</span> <span class="kn">import</span> <span class="n">StreamingResponse</span>
-<span class="kn">import</span> <span class="n">json</span>
-<span class="kn">import</span> <span class="n">asyncio</span>
+<p>``python
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
+import json
+import asyncio</p>
 
-<span class="n">app</span> <span class="o">=</span> <span class="nc">FastAPI</span><span class="p">()</span>
+<p>app = FastAPI()</p>
 
-<span class="k">async</span> <span class="k">def</span> <span class="nf">event_generator</span><span class="p">():</span>
-    <span class="sh">"""</span><span class="s">
-    Yields data in strict SSE format:
-    data: {</span><span class="sh">"</span><span class="s">key</span><span class="sh">"</span><span class="s">: </span><span class="sh">"</span><span class="s">value</span><span class="sh">"</span><span class="s">}</span><span class="se">\n\n</span><span class="s">
-    </span><span class="sh">"""</span>
-    <span class="c1"># Phase 1: Planning
-</span>    <span class="k">yield</span> <span class="sa">f</span><span class="sh">"</span><span class="s">data: </span><span class="si">{</span><span class="n">json</span><span class="p">.</span><span class="n">dumps</span><span class="p">(</span><span class="si">{</span><span class="sh">'</span><span class="s">type</span><span class="sh">'</span><span class="si">:</span> <span class="sh">'</span><span class="s">status</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">content</span><span class="sh">'</span><span class="si">:</span> <span class="sh">'</span><span class="s">Searching Google...</span><span class="sh">'</span><span class="si">}</span><span class="p">)</span><span class="si">}</span><span class="se">\n\n</span><span class="sh">"</span>
-    <span class="k">await</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># Fake tool latency
-</span>    
-    <span class="c1"># Phase 2: Streaming Answer
-</span>    <span class="n">sentence</span> <span class="o">=</span> <span class="sh">"</span><span class="s">The speed of light is 299,792 km/s.</span><span class="sh">"</span>
-    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">sentence</span><span class="p">.</span><span class="nf">split</span><span class="p">():</span>
-        <span class="k">yield</span> <span class="sa">f</span><span class="sh">"</span><span class="s">data: </span><span class="si">{</span><span class="n">json</span><span class="p">.</span><span class="n">dumps</span><span class="p">(</span><span class="si">{</span><span class="sh">'</span><span class="s">type</span><span class="sh">'</span><span class="si">:</span> <span class="sh">'</span><span class="s">token</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">content</span><span class="sh">'</span><span class="si">:</span> <span class="n">word</span> <span class="o">+</span> <span class="sh">'</span><span class="s"> </span><span class="sh">'</span><span class="si">}</span><span class="p">)</span><span class="si">}</span><span class="se">\n\n</span><span class="sh">"</span>
-        <span class="k">await</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+<p>async def event_generator():
+ “””
+ Yields data in strict SSE format:
+ data: {“key”: “value”}\n\n
+ “””
+ # Phase 1: Planning
+ yield f”data: {json.dumps({‘type’: ‘status’, ‘content’: ‘Searching Google…’})}\n\n”
+ await asyncio.sleep(1) # Fake tool latency</p>
 
-    <span class="c1"># Phase 3: Done
-</span>    <span class="k">yield</span> <span class="sh">"</span><span class="s">data: [DONE]</span><span class="se">\n\n</span><span class="sh">"</span>
+<p># Phase 2: Streaming Answer
+ sentence = “The speed of light is 299,792 km/s.”
+ for word in sentence.split():
+ yield f”data: {json.dumps({‘type’: ‘token’, ‘content’: word + ‘ ‘})}\n\n”
+ await asyncio.sleep(0.1)</p>
 
-<span class="nd">@app.get</span><span class="p">(</span><span class="sh">"</span><span class="s">/stream</span><span class="sh">"</span><span class="p">)</span>
-<span class="k">async</span> <span class="k">def</span> <span class="nf">stream_endpoint</span><span class="p">():</span>
-    <span class="k">return</span> <span class="nc">StreamingResponse</span><span class="p">(</span><span class="nf">event_generator</span><span class="p">(),</span> <span class="n">media_type</span><span class="o">=</span><span class="sh">"</span><span class="s">text/event-stream</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p># Phase 3: Done
+ yield “data: [DONE]\n\n”</p>
+
+<p>@app.get(“/stream”)
+async def stream_endpoint():
+ return StreamingResponse(event_generator(), media_type=”text/event-stream”)
+``</p>
 
 <hr />
 
@@ -432,7 +436,7 @@ Users love to see the “Brain”:</p>
 
 <h2 id="9-connections-to-other-topics">9. Connections to Other Topics</h2>
 
-<p>This connects to <strong>Speech Model Export</strong> (Day 47 Speech).</p>
+<p>This connects to <strong>Speech Model Export</strong> (Speech).</p>
 <ul>
   <li>Both deal with <strong>Streaming Latency</strong>.</li>
   <li>In Speech, we show partial words (<code class="language-plaintext highlighter-rouge">he</code> -&gt; <code class="language-plaintext highlighter-rouge">hel</code> -&gt; <code class="language-plaintext highlighter-rouge">hello</code>).</li>
@@ -454,12 +458,9 @@ Users love to see the “Brain”:</p>
 <h2 id="11-future-directions">11. Future Directions</h2>
 
 <ul>
-  <li><strong>Generative UI</strong>: Streaming not just text, but React Components.
-    <ul>
-      <li>Agent streams: <code class="language-plaintext highlighter-rouge">&lt;WeatherWidget temp="72" /&gt;</code>.</li>
-      <li>Browser renders the widget instantly.</li>
-    </ul>
-  </li>
+  <li><strong>Generative UI</strong>: Streaming not just text, but React Components.</li>
+  <li>Agent streams: <code class="language-plaintext highlighter-rouge">&lt;WeatherWidget temp="72" /&gt;</code>.</li>
+  <li>Browser renders the widget instantly.</li>
   <li><strong>Duplex Speech</strong>: Streaming Audio In -&gt; Streaming Audio Out (OpenAI GPT-4o). No text intermediate.</li>
 </ul>
 

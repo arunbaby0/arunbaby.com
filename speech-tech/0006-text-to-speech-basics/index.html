@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Text-to-Speech (TTS) System Fundamentals">
     <meta itemprop="description" content="From text to natural speech: understanding modern neural TTS architectures that power Alexa, Google Assistant, and Siri.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -281,8 +281,9 @@
 
 <p>Most TTS systems use a two-stage approach:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Text → [Acoustic Model] → Mel Spectrogram → [Vocoder] → Audio Waveform
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+Text → [Acoustic Model] → Mel Spectrogram → [Vocoder] → Audio Waveform
+</code></p>
 
 <p><strong>Stage 1: Acoustic Model (Text → Mel Spectrogram)</strong></p>
 <ul>
@@ -322,88 +323,89 @@
 
 <p>Transform raw text into model-ready input.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">TextProcessor</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Text normalization and phoneme conversion
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">normalizer</span> <span class="o">=</span> <span class="nc">TextNormalizer</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">g2p</span> <span class="o">=</span> <span class="nc">Grapheme2Phoneme</span><span class="p">()</span>  <span class="c1"># Grapheme-to-Phoneme
-</span>    
-    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Convert text to phoneme sequence
-        
-        Args:
-            text: Raw input text
-        
-        Returns:
-            List of phonemes
-        </span><span class="sh">"""</span>
-        <span class="c1"># 1. Normalize text
-</span>        <span class="n">normalized</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">normalizer</span><span class="p">.</span><span class="nf">normalize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-        <span class="c1"># "Dr. Smith has $100" → "Doctor Smith has one hundred dollars"
-</span>        
-        <span class="c1"># 2. Convert to phonemes
-</span>        <span class="n">phonemes</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">g2p</span><span class="p">.</span><span class="nf">convert</span><span class="p">(</span><span class="n">normalized</span><span class="p">)</span>
-        <span class="c1"># "hello" → ['HH', 'AH', 'L', 'OW']
-</span>        
-        <span class="k">return</span> <span class="n">phonemes</span>
+<p>``python
+class TextProcessor:
+ “””
+ Text normalization and phoneme conversion
+ “””</p>
 
-<span class="k">class</span> <span class="nc">TextNormalizer</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Normalize text (expand abbreviations, numbers, etc.)
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_expand_abbreviations</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_expand_numbers</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_expand_symbols</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">text</span>
-    
-    <span class="k">def</span> <span class="nf">_expand_abbreviations</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Dr. → Doctor, Mr. → Mister, etc.</span><span class="sh">"""</span>
-        <span class="n">expansions</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">Dr.</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">Doctor</span><span class="sh">'</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">Mr.</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">Mister</span><span class="sh">'</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">Mrs.</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">Misses</span><span class="sh">'</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">Ms.</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">Miss</span><span class="sh">'</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">St.</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">Street</span><span class="sh">'</span><span class="p">,</span>
-        <span class="p">}</span>
-        <span class="k">for</span> <span class="n">abbr</span><span class="p">,</span> <span class="n">expansion</span> <span class="ow">in</span> <span class="n">expansions</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">.</span><span class="nf">replace</span><span class="p">(</span><span class="n">abbr</span><span class="p">,</span> <span class="n">expansion</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">text</span>
-    
-    <span class="k">def</span> <span class="nf">_expand_numbers</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">$100 → one hundred dollars</span><span class="sh">"""</span>
-        <span class="kn">import</span> <span class="n">re</span>
-        
-        <span class="c1"># Currency
-</span>        <span class="n">text</span> <span class="o">=</span> <span class="n">re</span><span class="p">.</span><span class="nf">sub</span><span class="p">(</span><span class="sa">r</span><span class="sh">'</span><span class="s">\$(\d+)</span><span class="sh">'</span><span class="p">,</span> <span class="sa">r</span><span class="sh">'</span><span class="s">\1 dollars</span><span class="sh">'</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
-        
-        <span class="c1"># Years
-</span>        <span class="n">text</span> <span class="o">=</span> <span class="n">re</span><span class="p">.</span><span class="nf">sub</span><span class="p">(</span><span class="sa">r</span><span class="sh">'</span><span class="s">(\d{4})</span><span class="sh">'</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">_year_to_words</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">text</span>
-    
-    <span class="k">def</span> <span class="nf">_year_to_words</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">match</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Convert year to words: 2024 → twenty twenty-four</span><span class="sh">"""</span>
-        <span class="c1"># Simplified implementation
-</span>        <span class="k">return</span> <span class="k">match</span><span class="p">.</span><span class="nf">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Placeholder
-</span>    
-    <span class="k">def</span> <span class="nf">_expand_symbols</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">@ → at, % → percent, etc.</span><span class="sh">"""</span>
-        <span class="n">symbols</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">@</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">at</span><span class="sh">'</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">%</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">percent</span><span class="sh">'</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">#</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">number</span><span class="sh">'</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">&amp;</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">and</span><span class="sh">'</span><span class="p">,</span>
-        <span class="p">}</span>
-        <span class="k">for</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">expansion</span> <span class="ow">in</span> <span class="n">symbols</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">.</span><span class="nf">replace</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="n">expansion</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">text</span>
-</code></pre></div></div>
+<p>def <strong>init</strong>(self):
+ self.normalizer = TextNormalizer()
+ self.g2p = Grapheme2Phoneme() # Grapheme-to-Phoneme</p>
+
+<p>def process(self, text: str) -&gt; list[str]:
+ “””
+ Convert text to phoneme sequence</p>
+
+<p>Args:
+ text: Raw input text</p>
+
+<p>Returns:
+ List of phonemes
+ “””
+ # 1. Normalize text
+ normalized = self.normalizer.normalize(text)
+ # “Dr. Smith has $100” → “Doctor Smith has one hundred dollars”</p>
+
+<p># 2. Convert to phonemes
+ phonemes = self.g2p.convert(normalized)
+ # “hello” → [‘HH’, ‘AH’, ‘L’, ‘OW’]</p>
+
+<p>return phonemes</p>
+
+<p>class TextNormalizer:
+ “””
+ Normalize text (expand abbreviations, numbers, etc.)
+ “””</p>
+
+<p>def normalize(self, text: str) -&gt; str:
+ text = self._expand_abbreviations(text)
+ text = self._expand_numbers(text)
+ text = self._expand_symbols(text)
+ return text</p>
+
+<p>def _expand_abbreviations(self, text: str) -&gt; str:
+ “"”Dr. → Doctor, Mr. → Mister, etc.”””
+ expansions = {
+ ‘Dr.’: ‘Doctor’,
+ ‘Mr.’: ‘Mister’,
+ ‘Mrs.’: ‘Misses’,
+ ‘Ms.’: ‘Miss’,
+ ‘St.’: ‘Street’,
+ }
+ for abbr, expansion in expansions.items():
+ text = text.replace(abbr, expansion)
+ return text</p>
+
+<p>def _expand_numbers(self, text: str) -&gt; str:
+ “”“$100 → one hundred dollars”””
+ import re</p>
+
+<p># Currency
+ text = re.sub(r’$(\d+)’, r’\1 dollars’, text)</p>
+
+<p># Years
+ text = re.sub(r’(\d{4})’, self._year_to_words, text)</p>
+
+<p>return text</p>
+
+<p>def _year_to_words(self, match) -&gt; str:
+ “"”Convert year to words: 2024 → twenty twenty-four”””
+ # Simplified implementation
+ return match.group(0) # Placeholder</p>
+
+<p>def _expand_symbols(self, text: str) -&gt; str:
+ “””@ → at, % → percent, etc.”””
+ symbols = {
+ ‘@’: ‘at’,
+ ‘%’: ‘percent’,
+ ‘#’: ‘number’,
+ ‘&amp;’: ‘and’,
+ }
+ for symbol, expansion in symbols.items():
+ text = text.replace(symbol, expansion)
+ return text
+``</p>
 
 <h3 id="2-acoustic-model">2. Acoustic Model</h3>
 
@@ -411,183 +413,185 @@
 
 <p><strong>Tacotron 2 Architecture (simplified):</strong></p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Input: Phoneme sequence
-   ↓
+<p><code class="language-plaintext highlighter-rouge">
+Input: Phoneme sequence
+ ↓
 [Character Embeddings]
-   ↓
+ ↓
 [Encoder] (Bidirectional LSTM)
-   ↓
+ ↓
 [Attention] (Location-sensitive)
-   ↓
+ ↓
 [Decoder] (Autoregressive LSTM)
-   ↓
+ ↓
 [Mel Predictor]
-   ↓
+ ↓
 Output: Mel Spectrogram
-</code></pre></div></div>
+</code></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">SimplifiedTacotron</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Simplified Tacotron-style acoustic model
-    
-    Real Tacotron 2 is much more complex!
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">vocab_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">embedding_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
-        <span class="n">encoder_hidden</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
-        <span class="n">decoder_hidden</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span>
-        <span class="n">n_mels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">80</span>
-    <span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="c1"># Character/phoneme embeddings
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Embedding</span><span class="p">(</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">)</span>
-        
-        <span class="c1"># Encoder
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTM</span><span class="p">(</span>
-            <span class="n">embedding_dim</span><span class="p">,</span>
-            <span class="n">encoder_hidden</span><span class="p">,</span>
-            <span class="n">num_layers</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-            <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-            <span class="n">bidirectional</span><span class="o">=</span><span class="bp">True</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Attention
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">attention</span> <span class="o">=</span> <span class="nc">LocationSensitiveAttention</span><span class="p">(</span>
-            <span class="n">encoder_hidden</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span>  <span class="c1"># Bidirectional
-</span>            <span class="n">decoder_hidden</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Decoder
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">decoder</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTMCell</span><span class="p">(</span>
-            <span class="n">encoder_hidden</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">n_mels</span><span class="p">,</span>  <span class="c1"># Context + previous mel frame
-</span>            <span class="n">decoder_hidden</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Mel predictor
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">mel_predictor</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">decoder_hidden</span><span class="p">,</span> <span class="n">n_mels</span><span class="p">)</span>
-        
-        <span class="c1"># Stop token predictor
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">stop_predictor</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">decoder_hidden</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">mel_targets</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Forward pass
-        
-        Args:
-            text: [batch, seq_len] phoneme indices
-            mel_targets: [batch, mel_len, n_mels] target mels (training only)
-        
-        Returns:
-            mels: [batch, mel_len, n_mels]
-            stop_tokens: [batch, mel_len]
-        </span><span class="sh">"""</span>
-        <span class="c1"># Encode text
-</span>        <span class="n">embedded</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">embedding</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>  <span class="c1"># [batch, seq_len, embed_dim]
-</span>        <span class="n">encoder_outputs</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span><span class="n">embedded</span><span class="p">)</span>  <span class="c1"># [batch, seq_len, hidden*2]
-</span>        
-        <span class="c1"># Decode (autoregressive)
-</span>        <span class="k">if</span> <span class="n">mel_targets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="c1"># Teacher forcing during training
-</span>            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">_decode_teacher_forcing</span><span class="p">(</span><span class="n">encoder_outputs</span><span class="p">,</span> <span class="n">mel_targets</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Autoregressive during inference
-</span>            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">_decode_autoregressive</span><span class="p">(</span><span class="n">encoder_outputs</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_decode_autoregressive</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">encoder_outputs</span><span class="p">,</span> <span class="n">max_len</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Autoregressive decoding (inference)</span><span class="sh">"""</span>
-        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">encoder_outputs</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">n_mels</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">mel_predictor</span><span class="p">.</span><span class="n">out_features</span>
-        
-        <span class="c1"># Initialize
-</span>        <span class="n">decoder_hidden</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">decoder</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">)</span>
-        <span class="n">decoder_cell</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">decoder</span><span class="p">.</span><span class="n">hidden_size</span><span class="p">)</span>
-        <span class="n">attention_context</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">encoder_outputs</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
-        <span class="n">mel_frame</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">n_mels</span><span class="p">)</span>
-        
-        <span class="n">mels</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">stop_tokens</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">max_len</span><span class="p">):</span>
-            <span class="c1"># Compute attention
-</span>            <span class="n">attention_context</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">attention</span><span class="p">(</span>
-                <span class="n">decoder_hidden</span><span class="p">,</span>
-                <span class="n">encoder_outputs</span>
-            <span class="p">)</span>
-            
-            <span class="c1"># Decoder step
-</span>            <span class="n">decoder_input</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span><span class="n">attention_context</span><span class="p">,</span> <span class="n">mel_frame</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">decoder_hidden</span><span class="p">,</span> <span class="n">decoder_cell</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">decoder</span><span class="p">(</span>
-                <span class="n">decoder_input</span><span class="p">,</span>
-                <span class="p">(</span><span class="n">decoder_hidden</span><span class="p">,</span> <span class="n">decoder_cell</span><span class="p">)</span>
-            <span class="p">)</span>
-            
-            <span class="c1"># Predict mel frame and stop token
-</span>            <span class="n">mel_frame</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">mel_predictor</span><span class="p">(</span><span class="n">decoder_hidden</span><span class="p">)</span>
-            <span class="n">stop_token</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">sigmoid</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nf">stop_predictor</span><span class="p">(</span><span class="n">decoder_hidden</span><span class="p">))</span>
-            
-            <span class="n">mels</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">mel_frame</span><span class="p">)</span>
-            <span class="n">stop_tokens</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">stop_token</span><span class="p">)</span>
-            
-            <span class="c1"># Check if should stop
-</span>            <span class="nf">if </span><span class="p">(</span><span class="n">stop_token</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">).</span><span class="nf">all</span><span class="p">():</span>
-                <span class="k">break</span>
-        
-        <span class="n">mels</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">stack</span><span class="p">(</span><span class="n">mels</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># [batch, mel_len, n_mels]
-</span>        <span class="n">stop_tokens</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">stack</span><span class="p">(</span><span class="n">stop_tokens</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># [batch, mel_len, 1]
-</span>        
-        <span class="k">return</span> <span class="n">mels</span><span class="p">,</span> <span class="n">stop_tokens</span>
+<p>class SimplifiedTacotron(nn.Module):
+ “””
+ Simplified Tacotron-style acoustic model</p>
 
-<span class="k">class</span> <span class="nc">LocationSensitiveAttention</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Location-sensitive attention (simplified)
-    
-    Note: Real Tacotron uses cumulative attention features; this
-    minimal version omits location convolution for brevity.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">encoder_dim</span><span class="p">,</span> <span class="n">decoder_dim</span><span class="p">,</span> <span class="n">attention_dim</span><span class="o">=</span><span class="mi">128</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">query_layer</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">decoder_dim</span><span class="p">,</span> <span class="n">attention_dim</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">key_layer</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">encoder_dim</span><span class="p">,</span> <span class="n">attention_dim</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">value_layer</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">attention_dim</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        
-        <span class="c1"># For brevity, location features are omitted in this simplified demo
-</span>    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">keys</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Compute attention context
-        
-        Args:
-            query: [batch, decoder_dim] - current decoder state
-            keys: [batch, seq_len, encoder_dim] - encoder outputs
-        
-        Returns:
-            context: [batch, encoder_dim]
-            attention_weights: [batch, seq_len]
-        </span><span class="sh">"""</span>
-        <span class="c1"># Compute attention scores
-</span>        <span class="n">query_proj</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">query_layer</span><span class="p">(</span><span class="n">query</span><span class="p">).</span><span class="nf">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># [batch, 1, attn_dim]
-</span>        <span class="n">keys_proj</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">key_layer</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>  <span class="c1"># [batch, seq_len, attn_dim]
-</span>        
-        <span class="n">scores</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">value_layer</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">tanh</span><span class="p">(</span><span class="n">query_proj</span> <span class="o">+</span> <span class="n">keys_proj</span><span class="p">)).</span><span class="nf">squeeze</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-        <span class="n">attention_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># [batch, seq_len]
-</span>        
-        <span class="c1"># Compute context
-</span>        <span class="n">context</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">bmm</span><span class="p">(</span>
-            <span class="n">attention_weights</span><span class="p">.</span><span class="nf">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
-            <span class="n">keys</span>
-        <span class="p">).</span><span class="nf">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># [batch, encoder_dim]
-</span>        
-        <span class="k">return</span> <span class="n">context</span><span class="p">,</span> <span class="n">attention_weights</span>
-</code></pre></div></div>
+<p>Real Tacotron 2 is much more complex!
+ “””</p>
+
+<p>def <strong>init</strong>(
+ self,
+ vocab_size: int,
+ embedding_dim: int = 512,
+ encoder_hidden: int = 256,
+ decoder_hidden: int = 1024,
+ n_mels: int = 80
+ ):
+ super().<strong>init</strong>()</p>
+
+<p># Character/phoneme embeddings
+ self.embedding = nn.Embedding(vocab_size, embedding_dim)</p>
+
+<p># Encoder
+ self.encoder = nn.LSTM(
+ embedding_dim,
+ encoder_hidden,
+ num_layers=3,
+ batch_first=True,
+ bidirectional=True
+ )</p>
+
+<p># Attention
+ self.attention = LocationSensitiveAttention(
+ encoder_hidden * 2, # Bidirectional
+ decoder_hidden
+ )</p>
+
+<p># Decoder
+ self.decoder = nn.LSTMCell(
+ encoder_hidden * 2 + n_mels, # Context + previous mel frame
+ decoder_hidden
+ )</p>
+
+<p># Mel predictor
+ self.mel_predictor = nn.Linear(decoder_hidden, n_mels)</p>
+
+<p># Stop token predictor
+ self.stop_predictor = nn.Linear(decoder_hidden, 1)</p>
+
+<p>def forward(self, text, mel_targets=None):
+ “””
+ Forward pass</p>
+
+<p>Args:
+ text: [batch, seq_len] phoneme indices
+ mel_targets: [batch, mel_len, n_mels] target mels (training only)</p>
+
+<p>Returns:
+ mels: [batch, mel_len, n_mels]
+ stop_tokens: [batch, mel_len]
+ “””
+ # Encode text
+ embedded = self.embedding(text) # [batch, seq_len, embed_dim]
+ encoder_outputs, _ = self.encoder(embedded) # [batch, seq_len, hidden*2]</p>
+
+<p># Decode (autoregressive)
+ if mel_targets is not None:
+ # Teacher forcing during training
+ return self._decode_teacher_forcing(encoder_outputs, mel_targets)
+ else:
+ # Autoregressive during inference
+ return self._decode_autoregressive(encoder_outputs, max_len=1000)</p>
+
+<p>def _decode_autoregressive(self, encoder_outputs, max_len):
+ “"”Autoregressive decoding (inference)”””
+ batch_size = encoder_outputs.size(0)
+ n_mels = self.mel_predictor.out_features</p>
+
+<p># Initialize
+ decoder_hidden = torch.zeros(batch_size, self.decoder.hidden_size)
+ decoder_cell = torch.zeros(batch_size, self.decoder.hidden_size)
+ attention_context = torch.zeros(batch_size, encoder_outputs.size(2))
+ mel_frame = torch.zeros(batch_size, n_mels)</p>
+
+<p>mels = []
+ stop_tokens = []</p>
+
+<p>for _ in range(max_len):
+ # Compute attention
+ attention_context, _ = self.attention(
+ decoder_hidden,
+ encoder_outputs
+ )</p>
+
+<p># Decoder step
+ decoder_input = torch.cat([attention_context, mel_frame], dim=1)
+ decoder_hidden, decoder_cell = self.decoder(
+ decoder_input,
+ (decoder_hidden, decoder_cell)
+ )</p>
+
+<p># Predict mel frame and stop token
+ mel_frame = self.mel_predictor(decoder_hidden)
+ stop_token = torch.sigmoid(self.stop_predictor(decoder_hidden))</p>
+
+<p>mels.append(mel_frame)
+ stop_tokens.append(stop_token)</p>
+
+<p># Check if should stop
+ if (stop_token &gt; 0.5).all():
+ break</p>
+
+<p>mels = torch.stack(mels, dim=1) # [batch, mel_len, n_mels]
+ stop_tokens = torch.stack(stop_tokens, dim=1) # [batch, mel_len, 1]</p>
+
+<p>return mels, stop_tokens</p>
+
+<p>class LocationSensitiveAttention(nn.Module):
+ “””
+ Location-sensitive attention (simplified)</p>
+
+<p>Note: Real Tacotron uses cumulative attention features; this
+ minimal version omits location convolution for brevity.
+ “””</p>
+
+<p>def <strong>init</strong>(self, encoder_dim, decoder_dim, attention_dim=128):
+ super().<strong>init</strong>()</p>
+
+<p>self.query_layer = nn.Linear(decoder_dim, attention_dim)
+ self.key_layer = nn.Linear(encoder_dim, attention_dim)
+ self.value_layer = nn.Linear(attention_dim, 1)</p>
+
+<p># For brevity, location features are omitted in this simplified demo</p>
+
+<p>def forward(self, query, keys):
+ “””
+ Compute attention context</p>
+
+<p>Args:
+ query: [batch, decoder_dim] - current decoder state
+ keys: [batch, seq_len, encoder_dim] - encoder outputs</p>
+
+<p>Returns:
+ context: [batch, encoder_dim]
+ attention_weights: [batch, seq_len]
+ “””
+ # Compute attention scores
+ query_proj = self.query_layer(query).unsqueeze(1) # [batch, 1, attn_dim]
+ keys_proj = self.key_layer(keys) # [batch, seq_len, attn_dim]</p>
+
+<p>scores = self.value_layer(torch.tanh(query_proj + keys_proj)).squeeze(2)
+ attention_weights = torch.softmax(scores, dim=1) # [batch, seq_len]</p>
+
+<p># Compute context
+ context = torch.bmm(
+ attention_weights.unsqueeze(1),
+ keys
+ ).squeeze(1) # [batch, encoder_dim]</p>
+
+<p>return context, attention_weights
+``</p>
 
 <h3 id="3-vocoder">3. Vocoder</h3>
 
@@ -639,111 +643,112 @@ Output: Mel Spectrogram
 
 <p><strong>HiFi-GAN Architecture:</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">HiFiGANGenerator</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Simplified HiFi-GAN generator
-    
-    Upsamples mel spectrogram to waveform
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">n_mels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">80</span><span class="p">,</span>
-        <span class="n">upsample_rates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
-        <span class="n">upsample_kernel_sizes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
-        <span class="n">resblock_kernel_sizes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span>
-        <span class="n">resblock_dilation_sizes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">]]</span>
-    <span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">num_kernels</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">resblock_kernel_sizes</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">num_upsamples</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">upsample_rates</span><span class="p">)</span>
-        
-        <span class="c1"># Initial conv
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">conv_pre</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Conv1d</span><span class="p">(</span><span class="n">n_mels</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-        
-        <span class="c1"># Upsampling layers
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">ups</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ModuleList</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="nf">zip</span><span class="p">(</span><span class="n">upsample_rates</span><span class="p">,</span> <span class="n">upsample_kernel_sizes</span><span class="p">)):</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">ups</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span>
-                <span class="n">nn</span><span class="p">.</span><span class="nc">ConvTranspose1d</span><span class="p">(</span>
-                    <span class="mi">512</span> <span class="o">//</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">i</span><span class="p">),</span>
-                    <span class="mi">512</span> <span class="o">//</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span>
-                    <span class="n">kernel_size</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
-                    <span class="n">stride</span><span class="o">=</span><span class="n">u</span><span class="p">,</span>
-                    <span class="n">padding</span><span class="o">=</span><span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="n">u</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-        
-        <span class="c1"># Residual blocks
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">resblocks</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ModuleList</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">ups</span><span class="p">)):</span>
-            <span class="n">ch</span> <span class="o">=</span> <span class="mi">512</span> <span class="o">//</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">resblock_kernel_sizes</span><span class="p">,</span> <span class="n">resblock_dilation_sizes</span><span class="p">):</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">resblocks</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">ResBlock</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
-        
-        <span class="c1"># Final conv
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">conv_post</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Conv1d</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">mel</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Generate waveform from mel spectrogram
-        
-        Args:
-            mel: [batch, n_mels, mel_len]
-        
-        Returns:
-            waveform: [batch, 1, audio_len]
-        </span><span class="sh">"""</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">conv_pre</span><span class="p">(</span><span class="n">mel</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">up</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">ups</span><span class="p">):</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="nf">leaky_relu</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="nf">up</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-            
-            <span class="c1"># Apply residual blocks
-</span>            <span class="n">xs</span> <span class="o">=</span> <span class="bp">None</span>
-            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">num_kernels</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">xs</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="n">xs</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">resblocks</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">num_kernels</span> <span class="o">+</span> <span class="n">j</span><span class="p">](</span><span class="n">x</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">xs</span> <span class="o">+=</span> <span class="n">self</span><span class="p">.</span><span class="n">resblocks</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">num_kernels</span> <span class="o">+</span> <span class="n">j</span><span class="p">](</span><span class="n">x</span><span class="p">)</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">xs</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">num_kernels</span>
-        
-        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="nf">leaky_relu</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">conv_post</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tanh</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">x</span>
+<p>class HiFiGANGenerator(nn.Module):
+ “””
+ Simplified HiFi-GAN generator</p>
 
-<span class="k">class</span> <span class="nc">ResBlock</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Residual block with dilated convolutions</span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">dilations</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">convs</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ModuleList</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dilations</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">convs</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span>
-                <span class="n">nn</span><span class="p">.</span><span class="nc">Conv1d</span><span class="p">(</span>
-                    <span class="n">channels</span><span class="p">,</span>
-                    <span class="n">channels</span><span class="p">,</span>
-                    <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span>
-                    <span class="n">dilation</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
-                    <span class="n">padding</span><span class="o">=</span><span class="p">(</span><span class="n">kernel_size</span> <span class="o">*</span> <span class="n">d</span> <span class="o">-</span> <span class="n">d</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">conv</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">convs</span><span class="p">:</span>
-            <span class="n">xt</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="nf">leaky_relu</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
-            <span class="n">xt</span> <span class="o">=</span> <span class="nf">conv</span><span class="p">(</span><span class="n">xt</span><span class="p">)</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">xt</span>
-        <span class="k">return</span> <span class="n">x</span>
-</code></pre></div></div>
+<p>Upsamples mel spectrogram to waveform
+ “””</p>
+
+<p>def <strong>init</strong>(
+ self,
+ n_mels: int = 80,
+ upsample_rates: list[int] = [8, 8, 2, 2],
+ upsample_kernel_sizes: list[int] = [16, 16, 4, 4],
+ resblock_kernel_sizes: list[int] = [3, 7, 11],
+ resblock_dilation_sizes: list[list[int]] = [[1, 3, 5], [1, 3, 5], [1, 3, 5]]
+ ):
+ super().<strong>init</strong>()</p>
+
+<p>self.num_kernels = len(resblock_kernel_sizes)
+ self.num_upsamples = len(upsample_rates)</p>
+
+<p># Initial conv
+ self.conv_pre = nn.Conv1d(n_mels, 512, kernel_size=7, padding=3)</p>
+
+<p># Upsampling layers
+ self.ups = nn.ModuleList()
+ for i, (u, k) in enumerate(zip(upsample_rates, upsample_kernel_sizes)):
+ self.ups.append(
+ nn.ConvTranspose1d(
+ 512 // (2 ** i),
+ 512 // (2 ** (i + 1)),
+ kernel_size=k,
+ stride=u,
+ padding=(k - u) // 2
+ )
+ )</p>
+
+<p># Residual blocks
+ self.resblocks = nn.ModuleList()
+ for i in range(len(self.ups)):
+ ch = 512 // (2 ** (i + 1))
+ for k, d in zip(resblock_kernel_sizes, resblock_dilation_sizes):
+ self.resblocks.append(ResBlock(ch, k, d))</p>
+
+<p># Final conv
+ self.conv_post = nn.Conv1d(ch, 1, kernel_size=7, padding=3)</p>
+
+<p>def forward(self, mel):
+ “””
+ Generate waveform from mel spectrogram</p>
+
+<p>Args:
+ mel: [batch, n_mels, mel_len]</p>
+
+<p>Returns:
+ waveform: [batch, 1, audio_len]
+ “””
+ x = self.conv_pre(mel)</p>
+
+<p>for i, up in enumerate(self.ups):
+ x = torch.nn.functional.leaky_relu(x, 0.1)
+ x = up(x)</p>
+
+<p># Apply residual blocks
+ xs = None
+ for j in range(self.num_kernels):
+ if xs is None:
+ xs = self.resblocks<a href="x">i * self.num_kernels + j</a>
+ else:
+ xs += self.resblocks<a href="x">i * self.num_kernels + j</a>
+ x = xs / self.num_kernels</p>
+
+<p>x = torch.nn.functional.leaky_relu(x)
+ x = self.conv_post(x)
+ x = torch.tanh(x)</p>
+
+<p>return x</p>
+
+<p>class ResBlock(nn.Module):
+ “"”Residual block with dilated convolutions”””</p>
+
+<p>def <strong>init</strong>(self, channels, kernel_size, dilations):
+ super().<strong>init</strong>()</p>
+
+<p>self.convs = nn.ModuleList()
+ for d in dilations:
+ self.convs.append(
+ nn.Conv1d(
+ channels,
+ channels,
+ kernel_size=kernel_size,
+ dilation=d,
+ padding=(kernel_size * d - d) // 2
+ )
+ )</p>
+
+<p>def forward(self, x):
+ for conv in self.convs:
+ xt = torch.nn.functional.leaky_relu(x, 0.1)
+ xt = conv(xt)
+ x = x + xt
+ return x
+``</p>
 
 <hr />
 
@@ -760,65 +765,67 @@ Output: Mel Spectrogram
 
 <p><strong>Architecture:</strong></p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Input: Phoneme sequence
-   ↓
+<p><code class="language-plaintext highlighter-rouge">
+Input: Phoneme sequence
+ ↓
 [Phoneme Embeddings]
-   ↓
+ ↓
 [Feed-Forward Transformer]
-   ↓
+ ↓
 [Duration Predictor] → phoneme durations
 [Pitch Predictor] → pitch contour
 [Energy Predictor] → energy contour
-   ↓
+ ↓
 [Length Regulator] (expand phonemes by duration)
-   ↓
+ ↓
 [Feed-Forward Transformer]
-   ↓
+ ↓
 Output: Mel Spectrogram
-</code></pre></div></div>
+</code></p>
 
 <p><strong>Key innovation: Length Regulator</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">length_regulator</span><span class="p">(</span><span class="n">phoneme_features</span><span class="p">,</span> <span class="n">durations</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Expand phoneme features based on predicted durations
-    
-    Args:
-        phoneme_features: [batch, phoneme_len, hidden]
-        durations: [batch, phoneme_len] - frames per phoneme
-    
-    Returns:
-        expanded: [batch, mel_len, hidden]
-    </span><span class="sh">"""</span>
-    <span class="n">expanded</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">for</span> <span class="n">batch_idx</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">phoneme_features</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span>
-        <span class="n">batch_expanded</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">phoneme_idx</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">phoneme_features</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)):</span>
-            <span class="n">feature</span> <span class="o">=</span> <span class="n">phoneme_features</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">,</span> <span class="n">phoneme_idx</span><span class="p">]</span>
-            <span class="n">duration</span> <span class="o">=</span> <span class="n">durations</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">,</span> <span class="n">phoneme_idx</span><span class="p">].</span><span class="nf">int</span><span class="p">()</span>
-            
-            <span class="c1"># Repeat feature 'duration' times
-</span>            <span class="n">batch_expanded</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">feature</span><span class="p">.</span><span class="nf">repeat</span><span class="p">(</span><span class="n">duration</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-        
-        <span class="n">batch_expanded</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">(</span><span class="n">batch_expanded</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">expanded</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">batch_expanded</span><span class="p">)</span>
-    
-    <span class="c1"># Pad to max length
-</span>    <span class="n">max_len</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">expanded</span><span class="p">)</span>
-    <span class="n">expanded</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="nf">pad</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">max_len</span> <span class="o">-</span> <span class="n">e</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)))</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">expanded</span><span class="p">]</span>
-    
-    <span class="k">return</span> <span class="n">torch</span><span class="p">.</span><span class="nf">stack</span><span class="p">(</span><span class="n">expanded</span><span class="p">)</span>
+<p>``python
+def length_regulator(phoneme_features, durations):
+ “””
+ Expand phoneme features based on predicted durations</p>
 
-<span class="c1"># Example
-</span><span class="n">phoneme_features</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>  <span class="c1"># 10 phonemes
-</span><span class="n">durations</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]])</span>  <span class="c1"># Frames per phoneme
-</span>
-<span class="n">expanded</span> <span class="o">=</span> <span class="nf">length_regulator</span><span class="p">(</span><span class="n">phoneme_features</span><span class="p">,</span> <span class="n">durations</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Input shape: </span><span class="si">{</span><span class="n">phoneme_features</span><span class="p">.</span><span class="n">shape</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Output shape: </span><span class="si">{</span><span class="n">expanded</span><span class="p">.</span><span class="n">shape</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>  <span class="c1"># [1, 44, 256] (sum of durations)
-</span></code></pre></div></div>
+<p>Args:
+ phoneme_features: [batch, phoneme_len, hidden]
+ durations: [batch, phoneme_len] - frames per phoneme</p>
+
+<p>Returns:
+ expanded: [batch, mel_len, hidden]
+ “””
+ expanded = []</p>
+
+<p>for batch_idx in range(phoneme_features.size(0)):
+ batch_expanded = []</p>
+
+<p>for phoneme_idx in range(phoneme_features.size(1)):
+ feature = phoneme_features[batch_idx, phoneme_idx]
+ duration = durations[batch_idx, phoneme_idx].int()</p>
+
+<p># Repeat feature ‘duration’ times
+ batch_expanded.append(feature.repeat(duration, 1))</p>
+
+<p>batch_expanded = torch.cat(batch_expanded, dim=0)
+ expanded.append(batch_expanded)</p>
+
+<p># Pad to max length
+ max_len = max(e.size(0) for e in expanded)
+ expanded = [torch.nn.functional.pad(e, (0, 0, 0, max_len - e.size(0))) for e in expanded]</p>
+
+<p>return torch.stack(expanded)</p>
+
+<h1 id="example">Example</h1>
+<p>phoneme_features = torch.randn(1, 10, 256) # 10 phonemes
+durations = torch.tensor([[5, 3, 4, 6, 2, 5, 7, 3, 4, 5]]) # Frames per phoneme</p>
+
+<p>expanded = length_regulator(phoneme_features, durations)
+print(f”Input shape: {phoneme_features.shape}”)
+print(f”Output shape: {expanded.shape}”) # [1, 44, 256] (sum of durations)
+``</p>
 
 <hr />
 
@@ -833,74 +840,75 @@ Output: Mel Spectrogram
   <li><strong>Energy:</strong> Loudness</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ProsodyController</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Control prosody in TTS generation
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
-    
-    <span class="k">def</span> <span class="nf">synthesize_with_prosody</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">pitch_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">duration_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">energy_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
-    <span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Generate speech with prosody control
-        
-        Args:
-            text: Input text
-            pitch_scale: Multiply pitch by this factor (&gt;1 = higher, &lt;1 = lower)
-            duration_scale: Multiply duration by this factor (&gt;1 = slower, &lt;1 = faster)
-            energy_scale: Multiply energy by this factor (&gt;1 = louder, &lt;1 = softer)
-        
-        Returns:
-            audio: Generated waveform
-        </span><span class="sh">"""</span>
-        <span class="c1"># Get model predictions
-</span>        <span class="n">phonemes</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">text_to_phonemes</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-        <span class="n">mel_spec</span><span class="p">,</span> <span class="n">pitch</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">energy</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">phonemes</span><span class="p">)</span>
-        
-        <span class="c1"># Apply prosody modifications
-</span>        <span class="n">pitch_modified</span> <span class="o">=</span> <span class="n">pitch</span> <span class="o">*</span> <span class="n">pitch_scale</span>
-        <span class="n">duration_modified</span> <span class="o">=</span> <span class="n">duration</span> <span class="o">*</span> <span class="n">duration_scale</span>
-        <span class="n">energy_modified</span> <span class="o">=</span> <span class="n">energy</span> <span class="o">*</span> <span class="n">energy_scale</span>
-        
-        <span class="c1"># Regenerate mel spectrogram with modified prosody
-</span>        <span class="n">mel_spec_modified</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">synthesize_mel</span><span class="p">(</span>
-            <span class="n">phonemes</span><span class="p">,</span>
-            <span class="n">pitch</span><span class="o">=</span><span class="n">pitch_modified</span><span class="p">,</span>
-            <span class="n">duration</span><span class="o">=</span><span class="n">duration_modified</span><span class="p">,</span>
-            <span class="n">energy</span><span class="o">=</span><span class="n">energy_modified</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Vocoder: mel → waveform
-</span>        <span class="n">audio</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">vocoder</span><span class="p">(</span><span class="n">mel_spec_modified</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">audio</span>
+<p>``python
+class ProsodyController:
+ “””
+ Control prosody in TTS generation
+ “””</p>
 
-<span class="c1"># Usage example
-</span><span class="n">controller</span> <span class="o">=</span> <span class="nc">ProsodyController</span><span class="p">(</span><span class="n">tts_model</span><span class="p">)</span>
+<p>def <strong>init</strong>(self, model):
+ self.model = model</p>
 
-<span class="c1"># Happy speech: higher pitch, faster
-</span><span class="n">happy_audio</span> <span class="o">=</span> <span class="n">controller</span><span class="p">.</span><span class="nf">synthesize_with_prosody</span><span class="p">(</span>
-    <span class="sh">"</span><span class="s">Hello, how are you?</span><span class="sh">"</span><span class="p">,</span>
-    <span class="n">pitch_scale</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span>
-    <span class="n">duration_scale</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
-    <span class="n">energy_scale</span><span class="o">=</span><span class="mf">1.1</span>
-<span class="p">)</span>
+<p>def synthesize_with_prosody(
+ self,
+ text: str,
+ pitch_scale: float = 1.0,
+ duration_scale: float = 1.0,
+ energy_scale: float = 1.0
+ ):
+ “””
+ Generate speech with prosody control</p>
 
-<span class="c1"># Sad speech: lower pitch, slower
-</span><span class="n">sad_audio</span> <span class="o">=</span> <span class="n">controller</span><span class="p">.</span><span class="nf">synthesize_with_prosody</span><span class="p">(</span>
-    <span class="sh">"</span><span class="s">Hello, how are you?</span><span class="sh">"</span><span class="p">,</span>
-    <span class="n">pitch_scale</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
-    <span class="n">duration_scale</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span>
-    <span class="n">energy_scale</span><span class="o">=</span><span class="mf">0.9</span>
-<span class="p">)</span>
-</code></pre></div></div>
+<p>Args:
+ text: Input text
+ pitch_scale: Multiply pitch by this factor (&gt;1 = higher, &lt;1 = lower)
+ duration_scale: Multiply duration by this factor (&gt;1 = slower, &lt;1 = faster)
+ energy_scale: Multiply energy by this factor (&gt;1 = louder, &lt;1 = softer)</p>
+
+<p>Returns:
+ audio: Generated waveform
+ “””
+ # Get model predictions
+ phonemes = self.model.text_to_phonemes(text)
+ mel_spec, pitch, duration, energy = self.model.predict(phonemes)</p>
+
+<p># Apply prosody modifications
+ pitch_modified = pitch * pitch_scale
+ duration_modified = duration * duration_scale
+ energy_modified = energy * energy_scale</p>
+
+<p># Regenerate mel spectrogram with modified prosody
+ mel_spec_modified = self.model.synthesize_mel(
+ phonemes,
+ pitch=pitch_modified,
+ duration=duration_modified,
+ energy=energy_modified
+ )</p>
+
+<p># Vocoder: mel → waveform
+ audio = self.model.vocoder(mel_spec_modified)</p>
+
+<p>return audio</p>
+
+<h1 id="usage-example">Usage example</h1>
+<p>controller = ProsodyController(tts_model)</p>
+
+<h1 id="happy-speech-higher-pitch-faster">Happy speech: higher pitch, faster</h1>
+<p>happy_audio = controller.synthesize_with_prosody(
+ “Hello, how are you?”,
+ pitch_scale=1.2,
+ duration_scale=0.9,
+ energy_scale=1.1
+)</p>
+
+<h1 id="sad-speech-lower-pitch-slower">Sad speech: lower pitch, slower</h1>
+<p>sad_audio = controller.synthesize_with_prosody(
+ “Hello, how are you?”,
+ pitch_scale=0.8,
+ duration_scale=1.2,
+ energy_scale=0.9
+)
+``</p>
 
 <hr />
 
@@ -917,31 +925,32 @@ Output: Mel Spectrogram
   <li>Correlates with quality but not perfectly</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">librosa</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+import librosa
+import numpy as np</p>
 
-<span class="k">def</span> <span class="nf">mel_cepstral_distortion</span><span class="p">(</span><span class="n">generated_mel</span><span class="p">,</span> <span class="n">target_mel</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Compute MCD between generated and target mel spectrograms
-    
-    Args:
-        generated_mel: [n_mels, time]
-        target_mel: [n_mels, time]
-    
-    Returns:
-        MCD score (lower is better)
-    </span><span class="sh">"""</span>
-    <span class="c1"># Align lengths
-</span>    <span class="n">min_len</span> <span class="o">=</span> <span class="nf">min</span><span class="p">(</span><span class="n">generated_mel</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">target_mel</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-    <span class="n">generated_mel</span> <span class="o">=</span> <span class="n">generated_mel</span><span class="p">[:,</span> <span class="p">:</span><span class="n">min_len</span><span class="p">]</span>
-    <span class="n">target_mel</span> <span class="o">=</span> <span class="n">target_mel</span><span class="p">[:,</span> <span class="p">:</span><span class="n">min_len</span><span class="p">]</span>
-    
-    <span class="c1"># Compute simple L2 distance over mel frames (proxy for MCD)
-</span>    <span class="n">diff</span> <span class="o">=</span> <span class="n">generated_mel</span> <span class="o">-</span> <span class="n">target_mel</span>
-    <span class="n">mcd</span> <span class="o">=</span> <span class="nf">float</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">diff</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">).</span><span class="nf">mean</span><span class="p">())</span>
-    
-    <span class="k">return</span> <span class="n">mcd</span>
-</code></pre></div></div>
+<p>def mel_cepstral_distortion(generated_mel, target_mel):
+ “””
+ Compute MCD between generated and target mel spectrograms</p>
+
+<p>Args:
+ generated_mel: [n_mels, time]
+ target_mel: [n_mels, time]</p>
+
+<p>Returns:
+ MCD score (lower is better)
+ “””
+ # Align lengths
+ min_len = min(generated_mel.shape[1], target_mel.shape[1])
+ generated_mel = generated_mel[:, :min_len]
+ target_mel = target_mel[:, :min_len]</p>
+
+<p># Compute simple L2 distance over mel frames (proxy for MCD)
+ diff = generated_mel - target_mel
+ mcd = float(np.linalg.norm(diff, axis=0).mean())</p>
+
+<p>return mcd
+``</p>
 
 <p><strong>F0 RMSE:</strong> Root mean squared error of pitch</p>
 
@@ -982,38 +991,39 @@ Output: Mel Spectrogram
 
 <h3 id="multi-speaker-tts">Multi-Speaker TTS</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">MultiSpeakerTTS</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    TTS supporting multiple voices
-    
-    Approach 1: Speaker embedding
-    Approach 2: Separate models per speaker
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">speaker_embeddings</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">speaker_embeddings</span> <span class="o">=</span> <span class="n">speaker_embeddings</span>
-    
-    <span class="k">def</span> <span class="nf">synthesize</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">speaker_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Generate speech in specific speaker</span><span class="sh">'</span><span class="s">s voice
-        
-        Args:
-            text: Input text
-            speaker_id: Speaker identifier
-        
-        Returns:
-            audio: Waveform in target speaker</span><span class="sh">'</span><span class="s">s voice
-        </span><span class="sh">"""</span>
-        <span class="c1"># Get speaker embedding
-</span>        <span class="n">speaker_emb</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">speaker_embeddings</span><span class="p">[</span><span class="n">speaker_id</span><span class="p">]</span>
-        
-        <span class="c1"># Generate with speaker conditioning
-</span>        <span class="n">mel</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">generate_mel</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">speaker_embedding</span><span class="o">=</span><span class="n">speaker_emb</span><span class="p">)</span>
-        <span class="n">audio</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">vocoder</span><span class="p">(</span><span class="n">mel</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">audio</span>
-</code></pre></div></div>
+<p>``python
+class MultiSpeakerTTS:
+ “””
+ TTS supporting multiple voices</p>
+
+<p>Approach 1: Speaker embedding
+ Approach 2: Separate models per speaker
+ “””</p>
+
+<p>def <strong>init</strong>(self, model, speaker_embeddings):
+ self.model = model
+ self.speaker_embeddings = speaker_embeddings</p>
+
+<p>def synthesize(self, text: str, speaker_id: int):
+ “””
+ Generate speech in specific speaker’s voice</p>
+
+<p>Args:
+ text: Input text
+ speaker_id: Speaker identifier</p>
+
+<p>Returns:
+ audio: Waveform in target speaker’s voice
+ “””
+ # Get speaker embedding
+ speaker_emb = self.speaker_embeddings[speaker_id]</p>
+
+<p># Generate with speaker conditioning
+ mel = self.model.generate_mel(text, speaker_embedding=speaker_emb)
+ audio = self.model.vocoder(mel)</p>
+
+<p>return audio
+``</p>
 
 <hr />
 
@@ -1038,98 +1048,101 @@ Output: Mel Spectrogram
 
 <h3 id="data-preparation-pipeline">Data Preparation Pipeline</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">TTSDataPreparation</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Prepare data for TTS training
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="mi">22050</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">sample_rate</span>
-    
-    <span class="k">def</span> <span class="nf">prepare_dataset</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-        <span class="n">text_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Prepare audio-text pairs
-        
-        Steps:
-        1. Text normalization
-        2. Audio preprocessing
-        3. Alignment (forced alignment)
-        4. Feature extraction
-        </span><span class="sh">"""</span>
-        <span class="n">dataset</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">audio_file</span><span class="p">,</span> <span class="n">text_file</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">audio_files</span><span class="p">,</span> <span class="n">text_files</span><span class="p">):</span>
-            <span class="c1"># Load audio
-</span>            <span class="n">audio</span><span class="p">,</span> <span class="n">sr</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="n">audio_file</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span><span class="p">)</span>
-            
-            <span class="c1"># Load text
-</span>            <span class="k">with</span> <span class="nf">open</span><span class="p">(</span><span class="n">text_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                <span class="n">text</span> <span class="o">=</span> <span class="n">f</span><span class="p">.</span><span class="nf">read</span><span class="p">().</span><span class="nf">strip</span><span class="p">()</span>
-            
-            <span class="c1"># Normalize text
-</span>            <span class="n">normalized_text</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">normalize_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-            
-            <span class="c1"># Convert to phonemes
-</span>            <span class="n">phonemes</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">text_to_phonemes</span><span class="p">(</span><span class="n">normalized_text</span><span class="p">)</span>
-            
-            <span class="c1"># Extract mel spectrogram
-</span>            <span class="n">mel</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">extract_mel</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-            
-            <span class="c1"># Extract prosody features
-</span>            <span class="n">pitch</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">extract_pitch</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-            <span class="n">energy</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">extract_energy</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-            
-            <span class="c1"># Compute duration (requires forced alignment)
-</span>            <span class="n">duration</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">compute_durations</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">phonemes</span><span class="p">)</span>
-            
-            <span class="n">dataset</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span>
-                <span class="sh">'</span><span class="s">audio_path</span><span class="sh">'</span><span class="p">:</span> <span class="n">audio_file</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">:</span> <span class="n">text</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">normalized_text</span><span class="sh">'</span><span class="p">:</span> <span class="n">normalized_text</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">phonemes</span><span class="sh">'</span><span class="p">:</span> <span class="n">phonemes</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">mel</span><span class="sh">'</span><span class="p">:</span> <span class="n">mel</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">pitch</span><span class="sh">'</span><span class="p">:</span> <span class="n">pitch</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">energy</span><span class="sh">'</span><span class="p">:</span> <span class="n">energy</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">duration</span><span class="sh">'</span><span class="p">:</span> <span class="n">duration</span>
-            <span class="p">})</span>
-        
-        <span class="k">return</span> <span class="n">dataset</span>
-    
-    <span class="k">def</span> <span class="nf">extract_mel</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Extract mel spectrogram</span><span class="sh">"""</span>
-        <span class="n">mel</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="n">feature</span><span class="p">.</span><span class="nf">melspectrogram</span><span class="p">(</span>
-            <span class="n">y</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span>
-            <span class="n">sr</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span><span class="p">,</span>
-            <span class="n">n_fft</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
-            <span class="n">hop_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
-            <span class="n">n_mels</span><span class="o">=</span><span class="mi">80</span>
-        <span class="p">)</span>
-        <span class="n">mel_db</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">power_to_db</span><span class="p">(</span><span class="n">mel</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="nb">max</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">mel_db</span>
-    
-    <span class="k">def</span> <span class="nf">extract_pitch</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Extract pitch (F0) contour</span><span class="sh">"""</span>
-        <span class="n">f0</span><span class="p">,</span> <span class="n">voiced_flag</span><span class="p">,</span> <span class="n">voiced_probs</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">pyin</span><span class="p">(</span>
-            <span class="n">audio</span><span class="p">,</span>
-            <span class="n">fmin</span><span class="o">=</span><span class="n">librosa</span><span class="p">.</span><span class="nf">note_to_hz</span><span class="p">(</span><span class="sh">'</span><span class="s">C2</span><span class="sh">'</span><span class="p">),</span>
-            <span class="n">fmax</span><span class="o">=</span><span class="n">librosa</span><span class="p">.</span><span class="nf">note_to_hz</span><span class="p">(</span><span class="sh">'</span><span class="s">C7</span><span class="sh">'</span><span class="p">),</span>
-            <span class="n">sr</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">f0</span>
-    
-    <span class="k">def</span> <span class="nf">extract_energy</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Extract energy (RMS)</span><span class="sh">"""</span>
-        <span class="n">energy</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="n">feature</span><span class="p">.</span><span class="nf">rms</span><span class="p">(</span>
-            <span class="n">y</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span>
-            <span class="n">frame_length</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
-            <span class="n">hop_length</span><span class="o">=</span><span class="mi">256</span>
-        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">energy</span>
-</code></pre></div></div>
+<p>``python
+class TTSDataPreparation:
+ “””
+ Prepare data for TTS training
+ “””</p>
+
+<p>def <strong>init</strong>(self, sample_rate=22050):
+ self.sample_rate = sample_rate</p>
+
+<p>def prepare_dataset(
+ self,
+ audio_files: list[str],
+ text_files: list[str]
+ ) -&gt; list[dict]:
+ “””
+ Prepare audio-text pairs</p>
+
+<p>Steps:</p>
+<ol>
+  <li>Text normalization</li>
+  <li>Audio preprocessing</li>
+  <li>Alignment (forced alignment)</li>
+  <li>Feature extraction
+ “””
+ dataset = []</li>
+</ol>
+
+<p>for audio_file, text_file in zip(audio_files, text_files):
+ # Load audio
+ audio, sr = librosa.load(audio_file, sr=self.sample_rate)</p>
+
+<p># Load text
+ with open(text_file) as f:
+ text = f.read().strip()</p>
+
+<p># Normalize text
+ normalized_text = self.normalize_text(text)</p>
+
+<p># Convert to phonemes
+ phonemes = self.text_to_phonemes(normalized_text)</p>
+
+<p># Extract mel spectrogram
+ mel = self.extract_mel(audio)</p>
+
+<p># Extract prosody features
+ pitch = self.extract_pitch(audio)
+ energy = self.extract_energy(audio)</p>
+
+<p># Compute duration (requires forced alignment)
+ duration = self.compute_durations(audio, phonemes)</p>
+
+<p>dataset.append({
+ ‘audio_path’: audio_file,
+ ‘text’: text,
+ ‘normalized_text’: normalized_text,
+ ‘phonemes’: phonemes,
+ ‘mel’: mel,
+ ‘pitch’: pitch,
+ ‘energy’: energy,
+ ‘duration’: duration
+ })</p>
+
+<p>return dataset</p>
+
+<p>def extract_mel(self, audio):
+ “"”Extract mel spectrogram”””
+ mel = librosa.feature.melspectrogram(
+ y=audio,
+ sr=self.sample_rate,
+ n_fft=1024,
+ hop_length=256,
+ n_mels=80
+ )
+ mel_db = librosa.power_to_db(mel, ref=np.max)
+ return mel_db</p>
+
+<p>def extract_pitch(self, audio):
+ “"”Extract pitch (F0) contour”””
+ f0, voiced_flag, voiced_probs = librosa.pyin(
+ audio,
+ fmin=librosa.note_to_hz(‘C2’),
+ fmax=librosa.note_to_hz(‘C7’),
+ sr=self.sample_rate
+ )
+ return f0</p>
+
+<p>def extract_energy(self, audio):
+ “"”Extract energy (RMS)”””
+ energy = librosa.feature.rms(
+ y=audio,
+ frame_length=1024,
+ hop_length=256
+ )[0]
+ return energy
+``</p>
 
 <h3 id="data-quality-challenges">Data Quality Challenges</h3>
 
@@ -1167,150 +1180,152 @@ Output: Mel Spectrogram
 
 <p><strong>1. Speaker Embedding (Zero-Shot/Few-Shot)</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SpeakerEncoder</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Encode speaker characteristics from reference audio
-    
-    Architecture: Similar to speaker recognition
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">mel_dim</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">256</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="c1"># LSTM encoder
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTM</span><span class="p">(</span>
-            <span class="n">mel_dim</span><span class="p">,</span>
-            <span class="n">embedding_dim</span><span class="p">,</span>
-            <span class="n">num_layers</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-            <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Projection to speaker embedding
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">projection</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">embedding_dim</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">mel</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Extract speaker embedding from mel spectrogram
-        
-        Args:
-            mel: [batch, mel_len, mel_dim]
-        
-        Returns:
-            speaker_embedding: [batch, embedding_dim]
-        </span><span class="sh">"""</span>
-        <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">hidden</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span><span class="n">mel</span><span class="p">)</span>
-        
-        <span class="c1"># Use last hidden state
-</span>        <span class="n">speaker_emb</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">projection</span><span class="p">(</span><span class="n">hidden</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-        
-        <span class="c1"># L2 normalize
-</span>        <span class="n">speaker_emb</span> <span class="o">=</span> <span class="n">speaker_emb</span> <span class="o">/</span> <span class="p">(</span><span class="n">speaker_emb</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">speaker_emb</span>
+<p>``python
+class SpeakerEncoder(nn.Module):
+ “””
+ Encode speaker characteristics from reference audio</p>
 
-<span class="k">class</span> <span class="nc">VoiceCloningTTS</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    TTS with voice cloning capability
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">acoustic_model</span><span class="p">,</span> <span class="n">vocoder</span><span class="p">,</span> <span class="n">speaker_encoder</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">acoustic_model</span> <span class="o">=</span> <span class="n">acoustic_model</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vocoder</span> <span class="o">=</span> <span class="n">vocoder</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">speaker_encoder</span> <span class="o">=</span> <span class="n">speaker_encoder</span>
-    
-    <span class="k">def</span> <span class="nf">clone_voice</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">reference_audio</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span>
-    <span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Generate speech in reference voice
-        
-        Args:
-            text: Text to synthesize
-            reference_audio: Audio sample of target voice (3-10 seconds)
-        
-        Returns:
-            synthesized_audio: Speech in target voice
-        </span><span class="sh">"""</span>
-        <span class="c1"># Extract speaker embedding from reference
-</span>        <span class="n">reference_mel</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">extract_mel</span><span class="p">(</span><span class="n">reference_audio</span><span class="p">)</span>
-        <span class="n">speaker_embedding</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">speaker_encoder</span><span class="p">(</span><span class="n">reference_mel</span><span class="p">)</span>
-        
-        <span class="c1"># Generate mel spectrogram conditioned on speaker
-</span>        <span class="n">mel</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">acoustic_model</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span>
-            <span class="n">text</span><span class="p">,</span>
-            <span class="n">speaker_embedding</span><span class="o">=</span><span class="n">speaker_embedding</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Vocoder: mel → waveform
-</span>        <span class="n">audio</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">vocoder</span><span class="p">(</span><span class="n">mel</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">audio</span>
+<p>Architecture: Similar to speaker recognition
+ “””</p>
 
-<span class="c1"># Usage
-</span><span class="n">tts</span> <span class="o">=</span> <span class="nc">VoiceCloningTTS</span><span class="p">(</span><span class="n">acoustic_model</span><span class="p">,</span> <span class="n">vocoder</span><span class="p">,</span> <span class="n">speaker_encoder</span><span class="p">)</span>
+<p>def <strong>init</strong>(self, mel_dim=80, embedding_dim=256):
+ super().<strong>init</strong>()</p>
 
-<span class="c1"># Clone voice from 5-second reference
-</span><span class="n">reference_audio</span> <span class="o">=</span> <span class="nf">load_audio</span><span class="p">(</span><span class="sh">"</span><span class="s">reference_voice.wav</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">cloned_speech</span> <span class="o">=</span> <span class="n">tts</span><span class="p">.</span><span class="nf">clone_voice</span><span class="p">(</span>
-    <span class="sh">"</span><span class="s">Hello, this is a cloned voice!</span><span class="sh">"</span><span class="p">,</span>
-    <span class="n">reference_audio</span>
-<span class="p">)</span>
-</code></pre></div></div>
+<p># LSTM encoder
+ self.encoder = nn.LSTM(
+ mel_dim,
+ embedding_dim,
+ num_layers=3,
+ batch_first=True
+ )</p>
+
+<p># Projection to speaker embedding
+ self.projection = nn.Linear(embedding_dim, embedding_dim)</p>
+
+<p>def forward(self, mel):
+ “””
+ Extract speaker embedding from mel spectrogram</p>
+
+<p>Args:
+ mel: [batch, mel_len, mel_dim]</p>
+
+<p>Returns:
+ speaker_embedding: [batch, embedding_dim]
+ “””
+ _, (hidden, _) = self.encoder(mel)</p>
+
+<p># Use last hidden state
+ speaker_emb = self.projection(hidden[-1])</p>
+
+<p># L2 normalize
+ speaker_emb = speaker_emb / (speaker_emb.norm(dim=1, keepdim=True) + 1e-8)</p>
+
+<p>return speaker_emb</p>
+
+<p>class VoiceCloningTTS:
+ “””
+ TTS with voice cloning capability
+ “””</p>
+
+<p>def <strong>init</strong>(self, acoustic_model, vocoder, speaker_encoder):
+ self.acoustic_model = acoustic_model
+ self.vocoder = vocoder
+ self.speaker_encoder = speaker_encoder</p>
+
+<p>def clone_voice(
+ self,
+ text: str,
+ reference_audio: torch.Tensor
+ ):
+ “””
+ Generate speech in reference voice</p>
+
+<p>Args:
+ text: Text to synthesize
+ reference_audio: Audio sample of target voice (3-10 seconds)</p>
+
+<p>Returns:
+ synthesized_audio: Speech in target voice
+ “””
+ # Extract speaker embedding from reference
+ reference_mel = self.extract_mel(reference_audio)
+ speaker_embedding = self.speaker_encoder(reference_mel)</p>
+
+<p># Generate mel spectrogram conditioned on speaker
+ mel = self.acoustic_model.generate(
+ text,
+ speaker_embedding=speaker_embedding
+ )</p>
+
+<p># Vocoder: mel → waveform
+ audio = self.vocoder(mel)</p>
+
+<p>return audio</p>
+
+<h1 id="usage">Usage</h1>
+<p>tts = VoiceCloningTTS(acoustic_model, vocoder, speaker_encoder)</p>
+
+<h1 id="clone-voice-from-5-second-reference">Clone voice from 5-second reference</h1>
+<p>reference_audio = load_audio(“reference_voice.wav”)
+cloned_speech = tts.clone_voice(
+ “Hello, this is a cloned voice!”,
+ reference_audio
+)
+``</p>
 
 <p><strong>2. Fine-Tuning (10-60 minutes of data)</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">VoiceCloner</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Fine-tune pre-trained TTS on target voice
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">pretrained_model</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">pretrained_model</span>
-    
-    <span class="k">def</span> <span class="nf">fine_tune</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">target_voice_data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">],</span>  <span class="c1"># [(audio, text), ...]
-</span>        <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
-        <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span>
-    <span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Fine-tune model on target voice
-        
-        Args:
-            target_voice_data: Audio-text pairs for target speaker
-            num_steps: Training steps
-            learning_rate: Learning rate
-        </span><span class="sh">"""</span>
-        <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">optim</span><span class="p">.</span><span class="nc">Adam</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">num_steps</span><span class="p">):</span>
-            <span class="c1"># Sample batch
-</span>            <span class="n">batch</span> <span class="o">=</span> <span class="n">random</span><span class="p">.</span><span class="nf">sample</span><span class="p">(</span><span class="n">target_voice_data</span><span class="p">,</span> <span class="nf">min</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">target_voice_data</span><span class="p">)))</span>
-            
-            <span class="c1"># Forward pass
-</span>            <span class="n">loss</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">compute_loss</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
-            
-            <span class="c1"># Backward pass
-</span>            <span class="n">optimizer</span><span class="p">.</span><span class="nf">zero_grad</span><span class="p">()</span>
-            <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
-            <span class="n">optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
-            
-            <span class="k">if</span> <span class="n">step</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Step </span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s">, Loss: </span><span class="si">{</span><span class="n">loss</span><span class="p">.</span><span class="nf">item</span><span class="p">()</span><span class="si">:</span><span class="p">.</span><span class="mi">4</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span>
+<p>``python
+class VoiceCloner:
+ “””
+ Fine-tune pre-trained TTS on target voice
+ “””</p>
 
-<span class="c1"># Usage
-</span><span class="n">cloner</span> <span class="o">=</span> <span class="nc">VoiceCloner</span><span class="p">(</span><span class="n">pretrained_tts_model</span><span class="p">)</span>
+<p>def <strong>init</strong>(self, pretrained_model):
+ self.model = pretrained_model</p>
 
-<span class="c1"># Collect 30 minutes of target voice
-</span><span class="n">target_data</span> <span class="o">=</span> <span class="p">[...]</span>  <span class="c1"># List of (audio, text) pairs
-</span>
-<span class="c1"># Fine-tune
-</span><span class="n">cloned_model</span> <span class="o">=</span> <span class="n">cloner</span><span class="p">.</span><span class="nf">fine_tune</span><span class="p">(</span><span class="n">target_data</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def fine_tune(
+ self,
+ target_voice_data: list[tuple], # [(audio, text), …]
+ num_steps: int = 1000,
+ learning_rate: float = 1e-4
+ ):
+ “””
+ Fine-tune model on target voice</p>
+
+<p>Args:
+ target_voice_data: Audio-text pairs for target speaker
+ num_steps: Training steps
+ learning_rate: Learning rate
+ “””
+ optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)</p>
+
+<p>for step in range(num_steps):
+ # Sample batch
+ batch = random.sample(target_voice_data, min(8, len(target_voice_data)))</p>
+
+<p># Forward pass
+ loss = self.model.compute_loss(batch)</p>
+
+<p># Backward pass
+ optimizer.zero_grad()
+ loss.backward()
+ optimizer.step()</p>
+
+<p>if step % 100 == 0:
+ print(f”Step {step}, Loss: {loss.item():.4f}”)</p>
+
+<p>return self.model</p>
+
+<h1 id="usage-1">Usage</h1>
+<p>cloner = VoiceCloner(pretrained_tts_model)</p>
+
+<h1 id="collect-30-minutes-of-target-voice">Collect 30 minutes of target voice</h1>
+<p>target_data = […] # List of (audio, text) pairs</p>
+
+<h1 id="fine-tune">Fine-tune</h1>
+<p>cloned_model = cloner.fine_tune(target_data, num_steps=1000)
+``</p>
 
 <hr />
 
@@ -1318,147 +1333,152 @@ Output: Mel Spectrogram
 
 <h3 id="pattern-1-caching--dynamic-generation">Pattern 1: Caching + Dynamic Generation</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">HybridTTSSystem</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Hybrid system: Cache common phrases, generate on-the-fly for novel text
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">tts_model</span><span class="p">,</span> <span class="n">cache_backend</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">tts</span> <span class="o">=</span> <span class="n">tts_model</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">cache</span> <span class="o">=</span> <span class="n">cache_backend</span>  <span class="c1"># e.g., Redis
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">common_phrases</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="sh">"</span><span class="s">Welcome</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Thank you</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">Goodbye</span><span class="sh">"</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">Please hold</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">One moment please</span><span class="sh">"</span>
-        <span class="p">]</span>
-        <span class="n">self</span><span class="p">.</span><span class="nf">_warm_cache</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">_warm_cache</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Pre-generate and cache common phrases</span><span class="sh">"""</span>
-        <span class="k">for</span> <span class="n">phrase</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">common_phrases</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">.</span><span class="nf">exists</span><span class="p">(</span><span class="n">phrase</span><span class="p">):</span>
-                <span class="n">audio</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">tts</span><span class="p">.</span><span class="nf">synthesize</span><span class="p">(</span><span class="n">phrase</span><span class="p">)</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="n">phrase</span><span class="p">,</span> <span class="n">audio</span><span class="p">,</span> <span class="n">ttl</span><span class="o">=</span><span class="mi">86400</span><span class="p">)</span>  <span class="c1"># 24-hour TTL
-</span>    
-    <span class="k">def</span> <span class="nf">synthesize</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Synthesize with caching
-        
-        Cache hit: &lt;5ms
-        Cache miss: 100-300ms (generate)
-        </span><span class="sh">"""</span>
-        <span class="c1"># Check cache
-</span>        <span class="n">cached</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">cached</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">cached</span>
-        
-        <span class="c1"># Generate
-</span>        <span class="n">audio</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">tts</span><span class="p">.</span><span class="nf">synthesize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-        
-        <span class="c1"># Cache if frequently requested
-</span>        <span class="n">request_count</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">.</span><span class="nf">increment</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">count:</span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">request_count</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">audio</span><span class="p">,</span> <span class="n">ttl</span><span class="o">=</span><span class="mi">3600</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">audio</span>
-</code></pre></div></div>
+<p>``python
+class HybridTTSSystem:
+ “””
+ Hybrid system: Cache common phrases, generate on-the-fly for novel text
+ “””</p>
+
+<p>def <strong>init</strong>(self, tts_model, cache_backend):
+ self.tts = tts_model
+ self.cache = cache_backend # e.g., Redis
+ self.common_phrases = [
+ “Welcome”, “Thank you”, “Goodbye”,
+ “Please hold”, “One moment please”
+ ]
+ self._warm_cache()</p>
+
+<p>def _warm_cache(self):
+ “"”Pre-generate and cache common phrases”””
+ for phrase in self.common_phrases:
+ if not self.cache.exists(phrase):
+ audio = self.tts.synthesize(phrase)
+ self.cache.set(phrase, audio, ttl=86400) # 24-hour TTL</p>
+
+<p>def synthesize(self, text: str):
+ “””
+ Synthesize with caching</p>
+
+<p>Cache hit: &lt;5ms
+ Cache miss: 100-300ms (generate)
+ “””
+ # Check cache
+ cached = self.cache.get(text)
+ if cached is not None:
+ return cached</p>
+
+<p># Generate
+ audio = self.tts.synthesize(text)</p>
+
+<p># Cache if frequently requested
+ request_count = self.cache.increment(f”count:{text}”)
+ if request_count &gt; 10:
+ self.cache.set(text, audio, ttl=3600)</p>
+
+<p>return audio
+``</p>
 
 <h3 id="pattern-2-streaming-tts">Pattern 2: Streaming TTS</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">StreamingTTS</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Stream audio as it</span><span class="sh">'</span><span class="s">s generated (reduce latency)
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">acoustic_model</span><span class="p">,</span> <span class="n">vocoder</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">acoustic_model</span> <span class="o">=</span> <span class="n">acoustic_model</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vocoder</span> <span class="o">=</span> <span class="n">vocoder</span>
-    
-    <span class="k">def</span> <span class="nf">stream_synthesize</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Generate audio in chunks
-        
-        Yields audio chunks as they</span><span class="sh">'</span><span class="s">re ready
-        </span><span class="sh">"""</span>
-        <span class="c1"># Generate mel spectrogram
-</span>        <span class="n">mel_frames</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">acoustic_model</span><span class="p">.</span><span class="nf">generate_streaming</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-        
-        <span class="c1"># Stream vocoder output
-</span>        <span class="n">mel_buffer</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">chunk_size</span> <span class="o">=</span> <span class="mi">50</span>  <span class="c1"># mel frames per chunk
-</span>        
-        <span class="k">for</span> <span class="n">mel_frame</span> <span class="ow">in</span> <span class="n">mel_frames</span><span class="p">:</span>
-            <span class="n">mel_buffer</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">mel_frame</span><span class="p">)</span>
-            
-            <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">mel_buffer</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">chunk_size</span><span class="p">:</span>
-                <span class="c1"># Vocoder: mel chunk → audio chunk
-</span>                <span class="n">mel_chunk</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">stack</span><span class="p">(</span><span class="n">mel_buffer</span><span class="p">)</span>
-                <span class="n">audio_chunk</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">vocoder</span><span class="p">(</span><span class="n">mel_chunk</span><span class="p">)</span>
-                
-                <span class="k">yield</span> <span class="n">audio_chunk</span>
-                
-                <span class="c1"># Keep overlap for smoothness
-</span>                <span class="n">mel_buffer</span> <span class="o">=</span> <span class="n">mel_buffer</span><span class="p">[</span><span class="o">-</span><span class="mi">10</span><span class="p">:]</span>
-        
-        <span class="c1"># Final chunk
-</span>        <span class="k">if</span> <span class="n">mel_buffer</span><span class="p">:</span>
-            <span class="n">mel_chunk</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">stack</span><span class="p">(</span><span class="n">mel_buffer</span><span class="p">)</span>
-            <span class="n">audio_chunk</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">vocoder</span><span class="p">(</span><span class="n">mel_chunk</span><span class="p">)</span>
-            <span class="k">yield</span> <span class="n">audio_chunk</span>
+<p>``python
+class StreamingTTS:
+ “””
+ Stream audio as it’s generated (reduce latency)
+ “””</p>
 
-<span class="c1"># Usage
-</span><span class="n">streaming_tts</span> <span class="o">=</span> <span class="nc">StreamingTTS</span><span class="p">(</span><span class="n">acoustic_model</span><span class="p">,</span> <span class="n">vocoder</span><span class="p">)</span>
+<p>def <strong>init</strong>(self, acoustic_model, vocoder):
+ self.acoustic_model = acoustic_model
+ self.vocoder = vocoder</p>
 
-<span class="c1"># Stream audio
-</span><span class="k">for</span> <span class="n">audio_chunk</span> <span class="ow">in</span> <span class="n">streaming_tts</span><span class="p">.</span><span class="nf">stream_synthesize</span><span class="p">(</span><span class="sh">"</span><span class="s">Long text to synthesize...</span><span class="sh">"</span><span class="p">):</span>
-    <span class="c1"># Play audio_chunk immediately
-</span>    <span class="nf">play_audio</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-    <span class="c1"># User starts hearing speech before full generation completes!
-</span></code></pre></div></div>
+<p>def stream_synthesize(self, text: str):
+ “””
+ Generate audio in chunks</p>
+
+<p>Yields audio chunks as they’re ready
+ “””
+ # Generate mel spectrogram
+ mel_frames = self.acoustic_model.generate_streaming(text)</p>
+
+<p># Stream vocoder output
+ mel_buffer = []
+ chunk_size = 50 # mel frames per chunk</p>
+
+<p>for mel_frame in mel_frames:
+ mel_buffer.append(mel_frame)</p>
+
+<p>if len(mel_buffer) &gt;= chunk_size:
+ # Vocoder: mel chunk → audio chunk
+ mel_chunk = torch.stack(mel_buffer)
+ audio_chunk = self.vocoder(mel_chunk)</p>
+
+<p>yield audio_chunk</p>
+
+<p># Keep overlap for smoothness
+ mel_buffer = mel_buffer[-10:]</p>
+
+<p># Final chunk
+ if mel_buffer:
+ mel_chunk = torch.stack(mel_buffer)
+ audio_chunk = self.vocoder(mel_chunk)
+ yield audio_chunk</p>
+
+<h1 id="usage-2">Usage</h1>
+<p>streaming_tts = StreamingTTS(acoustic_model, vocoder)</p>
+
+<h1 id="stream-audio">Stream audio</h1>
+<p>for audio_chunk in streaming_tts.stream_synthesize(“Long text to synthesize…”):
+ # Play audio_chunk immediately
+ play_audio(audio_chunk)
+ # User starts hearing speech before full generation completes!
+``</p>
 
 <h3 id="pattern-3-edge-deployment">Pattern 3: Edge Deployment</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">EdgeTTS</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    TTS optimized for edge devices (phones, IoT)
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">load_optimized_model</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">load_optimized_model</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Load quantized, pruned model
-        
-        Techniques:
-        - INT8 quantization (4x smaller, 2-4x faster)
-        - Knowledge distillation (smaller student model)
-        - Pruning (remove 30-50% of weights)
-        </span><span class="sh">"""</span>
-        <span class="kn">import</span> <span class="n">torch.quantization</span>
-        
-        <span class="c1"># Load full precision model
-</span>        <span class="n">model</span> <span class="o">=</span> <span class="nf">load_full_model</span><span class="p">()</span>
-        
-        <span class="c1"># Quantize to INT8
-</span>        <span class="c1"># Use dynamic quantization for linear-heavy modules as a safe default
-</span>        <span class="n">model_quantized</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">quantization</span><span class="p">.</span><span class="nf">quantize_dynamic</span><span class="p">(</span>
-            <span class="n">model</span><span class="p">,</span>
-            <span class="p">{</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">},</span>
-            <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">qint8</span>
-        <span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">model_quantized</span>
-    
-    <span class="k">def</span> <span class="nf">synthesize_on_device</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Synthesize on edge device
-        
-        Latency: 50-150ms
-        Memory: &lt;100MB
-        </span><span class="sh">"""</span>
-        <span class="n">audio</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">audio</span>
-</code></pre></div></div>
+<p>``python
+class EdgeTTS:
+ “””
+ TTS optimized for edge devices (phones, IoT)
+ “””</p>
+
+<p>def <strong>init</strong>(self):
+ self.model = self.load_optimized_model()</p>
+
+<p>def load_optimized_model(self):
+ “””
+ Load quantized, pruned model</p>
+
+<p>Techniques:</p>
+<ul>
+  <li>INT8 quantization (4x smaller, 2-4x faster)</li>
+  <li>Knowledge distillation (smaller student model)</li>
+  <li>Pruning (remove 30-50% of weights)
+ “””
+ import torch.quantization</li>
+</ul>
+
+<p># Load full precision model
+ model = load_full_model()</p>
+
+<p># Quantize to INT8
+ # Use dynamic quantization for linear-heavy modules as a safe default
+ model_quantized = torch.quantization.quantize_dynamic(
+ model,
+ {nn.Linear},
+ dtype=torch.qint8
+ )</p>
+
+<p>return model_quantized</p>
+
+<p>def synthesize_on_device(self, text: str):
+ “””
+ Synthesize on edge device</p>
+
+<p>Latency: 50-150ms
+ Memory: &lt;100MB
+ “””
+ audio = self.model.generate(text)
+ return audio
+``</p>
 
 <hr />
 
@@ -1466,58 +1486,61 @@ Output: Mel Spectrogram
 
 <h3 id="automated-quality-monitoring">Automated Quality Monitoring</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">TTSQualityMonitor</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Monitor TTS quality in production
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">baseline_mcd</span> <span class="o">=</span> <span class="mf">2.5</span>  <span class="c1"># Expected MCD
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">alert_threshold</span> <span class="o">=</span> <span class="mf">3.5</span>  <span class="c1"># Alert if MCD &gt; this
-</span>    
-    <span class="k">def</span> <span class="nf">monitor_synthesis</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">generated_audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Check quality of generated audio
-        
-        Red flags:
-        - Abnormal duration
-        - Clipping / distortion
-        - Silent segments
-        - MCD drift
-        </span><span class="sh">"""</span>
-        <span class="n">issues</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># Check duration
-</span>        <span class="n">expected_duration</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">text</span><span class="p">.</span><span class="nf">split</span><span class="p">())</span> <span class="o">*</span> <span class="mf">0.5</span>  <span class="c1"># ~0.5s per word
-</span>        <span class="n">actual_duration</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">generated_audio</span><span class="p">)</span> <span class="o">/</span> <span class="mi">22050</span>
-        <span class="k">if</span> <span class="nf">abs</span><span class="p">(</span><span class="n">actual_duration</span> <span class="o">-</span> <span class="n">expected_duration</span><span class="p">)</span> <span class="o">/</span> <span class="n">expected_duration</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
-            <span class="n">issues</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Abnormal duration: </span><span class="si">{</span><span class="n">actual_duration</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s vs </span><span class="si">{</span><span class="n">expected_duration</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s expected</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="c1"># Check for clipping
-</span>        <span class="k">if</span> <span class="n">np</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">abs</span><span class="p">(</span><span class="n">generated_audio</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mf">0.99</span><span class="p">:</span>
-            <span class="n">issues</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sh">"</span><span class="s">Clipping detected</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="c1"># Check for silent segments
-</span>        <span class="n">rms</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="n">feature</span><span class="p">.</span><span class="nf">rms</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">generated_audio</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">silent_ratio</span> <span class="o">=</span> <span class="p">(</span><span class="n">rms</span> <span class="o">&lt;</span> <span class="mf">0.01</span><span class="p">).</span><span class="nf">sum</span><span class="p">()</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">rms</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">silent_ratio</span> <span class="o">&gt;</span> <span class="mf">0.3</span><span class="p">:</span>
-            <span class="n">issues</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Too much silence: </span><span class="si">{</span><span class="n">silent_ratio</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="c1"># Log for drift detection
-</span>        <span class="n">self</span><span class="p">.</span><span class="nf">log_quality_metrics</span><span class="p">({</span>
-            <span class="sh">'</span><span class="s">text_length</span><span class="sh">'</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">text</span><span class="p">),</span>
-            <span class="sh">'</span><span class="s">audio_duration</span><span class="sh">'</span><span class="p">:</span> <span class="n">actual_duration</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">max_amplitude</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">abs</span><span class="p">(</span><span class="n">generated_audio</span><span class="p">)),</span>
-            <span class="sh">'</span><span class="s">silent_ratio</span><span class="sh">'</span><span class="p">:</span> <span class="n">silent_ratio</span>
-        <span class="p">})</span>
-        
-        <span class="k">return</span> <span class="n">issues</span>
-    
-    <span class="k">def</span> <span class="nf">log_quality_metrics</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Log metrics for drift detection</span><span class="sh">"""</span>
-        <span class="c1"># Send to monitoring system (Datadog, Prometheus, etc.)
-</span>        <span class="k">pass</span>
-</code></pre></div></div>
+<p>``python
+class TTSQualityMonitor:
+ “””
+ Monitor TTS quality in production
+ “””</p>
+
+<p>def <strong>init</strong>(self):
+ self.baseline_mcd = 2.5 # Expected MCD
+ self.alert_threshold = 3.5 # Alert if MCD &gt; this</p>
+
+<p>def monitor_synthesis(self, text: str, generated_audio: np.ndarray):
+ “””
+ Check quality of generated audio</p>
+
+<p>Red flags:</p>
+<ul>
+  <li>Abnormal duration</li>
+  <li>Clipping / distortion</li>
+  <li>Silent segments</li>
+  <li>MCD drift
+ “””
+ issues = []</li>
+</ul>
+
+<p># Check duration
+ expected_duration = len(text.split()) * 0.5 # ~0.5s per word
+ actual_duration = len(generated_audio) / 22050
+ if abs(actual_duration - expected_duration) / expected_duration &gt; 0.5:
+ issues.append(f”Abnormal duration: {actual_duration:.2f}s vs {expected_duration:.2f}s expected”)</p>
+
+<p># Check for clipping
+ if np.max(np.abs(generated_audio)) &gt; 0.99:
+ issues.append(“Clipping detected”)</p>
+
+<p># Check for silent segments
+ rms = librosa.feature.rms(y=generated_audio)[0]
+ silent_ratio = (rms &lt; 0.01).sum() / len(rms)
+ if silent_ratio &gt; 0.3:
+ issues.append(f”Too much silence: {silent_ratio:.1%}”)</p>
+
+<p># Log for drift detection
+ self.log_quality_metrics({
+ ‘text_length’: len(text),
+ ‘audio_duration’: actual_duration,
+ ‘max_amplitude’: np.max(np.abs(generated_audio)),
+ ‘silent_ratio’: silent_ratio
+ })</p>
+
+<p>return issues</p>
+
+<p>def log_quality_metrics(self, metrics: dict):
+ “"”Log metrics for drift detection”””
+ # Send to monitoring system (Datadog, Prometheus, etc.)
+ pass
+``</p>
 
 <hr />
 
@@ -1616,12 +1639,12 @@ Output: Mel Spectrogram
 
 <h2 id="key-takeaways">Key Takeaways</h2>
 
-<p>✅ <strong>Two-stage pipeline</strong> - Acoustic model + vocoder is standard<br />
-✅ <strong>Text processing critical</strong> - Normalization and G2P affect quality<br />
-✅ <strong>Autoregressive vs non-autoregressive</strong> - Tacotron vs FastSpeech trade-offs<br />
-✅ <strong>Prosody control</strong> - Pitch, duration, energy for expressiveness<br />
-✅ <strong>Multiple metrics</strong> - Objective (MCD) and subjective (MOS) both needed<br />
-✅ <strong>Production optimization</strong> - Latency, caching, streaming for real-time use<br />
+<p>✅ <strong>Two-stage pipeline</strong> - Acoustic model + vocoder is standard 
+✅ <strong>Text processing critical</strong> - Normalization and G2P affect quality 
+✅ <strong>Autoregressive vs non-autoregressive</strong> - Tacotron vs FastSpeech trade-offs 
+✅ <strong>Prosody control</strong> - Pitch, duration, energy for expressiveness 
+✅ <strong>Multiple metrics</strong> - Objective (MCD) and subjective (MOS) both needed 
+✅ <strong>Production optimization</strong> - Latency, caching, streaming for real-time use 
 ✅ <strong>Like climbing stairs</strong> - Build incrementally (phoneme → mel → waveform)</p>
 
 <hr />

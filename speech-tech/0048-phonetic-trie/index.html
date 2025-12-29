@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Phonetic Trie">
     <meta itemprop="description" content="“Spelling is irrelevant. Sound is everything.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -305,19 +305,20 @@ The ASR might transcribe this as:</p>
   <li><strong>Phonetic Trie (The Solution)</strong>: Maps <em>Phonetic Hashes</em> to IDs.</li>
 </ol>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[User Says] -&gt; [ASR] -&gt; "File men"
-                           |
-                           v
-                    [Phonetic Encoder (Metaphone)]
-                           |
-                           v
-                        "FLMN"
-                           |
-                           v
-                    [Phonetic Trie Search]
-                           |
-  Results: ["Philemon" (FLMN), "Philamon" (FLMN)]
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+[User Says] -&gt; [ASR] -&gt; "File men"
+ |
+ v
+ [Phonetic Encoder (Metaphone)]
+ |
+ v
+ "FLMN"
+ |
+ v
+ [Phonetic Trie Search]
+ |
+ Results: ["Philemon" (FLMN), "Philamon" (FLMN)]
+</code></p>
 
 <hr />
 
@@ -332,47 +333,48 @@ For Multilingual: <strong>Neural G2P</strong>. (Because Soundex logic fails on C
 
 <p>We will implement a simple “Sound Search” using Python’s <code class="language-plaintext highlighter-rouge">metaphone</code> library and a Trie.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">phonetics</span> <span class="c1"># pip install phonetics
-</span><span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<p>``python
+import phonetics # pip install phonetics
+from collections import defaultdict</p>
 
-<span class="k">class</span> <span class="nc">PhoneticSearchEngine</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="c1"># Maps Sound Code -&gt; List of actual words
-</span>        <span class="c1"># This acts as our hash map / Trie
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">index</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-        
-    <span class="k">def</span> <span class="nf">add_song</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">song_title</span><span class="p">):</span>
-        <span class="c1"># 1. Compute the phonetic signature
-</span>        <span class="c1"># dmetaphone returns tuple (Primary, Secondary)
-</span>        <span class="n">primary</span><span class="p">,</span> <span class="n">secondary</span> <span class="o">=</span> <span class="n">phonetics</span><span class="p">.</span><span class="nf">dmetaphone</span><span class="p">(</span><span class="n">song_title</span><span class="p">)</span>
-        
-        <span class="c1"># 2. Index both!
-</span>        <span class="k">if</span> <span class="n">primary</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">index</span><span class="p">[</span><span class="n">primary</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">song_title</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">secondary</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">index</span><span class="p">[</span><span class="n">secondary</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">song_title</span><span class="p">)</span>
-            
-    <span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">spoken_query</span><span class="p">):</span>
-        <span class="c1"># 1. Convert user's transcript to sound code
-</span>        <span class="n">primary</span><span class="p">,</span> <span class="n">secondary</span> <span class="o">=</span> <span class="n">phonetics</span><span class="p">.</span><span class="nf">dmetaphone</span><span class="p">(</span><span class="n">spoken_query</span><span class="p">)</span>
-        
-        <span class="n">results</span> <span class="o">=</span> <span class="nf">set</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">primary</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">index</span><span class="p">:</span>
-            <span class="n">results</span><span class="p">.</span><span class="nf">update</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">index</span><span class="p">[</span><span class="n">primary</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">secondary</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">index</span><span class="p">:</span>
-            <span class="n">results</span><span class="p">.</span><span class="nf">update</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">index</span><span class="p">[</span><span class="n">secondary</span><span class="p">])</span>
-            
-        <span class="k">return</span> <span class="nf">list</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+<p>class PhoneticSearchEngine:
+ def <strong>init</strong>(self):
+ # Maps Sound Code -&gt; List of actual words
+ # This acts as our hash map / Trie
+ self.index = defaultdict(list)</p>
 
-<span class="c1"># Usage
-</span><span class="n">engine</span> <span class="o">=</span> <span class="nc">PhoneticSearchEngine</span><span class="p">()</span>
-<span class="n">engine</span><span class="p">.</span><span class="nf">add_song</span><span class="p">(</span><span class="sh">"</span><span class="s">Taylor Swift</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">engine</span><span class="p">.</span><span class="nf">add_song</span><span class="p">(</span><span class="sh">"</span><span class="s">Tailor Switch</span><span class="sh">"</span><span class="p">)</span> <span class="c1"># Confusingly similar
-</span>
-<span class="nf">print</span><span class="p">(</span><span class="n">engine</span><span class="p">.</span><span class="nf">search</span><span class="p">(</span><span class="sh">"</span><span class="s">Taler Swift</span><span class="sh">"</span><span class="p">))</span> 
-<span class="c1"># Output: ['Taylor Swift']
-# Explanation: 'Taylor' -&gt; TLER, 'Taler' -&gt; TLER. Match.
-</span></code></pre></div></div>
+<p>def add_song(self, song_title):
+ # 1. Compute the phonetic signature
+ # dmetaphone returns tuple (Primary, Secondary)
+ primary, secondary = phonetics.dmetaphone(song_title)</p>
+
+<p># 2. Index both!
+ if primary:
+ self.index[primary].append(song_title)
+ if secondary:
+ self.index[secondary].append(song_title)</p>
+
+<p>def search(self, spoken_query):
+ # 1. Convert user’s transcript to sound code
+ primary, secondary = phonetics.dmetaphone(spoken_query)</p>
+
+<p>results = set()
+ if primary in self.index:
+ results.update(self.index[primary])
+ if secondary in self.index:
+ results.update(self.index[secondary])</p>
+
+<p>return list(results)</p>
+
+<h1 id="usage">Usage</h1>
+<p>engine = PhoneticSearchEngine()
+engine.add_song(“Taylor Swift”)
+engine.add_song(“Tailor Switch”) # Confusingly similar</p>
+
+<p>print(engine.search(“Taler Swift”))</p>
+<h1 id="output-taylor-swift">Output: [‘Taylor Swift’]</h1>
+<h1 id="explanation-taylor---tler-taler---tler-match">Explanation: ‘Taylor’ -&gt; TLER, ‘Taler’ -&gt; TLER. Match.</h1>
+<p>``</p>
 
 <hr />
 

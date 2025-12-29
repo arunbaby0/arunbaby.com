@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Model Serialization Systems">
     <meta itemprop="description" content="“Training is Art. Serialization is Logistics. Wars are won on logistics.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -291,15 +291,16 @@ Now, your Production Engineering team says:</p>
 
 <p>The golden standard for modern ML deployment is the <strong>Interchange Format</strong> approach (using ONNX).</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[PyTorch Training Env]      [Intermediate Rep]         [Inference Env]
-+-------------------+      +----------------+       +------------------+
-|  Model (RAM)      | ---&gt; |  ONNX Protocol | ---&gt;  |  ONNX Runtime    |
-|  (Dynamic Graph)  |      |   Buffer File  |       |  (C++ /  Go)     |
-+-------------------+      +----------------+       +------------------+
-                                   ^
-                                   |
-                          (Static, Optimized Graph)
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+[PyTorch Training Env] [Intermediate Rep] [Inference Env]
++-------------------+ +----------------+ +------------------+
+| Model (RAM) | ---&gt; | ONNX Protocol | ---&gt; | ONNX Runtime |
+| (Dynamic Graph) | | Buffer File | | (C++ / Go) |
++-------------------+ +----------------+ +------------------+
+ ^
+ |
+ (Static, Optimized Graph)
+</code></p>
 
 <p>By serializing to a standard like ONNX, we decouple the <em>Authoring Tool</em> (PyTorch) from the <em>Execution Engine</em> (NVIDIA Trident / TFLite).</p>
 
@@ -313,12 +314,9 @@ Now, your Production Engineering team says:</p>
 <ul>
   <li><strong>What it does</strong>: Uses Python’s <code class="language-plaintext highlighter-rouge">pickle</code> to serialize the <em>state dictionary</em> (Map of “layer1.weight” -&gt; Tensor).</li>
   <li><strong>Pros</strong>: Easy, preserves Python flexibility (loops, if-statements).</li>
-  <li><strong>Cons</strong>:
-    <ul>
-      <li><strong>Dependency Hell</strong>: To load it, you need the <em>exact</em> original python class definition source code.</li>
-      <li><strong>Insecure</strong>: Pickle allows code execution. <code class="language-plaintext highlighter-rouge">torch.load('malicious.pt')</code> can wipe your hard drive.</li>
-    </ul>
-  </li>
+  <li><strong>Cons</strong>:</li>
+  <li><strong>Dependency Hell</strong>: To load it, you need the <em>exact</em> original python class definition source code.</li>
+  <li><strong>Insecure</strong>: Pickle allows code execution. <code class="language-plaintext highlighter-rouge">torch.load('malicious.pt')</code> can wipe your hard drive.</li>
 </ul>
 
 <p><strong>Approach B: Graph-Based (TorchScript / ONNX)</strong></p>
@@ -379,41 +377,42 @@ Store in <strong>Artifactory</strong> or <strong>S3</strong> with immutable tags
 
 <p>Here is how you actually serialize a PyTorch model to ONNX.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
-<span class="kn">import</span> <span class="n">torch.onnx</span>
+<p>``python
+import torch
+import torch.nn as nn
+import torch.onnx</p>
 
-<span class="c1"># 1. Define Model
-</span><span class="k">class</span> <span class="nc">Classifier</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">relu</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ReLU</span><span class="p">()</span>
+<h1 id="1-define-model">1. Define Model</h1>
+<p>class Classifier(nn.Module):
+ def <strong>init</strong>(self):
+ super().<strong>init</strong>()
+ self.fc = nn.Linear(10, 1)
+ self.relu = nn.ReLU()</p>
 
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">relu</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nf">fc</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<p>def forward(self, x):
+ return self.relu(self.fc(x))</p>
 
-<span class="n">model</span> <span class="o">=</span> <span class="nc">Classifier</span><span class="p">()</span>
-<span class="n">model</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span> <span class="c1"># Important: Switch to inference mode (freezes BatchNorm)
-</span>
-<span class="c1"># 2. Create Dummy Input
-</span><span class="n">dummy_input</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<p>model = Classifier()
+model.eval() # Important: Switch to inference mode (freezes BatchNorm)</p>
 
-<span class="c1"># 3. Export
-</span><span class="n">torch</span><span class="p">.</span><span class="n">onnx</span><span class="p">.</span><span class="nf">export</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">,</span> 
-    <span class="n">dummy_input</span><span class="p">,</span> 
-    <span class="sh">"</span><span class="s">classifier.onnx</span><span class="sh">"</span><span class="p">,</span>
-    <span class="n">export_params</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>        <span class="c1"># Store the trained parameter weights inside the model file
-</span>    <span class="n">opset_version</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>          <span class="c1"># ONNX version
-</span>    <span class="n">do_constant_folding</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>  <span class="c1"># Optimization
-</span>    <span class="n">input_names</span> <span class="o">=</span> <span class="p">[</span><span class="sh">'</span><span class="s">input</span><span class="sh">'</span><span class="p">],</span>   <span class="c1"># Variable names for graph
-</span>    <span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="sh">'</span><span class="s">output</span><span class="sh">'</span><span class="p">],</span>
-    <span class="n">dynamic_axes</span><span class="o">=</span><span class="p">{</span><span class="sh">'</span><span class="s">input</span><span class="sh">'</span> <span class="p">:</span> <span class="p">{</span><span class="mi">0</span> <span class="p">:</span> <span class="sh">'</span><span class="s">batch_size</span><span class="sh">'</span><span class="p">}}</span> <span class="c1"># Allow variable batch size
-</span><span class="p">)</span>
+<h1 id="2-create-dummy-input">2. Create Dummy Input</h1>
+<p>dummy_input = torch.randn(1, 10)</p>
 
-<span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Model serialized to classifier.onnx</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="3-export">3. Export</h1>
+<p>torch.onnx.export(
+ model, 
+ dummy_input, 
+ “classifier.onnx”,
+ export_params=True, # Store the trained parameter weights inside the model file
+ opset_version=12, # ONNX version
+ do_constant_folding=True, # Optimization
+ input_names = [‘input’], # Variable names for graph
+ output_names = [‘output’],
+ dynamic_axes={‘input’ : {0 : ‘batch_size’}} # Allow variable batch size
+)</p>
+
+<p>print(“Model serialized to classifier.onnx”)
+``</p>
 
 <hr />
 
@@ -441,10 +440,11 @@ Store in <strong>Artifactory</strong> or <strong>S3</strong> with immutable tags
     </ul>
   </li>
   <li><strong>Dynamic Control Flow</strong>:
-    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="n">x</span><span class="p">.</span><span class="nf">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="n">x</span>
-<span class="k">else</span><span class="p">:</span> <span class="k">return</span> <span class="n">y</span>
-</code></pre></div>    </div>
-    <p>The <em>Tracer</em> only sees path 1. It saves a graph that <em>always</em> returns x. This is a silent bug.</p>
+ <code class="language-plaintext highlighter-rouge">python
+ if x.sum() &gt; 0: return x
+ else: return y
+</code>
+ The <em>Tracer</em> only sees path 1. It saves a graph that <em>always</em> returns x. This is a silent bug.
     <ul>
       <li><em>Fix</em>: Use <code class="language-plaintext highlighter-rouge">torch.jit.script</code> (Compiler) instead of <code class="language-plaintext highlighter-rouge">trace</code>, or rewrite using <code class="language-plaintext highlighter-rouge">torch.where</code>.</li>
     </ul>

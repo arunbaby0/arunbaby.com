@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Speech Boundary Detection">
     <meta itemprop="description" content="“Knowing when to listen and when to stop.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -276,8 +276,8 @@
 <h3 id="1-energy-based-classical">1. Energy-Based (Classical)</h3>
 <ul>
   <li>Calculate Short-Time Energy (STE).</li>
-  <li>If $Energy &gt; Threshold$, assume speech.</li>
-  <li><strong>Pros:</strong> Ultra-fast, $O(1)$.</li>
+  <li>If <code class="language-plaintext highlighter-rouge">Energy &gt; Threshold</code>, assume speech.</li>
+  <li><strong>Pros:</strong> Ultra-fast, O(1).</li>
   <li><strong>Cons:</strong> Fails with background noise (AC, traffic).</li>
 </ul>
 
@@ -292,7 +292,7 @@
 <ul>
   <li><strong>Model:</strong> LSTM or small CNN.</li>
   <li><strong>Input:</strong> Mel-spectrogram frames.</li>
-  <li><strong>Output:</strong> Probability of speech $P(speech)$.</li>
+  <li><strong>Output:</strong> Probability of speech <code class="language-plaintext highlighter-rouge">P(speech)</code>.</li>
   <li><strong>Latency:</strong> &lt; 10ms.</li>
 </ul>
 
@@ -414,74 +414,75 @@
 
 <p>Let’s build a robust VAD using energy + spectral features.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
-<span class="kn">import</span> <span class="n">librosa</span>
+<p>``python
+import numpy as np
+import librosa</p>
 
-<span class="k">class</span> <span class="nc">ProductionVAD</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">frame_length</span><span class="o">=</span><span class="mf">0.025</span><span class="p">,</span> <span class="n">frame_shift</span><span class="o">=</span><span class="mf">0.010</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sr</span> <span class="o">=</span> <span class="n">sr</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">sr</span> <span class="o">*</span> <span class="n">frame_length</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">frame_shift</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">sr</span> <span class="o">*</span> <span class="n">frame_shift</span><span class="p">)</span>
-        
-        <span class="c1"># Thresholds (tuned on dev set)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">energy_threshold</span> <span class="o">=</span> <span class="mf">0.02</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">zcr_threshold</span> <span class="o">=</span> <span class="mf">0.3</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">spectral_centroid_threshold</span> <span class="o">=</span> <span class="mi">2000</span>
-        
-    <span class="k">def</span> <span class="nf">extract_features</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="c1"># Short-Time Energy
-</span>        <span class="n">energy</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="n">feature</span><span class="p">.</span><span class="nf">rms</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span> <span class="n">frame_length</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">frame_length</span><span class="p">,</span> 
-                                      <span class="n">hop_length</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">frame_shift</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="c1"># Zero Crossing Rate
-</span>        <span class="n">zcr</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="n">feature</span><span class="p">.</span><span class="nf">zero_crossing_rate</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">frame_length</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">frame_length</span><span class="p">,</span>
-                                                   <span class="n">hop_length</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">frame_shift</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="c1"># Spectral Centroid
-</span>        <span class="n">spectral_centroid</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="n">feature</span><span class="p">.</span><span class="nf">spectral_centroid</span><span class="p">(</span>
-            <span class="n">y</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">sr</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">frame_length</span><span class="p">,</span> 
-            <span class="n">hop_length</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">frame_shift</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="k">return</span> <span class="n">energy</span><span class="p">,</span> <span class="n">zcr</span><span class="p">,</span> <span class="n">spectral_centroid</span>
-    
-    <span class="k">def</span> <span class="nf">detect</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="n">energy</span><span class="p">,</span> <span class="n">zcr</span><span class="p">,</span> <span class="n">spectral_centroid</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">extract_features</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        
-        <span class="c1"># Decision logic
-</span>        <span class="n">speech_frames</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="p">(</span><span class="n">energy</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">energy_threshold</span><span class="p">)</span> <span class="o">&amp;</span>
-            <span class="p">(</span><span class="n">zcr</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">zcr_threshold</span><span class="p">)</span> <span class="o">&amp;</span>
-            <span class="p">(</span><span class="n">spectral_centroid</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">spectral_centroid_threshold</span><span class="p">)</span>
-        <span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">speech_frames</span>
-    
-    <span class="k">def</span> <span class="nf">get_speech_segments</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="n">speech_frames</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">detect</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        
-        <span class="c1"># Convert frame indices to time
-</span>        <span class="n">segments</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">in_speech</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="n">start_idx</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">is_speech</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">speech_frames</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">is_speech</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">in_speech</span><span class="p">:</span>
-                <span class="n">start_idx</span> <span class="o">=</span> <span class="n">i</span>
-                <span class="n">in_speech</span> <span class="o">=</span> <span class="bp">True</span>
-            <span class="k">elif</span> <span class="ow">not</span> <span class="n">is_speech</span> <span class="ow">and</span> <span class="n">in_speech</span><span class="p">:</span>
-                <span class="n">start_time</span> <span class="o">=</span> <span class="n">start_idx</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">frame_shift</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sr</span>
-                <span class="n">end_time</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">frame_shift</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sr</span>
-                <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">))</span>
-                <span class="n">in_speech</span> <span class="o">=</span> <span class="bp">False</span>
-        
-        <span class="k">return</span> <span class="n">segments</span>
+<p>class ProductionVAD:
+ def <strong>init</strong>(self, sr=16000, frame_length=0.025, frame_shift=0.010):
+ self.sr = sr
+ self.frame_length = int(sr * frame_length)
+ self.frame_shift = int(sr * frame_shift)</p>
 
-<span class="c1"># Usage
-</span><span class="n">vad</span> <span class="o">=</span> <span class="nc">ProductionVAD</span><span class="p">()</span>
-<span class="n">audio</span><span class="p">,</span> <span class="n">sr</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sh">"</span><span class="s">audio.wav</span><span class="sh">"</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">)</span>
-<span class="n">segments</span> <span class="o">=</span> <span class="n">vad</span><span class="p">.</span><span class="nf">get_speech_segments</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Speech segments: </span><span class="si">{</span><span class="n">segments</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p># Thresholds (tuned on dev set)
+ self.energy_threshold = 0.02
+ self.zcr_threshold = 0.3
+ self.spectral_centroid_threshold = 2000</p>
+
+<p>def extract_features(self, audio):
+ # Short-Time Energy
+ energy = librosa.feature.rms(y=audio, frame_length=self.frame_length, 
+ hop_length=self.frame_shift)[0]</p>
+
+<p># Zero Crossing Rate
+ zcr = librosa.feature.zero_crossing_rate(audio, frame_length=self.frame_length,
+ hop_length=self.frame_shift)[0]</p>
+
+<p># Spectral Centroid
+ spectral_centroid = librosa.feature.spectral_centroid(
+ y=audio, sr=self.sr, n_fft=self.frame_length, 
+ hop_length=self.frame_shift)[0]</p>
+
+<p>return energy, zcr, spectral_centroid</p>
+
+<p>def detect(self, audio):
+ energy, zcr, spectral_centroid = self.extract_features(audio)</p>
+
+<p># Decision logic
+ speech_frames = (
+ (energy &gt; self.energy_threshold) &amp;
+ (zcr &lt; self.zcr_threshold) &amp;
+ (spectral_centroid &gt; self.spectral_centroid_threshold)
+ )</p>
+
+<p>return speech_frames</p>
+
+<p>def get_speech_segments(self, audio):
+ speech_frames = self.detect(audio)</p>
+
+<p># Convert frame indices to time
+ segments = []
+ in_speech = False
+ start_idx = 0</p>
+
+<p>for i, is_speech in enumerate(speech_frames):
+ if is_speech and not in_speech:
+ start_idx = i
+ in_speech = True
+ elif not is_speech and in_speech:
+ start_time = start_idx * self.frame_shift / self.sr
+ end_time = i * self.frame_shift / self.sr
+ segments.append((start_time, end_time))
+ in_speech = False</p>
+
+<p>return segments</p>
+
+<h1 id="usage">Usage</h1>
+<p>vad = ProductionVAD()
+audio, sr = librosa.load(“audio.wav”, sr=16000)
+segments = vad.get_speech_segments(audio)
+print(f”Speech segments: {segments}”)
+``</p>
 
 <h2 id="10-deep-dive-webrtc-vad-industry-standard">10. Deep Dive: WebRTC VAD (Industry Standard)</h2>
 
@@ -494,115 +495,120 @@
   <li><strong>Modes:</strong> Aggressive (0), Normal (1), Conservative (2), Very Conservative (3).</li>
 </ol>
 
-<p><strong>Python Wrapper:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">webrtcvad</span>
-<span class="kn">import</span> <span class="n">struct</span>
+<p><strong>Python Wrapper:</strong>
+``python
+import webrtcvad
+import struct</p>
 
-<span class="k">def</span> <span class="nf">read_wave</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
-    <span class="k">with</span> <span class="n">wave</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="sh">'</span><span class="s">rb</span><span class="sh">'</span><span class="p">)</span> <span class="k">as</span> <span class="n">wf</span><span class="p">:</span>
-        <span class="n">sample_rate</span> <span class="o">=</span> <span class="n">wf</span><span class="p">.</span><span class="nf">getframerate</span><span class="p">()</span>
-        <span class="n">pcm_data</span> <span class="o">=</span> <span class="n">wf</span><span class="p">.</span><span class="nf">readframes</span><span class="p">(</span><span class="n">wf</span><span class="p">.</span><span class="nf">getnframes</span><span class="p">())</span>
-    <span class="k">return</span> <span class="n">pcm_data</span><span class="p">,</span> <span class="n">sample_rate</span>
+<p>def read_wave(path):
+ with wave.open(path, ‘rb’) as wf:
+ sample_rate = wf.getframerate()
+ pcm_data = wf.readframes(wf.getnframes())
+ return pcm_data, sample_rate</p>
 
-<span class="k">def</span> <span class="nf">frame_generator</span><span class="p">(</span><span class="n">frame_duration_ms</span><span class="p">,</span> <span class="n">audio</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">):</span>
-    <span class="n">n</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="p">(</span><span class="n">frame_duration_ms</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
-    <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">while</span> <span class="n">offset</span> <span class="o">+</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nf">len</span><span class="p">(</span><span class="n">audio</span><span class="p">):</span>
-        <span class="k">yield</span> <span class="n">audio</span><span class="p">[</span><span class="n">offset</span><span class="p">:</span><span class="n">offset</span> <span class="o">+</span> <span class="n">n</span><span class="p">]</span>
-        <span class="n">offset</span> <span class="o">+=</span> <span class="n">n</span>
+<p>def frame_generator(frame_duration_ms, audio, sample_rate):
+ n = int(sample_rate * (frame_duration_ms / 1000.0) * 2)
+ offset = 0
+ while offset + n &lt; len(audio):
+ yield audio[offset:offset + n]
+ offset += n</p>
 
-<span class="n">vad</span> <span class="o">=</span> <span class="n">webrtcvad</span><span class="p">.</span><span class="nc">Vad</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># Mode 2 (Normal)
-</span><span class="n">audio</span><span class="p">,</span> <span class="n">sample_rate</span> <span class="o">=</span> <span class="nf">read_wave</span><span class="p">(</span><span class="sh">'</span><span class="s">audio.wav</span><span class="sh">'</span><span class="p">)</span>
+<p>vad = webrtcvad.Vad(2) # Mode 2 (Normal)
+audio, sample_rate = read_wave(‘audio.wav’)</p>
 
-<span class="n">frames</span> <span class="o">=</span> <span class="nf">frame_generator</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">audio</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">)</span>  <span class="c1"># 30ms frames
-</span><span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">:</span>
-    <span class="n">is_speech</span> <span class="o">=</span> <span class="n">vad</span><span class="p">.</span><span class="nf">is_speech</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Speech: </span><span class="si">{</span><span class="n">is_speech</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>frames = frame_generator(30, audio, sample_rate) # 30ms frames
+for frame in frames:
+ is_speech = vad.is_speech(frame, sample_rate)
+ print(f”Speech: {is_speech}”)
+``</p>
 
 <h2 id="11-deep-dive-forced-alignment-with-montreal-forced-aligner">11. Deep Dive: Forced Alignment with Montreal Forced Aligner</h2>
 
-<p><strong>Installation:</strong></p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>conda <span class="nb">install</span> <span class="nt">-c</span> conda-forge montreal-forced-aligner
-</code></pre></div></div>
+<p><strong>Installation:</strong>
+<code class="language-plaintext highlighter-rouge">bash
+conda install -c conda-forge montreal-forced-aligner
+</code></p>
 
-<p><strong>Usage:</strong></p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 1. Prepare data</span>
-<span class="c"># Directory structure:</span>
-<span class="c"># corpus/</span>
-<span class="c">#   audio1.wav</span>
-<span class="c">#   audio1.txt  # Transcript</span>
-<span class="c">#   audio2.wav</span>
-<span class="c">#   audio2.txt</span>
+<p><strong>Usage:</strong>
+``bash</p>
+<h1 id="1-prepare-data">1. Prepare data</h1>
+<h1 id="directory-structure">Directory structure:</h1>
+<h1 id="corpus">corpus/</h1>
+<h1 id="audio1wav">audio1.wav</h1>
+<h1 id="audio1txt--transcript">audio1.txt # Transcript</h1>
+<h1 id="audio2wav">audio2.wav</h1>
+<h1 id="audio2txt">audio2.txt</h1>
 
-<span class="c"># 2. Download acoustic model and dictionary</span>
-mfa model download acoustic english_us_arpa
-mfa model download dictionary english_us_arpa
+<h1 id="2-download-acoustic-model-and-dictionary">2. Download acoustic model and dictionary</h1>
+<p>mfa model download acoustic english_us_arpa
+mfa model download dictionary english_us_arpa</p>
 
-<span class="c"># 3. Align</span>
-mfa align corpus/ english_us_arpa english_us_arpa output/
+<h1 id="3-align">3. Align</h1>
+<p>mfa align corpus/ english_us_arpa english_us_arpa output/</p>
 
-<span class="c"># 4. Output: TextGrid files with word/phone timestamps</span>
-</code></pre></div></div>
+<h1 id="4-output-textgrid-files-with-wordphone-timestamps">4. Output: TextGrid files with word/phone timestamps</h1>
+<p>``</p>
 
-<p><strong>Parsing TextGrid:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">textgrid</span>
+<p><strong>Parsing TextGrid:</strong>
+``python
+import textgrid</p>
 
-<span class="n">tg</span> <span class="o">=</span> <span class="n">textgrid</span><span class="p">.</span><span class="n">TextGrid</span><span class="p">.</span><span class="nf">fromFile</span><span class="p">(</span><span class="sh">"</span><span class="s">output/audio1.TextGrid</span><span class="sh">"</span><span class="p">)</span>
+<p>tg = textgrid.TextGrid.fromFile(“output/audio1.TextGrid”)</p>
 
-<span class="c1"># Extract word boundaries
-</span><span class="n">words_tier</span> <span class="o">=</span> <span class="n">tg</span><span class="p">.</span><span class="nf">getFirst</span><span class="p">(</span><span class="sh">'</span><span class="s">words</span><span class="sh">'</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">interval</span> <span class="ow">in</span> <span class="n">words_tier</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">interval</span><span class="p">.</span><span class="n">mark</span><span class="p">:</span>  <span class="c1"># Non-empty
-</span>        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">interval</span><span class="p">.</span><span class="n">mark</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">interval</span><span class="p">.</span><span class="n">minTime</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s - </span><span class="si">{</span><span class="n">interval</span><span class="p">.</span><span class="n">maxTime</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s</span><span class="sh">"</span><span class="p">)</span>
+<h1 id="extract-word-boundaries">Extract word boundaries</h1>
+<p>words_tier = tg.getFirst(‘words’)
+for interval in words_tier:
+ if interval.mark: # Non-empty
+ print(f”{interval.mark}: {interval.minTime:.2f}s - {interval.maxTime:.2f}s”)</p>
 
-<span class="c1"># Extract phone boundaries
-</span><span class="n">phones_tier</span> <span class="o">=</span> <span class="n">tg</span><span class="p">.</span><span class="nf">getFirst</span><span class="p">(</span><span class="sh">'</span><span class="s">phones</span><span class="sh">'</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">interval</span> <span class="ow">in</span> <span class="n">phones_tier</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">interval</span><span class="p">.</span><span class="n">mark</span><span class="p">:</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">interval</span><span class="p">.</span><span class="n">mark</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">interval</span><span class="p">.</span><span class="n">minTime</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s - </span><span class="si">{</span><span class="n">interval</span><span class="p">.</span><span class="n">maxTime</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="extract-phone-boundaries">Extract phone boundaries</h1>
+<p>phones_tier = tg.getFirst(‘phones’)
+for interval in phones_tier:
+ if interval.mark:
+ print(f”{interval.mark}: {interval.minTime:.2f}s - {interval.maxTime:.2f}s”)
+``</p>
 
 <h2 id="12-deep-dive-ctc-based-segmentation">12. Deep Dive: CTC-Based Segmentation</h2>
 
 <p>Modern End-to-End ASR uses CTC. We can extract boundaries from CTC alignments.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn.functional</span> <span class="k">as</span> <span class="n">F</span>
+<p>``python
+import torch
+import torch.nn.functional as F</p>
 
-<span class="k">def</span> <span class="nf">ctc_segmentation</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">blank_id</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    logits: (T, vocab_size) - CTC output probabilities
-    text: Ground truth text
-    Returns: List of (char, start_frame, end_frame)
-    </span><span class="sh">"""</span>
-    <span class="n">T</span> <span class="o">=</span> <span class="n">logits</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">probs</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-    
-    <span class="c1"># Get most likely path (greedy decoding)
-</span>    <span class="n">path</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-    
-    <span class="c1"># Collapse repeated characters and remove blanks
-</span>    <span class="n">segments</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">prev_char</span> <span class="o">=</span> <span class="n">blank_id</span>
-    <span class="n">start_frame</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
-        <span class="n">char</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="n">t</span><span class="p">].</span><span class="nf">item</span><span class="p">()</span>
-        
-        <span class="k">if</span> <span class="n">char</span> <span class="o">!=</span> <span class="n">blank_id</span> <span class="ow">and</span> <span class="n">char</span> <span class="o">!=</span> <span class="n">prev_char</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">prev_char</span> <span class="o">!=</span> <span class="n">blank_id</span><span class="p">:</span>
-                <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">prev_char</span><span class="p">,</span> <span class="n">start_frame</span><span class="p">,</span> <span class="n">t</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-            <span class="n">start_frame</span> <span class="o">=</span> <span class="n">t</span>
-        
-        <span class="n">prev_char</span> <span class="o">=</span> <span class="n">char</span>
-    
-    <span class="c1"># Add last segment
-</span>    <span class="k">if</span> <span class="n">prev_char</span> <span class="o">!=</span> <span class="n">blank_id</span><span class="p">:</span>
-        <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">prev_char</span><span class="p">,</span> <span class="n">start_frame</span><span class="p">,</span> <span class="n">T</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-    
-    <span class="k">return</span> <span class="n">segments</span>
-</code></pre></div></div>
+<p>def ctc_segmentation(logits, text, blank_id=0):
+ “””
+ logits: (T, vocab_size) - CTC output probabilities
+ text: Ground truth text
+ Returns: List of (char, start_frame, end_frame)
+ “””
+ T = logits.shape[0]
+ probs = F.softmax(logits, dim=-1)</p>
+
+<p># Get most likely path (greedy decoding)
+ path = torch.argmax(probs, dim=-1)</p>
+
+<p># Collapse repeated characters and remove blanks
+ segments = []
+ prev_char = blank_id
+ start_frame = 0</p>
+
+<p>for t in range(T):
+ char = path[t].item()</p>
+
+<p>if char != blank_id and char != prev_char:
+ if prev_char != blank_id:
+ segments.append((prev_char, start_frame, t-1))
+ start_frame = t</p>
+
+<p>prev_char = char</p>
+
+<p># Add last segment
+ if prev_char != blank_id:
+ segments.append((prev_char, start_frame, T-1))</p>
+
+<p>return segments
+``</p>
 
 <h2 id="13-deep-dive-endpointing-end-of-query-detection">13. Deep Dive: Endpointing (End-of-Query Detection)</h2>
 
@@ -611,67 +617,70 @@ mfa align corpus/ english_us_arpa english_us_arpa output/
 <p><strong>Naive Approach:</strong> Fixed timeout (e.g., 700ms of silence).
 <strong>Problem:</strong> Cuts off slow speakers, feels sluggish for fast speakers.</p>
 
-<p><strong>Adaptive Endpointing:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">AdaptiveEndpointer</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">base_timeout</span> <span class="o">=</span> <span class="mf">0.7</span>  <span class="c1"># 700ms
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">min_timeout</span> <span class="o">=</span> <span class="mf">0.3</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">max_timeout</span> <span class="o">=</span> <span class="mf">1.5</span>
-        
-    <span class="k">def</span> <span class="nf">compute_timeout</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">speaking_rate</span><span class="p">,</span> <span class="n">prosody_features</span><span class="p">):</span>
-        <span class="c1"># speaking_rate: words per second
-</span>        <span class="c1"># prosody_features: pitch drop, energy drop
-</span>        
-        <span class="c1"># Slow speakers get longer timeout
-</span>        <span class="n">rate_factor</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">speaking_rate</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">)</span>
-        
-        <span class="c1"># Falling intonation (end of sentence) -&gt; shorter timeout
-</span>        <span class="n">pitch_drop</span> <span class="o">=</span> <span class="n">prosody_features</span><span class="p">[</span><span class="sh">'</span><span class="s">pitch_drop</span><span class="sh">'</span><span class="p">]</span>
-        <span class="n">prosody_factor</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">pitch_drop</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span>
-        
-        <span class="n">timeout</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">base_timeout</span> <span class="o">*</span> <span class="n">rate_factor</span> <span class="o">*</span> <span class="n">prosody_factor</span>
-        <span class="n">timeout</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">clip</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">min_timeout</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">max_timeout</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">timeout</span>
-</code></pre></div></div>
+<p><strong>Adaptive Endpointing:</strong>
+``python
+class AdaptiveEndpointer:
+ def <strong>init</strong>(self):
+ self.base_timeout = 0.7 # 700ms
+ self.min_timeout = 0.3
+ self.max_timeout = 1.5</p>
+
+<p>def compute_timeout(self, speaking_rate, prosody_features):
+ # speaking_rate: words per second
+ # prosody_features: pitch drop, energy drop</p>
+
+<p># Slow speakers get longer timeout
+ rate_factor = 1.0 / (speaking_rate + 0.1)</p>
+
+<p># Falling intonation (end of sentence) -&gt; shorter timeout
+ pitch_drop = prosody_features[‘pitch_drop’]
+ prosody_factor = 1.0 - (pitch_drop * 0.5)</p>
+
+<p>timeout = self.base_timeout * rate_factor * prosody_factor
+ timeout = np.clip(timeout, self.min_timeout, self.max_timeout)</p>
+
+<p>return timeout
+``</p>
 
 <h2 id="14-deep-dive-speaker-diarization-boundaries">14. Deep Dive: Speaker Diarization Boundaries</h2>
 
-<p><strong>Pyannote Pipeline:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">pyannote.audio</span> <span class="kn">import</span> <span class="n">Pipeline</span>
+<p><strong>Pyannote Pipeline:</strong>
+``python
+from pyannote.audio import Pipeline</p>
 
-<span class="n">pipeline</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">.</span><span class="nf">from_pretrained</span><span class="p">(</span><span class="sh">"</span><span class="s">pyannote/speaker-diarization</span><span class="sh">"</span><span class="p">)</span>
+<p>pipeline = Pipeline.from_pretrained(“pyannote/speaker-diarization”)</p>
 
-<span class="c1"># Apply on audio file
-</span><span class="n">diarization</span> <span class="o">=</span> <span class="nf">pipeline</span><span class="p">(</span><span class="sh">"</span><span class="s">audio.wav</span><span class="sh">"</span><span class="p">)</span>
+<h1 id="apply-on-audio-file">Apply on audio file</h1>
+<p>diarization = pipeline(“audio.wav”)</p>
 
-<span class="c1"># Extract speaker segments
-</span><span class="k">for</span> <span class="n">turn</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">speaker</span> <span class="ow">in</span> <span class="n">diarization</span><span class="p">.</span><span class="nf">itertracks</span><span class="p">(</span><span class="n">yield_label</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Speaker </span><span class="si">{</span><span class="n">speaker</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">turn</span><span class="p">.</span><span class="n">start</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">s - </span><span class="si">{</span><span class="n">turn</span><span class="p">.</span><span class="n">end</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">s</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="extract-speaker-segments">Extract speaker segments</h1>
+<p>for turn, _, speaker in diarization.itertracks(yield_label=True):
+ print(f”Speaker {speaker}: {turn.start:.1f}s - {turn.end:.1f}s”)
+``</p>
 
-<p><strong>Custom Post-Processing:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">merge_short_segments</span><span class="p">(</span><span class="n">diarization</span><span class="p">,</span> <span class="n">min_duration</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Merge segments shorter than min_duration with neighbors</span><span class="sh">"""</span>
-    <span class="n">segments</span> <span class="o">=</span> <span class="nf">list</span><span class="p">(</span><span class="n">diarization</span><span class="p">.</span><span class="nf">itertracks</span><span class="p">(</span><span class="n">yield_label</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
-    <span class="n">merged</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nf">len</span><span class="p">(</span><span class="n">segments</span><span class="p">):</span>
-        <span class="n">turn</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">speaker</span> <span class="o">=</span> <span class="n">segments</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-        <span class="n">duration</span> <span class="o">=</span> <span class="n">turn</span><span class="p">.</span><span class="n">end</span> <span class="o">-</span> <span class="n">turn</span><span class="p">.</span><span class="n">start</span>
-        
-        <span class="k">if</span> <span class="n">duration</span> <span class="o">&lt;</span> <span class="n">min_duration</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="c1"># Merge with previous segment
-</span>            <span class="n">prev_turn</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">prev_speaker</span> <span class="o">=</span> <span class="n">merged</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="n">merged</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nc">Segment</span><span class="p">(</span><span class="n">prev_turn</span><span class="p">.</span><span class="n">start</span><span class="p">,</span> <span class="n">turn</span><span class="p">.</span><span class="n">end</span><span class="p">),</span> <span class="n">_</span><span class="p">,</span> <span class="n">prev_speaker</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">merged</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">segments</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-        
-        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-    
-    <span class="k">return</span> <span class="n">merged</span>
-</code></pre></div></div>
+<p><strong>Custom Post-Processing:</strong>
+``python
+def merge_short_segments(diarization, min_duration=1.0):
+ “"”Merge segments shorter than min_duration with neighbors”””
+ segments = list(diarization.itertracks(yield_label=True))
+ merged = []</p>
+
+<p>i = 0
+ while i &lt; len(segments):
+ turn, _, speaker = segments[i]
+ duration = turn.end - turn.start</p>
+
+<p>if duration &lt; min_duration and i &gt; 0:
+ # Merge with previous segment
+ prev_turn, _, prev_speaker = merged[-1]
+ merged[-1] = (Segment(prev_turn.start, turn.end), _, prev_speaker)
+ else:
+ merged.append(segments[i])</p>
+
+<p>i += 1</p>
+
+<p>return merged
+``</p>
 
 <h2 id="15-system-design-real-time-podcast-transcription">15. System Design: Real-Time Podcast Transcription</h2>
 
@@ -691,33 +700,34 @@ mfa align corpus/ english_us_arpa english_us_arpa output/
   <li><strong>Post-Processing:</strong> Punctuation restoration, capitalization.</li>
 </ol>
 
-<p><strong>Pipeline Code:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">transcribe_podcast</span><span class="p">(</span><span class="n">audio_path</span><span class="p">):</span>
-    <span class="c1"># 1. VAD
-</span>    <span class="n">speech_segments</span> <span class="o">=</span> <span class="nf">silero_vad</span><span class="p">(</span><span class="n">audio_path</span><span class="p">)</span>
-    
-    <span class="c1"># 2. Diarization
-</span>    <span class="n">diarization</span> <span class="o">=</span> <span class="nf">pyannote_diarize</span><span class="p">(</span><span class="n">audio_path</span><span class="p">)</span>
-    
-    <span class="c1"># 3. ASR per speaker segment
-</span>    <span class="n">transcripts</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">turn</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">speaker</span> <span class="ow">in</span> <span class="n">diarization</span><span class="p">.</span><span class="nf">itertracks</span><span class="p">(</span><span class="n">yield_label</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-        <span class="n">segment_audio</span> <span class="o">=</span> <span class="nf">extract_segment</span><span class="p">(</span><span class="n">audio_path</span><span class="p">,</span> <span class="n">turn</span><span class="p">.</span><span class="n">start</span><span class="p">,</span> <span class="n">turn</span><span class="p">.</span><span class="n">end</span><span class="p">)</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="nf">whisper_transcribe</span><span class="p">(</span><span class="n">segment_audio</span><span class="p">)</span>
-        
-        <span class="c1"># 4. Forced Alignment
-</span>        <span class="n">word_timestamps</span> <span class="o">=</span> <span class="nf">mfa_align</span><span class="p">(</span><span class="n">segment_audio</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
-        
-        <span class="n">transcripts</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span>
-            <span class="sh">'</span><span class="s">speaker</span><span class="sh">'</span><span class="p">:</span> <span class="n">speaker</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">start</span><span class="sh">'</span><span class="p">:</span> <span class="n">turn</span><span class="p">.</span><span class="n">start</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">end</span><span class="sh">'</span><span class="p">:</span> <span class="n">turn</span><span class="p">.</span><span class="n">end</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">:</span> <span class="n">text</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">words</span><span class="sh">'</span><span class="p">:</span> <span class="n">word_timestamps</span>
-        <span class="p">})</span>
-    
-    <span class="k">return</span> <span class="n">transcripts</span>
-</code></pre></div></div>
+<p><strong>Pipeline Code:</strong>
+``python
+def transcribe_podcast(audio_path):
+ # 1. VAD
+ speech_segments = silero_vad(audio_path)</p>
+
+<p># 2. Diarization
+ diarization = pyannote_diarize(audio_path)</p>
+
+<p># 3. ASR per speaker segment
+ transcripts = []
+ for turn, _, speaker in diarization.itertracks(yield_label=True):
+ segment_audio = extract_segment(audio_path, turn.start, turn.end)
+ text = whisper_transcribe(segment_audio)</p>
+
+<p># 4. Forced Alignment
+ word_timestamps = mfa_align(segment_audio, text)</p>
+
+<p>transcripts.append({
+ ‘speaker’: speaker,
+ ‘start’: turn.start,
+ ‘end’: turn.end,
+ ‘text’: text,
+ ‘words’: word_timestamps
+ })</p>
+
+<p>return transcripts
+``</p>
 
 <h2 id="16-production-considerations">16. Production Considerations</h2>
 
@@ -758,23 +768,24 @@ mfa align corpus/ english_us_arpa english_us_arpa output/
   <li><strong>Transcription:</strong> Pauses within a sentence shouldn’t trigger segmentation.</li>
 </ul>
 
-<p><strong>Algorithm:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">classify_gap</span><span class="p">(</span><span class="n">audio_segment</span><span class="p">,</span> <span class="n">duration</span><span class="p">):</span>
-    <span class="c1"># Compute RMS energy
-</span>    <span class="n">energy</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sqrt</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">audio_segment</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
-    
-    <span class="c1"># Thresholds
-</span>    <span class="n">SILENCE_ENERGY</span> <span class="o">=</span> <span class="mf">0.01</span>
-    <span class="n">PAUSE_DURATION_MAX</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1"># 500ms
-</span>    
-    <span class="k">if</span> <span class="n">energy</span> <span class="o">&lt;</span> <span class="n">SILENCE_ENERGY</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">duration</span> <span class="o">&gt;</span> <span class="n">PAUSE_DURATION_MAX</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sh">"</span><span class="s">SILENCE</span><span class="sh">"</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sh">"</span><span class="s">PAUSE</span><span class="sh">"</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sh">"</span><span class="s">SPEECH</span><span class="sh">"</span>
-</code></pre></div></div>
+<p><strong>Algorithm:</strong>
+``python
+def classify_gap(audio_segment, duration):
+ # Compute RMS energy
+ energy = np.sqrt(np.mean(audio_segment**2))</p>
+
+<p># Thresholds
+ SILENCE_ENERGY = 0.01
+ PAUSE_DURATION_MAX = 0.5 # 500ms</p>
+
+<p>if energy &lt; SILENCE_ENERGY:
+ if duration &gt; PAUSE_DURATION_MAX:
+ return “SILENCE”
+ else:
+ return “PAUSE”
+ else:
+ return “SPEECH”
+``</p>
 
 <h2 id="18-deep-dive-music-vs-speech-segmentation">18. Deep Dive: Music vs. Speech Segmentation</h2>
 
@@ -788,20 +799,21 @@ mfa align corpus/ english_us_arpa english_us_arpa output/
   <li><strong>Rhythm:</strong> Music has regular beat patterns.</li>
 </ol>
 
-<p><strong>Model:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">librosa</span>
+<p><strong>Model:</strong>
+``python
+import librosa</p>
 
-<span class="k">def</span> <span class="nf">is_music</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">):</span>
-    <span class="c1"># Extract features
-</span>    <span class="n">spectral_flux</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">librosa</span><span class="p">.</span><span class="n">onset</span><span class="p">.</span><span class="nf">onset_strength</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="n">sr</span><span class="p">))</span>
-    <span class="n">zcr</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">librosa</span><span class="p">.</span><span class="n">feature</span><span class="p">.</span><span class="nf">zero_crossing_rate</span><span class="p">(</span><span class="n">audio</span><span class="p">))</span>
-    
-    <span class="c1"># Simple classifier (in practice, use a trained model)
-</span>    <span class="k">if</span> <span class="n">spectral_flux</span> <span class="o">&gt;</span> <span class="mi">15</span> <span class="ow">and</span> <span class="n">zcr</span> <span class="o">&gt;</span> <span class="mf">0.15</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">True</span>  <span class="c1"># Music
-</span>    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">False</span>  <span class="c1"># Speech
-</span></code></pre></div></div>
+<p>def is_music(audio, sr=16000):
+ # Extract features
+ spectral_flux = np.mean(librosa.onset.onset_strength(y=audio, sr=sr))
+ zcr = np.mean(librosa.feature.zero_crossing_rate(audio))</p>
+
+<p># Simple classifier (in practice, use a trained model)
+ if spectral_flux &gt; 15 and zcr &gt; 0.15:
+ return True # Music
+ else:
+ return False # Speech
+``</p>
 
 <p><strong>Production:</strong> Use a pre-trained classifier (e.g., <strong>Essentia</strong> library).</p>
 
@@ -809,11 +821,12 @@ mfa align corpus/ english_us_arpa english_us_arpa output/
 
 <p><strong>State-of-the-Art:</strong> Use a Transformer to predict “Is the user done speaking?”</p>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Audio Features (Mel-Spec) → Conformer Encoder → Binary Classifier
-                                ↓
-                        Contextual Features (ASR Partial Hypothesis)
-</code></pre></div></div>
+<p><strong>Architecture:</strong>
+<code class="language-plaintext highlighter-rouge">
+Audio Features (Mel-Spec) → Conformer Encoder → Binary Classifier
+ ↓
+ Contextual Features (ASR Partial Hypothesis)
+</code></p>
 
 <p><strong>Training Data:</strong></p>
 <ul>
@@ -821,27 +834,28 @@ mfa align corpus/ english_us_arpa english_us_arpa output/
   <li>Negative Examples: Utterances with artificial mid-sentence cuts.</li>
 </ul>
 
-<p><strong>Inference:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">NeuralEndpointer</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="nf">load_model</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="nb">buffer</span> <span class="o">=</span> <span class="p">[]</span>
-        
-    <span class="k">def</span> <span class="nf">process_frame</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_frame</span><span class="p">,</span> <span class="n">partial_transcript</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">audio_frame</span><span class="p">)</span>
-        
-        <span class="c1"># Extract features
-</span>        <span class="n">mel_spec</span> <span class="o">=</span> <span class="nf">compute_mel_spectrogram</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">)</span>
-        <span class="n">text_features</span> <span class="o">=</span> <span class="nf">encode_text</span><span class="p">(</span><span class="n">partial_transcript</span><span class="p">)</span>
-        
-        <span class="c1"># Predict
-</span>        <span class="n">prob_end</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">model</span><span class="p">(</span><span class="n">mel_spec</span><span class="p">,</span> <span class="n">text_features</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">prob_end</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sh">"</span><span class="s">END_OF_QUERY</span><span class="sh">"</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sh">"</span><span class="s">CONTINUE</span><span class="sh">"</span>
-</code></pre></div></div>
+<p><strong>Inference:</strong>
+``python
+class NeuralEndpointer:
+ def <strong>init</strong>(self, model_path):
+ self.model = load_model(model_path)
+ self.buffer = []</p>
+
+<p>def process_frame(self, audio_frame, partial_transcript):
+ self.buffer.append(audio_frame)</p>
+
+<p># Extract features
+ mel_spec = compute_mel_spectrogram(self.buffer)
+ text_features = encode_text(partial_transcript)</p>
+
+<p># Predict
+ prob_end = self.model(mel_spec, text_features)</p>
+
+<p>if prob_end &gt; 0.8:
+ return “END_OF_QUERY”
+ else:
+ return “CONTINUE”
+``</p>
 
 <h2 id="20-case-study-zooms-noise-suppression--vad">20. Case Study: Zoom’s Noise Suppression + VAD</h2>
 
@@ -871,7 +885,7 @@ mfa align corpus/ english_us_arpa english_us_arpa output/
 </ul>
 
 <p><strong>3. Segmentation Error Rate (SER):</strong>
-\(SER = \frac{FA + Miss + Confusion}{Total\_Frames}\)</p>
+<code class="language-plaintext highlighter-rouge">SER = \frac{FA + Miss + Confusion}{Total\_Frames}</code></p>
 <ul>
   <li><strong>FA (False Alarm):</strong> Silence marked as speech.</li>
   <li><strong>Miss:</strong> Speech marked as silence.</li>
@@ -921,20 +935,21 @@ mfa align corpus/ english_us_arpa english_us_arpa output/
 <p><strong>Traditional:</strong> HMM-based forced alignment.
 <strong>Modern:</strong> End-to-end neural networks.</p>
 
-<p><strong>Wav2Vec 2.0 for Phoneme Segmentation:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">transformers</span> <span class="kn">import</span> <span class="n">Wav2Vec2ForCTC</span><span class="p">,</span> <span class="n">Wav2Vec2Processor</span>
+<p><strong>Wav2Vec 2.0 for Phoneme Segmentation:</strong>
+``python
+from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor</p>
 
-<span class="n">processor</span> <span class="o">=</span> <span class="n">Wav2Vec2Processor</span><span class="p">.</span><span class="nf">from_pretrained</span><span class="p">(</span><span class="sh">"</span><span class="s">facebook/wav2vec2-lv-60-espeak-cv-ft</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">Wav2Vec2ForCTC</span><span class="p">.</span><span class="nf">from_pretrained</span><span class="p">(</span><span class="sh">"</span><span class="s">facebook/wav2vec2-lv-60-espeak-cv-ft</span><span class="sh">"</span><span class="p">)</span>
+<p>processor = Wav2Vec2Processor.from_pretrained(“facebook/wav2vec2-lv-60-espeak-cv-ft”)
+model = Wav2Vec2ForCTC.from_pretrained(“facebook/wav2vec2-lv-60-espeak-cv-ft”)</p>
 
-<span class="c1"># This model outputs phonemes directly
-</span><span class="n">inputs</span> <span class="o">=</span> <span class="nf">processor</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="sh">"</span><span class="s">pt</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">logits</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">).</span><span class="n">logits</span>
+<h1 id="this-model-outputs-phonemes-directly">This model outputs phonemes directly</h1>
+<p>inputs = processor(audio, sampling_rate=16000, return_tensors=”pt”)
+logits = model(**inputs).logits</p>
 
-<span class="c1"># Decode to phonemes
-</span><span class="n">predicted_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">phonemes</span> <span class="o">=</span> <span class="n">processor</span><span class="p">.</span><span class="nf">batch_decode</span><span class="p">(</span><span class="n">predicted_ids</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="decode-to-phonemes">Decode to phonemes</h1>
+<p>predicted_ids = torch.argmax(logits, dim=-1)
+phonemes = processor.batch_decode(predicted_ids)
+``</p>
 
 <p><strong>Boundary Extraction:</strong> Use CTC alignment to get start/end frames for each phoneme.</p>
 
@@ -967,9 +982,10 @@ mfa align corpus/ english_us_arpa english_us_arpa output/
   </li>
 </ol>
 
-<p><strong>Wake-on-Voice Pipeline:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Mic → Analog VAD (Is there sound?) → DSP (Is it speech?) → NPU (Is it "Alexa"?) → AP (Cloud ASR)
-</code></pre></div></div>
+<p><strong>Wake-on-Voice Pipeline:</strong>
+<code class="language-plaintext highlighter-rouge">
+Mic → Analog VAD (Is there sound?) → DSP (Is it speech?) → NPU (Is it "Alexa"?) → AP (Cloud ASR)
+</code></p>
 
 <h2 id="25-deep-dive-data-augmentation-for-robust-vad">25. Deep Dive: Data Augmentation for Robust VAD</h2>
 
@@ -982,23 +998,24 @@ mfa align corpus/ english_us_arpa english_us_arpa output/
   <li><strong>SpecAugment:</strong> Mask time/frequency bands in spectrogram.</li>
 </ol>
 
-<p><strong>Code:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torchaudio</span>
+<p><strong>Code:</strong>
+``python
+import torchaudio</p>
 
-<span class="k">def</span> <span class="nf">augment_vad_data</span><span class="p">(</span><span class="n">speech</span><span class="p">,</span> <span class="n">noise</span><span class="p">,</span> <span class="n">rir</span><span class="p">,</span> <span class="n">snr_db</span><span class="p">):</span>
-    <span class="c1"># 1. Apply Reverb
-</span>    <span class="n">reverbed</span> <span class="o">=</span> <span class="n">torchaudio</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="nf">fftconvolve</span><span class="p">(</span><span class="n">speech</span><span class="p">,</span> <span class="n">rir</span><span class="p">)</span>
-    
-    <span class="c1"># 2. Mix Noise
-</span>    <span class="n">speech_power</span> <span class="o">=</span> <span class="n">speech</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">noise_power</span> <span class="o">=</span> <span class="n">noise</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-    
-    <span class="n">snr</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">snr_db</span> <span class="o">/</span> <span class="mi">20</span><span class="p">)</span>
-    <span class="n">scale</span> <span class="o">=</span> <span class="n">snr</span> <span class="o">*</span> <span class="n">noise_power</span> <span class="o">/</span> <span class="n">speech_power</span>
-    <span class="n">noisy_speech</span> <span class="o">=</span> <span class="p">(</span><span class="n">scale</span> <span class="o">*</span> <span class="n">speech</span> <span class="o">+</span> <span class="n">noise</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">scale</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">noisy_speech</span>
-</code></pre></div></div>
+<p>def augment_vad_data(speech, noise, rir, snr_db):
+ # 1. Apply Reverb
+ reverbed = torchaudio.functional.fftconvolve(speech, rir)</p>
+
+<p># 2. Mix Noise
+ speech_power = speech.norm(p=2)
+ noise_power = noise.norm(p=2)</p>
+
+<p>snr = 10 ** (snr_db / 20)
+ scale = snr * noise_power / speech_power
+ noisy_speech = (scale * speech + noise) / (scale + 1)</p>
+
+<p>return noisy_speech
+``</p>
 
 <h2 id="26-interview-questions-for-speech-boundary-detection">26. Interview Questions for Speech Boundary Detection</h2>
 
@@ -1049,11 +1066,11 @@ mfa align corpus/ english_us_arpa english_us_arpa output/
 <p><strong>Solution (SincNet):</strong></p>
 <ul>
   <li>Constrain the first layer of CNN to learn <strong>band-pass filters</strong>.</li>
-  <li>Learn only two parameters per filter: low cutoff frequency ($f_1$) and high cutoff frequency ($f_2$).</li>
+  <li>Learn only two parameters per filter: low cutoff frequency (<code class="language-plaintext highlighter-rouge">f_1</code>) and high cutoff frequency (<code class="language-plaintext highlighter-rouge">f_2</code>).</li>
 </ul>
 
 <p><strong>Equation:</strong>
-\(g[n, f_1, f_2] = 2f_2 \text{sinc}(2\pi f_2 n) - 2f_1 \text{sinc}(2\pi f_1 n)\)</p>
+<code class="language-plaintext highlighter-rouge">g[n, f_1, f_2] = 2f_2 \text{sinc}(2\pi f_2 n) - 2f_1 \text{sinc}(2\pi f_1 n)</code></p>
 
 <p><strong>Benefits:</strong></p>
 <ul>
@@ -1062,29 +1079,30 @@ mfa align corpus/ english_us_arpa english_us_arpa output/
   <li><strong>Robustness:</strong> Better generalization to unseen noise.</li>
 </ul>
 
-<p><strong>Code:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SincConv_fast</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="mi">16000</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">out_channels</span> <span class="o">=</span> <span class="n">out_channels</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">kernel_size</span> <span class="o">=</span> <span class="n">kernel_size</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">sample_rate</span>
+<p><strong>Code:</strong>
+``python
+class SincConv_fast(nn.Module):
+ def <strong>init</strong>(self, out_channels, kernel_size, sample_rate=16000):
+ super().<strong>init</strong>()
+ self.out_channels = out_channels
+ self.kernel_size = kernel_size
+ self.sample_rate = sample_rate</p>
 
-        <span class="c1"># Initialize filters (mel-scale)
-</span>        <span class="n">mel</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2595</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nf">log10</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">sample_rate</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">700</span><span class="p">),</span> <span class="n">out_channels</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">hz</span> <span class="o">=</span> <span class="mi">700</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">mel</span> <span class="o">/</span> <span class="mi">2595</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">min_freq</span> <span class="o">=</span> <span class="n">hz</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">band_width</span> <span class="o">=</span> <span class="n">hz</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">hz</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<p># Initialize filters (mel-scale)
+ mel = np.linspace(0, 2595 * np.log10(1 + (sample_rate / 2) / 700), out_channels + 1)
+ hz = 700 * (10 ** (mel / 2595) - 1)
+ self.min_freq = hz[:-1]
+ self.band_width = hz[1:] - hz[:-1]</p>
 
-        <span class="c1"># Learnable parameters
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">min_freq</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">from_numpy</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">min_freq</span><span class="p">).</span><span class="nf">float</span><span class="p">())</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">band_width</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">from_numpy</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">band_width</span><span class="p">).</span><span class="nf">float</span><span class="p">())</span>
+<p># Learnable parameters
+ self.min_freq = nn.Parameter(torch.from_numpy(self.min_freq).float())
+ self.band_width = nn.Parameter(torch.from_numpy(self.band_width).float())</p>
 
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="c1"># Generate filters on the fly
-</span>        <span class="n">filters</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">get_sinc_filters</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">F</span><span class="p">.</span><span class="nf">conv1d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">filters</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def forward(self, x):
+ # Generate filters on the fly
+ filters = self.get_sinc_filters()
+ return F.conv1d(x, filters)
+``</p>
 
 <h2 id="29-system-design-building-a-scalable-vad-service">29. System Design: Building a Scalable VAD Service</h2>
 
@@ -1133,26 +1151,27 @@ mfa align corpus/ english_us_arpa english_us_arpa output/
   </li>
 </ol>
 
-<p><strong>API Definition (Protobuf):</strong></p>
-<div class="language-protobuf highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">service</span> <span class="n">VadService</span> <span class="p">{</span>
-  <span class="k">rpc</span> <span class="n">DetectSpeech</span><span class="p">(</span><span class="n">stream</span> <span class="n">AudioChunk</span><span class="p">)</span> <span class="k">returns</span> <span class="p">(</span><span class="n">stream</span> <span class="n">SpeechEvent</span><span class="p">);</span>
-<span class="p">}</span>
+<p><strong>API Definition (Protobuf):</strong>
+``protobuf
+service VadService {
+ rpc DetectSpeech(stream AudioChunk) returns (stream SpeechEvent);
+}</p>
 
-<span class="kd">message</span> <span class="nc">AudioChunk</span> <span class="p">{</span>
-  <span class="kt">bytes</span> <span class="na">data</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-  <span class="kt">int32</span> <span class="na">sample_rate</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
-<span class="p">}</span>
+<p>message AudioChunk {
+ bytes data = 1;
+ int32 sample_rate = 2;
+}</p>
 
-<span class="kd">message</span> <span class="nc">SpeechEvent</span> <span class="p">{</span>
-  <span class="kd">enum</span> <span class="n">EventType</span> <span class="p">{</span>
-    <span class="na">START_OF_SPEECH</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="na">END_OF_SPEECH</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-    <span class="na">ACTIVE</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
-  <span class="p">}</span>
-  <span class="n">EventType</span> <span class="na">type</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-  <span class="kt">float</span> <span class="na">timestamp</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre></div></div>
+<p>message SpeechEvent {
+ enum EventType {
+ START_OF_SPEECH = 0;
+ END_OF_SPEECH = 1;
+ ACTIVE = 2;
+ }
+ EventType type = 1;
+ float timestamp = 2;
+}
+``</p>
 
 <h2 id="30-further-reading">30. Further Reading</h2>
 
@@ -1286,7 +1305,134 @@ mfa align corpus/ english_us_arpa english_us_arpa output/
         
       </footer>
 
+      <div class="page__related page__related--full">
+  <h2 class="page__related-title">Related across topics</h2>
+  <style>
+    /* Make section span full content width and use 2 equal columns */
+    .page__related--full { float: inline-start; width: 100%; padding: 0; }
+    .cross-related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+    @media (max-width: 768px) { .cross-related-grid { grid-template-columns: 1fr; } }
+    /* Ensure archive cards stretch nicely in the grid */
+    .cross-related-grid .list__item, .cross-related-grid .grid__item { width: auto; float: none; margin: 0; }
+  </style>
+  <div class="cross-related-grid">
+    
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
       
+        <a href="/dsa/0035-surrounded-regions/" rel="permalink">Surrounded Regions (DFS/BFS)
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          20 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Capturing regions by identifying safe boundaries.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ml-system-design/0035-boundary-detection-in-ml/" rel="permalink">Boundary Detection in ML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          19 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Defining where one object ends and another begins.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ai-agents/0035-structured-output-patterns/" rel="permalink">Structured Output Patterns
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Make agents predictable: enforce schemas, validate outputs, and recover automatically when the model slips.”
+</p>
+  </article>
+</div>
+
+  </div>
+</div>
 
       <section class="page__share">
   <h4 class="page__share-title">Share on</h4>

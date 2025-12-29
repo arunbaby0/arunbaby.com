@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Anomaly Detection">
     <meta itemprop="description" content="“Anomaly detection is trapping rain water for metrics: find the boundaries of ‘normal’ and measure what overflows.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -283,22 +283,16 @@ In anomaly detection, we detect deviations from the learned “normal pattern”
 <h3 id="21-functional-requirements">2.1 Functional requirements</h3>
 
 <ul>
-  <li><strong>Inputs</strong>
-    <ul>
-      <li>time-series metrics (QPS, latency, error rates)</li>
-      <li>categorical counts (events by user type, country)</li>
-      <li>distributions (histograms, sketches)</li>
-      <li>model signals (loss, accuracy proxies, embedding stats)</li>
-    </ul>
-  </li>
-  <li><strong>Outputs</strong>
-    <ul>
-      <li>anomaly alerts with severity</li>
-      <li>explanation context (top contributing dimensions)</li>
-      <li>links to dashboards/runbooks</li>
-      <li>ability to suppress/acknowledge</li>
-    </ul>
-  </li>
+  <li><strong>Inputs</strong></li>
+  <li>time-series metrics (QPS, latency, error rates)</li>
+  <li>categorical counts (events by user type, country)</li>
+  <li>distributions (histograms, sketches)</li>
+  <li>model signals (loss, accuracy proxies, embedding stats)</li>
+  <li><strong>Outputs</strong></li>
+  <li>anomaly alerts with severity</li>
+  <li>explanation context (top contributing dimensions)</li>
+  <li>links to dashboards/runbooks</li>
+  <li>ability to suppress/acknowledge</li>
 </ul>
 
 <h3 id="22-non-functional-requirements">2.2 Non-functional requirements</h3>
@@ -319,38 +313,39 @@ In anomaly detection, we detect deviations from the learned “normal pattern”
 
 <h3 id="31-diagram">3.1 Diagram</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   Producers (services / models / pipelines)
-            |
-            v
-     +-------------+        +-------------------+
-     | Kafka/PubSub| -----&gt; | Stream Processor  |
-     +-------------+        | (Flink/Spark)     |
-            |               +---------+---------+
-            |                         |
-            |                         v
-            |               +-------------------+
-            |               | Feature Builder   |
-            |               | (windows, joins)  |
-            |               +---------+---------+
-            |                         |
-            v                         v
- +-------------------+      +-------------------+
- | TS Store          |      | Detector Service  |
- | (Prom/TSDB)       |      | rules + ML        |
- +---------+---------+      +---------+---------+
-           |                         |
-           v                         v
- +-------------------+      +-------------------+
- | Dashboards        |      | Alert Router      |
- | (Grafana)         |      | (Pager/Slack)     |
- +-------------------+      +---------+---------+
-                                     |
-                                     v
-                           +-------------------+
-                           | Case Mgmt / RCA   |
-                           | (tickets, notes)  |
-                           +-------------------+
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+ Producers (services / models / pipelines)
+ |
+ v
+ +-------------+ +-------------------+
+ | Kafka/PubSub| -----&gt; | Stream Processor |
+ +-------------+ | (Flink/Spark) |
+ | +---------+---------+
+ | |
+ | v
+ | +-------------------+
+ | | Feature Builder |
+ | | (windows, joins) |
+ | +---------+---------+
+ | |
+ v v
+ +-------------------+ +-------------------+
+ | TS Store | | Detector Service |
+ | (Prom/TSDB) | | rules + ML |
+ +---------+---------+ +---------+---------+
+ | |
+ v v
+ +-------------------+ +-------------------+
+ | Dashboards | | Alert Router |
+ | (Grafana) | | (Pager/Slack) |
+ +-------------------+ +---------+---------+
+ |
+ v
+ +-------------------+
+ | Case Mgmt / RCA |
+ | (tickets, notes) |
+ +-------------------+
+</code></p>
 
 <h3 id="32-core-idea">3.2 Core idea</h3>
 
@@ -415,28 +410,23 @@ ML handles complex patterns, but must be deployed carefully.</p>
 <p>Common detector families:</p>
 
 <ul>
-  <li><strong>Rules</strong>
-    <ul>
-      <li>simple thresholds, rate-of-change, “no data” checks</li>
-      <li>best for: clear SLO violations, missing pipelines</li>
-    </ul>
+  <li><strong>Rules</strong></li>
+  <li>simple thresholds, rate-of-change, “no data” checks</li>
+  <li>
+    <p>best for: clear SLO violations, missing pipelines</p>
   </li>
-  <li><strong>Statistical</strong>
-    <ul>
-      <li>z-score with robust estimators (median/MAD)</li>
-      <li>EWMA control charts</li>
-      <li>seasonal baselines (Holt-Winters)</li>
-      <li>best for: stable metrics with known periodicity</li>
-    </ul>
+  <li><strong>Statistical</strong></li>
+  <li>z-score with robust estimators (median/MAD)</li>
+  <li>EWMA control charts</li>
+  <li>seasonal baselines (Holt-Winters)</li>
+  <li>
+    <p>best for: stable metrics with known periodicity</p>
   </li>
-  <li><strong>ML / Unsupervised</strong>
-    <ul>
-      <li>Isolation Forest, One-Class SVM</li>
-      <li>autoencoders</li>
-      <li>clustering distance to centroids</li>
-      <li>best for: high-dimensional signals, unknown patterns</li>
-    </ul>
-  </li>
+  <li><strong>ML / Unsupervised</strong></li>
+  <li>Isolation Forest, One-Class SVM</li>
+  <li>autoencoders</li>
+  <li>clustering distance to centroids</li>
+  <li>best for: high-dimensional signals, unknown patterns</li>
 </ul>
 
 <p>The important production truth:</p>
@@ -574,73 +564,71 @@ It often beats fancy ML models in reducing MTTR.</p>
 
 <h3 id="61-robust-z-score-median--mad">6.1 Robust z-score (median + MAD)</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+import numpy as np</p>
 
+<p>def robust_zscore(x: np.ndarray) -&gt; np.ndarray:
+ “””
+ Robust z-score using median and MAD (median absolute deviation).
+ Less sensitive to outliers than mean/std.
+ “””
+ med = np.median(x)
+ mad = np.median(np.abs(x - med)) + 1e-9
+ return 0.6745 * (x - med) / mad</p>
 
-<span class="k">def</span> <span class="nf">robust_zscore</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Robust z-score using median and MAD (median absolute deviation).
-    Less sensitive to outliers than mean/std.
-    </span><span class="sh">"""</span>
-    <span class="n">med</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">median</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-    <span class="n">mad</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">median</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">med</span><span class="p">))</span> <span class="o">+</span> <span class="mf">1e-9</span>
-    <span class="k">return</span> <span class="mf">0.6745</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">med</span><span class="p">)</span> <span class="o">/</span> <span class="n">mad</span>
-
-
-<span class="k">def</span> <span class="nf">detect_anomaly_robust_z</span><span class="p">(</span><span class="n">x_window</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="n">z</span> <span class="o">=</span> <span class="nf">robust_zscore</span><span class="p">(</span><span class="n">x_window</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nf">abs</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">threshold</span>
-</code></pre></div></div>
+<p>def detect_anomaly_robust_z(x_window: np.ndarray, threshold: float = 4.0) -&gt; bool:
+ z = robust_zscore(x_window)
+ return abs(z[-1]) &gt;= threshold
+``</p>
 
 <h3 id="62-ewma-control-chart">6.2 EWMA control chart</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">ewma</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">zeros_like</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">series</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">series</span><span class="p">)):</span>
-        <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">series</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">out</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">out</span>
+<p>``python
+def ewma(series: np.ndarray, alpha: float = 0.2) -&gt; np.ndarray:
+ out = np.zeros_like(series, dtype=float)
+ out[0] = series[0]
+ for i in range(1, len(series)):
+ out[i] = alpha * series[i] + (1 - alpha) * out[i - 1]
+ return out</p>
 
-
-<span class="k">def</span> <span class="nf">detect_ewma_shift</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Simple EWMA shift detector: compare last value to EWMA +/- k * std.
-    (In production, use rolling std and seasonality-aware baselines.)
-    </span><span class="sh">"""</span>
-    <span class="n">smoothed</span> <span class="o">=</span> <span class="nf">ewma</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
-    <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">smoothed</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-    <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">std</span><span class="p">(</span><span class="n">smoothed</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="mf">1e-9</span>
-    <span class="k">return</span> <span class="nf">abs</span><span class="p">(</span><span class="n">smoothed</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">k</span> <span class="o">*</span> <span class="n">sigma</span>
-</code></pre></div></div>
+<p>def detect_ewma_shift(series: np.ndarray, alpha: float = 0.2, k: float = 3.0) -&gt; bool:
+ “””
+ Simple EWMA shift detector: compare last value to EWMA +/- k * std.
+ (In production, use rolling std and seasonality-aware baselines.)
+ “””
+ smoothed = ewma(series, alpha=alpha)
+ mu = np.mean(smoothed[:-1])
+ sigma = np.std(smoothed[:-1]) + 1e-9
+ return abs(smoothed[-1] - mu) &gt; k * sigma
+``</p>
 
 <h3 id="63-fusing-detectors-rule--stats">6.3 Fusing detectors (rule + stats)</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<p>``python
+from dataclasses import dataclass</p>
 
+<p>@dataclass
+class DetectionResult:
+ is_anomaly: bool
+ reason: str</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">DetectionResult</span><span class="p">:</span>
-    <span class="n">is_anomaly</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span>
+<p>def fused_detector(series: np.ndarray) -&gt; DetectionResult:
+ # Rule: “no data” or impossible values
+ if np.isnan(series[-1]):
+ return DetectionResult(True, “missing_data”)
+ if series[-1] &lt; 0:
+ return DetectionResult(True, “negative_value”)</p>
 
+<p># Statistical: robust z-score
+ if detect_anomaly_robust_z(series, threshold=4.0):
+ return DetectionResult(True, “robust_zscore”)</p>
 
-<span class="k">def</span> <span class="nf">fused_detector</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DetectionResult</span><span class="p">:</span>
-    <span class="c1"># Rule: “no data” or impossible values
-</span>    <span class="k">if</span> <span class="n">np</span><span class="p">.</span><span class="nf">isnan</span><span class="p">(</span><span class="n">series</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
-        <span class="k">return</span> <span class="nc">DetectionResult</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="sh">"</span><span class="s">missing_data</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">series</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nc">DetectionResult</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="sh">"</span><span class="s">negative_value</span><span class="sh">"</span><span class="p">)</span>
+<p># Statistical: EWMA shift
+ if detect_ewma_shift(series, alpha=0.2, k=3.0):
+ return DetectionResult(True, “ewma_shift”)</p>
 
-    <span class="c1"># Statistical: robust z-score
-</span>    <span class="k">if</span> <span class="nf">detect_anomaly_robust_z</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">4.0</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nc">DetectionResult</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="sh">"</span><span class="s">robust_zscore</span><span class="sh">"</span><span class="p">)</span>
-
-    <span class="c1"># Statistical: EWMA shift
-</span>    <span class="k">if</span> <span class="nf">detect_ewma_shift</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mf">3.0</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nc">DetectionResult</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="sh">"</span><span class="s">ewma_shift</span><span class="sh">"</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="nc">DetectionResult</span><span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="sh">"</span><span class="s">normal</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>return DetectionResult(False, “normal”)
+``</p>
 
 <p>This illustrates a production principle:
 <strong>anomaly detection is a system of small components</strong>, not a single model.</p>
@@ -663,29 +651,28 @@ It often beats fancy ML models in reducing MTTR.</p>
 
 <p>Here’s a small Isolation Forest example (conceptual; production needs careful feature scaling and segment baselines):</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">sklearn.ensemble</span> <span class="kn">import</span> <span class="n">IsolationForest</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+from sklearn.ensemble import IsolationForest
+import numpy as np</p>
 
+<p>def fit_isolation_forest(X: np.ndarray) -&gt; IsolationForest:
+ “””
+ X shape: [n_samples, n_features]
+ Features could include: latency_p95, error_rate, qps, cpu, mem, etc.
+ “””
+ model = IsolationForest(
+ n_estimators=200,
+ contamination=”auto”,
+ random_state=0,
+ )
+ model.fit(X)
+ return model</p>
 
-<span class="k">def</span> <span class="nf">fit_isolation_forest</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IsolationForest</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    X shape: [n_samples, n_features]
-    Features could include: latency_p95, error_rate, qps, cpu, mem, etc.
-    </span><span class="sh">"""</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="nc">IsolationForest</span><span class="p">(</span>
-        <span class="n">n_estimators</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
-        <span class="n">contamination</span><span class="o">=</span><span class="sh">"</span><span class="s">auto</span><span class="sh">"</span><span class="p">,</span>
-        <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">model</span><span class="p">.</span><span class="nf">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">model</span>
-
-
-<span class="k">def</span> <span class="nf">detect_multivariate</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">IsolationForest</span><span class="p">,</span> <span class="n">x_latest</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">score_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="c1"># sklearn: higher score = more normal; lower = more anomalous
-</span>    <span class="n">score</span> <span class="o">=</span> <span class="nf">float</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="nf">score_samples</span><span class="p">(</span><span class="n">x_latest</span><span class="p">.</span><span class="nf">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">score</span> <span class="o">&lt;</span> <span class="n">score_threshold</span>
-</code></pre></div></div>
+<p>def detect_multivariate(model: IsolationForest, x_latest: np.ndarray, score_threshold: float) -&gt; bool:
+ # sklearn: higher score = more normal; lower = more anomalous
+ score = float(model.score_samples(x_latest.reshape(1, -1))[0])
+ return score &lt; score_threshold
+``</p>
 
 <p>Operational note:</p>
 <ul>
@@ -704,12 +691,9 @@ It often beats fancy ML models in reducing MTTR.</p>
 Strategies:</p>
 <ul>
   <li>alert only on top-K segments (heavy hitters)</li>
-  <li>hierarchical detection:
-    <ul>
-      <li>detect anomaly globally</li>
-      <li>then drill down into segments to find top contributors</li>
-    </ul>
-  </li>
+  <li>hierarchical detection:</li>
+  <li>detect anomaly globally</li>
+  <li>then drill down into segments to find top contributors</li>
   <li>sketching (Count-Min Sketch for counts, t-digest/KLL for quantiles)</li>
 </ul>
 
@@ -803,30 +787,24 @@ when humans label an alert as “noise”, it should improve the system.</p>
 Practical evaluation strategies:</p>
 
 <ul>
-  <li><strong>Historical replay</strong>
-    <ul>
-      <li>replay a week/month of metrics</li>
-      <li>compare alerts to known incidents and change logs</li>
-    </ul>
+  <li><strong>Historical replay</strong></li>
+  <li>replay a week/month of metrics</li>
+  <li>
+    <p>compare alerts to known incidents and change logs</p>
   </li>
-  <li><strong>Synthetic injections</strong>
-    <ul>
-      <li>inject controlled anomalies (drop QPS, spike errors, shift distributions)</li>
-      <li>ensure detectors catch them with acceptable delay</li>
-    </ul>
+  <li><strong>Synthetic injections</strong></li>
+  <li>inject controlled anomalies (drop QPS, spike errors, shift distributions)</li>
+  <li>
+    <p>ensure detectors catch them with acceptable delay</p>
   </li>
-  <li><strong>Proxy labels</strong>
-    <ul>
-      <li>incident tickets, rollbacks, on-call notes</li>
-      <li>not perfect, but useful for measuring recall on “real pain”</li>
-    </ul>
+  <li><strong>Proxy labels</strong></li>
+  <li>incident tickets, rollbacks, on-call notes</li>
+  <li>
+    <p>not perfect, but useful for measuring recall on “real pain”</p>
   </li>
-  <li><strong>Human-in-the-loop tuning</strong>
-    <ul>
-      <li>collect feedback (noise vs real)</li>
-      <li>tune thresholds and suppression policies</li>
-    </ul>
-  </li>
+  <li><strong>Human-in-the-loop tuning</strong></li>
+  <li>collect feedback (noise vs real)</li>
+  <li>tune thresholds and suppression policies</li>
 </ul>
 
 <p>You typically optimize for:</p>
@@ -1069,31 +1047,25 @@ You need anomaly detection not just for infra metrics, but for data and model he
 <p>If your anomaly system is noisy, it dies. A practical playbook:</p>
 
 <ul>
-  <li><strong>Start narrow</strong>
-    <ul>
-      <li>detect a small set of critical metrics</li>
-      <li>keep paging volume low</li>
-    </ul>
+  <li><strong>Start narrow</strong></li>
+  <li>detect a small set of critical metrics</li>
+  <li>
+    <p>keep paging volume low</p>
   </li>
-  <li><strong>Add explainability</strong>
-    <ul>
-      <li>top contributors</li>
-      <li>baseline comparisons</li>
-      <li>recent change log correlation</li>
-    </ul>
+  <li><strong>Add explainability</strong></li>
+  <li>top contributors</li>
+  <li>baseline comparisons</li>
+  <li>
+    <p>recent change log correlation</p>
   </li>
-  <li><strong>Use severity tiers</strong>
-    <ul>
-      <li>paging only for high-confidence/high-impact signals</li>
-      <li>Slack-only for exploratory detectors</li>
-    </ul>
+  <li><strong>Use severity tiers</strong></li>
+  <li>paging only for high-confidence/high-impact signals</li>
+  <li>
+    <p>Slack-only for exploratory detectors</p>
   </li>
-  <li><strong>Build feedback</strong>
-    <ul>
-      <li>allow “noise” labeling</li>
-      <li>review suppressed alerts periodically</li>
-    </ul>
-  </li>
+  <li><strong>Build feedback</strong></li>
+  <li>allow “noise” labeling</li>
+  <li>review suppressed alerts periodically</li>
 </ul>
 
 <p>This is the same “pattern recognition” lesson as the DSA problem:
@@ -1105,36 +1077,29 @@ don’t react to every fluctuation; define the boundary of “actionable abnorma
 Here’s a pragmatic ladder:</p>
 
 <ul>
-  <li><strong>Static thresholds</strong>
-    <ul>
-      <li>best for: hard limits (error_rate must be &lt; 1%)</li>
-      <li>worst for: seasonal metrics</li>
-    </ul>
+  <li><strong>Static thresholds</strong></li>
+  <li>best for: hard limits (error_rate must be &lt; 1%)</li>
+  <li>
+    <p>worst for: seasonal metrics</p>
   </li>
-  <li><strong>Rolling robust baseline (median/MAD)</strong>
-    <ul>
-      <li>best for: noisy but mostly stationary signals</li>
-      <li>robust to spikes and outliers</li>
-    </ul>
+  <li><strong>Rolling robust baseline (median/MAD)</strong></li>
+  <li>best for: noisy but mostly stationary signals</li>
+  <li>
+    <p>robust to spikes and outliers</p>
   </li>
-  <li><strong>Seasonal baseline (same time last week)</strong>
-    <ul>
-      <li>best for: strong weekly patterns</li>
-      <li>easy to explain and cheap to run</li>
-    </ul>
+  <li><strong>Seasonal baseline (same time last week)</strong></li>
+  <li>best for: strong weekly patterns</li>
+  <li>
+    <p>easy to explain and cheap to run</p>
   </li>
-  <li><strong>Holt-Winters / ETS</strong>
-    <ul>
-      <li>best for: smooth seasonality + trend</li>
-      <li>good interpretability</li>
-    </ul>
+  <li><strong>Holt-Winters / ETS</strong></li>
+  <li>best for: smooth seasonality + trend</li>
+  <li>
+    <p>good interpretability</p>
   </li>
-  <li><strong>Learned baselines (per segment)</strong>
-    <ul>
-      <li>best for: complex multi-segment products</li>
-      <li>requires strong governance to avoid accidental bias</li>
-    </ul>
-  </li>
+  <li><strong>Learned baselines (per segment)</strong></li>
+  <li>best for: complex multi-segment products</li>
+  <li>requires strong governance to avoid accidental bias</li>
 </ul>
 
 <p>Production tip:
@@ -1162,21 +1127,16 @@ teams can onboard new signals without changing code, and you can audit changes.<
 <p>These terms are often used interchangeably, but they’re different:</p>
 
 <ul>
-  <li><strong>Outlier</strong>: a single unusual point relative to its neighbors.
-    <ul>
-      <li>Example: one batch has a huge spike in null values.</li>
-    </ul>
+  <li><strong>Outlier</strong>: a single unusual point relative to its neighbors.</li>
+  <li>
+    <p>Example: one batch has a huge spike in null values.</p>
   </li>
-  <li><strong>Anomaly</strong>: a point or segment that violates an expected pattern.
-    <ul>
-      <li>Example: error rate spike at 2am that is not part of normal seasonality.</li>
-    </ul>
+  <li><strong>Anomaly</strong>: a point or segment that violates an expected pattern.</li>
+  <li>
+    <p>Example: error rate spike at 2am that is not part of normal seasonality.</p>
   </li>
-  <li><strong>Drift</strong>: the underlying distribution changes over time.
-    <ul>
-      <li>Example: feature distribution slowly shifts after a product change.</li>
-    </ul>
-  </li>
+  <li><strong>Drift</strong>: the underlying distribution changes over time.</li>
+  <li>Example: feature distribution slowly shifts after a product change.</li>
 </ul>
 
 <p>Operationally:</p>

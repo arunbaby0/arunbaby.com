@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Multi-region Speech Deployment">
     <meta itemprop="description" content="“Deploying speech models close to users for low-latency voice experiences.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -269,18 +269,19 @@
 
 <h2 id="2-multi-region-architecture-overview">2. Multi-Region Architecture Overview</h2>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        Global Load Balancer (AWS Route 53, Cloudflare)
-                    |
-    ---------------------------------
-    |               |               |
-  US-West         EU-West        Asia-Pacific
-  (Oregon)        (Frankfurt)     (Tokyo)
-    |               |               |
-  ASR Model       ASR Model       ASR Model
-  TTS Model       TTS Model       TTS Model
-  Speaker ID      Speaker ID      Speaker ID
-</code></pre></div></div>
+<p><strong>Architecture:</strong>
+<code class="language-plaintext highlighter-rouge">
+ Global Load Balancer (AWS Route 53, Cloudflare)
+ |
+ ---------------------------------
+ | | |
+ US-West EU-West Asia-Pacific
+ (Oregon) (Frankfurt) (Tokyo)
+ | | |
+ ASR Model ASR Model ASR Model
+ TTS Model TTS Model TTS Model
+ Speaker ID Speaker ID Speaker ID
+</code></p>
 
 <p><strong>Key Components:</strong></p>
 <ol>
@@ -299,18 +300,19 @@
   <li><strong>Cloudflare:</strong> Automatic geo-routing via Anycast.</li>
 </ul>
 
-<p><strong>Example (Route 53):</strong></p>
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"Name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"speech-api.example.com"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"Type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"A"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"GeoLocation"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="nl">"ContinentCode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"NA"</span><span class="w">
-  </span><span class="p">},</span><span class="w">
-  </span><span class="nl">"ResourceRecords"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
-    </span><span class="p">{</span><span class="nl">"Value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"3.12.45.67"</span><span class="p">}</span><span class="w">  </span><span class="err">//</span><span class="w"> </span><span class="err">US-West</span><span class="w"> </span><span class="err">IP</span><span class="w">
-  </span><span class="p">]</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
+<p><strong>Example (Route 53):</strong>
+<code class="language-plaintext highlighter-rouge">json
+{
+ "Name": "speech-api.example.com",
+ "Type": "A",
+ "GeoLocation": {
+ "ContinentCode": "NA"
+ },
+ "ResourceRecords": [
+ {"Value": "3.12.45.67"} // US-West IP
+ ]
+}
+</code></p>
 
 <p>Users in North America get routed to <code class="language-plaintext highlighter-rouge">3.12.45.67</code> (US-West).
 Users in Europe get routed to EU-West.</p>
@@ -336,25 +338,27 @@ Users in Europe get routed to EU-West.</p>
   <li>Cloudflare has 300+ PoPs.</li>
 </ul>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>User in Berlin → Cloudflare PoP (Berlin) → ASR Model (Frankfurt)
-                       ↑
-                  Model cached at edge
-</code></pre></div></div>
+<p><strong>Architecture:</strong>
+<code class="language-plaintext highlighter-rouge">
+User in Berlin → Cloudflare PoP (Berlin) → ASR Model (Frankfurt)
+ ↑
+ Model cached at edge
+</code></p>
 
-<p><strong>Implementation (AWS Lambda@Edge):</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">json</span>
+<p><strong>Implementation (AWS Lambda@Edge):</strong>
+``python
+import json</p>
 
-<span class="k">def</span> <span class="nf">lambda_handler</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-    <span class="c1"># Run lightweight ASR model at edge
-</span>    <span class="n">audio_data</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="sh">'</span><span class="s">body</span><span class="sh">'</span><span class="p">]</span>
-    <span class="n">transcript</span> <span class="o">=</span> <span class="n">edge_asr_model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">audio_data</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="sh">'</span><span class="s">statusCode</span><span class="sh">'</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>
-        <span class="sh">'</span><span class="s">body</span><span class="sh">'</span><span class="p">:</span> <span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">({</span><span class="sh">'</span><span class="s">transcript</span><span class="sh">'</span><span class="p">:</span> <span class="n">transcript</span><span class="p">})</span>
-    <span class="p">}</span>
-</code></pre></div></div>
+<p>def lambda_handler(event, context):
+ # Run lightweight ASR model at edge
+ audio_data = event[‘body’]
+ transcript = edge_asr_model.predict(audio_data)</p>
+
+<p>return {
+ ‘statusCode’: 200,
+ ‘body’: json.dumps({‘transcript’: transcript})
+ }
+``</p>
 
 <p><strong>Trade-offs:</strong></p>
 <ul>
@@ -376,42 +380,44 @@ Users in Europe get routed to EU-West.</p>
   <li>Each regional cluster pulls the latest model.</li>
 </ol>
 
-<p><strong>AWS S3 Cross-Region Replication:</strong></p>
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"Role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"arn:aws:iam::123456789:role/s3-replication"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"Rules"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
-    </span><span class="p">{</span><span class="w">
-      </span><span class="nl">"Status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Enabled"</span><span class="p">,</span><span class="w">
-      </span><span class="nl">"Priority"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">
-      </span><span class="nl">"Filter"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"Prefix"</span><span class="p">:</span><span class="w"> </span><span class="s2">"models/"</span><span class="p">},</span><span class="w">
-      </span><span class="nl">"Destination"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="nl">"Bucket"</span><span class="p">:</span><span class="w"> </span><span class="s2">"arn:aws:s3:::models-eu-west"</span><span class="p">,</span><span class="w">
-        </span><span class="nl">"ReplicationTime"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"Status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Enabled"</span><span class="p">,</span><span class="w"> </span><span class="nl">"Time"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"Minutes"</span><span class="p">:</span><span class="w"> </span><span class="mi">15</span><span class="p">}}</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">]</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
+<p><strong>AWS S3 Cross-Region Replication:</strong>
+<code class="language-plaintext highlighter-rouge">json
+{
+ "Role": "arn:aws:iam::123456789:role/s3-replication",
+ "Rules": [
+ {
+ "Status": "Enabled",
+ "Priority": 1,
+ "Filter": {"Prefix": "models/"},
+ "Destination": {
+ "Bucket": "arn:aws:s3:::models-eu-west",
+ "ReplicationTime": {"Status": "Enabled", "Time": {"Minutes": 15}}
+ }
+ }
+ ]
+}
+</code></p>
 
 <p>Models replicate within 15 minutes.</p>
 
 <h3 id="strategy-2-regional-model-stores">Strategy 2: Regional Model Stores</h3>
 <p>Each region has its own S3 bucket. A deployment pipeline copies models to all buckets.</p>
 
-<p><strong>Terraform Script:</strong></p>
-<div class="language-hcl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">resource</span> <span class="s2">"aws_s3_bucket"</span> <span class="s2">"model_store"</span> <span class="p">{</span>
-  <span class="nx">for_each</span> <span class="o">=</span> <span class="nx">toset</span><span class="p">([</span><span class="s2">"us-west-2"</span><span class="p">,</span> <span class="s2">"eu-west-1"</span><span class="p">,</span> <span class="s2">"ap-southeast-1"</span><span class="p">])</span>
-  <span class="nx">bucket</span>   <span class="o">=</span> <span class="s2">"speech-models-${each.value}"</span>
-  <span class="nx">region</span>   <span class="o">=</span> <span class="nx">each</span><span class="p">.</span><span class="nx">value</span>
-<span class="p">}</span>
+<p><strong>Terraform Script:</strong>
+``hcl
+resource “aws_s3_bucket” “model_store” {
+ for_each = toset([“us-west-2”, “eu-west-1”, “ap-southeast-1”])
+ bucket = “speech-models-${each.value}”
+ region = each.value
+}</p>
 
-<span class="nx">resource</span> <span class="s2">"aws_s3_bucket_object"</span> <span class="s2">"model"</span> <span class="p">{</span>
-  <span class="nx">for_each</span> <span class="o">=</span> <span class="nx">aws_s3_bucket</span><span class="p">.</span><span class="nx">model_store</span>
-  <span class="nx">bucket</span>   <span class="o">=</span> <span class="nx">each</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">id</span>
-  <span class="nx">key</span>      <span class="o">=</span> <span class="s2">"asr-v100.pt"</span>
-  <span class="nx">source</span>   <span class="o">=</span> <span class="s2">"models/asr-v100.pt"</span>
-<span class="p">}</span>
-</code></pre></div></div>
+<p>resource “aws_s3_bucket_object” “model” {
+ for_each = aws_s3_bucket.model_store
+ bucket = each.value.id
+ key = “asr-v100.pt”
+ source = “models/asr-v100.pt”
+}
+``</p>
 
 <p><strong>Pros:</strong> Independent regions (failure in one doesn’t affect others).
 <strong>Cons:</strong> Deployment latency (sequential uploads).</p>
@@ -420,11 +426,12 @@ Users in Europe get routed to EU-West.</p>
 
 <p><strong>Problem:</strong> EU regulations (GDPR) require that user audio data stays in the EU.</p>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>EU User → EU Load Balancer → EU ASR Model → EU Storage
-   ↓
+<p><strong>Architecture:</strong>
+<code class="language-plaintext highlighter-rouge">
+EU User → EU Load Balancer → EU ASR Model → EU Storage
+ ↓
 Audio NEVER leaves EU
-</code></pre></div></div>
+</code></p>
 
 <p><strong>Implementation:</strong></p>
 <ul>
@@ -432,14 +439,15 @@ Audio NEVER leaves EU
   <li><strong>IAM Roles:</strong> EU instances can only access EU S3 buckets.</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># In EU region only
-</span><span class="n">AWS_REGION</span> <span class="o">=</span> <span class="sh">"</span><span class="s">eu-west-1</span><span class="sh">"</span>
-<span class="n">s3_client</span> <span class="o">=</span> <span class="n">boto3</span><span class="p">.</span><span class="nf">client</span><span class="p">(</span><span class="sh">'</span><span class="s">s3</span><span class="sh">'</span><span class="p">,</span> <span class="n">region_name</span><span class="o">=</span><span class="n">AWS_REGION</span><span class="p">)</span>
+<p>``python</p>
+<h1 id="in-eu-region-only">In EU region only</h1>
+<p>AWS_REGION = “eu-west-1”
+s3_client = boto3.client(‘s3’, region_name=AWS_REGION)</p>
 
-<span class="c1"># This will fail if model is in US bucket
-</span><span class="n">model</span> <span class="o">=</span> <span class="n">s3_client</span><span class="p">.</span><span class="nf">get_object</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="sh">'</span><span class="s">models-us-west</span><span class="sh">'</span><span class="p">,</span> <span class="n">Key</span><span class="o">=</span><span class="sh">'</span><span class="s">asr.pt</span><span class="sh">'</span><span class="p">)</span>
-<span class="c1"># Error: Access Denied
-</span></code></pre></div></div>
+<h1 id="this-will-fail-if-model-is-in-us-bucket">This will fail if model is in US bucket</h1>
+<p>model = s3_client.get_object(Bucket=’models-us-west’, Key=’asr.pt’)</p>
+<h1 id="error-access-denied">Error: Access Denied</h1>
+<p>``</p>
 
 <p><strong>Separate Training Pipelines:</strong></p>
 <ul>
@@ -460,68 +468,76 @@ Audio NEVER leaves EU
   <li>If still healthy, roll out to <strong>EU-West</strong>, then <strong>Asia-Pacific</strong>.</li>
 </ol>
 
-<p><strong>Kubernetes Deployment:</strong></p>
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">apps/v1</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">Deployment</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">tts-v2-canary</span>
-  <span class="na">namespace</span><span class="pi">:</span> <span class="s">us-west</span>
-<span class="na">spec</span><span class="pi">:</span>
-  <span class="na">replicas</span><span class="pi">:</span> <span class="m">1</span>  <span class="c1"># 1% of 100 total replicas</span>
-  <span class="na">selector</span><span class="pi">:</span>
-    <span class="na">matchLabels</span><span class="pi">:</span>
-      <span class="na">app</span><span class="pi">:</span> <span class="s">tts</span>
-      <span class="na">version</span><span class="pi">:</span> <span class="s">v2</span>
-  <span class="na">template</span><span class="pi">:</span>
-    <span class="na">spec</span><span class="pi">:</span>
-      <span class="na">containers</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">tts</span>
-        <span class="na">image</span><span class="pi">:</span> <span class="s">tts:v2</span>
-</code></pre></div></div>
+<p><strong>Kubernetes Deployment:</strong>
+``yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: tts-v2-canary
+ namespace: us-west
+spec:
+ replicas: 1 # 1% of 100 total replicas
+ selector:
+ matchLabels:
+ app: tts
+ version: v2
+ template:
+ spec:
+ containers:</p>
+<ul>
+  <li>name: tts
+ image: tts:v2
+``</li>
+</ul>
 
-<p><strong>Traffic Split (Istio):</strong></p>
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">networking.istio.io/v1beta1</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">VirtualService</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">tts-service</span>
-<span class="na">spec</span><span class="pi">:</span>
-  <span class="na">hosts</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="s">tts.example.com</span>
-  <span class="na">http</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">match</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="na">headers</span><span class="pi">:</span>
-        <span class="na">canary</span><span class="pi">:</span>
-          <span class="na">exact</span><span class="pi">:</span> <span class="s2">"</span><span class="s">true"</span>
-    <span class="na">route</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="na">destination</span><span class="pi">:</span>
-        <span class="na">host</span><span class="pi">:</span> <span class="s">tts</span>
-        <span class="na">subset</span><span class="pi">:</span> <span class="s">v2</span>
-  <span class="pi">-</span> <span class="na">route</span><span class="pi">:</span>
-    <span class="pi">-</span> <span class="na">destination</span><span class="pi">:</span>
-        <span class="na">host</span><span class="pi">:</span> <span class="s">tts</span>
-        <span class="na">subset</span><span class="pi">:</span> <span class="s">v1</span>
-      <span class="na">weight</span><span class="pi">:</span> <span class="m">99</span>
-    <span class="pi">-</span> <span class="na">destination</span><span class="pi">:</span>
-        <span class="na">host</span><span class="pi">:</span> <span class="s">tts</span>
-        <span class="na">subset</span><span class="pi">:</span> <span class="s">v2</span>
-      <span class="na">weight</span><span class="pi">:</span> <span class="m">1</span>
-</code></pre></div></div>
+<p><strong>Traffic Split (Istio):</strong>
+``yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+ name: tts-service
+spec:
+ hosts:</p>
+<ul>
+  <li>tts.example.com
+ http:</li>
+  <li>match:</li>
+  <li>headers:
+ canary:
+ exact: “true”
+ route:</li>
+  <li>destination:
+ host: tts
+ subset: v2</li>
+  <li>route:</li>
+  <li>destination:
+ host: tts
+ subset: v1
+ weight: 99</li>
+  <li>destination:
+ host: tts
+ subset: v2
+ weight: 1
+``</li>
+</ul>
 
 <h2 id="8-deep-dive-fallback-and-disaster-recovery">8. Deep Dive: Fallback and Disaster Recovery</h2>
 
 <p><strong>Scenario:</strong> The EU-West data center goes offline (power outage).</p>
 
 <h3 id="fallback-strategy-1-route-to-nearest-healthy-region">Fallback Strategy 1: Route to Nearest Healthy Region</h3>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>EU User → (EU-West DOWN) → GeoDNS → US-East
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+EU User → (EU-West DOWN) → GeoDNS → US-East
+</code></p>
 
 <p><strong>Cons:</strong> Increased latency (50ms → 150ms).</p>
 
 <h3 id="fallback-strategy-2-multi-region-active-active">Fallback Strategy 2: Multi-Region Active-Active</h3>
 <p>Deploy to <strong>2 regions per continent</strong>.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>EU User → EU-West (Primary) + EU-Central (Backup)
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+EU User → EU-West (Primary) + EU-Central (Backup)
+</code></p>
 
 <p>If EU-West fails, EU-Central takes over instantly.</p>
 
@@ -545,28 +561,29 @@ Audio NEVER leaves EU
   </li>
 </ol>
 
-<p><strong>Redis Caching:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">redis</span>
-<span class="kn">import</span> <span class="n">hashlib</span>
+<p><strong>Redis Caching:</strong>
+``python
+import redis
+import hashlib</p>
 
-<span class="n">redis_client</span> <span class="o">=</span> <span class="n">redis</span><span class="p">.</span><span class="nc">Redis</span><span class="p">()</span>
+<p>redis_client = redis.Redis()</p>
 
-<span class="k">def</span> <span class="nf">tts_with_cache</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
-    <span class="n">cache_key</span> <span class="o">=</span> <span class="n">hashlib</span><span class="p">.</span><span class="nf">md5</span><span class="p">(</span><span class="n">text</span><span class="p">.</span><span class="nf">encode</span><span class="p">()).</span><span class="nf">hexdigest</span><span class="p">()</span>
-    
-    <span class="c1"># Check cache
-</span>    <span class="n">cached_audio</span> <span class="o">=</span> <span class="n">redis_client</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">cached_audio</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">cached_audio</span>
-    
-    <span class="c1"># Generate TTS
-</span>    <span class="n">audio</span> <span class="o">=</span> <span class="n">tts_model</span><span class="p">.</span><span class="nf">synthesize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-    
-    <span class="c1"># Store in cache (TTL = 1 hour)
-</span>    <span class="n">redis_client</span><span class="p">.</span><span class="nf">setex</span><span class="p">(</span><span class="n">cache_key</span><span class="p">,</span> <span class="mi">3600</span><span class="p">,</span> <span class="n">audio</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">audio</span>
-</code></pre></div></div>
+<p>def tts_with_cache(text):
+ cache_key = hashlib.md5(text.encode()).hexdigest()</p>
+
+<p># Check cache
+ cached_audio = redis_client.get(cache_key)
+ if cached_audio:
+ return cached_audio</p>
+
+<p># Generate TTS
+ audio = tts_model.synthesize(text)</p>
+
+<p># Store in cache (TTL = 1 hour)
+ redis_client.setex(cache_key, 3600, audio)</p>
+
+<p>return audio
+``</p>
 
 <p><strong>Pros:</strong> Reduces TTS latency from 200ms to 5ms (cache hit).
 <strong>Cons:</strong> Stale data (if model updates, cache must be invalidated).</p>
@@ -582,20 +599,21 @@ Audio NEVER leaves EU
   <li>Inference speed: 2x faster.</li>
 </ul>
 
-<p><strong>PyTorch Quantization:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
+<p><strong>PyTorch Quantization:</strong>
+``python
+import torch</p>
 
-<span class="c1"># Load original model
-</span><span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sh">'</span><span class="s">asr_fp32.pt</span><span class="sh">'</span><span class="p">)</span>
+<h1 id="load-original-model">Load original model</h1>
+<p>model = torch.load(‘asr_fp32.pt’)</p>
 
-<span class="c1"># Quantize to INT8
-</span><span class="n">quantized_model</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">quantization</span><span class="p">.</span><span class="nf">quantize_dynamic</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">,</span> <span class="p">{</span><span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">},</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">qint8</span>
-<span class="p">)</span>
+<h1 id="quantize-to-int8">Quantize to INT8</h1>
+<p>quantized_model = torch.quantization.quantize_dynamic(
+ model, {torch.nn.Linear}, dtype=torch.qint8
+)</p>
 
-<span class="c1"># Save
-</span><span class="n">torch</span><span class="p">.</span><span class="nf">save</span><span class="p">(</span><span class="n">quantized_model</span><span class="p">,</span> <span class="sh">'</span><span class="s">asr_int8.pt</span><span class="sh">'</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="save">Save</h1>
+<p>torch.save(quantized_model, ‘asr_int8.pt’)
+``</p>
 
 <p><strong>Accuracy Drop:</strong> Typically &lt; 1% WER increase.</p>
 
@@ -609,24 +627,25 @@ Audio NEVER leaves EU
   <li><strong>Traffic Distribution:</strong> % of traffic per region.</li>
 </ol>
 
-<p><strong>Prometheus Metrics:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">prometheus_client</span> <span class="kn">import</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">Histogram</span>
+<p><strong>Prometheus Metrics:</strong>
+``python
+from prometheus_client import Counter, Histogram</p>
 
-<span class="n">asr_requests</span> <span class="o">=</span> <span class="nc">Counter</span><span class="p">(</span><span class="sh">'</span><span class="s">asr_requests_total</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">Total ASR requests</span><span class="sh">'</span><span class="p">,</span> <span class="p">[</span><span class="sh">'</span><span class="s">region</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">model_version</span><span class="sh">'</span><span class="p">])</span>
-<span class="n">asr_latency</span> <span class="o">=</span> <span class="nc">Histogram</span><span class="p">(</span><span class="sh">'</span><span class="s">asr_latency_seconds</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">ASR latency</span><span class="sh">'</span><span class="p">,</span> <span class="p">[</span><span class="sh">'</span><span class="s">region</span><span class="sh">'</span><span class="p">])</span>
+<p>asr_requests = Counter(‘asr_requests_total’, ‘Total ASR requests’, [‘region’, ‘model_version’])
+asr_latency = Histogram(‘asr_latency_seconds’, ‘ASR latency’, [‘region’])</p>
 
-<span class="nd">@app.post</span><span class="p">(</span><span class="sh">"</span><span class="s">/asr</span><span class="sh">"</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">transcribe</span><span class="p">(</span><span class="n">audio</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">):</span>
-    <span class="n">region</span> <span class="o">=</span> <span class="nf">get_region</span><span class="p">()</span>
-    <span class="n">model_version</span> <span class="o">=</span> <span class="nf">get_model_version</span><span class="p">()</span>
-    
-    <span class="n">asr_requests</span><span class="p">.</span><span class="nf">labels</span><span class="p">(</span><span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">,</span> <span class="n">model_version</span><span class="o">=</span><span class="n">model_version</span><span class="p">).</span><span class="nf">inc</span><span class="p">()</span>
-    
-    <span class="k">with</span> <span class="n">asr_latency</span><span class="p">.</span><span class="nf">labels</span><span class="p">(</span><span class="n">region</span><span class="o">=</span><span class="n">region</span><span class="p">).</span><span class="nf">time</span><span class="p">():</span>
-        <span class="n">transcript</span> <span class="o">=</span> <span class="n">asr_model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="p">{</span><span class="sh">"</span><span class="s">transcript</span><span class="sh">"</span><span class="p">:</span> <span class="n">transcript</span><span class="p">}</span>
-</code></pre></div></div>
+<p>@app.post(“/asr”)
+def transcribe(audio: bytes):
+ region = get_region()
+ model_version = get_model_version()</p>
+
+<p>asr_requests.labels(region=region, model_version=model_version).inc()</p>
+
+<p>with asr_latency.labels(region=region).time():
+ transcript = asr_model.predict(audio)</p>
+
+<p>return {“transcript”: transcript}
+``</p>
 
 <p><strong>Grafana Dashboard:</strong></p>
 <ul>
@@ -673,64 +692,69 @@ Audio NEVER leaves EU
 
 <h2 id="implementation-multi-region-speech-api">Implementation: Multi-Region Speech API</h2>
 
-<p><strong>Step 1: Dockerize the ASR Model</strong></p>
-<div class="language-dockerfile highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">FROM</span><span class="s"> nvidia/cuda:11.8-runtime-ubuntu20.04</span>
-<span class="k">WORKDIR</span><span class="s"> /app</span>
-<span class="k">COPY</span><span class="s"> requirements.txt .</span>
-<span class="k">RUN </span>pip <span class="nb">install</span> <span class="nt">-r</span> requirements.txt
-<span class="k">COPY</span><span class="s"> asr_model.pt .</span>
-<span class="k">COPY</span><span class="s"> serve.py .</span>
-<span class="k">EXPOSE</span><span class="s"> 8000</span>
-<span class="k">CMD</span><span class="s"> ["python", "serve.py"]</span>
-</code></pre></div></div>
+<p><strong>Step 1: Dockerize the ASR Model</strong>
+<code class="language-plaintext highlighter-rouge">dockerfile
+FROM nvidia/cuda:11.8-runtime-ubuntu20.04
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY asr_model.pt .
+COPY serve.py .
+EXPOSE 8000
+CMD ["python", "serve.py"]
+</code></p>
 
-<p><strong>Step 2: Deploy to Multi-Region Kubernetes</strong></p>
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">apps/v1</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">Deployment</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">asr-us-west</span>
-  <span class="na">namespace</span><span class="pi">:</span> <span class="s">us-west-2</span>
-<span class="na">spec</span><span class="pi">:</span>
-  <span class="na">replicas</span><span class="pi">:</span> <span class="m">10</span>
-  <span class="na">template</span><span class="pi">:</span>
-    <span class="na">spec</span><span class="pi">:</span>
-      <span class="na">containers</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">asr</span>
-        <span class="na">image</span><span class="pi">:</span> <span class="s">my-registry/asr:v1</span>
-        <span class="na">resources</span><span class="pi">:</span>
-          <span class="na">limits</span><span class="pi">:</span>
-            <span class="na">nvidia.com/gpu</span><span class="pi">:</span> <span class="m">1</span>
-<span class="nn">---</span>
-<span class="na">apiVersion</span><span class="pi">:</span> <span class="s">apps/v1</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">Deployment</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">asr-eu-west</span>
-  <span class="na">namespace</span><span class="pi">:</span> <span class="s">eu-west-1</span>
-<span class="na">spec</span><span class="pi">:</span>
-  <span class="na">replicas</span><span class="pi">:</span> <span class="m">10</span>
-  <span class="na">template</span><span class="pi">:</span>
-    <span class="na">spec</span><span class="pi">:</span>
-      <span class="na">containers</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">asr</span>
-        <span class="na">image</span><span class="pi">:</span> <span class="s">my-registry/asr:v1</span>
-        <span class="na">resources</span><span class="pi">:</span>
-          <span class="na">limits</span><span class="pi">:</span>
-            <span class="na">nvidia.com/gpu</span><span class="pi">:</span> <span class="m">1</span>
-</code></pre></div></div>
+<p><strong>Step 2: Deploy to Multi-Region Kubernetes</strong>
+``yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: asr-us-west
+ namespace: us-west-2
+spec:
+ replicas: 10
+ template:
+ spec:
+ containers:</p>
+<ul>
+  <li>name: asr
+ image: my-registry/asr:v1
+ resources:
+ limits:
+ nvidia.com/gpu: 1
+—
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: asr-eu-west
+ namespace: eu-west-1
+spec:
+ replicas: 10
+ template:
+ spec:
+ containers:</li>
+  <li>name: asr
+ image: my-registry/asr:v1
+ resources:
+ limits:
+ nvidia.com/gpu: 1
+``</li>
+</ul>
 
-<p><strong>Step 3: Global Load Balancer (Cloudflare)</strong></p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-X</span> POST <span class="s2">"https://api.cloudflare.com/client/v4/zones/{zone_id}/load_balancers"</span> <span class="se">\</span>
-  <span class="nt">-H</span> <span class="s2">"Authorization: Bearer {api_token}"</span> <span class="se">\</span>
-  <span class="nt">-d</span> <span class="s1">'{
-    "name": "speech-api.example.com",
-    "default_pools": ["us-west", "eu-west", "asia-pacific"],
-    "region_pools": {
-      "WNAM": ["us-west"],
-      "EEUR": ["eu-west"],
-      "SEAS": ["asia-pacific"]
-    }
-  }'</span>
-</code></pre></div></div>
+<p><strong>Step 3: Global Load Balancer (Cloudflare)</strong>
+<code class="language-plaintext highlighter-rouge">bash
+curl -X POST "https://api.cloudflare.com/client/v4/zones/{zone_id}/load_balancers" \
+ -H "Authorization: Bearer {api_token}" \
+ -d '{
+ "name": "speech-api.example.com",
+ "default_pools": ["us-west", "eu-west", "asia-pacific"],
+ "region_pools": {
+ "WNAM": ["us-west"],
+ "EEUR": ["eu-west"],
+ "SEAS": ["asia-pacific"]
+ }
+ }'
+</code></p>
 
 <h2 id="top-interview-questions">Top Interview Questions</h2>
 
@@ -780,48 +804,50 @@ Audio NEVER leaves EU
 
 <p><strong>Challenge:</strong> Each audio chunk arrives every 20ms. ASR must process faster than real-time.</p>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>User Microphone
-    ↓
+<p><strong>Architecture:</strong>
+<code class="language-plaintext highlighter-rouge">
+User Microphone
+ ↓
 WebRTC Stream (20ms chunks)
-    ↓
+ ↓
 Regional ASR Server (Streaming Model)
-    ↓
+ ↓
 Transcript (partial results every 100ms)
-</code></pre></div></div>
+</code></p>
 
-<p><strong>Streaming ASR Implementation:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">grpc</span>
-<span class="kn">from</span> <span class="n">google.cloud</span> <span class="kn">import</span> <span class="n">speech_v1p1beta1</span> <span class="k">as</span> <span class="n">speech</span>
+<p><strong>Streaming ASR Implementation:</strong>
+``python
+import grpc
+from google.cloud import speech_v1p1beta1 as speech</p>
 
-<span class="k">def</span> <span class="nf">stream_transcribe</span><span class="p">():</span>
-    <span class="n">client</span> <span class="o">=</span> <span class="n">speech</span><span class="p">.</span><span class="nc">SpeechClient</span><span class="p">()</span>
-    
-    <span class="n">config</span> <span class="o">=</span> <span class="n">speech</span><span class="p">.</span><span class="nc">StreamingRecognitionConfig</span><span class="p">(</span>
-        <span class="n">config</span><span class="o">=</span><span class="n">speech</span><span class="p">.</span><span class="nc">RecognitionConfig</span><span class="p">(</span>
-            <span class="n">encoding</span><span class="o">=</span><span class="n">speech</span><span class="p">.</span><span class="n">RecognitionConfig</span><span class="p">.</span><span class="n">AudioEncoding</span><span class="p">.</span><span class="n">LINEAR16</span><span class="p">,</span>
-            <span class="n">sample_rate_hertz</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span>
-            <span class="n">language_code</span><span class="o">=</span><span class="sh">'</span><span class="s">en-US</span><span class="sh">'</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="n">interim_results</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>  <span class="c1"># Get partial results
-</span>    <span class="p">)</span>
-    
-    <span class="c1"># Generator for audio chunks
-</span>    <span class="k">def</span> <span class="nf">audio_generator</span><span class="p">():</span>
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="n">chunk</span> <span class="o">=</span> <span class="nf">get_audio_chunk</span><span class="p">()</span>  <span class="c1"># 20ms of audio
-</span>            <span class="k">yield</span> <span class="n">speech</span><span class="p">.</span><span class="nc">StreamingRecognizeRequest</span><span class="p">(</span><span class="n">audio_content</span><span class="o">=</span><span class="n">chunk</span><span class="p">)</span>
-    
-    <span class="n">requests</span> <span class="o">=</span> <span class="nf">audio_generator</span><span class="p">()</span>
-    <span class="n">responses</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="nf">streaming_recognize</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">requests</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">response</span> <span class="ow">in</span> <span class="n">responses</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">response</span><span class="p">.</span><span class="n">results</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">result</span><span class="p">.</span><span class="n">is_final</span><span class="p">:</span>
-                <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Final: </span><span class="si">{</span><span class="n">result</span><span class="p">.</span><span class="n">alternatives</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">transcript</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Partial: </span><span class="si">{</span><span class="n">result</span><span class="p">.</span><span class="n">alternatives</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">transcript</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def stream_transcribe():
+ client = speech.SpeechClient()</p>
+
+<p>config = speech.StreamingRecognitionConfig(
+ config=speech.RecognitionConfig(
+ encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+ sample_rate_hertz=16000,
+ language_code=’en-US’,
+ ),
+ interim_results=True, # Get partial results
+ )</p>
+
+<p># Generator for audio chunks
+ def audio_generator():
+ while True:
+ chunk = get_audio_chunk() # 20ms of audio
+ yield speech.StreamingRecognizeRequest(audio_content=chunk)</p>
+
+<p>requests = audio_generator()
+ responses = client.streaming_recognize(config, requests)</p>
+
+<p>for response in responses:
+ for result in response.results:
+ if result.is_final:
+ print(f”Final: {result.alternatives[0].transcript}”)
+ else:
+ print(f”Partial: {result.alternatives[0].transcript}”)
+``</p>
 
 <p><strong>Key Requirement:</strong> Model must process in &lt; 20ms to keep up with audio stream.</p>
 
@@ -851,24 +877,25 @@ Transcript (partial results every 100ms)
   <li>Target for streaming: RTF &lt; 0.5.</li>
 </ul>
 
-<p><strong>Automated Testing:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">time</span>
+<p><strong>Automated Testing:</strong>
+``python
+import time</p>
 
-<span class="k">def</span> <span class="nf">measure_rtf</span><span class="p">(</span><span class="n">asr_model</span><span class="p">,</span> <span class="n">audio_file</span><span class="p">):</span>
-    <span class="n">audio_duration</span> <span class="o">=</span> <span class="nf">get_audio_duration</span><span class="p">(</span><span class="n">audio_file</span><span class="p">)</span>  <span class="c1"># e.g., 10 seconds
-</span>    
-    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-    <span class="n">transcript</span> <span class="o">=</span> <span class="n">asr_model</span><span class="p">.</span><span class="nf">transcribe</span><span class="p">(</span><span class="n">audio_file</span><span class="p">)</span>
-    <span class="n">processing_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
-    
-    <span class="n">rtf</span> <span class="o">=</span> <span class="n">processing_time</span> <span class="o">/</span> <span class="n">audio_duration</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">RTF: </span><span class="si">{</span><span class="n">rtf</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="k">if</span> <span class="n">rtf</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">WARNING: Model is slower than real-time!</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">rtf</span>
-</code></pre></div></div>
+<p>def measure_rtf(asr_model, audio_file):
+ audio_duration = get_audio_duration(audio_file) # e.g., 10 seconds</p>
+
+<p>start = time.time()
+ transcript = asr_model.transcribe(audio_file)
+ processing_time = time.time() - start</p>
+
+<p>rtf = processing_time / audio_duration
+ print(f”RTF: {rtf:.2f}”)</p>
+
+<p>if rtf &gt; 1.0:
+ print(“WARNING: Model is slower than real-time!”)</p>
+
+<p>return rtf
+``</p>
 
 <h2 id="15-deep-dive-bandwidth-management">15. Deep Dive: Bandwidth Management</h2>
 
@@ -881,27 +908,28 @@ Transcript (partial results every 100ms)
   <li><strong>Speex:</strong> 8 kbps (ultra-low bitrate)</li>
 </ul>
 
-<p><strong>Implementation:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">pyaudio</span>
-<span class="kn">import</span> <span class="n">opuslib</span>
+<p><strong>Implementation:</strong>
+``python
+import pyaudio
+import opuslib</p>
 
-<span class="k">def</span> <span class="nf">stream_compressed_audio</span><span class="p">():</span>
-    <span class="n">p</span> <span class="o">=</span> <span class="n">pyaudio</span><span class="p">.</span><span class="nc">PyAudio</span><span class="p">()</span>
-    <span class="n">encoder</span> <span class="o">=</span> <span class="n">opuslib</span><span class="p">.</span><span class="nc">Encoder</span><span class="p">(</span><span class="mi">16000</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">opuslib</span><span class="p">.</span><span class="n">APPLICATION_VOIP</span><span class="p">)</span>
-    
-    <span class="n">stream</span> <span class="o">=</span> <span class="n">p</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="n">pyaudio</span><span class="p">.</span><span class="n">paInt16</span><span class="p">,</span>
-                    <span class="n">channels</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                    <span class="n">rate</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span>
-                    <span class="nb">input</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-                    <span class="n">frames_per_buffer</span><span class="o">=</span><span class="mi">320</span><span class="p">)</span>  <span class="c1"># 20ms chunks
-</span>    
-    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-        <span class="n">audio_chunk</span> <span class="o">=</span> <span class="n">stream</span><span class="p">.</span><span class="nf">read</span><span class="p">(</span><span class="mi">320</span><span class="p">)</span>
-        <span class="n">compressed</span> <span class="o">=</span> <span class="n">encoder</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">,</span> <span class="mi">320</span><span class="p">)</span>
-        
-        <span class="c1"># Send compressed chunk to server
-</span>        <span class="nf">send_to_server</span><span class="p">(</span><span class="n">compressed</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def stream_compressed_audio():
+ p = pyaudio.PyAudio()
+ encoder = opuslib.Encoder(16000, 1, opuslib.APPLICATION_VOIP)</p>
+
+<p>stream = p.open(format=pyaudio.paInt16,
+ channels=1,
+ rate=16000,
+ input=True,
+ frames_per_buffer=320) # 20ms chunks</p>
+
+<p>while True:
+ audio_chunk = stream.read(320)
+ compressed = encoder.encode(audio_chunk, 320)</p>
+
+<p># Send compressed chunk to server
+ send_to_server(compressed)
+``</p>
 
 <p><strong>Trade-off:</strong> Lower bitrate = worse audio quality = higher WER.</p>
 
@@ -912,19 +940,20 @@ Transcript (partial results every 100ms)
 <p><strong>Strategy 1: CPU Inference with ONNX Runtime</strong>
 Convert model from PyTorch to ONNX for optimized CPU inference.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">onnx</span>
+<p>``python
+import torch
+import onnx</p>
 
-<span class="c1"># Export to ONNX
-</span><span class="n">dummy_input</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>  <span class="c1"># Mel spectrogram
-</span><span class="n">torch</span><span class="p">.</span><span class="n">onnx</span><span class="p">.</span><span class="nf">export</span><span class="p">(</span><span class="n">asr_model</span><span class="p">,</span> <span class="n">dummy_input</span><span class="p">,</span> <span class="sh">"</span><span class="s">asr.onnx</span><span class="sh">"</span><span class="p">)</span>
+<h1 id="export-to-onnx">Export to ONNX</h1>
+<p>dummy_input = torch.randn(1, 80, 100) # Mel spectrogram
+torch.onnx.export(asr_model, dummy_input, “asr.onnx”)</p>
 
-<span class="c1"># Inference with ONNX Runtime (2-3x faster than PyTorch CPU)
-</span><span class="kn">import</span> <span class="n">onnxruntime</span> <span class="k">as</span> <span class="n">ort</span>
+<h1 id="inference-with-onnx-runtime-2-3x-faster-than-pytorch-cpu">Inference with ONNX Runtime (2-3x faster than PyTorch CPU)</h1>
+<p>import onnxruntime as ort</p>
 
-<span class="n">session</span> <span class="o">=</span> <span class="n">ort</span><span class="p">.</span><span class="nc">InferenceSession</span><span class="p">(</span><span class="sh">"</span><span class="s">asr.onnx</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">outputs</span> <span class="o">=</span> <span class="n">session</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="p">{</span><span class="sh">"</span><span class="s">input</span><span class="sh">"</span><span class="p">:</span> <span class="n">audio_features</span><span class="p">})</span>
-</code></pre></div></div>
+<p>session = ort.InferenceSession(“asr.onnx”)
+outputs = session.run(None, {“input”: audio_features})
+``</p>
 
 <p><strong>Result:</strong> CPU instances are 5x cheaper than GPU instances.</p>
 
@@ -938,39 +967,45 @@ Don’t run 24/7 in all regions. Scale down at night.</p>
   <li><strong>Asia-Pacific:</strong> Peak at 2pm JST (1am EST).</li>
 </ul>
 
-<p><strong>Autoscaling Policy:</strong></p>
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">autoscaling/v2</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">HorizontalPodAutoscaler</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">asr-us-west</span>
-<span class="na">spec</span><span class="pi">:</span>
-  <span class="na">scaleTargetRef</span><span class="pi">:</span>
-    <span class="na">kind</span><span class="pi">:</span> <span class="s">Deployment</span>
-    <span class="na">name</span><span class="pi">:</span> <span class="s">asr-us-west</span>
-  <span class="na">minReplicas</span><span class="pi">:</span> <span class="m">2</span>   <span class="c1"># Night</span>
-  <span class="na">maxReplicas</span><span class="pi">:</span> <span class="m">50</span>  <span class="c1"># Day</span>
-  <span class="na">metrics</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">type</span><span class="pi">:</span> <span class="s">Resource</span>
-    <span class="na">resource</span><span class="pi">:</span>
-      <span class="na">name</span><span class="pi">:</span> <span class="s">cpu</span>
-      <span class="na">target</span><span class="pi">:</span>
-        <span class="na">type</span><span class="pi">:</span> <span class="s">Utilization</span>
-        <span class="na">averageUtilization</span><span class="pi">:</span> <span class="m">60</span>
-</code></pre></div></div>
+<p><strong>Autoscaling Policy:</strong>
+``yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+ name: asr-us-west
+spec:
+ scaleTargetRef:
+ kind: Deployment
+ name: asr-us-west
+ minReplicas: 2 # Night
+ maxReplicas: 50 # Day
+ metrics:</p>
+<ul>
+  <li>type: Resource
+ resource:
+ name: cpu
+ target:
+ type: Utilization
+ averageUtilization: 60
+``</li>
+</ul>
 
 <p><strong>Strategy 3: Spot Instances for Batch Transcription</strong>
 For non-real-time workloads (podcast transcription), use spot instances.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Kubernetes Toleration for Spot Instances
-</span><span class="n">spec</span><span class="p">:</span>
-  <span class="n">tolerations</span><span class="p">:</span>
-  <span class="o">-</span> <span class="n">key</span><span class="p">:</span> <span class="sh">"</span><span class="s">spot</span><span class="sh">"</span>
-    <span class="n">operator</span><span class="p">:</span> <span class="sh">"</span><span class="s">Equal</span><span class="sh">"</span>
-    <span class="n">value</span><span class="p">:</span> <span class="sh">"</span><span class="s">true</span><span class="sh">"</span>
-    <span class="n">effect</span><span class="p">:</span> <span class="sh">"</span><span class="s">NoSchedule</span><span class="sh">"</span>
-  <span class="n">nodeSelector</span><span class="p">:</span>
-    <span class="n">instance</span><span class="o">-</span><span class="nb">type</span><span class="p">:</span> <span class="sh">"</span><span class="s">spot</span><span class="sh">"</span>
-</code></pre></div></div>
+<p>``python</p>
+<h1 id="kubernetes-toleration-for-spot-instances">Kubernetes Toleration for Spot Instances</h1>
+<p>spec:
+ tolerations:</p>
+<ul>
+  <li>key: “spot”
+ operator: “Equal”
+ value: “true”
+ effect: “NoSchedule”
+ nodeSelector:
+ instance-type: “spot”
+``</li>
+</ul>
 
 <h2 id="17-deep-dive-multi-language-support">17. Deep Dive: Multi-Language Support</h2>
 
@@ -993,12 +1028,13 @@ For non-real-time workloads (podcast transcription), use spot instances.</p>
 <p><strong>Hybrid Approach:</strong>
 Deploy multilingual model globally. Deploy language-specific models in high-demand regions.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="n">language_code</span><span class="p">,</span> <span class="n">region</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">language_code</span> <span class="o">==</span> <span class="sh">'</span><span class="s">en</span><span class="sh">'</span> <span class="ow">and</span> <span class="n">region</span> <span class="o">==</span> <span class="sh">'</span><span class="s">us-west</span><span class="sh">'</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nf">load_model</span><span class="p">(</span><span class="sh">'</span><span class="s">asr-en-specialized</span><span class="sh">'</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nf">load_model</span><span class="p">(</span><span class="sh">'</span><span class="s">asr-multilingual</span><span class="sh">'</span><span class="p">)</span>
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">python
+def get_model(language_code, region):
+ if language_code == 'en' and region == 'us-west':
+ return load_model('asr-en-specialized')
+ else:
+ return load_model('asr-multilingual')
+</code></p>
 
 <h2 id="18-deep-dive-failover-testing-and-chaos-engineering">18. Deep Dive: Failover Testing and Chaos Engineering</h2>
 
@@ -1011,34 +1047,35 @@ Deploy multilingual model globally. Deploy language-specific models in high-dema
   <li><strong>Measure:</strong> What’s the latency increase? Any errors?</li>
 </ol>
 
-<p><strong>Automated Failover Test:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">requests</span>
-<span class="kn">import</span> <span class="n">time</span>
+<p><strong>Automated Failover Test:</strong>
+``python
+import requests
+import time</p>
 
-<span class="k">def</span> <span class="nf">test_failover</span><span class="p">():</span>
-    <span class="c1"># Baseline: All regions healthy
-</span>    <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="sh">"</span><span class="s">https://speech-api.example.com/health</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="n">response</span><span class="p">.</span><span class="nf">json</span><span class="p">()[</span><span class="sh">'</span><span class="s">all_healthy</span><span class="sh">'</span><span class="p">]</span> <span class="o">==</span> <span class="bp">True</span>
-    
-    <span class="c1"># Simulate EU-West failure
-</span>    <span class="nf">kill_region</span><span class="p">(</span><span class="sh">'</span><span class="s">eu-west</span><span class="sh">'</span><span class="p">)</span>
-    
-    <span class="n">time</span><span class="p">.</span><span class="nf">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>  <span class="c1"># Wait for DNS update
-</span>    
-    <span class="c1"># Test from EU client
-</span>    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-    <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="p">.</span><span class="nf">post</span><span class="p">(</span>
-        <span class="sh">"</span><span class="s">https://speech-api.example.com/asr</span><span class="sh">"</span><span class="p">,</span>
-        <span class="n">data</span><span class="o">=</span><span class="n">audio_data</span><span class="p">,</span>
-        <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="sh">"</span><span class="s">X-Client-Location</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">EU</span><span class="sh">"</span><span class="p">}</span>
-    <span class="p">)</span>
-    <span class="n">latency</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
-    
-    <span class="k">assert</span> <span class="n">response</span><span class="p">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
-    <span class="k">assert</span> <span class="n">latency</span> <span class="o">&lt;</span> <span class="mi">200</span>  <span class="c1"># Acceptable degraded latency
-</span>    
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Failover successful. Latency: </span><span class="si">{</span><span class="n">latency</span><span class="o">*</span><span class="mi">1000</span><span class="si">:</span><span class="p">.</span><span class="mi">0</span><span class="n">f</span><span class="si">}</span><span class="s">ms</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def test_failover():
+ # Baseline: All regions healthy
+ response = requests.get(“https://speech-api.example.com/health”)
+ assert response.json()[‘all_healthy’] == True</p>
+
+<p># Simulate EU-West failure
+ kill_region(‘eu-west’)</p>
+
+<p>time.sleep(10) # Wait for DNS update</p>
+
+<p># Test from EU client
+ start = time.time()
+ response = requests.post(
+ “https://speech-api.example.com/asr”,
+ data=audio_data,
+ headers={“X-Client-Location”: “EU”}
+ )
+ latency = time.time() - start</p>
+
+<p>assert response.status_code == 200
+ assert latency &lt; 200 # Acceptable degraded latency</p>
+
+<p>print(f”Failover successful. Latency: {latency*1000:.0f}ms”)
+``</p>
 
 <p><strong>Run Monthly:</strong> Ensure team knows how to handle regional outages.</p>
 
@@ -1054,23 +1091,24 @@ Deploy multilingual model globally. Deploy language-specific models in high-dema
   <li>Log new model’s response for comparison.</li>
 </ol>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">asyncio</span>
+<p>``python
+import asyncio</p>
 
-<span class="k">async</span> <span class="k">def</span> <span class="nf">shadow_predict</span><span class="p">(</span><span class="n">audio</span><span class="p">):</span>
-    <span class="c1"># Primary prediction
-</span>    <span class="n">primary_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">create_task</span><span class="p">(</span><span class="n">model_v1</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">audio</span><span class="p">))</span>
-    
-    <span class="c1"># Shadow prediction (async, non-blocking)
-</span>    <span class="n">shadow_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">create_task</span><span class="p">(</span><span class="n">model_v2</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">audio</span><span class="p">))</span>
-    
-    <span class="c1"># Wait for primary
-</span>    <span class="n">primary_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">primary_task</span>
-    
-    <span class="c1"># Log shadow result (don't wait)
-</span>    <span class="n">asyncio</span><span class="p">.</span><span class="nf">create_task</span><span class="p">(</span><span class="nf">log_shadow_result</span><span class="p">(</span><span class="n">shadow_task</span><span class="p">))</span>
-    
-    <span class="k">return</span> <span class="n">primary_result</span>
-</code></pre></div></div>
+<p>async def shadow_predict(audio):
+ # Primary prediction
+ primary_task = asyncio.create_task(model_v1.predict(audio))</p>
+
+<p># Shadow prediction (async, non-blocking)
+ shadow_task = asyncio.create_task(model_v2.predict(audio))</p>
+
+<p># Wait for primary
+ primary_result = await primary_task</p>
+
+<p># Log shadow result (don’t wait)
+ asyncio.create_task(log_shadow_result(shadow_task))</p>
+
+<p>return primary_result
+``</p>
 
 <p><strong>Comparison Metrics:</strong></p>
 <ul>
@@ -1103,58 +1141,60 @@ A bug caused EU user audio to be logged in US servers.
 <p><strong>Optimization 1: WebSocket Connection Pooling</strong>
 Reuse connections instead of creating new ones for each request.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">websockets</span>
-<span class="kn">import</span> <span class="n">asyncio</span>
+<p>``python
+import websockets
+import asyncio</p>
 
-<span class="k">class</span> <span class="nc">ConnectionPool</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">uri</span> <span class="o">=</span> <span class="n">uri</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">pool</span> <span class="o">=</span> <span class="n">asyncio</span><span class="p">.</span><span class="nc">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="n">pool_size</span><span class="p">)</span>
-        <span class="n">asyncio</span><span class="p">.</span><span class="nf">create_task</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nf">_fill_pool</span><span class="p">(</span><span class="n">pool_size</span><span class="p">))</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_fill_pool</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
-            <span class="n">conn</span> <span class="o">=</span> <span class="k">await</span> <span class="n">websockets</span><span class="p">.</span><span class="nf">connect</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">uri</span><span class="p">)</span>
-            <span class="k">await</span> <span class="n">self</span><span class="p">.</span><span class="n">pool</span><span class="p">.</span><span class="nf">put</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">get_connection</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="k">await</span> <span class="n">self</span><span class="p">.</span><span class="n">pool</span><span class="p">.</span><span class="nf">get</span><span class="p">()</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">return_connection</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">conn</span><span class="p">):</span>
-        <span class="k">await</span> <span class="n">self</span><span class="p">.</span><span class="n">pool</span><span class="p">.</span><span class="nf">put</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+<p>class ConnectionPool:
+ def <strong>init</strong>(self, uri, pool_size=10):
+ self.uri = uri
+ self.pool = asyncio.Queue(maxsize=pool_size)
+ asyncio.create_task(self._fill_pool(pool_size))</p>
 
-<span class="c1"># Usage
-</span><span class="n">pool</span> <span class="o">=</span> <span class="nc">ConnectionPool</span><span class="p">(</span><span class="sh">'</span><span class="s">wss://speech-api.example.com</span><span class="sh">'</span><span class="p">)</span>
+<p>async def _fill_pool(self, size):
+ for _ in range(size):
+ conn = await websockets.connect(self.uri)
+ await self.pool.put(conn)</p>
 
-<span class="k">async</span> <span class="k">def</span> <span class="nf">stream_audio</span><span class="p">(</span><span class="n">audio_data</span><span class="p">):</span>
-    <span class="n">conn</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pool</span><span class="p">.</span><span class="nf">get_connection</span><span class="p">()</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">await</span> <span class="n">conn</span><span class="p">.</span><span class="nf">send</span><span class="p">(</span><span class="n">audio_data</span><span class="p">)</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">conn</span><span class="p">.</span><span class="nf">recv</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">response</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="k">await</span> <span class="n">pool</span><span class="p">.</span><span class="nf">return_connection</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
-</code></pre></div></div>
+<p>async def get_connection(self):
+ return await self.pool.get()</p>
+
+<p>async def return_connection(self, conn):
+ await self.pool.put(conn)</p>
+
+<h1 id="usage">Usage</h1>
+<p>pool = ConnectionPool(‘wss://speech-api.example.com’)</p>
+
+<p>async def stream_audio(audio_data):
+ conn = await pool.get_connection()
+ try:
+ await conn.send(audio_data)
+ response = await conn.recv()
+ return response
+ finally:
+ await pool.return_connection(conn)
+``</p>
 
 <p><strong>Optimization 2: gRPC Streaming with Multiplexing</strong>
 gRPC multiplexes multiple streams over a single TCP connection.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">grpc</span>
-<span class="kn">from</span> <span class="n">concurrent</span> <span class="kn">import</span> <span class="n">futures</span>
+<p>``python
+import grpc
+from concurrent import futures</p>
 
-<span class="k">class</span> <span class="nc">SpeechService</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">StreamingRecognize</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">request_iterator</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">request</span> <span class="ow">in</span> <span class="n">request_iterator</span><span class="p">:</span>
-            <span class="n">audio_chunk</span> <span class="o">=</span> <span class="n">request</span><span class="p">.</span><span class="n">audio_content</span>
-            <span class="n">transcript</span> <span class="o">=</span> <span class="n">asr_model</span><span class="p">.</span><span class="nf">process_chunk</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-            <span class="k">yield</span> <span class="nc">SpeechResponse</span><span class="p">(</span><span class="n">transcript</span><span class="o">=</span><span class="n">transcript</span><span class="p">)</span>
+<p>class SpeechService:
+ def StreamingRecognize(self, request_iterator, context):
+ for request in request_iterator:
+ audio_chunk = request.audio_content
+ transcript = asr_model.process_chunk(audio_chunk)
+ yield SpeechResponse(transcript=transcript)</p>
 
-<span class="c1"># Server
-</span><span class="n">server</span> <span class="o">=</span> <span class="n">grpc</span><span class="p">.</span><span class="nf">server</span><span class="p">(</span><span class="n">futures</span><span class="p">.</span><span class="nc">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
-<span class="nf">add_SpeechServiceServicer_to_server</span><span class="p">(</span><span class="nc">SpeechService</span><span class="p">(),</span> <span class="n">server</span><span class="p">)</span>
-<span class="n">server</span><span class="p">.</span><span class="nf">add_insecure_port</span><span class="p">(</span><span class="sh">'</span><span class="s">[::]:50051</span><span class="sh">'</span><span class="p">)</span>
-<span class="n">server</span><span class="p">.</span><span class="nf">start</span><span class="p">()</span>
-</code></pre></div></div>
+<h1 id="server">Server</h1>
+<p>server = grpc.server(futures.ThreadPoolExecutor(max_workers=100))
+add_SpeechServiceServicer_to_server(SpeechService(), server)
+server.add_insecure_port(‘[::]:50051’)
+server.start()
+``</p>
 
 <h2 id="22-deep-dive-latency-slas-and-penalties">22. Deep Dive: Latency SLAs and Penalties</h2>
 
@@ -1176,50 +1216,51 @@ gRPC multiplexes multiple streams over a single TCP connection.</p>
   <li><strong>Fallback:</strong> Route to next-closest region if primary is overloaded.</li>
 </ol>
 
-<p><strong>Circuit Breaker Implementation:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">import</span> <span class="n">time</span>
+<p><strong>Circuit Breaker Implementation:</strong>
+``python
+from enum import Enum
+import time</p>
 
-<span class="k">class</span> <span class="nc">CircuitState</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="n">CLOSED</span> <span class="o">=</span> <span class="sh">"</span><span class="s">closed</span><span class="sh">"</span>  <span class="c1"># Normal operation
-</span>    <span class="n">OPEN</span> <span class="o">=</span> <span class="sh">"</span><span class="s">open</span><span class="sh">"</span>      <span class="c1"># Circuit tripped
-</span>    <span class="n">HALF_OPEN</span> <span class="o">=</span> <span class="sh">"</span><span class="s">half_open</span><span class="sh">"</span>  <span class="c1"># Testing recovery
-</span>
-<span class="k">class</span> <span class="nc">CircuitBreaker</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">failure_threshold</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">60</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">CircuitState</span><span class="p">.</span><span class="n">CLOSED</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">failure_count</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">failure_threshold</span> <span class="o">=</span> <span class="n">failure_threshold</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">last_failure_time</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">CircuitState</span><span class="p">.</span><span class="n">OPEN</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">last_failure_time</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">timeout</span><span class="p">:</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">CircuitState</span><span class="p">.</span><span class="n">HALF_OPEN</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="nc">Exception</span><span class="p">(</span><span class="sh">"</span><span class="s">Circuit breaker is OPEN</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="nf">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">CircuitState</span><span class="p">.</span><span class="n">HALF_OPEN</span><span class="p">:</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">CircuitState</span><span class="p">.</span><span class="n">CLOSED</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">failure_count</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="k">return</span> <span class="n">result</span>
-        <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">failure_count</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">last_failure_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-            
-            <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">failure_count</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">failure_threshold</span><span class="p">:</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">CircuitState</span><span class="p">.</span><span class="n">OPEN</span>
-            <span class="k">raise</span> <span class="n">e</span>
+<p>class CircuitState(Enum):
+ CLOSED = “closed” # Normal operation
+ OPEN = “open” # Circuit tripped
+ HALF_OPEN = “half_open” # Testing recovery</p>
 
-<span class="c1"># Usage
-</span><span class="n">breaker</span> <span class="o">=</span> <span class="nc">CircuitBreaker</span><span class="p">()</span>
+<p>class CircuitBreaker:
+ def <strong>init</strong>(self, failure_threshold=5, timeout=60):
+ self.state = CircuitState.CLOSED
+ self.failure_count = 0
+ self.failure_threshold = failure_threshold
+ self.timeout = timeout
+ self.last_failure_time = 0</p>
 
-<span class="k">def</span> <span class="nf">call_asr_service</span><span class="p">(</span><span class="n">audio</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">breaker</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="n">asr_model</span><span class="p">.</span><span class="n">transcribe</span><span class="p">,</span> <span class="n">audio</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def call(self, func, *args, **kwargs):
+ if self.state == CircuitState.OPEN:
+ if time.time() - self.last_failure_time &gt; self.timeout:
+ self.state = CircuitState.HALF_OPEN
+ else:
+ raise Exception(“Circuit breaker is OPEN”)</p>
+
+<p>try:
+ result = func(*args, **kwargs)
+ if self.state == CircuitState.HALF_OPEN:
+ self.state = CircuitState.CLOSED
+ self.failure_count = 0
+ return result
+ except Exception as e:
+ self.failure_count += 1
+ self.last_failure_time = time.time()</p>
+
+<p>if self.failure_count &gt;= self.failure_threshold:
+ self.state = CircuitState.OPEN
+ raise e</p>
+
+<h1 id="usage-1">Usage</h1>
+<p>breaker = CircuitBreaker()</p>
+
+<p>def call_asr_service(audio):
+ return breaker.call(asr_model.transcribe, audio)
+``</p>
 
 <h2 id="23-production-deployment-checklist">23. Production Deployment Checklist</h2>
 
@@ -1237,38 +1278,39 @@ gRPC multiplexes multiple streams over a single TCP connection.</p>
   <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>Rollback Plan:</strong> Can revert to previous model in &lt; 5 minutes.</li>
 </ul>
 
-<p><strong>Load Testing Script:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">asyncio</span>
-<span class="kn">import</span> <span class="n">aiohttp</span>
-<span class="kn">import</span> <span class="n">time</span>
+<p><strong>Load Testing Script:</strong>
+``python
+import asyncio
+import aiohttp
+import time</p>
 
-<span class="k">async</span> <span class="k">def</span> <span class="nf">stress_test</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">audio_file</span><span class="p">,</span> <span class="n">num_requests</span><span class="o">=</span><span class="mi">10000</span><span class="p">):</span>
-    <span class="k">async</span> <span class="k">with</span> <span class="n">aiohttp</span><span class="p">.</span><span class="nc">ClientSession</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
-        <span class="n">tasks</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-        
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">num_requests</span><span class="p">):</span>
-            <span class="n">task</span> <span class="o">=</span> <span class="n">session</span><span class="p">.</span><span class="nf">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="nf">open</span><span class="p">(</span><span class="n">audio_file</span><span class="p">,</span> <span class="sh">'</span><span class="s">rb</span><span class="sh">'</span><span class="p">))</span>
-            <span class="n">tasks</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
-        
-        <span class="n">responses</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">gather</span><span class="p">(</span><span class="o">*</span><span class="n">tasks</span><span class="p">)</span>
-        
-        <span class="n">duration</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
-        <span class="n">rps</span> <span class="o">=</span> <span class="n">num_requests</span> <span class="o">/</span> <span class="n">duration</span>
-        
-        <span class="n">latencies</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">.</span><span class="n">headers</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="sh">'</span><span class="s">X-Latency-Ms</span><span class="sh">'</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">responses</span><span class="p">]</span>
-        <span class="n">p99</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">([</span><span class="nf">float</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">latencies</span> <span class="k">if</span> <span class="n">l</span><span class="p">])[</span><span class="nf">int</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">latencies</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.99</span><span class="p">)]</span>
-        
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">RPS: </span><span class="si">{</span><span class="n">rps</span><span class="si">:</span><span class="p">.</span><span class="mi">0</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">P99 Latency: </span><span class="si">{</span><span class="n">p99</span><span class="si">:</span><span class="p">.</span><span class="mi">0</span><span class="n">f</span><span class="si">}</span><span class="s">ms</span><span class="sh">"</span><span class="p">)</span>
+<p>async def stress_test(url, audio_file, num_requests=10000):
+ async with aiohttp.ClientSession() as session:
+ tasks = []
+ start = time.time()</p>
 
-<span class="c1"># Run
-</span><span class="n">asyncio</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span><span class="nf">stress_test</span><span class="p">(</span>
-    <span class="sh">'</span><span class="s">https://speech-api.example.com/asr</span><span class="sh">'</span><span class="p">,</span>
-    <span class="sh">'</span><span class="s">test_audio.wav</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">num_requests</span><span class="o">=</span><span class="mi">10000</span>
-<span class="p">))</span>
-</code></pre></div></div>
+<p>for i in range(num_requests):
+ task = session.post(url, data=open(audio_file, ‘rb’))
+ tasks.append(task)</p>
+
+<p>responses = await asyncio.gather(*tasks)</p>
+
+<p>duration = time.time() - start
+ rps = num_requests / duration</p>
+
+<p>latencies = [r.headers.get(‘X-Latency-Ms’) for r in responses]
+ p99 = sorted([float(l) for l in latencies if l])[int(len(latencies) * 0.99)]</p>
+
+<p>print(f”RPS: {rps:.0f}”)
+ print(f”P99 Latency: {p99:.0f}ms”)</p>
+
+<h1 id="run">Run</h1>
+<p>asyncio.run(stress_test(
+ ‘https://speech-api.example.com/asr’,
+ ‘test_audio.wav’,
+ num_requests=10000
+))
+``</p>
 
 <h2 id="24-future-trends-serverless-speech">24. Future Trends: Serverless Speech</h2>
 
@@ -1289,23 +1331,24 @@ gRPC multiplexes multiple streams over a single TCP connection.</p>
 <p><strong>Workaround: Provisioned Concurrency</strong>
 Keep N instances warm at all times.</p>
 
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># AWS Lambda with Provisioned Concurrency</span>
-<span class="na">Resources</span><span class="pi">:</span>
-  <span class="na">SpeechFunction</span><span class="pi">:</span>
-    <span class="na">Type</span><span class="pi">:</span> <span class="s">AWS::Lambda::Function</span>
-    <span class="na">Properties</span><span class="pi">:</span>
-      <span class="na">Runtime</span><span class="pi">:</span> <span class="s">python3.9</span>
-      <span class="na">Handler</span><span class="pi">:</span> <span class="s">app.handler</span>
-      <span class="na">MemorySize</span><span class="pi">:</span> <span class="m">10240</span>  <span class="c1"># 10 GB</span>
-      <span class="na">Timeout</span><span class="pi">:</span> <span class="m">60</span>
-  
-  <span class="na">ProvisionedConcurrency</span><span class="pi">:</span>
-    <span class="na">Type</span><span class="pi">:</span> <span class="s">AWS::Lambda::Alias</span>
-    <span class="na">Properties</span><span class="pi">:</span>
-      <span class="na">FunctionName</span><span class="pi">:</span> <span class="kt">!Ref</span> <span class="s">SpeechFunction</span>
-      <span class="na">ProvisionedConcurrencyConfig</span><span class="pi">:</span>
-        <span class="na">ProvisionedConcurrentExecutions</span><span class="pi">:</span> <span class="m">10</span>  <span class="c1"># Keep 10 warm</span>
-</code></pre></div></div>
+<p>``yaml</p>
+<h1 id="aws-lambda-with-provisioned-concurrency">AWS Lambda with Provisioned Concurrency</h1>
+<p>Resources:
+ SpeechFunction:
+ Type: AWS::Lambda::Function
+ Properties:
+ Runtime: python3.9
+ Handler: app.handler
+ MemorySize: 10240 # 10 GB
+ Timeout: 60</p>
+
+<p>ProvisionedConcurrency:
+ Type: AWS::Lambda::Alias
+ Properties:
+ FunctionName: !Ref SpeechFunction
+ ProvisionedConcurrencyConfig:
+ ProvisionedConcurrentExecutions: 10 # Keep 10 warm
+``</p>
 
 <h2 id="key-takeaways">Key Takeaways</h2>
 

@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Distributed Speech Training">
     <meta itemprop="description" content="Design distributed training pipelines for large-scale speech models that efficiently handle hundreds of thousands of hours of sequential audio data.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -354,58 +354,56 @@
 <p>Just like <strong>Add Two Numbers (Linked List)</strong> processes digits sequentially with a carry:</p>
 
 <ul>
-  <li>Speech training processes <strong>audio frames</strong> sequentially with <strong>state</strong>:
-    <ul>
-      <li>RNN/Transformer hidden states</li>
-      <li>Streaming encoders</li>
-      <li>Optimizer state across steps</li>
-    </ul>
-  </li>
+  <li>Speech training processes <strong>audio frames</strong> sequentially with <strong>state</strong>:</li>
+  <li>RNN/Transformer hidden states</li>
+  <li>Streaming encoders</li>
+  <li>Optimizer state across steps</li>
 </ul>
 
 <p>The pattern is the same: <strong>process a long sequence one chunk at a time, maintain state, aggregate results.</strong></p>
 
 <h2 id="high-level-architecture">High-Level Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────────┐
-│                Distributed Speech Training System               │
-└─────────────────────────────────────────────────────────────────┘
+<p>``
+┌─────────────────────────────────────────────────────────────────┐
+│ Distributed Speech Training System │
+└─────────────────────────────────────────────────────────────────┘</p>
 
-                      Control Plane
-                ┌────────────────────┐
-                │  Training Orchestr.│
-                │  - Job configs     │
-                │  - Resource alloc  │
-                │  - Elastic scaling │
-                └──────────┬─────────┘
-                           │
-                 ┌─────────▼────────┐
-                 │  Experiment       │
-                 │  Tracking (ML)    │
-                 │  - Metrics/WER    │
-                 │  - Artifacts      │
-                 └─────────┬────────┘
-                           │
-                      Data Plane
-       ┌───────────────────┼────────────────────┐
-       │                   │                    │
-┌──────▼───────┐    ┌──────▼───────┐     ┌──────▼───────┐
-│  Trainer     │    │  Trainer     │     │  Trainer     │
-│  Group 1     │    │  Group 2     │     │  Group N     │
-│  (ASR)       │    │  (TTS)       │     │  (Multi-task)│
-│  GPUs 0..7   │    │  GPUs 0..7   │     │  GPUs 0..7   │
-└──────┬───────┘    └──────┬───────┘     └──────┬───────┘
-       │                   │                    │
-       └───────────────────┼────────────────────┘
-                           │
-                     ┌─────▼─────┐
-                     │  Data     │
-                     │  Layer    │
-                     │  - Audio  │
-                     │  - Text   │
-                     │  - Alignm.│
-                     └───────────┘
-</code></pre></div></div>
+<p>Control Plane
+ ┌────────────────────┐
+ │ Training Orchestr.│
+ │ - Job configs │
+ │ - Resource alloc │
+ │ - Elastic scaling │
+ └──────────┬─────────┘
+ │
+ ┌─────────▼────────┐
+ │ Experiment │
+ │ Tracking (ML) │
+ │ - Metrics/WER │
+ │ - Artifacts │
+ └─────────┬────────┘
+ │
+ Data Plane
+ ┌───────────────────┼────────────────────┐
+ │ │ │
+┌──────▼───────┐ ┌──────▼───────┐ ┌──────▼───────┐
+│ Trainer │ │ Trainer │ │ Trainer │
+│ Group 1 │ │ Group 2 │ │ Group N │
+│ (ASR) │ │ (TTS) │ │ (Multi-task)│
+│ GPUs 0..7 │ │ GPUs 0..7 │ │ GPUs 0..7 │
+└──────┬───────┘ └──────┬───────┘ └──────┬───────┘
+ │ │ │
+ └───────────────────┼────────────────────┘
+ │
+ ┌─────▼─────┐
+ │ Data │
+ │ Layer │
+ │ - Audio │
+ │ - Text │
+ │ - Alignm.│
+ └───────────┘
+``</p>
 
 <h3 id="key-components">Key Components</h3>
 
@@ -424,92 +422,91 @@
 
 <ul>
   <li>100K+ hours audio → ~100 TB (16kHz 16-bit PCM)</li>
-  <li>Stored as:
-    <ul>
-      <li>Compressed audio files (FLAC, Opus)</li>
-      <li>Sharded containers (WebDataset tar files)</li>
-    </ul>
-  </li>
+  <li>Stored as:</li>
+  <li>Compressed audio files (FLAC, Opus)</li>
+  <li>Sharded containers (WebDataset tar files)</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torchaudio</span>
-<span class="kn">from</span> <span class="n">torch.utils.data</span> <span class="kn">import</span> <span class="n">IterableDataset</span>
+<p>``python
+import torchaudio
+from torch.utils.data import IterableDataset</p>
 
-<span class="k">class</span> <span class="nc">ShardedSpeechDataset</span><span class="p">(</span><span class="n">IterableDataset</span><span class="p">):</span>
-    \<span class="sh">"</span><span class="se">\"\"</span><span class="s">Distributed speech dataset with sharded storage.</span><span class="se">\"\"\"\n</span><span class="s">    def __init__(self, shard_paths, rank: int, world_size: int):
-        super().__init__()
-        self.shard_paths = shard_paths[rank::world_size]
+<p>class ShardedSpeechDataset(IterableDataset):
+ """Distributed speech dataset with sharded storage."""\n def <strong>init</strong>(self, shard_paths, rank: int, world_size: int):
+ super().<strong>init</strong>()
+ self.shard_paths = shard_paths[rank::world_size]</p>
 
-    def __iter__(self):
-        for shard_path in self.shard_paths:
-            # Load shard index
-            # For each entry: load audio + transcript
-            for audio_path, text in self._load_shard(shard_path):
-                audio, sr = torchaudio.load(audio_path)
-                # Resample if needed
-                if sr != 16000:
-                    audio = torchaudio.functional.resample(audio, sr, 16000)
-                yield {
-                    </span><span class="sh">"</span><span class="n">audio</span><span class="sh">"</span><span class="s">: audio[0],  # mono
-                    </span><span class="sh">"</span><span class="n">text</span><span class="sh">"</span><span class="s">: text,
-                }
+<p>def <strong>iter</strong>(self):
+ for shard_path in self.shard_paths:
+ # Load shard index
+ # For each entry: load audio + transcript
+ for audio_path, text in self._load_shard(shard_path):
+ audio, sr = torchaudio.load(audio_path)
+ # Resample if needed
+ if sr != 16000:
+ audio = torchaudio.functional.resample(audio, sr, 16000)
+ yield {
+ “audio”: audio[0], # mono
+ “text”: text,
+ }</p>
 
-    def _load_shard(self, shard_path):
-        # Implementation detail: read metadata + file paths
-        # Could be a JSON index, LMDB, etc.
-        raise NotImplementedError
-</span></code></pre></div></div>
+<p>def _load_shard(self, shard_path):
+ # Implementation detail: read metadata + file paths
+ # Could be a JSON index, LMDB, etc.
+ raise NotImplementedError
+``</p>
 
 <h3 id="2-feature-extraction--augmentation">2. Feature Extraction &amp; Augmentation</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torchaudio.transforms</span> <span class="k">as</span> <span class="n">T</span>
+<p>``python
+import torchaudio.transforms as T</p>
 
-<span class="k">class</span> <span class="nc">SpeechCollator</span><span class="p">:</span>
-    \<span class="sh">"</span><span class="se">\"\"</span><span class="s">Collate function for speech batches.</span><span class="se">\"\"\"\n</span><span class="s">    def __init__(self, apply_specaugment: bool = True):
-        self.mel_spec = T.MelSpectrogram(
-            sample_rate=16000,
-            n_fft=400,
-            win_length=400,
-            hop_length=160,
-            n_mels=80
-        )
-        self.apply_specaugment = apply_specaugment
+<p>class SpeechCollator:
+ """Collate function for speech batches."""\n def <strong>init</strong>(self, apply_specaugment: bool = True):
+ self.mel_spec = T.MelSpectrogram(
+ sample_rate=16000,
+ n_fft=400,
+ win_length=400,
+ hop_length=160,
+ n_mels=80
+ )
+ self.apply_specaugment = apply_specaugment</p>
 
-    def __call__(self, batch):
-        # batch: list of {</span><span class="se">\"</span><span class="s">audio</span><span class="se">\"</span><span class="s">: tensor, </span><span class="se">\"</span><span class="s">text</span><span class="se">\"</span><span class="s">: str}
-        features = []
-        targets = []
-        input_lengths = []
+<p>def <strong>call</strong>(self, batch):
+ # batch: list of {"audio": tensor, "text": str}
+ features = []
+ targets = []
+ input_lengths = []</p>
 
-        for sample in batch:
-            audio = sample[</span><span class="se">\"</span><span class="s">audio</span><span class="se">\"</span><span class="s">]
-            text = sample[</span><span class="se">\"</span><span class="s">text</span><span class="se">\"</span><span class="s">]
+<p>for sample in batch:
+ audio = sample["audio"]
+ text = sample["text"]</p>
 
-            # 1. Compute log-mel features
-            spec = self.mel_spec(audio)
-            spec = torchaudio.functional.amplitude_to_DB(spec)
+<p># 1. Compute log-mel features
+ spec = self.mel_spec(audio)
+ spec = torchaudio.functional.amplitude_to_DB(spec)</p>
 
-            # 2. Optional SpecAugment
-            if self.apply_specaugment:
-                spec = self._spec_augment(spec)
+<p># 2. Optional SpecAugment
+ if self.apply_specaugment:
+ spec = self._spec_augment(spec)</p>
 
-            features.append(spec)
-            targets.append(text)
-            input_lengths.append(spec.shape[-1])
+<p>features.append(spec)
+ targets.append(text)
+ input_lengths.append(spec.shape[-1])</p>
 
-        # 3. Pad features &amp; convert text to tokens (omitted)
-        # ...
-        return {
-            </span><span class="se">\"</span><span class="s">features</span><span class="se">\"</span><span class="s">: features,
-            </span><span class="se">\"</span><span class="s">targets</span><span class="se">\"</span><span class="s">: targets,
-            </span><span class="se">\"</span><span class="s">input_lengths</span><span class="se">\"</span><span class="s">: input_lengths,
-        }
+<p># 3. Pad features &amp; convert text to tokens (omitted)
+ # …
+ return {
+ "features": features,
+ "targets": targets,
+ "input_lengths": input_lengths,
+ }</p>
 
-    def _spec_augment(self, spec):
-        # Simple frequency/time masking
-        # Real system would use more sophisticated augmentation
-        return spec
-</span></code></pre></div></div>
+<p>def _spec_augment(self, spec):
+ # Simple frequency/time masking
+ # Real system would use more sophisticated augmentation
+ return spec
+``</p>
 
 <h3 id="3-streaming--chunked-training">3. Streaming / Chunked Training</h3>
 
@@ -521,45 +518,47 @@
   <li>Maintain context across chunks with model state (for streaming models)</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">chunk_audio</span><span class="p">(</span><span class="n">audio</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">hop_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-    \<span class="sh">"</span><span class="se">\"\"</span><span class="s">Chunk long audio into overlapping windows.</span><span class="se">\"\"\"\n</span><span class="s">    chunks = []
-    for start in range(0, max(1, len(audio) - chunk_size + 1), hop_size):
-        end = start + chunk_size
-        chunk = audio[start:end]
-        if len(chunk) &lt; chunk_size:
-            chunk = torch.nn.functional.pad(chunk, (0, chunk_size - len(chunk)))
-        chunks.append(chunk)
-    return chunks
-</span></code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">python
+def chunk_audio(audio: torch.Tensor, chunk_size: int, hop_size: int):
+ \"\"\"Chunk long audio into overlapping windows.\"\"\"\n chunks = []
+ for start in range(0, max(1, len(audio) - chunk_size + 1), hop_size):
+ end = start + chunk_size
+ chunk = audio[start:end]
+ if len(chunk) &lt; chunk_size:
+ chunk = torch.nn.functional.pad(chunk, (0, chunk_size - len(chunk)))
+ chunks.append(chunk)
+ return chunks
+</code></p>
 
 <h2 id="distributed-training-patterns-for-speech">Distributed Training Patterns for Speech</h2>
 
 <h3 id="1-data-parallel-speech-training">1. Data Parallel Speech Training</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch.distributed</span> <span class="k">as</span> <span class="n">dist</span>
+<p>``python
+import torch.distributed as dist</p>
 
-<span class="k">def</span> <span class="nf">train_epoch</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">rank</span><span class="p">,</span> <span class="n">world_size</span><span class="p">):</span>
-    <span class="n">model</span><span class="p">.</span><span class="nf">train</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">dataloader</span><span class="p">:</span>
-        <span class="n">features</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span>\<span class="sh">"</span><span class="s">features</span><span class="se">\"</span><span class="s">].to(rank)  # local GPU
-        targets = batch[</span><span class="se">\"</span><span class="s">targets</span><span class="se">\"</span><span class="s">]            # tokenized elsewhere
+<p>def train_epoch(model, dataloader, optimizer, rank, world_size):
+ model.train()
+ for batch in dataloader:
+ features = batch["features"].to(rank) # local GPU
+ targets = batch["targets"] # tokenized elsewhere</p>
 
-        # Forward
-        outputs = model(features)
-        loss = compute_loss(outputs, targets)
+<p># Forward
+ outputs = model(features)
+ loss = compute_loss(outputs, targets)</p>
 
-        # Backward
-        loss.backward()
+<p># Backward
+ loss.backward()</p>
 
-        # Gradient all-reduce (data parallel)
-        for param in model.parameters():
-            if param.grad is not None:
-                dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
-                param.grad.data /= world_size
+<p># Gradient all-reduce (data parallel)
+ for param in model.parameters():
+ if param.grad is not None:
+ dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
+ param.grad.data /= world_size</p>
 
-        optimizer.step()
-        optimizer.zero_grad()
-</span></code></pre></div></div>
+<p>optimizer.step()
+ optimizer.zero_grad()
+``</p>
 
 <h3 id="2-model-parallel-asrtts">2. Model Parallel ASR/TTS</h3>
 
@@ -579,21 +578,22 @@
   <li>Increase throughput</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">deepspeed</span>
+<p>``python
+import deepspeed</p>
 
-<span class="n">model</span> <span class="o">=</span> <span class="nf">build_speech_model</span><span class="p">()</span>
-<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">optim</span><span class="p">.</span><span class="nc">AdamW</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="nf">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">3e-4</span><span class="p">)</span>
+<p>model = build_speech_model()
+optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)</p>
 
-<span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">deepspeed</span><span class="p">.</span><span class="nf">initialize</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-    <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
-    <span class="n">config</span><span class="o">=</span><span class="p">{</span>
-        \<span class="sh">"</span><span class="s">train_micro_batch_size_per_gpu</span><span class="se">\"</span><span class="s">: 8,
-        </span><span class="se">\"</span><span class="s">zero_optimization</span><span class="se">\"</span><span class="s">: {</span><span class="se">\"</span><span class="s">stage</span><span class="se">\"</span><span class="s">: 2},
-        </span><span class="se">\"</span><span class="s">fp16</span><span class="se">\"</span><span class="s">: {</span><span class="se">\"</span><span class="s">enabled</span><span class="se">\"</span><span class="s">: True},
-    }
+<p>model, optimizer, _, _ = deepspeed.initialize(
+ model=model,
+ optimizer=optimizer,
+ config={
+ "train_micro_batch_size_per_gpu": 8,
+ "zero_optimization": {"stage": 2},
+ "fp16": {"enabled": True},
+ }
 )
-</span></code></pre></div></div>
+``</p>
 
 <h2 id="handling-large-scale-sequential-audio">Handling Large-Scale Sequential Audio</h2>
 
@@ -601,31 +601,33 @@
 
 <p>Group utterances by duration to minimize padding:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">bucket_by_duration</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">boundaries</span><span class="o">=</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">)):</span>
-    <span class="n">buckets</span> <span class="o">=</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">boundaries</span><span class="p">}</span>
-    <span class="n">buckets</span><span class="p">[</span><span class="sh">'</span><span class="s">long</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">:</span>
-        <span class="n">dur</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">sample</span><span class="p">[</span><span class="sh">'</span><span class="s">audio</span><span class="sh">'</span><span class="p">])</span> <span class="o">/</span> <span class="mi">16000</span>
-        <span class="n">placed</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">boundaries</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">dur</span> <span class="o">&lt;=</span> <span class="n">b</span><span class="p">:</span>
-                <span class="n">buckets</span><span class="p">[</span><span class="n">b</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
-                <span class="n">placed</span> <span class="o">=</span> <span class="bp">True</span>
-                <span class="k">break</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">placed</span><span class="p">:</span>
-            <span class="n">buckets</span><span class="p">[</span><span class="sh">'</span><span class="s">long</span><span class="sh">'</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">buckets</span>
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">python
+def bucket_by_duration(samples, boundaries=(2.0, 5.0, 10.0)):
+ buckets = {b: [] for b in boundaries}
+ buckets['long'] = []
+ for sample in samples:
+ dur = len(sample['audio']) / 16000
+ placed = False
+ for b in boundaries:
+ if dur &lt;= b:
+ buckets[b].append(sample)
+ placed = True
+ break
+ if not placed:
+ buckets['long'].append(sample)
+ return buckets
+</code></p>
 
 <h3 id="2-streaming-training-for-asr">2. Streaming Training for ASR</h3>
 
 <p>Streaming models (e.g., RNN-T, streaming Conformer) process audio chunk-by-chunk:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">hidden_state</span> <span class="o">=</span> <span class="bp">None</span>
-<span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nf">chunk_audio</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">,</span> <span class="n">hop_size</span><span class="p">):</span>
-    <span class="n">outputs</span><span class="p">,</span> <span class="n">hidden_state</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">hidden_state</span><span class="p">)</span>
-    <span class="c1"># Compute partial loss, update gradients, etc.
-</span></code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">python
+hidden_state = None
+for chunk in chunk_audio(audio, chunk_size, hop_size):
+ outputs, hidden_state = model(chunk, hidden_state)
+ # Compute partial loss, update gradients, etc.
+</code></p>
 
 <p>This mirrors <strong>carry-based</strong> sequential processing in Add Two Numbers.</p>
 
@@ -633,15 +635,16 @@
 
 <h3 id="checkpoint-strategy">Checkpoint Strategy</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">save_speech_checkpoint</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">global_step</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-    <span class="n">state</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="sh">'</span><span class="s">model_state</span><span class="sh">'</span><span class="p">:</span> <span class="n">model</span><span class="p">.</span><span class="nf">state_dict</span><span class="p">(),</span>
-        <span class="sh">'</span><span class="s">optimizer_state</span><span class="sh">'</span><span class="p">:</span> <span class="n">optimizer</span><span class="p">.</span><span class="nf">state_dict</span><span class="p">(),</span>
-        <span class="sh">'</span><span class="s">epoch</span><span class="sh">'</span><span class="p">:</span> <span class="n">epoch</span><span class="p">,</span>
-        <span class="sh">'</span><span class="s">global_step</span><span class="sh">'</span><span class="p">:</span> <span class="n">global_step</span><span class="p">,</span>
-    <span class="p">}</span>
-    <span class="n">torch</span><span class="p">.</span><span class="nf">save</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">python
+def save_speech_checkpoint(model, optimizer, epoch, global_step, path):
+ state = {
+ 'model_state': model.state_dict(),
+ 'optimizer_state': optimizer.state_dict(),
+ 'epoch': epoch,
+ 'global_step': global_step,
+ }
+ torch.save(state, path)
+</code></p>
 
 <h3 id="evaluation">Evaluation</h3>
 
@@ -650,22 +653,23 @@
   <li><strong>TTS:</strong> MOS (subjective), MCD, PESQ</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">evaluate_asr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">eval_loader</span><span class="p">,</span> <span class="n">decoder</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    \<span class="sh">"</span><span class="se">\"\"</span><span class="s">Compute WER on evaluation set.</span><span class="se">\"\"\"\n</span><span class="s">    model.eval()
-    total_words = 0
-    total_errors = 0
-    with torch.no_grad():
-        for batch in eval_loader:
-            features = batch[</span><span class="sh">'</span><span class="s">features</span><span class="sh">'</span><span class="s">]
-            targets = batch[</span><span class="sh">'</span><span class="s">targets</span><span class="sh">'</span><span class="s">]  # reference texts
-            outputs = model(features)
-            hyps = decoder(outputs)
-            for hyp, ref in zip(hyps, targets):
-                errors, words = compute_wer(hyp, ref)  # external function
-                total_errors += errors
-                total_words += words
-    return total_errors / max(1, total_words)
-</span></code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">python
+def evaluate_asr(model, eval_loader, decoder) -&gt; float:
+ \"\"\"Compute WER on evaluation set.\"\"\"\n model.eval()
+ total_words = 0
+ total_errors = 0
+ with torch.no_grad():
+ for batch in eval_loader:
+ features = batch['features']
+ targets = batch['targets'] # reference texts
+ outputs = model(features)
+ hyps = decoder(outputs)
+ for hyp, ref in zip(hyps, targets):
+ errors, words = compute_wer(hyp, ref) # external function
+ total_errors += errors
+ total_words += words
+ return total_errors / max(1, total_words)
+</code></p>
 
 <h2 id="real-world-case-study-google--youtube-asr">Real-World Case Study: Google / YouTube ASR</h2>
 
@@ -735,14 +739,14 @@
     <tr>
       <td>8</td>
       <td>100</td>
-      <td>$576</td>
-      <td>$57,600</td>
+      <td><code class="language-plaintext highlighter-rouge">576 | </code>57,600</td>
+      <td> </td>
     </tr>
     <tr>
       <td>128</td>
       <td>7</td>
-      <td>$9,216</td>
-      <td>$64,512</td>
+      <td><code class="language-plaintext highlighter-rouge">9,216 | </code>64,512</td>
+      <td> </td>
     </tr>
   </tbody>
 </table>
@@ -758,22 +762,13 @@
 <ol>
   <li><strong>Efficient data pipeline</strong>
     <ul>
-      <li>Minimize redundant decoding and feature extraction:
-        <ul>
-          <li>Cache log-mel features for static portions of the corpus.</li>
-          <li>Use compressed but CPU-cheap formats (e.g., FLAC instead of heavy MP3).</li>
-        </ul>
-      </li>
-      <li>Use asynchronous prefetching and queuing:
-        <ul>
-          <li>Always have several batches ready on each worker.</li>
-        </ul>
-      </li>
-      <li>Place storage close to compute:
-        <ul>
-          <li>Prefer local SSD caches over always reading from remote object stores.</li>
-        </ul>
-      </li>
+      <li>Minimize redundant decoding and feature extraction:</li>
+      <li>Cache log-mel features for static portions of the corpus.</li>
+      <li>Use compressed but CPU-cheap formats (e.g., FLAC instead of heavy MP3).</li>
+      <li>Use asynchronous prefetching and queuing:</li>
+      <li>Always have several batches ready on each worker.</li>
+      <li>Place storage close to compute:</li>
+      <li>Prefer local SSD caches over always reading from remote object stores.</li>
     </ul>
   </li>
   <li><strong>Mixed precision &amp; kernel fusion</strong>
@@ -804,74 +799,53 @@ training system, use a checklist like this:</p>
 <ol>
   <li><strong>Data sanity and coverage</strong>
     <ul>
-      <li>Validate that:
-        <ul>
-          <li>All audio is decodable and at expected sample rates.</li>
-          <li>Transcripts or labels are present and match audio IDs.</li>
-          <li>Duration distribution matches expectations (no “zero-length” or extreme outliers).</li>
-        </ul>
-      </li>
-      <li>Build dashboards for:
-        <ul>
-          <li>Per-language/per-domain hours,</li>
-          <li>Label source (human vs machine-generated).</li>
-        </ul>
-      </li>
+      <li>Validate that:</li>
+      <li>All audio is decodable and at expected sample rates.</li>
+      <li>Transcripts or labels are present and match audio IDs.</li>
+      <li>Duration distribution matches expectations (no “zero-length” or extreme outliers).</li>
+      <li>Build dashboards for:</li>
+      <li>Per-language/per-domain hours,</li>
+      <li>Label source (human vs machine-generated).</li>
     </ul>
   </li>
   <li><strong>Pipeline throughput</strong>
     <ul>
-      <li>Measure:
-        <ul>
-          <li>Average and p95/p99 batch load time,</li>
-          <li>GPU utilization and step time,</li>
-          <li>Percentage of time spent in data vs compute vs communication.</li>
-        </ul>
-      </li>
+      <li>Measure:</li>
+      <li>Average and p95/p99 batch load time,</li>
+      <li>GPU utilization and step time,</li>
+      <li>Percentage of time spent in data vs compute vs communication.</li>
       <li>Only introduce more complex augmentation or feature extraction once you
-know the pipeline can handle it without starving GPUs.</li>
+ know the pipeline can handle it without starving GPUs.</li>
     </ul>
   </li>
   <li><strong>Stability and convergence</strong>
     <ul>
-      <li>Track:
-        <ul>
-          <li>Training and validation loss curves,</li>
-          <li>WER/CER/MOS trends,</li>
-          <li>Gradient norms and learning rate.</li>
-        </ul>
-      </li>
-      <li>Watch for:
-        <ul>
-          <li>Divergence after scaling up GPUs or batch size,</li>
-          <li>Instability when switching to mixed precision.</li>
-        </ul>
-      </li>
+      <li>Track:</li>
+      <li>Training and validation loss curves,</li>
+      <li>WER/CER/MOS trends,</li>
+      <li>Gradient norms and learning rate.</li>
+      <li>Watch for:</li>
+      <li>Divergence after scaling up GPUs or batch size,</li>
+      <li>Instability when switching to mixed precision.</li>
     </ul>
   </li>
   <li><strong>Debuggability</strong>
     <ul>
-      <li>Log a small sample of:
-        <ul>
-          <li>Raw audio,</li>
-          <li>Augmented audio,</li>
-          <li>Features,</li>
-          <li>Model outputs and decoded transcripts.</li>
-        </ul>
-      </li>
+      <li>Log a small sample of:</li>
+      <li>Raw audio,</li>
+      <li>Augmented audio,</li>
+      <li>Features,</li>
+      <li>Model outputs and decoded transcripts.</li>
       <li>Keep a library of “golden” test clips that you re-run after any significant
-code change (models, data pipeline, augmentation).</li>
+ code change (models, data pipeline, augmentation).</li>
     </ul>
   </li>
   <li><strong>Operational readiness</strong>
     <ul>
-      <li>Ensure:
-        <ul>
-          <li>One-command restart from latest checkpoint.</li>
-          <li>Clear runbooks for common failures (node loss, filesystem issues, metric anomalies).</li>
-          <li>Proper on-call/alerting for long-running training jobs.</li>
-        </ul>
-      </li>
+      <li>Ensure:</li>
+      <li>One-command restart from latest checkpoint.</li>
+      <li>Clear runbooks for common failures (node loss, filesystem issues, metric anomalies).</li>
+      <li>Proper on-call/alerting for long-running training jobs.</li>
     </ul>
   </li>
 </ol>
@@ -894,7 +868,7 @@ code change (models, data pipeline, augmentation).</li>
 
 <h3 id="connection-to-thematic-link-handling-large-scale-sequential-data">Connection to Thematic Link: Handling Large-Scale Sequential Data</h3>
 
-<p>All three Day 17 topics share a common theme:</p>
+<p>All three topics share a common theme:</p>
 
 <p><strong>DSA (Add Two Numbers – Linked List):</strong></p>
 <ul>

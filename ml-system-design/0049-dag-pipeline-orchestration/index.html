@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="DAG Pipeline Orchestration">
     <meta itemprop="description" content="“Cron is not an orchestrator. A script is not a pipeline.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -292,17 +292,18 @@ ML software runs as a <strong>Pipeline</strong>.</p>
 
 <p>An MLOps Orchestrator (like Airflow or Kubeflow Pipelines) consists of:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[Scheduler (The Brain)]
-   |  (Polls DAGs, Checks Time, Checks Dependencies)
-   |
-   +---&gt; [Queue (Redis/RabbitMQ)]
-            |
-            v
-   [Workers (The Brawn)]
-      | Worker 1: [Task A: Data Prep]
-      | Worker 2: [Task B: Training (GPU)]
-      | Worker 3: [Task C: Evaluation]
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+[Scheduler (The Brain)]
+ | (Polls DAGs, Checks Time, Checks Dependencies)
+ |
+ +---&gt; [Queue (Redis/RabbitMQ)]
+ |
+ v
+ [Workers (The Brawn)]
+ | Worker 1: [Task A: Data Prep]
+ | Worker 2: [Task B: Training (GPU)]
+ | Worker 3: [Task C: Evaluation]
+</code></p>
 
 <h3 id="key-components">Key Components</h3>
 <ol>
@@ -334,13 +335,13 @@ ML software runs as a <strong>Pipeline</strong>.</p>
 <h2 id="5-data-flow-the-backfill">5. Data Flow: The Backfill</h2>
 
 <p>A unique feature of Orchestrators is <strong>Backfilling</strong>.
-Imagine you change your Feature Engineering logic today (Day 50).
-You want to re-train the model on data from Day 1 to Day 49 using the <em>new</em> logic.</p>
+Imagine you change your Feature Engineering logic today .
+You want to re-train the model on data fromtousing the <em>new</em> logic.</p>
 
 <p>With <code class="language-plaintext highlighter-rouge">cron</code>, this is a nightmare.
 With Airflow:</p>
 <ol>
-  <li>Clear the state of “FeatureEng Task” for <code class="language-plaintext highlighter-rouge">dates=[Day 1...Day 49]</code>.</li>
+  <li>Clear the state of “FeatureEng Task” for <code class="language-plaintext highlighter-rouge">dates=[ ... ]</code>.</li>
   <li>The Scheduler sees these tasks as “Null state”.</li>
   <li>Since they have no dependencies blocking them (historical data exists), it schedules them all in parallel (up to <code class="language-plaintext highlighter-rouge">max_active_runs</code>).</li>
 </ol>
@@ -370,35 +371,36 @@ Kubeflow natively checks inputs. If <code class="language-plaintext highlighter-
 
 <h2 id="7-implementation-defining-a-dag-airflow">7. Implementation: defining a DAG (Airflow)</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">airflow</span> <span class="kn">import</span> <span class="n">DAG</span>
-<span class="kn">from</span> <span class="n">airflow.operators.python</span> <span class="kn">import</span> <span class="n">PythonOperator</span>
-<span class="kn">from</span> <span class="n">airflow.sensors.s3</span> <span class="kn">import</span> <span class="n">S3KeySensor</span>
-<span class="kn">from</span> <span class="n">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<p>``python
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from airflow.sensors.s3 import S3KeySensor
+from datetime import datetime</p>
 
-<span class="k">def</span> <span class="nf">train_model</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="c1"># ML Logic here
-</span>    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Training...</span><span class="sh">"</span><span class="p">)</span>
+<p>def train_model(**context):
+ # ML Logic here
+ print(“Training…”)</p>
 
-<span class="k">with</span> <span class="nc">DAG</span><span class="p">(</span><span class="sh">"</span><span class="s">ml_pipeline_v1</span><span class="sh">"</span><span class="p">,</span> 
-         <span class="n">start_date</span><span class="o">=</span><span class="nf">datetime</span><span class="p">(</span><span class="mi">2023</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> 
-         <span class="n">schedule_interval</span><span class="o">=</span><span class="sh">"</span><span class="s">@daily</span><span class="sh">"</span><span class="p">,</span>
-         <span class="n">catchup</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">dag</span><span class="p">:</span>
+<p>with DAG(“ml_pipeline_v1”, 
+ start_date=datetime(2023, 1, 1), 
+ schedule_interval=”@daily”,
+ catchup=False) as dag:</p>
 
-    <span class="c1"># 1. Wait for data to arrive in S3
-</span>    <span class="n">wait_for_data</span> <span class="o">=</span> <span class="nc">S3KeySensor</span><span class="p">(</span>
-        <span class="n">task_id</span><span class="o">=</span><span class="sh">"</span><span class="s">wait_for_input</span><span class="sh">"</span><span class="p">,</span>
-        <span class="n">bucket_key</span><span class="o">=</span><span class="sh">"</span><span class="s">s3://data/incoming//data.csv</span><span class="sh">"</span>
-    <span class="p">)</span>
+<p># 1. Wait for data to arrive in S3
+ wait_for_data = S3KeySensor(
+ task_id=”wait_for_input”,
+ bucket_key=”s3://data/incoming//data.csv”
+ )</p>
 
-    <span class="c1"># 2. Train logic
-</span>    <span class="n">train</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span>
-        <span class="n">task_id</span><span class="o">=</span><span class="sh">"</span><span class="s">train_model</span><span class="sh">"</span><span class="p">,</span>
-        <span class="n">python_callable</span><span class="o">=</span><span class="n">train_model</span>
-    <span class="p">)</span>
+<p># 2. Train logic
+ train = PythonOperator(
+ task_id=”train_model”,
+ python_callable=train_model
+ )</p>
 
-    <span class="c1"># 3. Dependency Definition
-</span>    <span class="n">wait_for_data</span> <span class="o">&gt;&gt;</span> <span class="n">train</span>
-</code></pre></div></div>
+<p># 3. Dependency Definition
+ wait_for_data » train
+``</p>
 
 <hr />
 

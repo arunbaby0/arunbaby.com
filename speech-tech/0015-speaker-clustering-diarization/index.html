@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Speaker Clustering (Diarization)">
     <meta itemprop="description" content="Build production speaker diarization systems that cluster audio segments by speaker using embedding-based similarity and hash-based grouping.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -387,51 +387,52 @@
 
 <h2 id="high-level-architecture">High-Level Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────────┐
-│                  Speaker Diarization System                      │
-└─────────────────────────────────────────────────────────────────┘
+<p>``
+┌─────────────────────────────────────────────────────────────────┐
+│ Speaker Diarization System │
+└─────────────────────────────────────────────────────────────────┘</p>
 
-                    Audio Input
-                    (Multi-speaker)
-                         ↓
-            ┌────────────────────────┐
-            │  Voice Activity        │
-            │  Detection (VAD)       │
-            │  - Remove silence      │
-            └───────────┬────────────┘
-                        │
-            ┌───────────▼────────────┐
-            │  Audio Segmentation    │
-            │  - Fixed windows       │
-            │  - Change detection    │
-            └───────────┬────────────┘
-                        │
-            ┌───────────▼────────────┐
-            │  Embedding Extraction  │
-            │  - x-vectors           │
-            │  - d-vectors           │
-            │  - ECAPA-TDNN          │
-            └───────────┬────────────┘
-                        │
-        ┌───────────────┼───────────────┐
-        │               │               │
+<p>Audio Input
+ (Multi-speaker)
+ ↓
+ ┌────────────────────────┐
+ │ Voice Activity │
+ │ Detection (VAD) │
+ │ - Remove silence │
+ └───────────┬────────────┘
+ │
+ ┌───────────▼────────────┐
+ │ Audio Segmentation │
+ │ - Fixed windows │
+ │ - Change detection │
+ └───────────┬────────────┘
+ │
+ ┌───────────▼────────────┐
+ │ Embedding Extraction │
+ │ - x-vectors │
+ │ - d-vectors │
+ │ - ECAPA-TDNN │
+ └───────────┬────────────┘
+ │
+ ┌───────────────┼───────────────┐
+ │ │ │
 ┌───────▼──────┐ ┌─────▼─────┐ ┌──────▼──────┐
-│ Clustering   │ │ Refinement│ │ Overlap     │
-│ - AHC        │ │ - VB      │ │ Detection   │
-│ - Spectral   │ │ - PLDA    │ │             │
+│ Clustering │ │ Refinement│ │ Overlap │
+│ - AHC │ │ - VB │ │ Detection │
+│ - Spectral │ │ - PLDA │ │ │
 └───────┬──────┘ └─────┬─────┘ └──────┬──────┘
-        │               │               │
-        └───────────────┼───────────────┘
-                        │
-            ┌───────────▼────────────┐
-            │  Diarization Output    │
-            │                        │
-            │  [0-10s]:  Speaker A   │
-            │  [10-25s]: Speaker B   │
-            │  [25-40s]: Speaker A   │
-            │  [40-55s]: Speaker C   │
-            └────────────────────────┘
-</code></pre></div></div>
+ │ │ │
+ └───────────────┼───────────────┘
+ │
+ ┌───────────▼────────────┐
+ │ Diarization Output │
+ │ │
+ │ [0-10s]: Speaker A │
+ │ [10-25s]: Speaker B │
+ │ [25-40s]: Speaker A │
+ │ [40-55s]: Speaker C │
+ └────────────────────────┘
+``</p>
 
 <h3 id="key-components">Key Components</h3>
 
@@ -450,830 +451,849 @@
 
 <p>Remove silence to focus on speech segments:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
-<span class="kn">import</span> <span class="n">librosa</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<p>``python
+import numpy as np
+import librosa
+from typing import List, Tuple</p>
 
-<span class="k">class</span> <span class="nc">VoiceActivityDetector</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Voice Activity Detection using energy-based approach.
-    
-    Filters out silence before diarization.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16000</span><span class="p">,</span>
-        <span class="n">frame_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
-        <span class="n">hop_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">160</span><span class="p">,</span>
-        <span class="n">energy_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.03</span>
-    <span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">sample_rate</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span> <span class="o">=</span> <span class="n">frame_length</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">hop_length</span> <span class="o">=</span> <span class="n">hop_length</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">energy_threshold</span> <span class="o">=</span> <span class="n">energy_threshold</span>
-    
-    <span class="k">def</span> <span class="nf">detect</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-        <span class="sh">"""</span><span class="s">
-        Detect speech segments.
-        
-        Args:
-            audio: Audio waveform
-            
-        Returns:
-            List of (start_time, end_time) tuples in seconds
-        </span><span class="sh">"""</span>
-        <span class="c1"># Calculate energy for each frame
-</span>        <span class="n">energy</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="n">feature</span><span class="p">.</span><span class="nf">rms</span><span class="p">(</span>
-            <span class="n">y</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span>
-            <span class="n">frame_length</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">frame_length</span><span class="p">,</span>
-            <span class="n">hop_length</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">hop_length</span>
-        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="c1"># Normalize energy
-</span>        <span class="n">energy</span> <span class="o">=</span> <span class="n">energy</span> <span class="o">/</span> <span class="p">(</span><span class="n">energy</span><span class="p">.</span><span class="nf">max</span><span class="p">()</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
-        
-        <span class="c1"># Threshold to get speech frames
-</span>        <span class="n">speech_frames</span> <span class="o">=</span> <span class="n">energy</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">energy_threshold</span>
-        
-        <span class="c1"># Convert frames to time segments
-</span>        <span class="n">segments</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_frames_to_segments</span><span class="p">(</span><span class="n">speech_frames</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">segments</span>
-    
-    <span class="k">def</span> <span class="nf">_frames_to_segments</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">speech_frames</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-        <span class="sh">"""</span><span class="s">Convert binary frame sequence to time segments.</span><span class="sh">"""</span>
-        <span class="n">segments</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="n">in_speech</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="n">start_frame</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">is_speech</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">speech_frames</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">is_speech</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">in_speech</span><span class="p">:</span>
-                <span class="c1"># Speech started
-</span>                <span class="n">start_frame</span> <span class="o">=</span> <span class="n">i</span>
-                <span class="n">in_speech</span> <span class="o">=</span> <span class="bp">True</span>
-            <span class="k">elif</span> <span class="ow">not</span> <span class="n">is_speech</span> <span class="ow">and</span> <span class="n">in_speech</span><span class="p">:</span>
-                <span class="c1"># Speech ended
-</span>                <span class="n">start_time</span> <span class="o">=</span> <span class="n">start_frame</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">hop_length</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span>
-                <span class="n">end_time</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">hop_length</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span>
-                <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">))</span>
-                <span class="n">in_speech</span> <span class="o">=</span> <span class="bp">False</span>
-        
-        <span class="c1"># Handle case where speech continues to end
-</span>        <span class="k">if</span> <span class="n">in_speech</span><span class="p">:</span>
-            <span class="n">start_time</span> <span class="o">=</span> <span class="n">start_frame</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">hop_length</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span>
-            <span class="n">end_time</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">speech_frames</span><span class="p">)</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">hop_length</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span>
-            <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">))</span>
-        
-        <span class="k">return</span> <span class="n">segments</span>
-</code></pre></div></div>
+<p>class VoiceActivityDetector:
+ “””
+ Voice Activity Detection using energy-based approach.</p>
+
+<p>Filters out silence before diarization.
+ “””</p>
+
+<p>def <strong>init</strong>(
+ self,
+ sample_rate: int = 16000,
+ frame_length: int = 512,
+ hop_length: int = 160,
+ energy_threshold: float = 0.03
+ ):
+ self.sample_rate = sample_rate
+ self.frame_length = frame_length
+ self.hop_length = hop_length
+ self.energy_threshold = energy_threshold</p>
+
+<p>def detect(self, audio: np.ndarray) -&gt; List[Tuple[float, float]]:
+ “””
+ Detect speech segments.</p>
+
+<p>Args:
+ audio: Audio waveform</p>
+
+<p>Returns:
+ List of (start_time, end_time) tuples in seconds
+ “””
+ # Calculate energy for each frame
+ energy = librosa.feature.rms(
+ y=audio,
+ frame_length=self.frame_length,
+ hop_length=self.hop_length
+ )[0]</p>
+
+<p># Normalize energy
+ energy = energy / (energy.max() + 1e-8)</p>
+
+<p># Threshold to get speech frames
+ speech_frames = energy &gt; self.energy_threshold</p>
+
+<p># Convert frames to time segments
+ segments = self._frames_to_segments(speech_frames)</p>
+
+<p>return segments</p>
+
+<p>def _frames_to_segments(
+ self,
+ speech_frames: np.ndarray
+ ) -&gt; List[Tuple[float, float]]:
+ “"”Convert binary frame sequence to time segments.”””
+ segments = []</p>
+
+<p>in_speech = False
+ start_frame = 0</p>
+
+<p>for i, is_speech in enumerate(speech_frames):
+ if is_speech and not in_speech:
+ # Speech started
+ start_frame = i
+ in_speech = True
+ elif not is_speech and in_speech:
+ # Speech ended
+ start_time = start_frame * self.hop_length / self.sample_rate
+ end_time = i * self.hop_length / self.sample_rate
+ segments.append((start_time, end_time))
+ in_speech = False</p>
+
+<p># Handle case where speech continues to end
+ if in_speech:
+ start_time = start_frame * self.hop_length / self.sample_rate
+ end_time = len(speech_frames) * self.hop_length / self.sample_rate
+ segments.append((start_time, end_time))</p>
+
+<p>return segments
+``</p>
 
 <h3 id="2-speaker-embedding-extraction">2. Speaker Embedding Extraction</h3>
 
 <p>Extract voice embeddings (x-vectors) for each segment:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">SpeakerEmbeddingExtractor</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Extract speaker embeddings from audio.
-    
-    Similar to Group Anagrams:
-    - Anagrams: sorted string = signature
-    - Diarization: embedding vector = signature
-    
-    Embeddings encode speaker identity in fixed-size vector.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">pretrained_xvector.pt</span><span class="sh">"</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Initialize embedding extractor.
-        
-        In production, use pre-trained models:
-        - x-vectors (Kaldi)
-        - d-vectors (Google)
-        - ECAPA-TDNN (SpeechBrain)
-        </span><span class="sh">"""</span>
-        <span class="c1"># Load pre-trained model
-</span>        <span class="c1"># self.model = torch.load(model_path)
-</span>        
-        <span class="c1"># For demo: use dummy model
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_create_dummy_model</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">embedding_dim</span> <span class="o">=</span> <span class="mi">512</span>
-    
-    <span class="k">def</span> <span class="nf">_create_dummy_model</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Create dummy embedding model for demo.</span><span class="sh">"""</span>
-        <span class="k">class</span> <span class="nc">DummyEmbeddingModel</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-                <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Conv1d</span><span class="p">(</span><span class="mi">40</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">pool</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">AdaptiveAvgPool1d</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-            
-            <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-                <span class="c1"># x: (batch, features, time)
-</span>                <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-                <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">pool</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-                <span class="k">return</span> <span class="n">x</span><span class="p">.</span><span class="nf">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="nc">DummyEmbeddingModel</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">extract</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16000</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Extract embedding from audio segment.
-        
-        Args:
-            audio: Audio waveform
-            sample_rate: Sample rate
-            
-        Returns:
-            Embedding vector of shape (embedding_dim,)
-        </span><span class="sh">"""</span>
-        <span class="c1"># Extract mel spectrogram features
-</span>        <span class="n">mel_spec</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="n">feature</span><span class="p">.</span><span class="nf">melspectrogram</span><span class="p">(</span>
-            <span class="n">y</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span>
-            <span class="n">sr</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span>
-            <span class="n">n_mels</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
-            <span class="n">n_fft</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
-            <span class="n">hop_length</span><span class="o">=</span><span class="mi">160</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Log mel spectrogram
-</span>        <span class="n">log_mel</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">power_to_db</span><span class="p">(</span><span class="n">mel_spec</span><span class="p">)</span>
-        
-        <span class="c1"># Convert to tensor
-</span>        <span class="n">features</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nc">FloatTensor</span><span class="p">(</span><span class="n">log_mel</span><span class="p">).</span><span class="nf">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        
-        <span class="c1"># Extract embedding
-</span>        <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
-            <span class="n">embedding</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">model</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-        
-        <span class="c1"># Normalize embedding
-</span>        <span class="n">embedding</span> <span class="o">=</span> <span class="n">embedding</span><span class="p">.</span><span class="nf">squeeze</span><span class="p">().</span><span class="nf">numpy</span><span class="p">()</span>
-        <span class="n">embedding</span> <span class="o">=</span> <span class="n">embedding</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">embedding</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">embedding</span>
-    
-    <span class="k">def</span> <span class="nf">extract_batch</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio_segments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">],</span>
-        <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16000</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Extract embeddings for multiple segments.
-        
-        Args:
-            audio_segments: List of audio waveforms
-            
-        Returns:
-            Embedding matrix of shape (n_segments, embedding_dim)
-        </span><span class="sh">"""</span>
-        <span class="n">embeddings</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">audio</span> <span class="ow">in</span> <span class="n">audio_segments</span><span class="p">:</span>
-            <span class="n">emb</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">extract</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">)</span>
-            <span class="n">embeddings</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">emb</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
-</code></pre></div></div>
+<p>class SpeakerEmbeddingExtractor:
+ “””
+ Extract speaker embeddings from audio.</p>
+
+<p>Similar to Group Anagrams:</p>
+<ul>
+  <li>Anagrams: sorted string = signature</li>
+  <li>Diarization: embedding vector = signature</li>
+</ul>
+
+<p>Embeddings encode speaker identity in fixed-size vector.
+ “””</p>
+
+<p>def <strong>init</strong>(self, model_path: str = “pretrained_xvector.pt”):
+ “””
+ Initialize embedding extractor.</p>
+
+<p>In production, use pre-trained models:</p>
+<ul>
+  <li>x-vectors (Kaldi)</li>
+  <li>d-vectors (Google)</li>
+  <li>ECAPA-TDNN (SpeechBrain)
+ “””
+ # Load pre-trained model
+ # self.model = torch.load(model_path)</li>
+</ul>
+
+<p># For demo: use dummy model
+ self.model = self._create_dummy_model()
+ self.model.eval()</p>
+
+<p>self.embedding_dim = 512</p>
+
+<p>def _create_dummy_model(self) -&gt; nn.Module:
+ “"”Create dummy embedding model for demo.”””
+ class DummyEmbeddingModel(nn.Module):
+ def <strong>init</strong>(self):
+ super().<strong>init</strong>()
+ self.conv = nn.Conv1d(40, 512, kernel_size=5)
+ self.pool = nn.AdaptiveAvgPool1d(1)</p>
+
+<p>def forward(self, x):
+ # x: (batch, features, time)
+ x = self.conv(x)
+ x = self.pool(x)
+ return x.squeeze(-1)</p>
+
+<p>return DummyEmbeddingModel()</p>
+
+<p>def extract(
+ self,
+ audio: np.ndarray,
+ sample_rate: int = 16000
+ ) -&gt; np.ndarray:
+ “””
+ Extract embedding from audio segment.</p>
+
+<p>Args:
+ audio: Audio waveform
+ sample_rate: Sample rate</p>
+
+<p>Returns:
+ Embedding vector of shape (embedding_dim,)
+ “””
+ # Extract mel spectrogram features
+ mel_spec = librosa.feature.melspectrogram(
+ y=audio,
+ sr=sample_rate,
+ n_mels=40,
+ n_fft=512,
+ hop_length=160
+ )</p>
+
+<p># Log mel spectrogram
+ log_mel = librosa.power_to_db(mel_spec)</p>
+
+<p># Convert to tensor
+ features = torch.FloatTensor(log_mel).unsqueeze(0)</p>
+
+<p># Extract embedding
+ with torch.no_grad():
+ embedding = self.model(features)</p>
+
+<p># Normalize embedding
+ embedding = embedding.squeeze().numpy()
+ embedding = embedding / (np.linalg.norm(embedding) + 1e-8)</p>
+
+<p>return embedding</p>
+
+<p>def extract_batch(
+ self,
+ audio_segments: List[np.ndarray],
+ sample_rate: int = 16000
+ ) -&gt; np.ndarray:
+ “””
+ Extract embeddings for multiple segments.</p>
+
+<p>Args:
+ audio_segments: List of audio waveforms</p>
+
+<p>Returns:
+ Embedding matrix of shape (n_segments, embedding_dim)
+ “””
+ embeddings = []</p>
+
+<p>for audio in audio_segments:
+ emb = self.extract(audio, sample_rate)
+ embeddings.append(emb)</p>
+
+<p>return np.array(embeddings)
+``</p>
 
 <h3 id="3-agglomerative-hierarchical-clustering">3. Agglomerative Hierarchical Clustering</h3>
 
 <p>Cluster embeddings by speaker using AHC:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">scipy.cluster.hierarchy</span> <span class="kn">import</span> <span class="n">linkage</span><span class="p">,</span> <span class="n">fcluster</span>
-<span class="kn">from</span> <span class="n">scipy.spatial.distance</span> <span class="kn">import</span> <span class="n">cosine</span>
-<span class="kn">from</span> <span class="n">sklearn.metrics</span> <span class="kn">import</span> <span class="n">silhouette_score</span>
+<p>``python
+from scipy.cluster.hierarchy import linkage, fcluster
+from scipy.spatial.distance import cosine
+from sklearn.metrics import silhouette_score</p>
 
-<span class="k">class</span> <span class="nc">SpeakerClustering</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Cluster speaker embeddings using Agglomerative Hierarchical Clustering.
-    
-    Similar to Group Anagrams:
-    - Anagrams: group by sorted string
-    - Diarization: group by embedding similarity
-    
-    Both group similar items, but diarization uses approximate similarity.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">cosine</span><span class="sh">"</span><span class="p">,</span>
-        <span class="n">linkage_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">average</span><span class="sh">"</span><span class="p">,</span>
-        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span>
-    <span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Initialize speaker clustering.
-        
-        Args:
-            metric: Distance metric (</span><span class="sh">"</span><span class="s">cosine</span><span class="sh">"</span><span class="s">, </span><span class="sh">"</span><span class="s">euclidean</span><span class="sh">"</span><span class="s">)
-            linkage_method: </span><span class="sh">"</span><span class="s">average</span><span class="sh">"</span><span class="s">, </span><span class="sh">"</span><span class="s">complete</span><span class="sh">"</span><span class="s">, </span><span class="sh">"</span><span class="s">ward</span><span class="sh">"</span><span class="s">
-            threshold: Clustering threshold
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">metric</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">linkage_method</span> <span class="o">=</span> <span class="n">linkage_method</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">threshold</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">linkage_matrix</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">labels</span> <span class="o">=</span> <span class="bp">None</span>
-    
-    <span class="k">def</span> <span class="nf">fit_predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Cluster embeddings into speakers.
-        
-        Args:
-            embeddings: Embedding matrix (n_segments, embedding_dim)
-            
-        Returns:
-            Cluster labels (n_segments,)
-        </span><span class="sh">"""</span>
-        <span class="n">n_segments</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">n_segments</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span>
-        
-        <span class="c1"># Calculate pairwise distances
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">metric</span> <span class="o">==</span> <span class="sh">"</span><span class="s">cosine</span><span class="sh">"</span><span class="p">:</span>
-            <span class="c1"># Cosine distance
-</span>            <span class="kn">from</span> <span class="n">sklearn.metrics.pairwise</span> <span class="kn">import</span> <span class="n">cosine_similarity</span>
-            <span class="n">similarity</span> <span class="o">=</span> <span class="nf">cosine_similarity</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
-            <span class="n">distances</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">similarity</span>
-            
-            <span class="c1"># Convert to condensed distance matrix
-</span>            <span class="kn">from</span> <span class="n">scipy.spatial.distance</span> <span class="kn">import</span> <span class="n">squareform</span>
-            <span class="n">distances</span> <span class="o">=</span> <span class="nf">squareform</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">checks</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Use scipy's pdist
-</span>            <span class="kn">from</span> <span class="n">scipy.spatial.distance</span> <span class="kn">import</span> <span class="n">pdist</span>
-            <span class="n">distances</span> <span class="o">=</span> <span class="nf">pdist</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">metric</span><span class="p">)</span>
-        
-        <span class="c1"># Perform hierarchical clustering
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">linkage_matrix</span> <span class="o">=</span> <span class="nf">linkage</span><span class="p">(</span>
-            <span class="n">distances</span><span class="p">,</span>
-            <span class="n">method</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">linkage_method</span><span class="p">,</span>
-            <span class="n">metric</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">metric</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Cut dendrogram to get clusters
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">labels</span> <span class="o">=</span> <span class="nf">fcluster</span><span class="p">(</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">linkage_matrix</span><span class="p">,</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">threshold</span><span class="p">,</span>
-            <span class="n">criterion</span><span class="o">=</span><span class="sh">'</span><span class="s">distance</span><span class="sh">'</span>
-        <span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># Convert to 0-indexed
-</span>        
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">labels</span>
-    
-    <span class="k">def</span> <span class="nf">auto_tune_threshold</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">embeddings</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">min_speakers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-        <span class="n">max_speakers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Automatically tune clustering threshold.
-        
-        Uses silhouette score to find optimal threshold.
-        
-        Args:
-            embeddings: Embedding matrix
-            min_speakers: Minimum number of speakers
-            max_speakers: Maximum number of speakers
-            
-        Returns:
-            Optimal threshold
-        </span><span class="sh">"""</span>
-        <span class="n">best_threshold</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">threshold</span>
-        <span class="n">best_score</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
-        
-        <span class="c1"># Try different thresholds
-</span>        <span class="k">for</span> <span class="n">threshold</span> <span class="ow">in</span> <span class="n">np</span><span class="p">.</span><span class="nf">linspace</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">20</span><span class="p">):</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">threshold</span>
-            <span class="n">labels</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">fit_predict</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
-            
-            <span class="n">n_clusters</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">unique</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span>
-            
-            <span class="c1"># Check if within valid range
-</span>            <span class="k">if</span> <span class="n">n_clusters</span> <span class="o">&lt;</span> <span class="n">min_speakers</span> <span class="ow">or</span> <span class="n">n_clusters</span> <span class="o">&gt;</span> <span class="n">max_speakers</span><span class="p">:</span>
-                <span class="k">continue</span>
-            
-            <span class="c1"># Calculate silhouette score
-</span>            <span class="k">if</span> <span class="n">n_clusters</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">n_clusters</span> <span class="o">&lt;</span> <span class="nf">len</span><span class="p">(</span><span class="n">embeddings</span><span class="p">):</span>
-                <span class="n">score</span> <span class="o">=</span> <span class="nf">silhouette_score</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
-                
-                <span class="k">if</span> <span class="n">score</span> <span class="o">&gt;</span> <span class="n">best_score</span><span class="p">:</span>
-                    <span class="n">best_score</span> <span class="o">=</span> <span class="n">score</span>
-                    <span class="n">best_threshold</span> <span class="o">=</span> <span class="n">threshold</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">best_threshold</span>
-        <span class="k">return</span> <span class="n">best_threshold</span>
-    
-    <span class="k">def</span> <span class="nf">estimate_num_speakers</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Estimate number of speakers using elbow method.
-        
-        Similar to finding optimal k in K-means.
-        </span><span class="sh">"""</span>
-        <span class="kn">from</span> <span class="n">scipy.cluster.hierarchy</span> <span class="kn">import</span> <span class="n">dendrogram</span>
-        
-        <span class="c1"># Calculate dendrogram
-</span>        <span class="c1"># Look for "elbow" in height differences
-</span>        
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">linkage_matrix</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">fit_predict</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
-        
-        <span class="c1"># Get cluster counts at different thresholds
-</span>        <span class="n">thresholds</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">linspace</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
-        <span class="n">cluster_counts</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">threshold</span> <span class="ow">in</span> <span class="n">thresholds</span><span class="p">:</span>
-            <span class="n">labels</span> <span class="o">=</span> <span class="nf">fcluster</span><span class="p">(</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">linkage_matrix</span><span class="p">,</span>
-                <span class="n">threshold</span><span class="p">,</span>
-                <span class="n">criterion</span><span class="o">=</span><span class="sh">'</span><span class="s">distance</span><span class="sh">'</span>
-            <span class="p">)</span>
-            <span class="n">cluster_counts</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">unique</span><span class="p">(</span><span class="n">labels</span><span class="p">)))</span>
-        
-        <span class="c1"># Find elbow point
-</span>        <span class="c1"># Simplified: use median
-</span>        <span class="k">return</span> <span class="nf">int</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">median</span><span class="p">(</span><span class="n">cluster_counts</span><span class="p">))</span>
-</code></pre></div></div>
+<p>class SpeakerClustering:
+ “””
+ Cluster speaker embeddings using Agglomerative Hierarchical Clustering.</p>
+
+<p>Similar to Group Anagrams:</p>
+<ul>
+  <li>Anagrams: group by sorted string</li>
+  <li>Diarization: group by embedding similarity</li>
+</ul>
+
+<p>Both group similar items, but diarization uses approximate similarity.
+ “””</p>
+
+<p>def <strong>init</strong>(
+ self,
+ metric: str = “cosine”,
+ linkage_method: str = “average”,
+ threshold: float = 0.5
+ ):
+ “””
+ Initialize speaker clustering.</p>
+
+<p>Args:
+ metric: Distance metric (“cosine”, “euclidean”)
+ linkage_method: “average”, “complete”, “ward”
+ threshold: Clustering threshold
+ “””
+ self.metric = metric
+ self.linkage_method = linkage_method
+ self.threshold = threshold</p>
+
+<p>self.linkage_matrix = None
+ self.labels = None</p>
+
+<p>def fit_predict(self, embeddings: np.ndarray) -&gt; np.ndarray:
+ “””
+ Cluster embeddings into speakers.</p>
+
+<p>Args:
+ embeddings: Embedding matrix (n_segments, embedding_dim)</p>
+
+<p>Returns:
+ Cluster labels (n_segments,)
+ “””
+ n_segments = len(embeddings)</p>
+
+<p>if n_segments &lt; 2:
+ return np.array([0])</p>
+
+<p># Calculate pairwise distances
+ if self.metric == “cosine”:
+ # Cosine distance
+ from sklearn.metrics.pairwise import cosine_similarity
+ similarity = cosine_similarity(embeddings)
+ distances = 1 - similarity</p>
+
+<p># Convert to condensed distance matrix
+ from scipy.spatial.distance import squareform
+ distances = squareform(distances, checks=False)
+ else:
+ # Use scipy’s pdist
+ from scipy.spatial.distance import pdist
+ distances = pdist(embeddings, metric=self.metric)</p>
+
+<p># Perform hierarchical clustering
+ self.linkage_matrix = linkage(
+ distances,
+ method=self.linkage_method,
+ metric=self.metric
+ )</p>
+
+<p># Cut dendrogram to get clusters
+ self.labels = fcluster(
+ self.linkage_matrix,
+ self.threshold,
+ criterion=’distance’
+ ) - 1 # Convert to 0-indexed</p>
+
+<p>return self.labels</p>
+
+<p>def auto_tune_threshold(
+ self,
+ embeddings: np.ndarray,
+ min_speakers: int = 2,
+ max_speakers: int = 10
+ ) -&gt; float:
+ “””
+ Automatically tune clustering threshold.</p>
+
+<p>Uses silhouette score to find optimal threshold.</p>
+
+<p>Args:
+ embeddings: Embedding matrix
+ min_speakers: Minimum number of speakers
+ max_speakers: Maximum number of speakers</p>
+
+<p>Returns:
+ Optimal threshold
+ “””
+ best_threshold = self.threshold
+ best_score = -1.0</p>
+
+<p># Try different thresholds
+ for threshold in np.linspace(0.1, 1.0, 20):
+ self.threshold = threshold
+ labels = self.fit_predict(embeddings)</p>
+
+<p>n_clusters = len(np.unique(labels))</p>
+
+<p># Check if within valid range
+ if n_clusters &lt; min_speakers or n_clusters &gt; max_speakers:
+ continue</p>
+
+<p># Calculate silhouette score
+ if n_clusters &gt; 1 and n_clusters &lt; len(embeddings):
+ score = silhouette_score(embeddings, labels)</p>
+
+<p>if score &gt; best_score:
+ best_score = score
+ best_threshold = threshold</p>
+
+<p>self.threshold = best_threshold
+ return best_threshold</p>
+
+<p>def estimate_num_speakers(self, embeddings: np.ndarray) -&gt; int:
+ “””
+ Estimate number of speakers using elbow method.</p>
+
+<p>Similar to finding optimal k in K-means.
+ “””
+ from scipy.cluster.hierarchy import dendrogram</p>
+
+<p># Calculate dendrogram
+ # Look for “elbow” in height differences</p>
+
+<p>if self.linkage_matrix is None:
+ self.fit_predict(embeddings)</p>
+
+<p># Get cluster counts at different thresholds
+ thresholds = np.linspace(0.1, 1.0, 20)
+ cluster_counts = []</p>
+
+<p>for threshold in thresholds:
+ labels = fcluster(
+ self.linkage_matrix,
+ threshold,
+ criterion=’distance’
+ )
+ cluster_counts.append(len(np.unique(labels)))</p>
+
+<p># Find elbow point
+ # Simplified: use median
+ return int(np.median(cluster_counts))
+``</p>
 
 <h3 id="4-complete-diarization-pipeline">4. Complete Diarization Pipeline</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
-<span class="kn">import</span> <span class="n">logging</span>
+<p>``python
+from dataclasses import dataclass
+from typing import List, Tuple, Optional
+import logging</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">DiarizationSegment</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">A speech segment with speaker label.</span><span class="sh">"""</span>
-    <span class="n">start_time</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">end_time</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">speaker_id</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
-    
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">duration</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">end_time</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">start_time</span>
+<p>@dataclass
+class DiarizationSegment:
+ “"”A speech segment with speaker label.”””
+ start_time: float
+ end_time: float
+ speaker_id: int
+ confidence: float = 1.0</p>
 
-<span class="k">class</span> <span class="nc">SpeakerDiarization</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Complete speaker diarization system.
-    
-    Pipeline:
-    1. VAD: Remove silence
-    2. Segmentation: Split into windows
-    3. Embedding extraction: Get x-vectors
-    4. Clustering: Group by speaker (like anagram grouping!)
-    5. Smoothing: Refine boundaries
-    
-    Similar to Group Anagrams:
-    - Input: List of audio segments
-    - Process: Extract embeddings (like sorting strings)
-    - Output: Grouped segments (like grouped anagrams)
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">vad_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.03</span><span class="p">,</span>
-        <span class="n">segment_duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">,</span>
-        <span class="n">overlap</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span>
-        <span class="n">clustering_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span>
-    <span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Initialize diarization system.
-        
-        Args:
-            vad_threshold: Voice activity threshold
-            segment_duration: Duration of segments (seconds)
-            overlap: Overlap between segments (seconds)
-            clustering_threshold: Speaker clustering threshold
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="nc">VoiceActivityDetector</span><span class="p">(</span><span class="n">energy_threshold</span><span class="o">=</span><span class="n">vad_threshold</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">embedding_extractor</span> <span class="o">=</span> <span class="nc">SpeakerEmbeddingExtractor</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">clustering</span> <span class="o">=</span> <span class="nc">SpeakerClustering</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="n">clustering_threshold</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">segment_duration</span> <span class="o">=</span> <span class="n">segment_duration</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">overlap</span> <span class="o">=</span> <span class="n">overlap</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="p">.</span><span class="nf">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">diarize</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16000</span><span class="p">,</span>
-        <span class="n">num_speakers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">DiarizationSegment</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Perform speaker diarization.
-        
-        Args:
-            audio: Audio waveform
-            sample_rate: Sample rate
-            num_speakers: Optional number of speakers (auto-detect if None)
-            
-        Returns:
-            List of diarization segments
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span><span class="sh">"</span><span class="s">Starting diarization...</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="c1"># Step 1: Voice Activity Detection
-</span>        <span class="n">speech_segments</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">detect</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Found </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">speech_segments</span><span class="p">)</span><span class="si">}</span><span class="s"> speech segments</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">speech_segments</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[]</span>
-        
-        <span class="c1"># Step 2: Create overlapping windows
-</span>        <span class="n">windows</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_create_windows</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">,</span> <span class="n">speech_segments</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Created </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">windows</span><span class="p">)</span><span class="si">}</span><span class="s"> windows</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">windows</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[]</span>
-        
-        <span class="c1"># Step 3: Extract embeddings
-</span>        <span class="n">embeddings</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_extract_embeddings</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">windows</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Extracted embeddings of shape </span><span class="si">{</span><span class="n">embeddings</span><span class="p">.</span><span class="n">shape</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="c1"># Step 4: Cluster by speaker
-</span>        <span class="k">if</span> <span class="n">num_speakers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="c1"># If num_speakers provided, use it
-</span>            <span class="n">labels</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_cluster_fixed_speakers</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">num_speakers</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Auto-detect number of speakers
-</span>            <span class="n">labels</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">clustering</span><span class="p">.</span><span class="nf">fit_predict</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
-        
-        <span class="n">n_speakers</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">unique</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Detected </span><span class="si">{</span><span class="n">n_speakers</span><span class="si">}</span><span class="s"> speakers</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="c1"># Step 5: Convert to segments
-</span>        <span class="n">segments</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_windows_to_segments</span><span class="p">(</span><span class="n">windows</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
-        
-        <span class="c1"># Step 6: Smooth boundaries
-</span>        <span class="n">segments</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_smooth_segments</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">segments</span>
-    
-    <span class="k">def</span> <span class="nf">_create_windows</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">speech_segments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-        <span class="sh">"""</span><span class="s">
-        Create overlapping windows for embedding extraction.
-        
-        Args:
-            audio: Audio waveform
-            sample_rate: Sample rate
-            speech_segments: Speech segments from VAD
-            
-        Returns:
-            List of (start_time, end_time) windows
-        </span><span class="sh">"""</span>
-        <span class="n">windows</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="n">hop_duration</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">segment_duration</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">overlap</span>
-        
-        <span class="k">for</span> <span class="n">seg_start</span><span class="p">,</span> <span class="n">seg_end</span> <span class="ow">in</span> <span class="n">speech_segments</span><span class="p">:</span>
-            <span class="n">current_time</span> <span class="o">=</span> <span class="n">seg_start</span>
-            
-            <span class="k">while</span> <span class="n">current_time</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">segment_duration</span> <span class="o">&lt;=</span> <span class="n">seg_end</span><span class="p">:</span>
-                <span class="n">windows</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span>
-                    <span class="n">current_time</span><span class="p">,</span>
-                    <span class="n">current_time</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">segment_duration</span>
-                <span class="p">))</span>
-                <span class="n">current_time</span> <span class="o">+=</span> <span class="n">hop_duration</span>
-            
-            <span class="c1"># Add last window if remaining duration &gt; 50% of segment_duration
-</span>            <span class="k">if</span> <span class="n">seg_end</span> <span class="o">-</span> <span class="n">current_time</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">segment_duration</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">:</span>
-                <span class="n">windows</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">current_time</span><span class="p">,</span> <span class="n">seg_end</span><span class="p">))</span>
-        
-        <span class="k">return</span> <span class="n">windows</span>
-    
-    <span class="k">def</span> <span class="nf">_extract_embeddings</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">windows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
-        <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Extract embeddings for all windows.</span><span class="sh">"""</span>
-        <span class="n">audio_segments</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">windows</span><span class="p">:</span>
-            <span class="n">start_sample</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">start</span> <span class="o">*</span> <span class="n">sample_rate</span><span class="p">)</span>
-            <span class="n">end_sample</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">end</span> <span class="o">*</span> <span class="n">sample_rate</span><span class="p">)</span>
-            
-            <span class="n">segment_audio</span> <span class="o">=</span> <span class="n">audio</span><span class="p">[</span><span class="n">start_sample</span><span class="p">:</span><span class="n">end_sample</span><span class="p">]</span>
-            <span class="n">audio_segments</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">segment_audio</span><span class="p">)</span>
-        
-        <span class="c1"># Extract embeddings in batch
-</span>        <span class="n">embeddings</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">embedding_extractor</span><span class="p">.</span><span class="nf">extract_batch</span><span class="p">(</span>
-            <span class="n">audio_segments</span><span class="p">,</span>
-            <span class="n">sample_rate</span>
-        <span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">embeddings</span>
-    
-    <span class="k">def</span> <span class="nf">_cluster_fixed_speakers</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">embeddings</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">num_speakers</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Cluster with fixed number of speakers.</span><span class="sh">"""</span>
-        <span class="kn">from</span> <span class="n">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
-        
-        <span class="n">kmeans</span> <span class="o">=</span> <span class="nc">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">num_speakers</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
-        <span class="n">labels</span> <span class="o">=</span> <span class="n">kmeans</span><span class="p">.</span><span class="nf">fit_predict</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">labels</span>
-    
-    <span class="k">def</span> <span class="nf">_windows_to_segments</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">windows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
-        <span class="n">labels</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">DiarizationSegment</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">Convert windows with labels to segments.</span><span class="sh">"""</span>
-        <span class="n">segments</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="nf">for </span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">),</span> <span class="n">label</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">windows</span><span class="p">,</span> <span class="n">labels</span><span class="p">):</span>
-            <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">DiarizationSegment</span><span class="p">(</span>
-                <span class="n">start_time</span><span class="o">=</span><span class="n">start</span><span class="p">,</span>
-                <span class="n">end_time</span><span class="o">=</span><span class="n">end</span><span class="p">,</span>
-                <span class="n">speaker_id</span><span class="o">=</span><span class="nf">int</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
-            <span class="p">))</span>
-        
-        <span class="k">return</span> <span class="n">segments</span>
-    
-    <span class="k">def</span> <span class="nf">_smooth_segments</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">segments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DiarizationSegment</span><span class="p">],</span>
-        <span class="n">min_duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">DiarizationSegment</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Smooth segment boundaries.
-        
-        Steps:
-        1. Merge consecutive segments from same speaker
-        2. Remove very short segments
-        3. Fill gaps between segments
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">segments</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[]</span>
-        
-        <span class="c1"># Sort by start time
-</span>        <span class="n">segments</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">segments</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="p">.</span><span class="n">start_time</span><span class="p">)</span>
-        
-        <span class="c1"># Merge consecutive segments from same speaker
-</span>        <span class="n">merged</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">current</span> <span class="o">=</span> <span class="n">segments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
-            <span class="nf">if </span><span class="p">(</span><span class="n">segment</span><span class="p">.</span><span class="n">speaker_id</span> <span class="o">==</span> <span class="n">current</span><span class="p">.</span><span class="n">speaker_id</span> <span class="ow">and</span>
-                <span class="n">segment</span><span class="p">.</span><span class="n">start_time</span> <span class="o">-</span> <span class="n">current</span><span class="p">.</span><span class="n">end_time</span> <span class="o">&lt;</span> <span class="mf">0.3</span><span class="p">):</span>
-                <span class="c1"># Merge
-</span>                <span class="n">current</span> <span class="o">=</span> <span class="nc">DiarizationSegment</span><span class="p">(</span>
-                    <span class="n">start_time</span><span class="o">=</span><span class="n">current</span><span class="p">.</span><span class="n">start_time</span><span class="p">,</span>
-                    <span class="n">end_time</span><span class="o">=</span><span class="n">segment</span><span class="p">.</span><span class="n">end_time</span><span class="p">,</span>
-                    <span class="n">speaker_id</span><span class="o">=</span><span class="n">current</span><span class="p">.</span><span class="n">speaker_id</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Save current and start new
-</span>                <span class="k">if</span> <span class="n">current</span><span class="p">.</span><span class="n">duration</span> <span class="o">&gt;=</span> <span class="n">min_duration</span><span class="p">:</span>
-                    <span class="n">merged</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
-                <span class="n">current</span> <span class="o">=</span> <span class="n">segment</span>
-        
-        <span class="c1"># Add last segment
-</span>        <span class="k">if</span> <span class="n">current</span><span class="p">.</span><span class="n">duration</span> <span class="o">&gt;=</span> <span class="n">min_duration</span><span class="p">:</span>
-            <span class="n">merged</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">merged</span>
-    
-    <span class="k">def</span> <span class="nf">format_output</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">segments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DiarizationSegment</span><span class="p">],</span>
-        <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">rttm</span><span class="sh">"</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Format diarization output.
-        
-        Args:
-            segments: Diarization segments
-            format: Output format (</span><span class="sh">"</span><span class="s">rttm</span><span class="sh">"</span><span class="s">, </span><span class="sh">"</span><span class="s">json</span><span class="sh">"</span><span class="s">, </span><span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="s">)
-            
-        Returns:
-            Formatted string
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="sh">"</span><span class="s">rttm</span><span class="sh">"</span><span class="p">:</span>
-            <span class="c1"># RTTM format (standard for diarization evaluation)
-</span>            <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
-                <span class="n">line</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="sa">f</span><span class="sh">"</span><span class="s">SPEAKER file 1 </span><span class="si">{</span><span class="n">seg</span><span class="p">.</span><span class="n">start_time</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s"> </span><span class="sh">"</span>
-                    <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">seg</span><span class="p">.</span><span class="n">duration</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s"> &lt;NA&gt; &lt;NA&gt; speaker_</span><span class="si">{</span><span class="n">seg</span><span class="p">.</span><span class="n">speaker_id</span><span class="si">}</span><span class="s"> &lt;NA&gt; &lt;NA&gt;</span><span class="sh">"</span>
-                <span class="p">)</span>
-                <span class="n">lines</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-            <span class="k">return</span> <span class="sh">'</span><span class="se">\n</span><span class="sh">'</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
-        
-        <span class="k">elif</span> <span class="nb">format</span> <span class="o">==</span> <span class="sh">"</span><span class="s">json</span><span class="sh">"</span><span class="p">:</span>
-            <span class="kn">import</span> <span class="n">json</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="p">{</span>
-                    <span class="sh">"</span><span class="s">start</span><span class="sh">"</span><span class="p">:</span> <span class="n">seg</span><span class="p">.</span><span class="n">start_time</span><span class="p">,</span>
-                    <span class="sh">"</span><span class="s">end</span><span class="sh">"</span><span class="p">:</span> <span class="n">seg</span><span class="p">.</span><span class="n">end_time</span><span class="p">,</span>
-                    <span class="sh">"</span><span class="s">speaker</span><span class="sh">"</span><span class="p">:</span> <span class="sa">f</span><span class="sh">"</span><span class="s">speaker_</span><span class="si">{</span><span class="n">seg</span><span class="p">.</span><span class="n">speaker_id</span><span class="si">}</span><span class="sh">"</span><span class="p">,</span>
-                    <span class="sh">"</span><span class="s">duration</span><span class="sh">"</span><span class="p">:</span> <span class="n">seg</span><span class="p">.</span><span class="n">duration</span>
-                <span class="p">}</span>
-                <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">segments</span>
-            <span class="p">]</span>
-            <span class="k">return</span> <span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-        
-        <span class="k">else</span><span class="p">:</span>  <span class="c1"># text format
-</span>            <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
-                <span class="n">line</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="sa">f</span><span class="sh">"</span><span class="s">[</span><span class="si">{</span><span class="n">seg</span><span class="p">.</span><span class="n">start_time</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">s - </span><span class="si">{</span><span class="n">seg</span><span class="p">.</span><span class="n">end_time</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">s] </span><span class="sh">"</span>
-                    <span class="sa">f</span><span class="sh">"</span><span class="s">Speaker </span><span class="si">{</span><span class="n">seg</span><span class="p">.</span><span class="n">speaker_id</span><span class="si">}</span><span class="sh">"</span>
-                <span class="p">)</span>
-                <span class="n">lines</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-            <span class="k">return</span> <span class="sh">'</span><span class="se">\n</span><span class="sh">'</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+<p>@property
+ def duration(self) -&gt; float:
+ return self.end_time - self.start_time</p>
 
+<p>class SpeakerDiarization:
+ “””
+ Complete speaker diarization system.</p>
 
-<span class="c1"># Example usage
-</span><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="sh">"</span><span class="s">__main__</span><span class="sh">"</span><span class="p">:</span>
-    <span class="n">logging</span><span class="p">.</span><span class="nf">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="p">.</span><span class="n">INFO</span><span class="p">)</span>
-    
-    <span class="c1"># Generate sample audio (multi-speaker conversation)
-</span>    <span class="c1"># In practice, load real audio
-</span>    <span class="n">sample_rate</span> <span class="o">=</span> <span class="mi">16000</span>
-    <span class="n">duration</span> <span class="o">=</span> <span class="mi">60</span>  <span class="c1"># 60 seconds
-</span>    <span class="n">audio</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="n">duration</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>
-    
-    <span class="c1"># Create diarization system
-</span>    <span class="n">diarizer</span> <span class="o">=</span> <span class="nc">SpeakerDiarization</span><span class="p">(</span>
-        <span class="n">segment_duration</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span>
-        <span class="n">overlap</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span>
-        <span class="n">clustering_threshold</span><span class="o">=</span><span class="mf">0.5</span>
-    <span class="p">)</span>
-    
-    <span class="c1"># Perform diarization
-</span>    <span class="n">segments</span> <span class="o">=</span> <span class="n">diarizer</span><span class="p">.</span><span class="nf">diarize</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">,</span> <span class="n">num_speakers</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
-    
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">Diarization Results:</span><span class="sh">"</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Found </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span><span class="si">}</span><span class="s"> segments</span><span class="sh">"</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Speakers: </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="nf">set</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">speaker_id</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">))</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="c1"># Format output
-</span>    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="se">\n</span><span class="sh">"</span> <span class="o">+</span> <span class="n">diarizer</span><span class="p">.</span><span class="nf">format_output</span><span class="p">(</span><span class="n">segments</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">))</span>
-</code></pre></div></div>
+<p>Pipeline:</p>
+<ol>
+  <li>VAD: Remove silence</li>
+  <li>Segmentation: Split into windows</li>
+  <li>Embedding extraction: Get x-vectors</li>
+  <li>Clustering: Group by speaker (like anagram grouping!)</li>
+  <li>Smoothing: Refine boundaries</li>
+</ol>
+
+<p>Similar to Group Anagrams:</p>
+<ul>
+  <li>Input: List of audio segments</li>
+  <li>Process: Extract embeddings (like sorting strings)</li>
+  <li>Output: Grouped segments (like grouped anagrams)
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(
+ self,
+ vad_threshold: float = 0.03,
+ segment_duration: float = 1.5,
+ overlap: float = 0.75,
+ clustering_threshold: float = 0.5
+ ):
+ “””
+ Initialize diarization system.</p>
+
+<p>Args:
+ vad_threshold: Voice activity threshold
+ segment_duration: Duration of segments (seconds)
+ overlap: Overlap between segments (seconds)
+ clustering_threshold: Speaker clustering threshold
+ “””
+ self.vad = VoiceActivityDetector(energy_threshold=vad_threshold)
+ self.embedding_extractor = SpeakerEmbeddingExtractor()
+ self.clustering = SpeakerClustering(threshold=clustering_threshold)</p>
+
+<p>self.segment_duration = segment_duration
+ self.overlap = overlap</p>
+
+<p>self.logger = logging.getLogger(<strong>name</strong>)</p>
+
+<p>def diarize(
+ self,
+ audio: np.ndarray,
+ sample_rate: int = 16000,
+ num_speakers: Optional[int] = None
+ ) -&gt; List[DiarizationSegment]:
+ “””
+ Perform speaker diarization.</p>
+
+<p>Args:
+ audio: Audio waveform
+ sample_rate: Sample rate
+ num_speakers: Optional number of speakers (auto-detect if None)</p>
+
+<p>Returns:
+ List of diarization segments
+ “””
+ self.logger.info(“Starting diarization…”)</p>
+
+<p># Step 1: Voice Activity Detection
+ speech_segments = self.vad.detect(audio)
+ self.logger.info(f”Found {len(speech_segments)} speech segments”)</p>
+
+<p>if not speech_segments:
+ return []</p>
+
+<p># Step 2: Create overlapping windows
+ windows = self._create_windows(audio, sample_rate, speech_segments)
+ self.logger.info(f”Created {len(windows)} windows”)</p>
+
+<p>if not windows:
+ return []</p>
+
+<p># Step 3: Extract embeddings
+ embeddings = self._extract_embeddings(audio, windows, sample_rate)
+ self.logger.info(f”Extracted embeddings of shape {embeddings.shape}”)</p>
+
+<p># Step 4: Cluster by speaker
+ if num_speakers is not None:
+ # If num_speakers provided, use it
+ labels = self._cluster_fixed_speakers(embeddings, num_speakers)
+ else:
+ # Auto-detect number of speakers
+ labels = self.clustering.fit_predict(embeddings)</p>
+
+<p>n_speakers = len(np.unique(labels))
+ self.logger.info(f”Detected {n_speakers} speakers”)</p>
+
+<p># Step 5: Convert to segments
+ segments = self._windows_to_segments(windows, labels)</p>
+
+<p># Step 6: Smooth boundaries
+ segments = self._smooth_segments(segments)</p>
+
+<p>return segments</p>
+
+<p>def _create_windows(
+ self,
+ audio: np.ndarray,
+ sample_rate: int,
+ speech_segments: List[Tuple[float, float]]
+ ) -&gt; List[Tuple[float, float]]:
+ “””
+ Create overlapping windows for embedding extraction.</p>
+
+<p>Args:
+ audio: Audio waveform
+ sample_rate: Sample rate
+ speech_segments: Speech segments from VAD</p>
+
+<p>Returns:
+ List of (start_time, end_time) windows
+ “””
+ windows = []</p>
+
+<p>hop_duration = self.segment_duration - self.overlap</p>
+
+<p>for seg_start, seg_end in speech_segments:
+ current_time = seg_start</p>
+
+<p>while current_time + self.segment_duration &lt;= seg_end:
+ windows.append((
+ current_time,
+ current_time + self.segment_duration
+ ))
+ current_time += hop_duration</p>
+
+<p># Add last window if remaining duration &gt; 50% of segment_duration
+ if seg_end - current_time &gt; self.segment_duration * 0.5:
+ windows.append((current_time, seg_end))</p>
+
+<p>return windows</p>
+
+<p>def _extract_embeddings(
+ self,
+ audio: np.ndarray,
+ windows: List[Tuple[float, float]],
+ sample_rate: int
+ ) -&gt; np.ndarray:
+ “"”Extract embeddings for all windows.”””
+ audio_segments = []</p>
+
+<p>for start, end in windows:
+ start_sample = int(start * sample_rate)
+ end_sample = int(end * sample_rate)</p>
+
+<p>segment_audio = audio[start_sample:end_sample]
+ audio_segments.append(segment_audio)</p>
+
+<p># Extract embeddings in batch
+ embeddings = self.embedding_extractor.extract_batch(
+ audio_segments,
+ sample_rate
+ )</p>
+
+<p>return embeddings</p>
+
+<p>def _cluster_fixed_speakers(
+ self,
+ embeddings: np.ndarray,
+ num_speakers: int
+ ) -&gt; np.ndarray:
+ “"”Cluster with fixed number of speakers.”””
+ from sklearn.cluster import KMeans</p>
+
+<p>kmeans = KMeans(n_clusters=num_speakers, random_state=42)
+ labels = kmeans.fit_predict(embeddings)</p>
+
+<p>return labels</p>
+
+<p>def _windows_to_segments(
+ self,
+ windows: List[Tuple[float, float]],
+ labels: np.ndarray
+ ) -&gt; List[DiarizationSegment]:
+ “"”Convert windows with labels to segments.”””
+ segments = []</p>
+
+<p>for (start, end), label in zip(windows, labels):
+ segments.append(DiarizationSegment(
+ start_time=start,
+ end_time=end,
+ speaker_id=int(label)
+ ))</p>
+
+<p>return segments</p>
+
+<p>def _smooth_segments(
+ self,
+ segments: List[DiarizationSegment],
+ min_duration: float = 0.5
+ ) -&gt; List[DiarizationSegment]:
+ “””
+ Smooth segment boundaries.</p>
+
+<p>Steps:</p>
+<ol>
+  <li>Merge consecutive segments from same speaker</li>
+  <li>Remove very short segments</li>
+  <li>Fill gaps between segments
+ “””
+ if not segments:
+ return []</li>
+</ol>
+
+<p># Sort by start time
+ segments = sorted(segments, key=lambda s: s.start_time)</p>
+
+<p># Merge consecutive segments from same speaker
+ merged = []
+ current = segments[0]</p>
+
+<p>for segment in segments[1:]:
+ if (segment.speaker_id == current.speaker_id and
+ segment.start_time - current.end_time &lt; 0.3):
+ # Merge
+ current = DiarizationSegment(
+ start_time=current.start_time,
+ end_time=segment.end_time,
+ speaker_id=current.speaker_id
+ )
+ else:
+ # Save current and start new
+ if current.duration &gt;= min_duration:
+ merged.append(current)
+ current = segment</p>
+
+<p># Add last segment
+ if current.duration &gt;= min_duration:
+ merged.append(current)</p>
+
+<p>return merged</p>
+
+<p>def format_output(
+ self,
+ segments: List[DiarizationSegment],
+ format: str = “rttm”
+ ) -&gt; str:
+ “””
+ Format diarization output.</p>
+
+<p>Args:
+ segments: Diarization segments
+ format: Output format (“rttm”, “json”, “text”)</p>
+
+<p>Returns:
+ Formatted string
+ “””
+ if format == “rttm”:
+ # RTTM format (standard for diarization evaluation)
+ lines = []
+ for seg in segments:
+ line = (
+ f”SPEAKER file 1 {seg.start_time:.2f} “
+ f”{seg.duration:.2f} <NA> <NA> speaker_{seg.speaker_id} <NA> <NA>"
+ )
+ lines.append(line)
+ return '\n'.join(lines)</NA></NA></NA></NA></p>
+
+<p>elif format == “json”:
+ import json
+ output = [
+ {
+ “start”: seg.start_time,
+ “end”: seg.end_time,
+ “speaker”: f”speaker_{seg.speaker_id}”,
+ “duration”: seg.duration
+ }
+ for seg in segments
+ ]
+ return json.dumps(output, indent=2)</p>
+
+<p>else: # text format
+ lines = []
+ for seg in segments:
+ line = (
+ f”[{seg.start_time:.1f}s - {seg.end_time:.1f}s] “
+ f”Speaker {seg.speaker_id}”
+ )
+ lines.append(line)
+ return ‘\n’.join(lines)</p>
+
+<h1 id="example-usage">Example usage</h1>
+<p>if <strong>name</strong> == “<strong>main</strong>”:
+ logging.basicConfig(level=logging.INFO)</p>
+
+<p># Generate sample audio (multi-speaker conversation)
+ # In practice, load real audio
+ sample_rate = 16000
+ duration = 60 # 60 seconds
+ audio = np.random.randn(sample_rate * duration) * 0.1</p>
+
+<p># Create diarization system
+ diarizer = SpeakerDiarization(
+ segment_duration=1.5,
+ overlap=0.75,
+ clustering_threshold=0.5
+ )</p>
+
+<p># Perform diarization
+ segments = diarizer.diarize(audio, sample_rate, num_speakers=None)</p>
+
+<p>print(f”\nDiarization Results:”)
+ print(f”Found {len(segments)} segments”)
+ print(f”Speakers: {len(set(s.speaker_id for s in segments))}”)</p>
+
+<p># Format output
+ print(“\n” + diarizer.format_output(segments, format=”text”))
+``</p>
 
 <h2 id="production-deployment">Production Deployment</h2>
 
 <h3 id="real-time-streaming-diarization">Real-Time Streaming Diarization</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">queue</span> <span class="kn">import</span> <span class="n">Queue</span>
-<span class="kn">from</span> <span class="n">threading</span> <span class="kn">import</span> <span class="n">Thread</span>
+<p>``python
+from queue import Queue
+from threading import Thread</p>
 
-<span class="k">class</span> <span class="nc">StreamingDiarization</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Online speaker diarization for live audio.
-    
-    Challenges:
-    - Need to assign speakers before seeing full audio
-    - No future context for boundary refinement
-    - Must be fast (&lt;100ms latency)
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">chunk_duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">chunk_duration</span> <span class="o">=</span> <span class="n">chunk_duration</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">embedding_extractor</span> <span class="o">=</span> <span class="nc">SpeakerEmbeddingExtractor</span><span class="p">()</span>
-        
-        <span class="c1"># Running state
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">speaker_embeddings</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># speaker_id -&gt; list of embeddings
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">next_speaker_id</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="c1"># Buffer
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">audio_buffer</span> <span class="o">=</span> <span class="nc">Queue</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">result_queue</span> <span class="o">=</span> <span class="nc">Queue</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">process_chunk</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio_chunk</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16000</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DiarizationSegment</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Process audio chunk and return diarization.
-        
-        Args:
-            audio_chunk: Audio chunk
-            sample_rate: Sample rate
-            
-        Returns:
-            Diarization segment or None
-        </span><span class="sh">"""</span>
-        <span class="c1"># Extract embedding
-</span>        <span class="n">embedding</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">embedding_extractor</span><span class="p">.</span><span class="nf">extract</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">)</span>
-        
-        <span class="c1"># Find nearest speaker
-</span>        <span class="n">speaker_id</span><span class="p">,</span> <span class="n">similarity</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_find_nearest_speaker</span><span class="p">(</span><span class="n">embedding</span><span class="p">)</span>
-        
-        <span class="c1"># If no similar speaker found, create new speaker
-</span>        <span class="k">if</span> <span class="n">speaker_id</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">similarity</span> <span class="o">&lt;</span> <span class="mf">0.7</span><span class="p">:</span>
-            <span class="n">speaker_id</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">next_speaker_id</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">speaker_embeddings</span><span class="p">[</span><span class="n">speaker_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">next_speaker_id</span> <span class="o">+=</span> <span class="mi">1</span>
-        
-        <span class="c1"># Add embedding to speaker profile
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">speaker_embeddings</span><span class="p">[</span><span class="n">speaker_id</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">embedding</span><span class="p">)</span>
-        
-        <span class="c1"># Return segment
-</span>        <span class="k">return</span> <span class="nc">DiarizationSegment</span><span class="p">(</span>
-            <span class="n">start_time</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>  <span class="c1"># Relative time
-</span>            <span class="n">end_time</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">chunk_duration</span><span class="p">,</span>
-            <span class="n">speaker_id</span><span class="o">=</span><span class="n">speaker_id</span><span class="p">,</span>
-            <span class="n">confidence</span><span class="o">=</span><span class="n">similarity</span> <span class="k">if</span> <span class="n">similarity</span> <span class="k">else</span> <span class="mf">0.0</span>
-        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_find_nearest_speaker</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">embedding</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">Find nearest known speaker.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">speaker_embeddings</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">0.0</span>
-        
-        <span class="n">best_speaker</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">best_similarity</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
-        
-        <span class="k">for</span> <span class="n">speaker_id</span><span class="p">,</span> <span class="n">embeddings</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">speaker_embeddings</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-            <span class="c1"># Average speaker embedding
-</span>            <span class="n">speaker_emb</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-            
-            <span class="c1"># Cosine similarity
-</span>            <span class="n">similarity</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">dot</span><span class="p">(</span><span class="n">embedding</span><span class="p">,</span> <span class="n">speaker_emb</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span>
-                <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">embedding</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">speaker_emb</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-8</span>
-            <span class="p">)</span>
-            
-            <span class="k">if</span> <span class="n">similarity</span> <span class="o">&gt;</span> <span class="n">best_similarity</span><span class="p">:</span>
-                <span class="n">best_similarity</span> <span class="o">=</span> <span class="n">similarity</span>
-                <span class="n">best_speaker</span> <span class="o">=</span> <span class="n">speaker_id</span>
-        
-        <span class="k">return</span> <span class="n">best_speaker</span><span class="p">,</span> <span class="n">best_similarity</span>
-</code></pre></div></div>
+<p>class StreamingDiarization:
+ “””
+ Online speaker diarization for live audio.</p>
+
+<p>Challenges:</p>
+<ul>
+  <li>Need to assign speakers before seeing full audio</li>
+  <li>No future context for boundary refinement</li>
+  <li>Must be fast (&lt;100ms latency)
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self, chunk_duration: float = 2.0):
+ self.chunk_duration = chunk_duration
+ self.embedding_extractor = SpeakerEmbeddingExtractor()</p>
+
+<p># Running state
+ self.speaker_embeddings = {} # speaker_id -&gt; list of embeddings
+ self.next_speaker_id = 0</p>
+
+<p># Buffer
+ self.audio_buffer = Queue()
+ self.result_queue = Queue()</p>
+
+<p>def process_chunk(
+ self,
+ audio_chunk: np.ndarray,
+ sample_rate: int = 16000
+ ) -&gt; Optional[DiarizationSegment]:
+ “””
+ Process audio chunk and return diarization.</p>
+
+<p>Args:
+ audio_chunk: Audio chunk
+ sample_rate: Sample rate</p>
+
+<p>Returns:
+ Diarization segment or None
+ “””
+ # Extract embedding
+ embedding = self.embedding_extractor.extract(audio_chunk, sample_rate)</p>
+
+<p># Find nearest speaker
+ speaker_id, similarity = self._find_nearest_speaker(embedding)</p>
+
+<p># If no similar speaker found, create new speaker
+ if speaker_id is None or similarity &lt; 0.7:
+ speaker_id = self.next_speaker_id
+ self.speaker_embeddings[speaker_id] = []
+ self.next_speaker_id += 1</p>
+
+<p># Add embedding to speaker profile
+ self.speaker_embeddings[speaker_id].append(embedding)</p>
+
+<p># Return segment
+ return DiarizationSegment(
+ start_time=0.0, # Relative time
+ end_time=self.chunk_duration,
+ speaker_id=speaker_id,
+ confidence=similarity if similarity else 0.0
+ )</p>
+
+<p>def _find_nearest_speaker(
+ self,
+ embedding: np.ndarray
+ ) -&gt; Tuple[Optional[int], float]:
+ “"”Find nearest known speaker.”””
+ if not self.speaker_embeddings:
+ return None, 0.0</p>
+
+<p>best_speaker = None
+ best_similarity = -1.0</p>
+
+<p>for speaker_id, embeddings in self.speaker_embeddings.items():
+ # Average speaker embedding
+ speaker_emb = np.mean(embeddings, axis=0)</p>
+
+<p># Cosine similarity
+ similarity = np.dot(embedding, speaker_emb) / (
+ np.linalg.norm(embedding) * np.linalg.norm(speaker_emb) + 1e-8
+ )</p>
+
+<p>if similarity &gt; best_similarity:
+ best_similarity = similarity
+ best_speaker = speaker_id</p>
+
+<p>return best_speaker, best_similarity
+``</p>
 
 <h2 id="evaluation-metrics">Evaluation Metrics</h2>
 
 <h3 id="diarization-error-rate-der">Diarization Error Rate (DER)</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">calculate_der</span><span class="p">(</span>
-    <span class="n">reference</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DiarizationSegment</span><span class="p">],</span>
-    <span class="n">hypothesis</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DiarizationSegment</span><span class="p">],</span>
-    <span class="n">collar</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-    <span class="sh">"""</span><span class="s">
-    Calculate Diarization Error Rate.
-    
-    DER = (False Alarm + Missed Detection + Speaker Error) / Total Speech Time
-    
-    Args:
-        reference: Ground truth segments
-        hypothesis: Predicted segments
-        collar: Forgiveness collar around boundaries (seconds)
-        
-    Returns:
-        Dictionary with DER components
-    </span><span class="sh">"""</span>
-    <span class="c1"># Convert segments to frame-level labels
-</span>    <span class="c1"># Simplified implementation
-</span>    
-    <span class="n">total_speech_time</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">seg</span><span class="p">.</span><span class="n">duration</span> <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">reference</span><span class="p">)</span>
-    
-    <span class="c1"># Calculate overlap with collar
-</span>    <span class="n">false_alarm</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">missed_detection</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">speaker_error</span> <span class="o">=</span> <span class="mf">0.0</span>
-    
-    <span class="c1"># ... detailed calculation ...
-</span>    
-    <span class="n">der</span> <span class="o">=</span> <span class="p">(</span><span class="n">false_alarm</span> <span class="o">+</span> <span class="n">missed_detection</span> <span class="o">+</span> <span class="n">speaker_error</span><span class="p">)</span> <span class="o">/</span> <span class="n">total_speech_time</span>
-    
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="sh">"</span><span class="s">der</span><span class="sh">"</span><span class="p">:</span> <span class="n">der</span><span class="p">,</span>
-        <span class="sh">"</span><span class="s">false_alarm</span><span class="sh">"</span><span class="p">:</span> <span class="n">false_alarm</span> <span class="o">/</span> <span class="n">total_speech_time</span><span class="p">,</span>
-        <span class="sh">"</span><span class="s">missed_detection</span><span class="sh">"</span><span class="p">:</span> <span class="n">missed_detection</span> <span class="o">/</span> <span class="n">total_speech_time</span><span class="p">,</span>
-        <span class="sh">"</span><span class="s">speaker_error</span><span class="sh">"</span><span class="p">:</span> <span class="n">speaker_error</span> <span class="o">/</span> <span class="n">total_speech_time</span>
-    <span class="p">}</span>
-</code></pre></div></div>
+<p>``python
+def calculate_der(
+ reference: List[DiarizationSegment],
+ hypothesis: List[DiarizationSegment],
+ collar: float = 0.25
+) -&gt; Dict[str, float]:
+ “””
+ Calculate Diarization Error Rate.</p>
+
+<p>DER = (False Alarm + Missed Detection + Speaker Error) / Total Speech Time</p>
+
+<p>Args:
+ reference: Ground truth segments
+ hypothesis: Predicted segments
+ collar: Forgiveness collar around boundaries (seconds)</p>
+
+<p>Returns:
+ Dictionary with DER components
+ “””
+ # Convert segments to frame-level labels
+ # Simplified implementation</p>
+
+<p>total_speech_time = sum(seg.duration for seg in reference)</p>
+
+<p># Calculate overlap with collar
+ false_alarm = 0.0
+ missed_detection = 0.0
+ speaker_error = 0.0</p>
+
+<p># … detailed calculation …</p>
+
+<p>der = (false_alarm + missed_detection + speaker_error) / total_speech_time</p>
+
+<p>return {
+ “der”: der,
+ “false_alarm”: false_alarm / total_speech_time,
+ “missed_detection”: missed_detection / total_speech_time,
+ “speaker_error”: speaker_error / total_speech_time
+ }
+``</p>
 
 <h2 id="real-world-case-study-zooms-diarization">Real-World Case Study: Zoom’s Diarization</h2>
 
@@ -1347,39 +1367,39 @@
   <tbody>
     <tr>
       <td><strong>VAD</strong></td>
-      <td>$10/day</td>
-      <td>$20/day</td>
+      <td><code class="language-plaintext highlighter-rouge">10/day | </code>20/day</td>
       <td>$5/day</td>
+      <td> </td>
     </tr>
     <tr>
       <td><strong>Embedding extraction</strong></td>
-      <td>$200/day</td>
-      <td>$500/day</td>
+      <td><code class="language-plaintext highlighter-rouge">200/day | </code>500/day</td>
       <td>$300/day</td>
+      <td> </td>
     </tr>
     <tr>
       <td><strong>Clustering</strong></td>
+      <td><code class="language-plaintext highlighter-rouge">50/day | </code>100/day</td>
       <td>$50/day</td>
-      <td>$100/day</td>
-      <td>$50/day</td>
+      <td> </td>
     </tr>
     <tr>
       <td><strong>Storage</strong></td>
-      <td>$20/day</td>
+      <td><code class="language-plaintext highlighter-rouge">20/day | </code>30/day</td>
       <td>$30/day</td>
-      <td>$30/day</td>
+      <td> </td>
     </tr>
     <tr>
       <td><strong>Total</strong></td>
-      <td><strong>$280/day</strong></td>
-      <td><strong>$650/day</strong></td>
+      <td><strong><code class="language-plaintext highlighter-rouge">280/day** | **</code>650/day</strong></td>
       <td><strong>$385/day</strong></td>
+      <td> </td>
     </tr>
     <tr>
       <td><strong>Per hour</strong></td>
-      <td><strong>$0.28</strong></td>
-      <td><strong>$0.65</strong></td>
+      <td><strong><code class="language-plaintext highlighter-rouge">0.28** | **</code>0.65</strong></td>
       <td><strong>$0.39</strong></td>
+      <td> </td>
     </tr>
   </tbody>
 </table>
@@ -1469,43 +1489,46 @@
 
 <h3 id="universal-pattern">Universal Pattern</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Generic grouping pattern
-</span><span class="k">def</span> <span class="nf">group_by_similarity</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">embed_function</span><span class="p">,</span> <span class="n">similarity_threshold</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Universal pattern for grouping similar items.
-    
-    Used in:
-    - Anagrams: embed = sort, threshold = exact match
-    - Clustering: embed = features, threshold = distance
-    - Diarization: embed = x-vector, threshold = cosine similarity
-    </span><span class="sh">"""</span>
-    <span class="n">embeddings</span> <span class="o">=</span> <span class="p">[</span><span class="nf">embed_function</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">]</span>
-    
-    <span class="c1"># Cluster by similarity
-</span>    <span class="n">groups</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">assigned</span> <span class="o">=</span> <span class="nf">set</span><span class="p">()</span>
-    
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">emb_i</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">embeddings</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">assigned</span><span class="p">:</span>
-            <span class="k">continue</span>
-        
-        <span class="n">group</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="p">]</span>
-        <span class="n">assigned</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">emb_j</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">embeddings</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">:],</span> <span class="n">start</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">assigned</span><span class="p">:</span>
-                <span class="k">continue</span>
-            
-            <span class="c1"># Check similarity
-</span>            <span class="n">similarity</span> <span class="o">=</span> <span class="nf">compute_similarity</span><span class="p">(</span><span class="n">emb_i</span><span class="p">,</span> <span class="n">emb_j</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">similarity</span> <span class="o">&gt;</span> <span class="n">similarity_threshold</span><span class="p">:</span>
-                <span class="n">group</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
-                <span class="n">assigned</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
-        
-        <span class="n">groups</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">groups</span>
-</code></pre></div></div>
+<p>``python</p>
+<h1 id="generic-grouping-pattern">Generic grouping pattern</h1>
+<p>def group_by_similarity(items, embed_function, similarity_threshold):
+ “””
+ Universal pattern for grouping similar items.</p>
+
+<p>Used in:</p>
+<ul>
+  <li>Anagrams: embed = sort, threshold = exact match</li>
+  <li>Clustering: embed = features, threshold = distance</li>
+  <li>Diarization: embed = x-vector, threshold = cosine similarity
+ “””
+ embeddings = [embed_function(item) for item in items]</li>
+</ul>
+
+<p># Cluster by similarity
+ groups = []
+ assigned = set()</p>
+
+<p>for i, emb_i in enumerate(embeddings):
+ if i in assigned:
+ continue</p>
+
+<p>group = [i]
+ assigned.add(i)</p>
+
+<p>for j, emb_j in enumerate(embeddings[i+1:], start=i+1):
+ if j in assigned:
+ continue</p>
+
+<p># Check similarity
+ similarity = compute_similarity(emb_i, emb_j)
+ if similarity &gt; similarity_threshold:
+ group.append(j)
+ assigned.add(j)</p>
+
+<p>groups.append(group)</p>
+
+<p>return groups
+``</p>
 
 <p>This pattern is <strong>universal</strong> across:</p>
 <ul>
@@ -1523,93 +1546,64 @@ actionable for real-world engineering, here is a concrete checklist you can use
 when bringing a diarization system to production:</p>
 
 <ul>
-  <li><strong>1. Start with VAD quality:</strong>
-    <ul>
-      <li>Plot VAD decisions over spectrograms for a few dozen random calls/meetings.</li>
-      <li>Look for:
-        <ul>
-          <li>Missed speech (VAD says silence but you clearly see speech energy),</li>
-          <li>False speech (background noise, music, keyboard noise).</li>
-        </ul>
-      </li>
-      <li>Adjust thresholds, smoothing windows, or switch to a stronger ML-based VAD
-before touching the clustering logic.</li>
-    </ul>
+  <li><strong>1. Start with VAD quality:</strong></li>
+  <li>Plot VAD decisions over spectrograms for a few dozen random calls/meetings.</li>
+  <li>Look for:</li>
+  <li>Missed speech (VAD says silence but you clearly see speech energy),</li>
+  <li>False speech (background noise, music, keyboard noise).</li>
+  <li>
+    <p>Adjust thresholds, smoothing windows, or switch to a stronger ML-based VAD
+ before touching the clustering logic.</p>
   </li>
-  <li><strong>2. Inspect embeddings:</strong>
-    <ul>
-      <li>Randomly sample a few speakers and visualize their embeddings with t-SNE/UMAP.</li>
-      <li>You want:
-        <ul>
-          <li>Tight clusters per speaker,</li>
-          <li>Clear separation between speakers,</li>
-          <li>Minimal collapse where different speakers overlap heavily.</li>
-        </ul>
-      </li>
-      <li>If embeddings are poor, clustering will always struggle no matter how clever
-the algorithm is.</li>
-    </ul>
+  <li><strong>2. Inspect embeddings:</strong></li>
+  <li>Randomly sample a few speakers and visualize their embeddings with t-SNE/UMAP.</li>
+  <li>You want:</li>
+  <li>Tight clusters per speaker,</li>
+  <li>Clear separation between speakers,</li>
+  <li>Minimal collapse where different speakers overlap heavily.</li>
+  <li>
+    <p>If embeddings are poor, clustering will always struggle no matter how clever
+ the algorithm is.</p>
   </li>
-  <li><strong>3. Tune clustering threshold systematically:</strong>
-    <ul>
-      <li>Don’t guess a cosine distance threshold—sweep a range and evaluate DER on
-a labeled dev set.</li>
-      <li>Plot:
-        <ul>
-          <li>Threshold vs DER,</li>
-          <li>Threshold vs number of clusters,</li>
-          <li>Threshold vs over/under-segmentation.</li>
-        </ul>
-      </li>
-      <li>Choose a threshold that balances DER and stability (not too sensitive to
-small changes in audio conditions).</li>
-    </ul>
+  <li><strong>3. Tune clustering threshold systematically:</strong></li>
+  <li>Don’t guess a cosine distance threshold—sweep a range and evaluate DER on
+ a labeled dev set.</li>
+  <li>Plot:</li>
+  <li>Threshold vs DER,</li>
+  <li>Threshold vs number of clusters,</li>
+  <li>Threshold vs over/under-segmentation.</li>
+  <li>
+    <p>Choose a threshold that balances DER and stability (not too sensitive to
+ small changes in audio conditions).</p>
   </li>
-  <li><strong>4. Look at error types, not just DER:</strong>
-    <ul>
-      <li>Break DER into:
-        <ul>
-          <li><strong>Missed speech</strong> (VAD/embedding failures),</li>
-          <li><strong>False alarm speech</strong> (noise, music),</li>
-          <li><strong>Speaker confusion</strong> (wrong speaker labels).</li>
-        </ul>
-      </li>
-      <li>Fixing each category requires different interventions:
-        <ul>
-          <li>Better VAD or denoising for missed/false alarm,</li>
-          <li>Better embeddings or clustering for speaker confusion.</li>
-        </ul>
-      </li>
-    </ul>
+  <li><strong>4. Look at error types, not just DER:</strong></li>
+  <li>Break DER into:</li>
+  <li><strong>Missed speech</strong> (VAD/embedding failures),</li>
+  <li><strong>False alarm speech</strong> (noise, music),</li>
+  <li><strong>Speaker confusion</strong> (wrong speaker labels).</li>
+  <li>Fixing each category requires different interventions:</li>
+  <li>Better VAD or denoising for missed/false alarm,</li>
+  <li>
+    <p>Better embeddings or clustering for speaker confusion.</p>
   </li>
-  <li><strong>5. Evaluate across domains and conditions:</strong>
-    <ul>
-      <li>Don’t just evaluate on clean, single-domain data.</li>
-      <li>Include:
-        <ul>
-          <li>Noisy calls,</li>
-          <li>Far-field microphones,</li>
-          <li>Multilingual speakers,</li>
-          <li>Overlapping speech scenarios.</li>
-        </ul>
-      </li>
-      <li>A diarization system that works only in lab conditions is rarely useful in
-production.</li>
-    </ul>
+  <li><strong>5. Evaluate across domains and conditions:</strong></li>
+  <li>Don’t just evaluate on clean, single-domain data.</li>
+  <li>Include:</li>
+  <li>Noisy calls,</li>
+  <li>Far-field microphones,</li>
+  <li>Multilingual speakers,</li>
+  <li>Overlapping speech scenarios.</li>
+  <li>
+    <p>A diarization system that works only in lab conditions is rarely useful in
+ production.</p>
   </li>
-  <li><strong>6. Build good tooling:</strong>
-    <ul>
-      <li>A small web UI that:
-        <ul>
-          <li>Plots waveforms + spectrograms,</li>
-          <li>Overlays diarization segments (colors per speaker),</li>
-          <li>Lets you play back per-speaker audio.</li>
-        </ul>
-      </li>
-      <li>This is often worth more than any additional model complexity when you are
-iterating quickly with researchers and product teams.</li>
-    </ul>
-  </li>
+  <li><strong>6. Build good tooling:</strong></li>
+  <li>A small web UI that:</li>
+  <li>Plots waveforms + spectrograms,</li>
+  <li>Overlays diarization segments (colors per speaker),</li>
+  <li>Lets you play back per-speaker audio.</li>
+  <li>This is often worth more than any additional model complexity when you are
+ iterating quickly with researchers and product teams.</li>
 </ul>
 
 <p>If you apply this checklist and tie it back to the clustering and interval-merging

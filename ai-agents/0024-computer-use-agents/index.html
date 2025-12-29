@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Computer Use Agents">
     <meta itemprop="description" content="“Moving from ‘Chatting’ with an AI to ‘Co-working’ with an OS.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -357,12 +357,13 @@ In Computer Use, we break down a “Infinite GUI” into a “Structured Action 
 <p>When Anthropic released Claude 3.5 Sonnet with “Computer Use” capabilities, they introduced a specific orchestration pattern that has now become the industry standard.</p>
 
 <h3 id="81-the-tool-definition-contract">8.1 The Tool-Definition Contract</h3>
-<p>Unlike previous models that just “wrote code” to control the mouse, Claude’s computer use tools are defined with a strict schema. The model doesn’t just output <code class="language-plaintext highlighter-rouge">mouse_click</code>; it outputs a structured request:</p>
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
- </span><span class="nl">"action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mouse_move"</span><span class="p">,</span><span class="w">
- </span><span class="nl">"coordinate"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">450</span><span class="p">,</span><span class="w"> </span><span class="mi">210</span><span class="p">]</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
+<p>Unlike previous models that just “wrote code” to control the mouse, Claude’s computer use tools are defined with a strict schema. The model doesn’t just output <code class="language-plaintext highlighter-rouge">mouse_click</code>; it outputs a structured request:
+<code class="language-plaintext highlighter-rouge">json
+{
+ "action": "mouse_move",
+ "coordinate": [450, 210]
+}
+</code></p>
 
 <h3 id="82-the-redaction-layer">8.2 The Redaction Layer</h3>
 <p>One of the most important parts of the Anthropic architecture is the <strong>Privacy Redaction Layer</strong>. Since the agent is seeing your whole screen, it might see:</p>
@@ -508,19 +509,20 @@ Models like <strong>Google RT-2</strong> or <strong>Figure 01</strong> don’t o
   <li><strong>The Vision Layer:</strong> If the app is a game or a legacy tool with no accessibility metadata, the agent falls back to pure Vision.</li>
 </ul>
 
-<p><strong>The “Fallthrough” Code:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">click_button</span><span class="p">(</span><span class="n">label</span><span class="p">):</span>
- <span class="c1"># 1. Try to find the button in the Accessibility Tree (Fast/Reliable)
-</span> <span class="n">coord</span> <span class="o">=</span> <span class="n">accessibility_api</span><span class="p">.</span><span class="nf">get_coordinates</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
- <span class="k">if</span> <span class="n">coord</span><span class="p">:</span> <span class="k">return</span> <span class="n">mouse</span><span class="p">.</span><span class="nf">click</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
+<p><strong>The “Fallthrough” Code:</strong>
+``python
+def click_button(label):
+ # 1. Try to find the button in the Accessibility Tree (Fast/Reliable)
+ coord = accessibility_api.get_coordinates(label)
+ if coord: return mouse.click(coord)</p>
 
- <span class="c1"># 2. If not found, run Vision (Slower/Contextual)
-</span> <span class="n">screenshot</span> <span class="o">=</span> <span class="n">cam</span><span class="p">.</span><span class="nf">capture</span><span class="p">()</span>
- <span class="n">coord</span> <span class="o">=</span> <span class="n">mllm</span><span class="p">.</span><span class="nf">detect_button</span><span class="p">(</span><span class="n">screenshot</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
- <span class="k">if</span> <span class="n">coord</span><span class="p">:</span> <span class="k">return</span> <span class="n">mouse</span><span class="p">.</span><span class="nf">click</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
+<p># 2. If not found, run Vision (Slower/Contextual)
+ screenshot = cam.capture()
+ coord = mllm.detect_button(screenshot, label)
+ if coord: return mouse.click(coord)</p>
 
- <span class="k">raise</span> <span class="nc">Exception</span><span class="p">(</span><span class="sh">"</span><span class="s">Button not found</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>raise Exception(“Button not found”)
+``</p>
 
 <hr />
 

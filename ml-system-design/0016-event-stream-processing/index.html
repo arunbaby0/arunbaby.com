@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Event Stream Processing">
     <meta itemprop="description" content="Build production event stream processing systems that handle millions of events per second using windowing and temporal aggregation—applying the same interval merging principles from algorithm design.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -392,49 +392,50 @@
 
 <h2 id="high-level-architecture">High-Level Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────────┐
-│                   Event Stream Processing System                 │
-└─────────────────────────────────────────────────────────────────┘
+<p>``
+┌─────────────────────────────────────────────────────────────────┐
+│ Event Stream Processing System │
+└─────────────────────────────────────────────────────────────────┘</p>
 
-          Event Sources
-          ┌─────────┐ ┌─────────┐ ┌─────────┐
-          │  Apps   │ │ Services│ │  IoT    │
-          └────┬────┘ └────┬────┘ └────┬────┘
-               │           │           │
-               └───────────┼───────────┘
-                           │
-                    ┌──────▼──────┐
-                    │   Kafka     │
-                    │  (Message   │
-                    │   Broker)   │
-                    └──────┬──────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        │                  │                  │
+<p>Event Sources
+ ┌─────────┐ ┌─────────┐ ┌─────────┐
+ │ Apps │ │ Services│ │ IoT │
+ └────┬────┘ └────┬────┘ └────┬────┘
+ │ │ │
+ └───────────┼───────────┘
+ │
+ ┌──────▼──────┐
+ │ Kafka │
+ │ (Message │
+ │ Broker) │
+ └──────┬──────┘
+ │
+ ┌──────────────────┼──────────────────┐
+ │ │ │
 ┌───────▼────────┐ ┌──────▼──────┐ ┌────────▼────────┐
-│ Stream         │ │ Windowing   │ │ Aggregation     │
-│ Processing     │ │ Engine      │ │ Engine          │
-│                │ │             │ │                 │
-│ - Filter       │ │ - Tumbling  │ │ - Count         │
-│ - Transform    │ │ - Sliding   │ │ - Sum           │
-│ - Enrich       │ │ - Session   │ │ - Average       │
+│ Stream │ │ Windowing │ │ Aggregation │
+│ Processing │ │ Engine │ │ Engine │
+│ │ │ │ │ │
+│ - Filter │ │ - Tumbling │ │ - Count │
+│ - Transform │ │ - Sliding │ │ - Sum │
+│ - Enrich │ │ - Session │ │ - Average │
 └───────┬────────┘ └──────┬──────┘ └────────┬────────┘
-        │                  │                  │
-        └──────────────────┼──────────────────┘
-                           │
-                    ┌──────▼──────┐
-                    │   State     │
-                    │   Store     │
-                    │  (RocksDB)  │
-                    └──────┬──────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        │                  │                  │
+ │ │ │
+ └──────────────────┼──────────────────┘
+ │
+ ┌──────▼──────┐
+ │ State │
+ │ Store │
+ │ (RocksDB) │
+ └──────┬──────┘
+ │
+ ┌──────────────────┼──────────────────┐
+ │ │ │
 ┌───────▼────────┐ ┌──────▼──────┐ ┌────────▼────────┐
-│   Database     │ │   Cache     │ │   Dashboard     │
-│  (Cassandra)   │ │   (Redis)   │ │  (Grafana)      │
+│ Database │ │ Cache │ │ Dashboard │
+│ (Cassandra) │ │ (Redis) │ │ (Grafana) │
 └────────────────┘ └─────────────┘ └─────────────────┘
-</code></pre></div></div>
+``</p>
 
 <h3 id="key-components">Key Components</h3>
 
@@ -452,731 +453,758 @@
 
 <p>Windows group events by time, just like merging intervals:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
-<span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="n">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
-<span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">import</span> <span class="n">time</span>
+<p>``python
+from typing import List, Dict, Any, Optional
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from collections import defaultdict
+import time</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">Event</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">A single event in the stream.</span><span class="sh">"""</span>
-    <span class="n">event_id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">event_type</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">timestamp</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># Unix timestamp in milliseconds
-</span>    <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
-    
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">event_time</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Get event time as datetime.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">datetime</span><span class="p">.</span><span class="nf">fromtimestamp</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">timestamp</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">)</span>
+<p>@dataclass
+class Event:
+ “"”A single event in the stream.”””
+ event_id: str
+ event_type: str
+ timestamp: int # Unix timestamp in milliseconds
+ user_id: str
+ data: Dict[str, Any]</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">Window</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    A time window containing events.
-    
-    Similar to intervals in merge intervals problem:
-    - start: interval start
-    - end: interval end
-    - events: data within interval
-    </span><span class="sh">"""</span>
-    <span class="n">start</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># Window start (ms)
-</span>    <span class="n">end</span><span class="p">:</span> <span class="nb">int</span>    <span class="c1"># Window end (ms)
-</span>    <span class="n">events</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Event</span><span class="p">]</span>
-    
-    <span class="k">def</span> <span class="nf">overlaps</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="sh">'</span><span class="s">Window</span><span class="sh">'</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Check if this window overlaps with another.
-        
-        Same logic as interval overlap:
-        max(start1, start2) &lt;= min(end1, end2)
-        </span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="nf">max</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">start</span><span class="p">,</span> <span class="n">other</span><span class="p">.</span><span class="n">start</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="nf">min</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">end</span><span class="p">,</span> <span class="n">other</span><span class="p">.</span><span class="n">end</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="sh">'</span><span class="s">Window</span><span class="sh">'</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="sh">'</span><span class="s">Window</span><span class="sh">'</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Merge this window with another.
-        
-        Same as merging intervals:
-        - New start = min of starts
-        - New end = max of ends
-        - Combine events
-        </span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="nc">Window</span><span class="p">(</span>
-            <span class="n">start</span><span class="o">=</span><span class="nf">min</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">start</span><span class="p">,</span> <span class="n">other</span><span class="p">.</span><span class="n">start</span><span class="p">),</span>
-            <span class="n">end</span><span class="o">=</span><span class="nf">max</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">end</span><span class="p">,</span> <span class="n">other</span><span class="p">.</span><span class="n">end</span><span class="p">),</span>
-            <span class="n">events</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">events</span> <span class="o">+</span> <span class="n">other</span><span class="p">.</span><span class="n">events</span>
-        <span class="p">)</span>
-    
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">duration_ms</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">end</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">start</span>
-    
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">event_count</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">events</span><span class="p">)</span>
+<p>@property
+ def event_time(self) -&gt; datetime:
+ “"”Get event time as datetime.”””
+ return datetime.fromtimestamp(self.timestamp / 1000.0)</p>
 
+<p>@dataclass
+class Window:
+ “””
+ A time window containing events.</p>
 
-<span class="k">class</span> <span class="nc">WindowManager</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Manage event windows for stream processing.
-    
-    Similar to merge intervals:
-    - Group events into time windows
-    - Merge overlapping windows
-    - Maintain sorted window list
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">window_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">tumbling</span><span class="sh">"</span><span class="p">,</span> <span class="n">window_size_ms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60000</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Initialize window manager.
-        
-        Args:
-            window_type: </span><span class="sh">"</span><span class="s">tumbling</span><span class="sh">"</span><span class="s">, </span><span class="sh">"</span><span class="s">sliding</span><span class="sh">"</span><span class="s">, or </span><span class="sh">"</span><span class="s">session</span><span class="sh">"</span><span class="s">
-            window_size_ms: Window size in milliseconds
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">window_type</span> <span class="o">=</span> <span class="n">window_type</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">window_size_ms</span> <span class="o">=</span> <span class="n">window_size_ms</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">windows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Window</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">def</span> <span class="nf">assign_to_window</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Window</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Assign event to window(s).
-        
-        Returns:
-            List of windows this event belongs to
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">window_type</span> <span class="o">==</span> <span class="sh">"</span><span class="s">tumbling</span><span class="sh">"</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">_assign_tumbling</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">self</span><span class="p">.</span><span class="n">window_type</span> <span class="o">==</span> <span class="sh">"</span><span class="s">sliding</span><span class="sh">"</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">_assign_sliding</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">self</span><span class="p">.</span><span class="n">window_type</span> <span class="o">==</span> <span class="sh">"</span><span class="s">session</span><span class="sh">"</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">_assign_session</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Unknown window type: </span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">window_type</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_assign_tumbling</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Window</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Tumbling windows: Fixed-size, non-overlapping.
-        
-        Example: 1-minute windows
-        [0-60s], [60-120s], [120-180s], ...
-        
-        Each event belongs to exactly one window.
-        </span><span class="sh">"""</span>
-        <span class="c1"># Calculate which window this event belongs to
-</span>        <span class="n">window_id</span> <span class="o">=</span> <span class="n">event</span><span class="p">.</span><span class="n">timestamp</span> <span class="o">//</span> <span class="n">self</span><span class="p">.</span><span class="n">window_size_ms</span>
-        <span class="n">window_start</span> <span class="o">=</span> <span class="n">window_id</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">window_size_ms</span>
-        <span class="n">window_end</span> <span class="o">=</span> <span class="n">window_start</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">window_size_ms</span>
-        
-        <span class="c1"># Find or create window
-</span>        <span class="n">window</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_find_or_create_window</span><span class="p">(</span><span class="n">window_start</span><span class="p">,</span> <span class="n">window_end</span><span class="p">)</span>
-        <span class="n">window</span><span class="p">.</span><span class="n">events</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="p">[</span><span class="n">window</span><span class="p">]</span>
-    
-    <span class="k">def</span> <span class="nf">_assign_sliding</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Window</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Sliding windows: Fixed-size, overlapping.
-        
-        Example: 1-minute windows, sliding every 30 seconds
-        [0-60s], [30-90s], [60-120s], ...
-        
-        Each event can belong to multiple windows.
-        </span><span class="sh">"""</span>
-        <span class="n">slide_interval</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">window_size_ms</span> <span class="o">//</span> <span class="mi">2</span>  <span class="c1"># 50% overlap
-</span>        
-        <span class="c1"># Find all windows this event falls into
-</span>        <span class="n">windows</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># Calculate first window that could contain this event
-</span>        <span class="n">first_window_id</span> <span class="o">=</span> <span class="p">(</span><span class="n">event</span><span class="p">.</span><span class="n">timestamp</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">window_size_ms</span><span class="p">)</span> <span class="o">//</span> <span class="n">slide_interval</span>
-        <span class="n">first_window_start</span> <span class="o">=</span> <span class="n">first_window_id</span> <span class="o">*</span> <span class="n">slide_interval</span>
-        
-        <span class="c1"># Check windows until event is past window end
-</span>        <span class="n">current_start</span> <span class="o">=</span> <span class="n">first_window_start</span>
-        
-        <span class="k">while</span> <span class="n">current_start</span> <span class="o">&lt;=</span> <span class="n">event</span><span class="p">.</span><span class="n">timestamp</span><span class="p">:</span>
-            <span class="n">current_end</span> <span class="o">=</span> <span class="n">current_start</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">window_size_ms</span>
-            
-            <span class="k">if</span> <span class="n">current_start</span> <span class="o">&lt;=</span> <span class="n">event</span><span class="p">.</span><span class="n">timestamp</span> <span class="o">&lt;</span> <span class="n">current_end</span><span class="p">:</span>
-                <span class="n">window</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_find_or_create_window</span><span class="p">(</span><span class="n">current_start</span><span class="p">,</span> <span class="n">current_end</span><span class="p">)</span>
-                <span class="n">window</span><span class="p">.</span><span class="n">events</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
-                <span class="n">windows</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
-            
-            <span class="n">current_start</span> <span class="o">+=</span> <span class="n">slide_interval</span>
-        
-        <span class="k">return</span> <span class="n">windows</span>
-    
-    <span class="k">def</span> <span class="nf">_assign_session</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Window</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Session windows: Dynamic windows based on activity gaps.
-        
-        A session ends when there</span><span class="sh">'</span><span class="s">s a gap &gt; session_timeout between events.
-        
-        This is like merging intervals with a max gap tolerance!
-        </span><span class="sh">"""</span>
-        <span class="n">session_timeout</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">1000</span>  <span class="c1"># 5 minutes
-</span>        
-        <span class="c1"># Find window that could be extended
-</span>        <span class="k">for</span> <span class="n">window</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">windows</span><span class="p">:</span>
-            <span class="c1"># Check if event is within session timeout of window end
-</span>            <span class="k">if</span> <span class="n">event</span><span class="p">.</span><span class="n">timestamp</span> <span class="o">-</span> <span class="n">window</span><span class="p">.</span><span class="n">end</span> <span class="o">&lt;=</span> <span class="n">session_timeout</span><span class="p">:</span>
-                <span class="c1"># Extend window
-</span>                <span class="n">window</span><span class="p">.</span><span class="n">end</span> <span class="o">=</span> <span class="n">event</span><span class="p">.</span><span class="n">timestamp</span>
-                <span class="n">window</span><span class="p">.</span><span class="n">events</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
-                <span class="k">return</span> <span class="p">[</span><span class="n">window</span><span class="p">]</span>
-        
-        <span class="c1"># Start new session
-</span>        <span class="n">window</span> <span class="o">=</span> <span class="nc">Window</span><span class="p">(</span>
-            <span class="n">start</span><span class="o">=</span><span class="n">event</span><span class="p">.</span><span class="n">timestamp</span><span class="p">,</span>
-            <span class="n">end</span><span class="o">=</span><span class="n">event</span><span class="p">.</span><span class="n">timestamp</span><span class="p">,</span>
-            <span class="n">events</span><span class="o">=</span><span class="p">[</span><span class="n">event</span><span class="p">]</span>
-        <span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">windows</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="p">[</span><span class="n">window</span><span class="p">]</span>
-    
-    <span class="k">def</span> <span class="nf">_find_or_create_window</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Window</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Find existing window or create new one.</span><span class="sh">"""</span>
-        <span class="k">for</span> <span class="n">window</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">windows</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">window</span><span class="p">.</span><span class="n">start</span> <span class="o">==</span> <span class="n">start</span> <span class="ow">and</span> <span class="n">window</span><span class="p">.</span><span class="n">end</span> <span class="o">==</span> <span class="n">end</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">window</span>
-        
-        <span class="c1"># Create new window
-</span>        <span class="n">new_window</span> <span class="o">=</span> <span class="nc">Window</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="p">[])</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">windows</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">new_window</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">new_window</span>
-    
-    <span class="k">def</span> <span class="nf">get_completed_windows</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">watermark</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Window</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Get windows that are complete (past watermark).
-        
-        Watermark = latest timestamp we</span><span class="sh">'</span><span class="s">re confident we</span><span class="sh">'</span><span class="s">ve seen all events for.
-        
-        Similar to merge intervals: return all intervals before a certain time.
-        </span><span class="sh">"""</span>
-        <span class="n">completed</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">remaining</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">window</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">windows</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">window</span><span class="p">.</span><span class="n">end</span> <span class="o">&lt;</span> <span class="n">watermark</span><span class="p">:</span>
-                <span class="n">completed</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">remaining</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">windows</span> <span class="o">=</span> <span class="n">remaining</span>
-        <span class="k">return</span> <span class="n">completed</span>
-    
-    <span class="k">def</span> <span class="nf">merge_overlapping_windows</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Window</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Merge overlapping windows.
-        
-        This is exactly the merge intervals algorithm!
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">windows</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[]</span>
-        
-        <span class="c1"># Sort by start time
-</span>        <span class="n">sorted_windows</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">windows</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="n">w</span><span class="p">.</span><span class="n">start</span><span class="p">)</span>
-        
-        <span class="n">merged</span> <span class="o">=</span> <span class="p">[</span><span class="n">sorted_windows</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
-        
-        <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="n">sorted_windows</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
-            <span class="n">last</span> <span class="o">=</span> <span class="n">merged</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            
-            <span class="k">if</span> <span class="n">current</span><span class="p">.</span><span class="nf">overlaps</span><span class="p">(</span><span class="n">last</span><span class="p">):</span>
-                <span class="c1"># Merge
-</span>                <span class="n">merged</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">last</span><span class="p">.</span><span class="nf">merge</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Add new window
-</span>                <span class="n">merged</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">merged</span>
-</code></pre></div></div>
+<p>Similar to intervals in merge intervals problem:</p>
+<ul>
+  <li>start: interval start</li>
+  <li>end: interval end</li>
+  <li>events: data within interval
+ “””
+ start: int # Window start (ms)
+ end: int # Window end (ms)
+ events: List[Event]</li>
+</ul>
+
+<p>def overlaps(self, other: ‘Window’) -&gt; bool:
+ “””
+ Check if this window overlaps with another.</p>
+
+<p>Same logic as interval overlap:
+ max(start1, start2) &lt;= min(end1, end2)
+ “””
+ return max(self.start, other.start) &lt;= min(self.end, other.end)</p>
+
+<p>def merge(self, other: ‘Window’) -&gt; ‘Window’:
+ “””
+ Merge this window with another.</p>
+
+<p>Same as merging intervals:</p>
+<ul>
+  <li>New start = min of starts</li>
+  <li>New end = max of ends</li>
+  <li>Combine events
+ “””
+ return Window(
+ start=min(self.start, other.start),
+ end=max(self.end, other.end),
+ events=self.events + other.events
+ )</li>
+</ul>
+
+<p>@property
+ def duration_ms(self) -&gt; int:
+ return self.end - self.start</p>
+
+<p>@property
+ def event_count(self) -&gt; int:
+ return len(self.events)</p>
+
+<p>class WindowManager:
+ “””
+ Manage event windows for stream processing.</p>
+
+<p>Similar to merge intervals:</p>
+<ul>
+  <li>Group events into time windows</li>
+  <li>Merge overlapping windows</li>
+  <li>Maintain sorted window list
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self, window_type: str = “tumbling”, window_size_ms: int = 60000):
+ “””
+ Initialize window manager.</p>
+
+<p>Args:
+ window_type: “tumbling”, “sliding”, or “session”
+ window_size_ms: Window size in milliseconds
+ “””
+ self.window_type = window_type
+ self.window_size_ms = window_size_ms
+ self.windows: List[Window] = []</p>
+
+<p>def assign_to_window(self, event: Event) -&gt; List[Window]:
+ “””
+ Assign event to window(s).</p>
+
+<p>Returns:
+ List of windows this event belongs to
+ “””
+ if self.window_type == “tumbling”:
+ return self._assign_tumbling(event)
+ elif self.window_type == “sliding”:
+ return self._assign_sliding(event)
+ elif self.window_type == “session”:
+ return self._assign_session(event)
+ else:
+ raise ValueError(f”Unknown window type: {self.window_type}”)</p>
+
+<p>def _assign_tumbling(self, event: Event) -&gt; List[Window]:
+ “””
+ Tumbling windows: Fixed-size, non-overlapping.</p>
+
+<p>Example: 1-minute windows
+ [0-60s], [60-120s], [120-180s], …</p>
+
+<p>Each event belongs to exactly one window.
+ “””
+ # Calculate which window this event belongs to
+ window_id = event.timestamp // self.window_size_ms
+ window_start = window_id * self.window_size_ms
+ window_end = window_start + self.window_size_ms</p>
+
+<p># Find or create window
+ window = self._find_or_create_window(window_start, window_end)
+ window.events.append(event)</p>
+
+<p>return [window]</p>
+
+<p>def _assign_sliding(self, event: Event) -&gt; List[Window]:
+ “””
+ Sliding windows: Fixed-size, overlapping.</p>
+
+<p>Example: 1-minute windows, sliding every 30 seconds
+ [0-60s], [30-90s], [60-120s], …</p>
+
+<p>Each event can belong to multiple windows.
+ “””
+ slide_interval = self.window_size_ms // 2 # 50% overlap</p>
+
+<p># Find all windows this event falls into
+ windows = []</p>
+
+<p># Calculate first window that could contain this event
+ first_window_id = (event.timestamp - self.window_size_ms) // slide_interval
+ first_window_start = first_window_id * slide_interval</p>
+
+<p># Check windows until event is past window end
+ current_start = first_window_start</p>
+
+<p>while current_start &lt;= event.timestamp:
+ current_end = current_start + self.window_size_ms</p>
+
+<p>if current_start &lt;= event.timestamp &lt; current_end:
+ window = self._find_or_create_window(current_start, current_end)
+ window.events.append(event)
+ windows.append(window)</p>
+
+<p>current_start += slide_interval</p>
+
+<p>return windows</p>
+
+<p>def _assign_session(self, event: Event) -&gt; List[Window]:
+ “””
+ Session windows: Dynamic windows based on activity gaps.</p>
+
+<p>A session ends when there’s a gap &gt; session_timeout between events.</p>
+
+<p>This is like merging intervals with a max gap tolerance!
+ “””
+ session_timeout = 5 * 60 * 1000 # 5 minutes</p>
+
+<p># Find window that could be extended
+ for window in self.windows:
+ # Check if event is within session timeout of window end
+ if event.timestamp - window.end &lt;= session_timeout:
+ # Extend window
+ window.end = event.timestamp
+ window.events.append(event)
+ return [window]</p>
+
+<p># Start new session
+ window = Window(
+ start=event.timestamp,
+ end=event.timestamp,
+ events=[event]
+ )
+ self.windows.append(window)</p>
+
+<p>return [window]</p>
+
+<p>def _find_or_create_window(self, start: int, end: int) -&gt; Window:
+ “"”Find existing window or create new one.”””
+ for window in self.windows:
+ if window.start == start and window.end == end:
+ return window</p>
+
+<p># Create new window
+ new_window = Window(start=start, end=end, events=[])
+ self.windows.append(new_window)</p>
+
+<p>return new_window</p>
+
+<p>def get_completed_windows(self, watermark: int) -&gt; List[Window]:
+ “””
+ Get windows that are complete (past watermark).</p>
+
+<p>Watermark = latest timestamp we’re confident we’ve seen all events for.</p>
+
+<p>Similar to merge intervals: return all intervals before a certain time.
+ “””
+ completed = []
+ remaining = []</p>
+
+<p>for window in self.windows:
+ if window.end &lt; watermark:
+ completed.append(window)
+ else:
+ remaining.append(window)</p>
+
+<p>self.windows = remaining
+ return completed</p>
+
+<p>def merge_overlapping_windows(self) -&gt; List[Window]:
+ “””
+ Merge overlapping windows.</p>
+
+<p>This is exactly the merge intervals algorithm!
+ “””
+ if not self.windows:
+ return []</p>
+
+<p># Sort by start time
+ sorted_windows = sorted(self.windows, key=lambda w: w.start)</p>
+
+<p>merged = [sorted_windows[0]]</p>
+
+<p>for current in sorted_windows[1:]:
+ last = merged[-1]</p>
+
+<p>if current.overlaps(last):
+ # Merge
+ merged[-1] = last.merge(current)
+ else:
+ # Add new window
+ merged.append(current)</p>
+
+<p>return merged
+``</p>
 
 <h3 id="2-stream-processing-engine">2. Stream Processing Engine</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span>
-<span class="kn">from</span> <span class="n">queue</span> <span class="kn">import</span> <span class="n">Queue</span>
-<span class="kn">import</span> <span class="n">threading</span>
+<p>``python
+from typing import Callable, List
+from queue import Queue
+import threading</p>
 
-<span class="k">class</span> <span class="nc">StreamProcessor</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Event stream processing engine.
-    
-    Features:
-    - Real-time event processing
-    - Windowed aggregations
-    - Stateful operations
-    - Exactly-once semantics
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">window_manager</span> <span class="o">=</span> <span class="nc">WindowManager</span><span class="p">(</span><span class="n">window_type</span><span class="o">=</span><span class="sh">"</span><span class="s">tumbling</span><span class="sh">"</span><span class="p">,</span> <span class="n">window_size_ms</span><span class="o">=</span><span class="mi">60000</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">aggregators</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">state_store</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        
-        <span class="c1"># Processing queue
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">event_queue</span> <span class="o">=</span> <span class="nc">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">running</span> <span class="o">=</span> <span class="bp">False</span>
-        
-        <span class="c1"># Metrics
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">events_processed</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">windows_created</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="k">def</span> <span class="nf">register_aggregator</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Register an aggregation function.</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">aggregators</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span>
-    
-    <span class="k">def</span> <span class="nf">process_event</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Process a single event.
-        
-        Steps:
-        1. Assign to window(s)
-        2. Update state
-        3. Apply aggregations
-        4. Emit results
-        </span><span class="sh">"""</span>
-        <span class="c1"># Assign to windows
-</span>        <span class="n">windows</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">window_manager</span><span class="p">.</span><span class="nf">assign_to_window</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
-        
-        <span class="c1"># Update state for each window
-</span>        <span class="k">for</span> <span class="n">window</span> <span class="ow">in</span> <span class="n">windows</span><span class="p">:</span>
-            <span class="n">window_key</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">window</span><span class="p">.</span><span class="n">start</span><span class="si">}</span><span class="s">-</span><span class="si">{</span><span class="n">window</span><span class="p">.</span><span class="n">end</span><span class="si">}</span><span class="sh">"</span>
-            
-            <span class="c1"># Initialize state if needed
-</span>            <span class="k">if</span> <span class="n">window_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">state_store</span><span class="p">:</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">state_store</span><span class="p">[</span><span class="n">window_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                    <span class="sh">'</span><span class="s">count</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-                    <span class="sh">'</span><span class="s">sum</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-                    <span class="sh">'</span><span class="s">events</span><span class="sh">'</span><span class="p">:</span> <span class="p">[]</span>
-                <span class="p">}</span>
-            
-            <span class="c1"># Update state
-</span>            <span class="n">state</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">state_store</span><span class="p">[</span><span class="n">window_key</span><span class="p">]</span>
-            <span class="n">state</span><span class="p">[</span><span class="sh">'</span><span class="s">count</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">state</span><span class="p">[</span><span class="sh">'</span><span class="s">events</span><span class="sh">'</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
-            
-            <span class="c1"># Apply aggregations
-</span>            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">aggregator</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">aggregators</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="nf">aggregator</span><span class="p">(</span><span class="n">window</span><span class="p">.</span><span class="n">events</span><span class="p">)</span>
-                <span class="n">state</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">events_processed</span> <span class="o">+=</span> <span class="mi">1</span>
-    
-    <span class="k">def</span> <span class="nf">get_window_aggregates</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">window_start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">window_end</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Get aggregates for a specific window.</span><span class="sh">"""</span>
-        <span class="n">window_key</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">window_start</span><span class="si">}</span><span class="s">-</span><span class="si">{</span><span class="n">window_end</span><span class="si">}</span><span class="sh">"</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">state_store</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">window_key</span><span class="p">,</span> <span class="p">{})</span>
-    
-    <span class="k">def</span> <span class="nf">flush_completed_windows</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">watermark</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Flush completed windows to output.
-        
-        Similar to returning merged intervals after processing.
-        </span><span class="sh">"""</span>
-        <span class="n">completed</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">window_manager</span><span class="p">.</span><span class="nf">get_completed_windows</span><span class="p">(</span><span class="n">watermark</span><span class="p">)</span>
-        
-        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">window</span> <span class="ow">in</span> <span class="n">completed</span><span class="p">:</span>
-            <span class="n">window_key</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">window</span><span class="p">.</span><span class="n">start</span><span class="si">}</span><span class="s">-</span><span class="si">{</span><span class="n">window</span><span class="p">.</span><span class="n">end</span><span class="si">}</span><span class="sh">"</span>
-            
-            <span class="k">if</span> <span class="n">window_key</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">state_store</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="p">{</span>
-                    <span class="sh">'</span><span class="s">window_start</span><span class="sh">'</span><span class="p">:</span> <span class="n">window</span><span class="p">.</span><span class="n">start</span><span class="p">,</span>
-                    <span class="sh">'</span><span class="s">window_end</span><span class="sh">'</span><span class="p">:</span> <span class="n">window</span><span class="p">.</span><span class="n">end</span><span class="p">,</span>
-                    <span class="sh">'</span><span class="s">aggregates</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">state_store</span><span class="p">[</span><span class="n">window_key</span><span class="p">]</span>
-                <span class="p">}</span>
-                <span class="n">results</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-                
-                <span class="c1"># Clean up state
-</span>                <span class="k">del</span> <span class="n">self</span><span class="p">.</span><span class="n">state_store</span><span class="p">[</span><span class="n">window_key</span><span class="p">]</span>
-        
-        <span class="k">return</span> <span class="n">results</span>
+<p>class StreamProcessor:
+ “””
+ Event stream processing engine.</p>
 
+<p>Features:</p>
+<ul>
+  <li>Real-time event processing</li>
+  <li>Windowed aggregations</li>
+  <li>Stateful operations</li>
+  <li>Exactly-once semantics
+ “””</li>
+</ul>
 
-<span class="c1"># Example usage
-</span><span class="k">def</span> <span class="nf">example_stream_processing</span><span class="p">():</span>
-    <span class="sh">"""</span><span class="s">Example: Count events per user in 1-minute windows.</span><span class="sh">"""</span>
-    <span class="n">processor</span> <span class="o">=</span> <span class="nc">StreamProcessor</span><span class="p">()</span>
-    
-    <span class="c1"># Register aggregator
-</span>    <span class="k">def</span> <span class="nf">count_by_user</span><span class="p">(</span><span class="n">events</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Event</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">Count events per user.</span><span class="sh">"""</span>
-        <span class="n">counts</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
-            <span class="n">counts</span><span class="p">[</span><span class="n">event</span><span class="p">.</span><span class="n">user_id</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="k">return</span> <span class="nf">dict</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
-    
-    <span class="n">processor</span><span class="p">.</span><span class="nf">register_aggregator</span><span class="p">(</span><span class="sh">'</span><span class="s">user_counts</span><span class="sh">'</span><span class="p">,</span> <span class="n">count_by_user</span><span class="p">)</span>
-    
-    <span class="c1"># Process events
-</span>    <span class="n">events</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="nc">Event</span><span class="p">(</span><span class="sh">"</span><span class="s">1</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">click</span><span class="sh">"</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="sh">"</span><span class="s">user1</span><span class="sh">"</span><span class="p">,</span> <span class="p">{}),</span>
-        <span class="nc">Event</span><span class="p">(</span><span class="sh">"</span><span class="s">2</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">click</span><span class="sh">"</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="sh">"</span><span class="s">user1</span><span class="sh">"</span><span class="p">,</span> <span class="p">{}),</span>
-        <span class="nc">Event</span><span class="p">(</span><span class="sh">"</span><span class="s">3</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">click</span><span class="sh">"</span><span class="p">,</span> <span class="mi">3000</span><span class="p">,</span> <span class="sh">"</span><span class="s">user2</span><span class="sh">"</span><span class="p">,</span> <span class="p">{}),</span>
-        <span class="nc">Event</span><span class="p">(</span><span class="sh">"</span><span class="s">4</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">view</span><span class="sh">"</span><span class="p">,</span> <span class="mi">65000</span><span class="p">,</span> <span class="sh">"</span><span class="s">user1</span><span class="sh">"</span><span class="p">,</span> <span class="p">{}),</span>  <span class="c1"># Next window
-</span>    <span class="p">]</span>
-    
-    <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
-        <span class="n">processor</span><span class="p">.</span><span class="nf">process_event</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
-    
-    <span class="c1"># Flush completed windows (watermark = 70000ms)
-</span>    <span class="n">results</span> <span class="o">=</span> <span class="n">processor</span><span class="p">.</span><span class="nf">flush_completed_windows</span><span class="p">(</span><span class="mi">70000</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Window </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">window_start</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">-</span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">window_end</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">:</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  User counts: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">aggregates</span><span class="sh">'</span><span class="p">][</span><span class="sh">'</span><span class="s">user_counts</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def <strong>init</strong>(self):
+ self.window_manager = WindowManager(window_type=”tumbling”, window_size_ms=60000)
+ self.aggregators: Dict[str, Callable] = {}
+ self.state_store: Dict[str, Any] = {}</p>
+
+<p># Processing queue
+ self.event_queue = Queue(maxsize=10000)
+ self.running = False</p>
+
+<p># Metrics
+ self.events_processed = 0
+ self.windows_created = 0</p>
+
+<p>def register_aggregator(self, name: str, func: Callable):
+ “"”Register an aggregation function.”””
+ self.aggregators[name] = func</p>
+
+<p>def process_event(self, event: Event):
+ “””
+ Process a single event.</p>
+
+<p>Steps:</p>
+<ol>
+  <li>Assign to window(s)</li>
+  <li>Update state</li>
+  <li>Apply aggregations</li>
+  <li>Emit results
+ “””
+ # Assign to windows
+ windows = self.window_manager.assign_to_window(event)</li>
+</ol>
+
+<p># Update state for each window
+ for window in windows:
+ window_key = f”{window.start}-{window.end}”</p>
+
+<p># Initialize state if needed
+ if window_key not in self.state_store:
+ self.state_store[window_key] = {
+ ‘count’: 0,
+ ‘sum’: 0,
+ ‘events’: []
+ }</p>
+
+<p># Update state
+ state = self.state_store[window_key]
+ state[‘count’] += 1
+ state[‘events’].append(event)</p>
+
+<p># Apply aggregations
+ for name, aggregator in self.aggregators.items():
+ result = aggregator(window.events)
+ state[name] = result</p>
+
+<p>self.events_processed += 1</p>
+
+<p>def get_window_aggregates(self, window_start: int, window_end: int) -&gt; Dict:
+ “"”Get aggregates for a specific window.”””
+ window_key = f”{window_start}-{window_end}”
+ return self.state_store.get(window_key, {})</p>
+
+<p>def flush_completed_windows(self, watermark: int) -&gt; List[Dict]:
+ “””
+ Flush completed windows to output.</p>
+
+<p>Similar to returning merged intervals after processing.
+ “””
+ completed = self.window_manager.get_completed_windows(watermark)</p>
+
+<p>results = []</p>
+
+<p>for window in completed:
+ window_key = f”{window.start}-{window.end}”</p>
+
+<p>if window_key in self.state_store:
+ result = {
+ ‘window_start’: window.start,
+ ‘window_end’: window.end,
+ ‘aggregates’: self.state_store[window_key]
+ }
+ results.append(result)</p>
+
+<p># Clean up state
+ del self.state_store[window_key]</p>
+
+<p>return results</p>
+
+<h1 id="example-usage">Example usage</h1>
+<p>def example_stream_processing():
+ “"”Example: Count events per user in 1-minute windows.”””
+ processor = StreamProcessor()</p>
+
+<p># Register aggregator
+ def count_by_user(events: List[Event]) -&gt; Dict[str, int]:
+ “"”Count events per user.”””
+ counts = defaultdict(int)
+ for event in events:
+ counts[event.user_id] += 1
+ return dict(counts)</p>
+
+<p>processor.register_aggregator(‘user_counts’, count_by_user)</p>
+
+<p># Process events
+ events = [
+ Event(“1”, “click”, 1000, “user1”, {}),
+ Event(“2”, “click”, 2000, “user1”, {}),
+ Event(“3”, “click”, 3000, “user2”, {}),
+ Event(“4”, “view”, 65000, “user1”, {}), # Next window
+ ]</p>
+
+<p>for event in events:
+ processor.process_event(event)</p>
+
+<p># Flush completed windows (watermark = 70000ms)
+ results = processor.flush_completed_windows(70000)</p>
+
+<p>for result in results:
+ print(f”Window {result[‘window_start’]}-{result[‘window_end’]}:”)
+ print(f” User counts: {result[‘aggregates’][‘user_counts’]}”)
+``</p>
 
 <h3 id="3-complex-event-processing-cep">3. Complex Event Processing (CEP)</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Callable</span>
-<span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<p>``python
+from typing import List, Callable
+from dataclasses import dataclass</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">Pattern</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Event pattern for detection.</span><span class="sh">"""</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">conditions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Event</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span>
-    <span class="n">window_ms</span><span class="p">:</span> <span class="nb">int</span>
-    
-<span class="k">class</span> <span class="nc">CEPEngine</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Complex Event Processing engine.
-    
-    Detect patterns in event streams:
-    - Sequences: A followed by B within time window
-    - Conditions: Events matching criteria
-    - Aggregations: Count, sum over window
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">patterns</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Pattern</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">matches</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">def</span> <span class="nf">register_pattern</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">pattern</span><span class="p">:</span> <span class="n">Pattern</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Register a pattern to detect.</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">patterns</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">detect_patterns</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">events</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Event</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Detect registered patterns in event stream.
-        
-        Uses interval-style processing:
-        - Sort events by time
-        - Sliding window over events
-        - Check pattern conditions
-        </span><span class="sh">"""</span>
-        <span class="n">matches</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># Sort events by timestamp
-</span>        <span class="n">sorted_events</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="p">.</span><span class="n">timestamp</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">patterns</span><span class="p">:</span>
-            <span class="c1"># Find sequences matching pattern
-</span>            <span class="n">pattern_matches</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_find_pattern_matches</span><span class="p">(</span><span class="n">sorted_events</span><span class="p">,</span> <span class="n">pattern</span><span class="p">)</span>
-            <span class="n">matches</span><span class="p">.</span><span class="nf">extend</span><span class="p">(</span><span class="n">pattern_matches</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">matches</span>
-    
-    <span class="k">def</span> <span class="nf">_find_pattern_matches</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">events</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Event</span><span class="p">],</span>
-        <span class="n">pattern</span><span class="p">:</span> <span class="n">Pattern</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">Find all matches of pattern in events.</span><span class="sh">"""</span>
-        <span class="n">matches</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">events</span><span class="p">)):</span>
-            <span class="c1"># Try to match pattern starting at event i
-</span>            <span class="n">match_events</span> <span class="o">=</span> <span class="p">[</span><span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
-            
-            <span class="c1"># Check if first condition matches
-</span>            <span class="k">if</span> <span class="ow">not</span> <span class="n">pattern</span><span class="p">.</span><span class="n">conditions</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
-                <span class="k">continue</span>
-            
-            <span class="c1"># Look for subsequent events matching remaining conditions
-</span>            <span class="n">j</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
-            <span class="n">condition_idx</span> <span class="o">=</span> <span class="mi">1</span>
-            
-            <span class="k">while</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="nf">len</span><span class="p">(</span><span class="n">events</span><span class="p">)</span> <span class="ow">and</span> <span class="n">condition_idx</span> <span class="o">&lt;</span> <span class="nf">len</span><span class="p">(</span><span class="n">pattern</span><span class="p">.</span><span class="n">conditions</span><span class="p">):</span>
-                <span class="c1"># Check if within time window
-</span>                <span class="k">if</span> <span class="n">events</span><span class="p">[</span><span class="n">j</span><span class="p">].</span><span class="n">timestamp</span> <span class="o">-</span> <span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">timestamp</span> <span class="o">&gt;</span> <span class="n">pattern</span><span class="p">.</span><span class="n">window_ms</span><span class="p">:</span>
-                    <span class="k">break</span>
-                
-                <span class="c1"># Check if condition matches
-</span>                <span class="k">if</span> <span class="n">pattern</span><span class="p">.</span><span class="n">conditions</span><span class="p">[</span><span class="n">condition_idx</span><span class="p">](</span><span class="n">events</span><span class="p">[</span><span class="n">j</span><span class="p">]):</span>
-                    <span class="n">match_events</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">events</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
-                    <span class="n">condition_idx</span> <span class="o">+=</span> <span class="mi">1</span>
-                
-                <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
-            
-            <span class="c1"># Check if full pattern matched
-</span>            <span class="k">if</span> <span class="n">condition_idx</span> <span class="o">==</span> <span class="nf">len</span><span class="p">(</span><span class="n">pattern</span><span class="p">.</span><span class="n">conditions</span><span class="p">):</span>
-                <span class="n">matches</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span>
-                    <span class="sh">'</span><span class="s">pattern</span><span class="sh">'</span><span class="p">:</span> <span class="n">pattern</span><span class="p">.</span><span class="n">name</span><span class="p">,</span>
-                    <span class="sh">'</span><span class="s">events</span><span class="sh">'</span><span class="p">:</span> <span class="n">match_events</span><span class="p">,</span>
-                    <span class="sh">'</span><span class="s">start_time</span><span class="sh">'</span><span class="p">:</span> <span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">timestamp</span><span class="p">,</span>
-                    <span class="sh">'</span><span class="s">end_time</span><span class="sh">'</span><span class="p">:</span> <span class="n">match_events</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="n">timestamp</span>
-                <span class="p">})</span>
-        
-        <span class="k">return</span> <span class="n">matches</span>
+<p>@dataclass
+class Pattern:
+ “"”Event pattern for detection.”””
+ name: str
+ conditions: List[Callable[[Event], bool]]
+ window_ms: int</p>
 
+<p>class CEPEngine:
+ “””
+ Complex Event Processing engine.</p>
 
-<span class="c1"># Example: Fraud detection pattern
-</span><span class="k">def</span> <span class="nf">fraud_detection_example</span><span class="p">():</span>
-    <span class="sh">"""</span><span class="s">Detect potential fraud: multiple failed logins followed by success.</span><span class="sh">"""</span>
-    <span class="n">cep</span> <span class="o">=</span> <span class="nc">CEPEngine</span><span class="p">()</span>
-    
-    <span class="c1"># Define pattern
-</span>    <span class="n">pattern</span> <span class="o">=</span> <span class="nc">Pattern</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="sh">"</span><span class="s">suspicious_login</span><span class="sh">"</span><span class="p">,</span>
-        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span>
-            <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="p">.</span><span class="n">event_type</span> <span class="o">==</span> <span class="sh">"</span><span class="s">login_failed</span><span class="sh">"</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="p">.</span><span class="n">event_type</span> <span class="o">==</span> <span class="sh">"</span><span class="s">login_failed</span><span class="sh">"</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="p">.</span><span class="n">event_type</span> <span class="o">==</span> <span class="sh">"</span><span class="s">login_failed</span><span class="sh">"</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="p">.</span><span class="n">event_type</span> <span class="o">==</span> <span class="sh">"</span><span class="s">login_success</span><span class="sh">"</span>
-        <span class="p">],</span>
-        <span class="n">window_ms</span><span class="o">=</span><span class="mi">60000</span>  <span class="c1"># Within 1 minute
-</span>    <span class="p">)</span>
-    
-    <span class="n">cep</span><span class="p">.</span><span class="nf">register_pattern</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
-    
-    <span class="c1"># Test events
-</span>    <span class="n">events</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="nc">Event</span><span class="p">(</span><span class="sh">"</span><span class="s">1</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">login_failed</span><span class="sh">"</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="sh">"</span><span class="s">user1</span><span class="sh">"</span><span class="p">,</span> <span class="p">{}),</span>
-        <span class="nc">Event</span><span class="p">(</span><span class="sh">"</span><span class="s">2</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">login_failed</span><span class="sh">"</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="sh">"</span><span class="s">user1</span><span class="sh">"</span><span class="p">,</span> <span class="p">{}),</span>
-        <span class="nc">Event</span><span class="p">(</span><span class="sh">"</span><span class="s">3</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">login_failed</span><span class="sh">"</span><span class="p">,</span> <span class="mi">3000</span><span class="p">,</span> <span class="sh">"</span><span class="s">user1</span><span class="sh">"</span><span class="p">,</span> <span class="p">{}),</span>
-        <span class="nc">Event</span><span class="p">(</span><span class="sh">"</span><span class="s">4</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">login_success</span><span class="sh">"</span><span class="p">,</span> <span class="mi">4000</span><span class="p">,</span> <span class="sh">"</span><span class="s">user1</span><span class="sh">"</span><span class="p">,</span> <span class="p">{}),</span>
-    <span class="p">]</span>
-    
-    <span class="n">matches</span> <span class="o">=</span> <span class="n">cep</span><span class="p">.</span><span class="nf">detect_patterns</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="k">match</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Pattern </span><span class="sh">'</span><span class="si">{</span><span class="k">match</span><span class="p">[</span><span class="sh">'</span><span class="s">pattern</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">'</span><span class="s"> detected:</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  Time window: </span><span class="si">{</span><span class="k">match</span><span class="p">[</span><span class="sh">'</span><span class="s">start_time</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">-</span><span class="si">{</span><span class="k">match</span><span class="p">[</span><span class="sh">'</span><span class="s">end_time</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  Events: </span><span class="si">{</span><span class="p">[</span><span class="n">e</span><span class="p">.</span><span class="n">event_id</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="k">match</span><span class="p">[</span><span class="sh">'</span><span class="s">events</span><span class="sh">'</span><span class="p">]]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>Detect patterns in event streams:</p>
+<ul>
+  <li>Sequences: A followed by B within time window</li>
+  <li>Conditions: Events matching criteria</li>
+  <li>Aggregations: Count, sum over window
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self):
+ self.patterns: List[Pattern] = []
+ self.matches: List[Dict] = []</p>
+
+<p>def register_pattern(self, pattern: Pattern):
+ “"”Register a pattern to detect.”””
+ self.patterns.append(pattern)</p>
+
+<p>def detect_patterns(self, events: List[Event]) -&gt; List[Dict]:
+ “””
+ Detect registered patterns in event stream.</p>
+
+<p>Uses interval-style processing:</p>
+<ul>
+  <li>Sort events by time</li>
+  <li>Sliding window over events</li>
+  <li>Check pattern conditions
+ “””
+ matches = []</li>
+</ul>
+
+<p># Sort events by timestamp
+ sorted_events = sorted(events, key=lambda e: e.timestamp)</p>
+
+<p>for pattern in self.patterns:
+ # Find sequences matching pattern
+ pattern_matches = self._find_pattern_matches(sorted_events, pattern)
+ matches.extend(pattern_matches)</p>
+
+<p>return matches</p>
+
+<p>def _find_pattern_matches(
+ self,
+ events: List[Event],
+ pattern: Pattern
+ ) -&gt; List[Dict]:
+ “"”Find all matches of pattern in events.”””
+ matches = []</p>
+
+<p>for i in range(len(events)):
+ # Try to match pattern starting at event i
+ match_events = [events[i]]</p>
+
+<p># Check if first condition matches
+ if not pattern.conditions<a href="events[i]">0</a>:
+ continue</p>
+
+<p># Look for subsequent events matching remaining conditions
+ j = i + 1
+ condition_idx = 1</p>
+
+<p>while j &lt; len(events) and condition_idx &lt; len(pattern.conditions):
+ # Check if within time window
+ if events[j].timestamp - events[i].timestamp &gt; pattern.window_ms:
+ break</p>
+
+<p># Check if condition matches
+ if pattern.conditions<a href="events[j]">condition_idx</a>:
+ match_events.append(events[j])
+ condition_idx += 1</p>
+
+<p>j += 1</p>
+
+<p># Check if full pattern matched
+ if condition_idx == len(pattern.conditions):
+ matches.append({
+ ‘pattern’: pattern.name,
+ ‘events’: match_events,
+ ‘start_time’: events[i].timestamp,
+ ‘end_time’: match_events[-1].timestamp
+ })</p>
+
+<p>return matches</p>
+
+<h1 id="example-fraud-detection-pattern">Example: Fraud detection pattern</h1>
+<p>def fraud_detection_example():
+ “"”Detect potential fraud: multiple failed logins followed by success.”””
+ cep = CEPEngine()</p>
+
+<p># Define pattern
+ pattern = Pattern(
+ name=”suspicious_login”,
+ conditions=[
+ lambda e: e.event_type == “login_failed”,
+ lambda e: e.event_type == “login_failed”,
+ lambda e: e.event_type == “login_failed”,
+ lambda e: e.event_type == “login_success”
+ ],
+ window_ms=60000 # Within 1 minute
+ )</p>
+
+<p>cep.register_pattern(pattern)</p>
+
+<p># Test events
+ events = [
+ Event(“1”, “login_failed”, 1000, “user1”, {}),
+ Event(“2”, “login_failed”, 2000, “user1”, {}),
+ Event(“3”, “login_failed”, 3000, “user1”, {}),
+ Event(“4”, “login_success”, 4000, “user1”, {}),
+ ]</p>
+
+<p>matches = cep.detect_patterns(events)</p>
+
+<p>for match in matches:
+ print(f”Pattern ‘{match[‘pattern’]}’ detected:”)
+ print(f” Time window: {match[‘start_time’]}-{match[‘end_time’]}”)
+ print(f” Events: {[e.event_id for e in match[‘events’]]}”)
+``</p>
 
 <h3 id="4-state-management-with-checkpointing">4. State Management with Checkpointing</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">pickle</span>
-<span class="kn">import</span> <span class="n">os</span>
+<p>``python
+import pickle
+import os</p>
 
-<span class="k">class</span> <span class="nc">StateManager</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Manage stateful stream processing with checkpointing.
-    
-    Features:
-    - Fault tolerance through checkpoints
-    - Exactly-once semantics
-    - State recovery
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">checkpoint_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">/tmp/checkpoints</span><span class="sh">"</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">checkpoint_dir</span> <span class="o">=</span> <span class="n">checkpoint_dir</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">state</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">checkpoint_interval_ms</span> <span class="o">=</span> <span class="mi">60000</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">last_checkpoint_time</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="n">os</span><span class="p">.</span><span class="nf">makedirs</span><span class="p">(</span><span class="n">checkpoint_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">update_state</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Update state.</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">state</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-    
-    <span class="k">def</span> <span class="nf">get_state</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="bp">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Get state value.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">state</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">checkpoint</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">watermark</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Create state checkpoint.
-        
-        Similar to saving merged intervals periodically.
-        </span><span class="sh">"""</span>
-        <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">checkpoint_dir</span><span class="p">,</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="s">checkpoint_</span><span class="si">{</span><span class="n">watermark</span><span class="si">}</span><span class="s">.pkl</span><span class="sh">"</span>
-        <span class="p">)</span>
-        
-        <span class="k">with</span> <span class="nf">open</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">,</span> <span class="sh">'</span><span class="s">wb</span><span class="sh">'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">pickle</span><span class="p">.</span><span class="nf">dump</span><span class="p">({</span>
-                <span class="sh">'</span><span class="s">watermark</span><span class="sh">'</span><span class="p">:</span> <span class="n">watermark</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">state</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">state</span>
-            <span class="p">},</span> <span class="n">f</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">last_checkpoint_time</span> <span class="o">=</span> <span class="n">watermark</span>
-        
-        <span class="c1"># Clean old checkpoints
-</span>        <span class="n">self</span><span class="p">.</span><span class="nf">_cleanup_old_checkpoints</span><span class="p">(</span><span class="n">watermark</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">restore_from_checkpoint</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">watermark</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Restore state from checkpoint.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">watermark</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="c1"># Find latest checkpoint
-</span>            <span class="n">checkpoints</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="p">.</span><span class="nf">listdir</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">checkpoint_dir</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">f</span><span class="p">.</span><span class="nf">startswith</span><span class="p">(</span><span class="sh">"</span><span class="s">checkpoint_</span><span class="sh">"</span><span class="p">)</span>
-            <span class="p">]</span>
-            
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">checkpoints</span><span class="p">:</span>
-                <span class="k">return</span>
-            
-            <span class="n">latest</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">checkpoints</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="nf">int</span><span class="p">(</span><span class="n">f</span><span class="p">.</span><span class="nf">split</span><span class="p">(</span><span class="sh">'</span><span class="s">_</span><span class="sh">'</span><span class="p">)[</span><span class="mi">1</span><span class="p">].</span><span class="nf">split</span><span class="p">(</span><span class="sh">'</span><span class="s">.</span><span class="sh">'</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span>
-            <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">checkpoint_dir</span><span class="p">,</span> <span class="n">latest</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">checkpoint_dir</span><span class="p">,</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="s">checkpoint_</span><span class="si">{</span><span class="n">watermark</span><span class="si">}</span><span class="s">.pkl</span><span class="sh">"</span>
-            <span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="nf">exists</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">):</span>
-            <span class="k">with</span> <span class="nf">open</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">,</span> <span class="sh">'</span><span class="s">rb</span><span class="sh">'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="n">pickle</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="sh">'</span><span class="s">state</span><span class="sh">'</span><span class="p">]</span>
-                <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="sh">'</span><span class="s">watermark</span><span class="sh">'</span><span class="p">]</span>
-        
-        <span class="k">return</span> <span class="bp">None</span>
-    
-    <span class="k">def</span> <span class="nf">_cleanup_old_checkpoints</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">current_watermark</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">keep_last</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Keep only recent checkpoints.</span><span class="sh">"""</span>
-        <span class="n">checkpoints</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="nf">int</span><span class="p">(</span><span class="n">f</span><span class="p">.</span><span class="nf">split</span><span class="p">(</span><span class="sh">'</span><span class="s">_</span><span class="sh">'</span><span class="p">)[</span><span class="mi">1</span><span class="p">].</span><span class="nf">split</span><span class="p">(</span><span class="sh">'</span><span class="s">.</span><span class="sh">'</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span>
-            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="p">.</span><span class="nf">listdir</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">checkpoint_dir</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">f</span><span class="p">.</span><span class="nf">startswith</span><span class="p">(</span><span class="sh">"</span><span class="s">checkpoint_</span><span class="sh">"</span><span class="p">)</span>
-        <span class="p">]</span>
-        
-        <span class="c1"># Sort by watermark
-</span>        <span class="n">checkpoints</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        
-        <span class="c1"># Delete old ones
-</span>        <span class="k">for</span> <span class="n">checkpoint_file</span><span class="p">,</span> <span class="n">watermark</span> <span class="ow">in</span> <span class="n">checkpoints</span><span class="p">[</span><span class="n">keep_last</span><span class="p">:]:</span>
-            <span class="n">os</span><span class="p">.</span><span class="nf">remove</span><span class="p">(</span><span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">checkpoint_dir</span><span class="p">,</span> <span class="n">checkpoint_file</span><span class="p">))</span>
-</code></pre></div></div>
+<p>class StateManager:
+ “””
+ Manage stateful stream processing with checkpointing.</p>
+
+<p>Features:</p>
+<ul>
+  <li>Fault tolerance through checkpoints</li>
+  <li>Exactly-once semantics</li>
+  <li>State recovery
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self, checkpoint_dir: str = “/tmp/checkpoints”):
+ self.checkpoint_dir = checkpoint_dir
+ self.state: Dict[str, Any] = {}
+ self.checkpoint_interval_ms = 60000
+ self.last_checkpoint_time = 0</p>
+
+<p>os.makedirs(checkpoint_dir, exist_ok=True)</p>
+
+<p>def update_state(self, key: str, value: Any):
+ “"”Update state.”””
+ self.state[key] = value</p>
+
+<p>def get_state(self, key: str, default: Any = None) -&gt; Any:
+ “"”Get state value.”””
+ return self.state.get(key, default)</p>
+
+<p>def checkpoint(self, watermark: int):
+ “””
+ Create state checkpoint.</p>
+
+<p>Similar to saving merged intervals periodically.
+ “””
+ checkpoint_path = os.path.join(
+ self.checkpoint_dir,
+ f”checkpoint_{watermark}.pkl”
+ )</p>
+
+<p>with open(checkpoint_path, ‘wb’) as f:
+ pickle.dump({
+ ‘watermark’: watermark,
+ ‘state’: self.state
+ }, f)</p>
+
+<p>self.last_checkpoint_time = watermark</p>
+
+<p># Clean old checkpoints
+ self._cleanup_old_checkpoints(watermark)</p>
+
+<p>def restore_from_checkpoint(self, watermark: Optional[int] = None):
+ “"”Restore state from checkpoint.”””
+ if watermark is None:
+ # Find latest checkpoint
+ checkpoints = [
+ f for f in os.listdir(self.checkpoint_dir)
+ if f.startswith(“checkpoint_”)
+ ]</p>
+
+<p>if not checkpoints:
+ return</p>
+
+<p>latest = max(checkpoints, key=lambda f: int(f.split(‘<em>’)[1].split(‘.’)[0]))
+ checkpoint_path = os.path.join(self.checkpoint_dir, latest)
+ else:
+ checkpoint_path = os.path.join(
+ self.checkpoint_dir,
+ f”checkpoint</em>{watermark}.pkl”
+ )</p>
+
+<p>if os.path.exists(checkpoint_path):
+ with open(checkpoint_path, ‘rb’) as f:
+ data = pickle.load(f)
+ self.state = data[‘state’]
+ return data[‘watermark’]</p>
+
+<p>return None</p>
+
+<p>def <em>cleanup_old_checkpoints(self, current_watermark: int, keep_last: int = 3):
+ “"”Keep only recent checkpoints.”””
+ checkpoints = [
+ (f, int(f.split(‘</em>’)[1].split(‘.’)[0]))
+ for f in os.listdir(self.checkpoint_dir)
+ if f.startswith(“checkpoint_”)
+ ]</p>
+
+<p># Sort by watermark
+ checkpoints.sort(key=lambda x: x[1], reverse=True)</p>
+
+<p># Delete old ones
+ for checkpoint_file, watermark in checkpoints[keep_last:]:
+ os.remove(os.path.join(self.checkpoint_dir, checkpoint_file))
+``</p>
 
 <h2 id="production-deployment">Production Deployment</h2>
 
 <h3 id="apache-kafka--flink-architecture">Apache Kafka + Flink Architecture</h3>
 
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># docker-compose.yml for stream processing stack</span>
-<span class="na">version</span><span class="pi">:</span> <span class="s1">'</span><span class="s">3.8'</span>
+<p>``yaml</p>
+<h1 id="docker-composeyml-for-stream-processing-stack">docker-compose.yml for stream processing stack</h1>
+<p>version: ‘3.8’</p>
 
-<span class="na">services</span><span class="pi">:</span>
-  <span class="na">zookeeper</span><span class="pi">:</span>
-    <span class="na">image</span><span class="pi">:</span> <span class="s">confluentinc/cp-zookeeper:latest</span>
-    <span class="na">environment</span><span class="pi">:</span>
-      <span class="na">ZOOKEEPER_CLIENT_PORT</span><span class="pi">:</span> <span class="m">2181</span>
-      <span class="na">ZOOKEEPER_TICK_TIME</span><span class="pi">:</span> <span class="m">2000</span>
-  
-  <span class="na">kafka</span><span class="pi">:</span>
-    <span class="na">image</span><span class="pi">:</span> <span class="s">confluentinc/cp-kafka:latest</span>
-    <span class="na">depends_on</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">zookeeper</span>
-    <span class="na">ports</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s2">"</span><span class="s">9092:9092"</span>
-    <span class="na">environment</span><span class="pi">:</span>
-      <span class="na">KAFKA_BROKER_ID</span><span class="pi">:</span> <span class="m">1</span>
-      <span class="na">KAFKA_ZOOKEEPER_CONNECT</span><span class="pi">:</span> <span class="s">zookeeper:2181</span>
-      <span class="na">KAFKA_ADVERTISED_LISTENERS</span><span class="pi">:</span> <span class="s">PLAINTEXT://kafka:9092</span>
-      <span class="na">KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR</span><span class="pi">:</span> <span class="m">1</span>
-  
-  <span class="na">flink-jobmanager</span><span class="pi">:</span>
-    <span class="na">image</span><span class="pi">:</span> <span class="s">flink:latest</span>
-    <span class="na">ports</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s2">"</span><span class="s">8081:8081"</span>
-    <span class="na">command</span><span class="pi">:</span> <span class="s">jobmanager</span>
-    <span class="na">environment</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">JOB_MANAGER_RPC_ADDRESS=flink-jobmanager</span>
-  
-  <span class="na">flink-taskmanager</span><span class="pi">:</span>
-    <span class="na">image</span><span class="pi">:</span> <span class="s">flink:latest</span>
-    <span class="na">depends_on</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">flink-jobmanager</span>
-    <span class="na">command</span><span class="pi">:</span> <span class="s">taskmanager</span>
-    <span class="na">environment</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="s">JOB_MANAGER_RPC_ADDRESS=flink-jobmanager</span>
-    <span class="na">deploy</span><span class="pi">:</span>
-      <span class="na">replicas</span><span class="pi">:</span> <span class="m">3</span>
-</code></pre></div></div>
+<p>services:
+ zookeeper:
+ image: confluentinc/cp-zookeeper:latest
+ environment:
+ ZOOKEEPER_CLIENT_PORT: 2181
+ ZOOKEEPER_TICK_TIME: 2000</p>
+
+<p>kafka:
+ image: confluentinc/cp-kafka:latest
+ depends_on:</p>
+<ul>
+  <li>zookeeper
+ ports:</li>
+  <li>“9092:9092”
+ environment:
+ KAFKA_BROKER_ID: 1
+ KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+ KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+ KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1</li>
+</ul>
+
+<p>flink-jobmanager:
+ image: flink:latest
+ ports:</p>
+<ul>
+  <li>“8081:8081”
+ command: jobmanager
+ environment:</li>
+  <li>JOB_MANAGER_RPC_ADDRESS=flink-jobmanager</li>
+</ul>
+
+<p>flink-taskmanager:
+ image: flink:latest
+ depends_on:</p>
+<ul>
+  <li>flink-jobmanager
+ command: taskmanager
+ environment:</li>
+  <li>JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+ deploy:
+ replicas: 3
+``</li>
+</ul>
 
 <h3 id="kafka-producer">Kafka Producer</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">kafka</span> <span class="kn">import</span> <span class="n">KafkaProducer</span>
-<span class="kn">import</span> <span class="n">json</span>
+<p>``python
+from kafka import KafkaProducer
+import json</p>
 
-<span class="k">class</span> <span class="nc">EventProducer</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Produce events to Kafka.</span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">bootstrap_servers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">producer</span> <span class="o">=</span> <span class="nc">KafkaProducer</span><span class="p">(</span>
-            <span class="n">bootstrap_servers</span><span class="o">=</span><span class="n">bootstrap_servers</span><span class="p">,</span>
-            <span class="n">value_serializer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">(</span><span class="n">v</span><span class="p">).</span><span class="nf">encode</span><span class="p">(</span><span class="sh">'</span><span class="s">utf-8</span><span class="sh">'</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">topic</span> <span class="o">=</span> <span class="n">topic</span>
-    
-    <span class="k">def</span> <span class="nf">send_event</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Send event to Kafka.</span><span class="sh">"""</span>
-        <span class="n">event_dict</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">event_id</span><span class="sh">'</span><span class="p">:</span> <span class="n">event</span><span class="p">.</span><span class="n">event_id</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">event_type</span><span class="sh">'</span><span class="p">:</span> <span class="n">event</span><span class="p">.</span><span class="n">event_type</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">timestamp</span><span class="sh">'</span><span class="p">:</span> <span class="n">event</span><span class="p">.</span><span class="n">timestamp</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">user_id</span><span class="sh">'</span><span class="p">:</span> <span class="n">event</span><span class="p">.</span><span class="n">user_id</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">data</span><span class="sh">'</span><span class="p">:</span> <span class="n">event</span><span class="p">.</span><span class="n">data</span>
-        <span class="p">}</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">producer</span><span class="p">.</span><span class="nf">send</span><span class="p">(</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">topic</span><span class="p">,</span>
-            <span class="n">value</span><span class="o">=</span><span class="n">event_dict</span><span class="p">,</span>
-            <span class="n">key</span><span class="o">=</span><span class="n">event</span><span class="p">.</span><span class="n">user_id</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="sh">'</span><span class="s">utf-8</span><span class="sh">'</span><span class="p">)</span>  <span class="c1"># Partition by user
-</span>        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Flush pending messages.</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">producer</span><span class="p">.</span><span class="nf">flush</span><span class="p">()</span>
-</code></pre></div></div>
+<p>class EventProducer:
+ “"”Produce events to Kafka.”””</p>
+
+<p>def <strong>init</strong>(self, bootstrap_servers: List[str], topic: str):
+ self.producer = KafkaProducer(
+ bootstrap_servers=bootstrap_servers,
+ value_serializer=lambda v: json.dumps(v).encode(‘utf-8’)
+ )
+ self.topic = topic</p>
+
+<p>def send_event(self, event: Event):
+ “"”Send event to Kafka.”””
+ event_dict = {
+ ‘event_id’: event.event_id,
+ ‘event_type’: event.event_type,
+ ‘timestamp’: event.timestamp,
+ ‘user_id’: event.user_id,
+ ‘data’: event.data
+ }</p>
+
+<p>self.producer.send(
+ self.topic,
+ value=event_dict,
+ key=event.user_id.encode(‘utf-8’) # Partition by user
+ )</p>
+
+<p>def flush(self):
+ “"”Flush pending messages.”””
+ self.producer.flush()
+``</p>
 
 <h2 id="scaling-strategies">Scaling Strategies</h2>
 
 <h3 id="horizontal-scaling">Horizontal Scaling</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Kafka topics with multiple partitions for parallelism
-</span><span class="k">def</span> <span class="nf">create_kafka_topic</span><span class="p">(</span><span class="n">admin_client</span><span class="p">,</span> <span class="n">topic_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">num_partitions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Create Kafka topic with partitions.</span><span class="sh">"""</span>
-    <span class="kn">from</span> <span class="n">kafka.admin</span> <span class="kn">import</span> <span class="n">NewTopic</span>
-    
-    <span class="n">topic</span> <span class="o">=</span> <span class="nc">NewTopic</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="n">topic_name</span><span class="p">,</span>
-        <span class="n">num_partitions</span><span class="o">=</span><span class="n">num_partitions</span><span class="p">,</span>
-        <span class="n">replication_factor</span><span class="o">=</span><span class="mi">3</span>
-    <span class="p">)</span>
-    
-    <span class="n">admin_client</span><span class="p">.</span><span class="nf">create_topics</span><span class="p">([</span><span class="n">topic</span><span class="p">])</span>
-</code></pre></div></div>
+<p>``python</p>
+<h1 id="kafka-topics-with-multiple-partitions-for-parallelism">Kafka topics with multiple partitions for parallelism</h1>
+<p>def create_kafka_topic(admin_client, topic_name: str, num_partitions: int = 10):
+ “"”Create Kafka topic with partitions.”””
+ from kafka.admin import NewTopic</p>
+
+<p>topic = NewTopic(
+ name=topic_name,
+ num_partitions=num_partitions,
+ replication_factor=3
+ )</p>
+
+<p>admin_client.create_topics([topic])
+``</p>
 
 <h3 id="auto-scaling-based-on-lag">Auto-scaling Based on Lag</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">StreamProcessorAutoScaler</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Auto-scale stream processors based on consumer lag.</span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">max_lag_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">max_lag_threshold</span> <span class="o">=</span> <span class="n">max_lag_threshold</span>
-    
-    <span class="k">def</span> <span class="nf">should_scale_up</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">consumer_lag</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Check if should add more processors.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">consumer_lag</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">max_lag_threshold</span>
-    
-    <span class="k">def</span> <span class="nf">should_scale_down</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">consumer_lag</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Check if can reduce processors.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">consumer_lag</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">max_lag_threshold</span> <span class="o">*</span> <span class="mf">0.5</span>
-</code></pre></div></div>
+<p>``python
+class StreamProcessorAutoScaler:
+ “"”Auto-scale stream processors based on consumer lag.”””</p>
+
+<p>def <strong>init</strong>(self, max_lag_threshold: int = 10000):
+ self.max_lag_threshold = max_lag_threshold</p>
+
+<p>def should_scale_up(self, consumer_lag: int) -&gt; bool:
+ “"”Check if should add more processors.”””
+ return consumer_lag &gt; self.max_lag_threshold</p>
+
+<p>def should_scale_down(self, consumer_lag: int) -&gt; bool:
+ “"”Check if can reduce processors.”””
+ return consumer_lag &lt; self.max_lag_threshold * 0.5
+``</p>
 
 <h2 id="real-world-case-study-netflix-event-processing">Real-World Case Study: Netflix Event Processing</h2>
 
@@ -1259,8 +1287,8 @@
     <tr>
       <td><strong>Total</strong></td>
       <td> </td>
-      <td><strong>$13,700/month</strong></td>
-      <td><strong>$0.37 per million events</strong></td>
+      <td><strong><code class="language-plaintext highlighter-rouge">13,700/month** | **</code>0.37 per million events</strong></td>
+      <td> </td>
     </tr>
   </tbody>
 </table>
@@ -1323,12 +1351,15 @@
 
 <h3 id="universal-pattern">Universal Pattern</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Pattern used across all three:
-</span><span class="mf">1.</span> <span class="n">Sort</span> <span class="n">items</span> <span class="n">by</span> <span class="n">time</span><span class="o">/</span><span class="n">position</span>
-<span class="mf">2.</span> <span class="n">Process</span> <span class="ow">in</span> <span class="n">temporal</span> <span class="n">order</span>
-<span class="mf">3.</span> <span class="n">Merge</span> <span class="n">adjacent</span><span class="o">/</span><span class="n">overlapping</span> <span class="n">ranges</span>
-<span class="mf">4.</span> <span class="n">Apply</span> <span class="n">aggregations</span> <span class="n">within</span> <span class="n">ranges</span>
-</code></pre></div></div>
+<p>``python</p>
+<h1 id="pattern-used-across-all-three">Pattern used across all three:</h1>
+<ol>
+  <li>Sort items by time/position</li>
+  <li>Process in temporal order</li>
+  <li>Merge adjacent/overlapping ranges</li>
+  <li>Apply aggregations within ranges
+``</li>
+</ol>
 
 <p>This pattern is <strong>fundamental</strong> to temporal data processing!</p>
 
@@ -1339,86 +1370,60 @@ count) in a meaningful way, here are additional angles you should be comfortable
 discussing:</p>
 
 <ul>
-  <li><strong>Backpressure in detail:</strong>
-    <ul>
-      <li>What happens when sinks (e.g., databases, dashboards) can’t keep up?</li>
-      <li>You should be able to talk about:
-        <ul>
-          <li>Producer-side throttling,</li>
-          <li>Buffer sizing and on-disk spill,</li>
-          <li>Dropping or sampling low-priority events,</li>
-          <li>Using dead-letter queues for problematic payloads.</li>
-        </ul>
-      </li>
-      <li>In Flink/Spark, backpressure is built into the runtime; in custom systems,
-you must design this flow control explicitly.</li>
-    </ul>
+  <li><strong>Backpressure in detail:</strong></li>
+  <li>What happens when sinks (e.g., databases, dashboards) can’t keep up?</li>
+  <li>You should be able to talk about:</li>
+  <li>Producer-side throttling,</li>
+  <li>Buffer sizing and on-disk spill,</li>
+  <li>Dropping or sampling low-priority events,</li>
+  <li>Using dead-letter queues for problematic payloads.</li>
+  <li>
+    <p>In Flink/Spark, backpressure is built into the runtime; in custom systems,
+ you must design this flow control explicitly.</p>
   </li>
-  <li><strong>Exactly-once vs at-least-once semantics:</strong>
-    <ul>
-      <li>Exactly-once is often implemented as <strong>effectively-once</strong> at the sink:
-        <ul>
-          <li>Idempotent writes,</li>
-          <li>Deduplication using event IDs,</li>
-          <li>Transactional writes (Kafka transactions, 2PC, etc.).</li>
-        </ul>
-      </li>
-      <li>Be ready to explain when at-least-once is acceptable (monitoring, metrics)
-and when you truly need exactly-once (billing, financial ledgers).</li>
-    </ul>
+  <li><strong>Exactly-once vs at-least-once semantics:</strong></li>
+  <li>Exactly-once is often implemented as <strong>effectively-once</strong> at the sink:</li>
+  <li>Idempotent writes,</li>
+  <li>Deduplication using event IDs,</li>
+  <li>Transactional writes (Kafka transactions, 2PC, etc.).</li>
+  <li>
+    <p>Be ready to explain when at-least-once is acceptable (monitoring, metrics)
+ and when you truly need exactly-once (billing, financial ledgers).</p>
   </li>
-  <li><strong>Multi-tenant stream processing:</strong>
-    <ul>
-      <li>In a large org, many teams may share the same Kafka cluster / stream engine.</li>
-      <li>Consider:
-        <ul>
-          <li>Per-tenant resource quotas,</li>
-          <li>Isolation between streams (separate topics vs namespaces),</li>
-          <li>Access control (who can publish/consume),</li>
-          <li>Governance around schema evolution (Schema Registry, Protobuf/Avro).</li>
-        </ul>
-      </li>
-    </ul>
+  <li><strong>Multi-tenant stream processing:</strong></li>
+  <li>In a large org, many teams may share the same Kafka cluster / stream engine.</li>
+  <li>Consider:</li>
+  <li>Per-tenant resource quotas,</li>
+  <li>Isolation between streams (separate topics vs namespaces),</li>
+  <li>Access control (who can publish/consume),</li>
+  <li>
+    <p>Governance around schema evolution (Schema Registry, Protobuf/Avro).</p>
   </li>
-  <li><strong>Schema evolution and compatibility:</strong>
-    <ul>
-      <li>Events evolve over time—fields are added/removed.</li>
-      <li>You should design:
-        <ul>
-          <li>Backward/forward compatible schemas,</li>
-          <li>Clear deprecation policies,</li>
-          <li>Validation in CI/CD so producers don’t break consumers.</li>
-        </ul>
-      </li>
-    </ul>
+  <li><strong>Schema evolution and compatibility:</strong></li>
+  <li>Events evolve over time—fields are added/removed.</li>
+  <li>You should design:</li>
+  <li>Backward/forward compatible schemas,</li>
+  <li>Clear deprecation policies,</li>
+  <li>
+    <p>Validation in CI/CD so producers don’t break consumers.</p>
   </li>
-  <li><strong>End-to-end SLAs:</strong>
-    <ul>
-      <li>It’s not enough to have p99 &lt; 100ms inside the stream processor.</li>
-      <li>End-to-end latency includes:
-        <ul>
-          <li>Ingestion → broker,</li>
-          <li>Broker → stream processor,</li>
-          <li>Processor → sink,</li>
-          <li>Sink → dashboard / downstream system.</li>
-        </ul>
-      </li>
-      <li>You should know where you’d instrument latency histograms and how you’d
-trace a single event through the system (e.g., using a correlation ID).</li>
-    </ul>
+  <li><strong>End-to-end SLAs:</strong></li>
+  <li>It’s not enough to have p99 &lt; 100ms inside the stream processor.</li>
+  <li>End-to-end latency includes:</li>
+  <li>Ingestion → broker,</li>
+  <li>Broker → stream processor,</li>
+  <li>Processor → sink,</li>
+  <li>Sink → dashboard / downstream system.</li>
+  <li>
+    <p>You should know where you’d instrument latency histograms and how you’d
+ trace a single event through the system (e.g., using a correlation ID).</p>
   </li>
-  <li><strong>Cost-awareness and capacity planning:</strong>
-    <ul>
-      <li>Stream processing clusters can be very expensive at high scale.</li>
-      <li>Think about:
-        <ul>
-          <li>Right-sizing instances (CPU vs memory bound),</li>
-          <li>Using autoscaling based on lag and CPU,</li>
-          <li>Separating critical vs non-critical pipelines (priority tiers).</li>
-        </ul>
-      </li>
-    </ul>
-  </li>
+  <li><strong>Cost-awareness and capacity planning:</strong></li>
+  <li>Stream processing clusters can be very expensive at high scale.</li>
+  <li>Think about:</li>
+  <li>Right-sizing instances (CPU vs memory bound),</li>
+  <li>Using autoscaling based on lag and CPU,</li>
+  <li>Separating critical vs non-critical pipelines (priority tiers).</li>
 </ul>
 
 <p>Being able to reason about these topics—and tie them back to the core windowing

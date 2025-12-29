@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Vector Databases">
     <meta itemprop="description" content="“The infrastructure for semantic search and AI-native applications.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -294,7 +294,7 @@
 
 <p><strong>Problem:</strong> Finding k nearest neighbors in 768 dimensions is computationally expensive.</p>
 
-<p><strong>Brute Force:</strong> Compare query to every vector. $O(N \cdot d)$ per query. Too slow for billions of vectors.</p>
+<p><strong>Brute Force:</strong> Compare query to every vector. O(N \cdot d) per query. Too slow for billions of vectors.</p>
 
 <p><strong>Solution:</strong> Approximate Nearest Neighbor (ANN) algorithms.</p>
 
@@ -448,64 +448,68 @@
 
 <h2 id="6-system-architecture">6. System Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                    ┌─────────────────────┐
-                    │   ML Model          │
-                    │  (Embedding Gen)    │
-                    └─────────┬───────────┘
-                              │ vectors
-                    ┌─────────▼───────────┐
-                    │   Vector Database   │
-                    │   (Pinecone/Milvus) │
-                    └─────────┬───────────┘
-                              │
-         ┌────────────────────┴────────────────────┐
-         │                                         │
-┌────────▼────────┐                      ┌────────▼────────┐
-│   Index         │                      │   Storage       │
-│   (HNSW/IVF)    │                      │   (Vectors +    │
-│                 │                      │    Metadata)    │
-└─────────────────┘                      └─────────────────┘
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+ ┌─────────────────────┐
+ │ ML Model │
+ │ (Embedding Gen) │
+ └─────────┬───────────┘
+ │ vectors
+ ┌─────────▼───────────┐
+ │ Vector Database │
+ │ (Pinecone/Milvus) │
+ └─────────┬───────────┘
+ │
+ ┌────────────────────┴────────────────────┐
+ │ │
+┌────────▼────────┐ ┌────────▼────────┐
+│ Index │ │ Storage │
+│ (HNSW/IVF) │ │ (Vectors + │
+│ │ │ Metadata) │
+└─────────────────┘ └─────────────────┘
+</code></p>
 
 <h2 id="7-building-a-semantic-search-system">7. Building a Semantic Search System</h2>
 
 <p><strong>Scenario:</strong> Build a semantic search for a knowledge base (10M documents).</p>
 
-<p><strong>Step 1: Embed Documents</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">sentence_transformers</span> <span class="kn">import</span> <span class="n">SentenceTransformer</span>
+<p><strong>Step 1: Embed Documents</strong>
+``python
+from sentence_transformers import SentenceTransformer</p>
 
-<span class="n">model</span> <span class="o">=</span> <span class="nc">SentenceTransformer</span><span class="p">(</span><span class="sh">'</span><span class="s">all-MiniLM-L6-v2</span><span class="sh">'</span><span class="p">)</span>
-<span class="n">embeddings</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>  <span class="c1"># (10M, 384)
-</span></code></pre></div></div>
+<p>model = SentenceTransformer(‘all-MiniLM-L6-v2’)
+embeddings = model.encode(documents) # (10M, 384)
+``</p>
 
-<p><strong>Step 2: Index in Vector DB</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">pinecone</span>
+<p><strong>Step 2: Index in Vector DB</strong>
+``python
+import pinecone</p>
 
-<span class="n">pinecone</span><span class="p">.</span><span class="nf">init</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="sh">"</span><span class="s">...</span><span class="sh">"</span><span class="p">,</span> <span class="n">environment</span><span class="o">=</span><span class="sh">"</span><span class="s">...</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">index</span> <span class="o">=</span> <span class="n">pinecone</span><span class="p">.</span><span class="nc">Index</span><span class="p">(</span><span class="sh">"</span><span class="s">knowledge-base</span><span class="sh">"</span><span class="p">)</span>
+<p>pinecone.init(api_key=”…”, environment=”…”)
+index = pinecone.Index(“knowledge-base”)</p>
 
-<span class="c1"># Upsert in batches
-</span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">documents</span><span class="p">),</span> <span class="mi">100</span><span class="p">):</span>
-    <span class="n">batch</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="p">(</span><span class="nf">str</span><span class="p">(</span><span class="n">j</span><span class="p">),</span> <span class="n">embeddings</span><span class="p">[</span><span class="n">j</span><span class="p">].</span><span class="nf">tolist</span><span class="p">(),</span> <span class="p">{</span><span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">:</span> <span class="n">documents</span><span class="p">[</span><span class="n">j</span><span class="p">]})</span>
-        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nf">min</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">100</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">documents</span><span class="p">)))</span>
-    <span class="p">]</span>
-    <span class="n">index</span><span class="p">.</span><span class="nf">upsert</span><span class="p">(</span><span class="n">vectors</span><span class="o">=</span><span class="n">batch</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="upsert-in-batches">Upsert in batches</h1>
+<p>for i in range(0, len(documents), 100):
+ batch = [
+ (str(j), embeddings[j].tolist(), {“text”: documents[j]})
+ for j in range(i, min(i + 100, len(documents)))
+ ]
+ index.upsert(vectors=batch)
+``</p>
 
-<p><strong>Step 3: Query</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">query</span> <span class="o">=</span> <span class="sh">"</span><span class="s">What is machine learning?</span><span class="sh">"</span>
-<span class="n">query_embedding</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">encode</span><span class="p">([</span><span class="n">query</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+<p><strong>Step 3: Query</strong>
+``python
+query = “What is machine learning?”
+query_embedding = model.encode([query])[0]</p>
 
-<span class="n">results</span> <span class="o">=</span> <span class="n">index</span><span class="p">.</span><span class="nf">query</span><span class="p">(</span>
-    <span class="n">vector</span><span class="o">=</span><span class="n">query_embedding</span><span class="p">.</span><span class="nf">tolist</span><span class="p">(),</span>
-    <span class="n">top_k</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-    <span class="n">include_metadata</span><span class="o">=</span><span class="bp">True</span>
-<span class="p">)</span>
+<p>results = index.query(
+ vector=query_embedding.tolist(),
+ top_k=5,
+ include_metadata=True
+)</p>
 
-<span class="k">for</span> <span class="k">match</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="sh">'</span><span class="s">matches</span><span class="sh">'</span><span class="p">]:</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Score: </span><span class="si">{</span><span class="k">match</span><span class="p">[</span><span class="sh">'</span><span class="s">score</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">, Text: </span><span class="si">{</span><span class="k">match</span><span class="p">[</span><span class="sh">'</span><span class="s">metadata</span><span class="sh">'</span><span class="p">][</span><span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>for match in results[‘matches’]:
+ print(f”Score: {match[‘score’]}, Text: {match[‘metadata’][‘text’]}”)
+``</p>
 
 <h2 id="8-hybrid-search-vector--keyword">8. Hybrid Search: Vector + Keyword</h2>
 
@@ -524,23 +528,24 @@
 <ol>
   <li>Get top-k from vector search.</li>
   <li>Get top-k from keyword search (BM25).</li>
-  <li>Combine rankings: $\text{score} = \sum \frac{1}{k + \text{rank}}$.</li>
+  <li>Combine rankings: <code class="language-plaintext highlighter-rouge">\text{score} = \sum \frac{1}{k + \text{rank}}</code>.</li>
 </ol>
 
-<p><strong>Implementation (Weaviate):</strong></p>
-<div class="language-graphql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
-  </span><span class="n">Get</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="n">Document</span><span class="p">(</span><span class="w">
-      </span><span class="n">hybrid</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-        </span><span class="n">query</span><span class="p">:</span><span class="w"> </span><span class="s2">"Python Flask tutorial"</span><span class="w">
-        </span><span class="n">alpha</span><span class="p">:</span><span class="w"> </span><span class="mf">0.5</span><span class="w">  </span><span class="c"># 0 = keyword only, 1 = vector only</span><span class="w">
-      </span><span class="p">}</span><span class="w">
-    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="n">text</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
+<p><strong>Implementation (Weaviate):</strong>
+<code class="language-plaintext highlighter-rouge">graphql
+{
+ Get {
+ Document(
+ hybrid: {
+ query: "Python Flask tutorial"
+ alpha: 0.5 # 0 = keyword only, 1 = vector only
+ }
+ ) {
+ text
+ }
+ }
+}
+</code></p>
 
 <h2 id="9-filtering-pre-filter-vs-post-filter">9. Filtering: Pre-filter vs Post-filter</h2>
 
@@ -651,13 +656,13 @@
 <h2 id="15-deep-dive-distance-metrics">15. Deep Dive: Distance Metrics</h2>
 
 <p><strong>Euclidean Distance (L2):</strong>
-\(d(a, b) = \sqrt{\sum_i (a_i - b_i)^2}\)</p>
+<code class="language-plaintext highlighter-rouge">d(a, b) = \sqrt{\sum_i (a_i - b_i)^2}</code></p>
 
 <p><strong>Cosine Similarity:</strong>
-\(\cos(a, b) = \frac{a \cdot b}{||a|| \cdot ||b||}\)</p>
+<code class="language-plaintext highlighter-rouge">\cos(a, b) = \frac{a \cdot b}{||a|| \cdot ||b||}</code></p>
 
 <p><strong>Inner Product (Dot Product):</strong>
-\(\text{IP}(a, b) = a \cdot b\)</p>
+<code class="language-plaintext highlighter-rouge">\text{IP}(a, b) = a \cdot b</code></p>
 
 <p><strong>Which to Use:</strong></p>
 <ul>
@@ -691,19 +696,20 @@
   <li><strong>Generate:</strong> Pass query + retrieved docs to LLM for answer.</li>
 </ol>
 
-<p><strong>Example:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Step 1: Embed query
-</span><span class="n">query</span> <span class="o">=</span> <span class="sh">"</span><span class="s">What is the capital of France?</span><span class="sh">"</span>
-<span class="n">query_embedding</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<p><strong>Example:</strong>
+``python</p>
+<h1 id="step-1-embed-query">Step 1: Embed query</h1>
+<p>query = “What is the capital of France?”
+query_embedding = model.encode(query)</p>
 
-<span class="c1"># Step 2: Retrieve from vector DB
-</span><span class="n">results</span> <span class="o">=</span> <span class="n">index</span><span class="p">.</span><span class="nf">query</span><span class="p">(</span><span class="n">vector</span><span class="o">=</span><span class="n">query_embedding</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<span class="n">context</span> <span class="o">=</span> <span class="sh">"</span><span class="se">\n</span><span class="sh">"</span><span class="p">.</span><span class="nf">join</span><span class="p">([</span><span class="n">r</span><span class="p">[</span><span class="sh">'</span><span class="s">metadata</span><span class="sh">'</span><span class="p">][</span><span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="sh">'</span><span class="s">matches</span><span class="sh">'</span><span class="p">]])</span>
+<h1 id="step-2-retrieve-from-vector-db">Step 2: Retrieve from vector DB</h1>
+<p>results = index.query(vector=query_embedding, top_k=3)
+context = “\n”.join([r[‘metadata’][‘text’] for r in results[‘matches’]])</p>
 
-<span class="c1"># Step 3: Generate with LLM
-</span><span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Context:</span><span class="se">\n</span><span class="si">{</span><span class="n">context</span><span class="si">}</span><span class="se">\n\n</span><span class="s">Question: </span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="se">\n</span><span class="s">Answer:</span><span class="sh">"</span>
-<span class="n">answer</span> <span class="o">=</span> <span class="n">llm</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="step-3-generate-with-llm">Step 3: Generate with LLM</h1>
+<p>prompt = f”Context:\n{context}\n\nQuestion: {query}\nAnswer:”
+answer = llm.generate(prompt)
+``</p>
 
 <p><strong>Benefits:</strong></p>
 <ul>
@@ -734,56 +740,58 @@
 
 <h2 id="19-implementation-guide-building-a-simple-vector-index">19. Implementation Guide: Building a Simple Vector Index</h2>
 
-<p><strong>Step 1: Define Data Structures</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
-<span class="kn">from</span> <span class="n">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
+<p><strong>Step 1: Define Data Structures</strong>
+``python
+import numpy as np
+from sklearn.cluster import KMeans</p>
 
-<span class="k">class</span> <span class="nc">IVFIndex</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span> <span class="o">=</span> <span class="n">n_clusters</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">centroids</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">inverted_lists</span> <span class="o">=</span> <span class="bp">None</span>
-    
-    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">vectors</span><span class="p">):</span>
-        <span class="c1"># K-means clustering
-</span>        <span class="n">kmeans</span> <span class="o">=</span> <span class="nc">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span><span class="p">)</span>
-        <span class="n">kmeans</span><span class="p">.</span><span class="nf">fit</span><span class="p">(</span><span class="n">vectors</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">centroids</span> <span class="o">=</span> <span class="n">kmeans</span><span class="p">.</span><span class="n">cluster_centers_</span>
-        
-        <span class="c1"># Build inverted lists
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">inverted_lists</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">n_clusters</span><span class="p">)]</span>
-        <span class="n">labels</span> <span class="o">=</span> <span class="n">kmeans</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">vectors</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">labels</span><span class="p">):</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">inverted_lists</span><span class="p">[</span><span class="n">label</span><span class="p">].</span><span class="nf">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">vectors</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
-    
-    <span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">n_probe</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-        <span class="c1"># Find nearest clusters
-</span>        <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">centroids</span> <span class="o">-</span> <span class="n">query</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">nearest_clusters</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">argsort</span><span class="p">(</span><span class="n">distances</span><span class="p">)[:</span><span class="n">n_probe</span><span class="p">]</span>
-        
-        <span class="c1"># Search within clusters
-</span>        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">cluster</span> <span class="ow">in</span> <span class="n">nearest_clusters</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">vector</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">inverted_lists</span><span class="p">[</span><span class="n">cluster</span><span class="p">]:</span>
-                <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">linalg</span><span class="p">.</span><span class="nf">norm</span><span class="p">(</span><span class="n">vector</span> <span class="o">-</span> <span class="n">query</span><span class="p">)</span>
-                <span class="n">candidates</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">dist</span><span class="p">,</span> <span class="n">idx</span><span class="p">))</span>
-        
-        <span class="c1"># Return top-k
-</span>        <span class="n">candidates</span><span class="p">.</span><span class="nf">sort</span><span class="p">()</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">idx</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">[:</span><span class="n">k</span><span class="p">]]</span>
-</code></pre></div></div>
+<p>class IVFIndex:
+ def <strong>init</strong>(self, n_clusters=100):
+ self.n_clusters = n_clusters
+ self.centroids = None
+ self.inverted_lists = None</p>
 
-<p><strong>Step 2: Test</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Generate random vectors
-</span><span class="n">vectors</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">10000</span><span class="p">,</span> <span class="mi">128</span><span class="p">)</span>
-<span class="n">index</span> <span class="o">=</span> <span class="nc">IVFIndex</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-<span class="n">index</span><span class="p">.</span><span class="nf">train</span><span class="p">(</span><span class="n">vectors</span><span class="p">)</span>
+<p>def train(self, vectors):
+ # K-means clustering
+ kmeans = KMeans(n_clusters=self.n_clusters)
+ kmeans.fit(vectors)
+ self.centroids = kmeans.cluster_centers_</p>
 
-<span class="c1"># Query
-</span><span class="n">query</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">index</span><span class="p">.</span><span class="nf">search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Top 10 results: </span><span class="si">{</span><span class="n">results</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p># Build inverted lists
+ self.inverted_lists = [[] for _ in range(self.n_clusters)]
+ labels = kmeans.predict(vectors)
+ for i, label in enumerate(labels):
+ self.inverted_lists[label].append((i, vectors[i]))</p>
+
+<p>def search(self, query, k=10, n_probe=10):
+ # Find nearest clusters
+ distances = np.linalg.norm(self.centroids - query, axis=1)
+ nearest_clusters = np.argsort(distances)[:n_probe]</p>
+
+<p># Search within clusters
+ candidates = []
+ for cluster in nearest_clusters:
+ for idx, vector in self.inverted_lists[cluster]:
+ dist = np.linalg.norm(vector - query)
+ candidates.append((dist, idx))</p>
+
+<p># Return top-k
+ candidates.sort()
+ return [idx for _, idx in candidates[:k]]
+``</p>
+
+<p><strong>Step 2: Test</strong>
+``python</p>
+<h1 id="generate-random-vectors">Generate random vectors</h1>
+<p>vectors = np.random.randn(10000, 128)
+index = IVFIndex(n_clusters=100)
+index.train(vectors)</p>
+
+<h1 id="query">Query</h1>
+<p>query = np.random.randn(128)
+results = index.search(query, k=10)
+print(f”Top 10 results: {results}”)
+``</p>
 
 <h2 id="20-advanced-quantization-for-memory-efficiency">20. Advanced: Quantization for Memory Efficiency</h2>
 
@@ -986,7 +994,134 @@
         
       </footer>
 
+      <div class="page__related page__related--full">
+  <h2 class="page__related-title">Related across topics</h2>
+  <style>
+    /* Make section span full content width and use 2 equal columns */
+    .page__related--full { float: inline-start; width: 100%; padding: 0; }
+    .cross-related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+    @media (max-width: 768px) { .cross-related-grid { grid-template-columns: 1fr; } }
+    /* Ensure archive cards stretch nicely in the grid */
+    .cross-related-grid .list__item, .cross-related-grid .grid__item { width: auto; float: none; margin: 0; }
+  </style>
+  <div class="cross-related-grid">
+    
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
       
+        <a href="/dsa/0043-median-of-two-sorted-arrays/" rel="permalink">Median of Two Sorted Arrays
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          17 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Finding the middle ground between two ordered worlds.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/speech-tech/0043-speech-enhancement/" rel="permalink">Speech Enhancement
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          14 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Extracting clear speech from the noise of the real world.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ai-agents/0043-testing-ai-agents/" rel="permalink">Testing AI Agents
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Test agents like systems: validate tool calls, pin behaviors with replayable traces, and catch regressions before users do.”
+</p>
+  </article>
+</div>
+
+  </div>
+</div>
 
       <section class="page__share">
   <h4 class="page__share-title">Share on</h4>

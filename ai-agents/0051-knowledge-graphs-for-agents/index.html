@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Knowledge Graphs for Agents">
     <meta itemprop="description" content="“RAG gives you documents. A knowledge graph gives you facts with structure—and agents need structure to act reliably.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -623,94 +623,89 @@ If you skip it, you’ll get “demo magic” that fails under load.</p>
 
 <p>This example builds a tiny KG in-memory and shows how an agent might use it as a tool.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">deque</span>
-<span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Set</span>
+<p>``python
+from collections import defaultdict, deque
+from dataclasses import dataclass
+from typing import Dict, List, Tuple, Set</p>
 
+<p>@dataclass(frozen=True)
+class Edge:
+ src: str
+ rel: str
+ dst: str</p>
 
-<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">Edge</span><span class="p">:</span>
-    <span class="n">src</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">dst</span><span class="p">:</span> <span class="nb">str</span>
+<p>class SimpleKG:
+ def <strong>init</strong>(self) -&gt; None:
+ self.adj: Dict[str, List[Tuple[str, str]]] = defaultdict(list) # node -&gt; [(rel, neighbor)]
+ self.edges: Set[Edge] = set()</p>
 
+<p>def add_edge(self, src: str, rel: str, dst: str) -&gt; None:
+ e = Edge(src, rel, dst)
+ if e in self.edges:
+ return
+ self.edges.add(e)
+ self.adj[src].append((rel, dst))</p>
 
-<span class="k">class</span> <span class="nc">SimpleKG</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">adj</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>  <span class="c1"># node -&gt; [(rel, neighbor)]
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">edges</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="n">Edge</span><span class="p">]</span> <span class="o">=</span> <span class="nf">set</span><span class="p">()</span>
+<p>def neighbors(self, node: str, rel: str | None = None) -&gt; List[str]:
+ out = []
+ for r, dst in self.adj.get(node, []):
+ if rel is None or rel == r:
+ out.append(dst)
+ return out</p>
 
-    <span class="k">def</span> <span class="nf">add_edge</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dst</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">e</span> <span class="o">=</span> <span class="nc">Edge</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">edges</span><span class="p">:</span>
-            <span class="k">return</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">edges</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">adj</span><span class="p">[</span><span class="n">src</span><span class="p">].</span><span class="nf">append</span><span class="p">((</span><span class="n">rel</span><span class="p">,</span> <span class="n">dst</span><span class="p">))</span>
+<p>def bfs_paths(self, start: str, goal: str, max_hops: int = 4) -&gt; List[List[str]]:
+ “””
+ Find paths from start to goal up to max_hops.
+ In production, you’d limit expansions, enforce schemas, and add caching.
+ “””
+ paths = []
+ q = deque([(start, [start])])
+ while q:
+ node, path = q.popleft()
+ if len(path) - 1 &gt; max_hops:
+ continue
+ if node == goal:
+ paths.append(path)
+ continue
+ for _, nxt in self.adj.get(node, []):
+ if nxt in path:
+ continue # avoid cycles
+ q.append((nxt, path + [nxt]))
+ return paths</p>
 
-    <span class="k">def</span> <span class="nf">neighbors</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="bp">None</span> <span class="o">=</span> <span class="bp">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">dst</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">adj</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">[]):</span>
-            <span class="k">if</span> <span class="n">rel</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">rel</span> <span class="o">==</span> <span class="n">r</span><span class="p">:</span>
-                <span class="n">out</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">out</span>
+<h1 id="example-kg-services-and-ownership">Example KG: services and ownership</h1>
+<p>kg = SimpleKG()
+kg.add_edge(“ServiceA”, “DEPENDS_ON”, “ServiceB”)
+kg.add_edge(“ServiceB”, “DEPENDS_ON”, “ServiceC”)
+kg.add_edge(“ServiceB”, “OWNED_BY”, “TeamPayments”)
+kg.add_edge(“ServiceC”, “OWNED_BY”, “TeamInfra”)</p>
 
-    <span class="k">def</span> <span class="nf">bfs_paths</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">goal</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_hops</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="sh">"""</span><span class="s">
-        Find paths from start to goal up to max_hops.
-        In production, you</span><span class="sh">'</span><span class="s">d limit expansions, enforce schemas, and add caching.
-        </span><span class="sh">"""</span>
-        <span class="n">paths</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">q</span> <span class="o">=</span> <span class="nf">deque</span><span class="p">([(</span><span class="n">start</span><span class="p">,</span> <span class="p">[</span><span class="n">start</span><span class="p">])])</span>
-        <span class="k">while</span> <span class="n">q</span><span class="p">:</span>
-            <span class="n">node</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">q</span><span class="p">.</span><span class="nf">popleft</span><span class="p">()</span>
-            <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="n">max_hops</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="k">if</span> <span class="n">node</span> <span class="o">==</span> <span class="n">goal</span><span class="p">:</span>
-                <span class="n">paths</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-                <span class="k">continue</span>
-            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">nxt</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">adj</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">[]):</span>
-                <span class="k">if</span> <span class="n">nxt</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
-                    <span class="k">continue</span>  <span class="c1"># avoid cycles
-</span>                <span class="n">q</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">nxt</span><span class="p">,</span> <span class="n">path</span> <span class="o">+</span> <span class="p">[</span><span class="n">nxt</span><span class="p">]))</span>
-        <span class="k">return</span> <span class="n">paths</span>
+<p>def tool_get_owner(service: str) -&gt; str | None:
+ owners = kg.neighbors(service, rel=”OWNED_BY”)
+ return owners[0] if owners else None</p>
 
+<p>def tool_dependency_owners(service: str, max_hops: int = 3) -&gt; List[Tuple[str, str]]:
+ “””
+ Returns (dependency_service, owner) pairs for all reachable dependencies.
+ “””
+ seen = set([service])
+ q = deque([(service, 0)])
+ out = []
+ while q:
+ node, depth = q.popleft()
+ if depth == max_hops:
+ continue
+ for dep in kg.neighbors(node, rel=”DEPENDS_ON”):
+ if dep in seen:
+ continue
+ seen.add(dep)
+ out.append((dep, tool_get_owner(dep) or “UNKNOWN”))
+ q.append((dep, depth + 1))
+ return out</p>
 
-<span class="c1"># Example KG: services and ownership
-</span><span class="n">kg</span> <span class="o">=</span> <span class="nc">SimpleKG</span><span class="p">()</span>
-<span class="n">kg</span><span class="p">.</span><span class="nf">add_edge</span><span class="p">(</span><span class="sh">"</span><span class="s">ServiceA</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">DEPENDS_ON</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">ServiceB</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">kg</span><span class="p">.</span><span class="nf">add_edge</span><span class="p">(</span><span class="sh">"</span><span class="s">ServiceB</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">DEPENDS_ON</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">ServiceC</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">kg</span><span class="p">.</span><span class="nf">add_edge</span><span class="p">(</span><span class="sh">"</span><span class="s">ServiceB</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">OWNED_BY</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">TeamPayments</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">kg</span><span class="p">.</span><span class="nf">add_edge</span><span class="p">(</span><span class="sh">"</span><span class="s">ServiceC</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">OWNED_BY</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">TeamInfra</span><span class="sh">"</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">tool_get_owner</span><span class="p">(</span><span class="n">service</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="bp">None</span><span class="p">:</span>
-    <span class="n">owners</span> <span class="o">=</span> <span class="n">kg</span><span class="p">.</span><span class="nf">neighbors</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="sh">"</span><span class="s">OWNED_BY</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">owners</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">owners</span> <span class="k">else</span> <span class="bp">None</span>
-
-
-<span class="k">def</span> <span class="nf">tool_dependency_owners</span><span class="p">(</span><span class="n">service</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_hops</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-    <span class="sh">"""</span><span class="s">
-    Returns (dependency_service, owner) pairs for all reachable dependencies.
-    </span><span class="sh">"""</span>
-    <span class="n">seen</span> <span class="o">=</span> <span class="nf">set</span><span class="p">([</span><span class="n">service</span><span class="p">])</span>
-    <span class="n">q</span> <span class="o">=</span> <span class="nf">deque</span><span class="p">([(</span><span class="n">service</span><span class="p">,</span> <span class="mi">0</span><span class="p">)])</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">while</span> <span class="n">q</span><span class="p">:</span>
-        <span class="n">node</span><span class="p">,</span> <span class="n">depth</span> <span class="o">=</span> <span class="n">q</span><span class="p">.</span><span class="nf">popleft</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">depth</span> <span class="o">==</span> <span class="n">max_hops</span><span class="p">:</span>
-            <span class="k">continue</span>
-        <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="n">kg</span><span class="p">.</span><span class="nf">neighbors</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">rel</span><span class="o">=</span><span class="sh">"</span><span class="s">DEPENDS_ON</span><span class="sh">"</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">dep</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">seen</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">dep</span><span class="p">)</span>
-            <span class="n">out</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">dep</span><span class="p">,</span> <span class="nf">tool_get_owner</span><span class="p">(</span><span class="n">dep</span><span class="p">)</span> <span class="ow">or</span> <span class="sh">"</span><span class="s">UNKNOWN</span><span class="sh">"</span><span class="p">))</span>
-            <span class="n">q</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">dep</span><span class="p">,</span> <span class="n">depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">out</span>
-
-
-<span class="nf">print</span><span class="p">(</span><span class="nf">tool_dependency_owners</span><span class="p">(</span><span class="sh">"</span><span class="s">ServiceA</span><span class="sh">"</span><span class="p">))</span>
-<span class="c1"># [('ServiceB', 'TeamPayments'), ('ServiceC', 'TeamInfra')]
-</span></code></pre></div></div>
+<p>print(tool_dependency_owners(“ServiceA”))</p>
+<h1 id="serviceb-teampayments-servicec-teaminfra">[(‘ServiceB’, ‘TeamPayments’), (‘ServiceC’, ‘TeamInfra’)]</h1>
+<p>``</p>
 
 <p>Why this example matters:</p>
 <ul>
@@ -833,21 +828,17 @@ KG queries must be:</p>
 Two common designs:</p>
 
 <ul>
-  <li><strong>Temporal edges</strong>
-    <ul>
-      <li>store <code class="language-plaintext highlighter-rouge">valid_from</code> / <code class="language-plaintext highlighter-rouge">valid_to</code> on edges</li>
-      <li>query with a <code class="language-plaintext highlighter-rouge">timestamp</code> filter</li>
-      <li>pros: compact storage, fine-grained history</li>
-      <li>cons: queries require more indexing discipline</li>
-    </ul>
+  <li><strong>Temporal edges</strong></li>
+  <li>store <code class="language-plaintext highlighter-rouge">valid_from</code> / <code class="language-plaintext highlighter-rouge">valid_to</code> on edges</li>
+  <li>query with a <code class="language-plaintext highlighter-rouge">timestamp</code> filter</li>
+  <li>pros: compact storage, fine-grained history</li>
+  <li>
+    <p>cons: queries require more indexing discipline</p>
   </li>
-  <li><strong>Versioned snapshots</strong>
-    <ul>
-      <li>store periodic snapshots (daily/weekly)</li>
-      <li>pros: simple “point-in-time” queries</li>
-      <li>cons: storage-heavy at scale</li>
-    </ul>
-  </li>
+  <li><strong>Versioned snapshots</strong></li>
+  <li>store periodic snapshots (daily/weekly)</li>
+  <li>pros: simple “point-in-time” queries</li>
+  <li>cons: storage-heavy at scale</li>
 </ul>
 
 <p>For agent reliability, temporal modeling is not a “nice to have”; it prevents confident but wrong answers in incident analysis and compliance workflows.</p>
@@ -874,12 +865,9 @@ Define a deterministic policy:</p>
 <ul>
   <li>rank sources by trust tier (system-of-record wins)</li>
   <li>prefer newer facts within the same trust tier</li>
-  <li>if conflict persists, return a structured “conflict” response:
-    <ul>
-      <li>list candidates + their provenance</li>
-      <li>ask a clarifying question or route to a human owner</li>
-    </ul>
-  </li>
+  <li>if conflict persists, return a structured “conflict” response:</li>
+  <li>list candidates + their provenance</li>
+  <li>ask a clarifying question or route to a human owner</li>
 </ul>
 
 <p>This is a major advantage of KGs over pure RAG: disagreements can be made explicit and handled systematically.</p>
@@ -896,24 +884,19 @@ Define a deterministic policy:</p>
 <p>Common options:</p>
 
 <ul>
-  <li><strong>Neo4j (property graph)</strong>
-    <ul>
-      <li>strengths: developer ergonomics (Cypher), traversal performance, mature tooling</li>
-      <li>trade-offs: operational scaling requires expertise; licensing considerations depending on edition</li>
-    </ul>
+  <li><strong>Neo4j (property graph)</strong></li>
+  <li>strengths: developer ergonomics (Cypher), traversal performance, mature tooling</li>
+  <li>
+    <p>trade-offs: operational scaling requires expertise; licensing considerations depending on edition</p>
   </li>
-  <li><strong>Amazon Neptune (managed graph DB)</strong>
-    <ul>
-      <li>strengths: managed operations, integrates with AWS ecosystem</li>
-      <li>trade-offs: query latency patterns depend on access paths; careful modeling required</li>
-    </ul>
+  <li><strong>Amazon Neptune (managed graph DB)</strong></li>
+  <li>strengths: managed operations, integrates with AWS ecosystem</li>
+  <li>
+    <p>trade-offs: query latency patterns depend on access paths; careful modeling required</p>
   </li>
-  <li><strong>“Graph in Postgres”</strong>
-    <ul>
-      <li>strengths: cheap, familiar, transactional</li>
-      <li>trade-offs: traversal queries can get slow; you’ll end up building indexes/caches anyway</li>
-    </ul>
-  </li>
+  <li><strong>“Graph in Postgres”</strong></li>
+  <li>strengths: cheap, familiar, transactional</li>
+  <li>trade-offs: traversal queries can get slow; you’ll end up building indexes/caches anyway</li>
 </ul>
 
 <p>For agents, a pragmatic path is:</p>
@@ -1166,20 +1149,14 @@ Avoid building a KG if:</p>
 Build the smallest KG that makes your agent meaningfully better:</p>
 
 <ul>
-  <li><strong>Entities</strong>
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">Service</code>, <code class="language-plaintext highlighter-rouge">Team</code>, <code class="language-plaintext highlighter-rouge">OnCallRotation</code>, <code class="language-plaintext highlighter-rouge">Runbook</code>, <code class="language-plaintext highlighter-rouge">Dashboard</code>, <code class="language-plaintext highlighter-rouge">SLA</code></li>
-    </ul>
-  </li>
-  <li><strong>Relations</strong>
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">OWNED_BY(Service -&gt; Team)</code></li>
-      <li><code class="language-plaintext highlighter-rouge">DEPENDS_ON(Service -&gt; Service)</code></li>
-      <li><code class="language-plaintext highlighter-rouge">HAS_RUNBOOK(Service -&gt; Runbook)</code></li>
-      <li><code class="language-plaintext highlighter-rouge">HAS_DASHBOARD(Service -&gt; Dashboard)</code></li>
-      <li><code class="language-plaintext highlighter-rouge">HAS_SLA(Service -&gt; SLA)</code></li>
-    </ul>
-  </li>
+  <li><strong>Entities</strong></li>
+  <li><code class="language-plaintext highlighter-rouge">Service</code>, <code class="language-plaintext highlighter-rouge">Team</code>, <code class="language-plaintext highlighter-rouge">OnCallRotation</code>, <code class="language-plaintext highlighter-rouge">Runbook</code>, <code class="language-plaintext highlighter-rouge">Dashboard</code>, <code class="language-plaintext highlighter-rouge">SLA</code></li>
+  <li><strong>Relations</strong></li>
+  <li><code class="language-plaintext highlighter-rouge">OWNED_BY(Service -&gt; Team)</code></li>
+  <li><code class="language-plaintext highlighter-rouge">DEPENDS_ON(Service -&gt; Service)</code></li>
+  <li><code class="language-plaintext highlighter-rouge">HAS_RUNBOOK(Service -&gt; Runbook)</code></li>
+  <li><code class="language-plaintext highlighter-rouge">HAS_DASHBOARD(Service -&gt; Dashboard)</code></li>
+  <li><code class="language-plaintext highlighter-rouge">HAS_SLA(Service -&gt; SLA)</code></li>
 </ul>
 
 <p>Then add:</p>

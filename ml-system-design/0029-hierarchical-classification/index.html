@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Hierarchical Classification Systems">
     <meta itemprop="description" content="“Organizing the world’s information into a structured hierarchy.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -256,17 +256,18 @@
 
 <p>Hierarchical classification is the task of assigning an item to one or more nodes in a <strong>taxonomy tree</strong>.</p>
 
-<p><strong>Example: Product Categorization</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Electronics
+<p><strong>Example: Product Categorization</strong>
+<code class="language-plaintext highlighter-rouge">
+Electronics
 ├── Computers
-│   ├── Laptops
-│   │   ├── Gaming Laptops
-│   │   └── Business Laptops
-│   └── Desktops
+│ ├── Laptops
+│ │ ├── Gaming Laptops
+│ │ └── Business Laptops
+│ └── Desktops
 └── Mobile Devices
-    ├── Smartphones
-    └── Tablets
-</code></pre></div></div>
+ ├── Smartphones
+ └── Tablets
+</code></p>
 
 <p><strong>Problem:</strong> Given a product description “Dell XPS 15 with RTX 3050”, classify it into:</p>
 <ul>
@@ -333,16 +334,17 @@
 
 <p>Train a <strong>single multi-class classifier</strong> predicting all leaf nodes, then use the hierarchy to ensure consistency.</p>
 
-<p><strong>Model:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Predict all 30,000 leaf categories
-</span><span class="n">logits</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>  <span class="c1"># Shape: [batch, 30000]
-</span><span class="n">probs</span> <span class="o">=</span> <span class="nf">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
+<p><strong>Model:</strong>
+``python</p>
+<h1 id="predict-all-30000-leaf-categories">Predict all 30,000 leaf categories</h1>
+<p>logits = model(input) # Shape: [batch, 30000]
+probs = softmax(logits)</p>
 
-<span class="c1"># Post-process: ensure parent probabilities &gt;= child probabilities
-</span><span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">taxonomy</span><span class="p">.</span><span class="nf">postorder</span><span class="p">():</span>
-    <span class="k">if</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">:</span>
-        <span class="n">node</span><span class="p">.</span><span class="n">prob</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">prob</span><span class="p">,</span> <span class="nf">max</span><span class="p">(</span><span class="n">child</span><span class="p">.</span><span class="n">prob</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">))</span>
-</code></pre></div></div>
+<h1 id="post-process-ensure-parent-probabilities--child-probabilities">Post-process: ensure parent probabilities &gt;= child probabilities</h1>
+<p>for node in taxonomy.postorder():
+ if node.children:
+ node.prob = max(node.prob, max(child.prob for child in node.children))
+``</p>
 
 <p><strong>Pros:</strong></p>
 <ul>
@@ -360,19 +362,21 @@
 
 <p>Train a <strong>separate classifier at each internal node</strong> to choose among its children.</p>
 
-<p><strong>Example:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Root Classifier: Electronics vs. Clothing vs. Books
-  ├─ Electronics Classifier: Computers vs. Mobile Devices
-  │   ├─ Computers Classifier: Laptops vs. Desktops
-</code></pre></div></div>
+<p><strong>Example:</strong>
+<code class="language-plaintext highlighter-rouge">
+Root Classifier: Electronics vs. Clothing vs. Books
+ ├─ Electronics Classifier: Computers vs. Mobile Devices
+ │ ├─ Computers Classifier: Laptops vs. Desktops
+</code></p>
 
-<p><strong>Inference:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">node</span> <span class="o">=</span> <span class="n">root</span>
-<span class="k">while</span> <span class="ow">not</span> <span class="n">node</span><span class="p">.</span><span class="nf">is_leaf</span><span class="p">():</span>
-    <span class="n">probs</span> <span class="o">=</span> <span class="n">node</span><span class="p">.</span><span class="nf">classifier</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
-    <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">[</span><span class="nf">argmax</span><span class="p">(</span><span class="n">probs</span><span class="p">)]</span>
-<span class="k">return</span> <span class="n">node</span>
-</code></pre></div></div>
+<p><strong>Inference:</strong>
+<code class="language-plaintext highlighter-rouge">python
+node = root
+while not node.is_leaf():
+ probs = node.classifier(input)
+ node = node.children[argmax(probs)]
+return node
+</code></p>
 
 <p><strong>Pros:</strong></p>
 <ul>
@@ -390,31 +394,33 @@
 
 <p>Use a <strong>shared encoder</strong> with <strong>hierarchical output heads</strong>.</p>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">HierarchicalClassifier</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">taxonomy</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="nc">ResNet</span><span class="p">()</span>  <span class="c1"># Shared
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">heads</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ModuleDict</span><span class="p">({</span>
-            <span class="n">node</span><span class="p">.</span><span class="nb">id</span><span class="p">:</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">2048</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">taxonomy</span><span class="p">.</span><span class="nf">internal_nodes</span><span class="p">()</span>
-        <span class="p">})</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="n">features</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">outputs</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">head</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">heads</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-            <span class="n">outputs</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span> <span class="o">=</span> <span class="nf">head</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">outputs</span>
-</code></pre></div></div>
+<p><strong>Architecture:</strong>
+``python
+class HierarchicalClassifier(nn.Module):
+ def <strong>init</strong>(self, taxonomy):
+ super().<strong>init</strong>()
+ self.encoder = ResNet() # Shared
+ self.heads = nn.ModuleDict({
+ node.id: nn.Linear(2048, len(node.children))
+ for node in taxonomy.internal_nodes()
+ })</p>
 
-<p><strong>Loss:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">total_loss</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">taxonomy</span><span class="p">.</span><span class="nf">internal_nodes</span><span class="p">():</span>
-    <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ground_truth_path</span><span class="p">:</span>
-        <span class="n">target</span> <span class="o">=</span> <span class="n">ground_truth_path</span><span class="p">[</span><span class="n">node</span><span class="p">].</span><span class="n">child_index</span>
-        <span class="n">total_loss</span> <span class="o">+=</span> <span class="nf">cross_entropy</span><span class="p">(</span><span class="n">outputs</span><span class="p">[</span><span class="n">node</span><span class="p">.</span><span class="nb">id</span><span class="p">],</span> <span class="n">target</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def forward(self, x):
+ features = self.encoder(x)
+ outputs = {}
+ for node_id, head in self.heads.items():
+ outputs[node_id] = head(features)
+ return outputs
+``</p>
+
+<p><strong>Loss:</strong>
+<code class="language-plaintext highlighter-rouge">python
+total_loss = 0
+for node in taxonomy.internal_nodes():
+ if node in ground_truth_path:
+ target = ground_truth_path[node].child_index
+ total_loss += cross_entropy(outputs[node.id], target)
+</code></p>
 
 <p><strong>Pros:</strong></p>
 <ul>
@@ -443,9 +449,9 @@
 <ul>
   <li>Treat each path as a separate task.</li>
   <li>Loss = Sum of losses for all valid paths.
-    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">loss</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="nf">path_loss</span><span class="p">(</span><span class="nf">model</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">ground_truth_paths</span><span class="p">)</span>
-</code></pre></div>    </div>
-  </li>
+<code class="language-plaintext highlighter-rouge">python
+loss = sum(path_loss(model(x), path) for path in ground_truth_paths)
+</code></li>
 </ul>
 
 <h2 id="5-hierarchy-aware-loss-functions">5. Hierarchy-Aware Loss Functions</h2>
@@ -519,22 +525,26 @@ where \(D\) is the depth and \(\alpha_i\) increases with depth (leaf nodes weigh
   </li>
 </ol>
 
-<p><strong>Parabel Architecture:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Build a label tree (clustering similar labels).
-2. Train classifiers at each node (like LCN).
-3. Beam search during inference to explore top-K branches.
-</code></pre></div></div>
+<p><strong>Parabel Architecture:</strong>
+``</p>
+<ol>
+  <li>Build a label tree (clustering similar labels).</li>
+  <li>Train classifiers at each node (like LCN).</li>
+  <li>Beam search during inference to explore top-K branches.
+``</li>
+</ol>
 
 <h2 id="deep-dive-googles-knowledge-graph-categories">Deep Dive: Google’s Knowledge Graph Categories</h2>
 
 <p>Google Search uses a hierarchical taxonomy for entities.
-<strong>Example:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Thing
+<strong>Example:</strong>
+<code class="language-plaintext highlighter-rouge">
+Thing
 ├── Creative Work
-│   └── Movie
+│ └── Movie
 └── Person
-    └── Actor
-</code></pre></div></div>
+ └── Actor
+</code></p>
 
 <p><strong>Challenge:</strong> New entities appear daily (new movies, new people).
 <strong>Solution:</strong></p>
@@ -551,12 +561,13 @@ where \(D\) is the depth and \(\alpha_i\) increases with depth (leaf nodes weigh
   <li><strong>Higher tasks</strong> are harder (e.g., “Is this a gaming laptop?”).</li>
 </ul>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Input → Shared Encoder → Task 1 (Electronics?) ──┐
-                         ├→ Task 2 (Computers?)   │
-                         └→ Task 3 (Laptops?)     │
-                                                   ├→ Final Prediction
-</code></pre></div></div>
+<p><strong>Architecture:</strong>
+<code class="language-plaintext highlighter-rouge">
+Input → Shared Encoder → Task 1 (Electronics?) ──┐
+ ├→ Task 2 (Computers?) │
+ └→ Task 3 (Laptops?) │
+ ├→ Final Prediction
+</code></p>
 
 <p><strong>Loss:</strong>
 \[
@@ -593,14 +604,14 @@ where \(\lambda_i\) are learned or hand-tuned.</p>
 <p><strong>Solutions:</strong></p>
 <ol>
   <li><strong>Class Weighting:</strong>
-\[
-w_i = \frac{\text{total samples}}{\text{samples in class } i}
-\]</li>
+ \[
+ w_i = \frac{\text{total samples}}{\text{samples in class } i}
+ \]</li>
   <li><strong>Focal Loss:</strong>
-\[
-\mathcal{L} = -\alpha (1 - p_t)^\gamma \log(p_t)
-\]
-Focuses on hard-to-classify examples.</li>
+ \[
+ \mathcal{L} = -\alpha (1 - p_t)^\gamma \log(p_t)
+ \]
+ Focuses on hard-to-classify examples.</li>
   <li><strong>Oversampling:</strong>
     <ul>
       <li>Augment rare classes.</li>
@@ -679,46 +690,49 @@ d(\text{pred}, \text{true}) = \text{depth}(\text{LCA}(\text{pred}, \text{true}))
 
 <p><strong>Idea:</strong> Use attention at each level of the hierarchy to focus on relevant features.</p>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">HierarchicalAttention</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">word_attention</span> <span class="o">=</span> <span class="nc">Attention</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sentence_attention</span> <span class="o">=</span> <span class="nc">Attention</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">document_attention</span> <span class="o">=</span> <span class="nc">Attention</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
-        <span class="c1"># Level 1: Words → Sentence Representation
-</span>        <span class="n">sentence_reps</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">sentence</span> <span class="ow">in</span> <span class="n">document</span><span class="p">:</span>
-            <span class="n">word_reps</span> <span class="o">=</span> <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="nf">embed</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">sentence</span><span class="p">]</span>
-            <span class="n">sentence_rep</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">word_attention</span><span class="p">(</span><span class="n">word_reps</span><span class="p">)</span>
-            <span class="n">sentence_reps</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">sentence_rep</span><span class="p">)</span>
-        
-        <span class="c1"># Level 2: Sentences → Document Representation
-</span>        <span class="n">doc_rep</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">sentence_attention</span><span class="p">(</span><span class="n">sentence_reps</span><span class="p">)</span>
-        
-        <span class="c1"># Level 3: Document → Category
-</span>        <span class="n">category</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">document_attention</span><span class="p">(</span><span class="n">doc_rep</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">category</span>
-</code></pre></div></div>
+<p><strong>Architecture:</strong>
+``python
+class HierarchicalAttention(nn.Module):
+ def <strong>init</strong>(self):
+ self.word_attention = Attention()
+ self.sentence_attention = Attention()
+ self.document_attention = Attention()</p>
+
+<p>def forward(self, document):
+ # Level 1: Words → Sentence Representation
+ sentence_reps = []
+ for sentence in document:
+ word_reps = [self.embed(word) for word in sentence]
+ sentence_rep = self.word_attention(word_reps)
+ sentence_reps.append(sentence_rep)</p>
+
+<p># Level 2: Sentences → Document Representation
+ doc_rep = self.sentence_attention(sentence_reps)</p>
+
+<p># Level 3: Document → Category
+ category = self.document_attention(doc_rep)
+ return category
+``</p>
 
 <h2 id="deep-dive-label-embedding-and-matching">Deep Dive: Label Embedding and Matching</h2>
 
 <p><strong>Idea:</strong> Embed both inputs and labels into the same space.</p>
 
-<p><strong>Training:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">input_emb</span> <span class="o">=</span> <span class="nf">encoder</span><span class="p">(</span><span class="n">product_description</span><span class="p">)</span>  <span class="c1"># [batch, 512]
-</span><span class="n">label_embs</span> <span class="o">=</span> <span class="nf">label_encoder</span><span class="p">(</span><span class="n">all_labels</span><span class="p">)</span>     <span class="c1"># [30000, 512]
-</span>
-<span class="c1"># Dot product similarity
-</span><span class="n">scores</span> <span class="o">=</span> <span class="n">input_emb</span> <span class="o">@</span> <span class="n">label_embs</span><span class="p">.</span><span class="n">T</span>  <span class="c1"># [batch, 30000]
-</span><span class="n">loss</span> <span class="o">=</span> <span class="nf">cross_entropy</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-</code></pre></div></div>
+<p><strong>Training:</strong>
+``python
+input_emb = encoder(product_description) # [batch, 512]
+label_embs = label_encoder(all_labels) # [30000, 512]</p>
 
-<p><strong>Inference:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Use FAISS for fast top-K retrieval
-</span><span class="n">top_k_labels</span> <span class="o">=</span> <span class="n">faiss_index</span><span class="p">.</span><span class="nf">search</span><span class="p">(</span><span class="n">input_emb</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="dot-product-similarity">Dot product similarity</h1>
+<p>scores = input_emb @ label_embs.T # [batch, 30000]
+loss = cross_entropy(scores, target)
+``</p>
+
+<p><strong>Inference:</strong>
+``python</p>
+<h1 id="use-faiss-for-fast-top-k-retrieval">Use FAISS for fast top-K retrieval</h1>
+<p>top_k_labels = faiss_index.search(input_emb, k=10)
+``</p>
 
 <p><strong>Benefit:</strong> Decouples the number of labels from model size. Can add new labels without retraining.</p>
 
@@ -743,56 +757,57 @@ d(\text{pred}, \text{true}) = \text{depth}(\text{LCA}(\text{pred}, \text{true}))
 
 <h2 id="implementation-example-pytorch-hierarchical-classifier">Implementation Example: PyTorch Hierarchical Classifier</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">HierarchicalModel</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">taxonomy</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">768</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">taxonomy</span> <span class="o">=</span> <span class="n">taxonomy</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Sequential</span><span class="p">(</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">embedding_dim</span><span class="p">,</span> <span class="mi">1024</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">ReLU</span><span class="p">(),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Dropout</span><span class="p">(</span><span class="mf">0.3</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="mi">512</span><span class="p">)</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># One classifier per internal node
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">classifiers</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ModuleDict</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">taxonomy</span><span class="p">.</span><span class="nf">internal_nodes</span><span class="p">():</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">classifiers</span><span class="p">[</span><span class="nf">str</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="nb">id</span><span class="p">)]</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">))</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">return_all</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="n">features</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">return_all</span><span class="p">:</span>
-            <span class="c1"># Return logits for all nodes (for training)
-</span>            <span class="n">outputs</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">classifier</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">classifiers</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-                <span class="n">outputs</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span> <span class="o">=</span> <span class="nf">classifier</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">outputs</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Greedy path prediction (for inference)
-</span>            <span class="n">node</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">taxonomy</span><span class="p">.</span><span class="n">root</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span><span class="p">]</span>
-            
-            <span class="k">while</span> <span class="ow">not</span> <span class="n">node</span><span class="p">.</span><span class="nf">is_leaf</span><span class="p">():</span>
-                <span class="n">logits</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">classifiers</span><span class="p">[</span><span class="nf">str</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="nb">id</span><span class="p">)](</span><span class="n">features</span><span class="p">)</span>
-                <span class="n">child_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">.</span><span class="n">children</span><span class="p">[</span><span class="n">child_idx</span><span class="p">.</span><span class="nf">item</span><span class="p">()]</span>
-                <span class="n">path</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            
-            <span class="k">return</span> <span class="n">path</span>
+<p>class HierarchicalModel(nn.Module):
+ def <strong>init</strong>(self, taxonomy, embedding_dim=768):
+ super().<strong>init</strong>()
+ self.taxonomy = taxonomy
+ self.encoder = nn.Sequential(
+ nn.Linear(embedding_dim, 1024),
+ nn.ReLU(),
+ nn.Dropout(0.3),
+ nn.Linear(1024, 512)
+ )</p>
 
-<span class="k">def</span> <span class="nf">hierarchical_loss</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">true_path</span><span class="p">):</span>
-    <span class="n">loss</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">true_path</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="p">.</span><span class="nf">is_leaf</span><span class="p">():</span>
-            <span class="n">logits</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="nf">str</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="nb">id</span><span class="p">)]</span>
-            <span class="n">target</span> <span class="o">=</span> <span class="n">true_path</span><span class="p">.</span><span class="nf">index</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="nf">get_child_on_path</span><span class="p">(</span><span class="n">true_path</span><span class="p">))</span>
-            <span class="n">loss</span> <span class="o">+=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">CrossEntropyLoss</span><span class="p">()(</span><span class="n">logits</span><span class="p">,</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([</span><span class="n">target</span><span class="p">]))</span>
-    <span class="k">return</span> <span class="n">loss</span>
-</code></pre></div></div>
+<p># One classifier per internal node
+ self.classifiers = nn.ModuleDict()
+ for node in taxonomy.internal_nodes():
+ self.classifiers[str(node.id)] = nn.Linear(512, len(node.children))</p>
+
+<p>def forward(self, x, return_all=False):
+ features = self.encoder(x)</p>
+
+<p>if return_all:
+ # Return logits for all nodes (for training)
+ outputs = {}
+ for node_id, classifier in self.classifiers.items():
+ outputs[node_id] = classifier(features)
+ return outputs
+ else:
+ # Greedy path prediction (for inference)
+ node = self.taxonomy.root
+ path = [node]</p>
+
+<p>while not node.is_leaf():
+ logits = self.classifiers<a href="features">str(node.id)</a>
+ child_idx = torch.argmax(logits, dim=1)
+ node = node.children[child_idx.item()]
+ path.append(node)</p>
+
+<p>return path</p>
+
+<p>def hierarchical_loss(outputs, true_path):
+ loss = 0
+ for node in true_path:
+ if not node.is_leaf():
+ logits = outputs[str(node.id)]
+ target = true_path.index(node.get_child_on_path(true_path))
+ loss += nn.CrossEntropyLoss()(logits, torch.tensor([target]))
+ return loss
+``</p>
 
 <h2 id="top-interview-questions">Top Interview Questions</h2>
 

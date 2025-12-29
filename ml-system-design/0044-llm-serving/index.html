@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="LLM Serving Infrastructure">
     <meta itemprop="description" content="“Serving models that think at human scale.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -323,18 +323,19 @@
 
 <h3 id="41-basic-architecture">4.1. Basic Architecture</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                    ┌─────────────────────┐
-                    │   Load Balancer     │
-                    │   (HAProxy/Nginx)   │
-                    └─────────┬───────────┘
-                              │
-         ┌────────────────────┴────────────────────┐
-         │                    │                    │
-┌────────▼────────┐  ┌────────▼────────┐  ┌────────▼────────┐
-│   GPU Node 1    │  │   GPU Node 2    │  │   GPU Node N    │
-│  (4x A100 80GB) │  │  (4x A100 80GB) │  │  (4x A100 80GB) │
-└─────────────────┘  └─────────────────┘  └─────────────────┘
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+ ┌─────────────────────┐
+ │ Load Balancer │
+ │ (HAProxy/Nginx) │
+ └─────────┬───────────┘
+ │
+ ┌────────────────────┴────────────────────┐
+ │ │ │
+┌────────▼────────┐ ┌────────▼────────┐ ┌────────▼────────┐
+│ GPU Node 1 │ │ GPU Node 2 │ │ GPU Node N │
+│ (4x A100 80GB) │ │ (4x A100 80GB) │ │ (4x A100 80GB) │
+└─────────────────┘ └─────────────────┘ └─────────────────┘
+</code></p>
 
 <h3 id="42-components">4.2. Components</h3>
 
@@ -461,15 +462,16 @@
   <li>High throughput.</li>
 </ul>
 
-<p><strong>Usage:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">vllm</span> <span class="kn">import</span> <span class="n">LLM</span><span class="p">,</span> <span class="n">SamplingParams</span>
+<p><strong>Usage:</strong>
+``python
+from vllm import LLM, SamplingParams</p>
 
-<span class="n">llm</span> <span class="o">=</span> <span class="nc">LLM</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="sh">"</span><span class="s">meta-llama/Llama-2-7b-hf</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">sampling_params</span> <span class="o">=</span> <span class="nc">SamplingParams</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<p>llm = LLM(model=”meta-llama/Llama-2-7b-hf”)
+sampling_params = SamplingParams(temperature=0.7, max_tokens=100)</p>
 
-<span class="n">outputs</span> <span class="o">=</span> <span class="n">llm</span><span class="p">.</span><span class="nf">generate</span><span class="p">([</span><span class="sh">"</span><span class="s">What is AI?</span><span class="sh">"</span><span class="p">],</span> <span class="n">sampling_params</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">text</span><span class="p">)</span>
-</code></pre></div></div>
+<p>outputs = llm.generate([“What is AI?”], sampling_params)
+print(outputs[0].outputs[0].text)
+``</p>
 
 <h3 id="62-tensorrt-llm-nvidia">6.2. TensorRT-LLM (NVIDIA)</h3>
 
@@ -523,31 +525,32 @@
 
 <h3 id="71-architecture">7.1. Architecture</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                    ┌─────────────────────┐
-                    │   API Gateway       │
-                    │   (Rate Limiting)   │
-                    └─────────┬───────────┘
-                              │
-                    ┌─────────▼───────────┐
-                    │   Request Router    │
-                    │   (Model Selection) │
-                    └─────────┬───────────┘
-                              │
-         ┌────────────────────┴────────────────────┐
-         │                                         │
-┌────────▼────────┐                      ┌────────▼────────┐
-│   Inference     │                      │   Inference     │
-│   Cluster A     │                      │   Cluster B     │
-│   (GPT-4)       │                      │   (GPT-3.5)     │
-└────────┬────────┘                      └────────┬────────┘
-         │                                         │
-         └────────────────────┬────────────────────┘
-                              │
-                    ┌─────────▼───────────┐
-                    │   Streaming         │
-                    │   Response Server   │
-                    └─────────────────────┘
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+ ┌─────────────────────┐
+ │ API Gateway │
+ │ (Rate Limiting) │
+ └─────────┬───────────┘
+ │
+ ┌─────────▼───────────┐
+ │ Request Router │
+ │ (Model Selection) │
+ └─────────┬───────────┘
+ │
+ ┌────────────────────┴────────────────────┐
+ │ │
+┌────────▼────────┐ ┌────────▼────────┐
+│ Inference │ │ Inference │
+│ Cluster A │ │ Cluster B │
+│ (GPT-4) │ │ (GPT-3.5) │
+└────────┬────────┘ └────────┬────────┘
+ │ │
+ └────────────────────┬────────────────────┘
+ │
+ ┌─────────▼───────────┐
+ │ Streaming │
+ │ Response Server │
+ └─────────────────────┘
+</code></p>
 
 <h3 id="72-request-flow">7.2. Request Flow</h3>
 
@@ -868,24 +871,25 @@
   <li><strong>Fair Scheduling:</strong> Balance latency across users.</li>
 </ol>
 
-<p><strong>Implementation:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">RequestScheduler</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">queues</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">premium</span><span class="sh">'</span><span class="p">:</span> <span class="p">[],</span>
-            <span class="sh">'</span><span class="s">standard</span><span class="sh">'</span><span class="p">:</span> <span class="p">[],</span>
-            <span class="sh">'</span><span class="s">batch</span><span class="sh">'</span><span class="p">:</span> <span class="p">[]</span>
-        <span class="p">}</span>
-    
-    <span class="k">def</span> <span class="nf">add_request</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="sh">'</span><span class="s">standard</span><span class="sh">'</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">queues</span><span class="p">[</span><span class="n">priority</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">get_next_request</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">priority</span> <span class="ow">in</span> <span class="p">[</span><span class="sh">'</span><span class="s">premium</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">standard</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">batch</span><span class="sh">'</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">queues</span><span class="p">[</span><span class="n">priority</span><span class="p">]:</span>
-                <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">queues</span><span class="p">[</span><span class="n">priority</span><span class="p">].</span><span class="nf">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">None</span>
-</code></pre></div></div>
+<p><strong>Implementation:</strong>
+``python
+class RequestScheduler:
+ def <strong>init</strong>(self):
+ self.queues = {
+ ‘premium’: [],
+ ‘standard’: [],
+ ‘batch’: []
+ }</p>
+
+<p>def add_request(self, request, priority=’standard’):
+ self.queues[priority].append(request)</p>
+
+<p>def get_next_request(self):
+ for priority in [‘premium’, ‘standard’, ‘batch’]:
+ if self.queues[priority]:
+ return self.queues[priority].pop(0)
+ return None
+``</p>
 
 <h2 id="21-benchmarking-llm-serving">21. Benchmarking LLM Serving</h2>
 
@@ -1024,7 +1028,134 @@
         
       </footer>
 
+      <div class="page__related page__related--full">
+  <h2 class="page__related-title">Related across topics</h2>
+  <style>
+    /* Make section span full content width and use 2 equal columns */
+    .page__related--full { float: inline-start; width: 100%; padding: 0; }
+    .cross-related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+    @media (max-width: 768px) { .cross-related-grid { grid-template-columns: 1fr; } }
+    /* Ensure archive cards stretch nicely in the grid */
+    .cross-related-grid .list__item, .cross-related-grid .grid__item { width: auto; float: none; margin: 0; }
+  </style>
+  <div class="cross-related-grid">
+    
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
       
+        <a href="/dsa/0044-largest-rectangle-histogram/" rel="permalink">Largest Rectangle in Histogram
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          16 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Finding the maximum hidden in the valleys and peaks.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/speech-tech/0044-voice-conversion/" rel="permalink">Voice Conversion
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Speaking with someone else’s voice.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ai-agents/0044-prompt-injection-defense/" rel="permalink">Prompt Injection Defense
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          6 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Treat prompts like an attack surface: isolate untrusted content, validate every tool call, and fail closed under uncertainty.”
+</p>
+  </article>
+</div>
+
+  </div>
+</div>
 
       <section class="page__share">
   <h4 class="page__share-title">Share on</h4>

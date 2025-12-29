@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Data Augmentation Pipeline">
     <meta itemprop="description" content="Design a robust data augmentation pipeline that applies rich transformations to large-scale datasets without becoming the training bottleneck.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -345,31 +345,32 @@ you the intuition and confidence to design larger, distributed augmentation syst
 
 <h2 id="high-level-architecture">High-Level Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────────┐
-│                    Data Augmentation Pipeline                    │
-└─────────────────────────────────────────────────────────────────┘
+<p>``
+┌─────────────────────────────────────────────────────────────────┐
+│ Data Augmentation Pipeline │
+└─────────────────────────────────────────────────────────────────┘</p>
 
-                 Offline / Preprocessing Layer
-          ┌───────────────────────────────────────┐
-          │ - Raw data ingestion (images/audio)   │
-          │ - Heavy augmentations (slow)         │
-          │ - Caching to TFRecord/WebDataset     │
-          └───────────────┬──────────────────────┘
-                          │
-                 Online / Training-time Layer
-          ┌───────────────▼──────────────────────┐
-          │ - Light/random augmentations         │
-          │ - Batch-wise composition             │
-          │ - On-GPU augmentations (optional)    │
-          └───────────────┬──────────────────────┘
-                          │
-                   Training Loop (GPU)
-          ┌───────────────▼──────────────────────┐
-          │ - Model forward/backward             │
-          │ - Loss, optimizer                    │
-          │ - Metrics &amp; logging                  │
-          └──────────────────────────────────────┘
-</code></pre></div></div>
+<p>Offline / Preprocessing Layer
+ ┌───────────────────────────────────────┐
+ │ - Raw data ingestion (images/audio) │
+ │ - Heavy augmentations (slow) │
+ │ - Caching to TFRecord/WebDataset │
+ └───────────────┬──────────────────────┘
+ │
+ Online / Training-time Layer
+ ┌───────────────▼──────────────────────┐
+ │ - Light/random augmentations │
+ │ - Batch-wise composition │
+ │ - On-GPU augmentations (optional) │
+ └───────────────┬──────────────────────┘
+ │
+ Training Loop (GPU)
+ ┌───────────────▼──────────────────────┐
+ │ - Model forward/backward │
+ │ - Loss, optimizer │
+ │ - Metrics &amp; logging │
+ └──────────────────────────────────────┘
+``</p>
 
 <h3 id="key-concepts">Key Concepts</h3>
 
@@ -378,24 +379,18 @@ you the intuition and confidence to design larger, distributed augmentation syst
     <ul>
       <li>Apply heavy, expensive transforms once.</li>
       <li>Save to disk (e.g., rotated/denoised images).</li>
-      <li>Good when:
-        <ul>
-          <li>Augmentations are deterministic,</li>
-          <li>You have a well-defined dataset and lots of storage.</li>
-        </ul>
-      </li>
+      <li>Good when:</li>
+      <li>Augmentations are deterministic,</li>
+      <li>You have a well-defined dataset and lots of storage.</li>
     </ul>
   </li>
   <li><strong>Online augmentation:</strong>
     <ul>
       <li>Lightweight, random transforms applied on-the-fly during training.</li>
       <li>Different per epoch / per sample.</li>
-      <li>Good for:
-        <ul>
-          <li>Infinite variation,</li>
-          <li>Online learning/continuous training.</li>
-        </ul>
-      </li>
+      <li>Good for:</li>
+      <li>Infinite variation,</li>
+      <li>Online learning/continuous training.</li>
     </ul>
   </li>
 </ol>
@@ -408,118 +403,119 @@ you the intuition and confidence to design larger, distributed augmentation syst
 
 <p>Use a <strong>declarative configuration</strong> for augmentation policies:</p>
 
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># config/augmentations/vision.yaml</span>
-<span class="na">image_augmentations</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">type</span><span class="pi">:</span> <span class="s">RandomResizedCrop</span>
-    <span class="na">params</span><span class="pi">:</span>
-      <span class="na">size</span><span class="pi">:</span> <span class="m">224</span>
-      <span class="na">scale</span><span class="pi">:</span> <span class="pi">[</span><span class="nv">0.8</span><span class="pi">,</span> <span class="nv">1.0</span><span class="pi">]</span>
-  <span class="pi">-</span> <span class="na">type</span><span class="pi">:</span> <span class="s">RandomHorizontalFlip</span>
-    <span class="na">params</span><span class="pi">:</span>
-      <span class="na">p</span><span class="pi">:</span> <span class="m">0.5</span>
-  <span class="pi">-</span> <span class="na">type</span><span class="pi">:</span> <span class="s">ColorJitter</span>
-    <span class="na">params</span><span class="pi">:</span>
-      <span class="na">brightness</span><span class="pi">:</span> <span class="m">0.2</span>
-      <span class="na">contrast</span><span class="pi">:</span> <span class="m">0.2</span>
-      <span class="na">saturation</span><span class="pi">:</span> <span class="m">0.2</span>
-  <span class="pi">-</span> <span class="na">type</span><span class="pi">:</span> <span class="s">RandAugment</span>
-    <span class="na">params</span><span class="pi">:</span>
-      <span class="na">num_ops</span><span class="pi">:</span> <span class="m">2</span>
-      <span class="na">magnitude</span><span class="pi">:</span> <span class="m">9</span>
-</code></pre></div></div>
+<p>``yaml</p>
+<h1 id="configaugmentationsvisionyaml">config/augmentations/vision.yaml</h1>
+<p>image_augmentations:</p>
+<ul>
+  <li>type: RandomResizedCrop
+ params:
+ size: 224
+ scale: [0.8, 1.0]</li>
+  <li>type: RandomHorizontalFlip
+ params:
+ p: 0.5</li>
+  <li>type: ColorJitter
+ params:
+ brightness: 0.2
+ contrast: 0.2
+ saturation: 0.2</li>
+  <li>type: RandAugment
+ params:
+ num_ops: 2
+ magnitude: 9
+``</li>
+</ul>
 
 <p>Then build a <strong>factory</strong> in code:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torchvision.transforms</span> <span class="k">as</span> <span class="n">T</span>
-<span class="kn">import</span> <span class="n">yaml</span>
+<p>``python
+import torchvision.transforms as T
+import yaml</p>
 
+<p>def build_vision_augmentations(config_path: str):
+ with open(config_path, ‘r’) as f:
+ cfg = yaml.safe_load(f)</p>
 
-<span class="k">def</span> <span class="nf">build_vision_augmentations</span><span class="p">(</span><span class="n">config_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="k">with</span> <span class="nf">open</span><span class="p">(</span><span class="n">config_path</span><span class="p">,</span> <span class="sh">'</span><span class="s">r</span><span class="sh">'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">cfg</span> <span class="o">=</span> <span class="n">yaml</span><span class="p">.</span><span class="nf">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<p>ops = []
+ for aug in cfg[‘image_augmentations’]:
+ t = aug[‘type’]
+ params = aug.get(‘params’, {})</p>
 
-    <span class="n">ops</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">aug</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">[</span><span class="sh">'</span><span class="s">image_augmentations</span><span class="sh">'</span><span class="p">]:</span>
-        <span class="n">t</span> <span class="o">=</span> <span class="n">aug</span><span class="p">[</span><span class="sh">'</span><span class="s">type</span><span class="sh">'</span><span class="p">]</span>
-        <span class="n">params</span> <span class="o">=</span> <span class="n">aug</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="sh">'</span><span class="s">params</span><span class="sh">'</span><span class="p">,</span> <span class="p">{})</span>
+<p>if t == ‘RandomResizedCrop’:
+ ops.append(T.RandomResizedCrop(<strong>params))
+ elif t == ‘RandomHorizontalFlip’:
+ ops.append(T.RandomHorizontalFlip(</strong>params))
+ elif t == ‘ColorJitter’:
+ ops.append(T.ColorJitter(<strong>params))
+ elif t == ‘RandAugment’:
+ ops.append(T.RandAugment(</strong>params))
+ else:
+ raise ValueError(f"Unknown augmentation: {t}")</p>
 
-        <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="sh">'</span><span class="s">RandomResizedCrop</span><span class="sh">'</span><span class="p">:</span>
-            <span class="n">ops</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">T</span><span class="p">.</span><span class="nc">RandomResizedCrop</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="n">t</span> <span class="o">==</span> <span class="sh">'</span><span class="s">RandomHorizontalFlip</span><span class="sh">'</span><span class="p">:</span>
-            <span class="n">ops</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">T</span><span class="p">.</span><span class="nc">RandomHorizontalFlip</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="n">t</span> <span class="o">==</span> <span class="sh">'</span><span class="s">ColorJitter</span><span class="sh">'</span><span class="p">:</span>
-            <span class="n">ops</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">T</span><span class="p">.</span><span class="nc">ColorJitter</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="n">t</span> <span class="o">==</span> <span class="sh">'</span><span class="s">RandAugment</span><span class="sh">'</span><span class="p">:</span>
-            <span class="n">ops</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">T</span><span class="p">.</span><span class="nc">RandAugment</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="n">f</span>\<span class="sh">"</span><span class="s">Unknown augmentation: {t}</span><span class="se">\"</span><span class="s">)
-
-    return T.Compose(ops)
-</span></code></pre></div></div>
+<p>return T.Compose(ops)
+``</p>
 
 <h3 id="2-online-augmentation-in-the-dataloader">2. Online Augmentation in the DataLoader</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">torch.utils.data</span> <span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">DataLoader</span>
-<span class="kn">from</span> <span class="n">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
+<p>``python
+from torch.utils.data import Dataset, DataLoader
+from PIL import Image</p>
 
+<p>class ImageDataset(Dataset):
+ def <strong>init</strong>(self, image_paths, labels, transform=None):
+ self.image_paths = image_paths
+ self.labels = labels
+ self.transform = transform</p>
 
-<span class="k">class</span> <span class="nc">ImageDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">image_paths</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">image_paths</span> <span class="o">=</span> <span class="n">image_paths</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">transform</span> <span class="o">=</span> <span class="n">transform</span>
+<p>def <strong>len</strong>(self):
+ return len(self.image_paths)</p>
 
-    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">image_paths</span><span class="p">)</span>
+<p>def <strong>getitem</strong>(self, idx):
+ path = self.image_paths[idx]
+ label = self.labels[idx]</p>
 
-    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
-        <span class="n">path</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">image_paths</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-        <span class="n">label</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">labels</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+<p>image = Image.open(path).convert("RGB")
+ if self.transform:
+ image = self.transform(image)</p>
 
-        <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="n">path</span><span class="p">).</span><span class="nf">convert</span><span class="p">(</span>\<span class="sh">"</span><span class="s">RGB</span><span class="se">\"</span><span class="s">)
-        if self.transform:
-            image = self.transform(image)
+<p>return image, label</p>
 
-        return image, label
-
-
-def build_dataloader(image_paths, labels, batch_size, num_workers, aug_config):
-    transform = build_vision_augmentations(aug_config)
-    dataset = ImageDataset(image_paths, labels, transform=transform)
-    loader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=num_workers,
-        pin_memory=True,
-        prefetch_factor=2,
-    )
-    return loader
-</span></code></pre></div></div>
+<p>def build_dataloader(image_paths, labels, batch_size, num_workers, aug_config):
+ transform = build_vision_augmentations(aug_config)
+ dataset = ImageDataset(image_paths, labels, transform=transform)
+ loader = DataLoader(
+ dataset,
+ batch_size=batch_size,
+ shuffle=True,
+ num_workers=num_workers,
+ pin_memory=True,
+ prefetch_factor=2,
+ )
+ return loader
+``</p>
 
 <h3 id="3-offline-augmentation-pipeline-batch-jobs">3. Offline Augmentation Pipeline (Batch Jobs)</h3>
 
 <p>For heavy operations (e.g., expensive geometric warps, super-resolution, denoising):</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">multiprocessing</span> <span class="kn">import</span> <span class="n">Pool</span>
-<span class="kn">from</span> <span class="n">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<p>``python
+from multiprocessing import Pool
+from pathlib import Path</p>
 
+<p>def augment_and_save(args):
+ input_path, output_dir, ops = args
+ img = Image.open(input_path).convert("RGB")</p>
 
-<span class="k">def</span> <span class="nf">augment_and_save</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
-    <span class="n">input_path</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">ops</span> <span class="o">=</span> <span class="n">args</span>
-    <span class="n">img</span> <span class="o">=</span> <span class="n">Image</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="n">input_path</span><span class="p">).</span><span class="nf">convert</span><span class="p">(</span>\<span class="sh">"</span><span class="s">RGB</span><span class="se">\"</span><span class="s">)
+<p>for i, op in enumerate(ops):
+ aug_img = op(img)
+ out_path = Path(output_dir) / f"{input_path.stem}_aug{i}{input_path.suffix}"
+ aug_img.save(out_path)</p>
 
-    for i, op in enumerate(ops):
-        aug_img = op(img)
-        out_path = Path(output_dir) / f</span><span class="se">\"</span><span class="s">{input_path.stem}_aug{i}{input_path.suffix}</span><span class="se">\"</span><span class="s">
-        aug_img.save(out_path)
-
-
-def run_offline_augmentation(image_paths, output_dir, ops, num_workers=8):
-    args = [(p, output_dir, ops) for p in image_paths]
-    with Pool(num_workers) as pool:
-        pool.map(augment_and_save, args)
-</span></code></pre></div></div>
+<p>def run_offline_augmentation(image_paths, output_dir, ops, num_workers=8):
+ args = [(p, output_dir, ops) for p in image_paths]
+ with Pool(num_workers) as pool:
+ pool.map(augment_and_save, args)
+``</p>
 
 <p>You can run this as:</p>
 
@@ -559,35 +555,30 @@ def run_offline_augmentation(image_paths, output_dir, ops, num_workers=8):
   <li>Avoid duplicated augmentations unless intentionally desired (e.g., strong augmentations in semi-supervised learning).</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">torch.utils.data.distributed</span> <span class="kn">import</span> <span class="n">DistributedSampler</span>
+<p>``python
+from torch.utils.data.distributed import DistributedSampler</p>
 
-<span class="k">def</span> <span class="nf">build_distributed_loader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">world_size</span><span class="p">,</span> <span class="n">rank</span><span class="p">):</span>
-    <span class="n">sampler</span> <span class="o">=</span> <span class="nc">DistributedSampler</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">num_replicas</span><span class="o">=</span><span class="n">world_size</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="n">rank</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="n">loader</span> <span class="o">=</span> <span class="nc">DataLoader</span><span class="p">(</span>
-        <span class="n">dataset</span><span class="p">,</span>
-        <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
-        <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
-        <span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-        <span class="n">pin_memory</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">loader</span>
-</code></pre></div></div>
+<p>def build_distributed_loader(dataset, batch_size, world_size, rank):
+ sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=True)
+ loader = DataLoader(
+ dataset,
+ batch_size=batch_size,
+ sampler=sampler,
+ num_workers=4,
+ pin_memory=True,
+ )
+ return loader
+``</p>
 
 <h3 id="3-caching--reuse">3. Caching &amp; Reuse</h3>
 
 <ul>
-  <li>Cache intermediate artifacts:
-    <ul>
-      <li>Pre-resized images for fixed-size training (e.g., 224x224)</li>
-      <li>Precomputed features if model backbone is frozen</li>
-    </ul>
-  </li>
-  <li>Use fast storage:
-    <ul>
-      <li>Local SSDs on training machines</li>
-      <li>Redis / memcached for hot subsets</li>
-    </ul>
-  </li>
+  <li>Cache intermediate artifacts:</li>
+  <li>Pre-resized images for fixed-size training (e.g., 224x224)</li>
+  <li>Precomputed features if model backbone is frozen</li>
+  <li>Use fast storage:</li>
+  <li>Local SSDs on training machines</li>
+  <li>Redis / memcached for hot subsets</li>
 </ul>
 
 <h2 id="monitoring--observability">Monitoring &amp; Observability</h2>
@@ -598,30 +589,21 @@ def run_offline_augmentation(image_paths, output_dir, ops, num_workers=8):
   <li>Data loader time vs model compute time per step</li>
   <li>GPU utilization over time</li>
   <li>Distribution of applied augmentations (e.g., how often rotations, color jitter)</li>
-  <li>Failure rates:
-    <ul>
-      <li>Decoding errors,</li>
-      <li>Corrupted images,</li>
-      <li>Label mismatches</li>
-    </ul>
-  </li>
+  <li>Failure rates:</li>
+  <li>Decoding errors,</li>
+  <li>Corrupted images,</li>
+  <li>Label mismatches</li>
 </ul>
 
 <h3 id="debugging-tools">Debugging Tools</h3>
 
 <ul>
-  <li>Log or visualize <strong>augmented samples</strong>:
-    <ul>
-      <li>Save a small batch of augmented images per experiment.</li>
-      <li>Use a simple dashboard (e.g., Streamlit/Gradio) to inspect them.</li>
-    </ul>
-  </li>
-  <li>Add assertions in the pipeline:
-    <ul>
-      <li>Check tensor shapes and ranges after each transform.</li>
-      <li>Ensure labels remain consistent (e.g., bounding boxes after geometric transforms).</li>
-    </ul>
-  </li>
+  <li>Log or visualize <strong>augmented samples</strong>:</li>
+  <li>Save a small batch of augmented images per experiment.</li>
+  <li>Use a simple dashboard (e.g., Streamlit/Gradio) to inspect them.</li>
+  <li>Add assertions in the pipeline:</li>
+  <li>Check tensor shapes and ranges after each transform.</li>
+  <li>Ensure labels remain consistent (e.g., bounding boxes after geometric transforms).</li>
 </ul>
 
 <h2 id="real-world-case-study-imagenet-scale-training">Real-World Case Study: ImageNet-Scale Training</h2>
@@ -629,19 +611,13 @@ def run_offline_augmentation(image_paths, output_dir, ops, num_workers=8):
 <p>For large vision models (ResNet, ViT, etc.) trained on ImageNet-scale datasets:</p>
 
 <ul>
-  <li>Augmentations:
-    <ul>
-      <li>RandomResizedCrop, random horizontal flip, color jitter, RandAugment</li>
-      <li>MixUp, CutMix for regularization</li>
-    </ul>
-  </li>
-  <li>Infrastructure:
-    <ul>
-      <li>8–1024 GPUs</li>
-      <li>Shared networked storage (e.g., NFS, S3 with caching)</li>
-      <li>Highly tuned input pipelines (prefetching, caching, GPU-based transforms)</li>
-    </ul>
-  </li>
+  <li>Augmentations:</li>
+  <li>RandomResizedCrop, random horizontal flip, color jitter, RandAugment</li>
+  <li>MixUp, CutMix for regularization</li>
+  <li>Infrastructure:</li>
+  <li>8–1024 GPUs</li>
+  <li>Shared networked storage (e.g., NFS, S3 with caching)</li>
+  <li>Highly tuned input pipelines (prefetching, caching, GPU-based transforms)</li>
 </ul>
 
 <p>Typical bottlenecks:</p>
@@ -665,54 +641,33 @@ def run_offline_augmentation(image_paths, output_dir, ops, num_workers=8):
 <h3 id="1-policy-search-for-augmentations">1. Policy Search for Augmentations</h3>
 
 <ul>
-  <li>Systems like <strong>AutoAugment</strong>, <strong>RandAugment</strong>, <strong>TrivialAugment</strong>:
-    <ul>
-      <li>Search over augmentation policies to find those that maximize validation accuracy.</li>
-      <li>The pipeline must support:
-        <ul>
-          <li>Easily swapping augmentation configs,</li>
-          <li>Running automated experiments at scale.</li>
-        </ul>
-      </li>
-    </ul>
-  </li>
+  <li>Systems like <strong>AutoAugment</strong>, <strong>RandAugment</strong>, <strong>TrivialAugment</strong>:</li>
+  <li>Search over augmentation policies to find those that maximize validation accuracy.</li>
+  <li>The pipeline must support:</li>
+  <li>Easily swapping augmentation configs,</li>
+  <li>Running automated experiments at scale.</li>
 </ul>
 
 <h3 id="2-task-specific-augmentations">2. Task-Specific Augmentations</h3>
 
 <ul>
-  <li>Detection/segmentation:
-    <ul>
-      <li>Maintain alignment between images and labels (boxes, masks).</li>
-    </ul>
-  </li>
-  <li>OCR:
-    <ul>
-      <li>Blur, perspective warps, fake backgrounds.</li>
-    </ul>
-  </li>
-  <li>Self-supervised learning:
-    <ul>
-      <li>Strong augmentations to enforce invariance (SimCLR, BYOL).</li>
-    </ul>
-  </li>
+  <li>Detection/segmentation:</li>
+  <li>Maintain alignment between images and labels (boxes, masks).</li>
+  <li>OCR:</li>
+  <li>Blur, perspective warps, fake backgrounds.</li>
+  <li>Self-supervised learning:</li>
+  <li>Strong augmentations to enforce invariance (SimCLR, BYOL).</li>
 </ul>
 
 <h3 id="3-safety--bias-considerations">3. Safety &amp; Bias Considerations</h3>
 
 <ul>
-  <li>Some augmentations may amplify biases or distort signals:
-    <ul>
-      <li>Over-aggressive noise augmentation on low-resource languages,</li>
-      <li>Crops that systematically remove certain content.</li>
-    </ul>
-  </li>
-  <li>You should:
-    <ul>
-      <li>Evaluate model behavior under different augmentations,</li>
-      <li>Include domain experts where necessary (e.g., medical imaging).</li>
-    </ul>
-  </li>
+  <li>Some augmentations may amplify biases or distort signals:</li>
+  <li>Over-aggressive noise augmentation on low-resource languages,</li>
+  <li>Crops that systematically remove certain content.</li>
+  <li>You should:</li>
+  <li>Evaluate model behavior under different augmentations,</li>
+  <li>Include domain experts where necessary (e.g., medical imaging).</li>
 </ul>
 
 <h2 id="connection-to-matrix-operations--data-transformations">Connection to Matrix Operations &amp; Data Transformations</h2>
@@ -741,74 +696,46 @@ to detect because they don’t crash the system—they just slowly degrade model
 quality. Typical failure modes:</p>
 
 <ul>
-  <li><strong>Label–image misalignment</strong>
-    <ul>
-      <li>Geometric transforms are applied to images but not to labels:
-        <ul>
-          <li>Bounding boxes not shifted/scaled,</li>
-          <li>Segmentation masks not warped,</li>
-          <li>Keypoints left in original coordinates.</li>
-        </ul>
-      </li>
-      <li>Safeguards:
-        <ul>
-          <li>Treat image + labels as a single object in the pipeline.</li>
-          <li>Write unit tests for transforms that take <code class="language-plaintext highlighter-rouge">(image, labels)</code> and assert invariants.</li>
-        </ul>
-      </li>
-    </ul>
+  <li><strong>Label–image misalignment</strong></li>
+  <li>Geometric transforms are applied to images but not to labels:</li>
+  <li>Bounding boxes not shifted/scaled,</li>
+  <li>Segmentation masks not warped,</li>
+  <li>Keypoints left in original coordinates.</li>
+  <li>Safeguards:</li>
+  <li>Treat image + labels as a single object in the pipeline.</li>
+  <li>
+    <p>Write unit tests for transforms that take <code class="language-plaintext highlighter-rouge">(image, labels)</code> and assert invariants.</p>
   </li>
-  <li><strong>Domain-destructive augmentation</strong>
-    <ul>
-      <li>Augmentations that overly distort input:
-        <ul>
-          <li>Extreme color jitter for medical images,</li>
-          <li>Aggressive noise in low-resource speech settings,</li>
-          <li>Random erasing that hides critical features.</li>
-        </ul>
-      </li>
-      <li>Safeguards:
-        <ul>
-          <li>Visual inspection dashboards across many random seeds.</li>
-          <li>Per-domain configs with different augmentation strengths.</li>
-        </ul>
-      </li>
-    </ul>
+  <li><strong>Domain-destructive augmentation</strong></li>
+  <li>Augmentations that overly distort input:</li>
+  <li>Extreme color jitter for medical images,</li>
+  <li>Aggressive noise in low-resource speech settings,</li>
+  <li>Random erasing that hides critical features.</li>
+  <li>Safeguards:</li>
+  <li>Visual inspection dashboards across many random seeds.</li>
+  <li>
+    <p>Per-domain configs with different augmentation strengths.</p>
   </li>
-  <li><strong>Data leakage</strong>
-    <ul>
-      <li>Using test augmentations or test data in training by mistake.</li>
-      <li>Safeguards:
-        <ul>
-          <li>Clear separation of train/val/test pipelines.</li>
-          <li>Configuration linting to prevent mixing datasets.</li>
-        </ul>
-      </li>
-    </ul>
+  <li><strong>Data leakage</strong></li>
+  <li>Using test augmentations or test data in training by mistake.</li>
+  <li>Safeguards:</li>
+  <li>Clear separation of train/val/test pipelines.</li>
+  <li>
+    <p>Configuration linting to prevent mixing datasets.</p>
   </li>
-  <li><strong>Non-determinism &amp; reproducibility issues</strong>
-    <ul>
-      <li>Augmentations using global RNG without proper seeding.</li>
-      <li>Different workers producing non-reproducible sequences for the same seed.</li>
-      <li>Safeguards:
-        <ul>
-          <li>Centralize RNG handling and seeding.</li>
-          <li>Log seeds with experiment configs.</li>
-        </ul>
-      </li>
-    </ul>
+  <li><strong>Non-determinism &amp; reproducibility issues</strong></li>
+  <li>Augmentations using global RNG without proper seeding.</li>
+  <li>Different workers producing non-reproducible sequences for the same seed.</li>
+  <li>Safeguards:</li>
+  <li>Centralize RNG handling and seeding.</li>
+  <li>
+    <p>Log seeds with experiment configs.</p>
   </li>
-  <li><strong>Performance regressions</strong>
-    <ul>
-      <li>Adding a new augmentation that is unexpectedly expensive (e.g., Python loops over pixels).</li>
-      <li>Safeguards:
-        <ul>
-          <li>Performance tests as part of CI.</li>
-          <li>Per-transform latency metrics and tracing.</li>
-        </ul>
-      </li>
-    </ul>
-  </li>
+  <li><strong>Performance regressions</strong></li>
+  <li>Adding a new augmentation that is unexpectedly expensive (e.g., Python loops over pixels).</li>
+  <li>Safeguards:</li>
+  <li>Performance tests as part of CI.</li>
+  <li>Per-transform latency metrics and tracing.</li>
 </ul>
 
 <p>Design your pipeline so that <strong>new augmentations are easy to add</strong>, but every new
@@ -829,86 +756,59 @@ simple checklist is often more effective than any amount of abstract design:</p>
   <li><strong>Start with a “no-augmentation” baseline</strong>
     <ul>
       <li>Train a model with augmentations disabled.</li>
-      <li>Record:
-        <ul>
-          <li>Training/validation curves,</li>
-          <li>Final accuracy/WER,</li>
-          <li>Training throughput.</li>
-        </ul>
-      </li>
+      <li>Record:</li>
+      <li>Training/validation curves,</li>
+      <li>Final accuracy/WER,</li>
+      <li>Training throughput.</li>
       <li>This gives you a reference to judge whether augmentation is helping or hurting.</li>
     </ul>
   </li>
   <li><strong>Introduce augmentations incrementally</strong>
     <ul>
       <li>Enable only a small subset (e.g., crops + flips).</li>
-      <li>Compare:
-        <ul>
-          <li>Validation metrics: did they improve?</li>
-          <li>Throughput: did step time increase unacceptably?</li>
-        </ul>
-      </li>
+      <li>Compare:</li>
+      <li>Validation metrics: did they improve?</li>
+      <li>Throughput: did step time increase unacceptably?</li>
       <li>Add more transforms only after you understand the effect of the previous ones.</li>
     </ul>
   </li>
   <li><strong>Visualize random batches per run</strong>
     <ul>
-      <li>For every experiment:
-        <ul>
-          <li>Save a small grid of augmented samples,</li>
-          <li>Tag it with the experiment ID and augmentation config.</li>
-        </ul>
-      </li>
+      <li>For every experiment:</li>
+      <li>Save a small grid of augmented samples,</li>
+      <li>Tag it with the experiment ID and augmentation config.</li>
       <li>Have a simple viewer (web UI or notebook) to flip through these grids quickly.</li>
     </ul>
   </li>
   <li><strong>Instrument pipeline performance</strong>
     <ul>
-      <li>Log:
-        <ul>
-          <li>Average data loader time per batch,</li>
-          <li>GPU utilization,</li>
-          <li>Queue depth between augmentation workers and training loop.</li>
-        </ul>
-      </li>
-      <li>Add alerts for:
-        <ul>
-          <li>Data loader time &gt; X% of step time,</li>
-          <li>Utilization &lt; Y% for sustained periods.</li>
-        </ul>
-      </li>
+      <li>Log:</li>
+      <li>Average data loader time per batch,</li>
+      <li>GPU utilization,</li>
+      <li>Queue depth between augmentation workers and training loop.</li>
+      <li>Add alerts for:</li>
+      <li>Data loader time &gt; X% of step time,</li>
+      <li>Utilization &lt; Y% for sustained periods.</li>
     </ul>
   </li>
   <li><strong>Stress-test with extreme configs</strong>
     <ul>
-      <li>Intentionally crank up augmentation strength:
-        <ul>
-          <li>Very strong color jitter,</li>
-          <li>Large random crops,</li>
-          <li>Heavy masking.</li>
-        </ul>
-      </li>
-      <li>Ensure:
-        <ul>
-          <li>Code doesn’t crash,</li>
-          <li>Latency stays within an acceptable range,</li>
-          <li>Model does not completely fail to train.</li>
-        </ul>
-      </li>
+      <li>Intentionally crank up augmentation strength:</li>
+      <li>Very strong color jitter,</li>
+      <li>Large random crops,</li>
+      <li>Heavy masking.</li>
+      <li>Ensure:</li>
+      <li>Code doesn’t crash,</li>
+      <li>Latency stays within an acceptable range,</li>
+      <li>Model does not completely fail to train.</li>
     </ul>
   </li>
   <li><strong>Keep augmentation and evaluation aligned</strong>
     <ul>
-      <li>Ensure evaluation uses <strong>realistic inputs</strong>:
-        <ul>
-          <li>No augmentations that don’t match production (e.g., training-time noise on clean eval data).</li>
-        </ul>
-      </li>
-      <li>For robustness testing:
-        <ul>
-          <li>Add a separate “stress test” evaluation pipeline (e.g., with noisy images/audio).</li>
-        </ul>
-      </li>
+      <li>Ensure evaluation uses <strong>realistic inputs</strong>:</li>
+      <li>No augmentations that don’t match production (e.g., training-time noise on clean eval data).</li>
+      <li>For robustness testing:</li>
+      <li>Add a separate “stress test” evaluation pipeline (e.g., with noisy images/audio).</li>
     </ul>
   </li>
 </ol>

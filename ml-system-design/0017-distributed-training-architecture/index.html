@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Distributed Training Architecture">
     <meta itemprop="description" content="Design distributed training architectures that can efficiently process massive sequential datasets and train billion-parameter models across thousands of GPUs.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -407,47 +407,48 @@
 
 <h2 id="high-level-architecture">High-Level Architecture</h2>
 
-<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────────┐
-│                Distributed Training Architecture                 │
-└─────────────────────────────────────────────────────────────────┘
+<p>``text
+┌─────────────────────────────────────────────────────────────────┐
+│ Distributed Training Architecture │
+└─────────────────────────────────────────────────────────────────┘</p>
 
-                          Control Plane
-                    ┌────────────────────┐
-                    │  Orchestrator      │
-                    │  - Job scheduler   │
-                    │  - Resource mgr    │
-                    │  - Elastic scaling │
-                    └─────────┬──────────┘
-                              │
-           ┌──────────────────┼──────────────────┐
-           │                  │                  │
+<p>Control Plane
+ ┌────────────────────┐
+ │ Orchestrator │
+ │ - Job scheduler │
+ │ - Resource mgr │
+ │ - Elastic scaling │
+ └─────────┬──────────┘
+ │
+ ┌──────────────────┼──────────────────┐
+ │ │ │
 ┌──────────▼─────────┐ ┌─────▼──────┐ ┌────────▼────────┐
-│  Config &amp; Params   │ │  Logging   │ │  Experiment     │
-│  - Model configs   │ │  &amp; Metrics │ │  Tracking       │
-│  - Optimizer cfgs  │ │  (Prom/Graf)││  (MLflow/W&amp;B)   │
+│ Config &amp; Params │ │ Logging │ │ Experiment │
+│ - Model configs │ │ &amp; Metrics │ │ Tracking │
+│ - Optimizer cfgs │ │ (Prom/Graf)││ (MLflow/W&amp;B) │
 └─────────┬──────────┘ └─────┬──────┘ └────────┬────────┘
-          │                   │                 │
-          └───────────────────┼─────────────────┘
-                              │
-                         Data Plane
-          ┌──────────────────┼──────────────────┐
-          │                  │                  │
+ │ │ │
+ └───────────────────┼─────────────────┘
+ │
+ Data Plane
+ ┌──────────────────┼──────────────────┐
+ │ │ │
 ┌─────────▼────────┐ ┌──────▼───────┐ ┌────────▼────────┐
-│  Trainer Group 1 │ │ Trainer Group│ │ Trainer Group N │
-│  (Data Parallel) │ │ 2 (Hybrid)   │ │ (Specialized)   │
-│  GPUs: 0..7      │ │ GPUs: 8..15  │ │ GPUs: ...       │
+│ Trainer Group 1 │ │ Trainer Group│ │ Trainer Group N │
+│ (Data Parallel) │ │ 2 (Hybrid) │ │ (Specialized) │
+│ GPUs: 0..7 │ │ GPUs: 8..15 │ │ GPUs: … │
 └─────────┬────────┘ └──────┬───────┘ └────────┬────────┘
-          │                  │                  │
-          └──────────────────┼──────────────────┘
-                             │
-                     ┌───────▼───────┐
-                     │   Data Layer  │
-                     │   - Sharded   │
-                     │     datasets  │
-                     │   - Feature   │
-                     │     store     │
-                     └───────────────┘
-</code></pre></div></div>
+ │ │ │
+ └──────────────────┼──────────────────┘
+ │
+ ┌───────▼───────┐
+ │ Data Layer │
+ │ - Sharded │
+ │ datasets │
+ │ - Feature │
+ │ store │
+ └───────────────┘
+``</p>
 
 <h3 id="key-components">Key Components</h3>
 
@@ -490,43 +491,38 @@
 <p><strong>Idea:</strong> replicate the model on each worker, shard the data.</p>
 
 <ul>
-  <li>Each worker:
-    <ul>
-      <li>Gets a different mini-batch.</li>
-      <li>Computes local gradients.</li>
-    </ul>
-  </li>
-  <li>Then all workers:
-    <ul>
-      <li><strong>All-reduce</strong> gradients,</li>
-      <li>Apply the update to their own copy of the model.</li>
-    </ul>
-  </li>
+  <li>Each worker:</li>
+  <li>Gets a different mini-batch.</li>
+  <li>Computes local gradients.</li>
+  <li>Then all workers:</li>
+  <li><strong>All-reduce</strong> gradients,</li>
+  <li>Apply the update to their own copy of the model.</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.distributed</span> <span class="k">as</span> <span class="n">dist</span>
+<p>``python
+import torch
+import torch.distributed as dist</p>
 
-<span class="k">def</span> <span class="nf">train_epoch_data_parallel</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">rank</span><span class="p">,</span> <span class="n">world_size</span><span class="p">):</span>
-    <span class="n">model</span><span class="p">.</span><span class="nf">train</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">dataloader</span><span class="p">):</span>
-        <span class="n">inputs</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">inputs</span><span class="sh">'</span><span class="p">].</span><span class="nf">to</span><span class="p">(</span><span class="n">rank</span><span class="p">)</span>
-        <span class="n">targets</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="sh">'</span><span class="s">targets</span><span class="sh">'</span><span class="p">].</span><span class="nf">to</span><span class="p">(</span><span class="n">rank</span><span class="p">)</span>
+<p>def train_epoch_data_parallel(model, dataloader, optimizer, rank, world_size):
+ model.train()
+ for step, batch in enumerate(dataloader):
+ inputs = batch[‘inputs’].to(rank)
+ targets = batch[‘targets’].to(rank)</p>
 
-        <span class="n">optimizer</span><span class="p">.</span><span class="nf">zero_grad</span><span class="p">()</span>
-        <span class="n">outputs</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
-        <span class="n">loss</span> <span class="o">=</span> <span class="nf">compute_loss</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
-        <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
+<p>optimizer.zero_grad()
+ outputs = model(inputs)
+ loss = compute_loss(outputs, targets)
+ loss.backward()</p>
 
-        <span class="c1"># Gradient all-reduce
-</span>        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="p">.</span><span class="nf">parameters</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">param</span><span class="p">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">dist</span><span class="p">.</span><span class="nf">all_reduce</span><span class="p">(</span><span class="n">param</span><span class="p">.</span><span class="n">grad</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="n">dist</span><span class="p">.</span><span class="n">ReduceOp</span><span class="p">.</span><span class="n">SUM</span><span class="p">)</span>
-            <span class="n">param</span><span class="p">.</span><span class="n">grad</span><span class="p">.</span><span class="n">data</span> <span class="o">/=</span> <span class="n">world_size</span>
+<p># Gradient all-reduce
+ for param in model.parameters():
+ if param.grad is None:
+ continue
+ dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
+ param.grad.data /= world_size</p>
 
-        <span class="n">optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
-</code></pre></div></div>
+<p>optimizer.step()
+``</p>
 
 <p><strong>Pros:</strong></p>
 <ul>
@@ -549,29 +545,30 @@
   <li>Example: tensor parallelism (split matrix multiplications across GPUs).</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">TensorParallelLinear</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    \<span class="sh">"</span><span class="se">\"\"</span><span class="s">Example of a tensor-parallel linear layer over 2 GPUs.</span><span class="se">\"\"\"\n</span><span class="s">    def __init__(self, in_features, out_features):
-        super().__init__()
-        self.out_half = out_features // 2
-        self.w0 = torch.nn.Parameter(
-            torch.randn(in_features, self.out_half, device=</span><span class="sh">'</span><span class="s">cuda:0</span><span class="sh">'</span><span class="s">)
-        )
-        self.w1 = torch.nn.Parameter(
-            torch.randn(in_features, self.out_half, device=</span><span class="sh">'</span><span class="s">cuda:1</span><span class="sh">'</span><span class="s">)
-        )
+<p>``python
+class TensorParallelLinear(torch.nn.Module):
+ """Example of a tensor-parallel linear layer over 2 GPUs."""\n def <strong>init</strong>(self, in_features, out_features):
+ super().<strong>init</strong>()
+ self.out_half = out_features // 2
+ self.w0 = torch.nn.Parameter(
+ torch.randn(in_features, self.out_half, device=’cuda:0’)
+ )
+ self.w1 = torch.nn.Parameter(
+ torch.randn(in_features, self.out_half, device=’cuda:1’)
+ )</p>
 
-    def forward(self, x):
-        # x initially on cuda:0
-        x0 = x.to(</span><span class="sh">'</span><span class="s">cuda:0</span><span class="sh">'</span><span class="s">)
-        x1 = x.to(</span><span class="sh">'</span><span class="s">cuda:1</span><span class="sh">'</span><span class="s">)
+<p>def forward(self, x):
+ # x initially on cuda:0
+ x0 = x.to(‘cuda:0’)
+ x1 = x.to(‘cuda:1’)</p>
 
-        y0 = x0 @ self.w0
-        y1 = x1 @ self.w1
+<p>y0 = x0 @ self.w0
+ y1 = x1 @ self.w1</p>
 
-        # Gather back to one device
-        y = torch.cat([y0.to(</span><span class="sh">'</span><span class="s">cuda:0</span><span class="sh">'</span><span class="s">), y1.to(</span><span class="sh">'</span><span class="s">cuda:0</span><span class="sh">'</span><span class="s">)], dim=-1)
-        return y
-</span></code></pre></div></div>
+<p># Gather back to one device
+ y = torch.cat([y0.to(‘cuda:0’), y1.to(‘cuda:0’)], dim=-1)
+ return y
+``</p>
 
 <p><strong>Pros:</strong></p>
 <ul>
@@ -588,11 +585,12 @@
 
 <p><strong>Idea:</strong> Split the network into <strong>stages</strong> and place each on a GPU (or set of GPUs).</p>
 
-<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Stage 0 (GPU0): layers 0–3
+<p><code class="language-plaintext highlighter-rouge">text
+Stage 0 (GPU0): layers 0–3
 Stage 1 (GPU1): layers 4–7
 Stage 2 (GPU2): layers 8–11
 ...
-</code></pre></div></div>
+</code></p>
 
 <ul>
   <li>Micro-batches flow through the pipeline, overlapping compute across stages.</li>
@@ -633,37 +631,39 @@ Stage 2 (GPU2): layers 8–11
   <li>Each shard contains a manageable number of samples (e.g., 10K–100K).</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">torch.utils.data</span> <span class="kn">import</span> <span class="n">IterableDataset</span>
+<p>``python
+from torch.utils.data import IterableDataset</p>
 
-<span class="k">class</span> <span class="nc">ShardedDataset</span><span class="p">(</span><span class="n">IterableDataset</span><span class="p">):</span>
-    \<span class="sh">"</span><span class="se">\"\"</span><span class="s">Distributed sharded dataset for large-scale sequential data.</span><span class="se">\"\"\"\n</span><span class="s">    def __init__(self, shard_paths: list[str], rank: int, world_size: int):
-        super().__init__()
-        self.shard_paths = shard_paths[rank::world_size]  # simple sharding
+<p>class ShardedDataset(IterableDataset):
+ """Distributed sharded dataset for large-scale sequential data."""\n def <strong>init</strong>(self, shard_paths: list[str], rank: int, world_size: int):
+ super().<strong>init</strong>()
+ self.shard_paths = shard_paths[rank::world_size] # simple sharding</p>
 
-    def __iter__(self):
-        for shard_path in self.shard_paths:
-            yield from self._read_shard(shard_path)
+<p>def <strong>iter</strong>(self):
+ for shard_path in self.shard_paths:
+ yield from self._read_shard(shard_path)</p>
 
-    def _read_shard(self, path: str):
-        # Read compressed records (e.g., TFRecord, WebDataset tar)
-        # Yield token/audio sequences lazily
-        raise NotImplementedError
-</span></code></pre></div></div>
+<p>def _read_shard(self, path: str):
+ # Read compressed records (e.g., TFRecord, WebDataset tar)
+ # Yield token/audio sequences lazily
+ raise NotImplementedError
+``</p>
 
 <h3 id="2-sequence-bucketing--packing">2. Sequence Bucketing &amp; Packing</h3>
 
 <p>To reduce padding waste when training on sequences:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">bucket_by_length</span><span class="p">(</span><span class="n">sequences</span><span class="p">,</span> <span class="n">bucket_sizes</span><span class="p">):</span>
-    <span class="n">buckets</span> <span class="o">=</span> <span class="p">{</span><span class="n">b</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bucket_sizes</span><span class="p">}</span>
-    <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">sequences</span><span class="p">:</span>
-        <span class="n">length</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bucket_sizes</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">length</span> <span class="o">&lt;=</span> <span class="n">b</span><span class="p">:</span>
-                <span class="n">buckets</span><span class="p">[</span><span class="n">b</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
-                <span class="k">break</span>
-    <span class="k">return</span> <span class="n">buckets</span>
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">python
+def bucket_by_length(sequences, bucket_sizes):
+ buckets = {b: [] for b in bucket_sizes}
+ for seq in sequences:
+ length = len(seq)
+ for b in bucket_sizes:
+ if length &lt;= b:
+ buckets[b].append(seq)
+ break
+ return buckets
+</code></p>
 
 <ul>
   <li>Group sequences by length bucket.</li>
@@ -673,18 +673,19 @@ Stage 2 (GPU2): layers 8–11
 
 <h3 id="3-streaming-input-pipeline">3. Streaming Input Pipeline</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+<p>``python
+from torch.utils.data import DataLoader</p>
 
-<span class="k">def</span> <span class="nf">build_dataloader</span><span class="p">(</span><span class="n">shards</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">rank</span><span class="p">,</span> <span class="n">world_size</span><span class="p">):</span>
-    <span class="n">dataset</span> <span class="o">=</span> <span class="nc">ShardedDataset</span><span class="p">(</span><span class="n">shards</span><span class="p">,</span> <span class="n">rank</span><span class="p">,</span> <span class="n">world_size</span><span class="p">)</span>
-    <span class="n">dataloader</span> <span class="o">=</span> <span class="nc">DataLoader</span><span class="p">(</span>
-        <span class="n">dataset</span><span class="p">,</span>
-        <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
-        <span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-        <span class="n">prefetch_factor</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">dataloader</span>
-</code></pre></div></div>
+<p>def build_dataloader(shards, batch_size, rank, world_size):
+ dataset = ShardedDataset(shards, rank, world_size)
+ dataloader = DataLoader(
+ dataset,
+ batch_size=batch_size,
+ num_workers=4,
+ prefetch_factor=4,
+ )
+ return dataloader
+``</p>
 
 <p>Common pitfalls:</p>
 
@@ -698,31 +699,26 @@ Stage 2 (GPU2): layers 8–11
 
 <h3 id="all-reduce-for-gradients">All-Reduce for Gradients</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch.distributed</span> <span class="k">as</span> <span class="n">dist</span>
+<p>``python
+import torch.distributed as dist</p>
 
-<span class="k">def</span> <span class="nf">allreduce_gradients</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
-    \<span class="sh">"</span><span class="se">\"\"</span><span class="s">All-reduce gradients across data-parallel workers.</span><span class="se">\"\"\"\n</span><span class="s">    for param in model.parameters():
-        if param.grad is None:
-            continue
-        dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
-        param.grad.data /= dist.get_world_size()
-</span></code></pre></div></div>
+<p>def allreduce_gradients(model):
+ """All-reduce gradients across data-parallel workers."""\n for param in model.parameters():
+ if param.grad is None:
+ continue
+ dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)
+ param.grad.data /= dist.get_world_size()
+``</p>
 
 <h3 id="topologies">Topologies</h3>
 
 <ul>
-  <li><strong>Ring all-reduce</strong>
-    <ul>
-      <li>Good bandwidth utilization.</li>
-      <li>Latency grows with number of nodes.</li>
-    </ul>
-  </li>
-  <li><strong>Tree all-reduce</strong>
-    <ul>
-      <li>Better latency characteristics.</li>
-      <li>Often used when world size is large.</li>
-    </ul>
-  </li>
+  <li><strong>Ring all-reduce</strong></li>
+  <li>Good bandwidth utilization.</li>
+  <li>Latency grows with number of nodes.</li>
+  <li><strong>Tree all-reduce</strong></li>
+  <li>Better latency characteristics.</li>
+  <li>Often used when world size is large.</li>
 </ul>
 
 <p>Frameworks like NCCL dynamically choose strategies based on the cluster topology:</p>
@@ -737,23 +733,23 @@ Stage 2 (GPU2): layers 8–11
 
 <h3 id="checkpointing">Checkpointing</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
+<p>``python
+import torch</p>
 
-<span class="k">def</span> <span class="nf">save_checkpoint</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-    <span class="n">state</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="sh">'</span><span class="s">model_state</span><span class="sh">'</span><span class="p">:</span> <span class="n">model</span><span class="p">.</span><span class="nf">state_dict</span><span class="p">(),</span>
-        <span class="sh">'</span><span class="s">optimizer_state</span><span class="sh">'</span><span class="p">:</span> <span class="n">optimizer</span><span class="p">.</span><span class="nf">state_dict</span><span class="p">(),</span>
-        <span class="sh">'</span><span class="s">step</span><span class="sh">'</span><span class="p">:</span> <span class="n">step</span><span class="p">,</span>
-    <span class="p">}</span>
-    <span class="n">torch</span><span class="p">.</span><span class="nf">save</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+<p>def save_checkpoint(model, optimizer, step, path):
+ state = {
+ ‘model_state’: model.state_dict(),
+ ‘optimizer_state’: optimizer.state_dict(),
+ ‘step’: step,
+ }
+ torch.save(state, path)</p>
 
-
-<span class="k">def</span> <span class="nf">load_checkpoint</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="sh">'</span><span class="s">cuda</span><span class="sh">'</span><span class="p">):</span>
-    <span class="n">state</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">map_location</span><span class="p">)</span>
-    <span class="n">model</span><span class="p">.</span><span class="nf">load_state_dict</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="sh">'</span><span class="s">model_state</span><span class="sh">'</span><span class="p">])</span>
-    <span class="n">optimizer</span><span class="p">.</span><span class="nf">load_state_dict</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="sh">'</span><span class="s">optimizer_state</span><span class="sh">'</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">state</span><span class="p">[</span><span class="sh">'</span><span class="s">step</span><span class="sh">'</span><span class="p">]</span>
-</code></pre></div></div>
+<p>def load_checkpoint(model, optimizer, path, map_location=’cuda’):
+ state = torch.load(path, map_location=map_location)
+ model.load_state_dict(state[‘model_state’])
+ optimizer.load_state_dict(state[‘optimizer_state’])
+ return state[‘step’]
+``</p>
 
 <p>Best practices:</p>
 
@@ -768,33 +764,21 @@ Stage 2 (GPU2): layers 8–11
 <p>Scenarios:</p>
 
 <ul>
-  <li><strong>Worker dies</strong> (e.g., preempted spot instance).
-    <ul>
-      <li>Use elastic training (TorchElastic/Ray Train) to allow workers to join/leave.</li>
-      <li>Rebuild process groups on the fly.</li>
-    </ul>
-  </li>
-  <li><strong>Node dies</strong>
-    <ul>
-      <li>Kubernetes reschedules pods.</li>
-      <li>Training resumes from latest checkpoint.</li>
-    </ul>
-  </li>
+  <li><strong>Worker dies</strong> (e.g., preempted spot instance).</li>
+  <li>Use elastic training (TorchElastic/Ray Train) to allow workers to join/leave.</li>
+  <li>Rebuild process groups on the fly.</li>
+  <li><strong>Node dies</strong></li>
+  <li>Kubernetes reschedules pods.</li>
+  <li>Training resumes from latest checkpoint.</li>
 </ul>
 
 <p>Important design question:</p>
 
 <ul>
-  <li><strong>How often do you checkpoint?</strong>
-    <ul>
-      <li>Trade-off between:
-        <ul>
-          <li>Time spent writing checkpoints.</li>
-          <li>Amount of work lost on failure.</li>
-        </ul>
-      </li>
-    </ul>
-  </li>
+  <li><strong>How often do you checkpoint?</strong></li>
+  <li>Trade-off between:</li>
+  <li>Time spent writing checkpoints.</li>
+  <li>Amount of work lost on failure.</li>
 </ul>
 
 <h2 id="monitoring--metrics">Monitoring &amp; Metrics</h2>
@@ -802,50 +786,42 @@ Stage 2 (GPU2): layers 8–11
 <h3 id="what-to-track">What to Track</h3>
 
 <ul>
-  <li><strong>Training metrics</strong>
-    <ul>
-      <li>Loss, accuracy, perplexity, WER, etc.</li>
-      <li>Learning rate schedules, gradient norms.</li>
-    </ul>
-  </li>
-  <li><strong>System metrics</strong>
-    <ul>
-      <li>GPU utilization, memory usage.</li>
-      <li>Network bandwidth, all-reduce time.</li>
-      <li>Data loader time vs step time.</li>
-    </ul>
-  </li>
+  <li><strong>Training metrics</strong></li>
+  <li>Loss, accuracy, perplexity, WER, etc.</li>
+  <li>Learning rate schedules, gradient norms.</li>
+  <li><strong>System metrics</strong></li>
+  <li>GPU utilization, memory usage.</li>
+  <li>Network bandwidth, all-reduce time.</li>
+  <li>Data loader time vs step time.</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">TrainingMetrics</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">step_times</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">throughputs</span> <span class="o">=</span> <span class="p">[]</span>
+<p>``python
+class TrainingMetrics:
+ def <strong>init</strong>(self):
+ self.step_times = []
+ self.throughputs = []</p>
 
-    <span class="k">def</span> <span class="nf">log_step</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">step_time</span><span class="p">,</span> <span class="n">samples</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">step_times</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">step_time</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">throughputs</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">samples</span> <span class="o">/</span> <span class="nf">max</span><span class="p">(</span><span class="n">step_time</span><span class="p">,</span> <span class="mf">1e-8</span><span class="p">))</span>
+<p>def log_step(self, step_time, samples):
+ self.step_times.append(step_time)
+ self.throughputs.append(samples / max(step_time, 1e-8))</p>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">avg_step_time</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nf">sum</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">step_times</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">step_times</span><span class="p">)</span> <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">step_times</span> <span class="k">else</span> <span class="mi">0</span>
+<p>@property
+ def avg_step_time(self):
+ return sum(self.step_times) / len(self.step_times) if self.step_times else 0</p>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">avg_throughput</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nf">sum</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">throughputs</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">throughputs</span><span class="p">)</span> <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">throughputs</span> <span class="k">else</span> <span class="mi">0</span>
-</code></pre></div></div>
+<p>@property
+ def avg_throughput(self):
+ return sum(self.throughputs) / len(self.throughputs) if self.throughputs else 0
+``</p>
 
 <p>Use Prometheus/Grafana or similar for real-time dashboards:</p>
 
 <ul>
   <li>Per-job, per-node, per-GPU metrics.</li>
-  <li>Alerting for:
-    <ul>
-      <li>Low GPU utilization,</li>
-      <li>High all-reduce latency,</li>
-      <li>Data loader bottlenecks.</li>
-    </ul>
-  </li>
+  <li>Alerting for:</li>
+  <li>Low GPU utilization,</li>
+  <li>High all-reduce latency,</li>
+  <li>Data loader bottlenecks.</li>
 </ul>
 
 <h2 id="failure-modes--mitigations">Failure Modes &amp; Mitigations</h2>
@@ -978,7 +954,7 @@ Stage 2 (GPU2): layers 8–11
     </tr>
     <tr>
       <td>GPU cost/day</td>
-      <td>128 × $3 = $384</td>
+      <td>128 × <code class="language-plaintext highlighter-rouge">3 = </code>384</td>
     </tr>
     <tr>
       <td><strong>Total cost</strong></td>
@@ -1012,7 +988,7 @@ Stage 2 (GPU2): layers 8–11
 
 <h3 id="connection-to-thematic-link-handling-large-scale-sequential-data">Connection to Thematic Link: Handling Large-Scale Sequential Data</h3>
 
-<p>All three Day 17 topics share the same pattern:</p>
+<p>All three topics share the same pattern:</p>
 
 <p><strong>DSA (Add Two Numbers – Linked List):</strong></p>
 <ul>

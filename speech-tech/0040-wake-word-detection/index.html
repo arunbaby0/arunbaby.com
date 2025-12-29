@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Wake Word Detection">
     <meta itemprop="description" content="“Hey Siri, Alexa, OK Google: The gateway to voice AI.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -316,7 +316,7 @@ It is the “Always-On” component of voice assistants.</p>
 <ul>
   <li><strong>KWS-Transformer:</strong> Using self-attention for global context.</li>
   <li><strong>Pros:</strong> High accuracy.</li>
-  <li><strong>Cons:</strong> Heavy computation ($O(T^2)$ attention), usually too heavy for always-on DSPs, but okay for “second stage” verification on the AP (Application Processor).</li>
+  <li><strong>Cons:</strong> Heavy computation (O(T^2) attention), usually too heavy for always-on DSPs, but okay for “second stage” verification on the AP (Application Processor).</li>
 </ul>
 
 <h2 id="4-loss-functions">4. Loss Functions</h2>
@@ -378,12 +378,9 @@ It is the “Always-On” component of voice assistants.</p>
 
 <p>Running on an ARM Cortex-M4 or specialized NPU (Neural Processing Unit).</p>
 <ul>
-  <li><strong>Quantization:</strong> Convert FP32 weights/activations to INT8.
-    <ul>
-      <li>Reduces memory by 4x.</li>
-      <li>Speedup on hardware with SIMD instructions (e.g., ARM NEON / CMSIS-NN).</li>
-    </ul>
-  </li>
+  <li><strong>Quantization:</strong> Convert FP32 weights/activations to INT8.</li>
+  <li>Reduces memory by 4x.</li>
+  <li>Speedup on hardware with SIMD instructions (e.g., ARM NEON / CMSIS-NN).</li>
   <li><strong>Pruning:</strong> Remove near-zero weights.</li>
   <li><strong>Compiler Optimization:</strong> Fusing layers (Conv + BatchNorm + ReLU) to reduce memory access.</li>
 </ul>
@@ -412,28 +409,25 @@ It is the “Always-On” component of voice assistants.</p>
 <ul>
   <li>Designed by Google for far-field KWS.</li>
   <li>Replaces the Log compression with a dynamic compression based on an Automatic Gain Control (AGC) mechanism.</li>
-  <li>$E(t, f)$ is the filterbank energy.</li>
-  <li>$M(t, f) = (1-s) M(t-1, f) + s E(t, f)$ (Smoothed energy).</li>
-  <li>$PCEN(t, f) = (E(t, f) / (M(t, f) + \epsilon))^\alpha + \delta$.</li>
+  <li><code class="language-plaintext highlighter-rouge">E(t, f)</code> is the filterbank energy.</li>
+  <li><code class="language-plaintext highlighter-rouge">M(t, f) = (1-s) M(t-1, f) + s E(t, f)</code> (Smoothed energy).</li>
+  <li><code class="language-plaintext highlighter-rouge">PCEN(t, f) = (E(t, f) / (M(t, f) + \epsilon))^\alpha + \delta</code>.</li>
   <li><strong>Result:</strong> Enhances transients (speech onsets) and suppresses stationary noise (fan hum).</li>
 </ul>
 
 <h2 id="11-deep-dive-tc-resnet-temporal-convolutional-resnet">11. Deep Dive: TC-ResNet (Temporal Convolutional ResNet)</h2>
 
 <p>A dominant architecture for KWS.
-<strong>Idea:</strong> Treat audio as a 1D time series with $C$ channels (frequency bins), rather than a 2D image.
+<strong>Idea:</strong> Treat audio as a 1D time series with <code class="language-plaintext highlighter-rouge">C</code> channels (frequency bins), rather than a 2D image.
 <strong>Structure:</strong></p>
 <ul>
-  <li><strong>Input:</strong> $T \times F$ (Time x Frequency). Treat $F$ as input channels.</li>
-  <li><strong>Conv1D:</strong> Kernel size $(K, 1)$. Convolves only along time.</li>
+  <li><strong>Input:</strong> <code class="language-plaintext highlighter-rouge">T \times F</code> (Time x Frequency). Treat <code class="language-plaintext highlighter-rouge">F</code> as input channels.</li>
+  <li><strong>Conv1D:</strong> Kernel size <code class="language-plaintext highlighter-rouge">(K, 1)</code>. Convolves only along time.</li>
   <li><strong>Residual Blocks:</strong> Standard ResNet skip connections.</li>
   <li><strong>Receptive Field:</strong> Stacking layers increases the receptive field to cover the whole keyword duration (e.g., 1 second).</li>
-  <li><strong>Advantages:</strong>
-    <ul>
-      <li>Fewer parameters than 2D CNNs.</li>
-      <li>Matches the physical nature of audio (temporal evolution of spectral content).</li>
-    </ul>
-  </li>
+  <li><strong>Advantages:</strong></li>
+  <li>Fewer parameters than 2D CNNs.</li>
+  <li>Matches the physical nature of audio (temporal evolution of spectral content).</li>
 </ul>
 
 <h2 id="12-deep-dive-acoustic-echo-cancellation-aec">12. Deep Dive: Acoustic Echo Cancellation (AEC)</h2>
@@ -441,12 +435,12 @@ It is the “Always-On” component of voice assistants.</p>
 <p><strong>Problem:</strong> “Barge-in”. The user says “Alexa, stop!” while the device is playing loud music. The microphone captures the user’s voice + the music.
 <strong>Solution:</strong> AEC.</p>
 <ol>
-  <li><strong>Reference Signal:</strong> The device knows what music it is playing ($x(t)$).</li>
-  <li><strong>Adaptive Filter:</strong> Estimate the room’s transfer function (impulse response $h(t)$).</li>
-  <li><strong>Prediction:</strong> Predict the echo $y(t) = x(t) * h(t)$.</li>
-  <li><strong>Subtraction:</strong> Subtract $y(t)$ from the microphone input $d(t)$. Error $e(t) = d(t) - y(t)$.</li>
-  <li><strong>Update:</strong> Use LMS (Least Mean Squares) or RLS (Recursive Least Squares) to update $h(t)$ to minimize $e(t)$.</li>
-  <li><strong>KWS Input:</strong> The “clean” error signal $e(t)$ is fed to the Wake Word engine.</li>
+  <li><strong>Reference Signal:</strong> The device knows what music it is playing (<code class="language-plaintext highlighter-rouge">x(t)</code>).</li>
+  <li><strong>Adaptive Filter:</strong> Estimate the room’s transfer function (impulse response <code class="language-plaintext highlighter-rouge">h(t)</code>).</li>
+  <li><strong>Prediction:</strong> Predict the echo <code class="language-plaintext highlighter-rouge">y(t) = x(t) * h(t)</code>.</li>
+  <li><strong>Subtraction:</strong> Subtract <code class="language-plaintext highlighter-rouge">y(t)</code> from the microphone input <code class="language-plaintext highlighter-rouge">d(t)</code>. Error <code class="language-plaintext highlighter-rouge">e(t) = d(t) - y(t)</code>.</li>
+  <li><strong>Update:</strong> Use LMS (Least Mean Squares) or RLS (Recursive Least Squares) to update <code class="language-plaintext highlighter-rouge">h(t)</code> to minimize <code class="language-plaintext highlighter-rouge">e(t)</code>.</li>
+  <li><strong>KWS Input:</strong> The “clean” error signal <code class="language-plaintext highlighter-rouge">e(t)</code> is fed to the Wake Word engine.</li>
 </ol>
 
 <h2 id="13-deep-dive-personalization-few-shot-learning">13. Deep Dive: Personalization (Few-Shot Learning)</h2>
@@ -519,8 +513,8 @@ It is the “Always-On” component of voice assistants.</p>
 
 <p><strong>1. Delay-and-Sum:</strong></p>
 <ul>
-  <li>If user is at angle $\theta$, sound reaches Mic 1 at $t_1$ and Mic 2 at $t_2$.</li>
-  <li>We shift Mic 2’s signal by $\Delta t = t_1 - t_2$ so they align.</li>
+  <li>If user is at angle <code class="language-plaintext highlighter-rouge">\theta</code>, sound reaches Mic 1 at <code class="language-plaintext highlighter-rouge">t_1</code> and Mic 2 at <code class="language-plaintext highlighter-rouge">t_2</code>.</li>
+  <li>We shift Mic 2’s signal by <code class="language-plaintext highlighter-rouge">\Delta t = t_1 - t_2</code> so they align.</li>
   <li>Summing them constructively interferes (boosts signal) and destructively interferes for other angles (noise).</li>
 </ul>
 
@@ -612,12 +606,12 @@ It is the “Always-On” component of voice assistants.</p>
   <li><strong>Collect Statistics:</strong> Record min/max values of activations for each layer.</li>
   <li><strong>Compute Scale/Zero-Point:</strong>
     <ul>
-      <li>$scale = \frac{max - min}{255}$</li>
-      <li>$zero_point = -\frac{min}{scale}$</li>
+      <li><code class="language-plaintext highlighter-rouge">scale = \frac{max - min}{255}</code></li>
+      <li><code class="language-plaintext highlighter-rouge">zero\_point = -\frac{min}{scale}</code></li>
     </ul>
   </li>
-  <li><strong>Quantize:</strong> $q = round(\frac{x}{scale} + zero_point)$</li>
-  <li><strong>Dequantize (for inference):</strong> $x = (q - zero_point) \times scale$</li>
+  <li><strong>Quantize:</strong> <code class="language-plaintext highlighter-rouge">q = round(\frac{x}{scale} + zero\_point)</code></li>
+  <li><strong>Dequantize (for inference):</strong> <code class="language-plaintext highlighter-rouge">x = (q - zero\_point) \times scale</code></li>
 </ol>
 
 <p><strong>Quantization-Aware Training (QAT):</strong></p>
@@ -627,23 +621,24 @@ It is the “Always-On” component of voice assistants.</p>
   <li><strong>Result:</strong> 1-2% accuracy improvement over PTQ.</li>
 </ul>
 
-<p><strong>TensorFlow Lite Micro Example:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">tensorflow</span> <span class="k">as</span> <span class="n">tf</span>
+<p><strong>TensorFlow Lite Micro Example:</strong>
+``python
+import tensorflow as tf</p>
 
-<span class="n">converter</span> <span class="o">=</span> <span class="n">tf</span><span class="p">.</span><span class="n">lite</span><span class="p">.</span><span class="n">TFLiteConverter</span><span class="p">.</span><span class="nf">from_keras_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-<span class="n">converter</span><span class="p">.</span><span class="n">optimizations</span> <span class="o">=</span> <span class="p">[</span><span class="n">tf</span><span class="p">.</span><span class="n">lite</span><span class="p">.</span><span class="n">Optimize</span><span class="p">.</span><span class="n">DEFAULT</span><span class="p">]</span>
-<span class="n">converter</span><span class="p">.</span><span class="n">target_spec</span><span class="p">.</span><span class="n">supported_ops</span> <span class="o">=</span> <span class="p">[</span><span class="n">tf</span><span class="p">.</span><span class="n">lite</span><span class="p">.</span><span class="n">OpsSet</span><span class="p">.</span><span class="n">TFLITE_BUILTINS_INT8</span><span class="p">]</span>
-<span class="n">converter</span><span class="p">.</span><span class="n">inference_input_type</span> <span class="o">=</span> <span class="n">tf</span><span class="p">.</span><span class="n">int8</span>
-<span class="n">converter</span><span class="p">.</span><span class="n">inference_output_type</span> <span class="o">=</span> <span class="n">tf</span><span class="p">.</span><span class="n">int8</span>
+<p>converter = tf.lite.TFLiteConverter.from_keras_model(model)
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+converter.inference_input_type = tf.int8
+converter.inference_output_type = tf.int8</p>
 
-<span class="c1"># Calibration
-</span><span class="k">def</span> <span class="nf">representative_dataset</span><span class="p">():</span>
-    <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">calibration_data</span><span class="p">:</span>
-        <span class="k">yield</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
+<h1 id="calibration">Calibration</h1>
+<p>def representative_dataset():
+ for data in calibration_data:
+ yield [data]</p>
 
-<span class="n">converter</span><span class="p">.</span><span class="n">representative_dataset</span> <span class="o">=</span> <span class="n">representative_dataset</span>
-<span class="n">tflite_model</span> <span class="o">=</span> <span class="n">converter</span><span class="p">.</span><span class="nf">convert</span><span class="p">()</span>
-</code></pre></div></div>
+<p>converter.representative_dataset = representative_dataset
+tflite_model = converter.convert()
+``</p>
 
 <h2 id="22-deep-dive-pruning-structured-vs-unstructured">22. Deep Dive: Pruning (Structured vs Unstructured)</h2>
 
@@ -718,7 +713,7 @@ It is the “Always-On” component of voice assistants.</p>
   <li><strong>Pre-Processing:</strong>
     <ul>
       <li>High-Pass Filter (remove DC offset).</li>
-      <li>Pre-Emphasis ($y[n] = x[n] - 0.97 \times x[n-1]$).</li>
+      <li>Pre-Emphasis (<code class="language-plaintext highlighter-rouge">y[n] = x[n] - 0.97 \times x[n-1]</code>).</li>
     </ul>
   </li>
   <li><strong>Feature Extraction:</strong>
@@ -741,7 +736,7 @@ It is the “Always-On” component of voice assistants.</p>
   </li>
   <li><strong>Decoder:</strong>
     <ul>
-      <li>If $P(Keyword) &gt; 0.8$ for 3 consecutive frames, trigger.</li>
+      <li>If <code class="language-plaintext highlighter-rouge">P(Keyword) &gt; 0.8</code> for 3 consecutive frames, trigger.</li>
     </ul>
   </li>
   <li><strong>Action:</strong>
@@ -909,7 +904,7 @@ It is the “Always-On” component of voice assistants.</p>
 
 <p><strong>2. Weight Clustering:</strong></p>
 <ul>
-  <li>Cluster weights into $K$ centroids (e.g., 256).</li>
+  <li>Cluster weights into <code class="language-plaintext highlighter-rouge">K</code> centroids (e.g., 256).</li>
   <li>Store only the centroid index (8 bits) instead of full weight (32 bits).</li>
   <li><strong>Compression:</strong> 4x.</li>
 </ul>
@@ -994,22 +989,16 @@ It is the “Always-On” component of voice assistants.</p>
 
 <p><strong>Example Results (KWS on Google Speech Commands):</strong></p>
 <ul>
-  <li><strong>ARM Cortex-M4 (80 MHz):</strong>
-    <ul>
-      <li>Model: DS-CNN (20KB).</li>
-      <li>Accuracy: 90.5%.</li>
-      <li>Latency: 15ms.</li>
-      <li>Energy: 0.3 mJ.</li>
-    </ul>
-  </li>
-  <li><strong>ARM Ethos-U55 (NPU):</strong>
-    <ul>
-      <li>Model: DS-CNN (20KB).</li>
-      <li>Accuracy: 90.5%.</li>
-      <li>Latency: 5ms.</li>
-      <li>Energy: 0.05 mJ (6x better).</li>
-    </ul>
-  </li>
+  <li><strong>ARM Cortex-M4 (80 MHz):</strong></li>
+  <li>Model: DS-CNN (20KB).</li>
+  <li>Accuracy: 90.5%.</li>
+  <li>Latency: 15ms.</li>
+  <li>Energy: 0.3 mJ.</li>
+  <li><strong>ARM Ethos-U55 (NPU):</strong></li>
+  <li>Model: DS-CNN (20KB).</li>
+  <li>Accuracy: 90.5%.</li>
+  <li>Latency: 5ms.</li>
+  <li>Energy: 0.05 mJ (6x better).</li>
 </ul>
 
 <h2 id="37-production-monitoring">37. Production Monitoring</h2>
@@ -1049,7 +1038,7 @@ It is the “Always-On” component of voice assistants.</p>
 
 <p><strong>Operational Costs (per million devices):</strong></p>
 <ul>
-  <li><strong>Cloud Verification (Stage 3):</strong> $0.01 per query. If 10% of triggers go to cloud, and each device triggers 5 times/day: $0.01 * 0.1 * 5 * 1M = $5K/day = $1.8M/year.</li>
+  <li><strong>Cloud Verification (Stage 3):</strong> <code class="language-plaintext highlighter-rouge">0.01 per query. If 10% of triggers go to cloud, and each device triggers 5 times/day: </code>0.01 * 0.1 * 5 * 1M = <code class="language-plaintext highlighter-rouge">5K/day = </code>1.8M/year.</li>
   <li><strong>Model Updates:</strong> $10K/month (OTA updates, CDN).</li>
   <li><strong>Monitoring:</strong> $5K/month (Datadog, Grafana Cloud).</li>
 </ul>
@@ -1154,7 +1143,134 @@ It is the “Always-On” component of voice assistants.</p>
         
       </footer>
 
+      <div class="page__related page__related--full">
+  <h2 class="page__related-title">Related across topics</h2>
+  <style>
+    /* Make section span full content width and use 2 equal columns */
+    .page__related--full { float: inline-start; width: 100%; padding: 0; }
+    .cross-related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+    @media (max-width: 768px) { .cross-related-grid { grid-template-columns: 1fr; } }
+    /* Ensure archive cards stretch nicely in the grid */
+    .cross-related-grid .list__item, .cross-related-grid .grid__item { width: auto; float: none; margin: 0; }
+  </style>
+  <div class="cross-related-grid">
+    
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
       
+        <a href="/dsa/0040-trapping-rain-water/" rel="permalink">Trapping Rain Water
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Calculating capacity in a fragmented landscape.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ml-system-design/0040-distributed-training/" rel="permalink">Distributed Training Patterns
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          21 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Scaling from one GPU to thousands.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ai-agents/0040-hierarchical-planning/" rel="permalink">Hierarchical Planning
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          15 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Make agents reliable at large tasks: plan at multiple levels, execute in small verified steps, and stop when budgets say so.”
+</p>
+  </article>
+</div>
+
+  </div>
+</div>
 
       <section class="page__share">
   <h4 class="page__share-title">Share on</h4>

@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="ML Pipeline Dependencies &amp; Orchestration">
     <meta itemprop="description" content="“Managing complex ML workflows with thousands of interdependent tasks.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -256,10 +256,11 @@
 
 <p>Machine Learning workflows are complex DAGs (Directed Acyclic Graphs) with dependencies:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Data Ingestion → Feature Engineering → Training → Evaluation → Deployment
-       ↓                ↓                   ↓
-   Validation     Feature Store      Model Registry
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+Data Ingestion → Feature Engineering → Training → Evaluation → Deployment
+ ↓ ↓ ↓
+ Validation Feature Store Model Registry
+</code></p>
 
 <p><strong>Challenges:</strong></p>
 <ol>
@@ -276,65 +277,66 @@
 
 <h3 id="example-training-pipeline-dag">Example: Training Pipeline DAG</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">airflow</span> <span class="kn">import</span> <span class="n">DAG</span>
-<span class="kn">from</span> <span class="n">airflow.operators.python</span> <span class="kn">import</span> <span class="n">PythonOperator</span>
-<span class="kn">from</span> <span class="n">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<p>``python
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from datetime import datetime, timedelta</p>
 
-<span class="n">default_args</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="sh">'</span><span class="s">owner</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">ml-team</span><span class="sh">'</span><span class="p">,</span>
-    <span class="sh">'</span><span class="s">retries</span><span class="sh">'</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-    <span class="sh">'</span><span class="s">retry_delay</span><span class="sh">'</span><span class="p">:</span> <span class="nf">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span>
-    <span class="sh">'</span><span class="s">email_on_failure</span><span class="sh">'</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
-    <span class="sh">'</span><span class="s">email</span><span class="sh">'</span><span class="p">:</span> <span class="p">[</span><span class="sh">'</span><span class="s">alerts@company.com</span><span class="sh">'</span><span class="p">]</span>
-<span class="p">}</span>
+<p>default_args = {
+ ‘owner’: ‘ml-team’,
+ ‘retries’: 3,
+ ‘retry_delay’: timedelta(minutes=5),
+ ‘email_on_failure’: True,
+ ‘email’: [‘alerts@company.com’]
+}</p>
 
-<span class="n">dag</span> <span class="o">=</span> <span class="nc">DAG</span><span class="p">(</span>
-    <span class="sh">'</span><span class="s">ml_training_pipeline</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">default_args</span><span class="o">=</span><span class="n">default_args</span><span class="p">,</span>
-    <span class="n">description</span><span class="o">=</span><span class="sh">'</span><span class="s">Daily model training</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">schedule_interval</span><span class="o">=</span><span class="sh">'</span><span class="s">0 2 * * *</span><span class="sh">'</span><span class="p">,</span>  <span class="c1"># 2 AM daily
-</span>    <span class="n">start_date</span><span class="o">=</span><span class="nf">datetime</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
-    <span class="n">catchup</span><span class="o">=</span><span class="bp">False</span>
-<span class="p">)</span>
+<p>dag = DAG(
+ ‘ml_training_pipeline’,
+ default_args=default_args,
+ description=’Daily model training’,
+ schedule_interval=’0 2 * * *’, # 2 AM daily
+ start_date=datetime(2024, 1, 1),
+ catchup=False
+)</p>
 
-<span class="k">def</span> <span class="nf">extract_data</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="c1"># Pull data from warehouse
-</span>    <span class="n">data</span> <span class="o">=</span> <span class="nf">query_warehouse</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">])</span>  <span class="c1"># ds = execution date
-</span>    <span class="nf">save_to_gcs</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="sa">f</span><span class="sh">"</span><span class="s">raw_data_</span><span class="si">{</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">.parquet</span><span class="sh">"</span><span class="p">)</span>
+<p>def extract_data(**context):
+ # Pull data from warehouse
+ data = query_warehouse(context[‘ds’]) # ds = execution date
+ save_to_gcs(data, f”raw_data_{context[‘ds’]}.parquet”)</p>
 
-<span class="k">def</span> <span class="nf">feature_engineering</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="nf">load_from_gcs</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">raw_data_</span><span class="si">{</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">.parquet</span><span class="sh">"</span><span class="p">)</span>
-    <span class="n">features</span> <span class="o">=</span> <span class="nf">compute_features</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-    <span class="nf">save_to_gcs</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="sa">f</span><span class="sh">"</span><span class="s">features_</span><span class="si">{</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">.parquet</span><span class="sh">"</span><span class="p">)</span>
+<p>def feature_engineering(**context):
+ data = load_from_gcs(f”raw_data_{context[‘ds’]}.parquet”)
+ features = compute_features(data)
+ save_to_gcs(features, f”features_{context[‘ds’]}.parquet”)</p>
 
-<span class="k">def</span> <span class="nf">train_model</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">features</span> <span class="o">=</span> <span class="nf">load_from_gcs</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">features_</span><span class="si">{</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">.parquet</span><span class="sh">"</span><span class="p">)</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="nf">train</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-    <span class="nf">save_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="sa">f</span><span class="sh">"</span><span class="s">model_</span><span class="si">{</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">.pkl</span><span class="sh">"</span><span class="p">)</span>
+<p>def train_model(**context):
+ features = load_from_gcs(f”features_{context[‘ds’]}.parquet”)
+ model = train(features)
+ save_model(model, f”model_{context[‘ds’]}.pkl”)</p>
 
-<span class="k">def</span> <span class="nf">evaluate_model</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="nf">load_model</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">model_</span><span class="si">{</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">.pkl</span><span class="sh">"</span><span class="p">)</span>
-    <span class="n">metrics</span> <span class="o">=</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_data</span><span class="p">)</span>
-    
-    <span class="k">if</span> <span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">auc</span><span class="sh">'</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">0.75</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sh">"</span><span class="s">Model quality below threshold!</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="nf">log_metrics</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span>
+<p>def evaluate_model(**context):
+ model = load_model(f”model_{context[‘ds’]}.pkl”)
+ metrics = evaluate(model, test_data)</p>
 
-<span class="k">def</span> <span class="nf">deploy_model</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">model_path</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">model_</span><span class="si">{</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">.pkl</span><span class="sh">"</span>
-    <span class="nf">deploy_to_production</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
+<p>if metrics[‘auc’] &lt; 0.75:
+ raise ValueError(“Model quality below threshold!”)</p>
 
-<span class="c1"># Define task dependencies
-</span><span class="n">extract</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">extract_data</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">extract_data</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
-<span class="n">feature_eng</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">feature_engineering</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">feature_engineering</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
-<span class="n">train</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">train_model</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">train_model</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
-<span class="n">evaluate</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">evaluate_model</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">evaluate_model</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
-<span class="n">deploy</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">deploy_model</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">deploy_model</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
+<p>log_metrics(metrics)</p>
 
-<span class="c1"># Dependencies (topological order)
-</span><span class="n">extract</span> <span class="o">&gt;&gt;</span> <span class="n">feature_eng</span> <span class="o">&gt;&gt;</span> <span class="n">train</span> <span class="o">&gt;&gt;</span> <span class="n">evaluate</span> <span class="o">&gt;&gt;</span> <span class="n">deploy</span>
-</code></pre></div></div>
+<p>def deploy_model(**context):
+ model_path = f”model_{context[‘ds’]}.pkl”
+ deploy_to_production(model_path)</p>
+
+<h1 id="define-task-dependencies">Define task dependencies</h1>
+<p>extract = PythonOperator(task_id=’extract_data’, python_callable=extract_data, dag=dag)
+feature_eng = PythonOperator(task_id=’feature_engineering’, python_callable=feature_engineering, dag=dag)
+train = PythonOperator(task_id=’train_model’, python_callable=train_model, dag=dag)
+evaluate = PythonOperator(task_id=’evaluate_model’, python_callable=evaluate_model, dag=dag)
+deploy = PythonOperator(task_id=’deploy_model’, python_callable=deploy_model, dag=dag)</p>
+
+<h1 id="dependencies-topological-order">Dependencies (topological order)</h1>
+<p>extract » feature_eng » train » evaluate » deploy
+``</p>
 
 <p><strong>Key Features:</strong></p>
 <ul>
@@ -357,49 +359,50 @@
 
 <h3 id="example-training-pipeline">Example: Training Pipeline</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">kfp</span>
-<span class="kn">from</span> <span class="n">kfp</span> <span class="kn">import</span> <span class="n">dsl</span>
+<p>``python
+import kfp
+from kfp import dsl</p>
 
-<span class="nd">@dsl.component</span>
-<span class="k">def</span> <span class="nf">data_ingestion</span><span class="p">(</span><span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="kn">import</span> <span class="n">pandas</span> <span class="k">as</span> <span class="n">pd</span>
-    <span class="c1"># Fetch data
-</span>    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="nf">read_sql</span><span class="p">(</span><span class="sh">"</span><span class="s">SELECT * FROM users</span><span class="sh">"</span><span class="p">,</span> <span class="n">conn</span><span class="p">)</span>
-    <span class="n">df</span><span class="p">.</span><span class="nf">to_parquet</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+<p>@dsl.component
+def data_ingestion(output_path: str):
+ import pandas as pd
+ # Fetch data
+ df = pd.read_sql(“SELECT * FROM users”, conn)
+ df.to_parquet(output_path)</p>
 
-<span class="nd">@dsl.component</span>
-<span class="k">def</span> <span class="nf">feature_engineering</span><span class="p">(</span><span class="n">input_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="kn">import</span> <span class="n">pandas</span> <span class="k">as</span> <span class="n">pd</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="nf">read_parquet</span><span class="p">(</span><span class="n">input_path</span><span class="p">)</span>
-    <span class="c1"># Engineer features
-</span>    <span class="n">df</span><span class="p">[</span><span class="sh">'</span><span class="s">age_squared</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="sh">'</span><span class="s">age</span><span class="sh">'</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span>
-    <span class="n">df</span><span class="p">.</span><span class="nf">to_parquet</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+<p>@dsl.component
+def feature_engineering(input_path: str, output_path: str):
+ import pandas as pd
+ df = pd.read_parquet(input_path)
+ # Engineer features
+ df[‘age_squared’] = df[‘age’] ** 2
+ df.to_parquet(output_path)</p>
 
-<span class="nd">@dsl.component</span><span class="p">(</span><span class="n">base_image</span><span class="o">=</span><span class="sh">'</span><span class="s">tensorflow/tensorflow:latest-gpu</span><span class="sh">'</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">train_model</span><span class="p">(</span><span class="n">input_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">model_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="kn">import</span> <span class="n">tensorflow</span> <span class="k">as</span> <span class="n">tf</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="n">tf</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">Dataset</span><span class="p">.</span><span class="nf">from_tensor_slices</span><span class="p">(...)</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="n">tf</span><span class="p">.</span><span class="n">keras</span><span class="p">.</span><span class="n">models</span><span class="p">.</span><span class="nc">Sequential</span><span class="p">([...])</span>
-    <span class="n">model</span><span class="p">.</span><span class="nf">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-    <span class="n">model</span><span class="p">.</span><span class="nf">save</span><span class="p">(</span><span class="n">model_output</span><span class="p">)</span>
+<p>@dsl.component(base_image=’tensorflow/tensorflow:latest-gpu’)
+def train_model(input_path: str, model_output: str):
+ import tensorflow as tf
+ data = tf.data.Dataset.from_tensor_slices(…)
+ model = tf.keras.models.Sequential([…])
+ model.fit(data, epochs=10)
+ model.save(model_output)</p>
 
-<span class="nd">@dsl.pipeline</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sh">'</span><span class="s">ML Training Pipeline</span><span class="sh">'</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">ml_pipeline</span><span class="p">():</span>
-    <span class="n">data_task</span> <span class="o">=</span> <span class="nf">data_ingestion</span><span class="p">(</span><span class="n">output_path</span><span class="o">=</span><span class="sh">'</span><span class="s">/data/raw.parquet</span><span class="sh">'</span><span class="p">)</span>
-    <span class="n">feature_task</span> <span class="o">=</span> <span class="nf">feature_engineering</span><span class="p">(</span>
-        <span class="n">input_path</span><span class="o">=</span><span class="n">data_task</span><span class="p">.</span><span class="n">output</span><span class="p">,</span>
-        <span class="n">output_path</span><span class="o">=</span><span class="sh">'</span><span class="s">/data/features.parquet</span><span class="sh">'</span>
-    <span class="p">)</span>
-    <span class="n">train_task</span> <span class="o">=</span> <span class="nf">train_model</span><span class="p">(</span>
-        <span class="n">input_path</span><span class="o">=</span><span class="n">feature_task</span><span class="p">.</span><span class="n">output</span><span class="p">,</span>
-        <span class="n">model_output</span><span class="o">=</span><span class="sh">'</span><span class="s">/models/model.h5</span><span class="sh">'</span>
-    <span class="p">).</span><span class="nf">set_gpu_limit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Request 1 GPU
-</span>
-<span class="c1"># Compile and run
-</span><span class="n">kfp</span><span class="p">.</span><span class="n">compiler</span><span class="p">.</span><span class="nc">Compiler</span><span class="p">().</span><span class="nf">compile</span><span class="p">(</span><span class="n">ml_pipeline</span><span class="p">,</span> <span class="sh">'</span><span class="s">pipeline.yaml</span><span class="sh">'</span><span class="p">)</span>
-<span class="n">client</span> <span class="o">=</span> <span class="n">kfp</span><span class="p">.</span><span class="nc">Client</span><span class="p">()</span>
-<span class="n">client</span><span class="p">.</span><span class="nf">create_run_from_pipeline_func</span><span class="p">(</span><span class="n">ml_pipeline</span><span class="p">)</span>
-</code></pre></div></div>
+<p>@dsl.pipeline(name=’ML Training Pipeline’)
+def ml_pipeline():
+ data_task = data_ingestion(output_path=’/data/raw.parquet’)
+ feature_task = feature_engineering(
+ input_path=data_task.output,
+ output_path=’/data/features.parquet’
+ )
+ train_task = train_model(
+ input_path=feature_task.output,
+ model_output=’/models/model.h5’
+ ).set_gpu_limit(1) # Request 1 GPU</p>
+
+<h1 id="compile-and-run">Compile and run</h1>
+<p>kfp.compiler.Compiler().compile(ml_pipeline, ‘pipeline.yaml’)
+client = kfp.Client()
+client.create_run_from_pipeline_func(ml_pipeline)
+``</p>
 
 <p><strong>Advantages:</strong></p>
 <ul>
@@ -411,34 +414,39 @@
 <h2 id="4-dependency-patterns-in-ml-pipelines">4. Dependency Patterns in ML Pipelines</h2>
 
 <h3 id="pattern-1-linear-pipeline">Pattern 1: Linear Pipeline</h3>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>A → B → C → D
-</code></pre></div></div>
-<p><strong>Example:</strong> Data Ingestion → Preprocessing → Training → Deployment.</p>
+<p><code class="language-plaintext highlighter-rouge">
+A → B → C → D
+</code>
+<strong>Example:</strong> Data Ingestion → Preprocessing → Training → Deployment.</p>
 
 <h3 id="pattern-2-fan-out-parallel-tasks">Pattern 2: Fan-Out (Parallel Tasks)</h3>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       → B1 →
-A →    → B2 →   → D
-       → B3 →
-</code></pre></div></div>
-<p><strong>Example:</strong> Train 3 models in parallel, then ensemble them.</p>
+<p><code class="language-plaintext highlighter-rouge">
+ → B1 →
+A → → B2 → → D
+ → B3 →
+</code>
+<strong>Example:</strong> Train 3 models in parallel, then ensemble them.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Airflow
-</span><span class="n">feature_eng</span> <span class="o">&gt;&gt;</span> <span class="p">[</span><span class="n">train_model_1</span><span class="p">,</span> <span class="n">train_model_2</span><span class="p">,</span> <span class="n">train_model_3</span><span class="p">]</span> <span class="o">&gt;&gt;</span> <span class="n">ensemble</span> <span class="o">&gt;&gt;</span> <span class="n">deploy</span>
-</code></pre></div></div>
+<p>``python</p>
+<h1 id="airflow">Airflow</h1>
+<p>feature_eng » [train_model_1, train_model_2, train_model_3] » ensemble » deploy
+``</p>
 
 <h3 id="pattern-3-fan-in-join">Pattern 3: Fan-In (Join)</h3>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>A1 →
-A2 →   → C
+<p><code class="language-plaintext highlighter-rouge">
+A1 →
+A2 → → C
 A3 →
-</code></pre></div></div>
-<p><strong>Example:</strong> Process data from 3 sources, then merge.</p>
+</code>
+<strong>Example:</strong> Process data from 3 sources, then merge.</p>
 
 <h3 id="pattern-4-diamond-complex-dependencies">Pattern 4: Diamond (Complex Dependencies)</h3>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>     → B →
-A →         → D
-     → C →
-</code></pre></div></div>
-<p><strong>Example:</strong> Extract features from images (B) and text (C), then combine for training (D).</p>
+<p><code class="language-plaintext highlighter-rouge">
+ → B →
+A → → D
+ → C →
+</code>
+<strong>Example:</strong> Extract features from images (B) and text (C), then combine for training (D).</p>
 
 <h2 id="5-handling-failures-and-retries">5. Handling Failures and Retries</h2>
 
@@ -456,35 +464,38 @@ A →         → D
 
 <h3 id="retry-strategy">Retry Strategy</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Airflow
-</span><span class="n">default_args</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="sh">'</span><span class="s">retries</span><span class="sh">'</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-    <span class="sh">'</span><span class="s">retry_delay</span><span class="sh">'</span><span class="p">:</span> <span class="nf">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span>
-    <span class="sh">'</span><span class="s">retry_exponential_backoff</span><span class="sh">'</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
-    <span class="sh">'</span><span class="s">max_retry_delay</span><span class="sh">'</span><span class="p">:</span> <span class="nf">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="p">}</span>
+<p>``python</p>
+<h1 id="airflow-1">Airflow</h1>
+<p>default_args = {
+ ‘retries’: 3,
+ ‘retry_delay’: timedelta(minutes=5),
+ ‘retry_exponential_backoff’: True,
+ ‘max_retry_delay’: timedelta(hours=1)
+}</p>
 
-<span class="c1"># Prefect
-</span><span class="nd">@flow</span><span class="p">(</span><span class="n">retries</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">retry_delay_seconds</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">my_flow</span><span class="p">():</span>
-    <span class="k">pass</span>
-</code></pre></div></div>
+<h1 id="prefect">Prefect</h1>
+<p>@flow(retries=3, retry_delay_seconds=300)
+def my_flow():
+ pass
+``</p>
 
 <h3 id="idempotency">Idempotency</h3>
 
 <p><strong>Critical:</strong> Tasks must be idempotent (running twice = running once).</p>
 
-<p><strong>Bad (not idempotent):</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">bad_task</span><span class="p">():</span>
-    <span class="n">db</span><span class="p">.</span><span class="nf">execute</span><span class="p">(</span><span class="sh">"</span><span class="s">INSERT INTO results VALUES (...)</span><span class="sh">"</span><span class="p">)</span>  <span class="c1"># Duplicate inserts!
-</span></code></pre></div></div>
+<p><strong>Bad (not idempotent):</strong>
+<code class="language-plaintext highlighter-rouge">python
+def bad_task():
+ db.execute("INSERT INTO results VALUES (...)") # Duplicate inserts!
+</code></p>
 
-<p><strong>Good (idempotent):</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">good_task</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">date</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span>
-    <span class="n">db</span><span class="p">.</span><span class="nf">execute</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">DELETE FROM results WHERE date = </span><span class="sh">'</span><span class="si">{</span><span class="n">date</span><span class="si">}</span><span class="sh">'"</span><span class="p">)</span>
-    <span class="n">db</span><span class="p">.</span><span class="nf">execute</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">INSERT INTO results VALUES (...)</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p><strong>Good (idempotent):</strong>
+<code class="language-plaintext highlighter-rouge">python
+def good_task(**context):
+ date = context['ds']
+ db.execute(f"DELETE FROM results WHERE date = '{date}'")
+ db.execute(f"INSERT INTO results VALUES (...)")
+</code></p>
 
 <h2 id="6-dynamic-dag-generation">6. Dynamic DAG Generation</h2>
 
@@ -492,22 +503,23 @@ A →         → D
 
 <p><strong>Solution:</strong> Programmatically generate DAGs.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Airflow
-</span><span class="kn">from</span> <span class="n">airflow</span> <span class="kn">import</span> <span class="n">DAG</span>
-<span class="kn">from</span> <span class="n">airflow.operators.python</span> <span class="kn">import</span> <span class="n">PythonOperator</span>
+<p>``python</p>
+<h1 id="airflow-2">Airflow</h1>
+<p>from airflow import DAG
+from airflow.operators.python import PythonOperator</p>
 
-<span class="n">models</span> <span class="o">=</span> <span class="p">[</span><span class="sh">'</span><span class="s">model_A</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">model_B</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">model_C</span><span class="sh">'</span><span class="p">,</span> <span class="p">...]</span>
+<p>models = [‘model_A’, ‘model_B’, ‘model_C’, …]</p>
 
-<span class="n">dag</span> <span class="o">=</span> <span class="nc">DAG</span><span class="p">(</span><span class="sh">'</span><span class="s">dynamic_training</span><span class="sh">'</span><span class="p">,</span> <span class="p">...)</span>
+<p>dag = DAG(‘dynamic_training’, …)</p>
 
-<span class="k">for</span> <span class="n">model_name</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
-    <span class="n">task</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span>
-        <span class="n">task_id</span><span class="o">=</span><span class="sa">f</span><span class="sh">'</span><span class="s">train_</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="sh">'</span><span class="p">,</span>
-        <span class="n">python_callable</span><span class="o">=</span><span class="n">train_model</span><span class="p">,</span>
-        <span class="n">op_kwargs</span><span class="o">=</span><span class="p">{</span><span class="sh">'</span><span class="s">model_name</span><span class="sh">'</span><span class="p">:</span> <span class="n">model_name</span><span class="p">},</span>
-        <span class="n">dag</span><span class="o">=</span><span class="n">dag</span>
-    <span class="p">)</span>
-</code></pre></div></div>
+<p>for model_name in models:
+ task = PythonOperator(
+ task_id=f’train_{model_name}’,
+ python_callable=train_model,
+ op_kwargs={‘model_name’: model_name},
+ dag=dag
+ )
+``</p>
 
 <h2 id="deep-dive-netflixs-ml-pipeline-at-scale">Deep Dive: Netflix’s ML Pipeline at Scale</h2>
 
@@ -532,48 +544,49 @@ A →         → D
   <li><strong>Titus (Netflix’s container platform) for Execution.</strong></li>
 </ol>
 
-<p><strong>Example Metaflow Pipeline:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">metaflow</span> <span class="kn">import</span> <span class="n">FlowSpec</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">resources</span>
+<p><strong>Example Metaflow Pipeline:</strong>
+``python
+from metaflow import FlowSpec, step, batch, resources</p>
 
-<span class="k">class</span> <span class="nc">RecommendationFlow</span><span class="p">(</span><span class="n">FlowSpec</span><span class="p">):</span>
-    
-    <span class="nd">@step</span>
-    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="nf">load_from_s3</span><span class="p">(</span><span class="sh">'</span><span class="s">s3://netflix-data/user_views.parquet</span><span class="sh">'</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="nf">next</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">feature_engineering</span><span class="p">)</span>
-    
-    <span class="nd">@batch</span><span class="p">(</span><span class="n">cpu</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">memory</span><span class="o">=</span><span class="mi">64000</span><span class="p">)</span>  <span class="c1"># 16 CPUs, 64GB RAM
-</span>    <span class="nd">@step</span>
-    <span class="k">def</span> <span class="nf">feature_engineering</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">features</span> <span class="o">=</span> <span class="nf">compute_features</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">data</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="nf">next</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">train</span><span class="p">)</span>
-    
-    <span class="nd">@batch</span><span class="p">(</span><span class="n">gpu</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">memory</span><span class="o">=</span><span class="mi">128000</span><span class="p">)</span>  <span class="c1"># 4 GPUs
-</span>    <span class="nd">@step</span>
-    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="nf">train_model</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">features</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="nf">next</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">evaluate</span><span class="p">)</span>
-    
-    <span class="nd">@step</span>
-    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">metrics</span> <span class="o">=</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">precision@10</span><span class="sh">'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">next</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">deploy</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">next</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">end</span><span class="p">)</span>  <span class="c1"># Don't deploy bad models
-</span>    
-    <span class="nd">@step</span>
-    <span class="k">def</span> <span class="nf">deploy</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="nf">deploy_to_production</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="nf">next</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">end</span><span class="p">)</span>
-    
-    <span class="nd">@step</span>
-    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Pipeline complete!</span><span class="sh">"</span><span class="p">)</span>
+<p>class RecommendationFlow(FlowSpec):</p>
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="sh">'</span><span class="s">__main__</span><span class="sh">'</span><span class="p">:</span>
-    <span class="nc">RecommendationFlow</span><span class="p">()</span>
-</code></pre></div></div>
+<p>@step
+ def start(self):
+ self.data = load_from_s3(‘s3://netflix-data/user_views.parquet’)
+ self.next(self.feature_engineering)</p>
+
+<p>@batch(cpu=16, memory=64000) # 16 CPUs, 64GB RAM
+ @step
+ def feature_engineering(self):
+ self.features = compute_features(self.data)
+ self.next(self.train)</p>
+
+<p>@batch(gpu=4, memory=128000) # 4 GPUs
+ @step
+ def train(self):
+ self.model = train_model(self.features)
+ self.next(self.evaluate)</p>
+
+<p>@step
+ def evaluate(self):
+ metrics = evaluate(self.model)
+ if metrics[‘precision@10’] &gt; 0.8:
+ self.next(self.deploy)
+ else:
+ self.next(self.end) # Don’t deploy bad models</p>
+
+<p>@step
+ def deploy(self):
+ deploy_to_production(self.model)
+ self.next(self.end)</p>
+
+<p>@step
+ def end(self):
+ print(“Pipeline complete!”)</p>
+
+<p>if <strong>name</strong> == ‘<strong>main</strong>’:
+ RecommendationFlow()
+``</p>
 
 <h2 id="deep-dive-ubers-michelangelo-platform">Deep Dive: Uber’s Michelangelo Platform</h2>
 
@@ -606,79 +619,85 @@ A →         → D
 
 <p><strong>Solution: Feature Store (Feast, Tecton)</strong></p>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Batch Pipeline (Airflow) → Compute Features → Feature Store (Online + Offline)
-                                                    ↓
-                                            Training &amp; Serving
-</code></pre></div></div>
+<p><strong>Architecture:</strong>
+<code class="language-plaintext highlighter-rouge">
+Batch Pipeline (Airflow) → Compute Features → Feature Store (Online + Offline)
+ ↓
+ Training &amp; Serving
+</code></p>
 
-<p><strong>Integration with Airflow:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@task</span>
-<span class="k">def</span> <span class="nf">compute_features</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">date</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span>
-    <span class="n">raw_data</span> <span class="o">=</span> <span class="nf">load_data</span><span class="p">(</span><span class="n">date</span><span class="p">)</span>
-    <span class="n">features</span> <span class="o">=</span> <span class="nf">transform</span><span class="p">(</span><span class="n">raw_data</span><span class="p">)</span>
-    
-    <span class="c1"># Write to Feature Store
-</span>    <span class="n">feast_client</span><span class="p">.</span><span class="nf">push_features</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">date</span><span class="p">)</span>
+<p><strong>Integration with Airflow:</strong>
+``python
+@task
+def compute_features(**context):
+ date = context[‘ds’]
+ raw_data = load_data(date)
+ features = transform(raw_data)</p>
 
-<span class="nd">@task</span>
-<span class="k">def</span> <span class="nf">train_model</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">date</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span>
-    <span class="c1"># Read from Feature Store
-</span>    <span class="n">features</span> <span class="o">=</span> <span class="n">feast_client</span><span class="p">.</span><span class="nf">get_historical_features</span><span class="p">(</span>
-        <span class="n">entity_rows</span><span class="o">=</span><span class="p">{</span><span class="sh">'</span><span class="s">user_id</span><span class="sh">'</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">...]},</span>
-        <span class="n">feature_refs</span><span class="o">=</span><span class="p">[</span><span class="sh">'</span><span class="s">user_profile:age</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">user_profile:country</span><span class="sh">'</span><span class="p">]</span>
-    <span class="p">)</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="nf">train</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-</code></pre></div></div>
+<p># Write to Feature Store
+ feast_client.push_features(features, timestamp=date)</p>
+
+<p>@task
+def train_model(**context):
+ date = context[‘ds’]
+ # Read from Feature Store
+ features = feast_client.get_historical_features(
+ entity_rows={‘user_id’: [1, 2, 3, …]},
+ feature_refs=[‘user_profile:age’, ‘user_profile:country’]
+ )
+ model = train(features)
+``</p>
 
 <h2 id="deep-dive-pipeline-testing-and-validation">Deep Dive: Pipeline Testing and Validation</h2>
 
-<p><strong>Unit Tests:</strong> Test individual tasks.</p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">test_feature_engineering</span><span class="p">():</span>
-    <span class="n">input_data</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="nc">DataFrame</span><span class="p">({</span><span class="sh">'</span><span class="s">age</span><span class="sh">'</span><span class="p">:</span> <span class="p">[</span><span class="mi">25</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">35</span><span class="p">]})</span>
-    <span class="n">output</span> <span class="o">=</span> <span class="nf">feature_engineering</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="sh">'</span><span class="s">age_squared</span><span class="sh">'</span> <span class="ow">in</span> <span class="n">output</span><span class="p">.</span><span class="n">columns</span>
-    <span class="k">assert</span> <span class="n">output</span><span class="p">[</span><span class="sh">'</span><span class="s">age_squared</span><span class="sh">'</span><span class="p">].</span><span class="nf">tolist</span><span class="p">()</span> <span class="o">==</span> <span class="p">[</span><span class="mi">625</span><span class="p">,</span> <span class="mi">900</span><span class="p">,</span> <span class="mi">1225</span><span class="p">]</span>
-</code></pre></div></div>
+<p><strong>Unit Tests:</strong> Test individual tasks.
+<code class="language-plaintext highlighter-rouge">python
+def test_feature_engineering():
+ input_data = pd.DataFrame({'age': [25, 30, 35]})
+ output = feature_engineering(input_data)
+ assert 'age_squared' in output.columns
+ assert output['age_squared'].tolist() == [625, 900, 1225]
+</code></p>
 
-<p><strong>Integration Tests:</strong> Test full pipeline on sample data.</p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">test_pipeline_end_to_end</span><span class="p">():</span>
-    <span class="c1"># Run pipeline with small test dataset
-</span>    <span class="n">result</span> <span class="o">=</span> <span class="nf">run_pipeline</span><span class="p">(</span><span class="n">test_data</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">model_quality</span><span class="sh">'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.7</span>
-</code></pre></div></div>
+<p><strong>Integration Tests:</strong> Test full pipeline on sample data.
+<code class="language-plaintext highlighter-rouge">python
+def test_pipeline_end_to_end():
+ # Run pipeline with small test dataset
+ result = run_pipeline(test_data)
+ assert result['model_quality'] &gt; 0.7
+</code></p>
 
-<p><strong>Data Validation:</strong> Check data quality before training.</p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">great_expectations</span> <span class="kn">import</span> <span class="n">DataContext</span>
+<p><strong>Data Validation:</strong> Check data quality before training.
+``python
+from great_expectations import DataContext</p>
 
-<span class="nd">@task</span>
-<span class="k">def</span> <span class="nf">validate_data</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="nf">load_data</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">])</span>
-    
-    <span class="c1"># Expectations
-</span>    <span class="k">assert</span> <span class="n">data</span><span class="p">[</span><span class="sh">'</span><span class="s">age</span><span class="sh">'</span><span class="p">].</span><span class="nf">between</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">120</span><span class="p">).</span><span class="nf">all</span><span class="p">(),</span> <span class="sh">"</span><span class="s">Invalid ages!</span><span class="sh">"</span>
-    <span class="k">assert</span> <span class="n">data</span><span class="p">[</span><span class="sh">'</span><span class="s">revenue</span><span class="sh">'</span><span class="p">].</span><span class="nf">notnull</span><span class="p">().</span><span class="nf">all</span><span class="p">(),</span> <span class="sh">"</span><span class="s">Missing revenue!</span><span class="sh">"</span>
-    
-    <span class="c1"># Use Great Expectations for complex validation
-</span>    <span class="n">context</span> <span class="o">=</span> <span class="nc">DataContext</span><span class="p">()</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">context</span><span class="p">.</span><span class="nf">run_checkpoint</span><span class="p">(</span><span class="sh">'</span><span class="s">data_quality_checkpoint</span><span class="sh">'</span><span class="p">,</span> <span class="n">batch_request</span><span class="o">=</span><span class="p">...)</span>
-    
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">results</span><span class="p">.</span><span class="n">success</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sh">"</span><span class="s">Data quality check failed!</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>@task
+def validate_data(**context):
+ data = load_data(context[‘ds’])</p>
+
+<p># Expectations
+ assert data[‘age’].between(0, 120).all(), “Invalid ages!”
+ assert data[‘revenue’].notnull().all(), “Missing revenue!”</p>
+
+<p># Use Great Expectations for complex validation
+ context = DataContext()
+ results = context.run_checkpoint(‘data_quality_checkpoint’, batch_request=…)</p>
+
+<p>if not results.success:
+ raise ValueError(“Data quality check failed!”)
+``</p>
 
 <h2 id="deep-dive-backfilling-historical-data">Deep Dive: Backfilling Historical Data</h2>
 
 <p><strong>Problem:</strong> You fixed a bug in feature engineering. Need to re-run for the past 90 days.</p>
 
-<p><strong>Airflow Backfill:</strong></p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>airflow dags backfill <span class="se">\</span>
-    <span class="nt">--start-date</span> 2024-01-01 <span class="se">\</span>
-    <span class="nt">--end-date</span> 2024-03-31 <span class="se">\</span>
-    ml_training_pipeline
-</code></pre></div></div>
+<p><strong>Airflow Backfill:</strong>
+<code class="language-plaintext highlighter-rouge">bash
+airflow dags backfill \
+ --start-date 2024-01-01 \
+ --end-date 2024-03-31 \
+ ml_training_pipeline
+</code></p>
 
 <p><strong>Challenges:</strong></p>
 <ul>
@@ -686,12 +705,13 @@ A →         → D
   <li><strong>Solution:</strong> Use <code class="language-plaintext highlighter-rouge">max_active_runs</code> parameter to limit parallelism.</li>
 </ul>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dag</span> <span class="o">=</span> <span class="nc">DAG</span><span class="p">(</span>
-    <span class="sh">'</span><span class="s">ml_pipeline</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">max_active_runs</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>  <span class="c1"># Run max 5 dates in parallel
-</span>    <span class="bp">...</span>
-<span class="p">)</span>
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">python
+dag = DAG(
+ 'ml_pipeline',
+ max_active_runs=5, # Run max 5 dates in parallel
+ ...
+)
+</code></p>
 
 <h2 id="deep-dive-monitoring-and-alerting">Deep Dive: Monitoring and Alerting</h2>
 
@@ -703,24 +723,25 @@ A →         → D
   <li><strong>Model Quality:</strong> Alert if AUC drops below threshold.</li>
 </ol>
 
-<p><strong>Airflow Integration with Prometheus/Grafana:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">airflow.providers.prometheus.operators.push_gateway</span> <span class="kn">import</span> <span class="n">PushGatewayOperator</span>
+<p><strong>Airflow Integration with Prometheus/Grafana:</strong>
+``python
+from airflow.providers.prometheus.operators.push_gateway import PushGatewayOperator</p>
 
-<span class="nd">@task</span>
-<span class="k">def</span> <span class="nf">push_metrics</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">metrics</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="sh">'</span><span class="s">model_auc</span><span class="sh">'</span><span class="p">:</span> <span class="mf">0.85</span><span class="p">,</span>
-        <span class="sh">'</span><span class="s">training_duration</span><span class="sh">'</span><span class="p">:</span> <span class="mi">3600</span><span class="p">,</span>  <span class="c1"># seconds
-</span>        <span class="sh">'</span><span class="s">data_rows</span><span class="sh">'</span><span class="p">:</span> <span class="mi">1000000</span>
-    <span class="p">}</span>
-    
-    <span class="c1"># Push to Prometheus
-</span>    <span class="n">push_gateway</span> <span class="o">=</span> <span class="nc">PushGatewayOperator</span><span class="p">(</span>
-        <span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">push_metrics</span><span class="sh">'</span><span class="p">,</span>
-        <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
-        <span class="n">gateway_url</span><span class="o">=</span><span class="sh">'</span><span class="s">http://pushgateway:9091</span><span class="sh">'</span>
-    <span class="p">)</span>
-</code></pre></div></div>
+<p>@task
+def push_metrics(**context):
+ metrics = {
+ ‘model_auc’: 0.85,
+ ‘training_duration’: 3600, # seconds
+ ‘data_rows’: 1000000
+ }</p>
+
+<p># Push to Prometheus
+ push_gateway = PushGatewayOperator(
+ task_id=’push_metrics’,
+ metrics=metrics,
+ gateway_url=’http://pushgateway:9091’
+ )
+``</p>
 
 <h2 id="deep-dive-cost-optimization">Deep Dive: Cost Optimization</h2>
 
@@ -734,139 +755,141 @@ A →         → D
   <li><strong>Caching:</strong> Cache intermediate results (features).</li>
 </ol>
 
-<p><strong>Airflow on Spot Instances:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">airflow.providers.amazon.aws.operators.ecs</span> <span class="kn">import</span> <span class="n">ECSOperator</span>
+<p><strong>Airflow on Spot Instances:</strong>
+``python
+from airflow.providers.amazon.aws.operators.ecs import ECSOperator</p>
 
-<span class="n">train_task</span> <span class="o">=</span> <span class="nc">ECSOperator</span><span class="p">(</span>
-    <span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">train_model</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">task_definition</span><span class="o">=</span><span class="sh">'</span><span class="s">ml-training</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">cluster</span><span class="o">=</span><span class="sh">'</span><span class="s">ml-cluster</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">overrides</span><span class="o">=</span><span class="p">{</span>
-        <span class="sh">'</span><span class="s">containerOverrides</span><span class="sh">'</span><span class="p">:</span> <span class="p">[{</span>
-            <span class="sh">'</span><span class="s">name</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">training-container</span><span class="sh">'</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">environment</span><span class="sh">'</span><span class="p">:</span> <span class="p">[...],</span>
-        <span class="p">}],</span>
-        <span class="sh">'</span><span class="s">cpu</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">4096</span><span class="sh">'</span><span class="p">,</span>  <span class="c1"># 4 vCPUs
-</span>        <span class="sh">'</span><span class="s">memory</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">16384</span><span class="sh">'</span><span class="p">,</span>  <span class="c1"># 16GB
-</span>        <span class="sh">'</span><span class="s">taskRoleArn</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">arn:aws:iam::...</span><span class="sh">'</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="n">launch_type</span><span class="o">=</span><span class="sh">'</span><span class="s">FARGATE_SPOT</span><span class="sh">'</span><span class="p">,</span>  <span class="c1"># Use Spot instances
-</span>    <span class="n">dag</span><span class="o">=</span><span class="n">dag</span>
-<span class="p">)</span>
-</code></pre></div></div>
+<p>train_task = ECSOperator(
+ task_id=’train_model’,
+ task_definition=’ml-training’,
+ cluster=’ml-cluster’,
+ overrides={
+ ‘containerOverrides’: [{
+ ‘name’: ‘training-container’,
+ ‘environment’: […],
+ }],
+ ‘cpu’: ‘4096’, # 4 vCPUs
+ ‘memory’: ‘16384’, # 16GB
+ ‘taskRoleArn’: ‘arn:aws:iam::…’,
+ },
+ launch_type=’FARGATE_SPOT’, # Use Spot instances
+ dag=dag
+)
+``</p>
 
 <h2 id="implementation-full-ml-pipeline-orchestration">Implementation: Full ML Pipeline Orchestration</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">airflow</span> <span class="kn">import</span> <span class="n">DAG</span>
-<span class="kn">from</span> <span class="n">airflow.operators.python</span> <span class="kn">import</span> <span class="n">PythonOperator</span>
-<span class="kn">from</span> <span class="n">airflow.operators.email</span> <span class="kn">import</span> <span class="n">EmailOperator</span>
-<span class="kn">from</span> <span class="n">airflow.utils.dates</span> <span class="kn">import</span> <span class="n">days_ago</span>
-<span class="kn">from</span> <span class="n">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
-<span class="kn">import</span> <span class="n">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+<p>``python
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from airflow.operators.email import EmailOperator
+from airflow.utils.dates import days_ago
+from datetime import timedelta
+import pandas as pd</p>
 
-<span class="n">default_args</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="sh">'</span><span class="s">owner</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">ml-team</span><span class="sh">'</span><span class="p">,</span>
-    <span class="sh">'</span><span class="s">depends_on_past</span><span class="sh">'</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
-    <span class="sh">'</span><span class="s">email</span><span class="sh">'</span><span class="p">:</span> <span class="p">[</span><span class="sh">'</span><span class="s">ml-alerts@company.com</span><span class="sh">'</span><span class="p">],</span>
-    <span class="sh">'</span><span class="s">email_on_failure</span><span class="sh">'</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
-    <span class="sh">'</span><span class="s">email_on_retry</span><span class="sh">'</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
-    <span class="sh">'</span><span class="s">retries</span><span class="sh">'</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="sh">'</span><span class="s">retry_delay</span><span class="sh">'</span><span class="p">:</span> <span class="nf">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span>
-<span class="p">}</span>
+<p>default_args = {
+ ‘owner’: ‘ml-team’,
+ ‘depends_on_past’: False,
+ ‘email’: [‘ml-alerts@company.com’],
+ ‘email_on_failure’: True,
+ ‘email_on_retry’: False,
+ ‘retries’: 2,
+ ‘retry_delay’: timedelta(minutes=5),
+}</p>
 
-<span class="n">dag</span> <span class="o">=</span> <span class="nc">DAG</span><span class="p">(</span>
-    <span class="sh">'</span><span class="s">complete_ml_pipeline</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">default_args</span><span class="o">=</span><span class="n">default_args</span><span class="p">,</span>
-    <span class="n">description</span><span class="o">=</span><span class="sh">'</span><span class="s">End-to-end ML pipeline</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">schedule_interval</span><span class="o">=</span><span class="sh">'</span><span class="s">0 2 * * *</span><span class="sh">'</span><span class="p">,</span>  <span class="c1"># 2 AM daily
-</span>    <span class="n">start_date</span><span class="o">=</span><span class="nf">days_ago</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
-    <span class="n">catchup</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-    <span class="n">max_active_runs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-<span class="p">)</span>
+<p>dag = DAG(
+ ‘complete_ml_pipeline’,
+ default_args=default_args,
+ description=’End-to-end ML pipeline’,
+ schedule_interval=’0 2 * * *’, # 2 AM daily
+ start_date=days_ago(1),
+ catchup=False,
+ max_active_runs=1,
+)</p>
 
-<span class="k">def</span> <span class="nf">data_quality_check</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Validate data quality before processing</span><span class="sh">"""</span>
-    <span class="n">date</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="nf">load_data</span><span class="p">(</span><span class="n">date</span><span class="p">)</span>
-    
-    <span class="c1"># Checks
-</span>    <span class="k">assert</span> <span class="nf">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">10000</span><span class="p">,</span> <span class="sh">"</span><span class="s">Insufficient data!</span><span class="sh">"</span>
-    <span class="k">assert</span> <span class="n">data</span><span class="p">[</span><span class="sh">'</span><span class="s">label</span><span class="sh">'</span><span class="p">].</span><span class="nf">notnull</span><span class="p">().</span><span class="nf">all</span><span class="p">(),</span> <span class="sh">"</span><span class="s">Missing labels!</span><span class="sh">"</span>
-    
-    <span class="c1"># Log stats
-</span>    <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_push</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">data_size</span><span class="sh">'</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="nf">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+<p>def data_quality_check(**context):
+ “"”Validate data quality before processing”””
+ date = context[‘ds’]
+ data = load_data(date)</p>
 
-<span class="k">def</span> <span class="nf">extract_features</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Feature engineering</span><span class="sh">"""</span>
-    <span class="n">date</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="nf">load_data</span><span class="p">(</span><span class="n">date</span><span class="p">)</span>
-    <span class="n">features</span> <span class="o">=</span> <span class="nf">engineer_features</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-    <span class="n">features</span><span class="p">.</span><span class="nf">to_parquet</span><span class="p">(</span><span class="sa">f</span><span class="sh">'</span><span class="s">/data/features_</span><span class="si">{</span><span class="n">date</span><span class="si">}</span><span class="s">.parquet</span><span class="sh">'</span><span class="p">)</span>
+<p># Checks
+ assert len(data) &gt; 10000, “Insufficient data!”
+ assert data[‘label’].notnull().all(), “Missing labels!”</p>
 
-<span class="k">def</span> <span class="nf">train_models</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Train multiple models in parallel</span><span class="sh">"""</span>
-    <span class="n">date</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span>
-    <span class="n">features</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="nf">read_parquet</span><span class="p">(</span><span class="sa">f</span><span class="sh">'</span><span class="s">/data/features_</span><span class="si">{</span><span class="n">date</span><span class="si">}</span><span class="s">.parquet</span><span class="sh">'</span><span class="p">)</span>
-    
-    <span class="n">models</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">model_type</span> <span class="ow">in</span> <span class="p">[</span><span class="sh">'</span><span class="s">xgboost</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">random_forest</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">logistic_regression</span><span class="sh">'</span><span class="p">]:</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="nf">train_model</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">model_type</span><span class="p">)</span>
-        <span class="n">models</span><span class="p">[</span><span class="n">model_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span>
-        <span class="nf">save_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="sa">f</span><span class="sh">'</span><span class="s">/models/</span><span class="si">{</span><span class="n">model_type</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="n">date</span><span class="si">}</span><span class="s">.pkl</span><span class="sh">'</span><span class="p">)</span>
-    
-    <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_push</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">model_paths</span><span class="sh">'</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">models</span><span class="p">.</span><span class="nf">keys</span><span class="p">())</span>
+<p># Log stats
+ context[‘ti’].xcom_push(key=’data_size’, value=len(data))</p>
 
-<span class="k">def</span> <span class="nf">evaluate_and_select_best</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Evaluate models and select the best</span><span class="sh">"""</span>
-    <span class="n">date</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span>
-    <span class="n">model_types</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_pull</span><span class="p">(</span><span class="n">task_ids</span><span class="o">=</span><span class="sh">'</span><span class="s">train_models</span><span class="sh">'</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">model_paths</span><span class="sh">'</span><span class="p">)</span>
-    
-    <span class="n">best_model</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">best_auc</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="k">for</span> <span class="n">model_type</span> <span class="ow">in</span> <span class="n">model_types</span><span class="p">:</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="nf">load_model</span><span class="p">(</span><span class="sa">f</span><span class="sh">'</span><span class="s">/models/</span><span class="si">{</span><span class="n">model_type</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="n">date</span><span class="si">}</span><span class="s">.pkl</span><span class="sh">'</span><span class="p">)</span>
-        <span class="n">auc</span> <span class="o">=</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_data</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">auc</span> <span class="o">&gt;</span> <span class="n">best_auc</span><span class="p">:</span>
-            <span class="n">best_auc</span> <span class="o">=</span> <span class="n">auc</span>
-            <span class="n">best_model</span> <span class="o">=</span> <span class="n">model_type</span>
-    
-    <span class="c1"># Quality gate
-</span>    <span class="k">if</span> <span class="n">best_auc</span> <span class="o">&lt;</span> <span class="mf">0.75</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Best model AUC (</span><span class="si">{</span><span class="n">best_auc</span><span class="si">}</span><span class="s">) below threshold!</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_push</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">best_model</span><span class="sh">'</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">best_model</span><span class="p">)</span>
-    <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_push</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">best_auc</span><span class="sh">'</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">best_auc</span><span class="p">)</span>
+<p>def extract_features(**context):
+ “"”Feature engineering”””
+ date = context[‘ds’]
+ data = load_data(date)
+ features = engineer_features(data)
+ features.to_parquet(f’/data/features_{date}.parquet’)</p>
 
-<span class="k">def</span> <span class="nf">deploy_best_model</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Deploy the best model to production</span><span class="sh">"""</span>
-    <span class="n">best_model</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_pull</span><span class="p">(</span><span class="n">task_ids</span><span class="o">=</span><span class="sh">'</span><span class="s">evaluate_and_select_best</span><span class="sh">'</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">best_model</span><span class="sh">'</span><span class="p">)</span>
-    <span class="n">date</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span>
-    
-    <span class="n">model_path</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">'</span><span class="s">/models/</span><span class="si">{</span><span class="n">best_model</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="n">date</span><span class="si">}</span><span class="s">.pkl</span><span class="sh">'</span>
-    <span class="nf">deploy_to_production</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
-    
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Deployed </span><span class="si">{</span><span class="n">best_model</span><span class="si">}</span><span class="s"> to production!</span><span class="sh">"</span><span class="p">)</span>
+<p>def train_models(**context):
+ “"”Train multiple models in parallel”””
+ date = context[‘ds’]
+ features = pd.read_parquet(f’/data/features_{date}.parquet’)</p>
 
-<span class="c1"># Define tasks
-</span><span class="n">quality_check</span> <span class="o">=</span> <span class="n">Python</span> <span class="nc">Operator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">data_quality_check</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">data_quality_check</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
-<span class="n">feature_eng</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">extract_features</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">extract_features</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
-<span class="n">train</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">train_models</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">train_models</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
-<span class="n">evaluate</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">evaluate_and_select_best</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">evaluate_and_select_best</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
-<span class="n">deploy</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">deploy_best_model</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">deploy_best_model</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
+<p>models = {}
+ for model_type in [‘xgboost’, ‘random_forest’, ‘logistic_regression’]:
+ model = train_model(features, model_type)
+ models[model_type] = model
+ save_model(model, f’/models/{model_type}_{date}.pkl’)</p>
 
-<span class="n">success_email</span> <span class="o">=</span> <span class="nc">EmailOperator</span><span class="p">(</span>
-    <span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">success_email</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">to</span><span class="o">=</span><span class="sh">'</span><span class="s">ml-team@company.com</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">subject</span><span class="o">=</span><span class="sh">'</span><span class="s">ML Pipeline Success - {{ ds }}</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">html_content</span><span class="o">=</span><span class="sh">'</span><span class="s">Pipeline completed successfully. Best AUC: {{ ti.xcom_pull(task_ids=</span><span class="se">\'</span><span class="s">evaluate_and_select_best</span><span class="se">\'</span><span class="s">, key=</span><span class="se">\'</span><span class="s">best_auc</span><span class="se">\'</span><span class="s">) }}</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">dag</span><span class="o">=</span><span class="n">dag</span>
-<span class="p">)</span>
+<p>context[‘ti’].xcom_push(key=’model_paths’, value=models.keys())</p>
 
-<span class="c1"># Dependencies
-</span><span class="n">quality_check</span> <span class="o">&gt;&gt;</span> <span class="n">feature_eng</span> <span class="o">&gt;&gt;</span> <span class="n">train</span> <span class="o">&gt;&gt;</span> <span class="n">evaluate</span> <span class="o">&gt;&gt;</span> <span class="n">deploy</span> <span class="o">&gt;&gt;</span> <span class="n">success_email</span>
-</code></pre></div></div>
+<p>def evaluate_and_select_best(**context):
+ “"”Evaluate models and select the best”””
+ date = context[‘ds’]
+ model_types = context[‘ti’].xcom_pull(task_ids=’train_models’, key=’model_paths’)</p>
+
+<p>best_model = None
+ best_auc = 0</p>
+
+<p>for model_type in model_types:
+ model = load_model(f’/models/{model_type}_{date}.pkl’)
+ auc = evaluate(model, test_data)</p>
+
+<p>if auc &gt; best_auc:
+ best_auc = auc
+ best_model = model_type</p>
+
+<p># Quality gate
+ if best_auc &lt; 0.75:
+ raise ValueError(f”Best model AUC ({best_auc}) below threshold!”)</p>
+
+<p>context[‘ti’].xcom_push(key=’best_model’, value=best_model)
+ context[‘ti’].xcom_push(key=’best_auc’, value=best_auc)</p>
+
+<p>def deploy_best_model(**context):
+ “"”Deploy the best model to production”””
+ best_model = context[‘ti’].xcom_pull(task_ids=’evaluate_and_select_best’, key=’best_model’)
+ date = context[‘ds’]</p>
+
+<p>model_path = f’/models/{best_model}_{date}.pkl’
+ deploy_to_production(model_path)</p>
+
+<p>print(f”Deployed {best_model} to production!”)</p>
+
+<h1 id="define-tasks">Define tasks</h1>
+<p>quality_check = Python Operator(task_id=’data_quality_check’, python_callable=data_quality_check, dag=dag)
+feature_eng = PythonOperator(task_id=’extract_features’, python_callable=extract_features, dag=dag)
+train = PythonOperator(task_id=’train_models’, python_callable=train_models, dag=dag)
+evaluate = PythonOperator(task_id=’evaluate_and_select_best’, python_callable=evaluate_and_select_best, dag=dag)
+deploy = PythonOperator(task_id=’deploy_best_model’, python_callable=deploy_best_model, dag=dag)</p>
+
+<p>success_email = EmailOperator(
+ task_id=’success_email’,
+ to=’ml-team@company.com’,
+ subject=’ML Pipeline Success - {{ ds }}’,
+ html_content=’Pipeline completed successfully. Best AUC: {{ ti.xcom_pull(task_ids='evaluate_and_select_best', key='best_auc') }}’,
+ dag=dag
+)</p>
+
+<h1 id="dependencies">Dependencies</h1>
+<p>quality_check » feature_eng » train » evaluate » deploy » success_email
+``</p>
 
 <h2 id="top-interview-questions">Top Interview Questions</h2>
 

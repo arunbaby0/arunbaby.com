@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Course Schedule (Topological Sort)">
     <meta itemprop="description" content="“You can’t build the roof before you pour the foundation.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -328,17 +328,11 @@ Simple: Take the one with <strong>zero prerequisites</strong>.</p>
   <li><strong>Initialize Queue</strong>: Add all nodes with <code class="language-plaintext highlighter-rouge">Indegree == 0</code> to Queue.</li>
   <li><strong>Process</strong>:
     <ul>
-      <li>While Queue is not empty:
-        <ul>
-          <li>Pop <code class="language-plaintext highlighter-rouge">u</code>. Add to list of <code class="language-plaintext highlighter-rouge">taken_courses</code>.</li>
-          <li>For each child <code class="language-plaintext highlighter-rouge">v</code> of <code class="language-plaintext highlighter-rouge">u</code>:
-            <ul>
-              <li><code class="language-plaintext highlighter-rouge">Indegree[v]--</code> (We satisfied one prerequisite).</li>
-              <li>If <code class="language-plaintext highlighter-rouge">Indegree[v] == 0</code>, push <code class="language-plaintext highlighter-rouge">v</code> to Queue.</li>
-            </ul>
-          </li>
-        </ul>
-      </li>
+      <li>While Queue is not empty:</li>
+      <li>Pop <code class="language-plaintext highlighter-rouge">u</code>. Add to list of <code class="language-plaintext highlighter-rouge">taken_courses</code>.</li>
+      <li>For each child <code class="language-plaintext highlighter-rouge">v</code> of <code class="language-plaintext highlighter-rouge">u</code>:</li>
+      <li><code class="language-plaintext highlighter-rouge">Indegree[v]--</code> (We satisfied one prerequisite).</li>
+      <li>If <code class="language-plaintext highlighter-rouge">Indegree[v] == 0</code>, push <code class="language-plaintext highlighter-rouge">v</code> to Queue.</li>
     </ul>
   </li>
   <li><strong>Check</strong>: If <code class="language-plaintext highlighter-rouge">count(taken_courses) == numCourses</code>, return True. Else, False (Cycle detected, some nodes never reached Indegree 0).</li>
@@ -348,46 +342,47 @@ Simple: Take the one with <strong>zero prerequisites</strong>.</p>
 
 <h2 id="5-implementation-kahns-algorithm">5. Implementation: Kahn’s Algorithm</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">deque</span>
+<p>``python
+from collections import deque</p>
 
-<span class="k">class</span> <span class="nc">Solution</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">canFinish</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">numCourses</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">prerequisites</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="c1"># 1. Initialize Graph
-</span>        <span class="n">adj</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">numCourses</span><span class="p">)]</span>
-        <span class="n">indegree</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">numCourses</span>
-        
-        <span class="c1"># 2. Build Graph (Time: O(E), Space: O(E))
-</span>        <span class="k">for</span> <span class="n">dest</span><span class="p">,</span> <span class="n">src</span> <span class="ow">in</span> <span class="n">prerequisites</span><span class="p">:</span>
-            <span class="c1"># src -&gt; dest (take src first)
-</span>            <span class="n">adj</span><span class="p">[</span><span class="n">src</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
-            <span class="n">indegree</span><span class="p">[</span><span class="n">dest</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-            
-        <span class="c1"># 3. Add seeds (Time: O(V))
-</span>        <span class="n">queue</span> <span class="o">=</span> <span class="nf">deque</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">numCourses</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">indegree</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">queue</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-                
-        <span class="n">processed_count</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="c1"># 4. BFS Traversal (Time: O(V + E))
-</span>        <span class="k">while</span> <span class="n">queue</span><span class="p">:</span>
-            <span class="n">node</span> <span class="o">=</span> <span class="n">queue</span><span class="p">.</span><span class="nf">popleft</span><span class="p">()</span>
-            <span class="n">processed_count</span> <span class="o">+=</span> <span class="mi">1</span>
-            
-            <span class="k">for</span> <span class="n">neighbor</span> <span class="ow">in</span> <span class="n">adj</span><span class="p">[</span><span class="n">node</span><span class="p">]:</span>
-                <span class="n">indegree</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
-                <span class="k">if</span> <span class="n">indegree</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">queue</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">neighbor</span><span class="p">)</span>
-                    
-        <span class="c1"># 5. Final check
-</span>        <span class="k">return</span> <span class="n">processed_count</span> <span class="o">==</span> <span class="n">numCourses</span>
+<p>class Solution:
+ def canFinish(self, numCourses: int, prerequisites: list[list[int]]) -&gt; bool:
+ # 1. Initialize Graph
+ adj = [[] for _ in range(numCourses)]
+ indegree = [0] * numCourses</p>
 
-<span class="c1"># Example Usage
-</span><span class="n">sol</span> <span class="o">=</span> <span class="nc">Solution</span><span class="p">()</span>
-<span class="nf">print</span><span class="p">(</span><span class="n">sol</span><span class="p">.</span><span class="nf">canFinish</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]]))</span> <span class="c1"># True
-</span><span class="nf">print</span><span class="p">(</span><span class="n">sol</span><span class="p">.</span><span class="nf">canFinish</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]]))</span> <span class="c1"># False
-</span></code></pre></div></div>
+<p># 2. Build Graph (Time: O(E), Space: O(E))
+ for dest, src in prerequisites:
+ # src -&gt; dest (take src first)
+ adj[src].append(dest)
+ indegree[dest] += 1</p>
+
+<p># 3. Add seeds (Time: O(V))
+ queue = deque()
+ for i in range(numCourses):
+ if indegree[i] == 0:
+ queue.append(i)</p>
+
+<p>processed_count = 0</p>
+
+<p># 4. BFS Traversal (Time: O(V + E))
+ while queue:
+ node = queue.popleft()
+ processed_count += 1</p>
+
+<p>for neighbor in adj[node]:
+ indegree[neighbor] -= 1
+ if indegree[neighbor] == 0:
+ queue.append(neighbor)</p>
+
+<p># 5. Final check
+ return processed_count == numCourses</p>
+
+<h1 id="example-usage">Example Usage</h1>
+<p>sol = Solution()
+print(sol.canFinish(2, [[1,0]])) # True
+print(sol.canFinish(2, [[1,0], [0,1]])) # False
+``</p>
 
 <hr />
 
@@ -416,18 +411,12 @@ Simple: Take the one with <strong>zero prerequisites</strong>.</p>
 <h2 id="7-complexity-analysis">7. Complexity Analysis</h2>
 
 <ul>
-  <li><strong>Time</strong>: $O(V + E)$.
-    <ul>
-      <li>$V$: Initializing lists.</li>
-      <li>$E$: Building graph edges.</li>
-      <li>BFS loop visits every node ($V$) and every edge ($E$) exactly once.</li>
-    </ul>
-  </li>
-  <li><strong>Space</strong>: $O(V + E)$.
-    <ul>
-      <li>To store the Adjacency List.</li>
-    </ul>
-  </li>
+  <li><strong>Time</strong>: O(V + E).</li>
+  <li><code class="language-plaintext highlighter-rouge">V</code>: Initializing lists.</li>
+  <li><code class="language-plaintext highlighter-rouge">E</code>: Building graph edges.</li>
+  <li>BFS loop visits every node (<code class="language-plaintext highlighter-rouge">V</code>) and every edge (<code class="language-plaintext highlighter-rouge">E</code>) exactly once.</li>
+  <li><strong>Space</strong>: O(V + E).</li>
+  <li>To store the Adjacency List.</li>
 </ul>
 
 <p>This is asymptotically optimal.</p>
@@ -439,9 +428,9 @@ Simple: Take the one with <strong>zero prerequisites</strong>.</p>
 <p>This algorithm is the backbone of <strong>Build Systems</strong> (Make, Maven, Bazel).</p>
 <ul>
   <li><strong>Parallel Dependencies</strong>:
-The Queue length represents the level of <strong>parallelism</strong>.
-If Queue has 5 items, it means 5 tasks are ready to run <em>simultaneously</em> on 5 worker threads.
-This is how <code class="language-plaintext highlighter-rouge">make -j8</code> works!</li>
+ The Queue length represents the level of <strong>parallelism</strong>.
+ If Queue has 5 items, it means 5 tasks are ready to run <em>simultaneously</em> on 5 worker threads.
+ This is how <code class="language-plaintext highlighter-rouge">make -j8</code> works!</li>
 </ul>
 
 <hr />
@@ -450,13 +439,10 @@ This is how <code class="language-plaintext highlighter-rouge">make -j8</code> w
 
 <p>This directly maps to <strong>DAG Pipeline Orchestration</strong> (ML System Design).</p>
 <ul>
-  <li><strong>Airflow / Kubeflow</strong>: These tools literally execute Kahn’s Algorithm.
-    <ul>
-      <li>Nodes = ETL Tasks (Load Data, Train Model).</li>
-      <li>Edges = Data dependencies.</li>
-      <li>The Scheduler puts tasks with <code class="language-plaintext highlighter-rouge">Indegree 0</code> into the worker pool.</li>
-    </ul>
-  </li>
+  <li><strong>Airflow / Kubeflow</strong>: These tools literally execute Kahn’s Algorithm.</li>
+  <li>Nodes = ETL Tasks (Load Data, Train Model).</li>
+  <li>Edges = Data dependencies.</li>
+  <li>The Scheduler puts tasks with <code class="language-plaintext highlighter-rouge">Indegree 0</code> into the worker pool.</li>
 </ul>
 
 <hr />

@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Cost-efficient Speech Systems">
     <meta itemprop="description" content="Strategies for building profitable speech recognition systems by optimizing the entire pipeline from signal processing to hardware.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -301,27 +301,25 @@ Using 44.1kHz (CD quality) for speech is wasteful. It triples your data size (st
 
 <p>Before the model even sees the data, we process it.</p>
 <ul>
-  <li><strong>Feature Extraction:</strong> We convert raw waves into Spectrograms or MFCCs (Mel-Frequency Cepstral Coefficients).
-    <ul>
-      <li><strong>Math:</strong> This involves Fourier Transforms (FFT). While fast (<code class="language-plaintext highlighter-rouge">O(N log N)</code>), doing this for thousands of streams adds up.</li>
-      <li><strong>Optimization:</strong> Use GPU-accelerated feature extraction (like <code class="language-plaintext highlighter-rouge">torchaudio</code> or <code class="language-plaintext highlighter-rouge">Kaldi</code> on GPU) instead of CPU-based <code class="language-plaintext highlighter-rouge">librosa</code>.</li>
-    </ul>
-  </li>
+  <li><strong>Feature Extraction:</strong> We convert raw waves into Spectrograms or MFCCs (Mel-Frequency Cepstral Coefficients).</li>
+  <li><strong>Math:</strong> This involves Fourier Transforms (FFT). While fast (O(N log N)), doing this for thousands of streams adds up.</li>
+  <li><strong>Optimization:</strong> Use GPU-accelerated feature extraction (like <code class="language-plaintext highlighter-rouge">torchaudio</code> or <code class="language-plaintext highlighter-rouge">Kaldi</code> on GPU) instead of CPU-based <code class="language-plaintext highlighter-rouge">librosa</code>.</li>
 </ul>
 
 <h2 id="high-level-architecture-the-efficient-pipeline">High-Level Architecture: The Efficient Pipeline</h2>
 
-<pre><code class="language-ascii">+-----------+    +-------------+    +-------------+    +-------------+
-| Raw Audio | -&gt; | VAD Filter  | -&gt; | Feature Ext | -&gt; |  ASR Model  |
-+-----------+    +-------------+    +-------------+    +-------------+
-                      |                    |                  |
-                 (Silence?)           (MFCCs/Spec)       (Transducer)
-                      |                    |                  |
-                      v                    v                  v
-                 +---------+        +-------------+    +-------------+
-                 | Discard |        | GPU/DSP Acc |    | Text Output |
-                 +---------+        +-------------+    +-------------+
-</code></pre>
+<p><code class="language-plaintext highlighter-rouge">ascii
++-----------+ +-------------+ +-------------+ +-------------+
+| Raw Audio | -&gt; | VAD Filter | -&gt; | Feature Ext | -&gt; | ASR Model |
++-----------+ +-------------+ +-------------+ +-------------+
+ | | |
+ (Silence?) (MFCCs/Spec) (Transducer)
+ | | |
+ v v v
+ +---------+ +-------------+ +-------------+
+ | Discard | | GPU/DSP Acc | | Text Output |
+ +---------+ +-------------+ +-------------+
+</code></p>
 
 <h2 id="strategy-1-the-gatekeeper-voice-activity-detection">Strategy 1: The Gatekeeper (Voice Activity Detection)</h2>
 
@@ -442,7 +440,7 @@ A call center records 10,000 hours of calls per day. They need to transcribe the
 <ul>
   <li><strong>Requirement:</strong> Transcription must be available within 1 hour of the call ending.</li>
   <li><strong>Current State:</strong> Using a cloud API (Google/AWS) at $0.024 per minute.</li>
-  <li><strong>Daily Cost:</strong> 10,000 hours * 60 mins * $0.024 = <strong>$14,400 / day</strong> ($432k/month). Ouch.</li>
+  <li><strong>Daily Cost:</strong> 10,000 hours * 60 mins * <code class="language-plaintext highlighter-rouge">0.024 = **</code>14,400 / day** ($432k/month). Ouch.</li>
 </ul>
 
 <p><strong>The Optimization Plan:</strong></p>
@@ -467,7 +465,7 @@ Since the requirement is “within 1 hour” (not real-time), you can batch.</p>
   <li>Total processing time needed: 6,000 hours.</li>
   <li>With 40x speedup, you need 150 GPU-hours.</li>
   <li>Cost of T4 Spot Instance: $0.20/hr.</li>
-  <li><strong>Daily Compute Cost:</strong> 150 * $0.20 = <strong>$30</strong>.</li>
+  <li><strong>Daily Compute Cost:</strong> 150 * <code class="language-plaintext highlighter-rouge">0.20 = **</code>30**.</li>
 </ul>
 
 <p><strong>Step 4: Storage &amp; Overhead</strong>
@@ -483,42 +481,43 @@ Add storage, data transfer, and management node costs. Let’s say <strong>$100/
 
 <p>Here is a Python snippet showing how to use <code class="language-plaintext highlighter-rouge">webrtcvad</code> to filter audio before sending it to an ASR system.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">webrtcvad</span>
-<span class="kn">import</span> <span class="n">collections</span>
-<span class="kn">import</span> <span class="n">sys</span>
+<p>``python
+import webrtcvad
+import collections
+import sys</p>
 
-<span class="k">class</span> <span class="nc">VADFilter</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">aggressiveness</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="n">webrtcvad</span><span class="p">.</span><span class="nc">Vad</span><span class="p">(</span><span class="n">aggressiveness</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="mi">16000</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">frame_duration_ms</span> <span class="o">=</span> <span class="mi">30</span> <span class="c1"># Must be 10, 20, or 30
-</span>
-    <span class="k">def</span> <span class="nf">read_frames</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_bytes</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Generator that yields 30ms frames</span><span class="sh">"""</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">frame_duration_ms</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="c1"># 2 bytes per sample
-</span>        <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">while</span> <span class="n">offset</span> <span class="o">+</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nf">len</span><span class="p">(</span><span class="n">audio_bytes</span><span class="p">):</span>
-            <span class="k">yield</span> <span class="n">audio_bytes</span><span class="p">[</span><span class="n">offset</span><span class="p">:</span><span class="n">offset</span> <span class="o">+</span> <span class="n">n</span><span class="p">]</span>
-            <span class="n">offset</span> <span class="o">+=</span> <span class="n">n</span>
+<p>class VADFilter:
+ def <strong>init</strong>(self, aggressiveness=3):
+ self.vad = webrtcvad.Vad(aggressiveness)
+ self.sample_rate = 16000
+ self.frame_duration_ms = 30 # Must be 10, 20, or 30</p>
 
-    <span class="k">def</span> <span class="nf">filter_audio</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_bytes</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Returns only the speech segments</span><span class="sh">"""</span>
-        <span class="n">frames</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">read_frames</span><span class="p">(</span><span class="n">audio_bytes</span><span class="p">)</span>
-        <span class="n">speech_frames</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">:</span>
-            <span class="n">is_speech</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">is_speech</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">sample_rate</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">is_speech</span><span class="p">:</span>
-                <span class="n">speech_frames</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="sa">b</span><span class="sh">''</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">speech_frames</span><span class="p">)</span>
+<p>def read_frames(self, audio_bytes):
+ “"”Generator that yields 30ms frames”””
+ n = int(self.sample_rate * (self.frame_duration_ms / 1000.0) * 2) # 2 bytes per sample
+ offset = 0
+ while offset + n &lt; len(audio_bytes):
+ yield audio_bytes[offset:offset + n]
+ offset += n</p>
 
-<span class="c1"># Usage
-# raw_audio = load_wav("call_center_recording.wav")
-# vad = VADFilter()
-# clean_audio = vad.filter_audio(raw_audio)
-# asr_model.transcribe(clean_audio)
-</span></code></pre></div></div>
+<p>def filter_audio(self, audio_bytes):
+ “"”Returns only the speech segments”””
+ frames = self.read_frames(audio_bytes)
+ speech_frames = []</p>
+
+<p>for frame in frames:
+ is_speech = self.vad.is_speech(frame, self.sample_rate)
+ if is_speech:
+ speech_frames.append(frame)</p>
+
+<p>return b’‘.join(speech_frames)</p>
+
+<h1 id="usage">Usage</h1>
+<h1 id="raw_audio--load_wavcall_center_recordingwav">raw_audio = load_wav(“call_center_recording.wav”)</h1>
+<h1 id="vad--vadfilter">vad = VADFilter()</h1>
+<h1 id="clean_audio--vadfilter_audioraw_audio">clean_audio = vad.filter_audio(raw_audio)</h1>
+<h1 id="asr_modeltranscribeclean_audio">asr_model.transcribe(clean_audio)</h1>
+<p>``</p>
 
 <h2 id="tutorial-deploying-speech-on-raspberry-pi">Tutorial: Deploying Speech on Raspberry Pi</h2>
 
@@ -530,32 +529,35 @@ Add storage, data transfer, and management node costs. Let’s say <strong>$100/
   <li>USB Microphone</li>
 </ul>
 
-<p><strong>Step 1: Install Dependencies</strong></p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>apt-get update
-<span class="nb">sudo </span>apt-get <span class="nb">install </span>python3-pip libatlas-base-dev
-pip3 <span class="nb">install </span>tensorflow-aarch64
-</code></pre></div></div>
+<p><strong>Step 1: Install Dependencies</strong>
+<code class="language-plaintext highlighter-rouge">bash
+sudo apt-get update
+sudo apt-get install python3-pip libatlas-base-dev
+pip3 install tensorflow-aarch64
+</code></p>
 
 <p><strong>Step 2: Download a TFLite Model</strong>
-We will use a pre-trained model for “Yes/No”.</p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>wget https://storage.googleapis.com/download.tensorflow.org/models/tflite/conv_actions_tflite.zip
+We will use a pre-trained model for “Yes/No”.
+<code class="language-plaintext highlighter-rouge">bash
+wget https://storage.googleapis.com/download.tensorflow.org/models/tflite/conv_actions_tflite.zip
 unzip conv_actions_tflite.zip
-</code></pre></div></div>
+</code></p>
 
-<p><strong>Step 3: Run Inference Script</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">tensorflow</span> <span class="k">as</span> <span class="n">tf</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p><strong>Step 3: Run Inference Script</strong>
+``python
+import tensorflow as tf
+import numpy as np</p>
 
-<span class="c1"># Load TFLite model and allocate tensors.
-</span><span class="n">interpreter</span> <span class="o">=</span> <span class="n">tf</span><span class="p">.</span><span class="n">lite</span><span class="p">.</span><span class="nc">Interpreter</span><span class="p">(</span><span class="n">model_path</span><span class="o">=</span><span class="sh">"</span><span class="s">conv_actions_frozen.tflite</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">interpreter</span><span class="p">.</span><span class="nf">allocate_tensors</span><span class="p">()</span>
+<h1 id="load-tflite-model-and-allocate-tensors">Load TFLite model and allocate tensors.</h1>
+<p>interpreter = tf.lite.Interpreter(model_path=”conv_actions_frozen.tflite”)
+interpreter.allocate_tensors()</p>
 
-<span class="c1"># Get input and output tensors.
-</span><span class="n">input_details</span> <span class="o">=</span> <span class="n">interpreter</span><span class="p">.</span><span class="nf">get_input_details</span><span class="p">()</span>
-<span class="n">output_details</span> <span class="o">=</span> <span class="n">interpreter</span><span class="p">.</span><span class="nf">get_output_details</span><span class="p">()</span>
+<h1 id="get-input-and-output-tensors">Get input and output tensors.</h1>
+<p>input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()</p>
 
-<span class="c1"># ... (Audio capture code using PyAudio) ...
-</span></code></pre></div></div>
+<h1 id="-audio-capture-code-using-pyaudio-">… (Audio capture code using PyAudio) …</h1>
+<p>``</p>
 
 <p><strong>Result:</strong> You now have a voice-controlled switch running locally for $35 one-time cost. No cloud bills!</p>
 
@@ -585,41 +587,42 @@ unzip conv_actions_tflite.zip
 </ul>
 
 <p><strong>Why it matters for cost:</strong>
-Calculating this naively is <code class="language-plaintext highlighter-rouge">O(N^2)</code>. The Fast Fourier Transform (FFT) algorithm (Cooley-Tukey) does it in <code class="language-plaintext highlighter-rouge">O(N log N)</code>. Without FFT, real-time speech recognition would be impossible on standard hardware.</p>
+Calculating this naively is O(N^2). The Fast Fourier Transform (FFT) algorithm (Cooley-Tukey) does it in O(N log N). Without FFT, real-time speech recognition would be impossible on standard hardware.</p>
 
 <h2 id="appendix-b-python-code-for-simple-asr">Appendix B: Python Code for Simple ASR</h2>
 
 <p>Here is a conceptual implementation of a simple “Template Matching” ASR system using Dynamic Time Warping (DTW). This was the state-of-the-art in the 1980s!</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
-<span class="kn">from</span> <span class="n">scipy.spatial.distance</span> <span class="kn">import</span> <span class="n">cdist</span>
+<p>``python
+import numpy as np
+from scipy.spatial.distance import cdist</p>
 
-<span class="k">def</span> <span class="nf">dtw</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Computes Dynamic Time Warping distance between two sequences.
-    This is essentially the </span><span class="sh">'</span><span class="s">Minimum Path Sum</span><span class="sh">'</span><span class="s"> problem!
-    </span><span class="sh">"""</span>
-    <span class="n">n</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="nf">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
-    <span class="n">dtw_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">zeros</span><span class="p">((</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">m</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
-    <span class="n">dtw_matrix</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">inf</span>
-    <span class="n">dtw_matrix</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">inf</span>
-    
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">m</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
-            <span class="n">cost</span> <span class="o">=</span> <span class="nf">abs</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-            <span class="c1"># Take min of (match, insertion, deletion)
-</span>            <span class="n">dtw_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">cost</span> <span class="o">+</span> <span class="nf">min</span><span class="p">(</span><span class="n">dtw_matrix</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">],</span>    <span class="c1"># Insertion
-</span>                                          <span class="n">dtw_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>    <span class="c1"># Deletion
-</span>                                          <span class="n">dtw_matrix</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># Match
-</span>                                          
-    <span class="k">return</span> <span class="n">dtw_matrix</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">]</span>
+<p>def dtw(x, y):
+ “””
+ Computes Dynamic Time Warping distance between two sequences.
+ This is essentially the ‘Minimum Path Sum’ problem!
+ “””
+ n, m = len(x), len(y)
+ dtw_matrix = np.zeros((n+1, m+1))
+ dtw_matrix[0, 1:] = np.inf
+ dtw_matrix[1:, 0] = np.inf</p>
 
-<span class="c1"># Usage
-# template = load_features("hello_template.wav")
-# input_audio = load_features("user_input.wav")
-# distance = dtw(template, input_audio)
-# if distance &lt; threshold: print("Detected 'Hello'")
-</span></code></pre></div></div>
+<p>for i in range(1, n+1):
+ for j in range(1, m+1):
+ cost = abs(x[i-1] - y[j-1])
+ # Take min of (match, insertion, deletion)
+ dtw_matrix[i, j] = cost + min(dtw_matrix[i-1, j], # Insertion
+ dtw_matrix[i, j-1], # Deletion
+ dtw_matrix[i-1, j-1]) # Match</p>
+
+<p>return dtw_matrix[n, m]</p>
+
+<h1 id="usage-1">Usage</h1>
+<h1 id="template--load_featureshello_templatewav">template = load_features(“hello_template.wav”)</h1>
+<h1 id="input_audio--load_featuresuser_inputwav">input_audio = load_features(“user_input.wav”)</h1>
+<h1 id="distance--dtwtemplate-input_audio">distance = dtw(template, input_audio)</h1>
+<h1 id="if-distance--threshold-printdetected-hello">if distance &lt; threshold: print(“Detected ‘Hello’”)</h1>
+<p>``</p>
 
 <h2 id="conclusion">Conclusion</h2>
 

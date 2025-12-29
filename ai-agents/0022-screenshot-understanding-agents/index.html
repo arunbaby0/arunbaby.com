@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Screenshot Understanding Agents">
     <meta itemprop="description" content="“Giving agents the eyes to read the screen as a human does.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -352,16 +352,17 @@ Imagine you have a 1000x1000 screenshot.</p>
   <li><strong>Final Input:</strong> Concatenate all of them. The LLM now has 576 tokens for the “Big Picture” and 2304 tokens for the “Details”.</li>
 </ol>
 
-<p><strong>Implementation Pseudocode:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">process_high_res</span><span class="p">(</span><span class="n">image</span><span class="p">):</span>
- <span class="n">thumbnail</span> <span class="o">=</span> <span class="nf">resize</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="p">(</span><span class="mi">336</span><span class="p">,</span> <span class="mi">336</span><span class="p">))</span>
- <span class="n">tiles</span> <span class="o">=</span> <span class="nf">split_into_grid</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
- <span class="n">encoded_tiles</span> <span class="o">=</span> <span class="p">[</span><span class="n">clip</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tiles</span><span class="p">]</span>
+<p><strong>Implementation Pseudocode:</strong>
+``python
+def process_high_res(image):
+ thumbnail = resize(image, (336, 336))
+ tiles = split_into_grid(image, grid=(2, 2))
+ encoded_tiles = [clip.encode(t) for t in tiles]</p>
 
- <span class="c1"># Send all to LLM
-</span> <span class="n">prompt</span> <span class="o">=</span> <span class="sh">"</span><span class="s">Look at these views: [Global] </span><span class="sh">"</span> <span class="o">+</span> <span class="n">thumbnail</span> <span class="o">+</span> <span class="sh">"</span><span class="s"> [Details] </span><span class="sh">"</span> <span class="o">+</span> <span class="n">encoded_tiles</span>
- <span class="k">return</span> <span class="n">llm</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
-</code></pre></div></div>
+<p># Send all to LLM
+ prompt = “Look at these views: [Global] “ + thumbnail + “ [Details] “ + encoded_tiles
+ return llm.generate(prompt)
+``</p>
 
 <p><strong>The Token Explosion Penalty:</strong>
 Junior Engineers often wonder why their API bill is so high when using vision.</p>
@@ -380,7 +381,7 @@ Junior Engineers often wonder why their API bill is so high when using vision.</
 <h3 id="41-ocr-free-reading-document-intelligence">4.1 OCR-Free Reading (Document Intelligence)</h3>
 <p>Traditional OCR (Tesseract) gives you a “Bag of Words”. It loses structure.</p>
 <ul>
-  <li><em>Tesseract Output:</em> “Invoice Date Total 12/01/2023 $500”. (Is $500 the total or a line item? Is the date the invoice date or due date?).</li>
+  <li><em>Tesseract Output:</em> “Invoice Date Total 12/01/2023 <code class="language-plaintext highlighter-rouge">500". (Is </code>500 the total or a line item? Is the date the invoice date or due date?).</li>
   <li><em>MLLM Output:</em> “This is a table. Row 1 matches column ‘Total’ with ‘$500’.”</li>
 </ul>
 
@@ -434,7 +435,7 @@ It often fails. It might say <code class="language-plaintext highlighter-rouge">
   </li>
   <li><strong>OCR Hallucination (Character Error):</strong> Misreading blurry text or confusing similar glyphs.
     <ul>
-      <li>Common errors: Reading <code class="language-plaintext highlighter-rouge">0</code> as <code class="language-plaintext highlighter-rouge">O</code>, <code class="language-plaintext highlighter-rouge">l</code> as <code class="language-plaintext highlighter-rouge">1</code>, or skipping decimal points (reading <code class="language-plaintext highlighter-rouge">$50.00</code> as <code class="language-plaintext highlighter-rouge">$5000</code>).</li>
+      <li>Common errors: Reading <code class="language-plaintext highlighter-rouge">0</code> as <code class="language-plaintext highlighter-rouge">O</code>, <code class="language-plaintext highlighter-rouge">l</code> as <code class="language-plaintext highlighter-rouge">1</code>, or skipping decimal points (reading <code class="language-plaintext highlighter-rouge">50.00</code> as <code class="language-plaintext highlighter-rouge">5000</code>).</li>
       <li><em>Defense:</em> <strong>Self-Correction</strong>. Loop the vision call: “I see you extracted ‘$5000’. Zoom into the price area and check if there’s a decimal point you missed.”</li>
     </ul>
   </li>
@@ -528,7 +529,7 @@ It often fails. It might say <code class="language-plaintext highlighter-rouge">
   <li><strong>Comparison:</strong> The agent compares this to the Excel data: <code class="language-plaintext highlighter-rouge">Starbucks | $12.50 | 2023-11-20</code>.</li>
   <li><strong>Discrepancy Check:</strong> The agent notices a $0.05 difference.</li>
   <li><strong>Evidence Extraction:</strong> It uses <strong>Visual Grounding</strong> (Grounding DINO) to crop the “Total” area of the receipt.</li>
-  <li><strong>Self-Correction:</strong> It sends the crop back to the MLLM: “Look closely at this specific crop. Is the number $12.45 or $12.50?”</li>
+  <li><strong>Self-Correction:</strong> It sends the crop back to the MLLM: “Look closely at this specific crop. Is the number <code class="language-plaintext highlighter-rouge">12.45 or </code>12.50?”</li>
   <li><strong>Final Action:</strong> The MLLM confirms $12.45. The agent flags the row for human review.</li>
 </ol>
 

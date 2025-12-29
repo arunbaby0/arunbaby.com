@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Adaptive Speech Models">
     <meta itemprop="description" content="Design adaptive speech models that adjust in real-time to speakers, accents, noise, and domains—using the same greedy adaptation strategy as Jump Game and online learning systems.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -386,43 +386,44 @@
 
 <h2 id="high-level-architecture">High-Level Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────────┐
-│                    Adaptive Speech System                        │
-└─────────────────────────────────────────────────────────────────┘
+<p>``
+┌─────────────────────────────────────────────────────────────────┐
+│ Adaptive Speech System │
+└─────────────────────────────────────────────────────────────────┘</p>
 
-                         User Audio Input
-                                │
-                    ┌───────────▼───────────┐
-                    │   Feature Extraction  │
-                    │   - Log-mel           │
-                    │   - Adaptive norm     │
-                    └───────────┬───────────┘
-                                │
-        ┌───────────────────────┼───────────────────────┐
-        │                       │                       │
-┌───────▼────────┐     ┌────────▼────────┐     ┌──────▼──────┐
-│  Baseline      │     │  Adapted        │     │  Adaptation │
-│  Acoustic      │     │  Acoustic       │     │  Controller │
-│  Model         │     │  Model          │     │             │
-│                │     │                 │     │ - Strategy  │
-│ (Static)       │     │ (User-specific) │     │ - Metrics   │
-└───────┬────────┘     └────────┬────────┘     │ - Rollback  │
-        │                       │               └──────┬──────┘
-        └───────────┬───────────┘                      │
-                    │                                  │
-            ┌───────▼────────┐              ┌──────────▼──────┐
-            │    Decoder     │◄─────────────│  User Feedback  │
-            │                │              │                 │
-            │ - Beam search  │              │ - Corrections   │
-            │ - LM fusion    │              │ - Implicit      │
-            └───────┬────────┘              │   signals       │
-                    │                       └─────────────────┘
-                    │
-            ┌───────▼────────┐
-            │   Hypothesis   │
-            │   (Text)       │
-            └────────────────┘
-</code></pre></div></div>
+<p>User Audio Input
+ │
+ ┌───────────▼───────────┐
+ │ Feature Extraction │
+ │ - Log-mel │
+ │ - Adaptive norm │
+ └───────────┬───────────┘
+ │
+ ┌───────────────────────┼───────────────────────┐
+ │ │ │
+┌───────▼────────┐ ┌────────▼────────┐ ┌──────▼──────┐
+│ Baseline │ │ Adapted │ │ Adaptation │
+│ Acoustic │ │ Acoustic │ │ Controller │
+│ Model │ │ Model │ │ │
+│ │ │ │ │ - Strategy │
+│ (Static) │ │ (User-specific) │ │ - Metrics │
+└───────┬────────┘ └────────┬────────┘ │ - Rollback │
+ │ │ └──────┬──────┘
+ └───────────┬───────────┘ │
+ │ │
+ ┌───────▼────────┐ ┌──────────▼──────┐
+ │ Decoder │◄─────────────│ User Feedback │
+ │ │ │ │
+ │ - Beam search │ │ - Corrections │
+ │ - LM fusion │ │ - Implicit │
+ └───────┬────────┘ │ signals │
+ │ └─────────────────┘
+ │
+ ┌───────▼────────┐
+ │ Hypothesis │
+ │ (Text) │
+ └────────────────┘
+``</p>
 
 <h3 id="key-components">Key Components</h3>
 
@@ -442,427 +443,441 @@
 
 <p>Classic speaker adaptation for GMM-HMM models (still used in hybrid systems):</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+import numpy as np</p>
 
-<span class="k">class</span> <span class="nc">MLLRAdapter</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    MLLR speaker adaptation.
-    
-    Learns a linear transform of acoustic features to match user</span><span class="sh">'</span><span class="s">s voice.
-    Fast, effective for limited adaptation data.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">feature_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="c1"># Affine transform: y = Ax + b
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">eye</span><span class="p">(</span><span class="n">feature_dim</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">feature_dim</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">adaptation_data</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">def</span> <span class="nf">add_sample</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">phoneme_posterior</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Add adaptation sample (features + posterior from baseline model).
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">adaptation_data</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">features</span><span class="p">,</span> <span class="n">phoneme_posterior</span><span class="p">))</span>
-    
-    <span class="k">def</span> <span class="nf">estimate_transform</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Estimate MLLR transform from adaptation data.
-        
-        Greedy: find transform that best fits user</span><span class="sh">'</span><span class="s">s voice.
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">adaptation_data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
-            <span class="k">return</span>  <span class="c1"># Need minimum data
-</span>        
-        <span class="c1"># Collect statistics (simplified)
-</span>        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">adaptation_data</span><span class="p">])</span>
-        
-        <span class="c1"># Estimate mean shift (simplified MLLR)
-</span>        <span class="n">baseline_mean</span> <span class="o">=</span> <span class="n">X</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">b</span> <span class="o">=</span> <span class="o">-</span><span class="n">baseline_mean</span>  <span class="c1"># Shift to center on user
-</span>        
-        <span class="c1"># In full MLLR, we'd estimate A using EM
-</span>        <span class="c1"># Here we use simple mean normalization
-</span>    
-    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Apply learned transform to new features.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">dot</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">A</span><span class="p">,</span> <span class="n">features</span><span class="p">)</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">b</span>
+<p>class MLLRAdapter:
+ “””
+ MLLR speaker adaptation.</p>
 
+<p>Learns a linear transform of acoustic features to match user’s voice.
+ Fast, effective for limited adaptation data.
+ “””</p>
 
-<span class="c1"># Usage
-</span><span class="n">adapter</span> <span class="o">=</span> <span class="nc">MLLRAdapter</span><span class="p">(</span><span class="n">feature_dim</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
+<p>def <strong>init</strong>(self, feature_dim: int):
+ # Affine transform: y = Ax + b
+ self.A = np.eye(feature_dim)
+ self.b = np.zeros(feature_dim)</p>
 
-<span class="c1"># Collect adaptation data (first few user utterances)
-</span><span class="k">for</span> <span class="n">utterance</span> <span class="ow">in</span> <span class="n">initial_utterances</span><span class="p">:</span>
-    <span class="n">features</span> <span class="o">=</span> <span class="nf">extract_features</span><span class="p">(</span><span class="n">utterance</span><span class="p">)</span>
-    <span class="n">posterior</span> <span class="o">=</span> <span class="nf">baseline_model</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-    <span class="n">adapter</span><span class="p">.</span><span class="nf">add_sample</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">posterior</span><span class="p">)</span>
+<p>self.adaptation_data = []</p>
 
-<span class="c1"># Estimate transform
-</span><span class="n">adapter</span><span class="p">.</span><span class="nf">estimate_transform</span><span class="p">()</span>
+<p>def add_sample(self, features: np.ndarray, phoneme_posterior: np.ndarray):
+ “””
+ Add adaptation sample (features + posterior from baseline model).
+ “””
+ self.adaptation_data.append((features, phoneme_posterior))</p>
 
-<span class="c1"># Apply to new utterances
-</span><span class="k">for</span> <span class="n">new_utterance</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
-    <span class="n">features</span> <span class="o">=</span> <span class="nf">extract_features</span><span class="p">(</span><span class="n">new_utterance</span><span class="p">)</span>
-    <span class="n">adapted_features</span> <span class="o">=</span> <span class="n">adapter</span><span class="p">.</span><span class="nf">transform</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-    <span class="n">output</span> <span class="o">=</span> <span class="nf">baseline_model</span><span class="p">(</span><span class="n">adapted_features</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def estimate_transform(self):
+ “””
+ Estimate MLLR transform from adaptation data.</p>
+
+<p>Greedy: find transform that best fits user’s voice.
+ “””
+ if len(self.adaptation_data) &lt; 10:
+ return # Need minimum data</p>
+
+<p># Collect statistics (simplified)
+ X = np.array([x for x, _ in self.adaptation_data])</p>
+
+<p># Estimate mean shift (simplified MLLR)
+ baseline_mean = X.mean(axis=0)
+ self.b = -baseline_mean # Shift to center on user</p>
+
+<p># In full MLLR, we’d estimate A using EM
+ # Here we use simple mean normalization</p>
+
+<p>def transform(self, features: np.ndarray) -&gt; np.ndarray:
+ “"”Apply learned transform to new features.”””
+ return np.dot(self.A, features) + self.b</p>
+
+<h1 id="usage">Usage</h1>
+<p>adapter = MLLRAdapter(feature_dim=80)</p>
+
+<h1 id="collect-adaptation-data-first-few-user-utterances">Collect adaptation data (first few user utterances)</h1>
+<p>for utterance in initial_utterances:
+ features = extract_features(utterance)
+ posterior = baseline_model(features)
+ adapter.add_sample(features, posterior)</p>
+
+<h1 id="estimate-transform">Estimate transform</h1>
+<p>adapter.estimate_transform()</p>
+
+<h1 id="apply-to-new-utterances">Apply to new utterances</h1>
+<p>for new_utterance in stream:
+ features = extract_features(new_utterance)
+ adapted_features = adapter.transform(features)
+ output = baseline_model(adapted_features)
+``</p>
 
 <p><strong>Neural Adapter Layers (for end-to-end models):</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">SpeakerAdapterLayer</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Lightweight adapter for end-to-end neural ASR.
-    
-    Inserts learnable bottleneck layers that adapt to user.
-    Baseline model stays frozen.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">adapter_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="c1"># Down-project → non-linearity → up-project
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">down</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">adapter_dim</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">up</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">adapter_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ReLU</span><span class="p">()</span>
-        
-        <span class="c1"># Initialize to near-identity
-</span>        <span class="n">nn</span><span class="p">.</span><span class="n">init</span><span class="p">.</span><span class="nf">zeros_</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">down</span><span class="p">.</span><span class="n">weight</span><span class="p">)</span>
-        <span class="n">nn</span><span class="p">.</span><span class="n">init</span><span class="p">.</span><span class="nf">zeros_</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">up</span><span class="p">.</span><span class="n">weight</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Apply adapter.
-        
-        Residual connection preserves baseline behavior initially.
-        </span><span class="sh">"""</span>
-        <span class="n">residual</span> <span class="o">=</span> <span class="n">x</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">down</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">activation</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">up</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">residual</span> <span class="o">+</span> <span class="n">x</span>  <span class="c1"># Residual connection
-</span>
+<p>class SpeakerAdapterLayer(nn.Module):
+ “””
+ Lightweight adapter for end-to-end neural ASR.</p>
 
-<span class="k">class</span> <span class="nc">AdaptiveASRModel</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    ASR model with speaker adapters.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">baseline_encoder</span><span class="p">,</span> <span class="n">baseline_decoder</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="c1"># Freeze baseline
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">baseline_encoder</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">decoder</span> <span class="o">=</span> <span class="n">baseline_decoder</span>
-        
-        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">encoder</span><span class="p">.</span><span class="nf">parameters</span><span class="p">():</span>
-            <span class="n">param</span><span class="p">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">decoder</span><span class="p">.</span><span class="nf">parameters</span><span class="p">():</span>
-            <span class="n">param</span><span class="p">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="bp">False</span>
-        
-        <span class="c1"># Add adapter layers (only these are updated)
-</span>        <span class="n">hidden_dim</span> <span class="o">=</span> <span class="mi">512</span>  <span class="c1"># Encoder hidden dim
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">adapters</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ModuleList</span><span class="p">([</span>
-            <span class="nc">SpeakerAdapterLayer</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>  <span class="c1"># One per encoder layer
-</span>        <span class="p">])</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_features</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Forward pass with adaptation.</span><span class="sh">"""</span>
-        <span class="c1"># Encoder with adapters
-</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">audio_features</span>
-        <span class="k">for</span> <span class="n">enc_layer</span><span class="p">,</span> <span class="n">adapter</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">encoder</span><span class="p">.</span><span class="n">layers</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">adapters</span><span class="p">):</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="nf">enc_layer</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="nf">adapter</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># Apply adaptation
-</span>        
-        <span class="c1"># Decoder (no adaptation)
-</span>        <span class="n">output</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">decoder</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">output</span>
-    
-    <span class="k">def</span> <span class="nf">adapt</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">:</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">transcript</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Greedy adaptation update.
-        
-        Like Jump Game extending reach or online learning updating weights.
-        </span><span class="sh">"""</span>
-        <span class="c1"># Forward pass
-</span>        <span class="n">output</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">forward</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        
-        <span class="c1"># Compute loss
-</span>        <span class="n">loss</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">compute_loss</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">transcript</span><span class="p">)</span>
-        
-        <span class="c1"># Backprop only through adapters
-</span>        <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
-        
-        <span class="c1"># Update adapters (greedy step)
-</span>        <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">adapter</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">adapters</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">adapter</span><span class="p">.</span><span class="nf">parameters</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="n">param</span><span class="p">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                        <span class="n">param</span><span class="p">.</span><span class="n">data</span> <span class="o">-=</span> <span class="n">learning_rate</span> <span class="o">*</span> <span class="n">param</span><span class="p">.</span><span class="n">grad</span>
-                        <span class="n">param</span><span class="p">.</span><span class="n">grad</span><span class="p">.</span><span class="nf">zero_</span><span class="p">()</span>
-        
-        <span class="k">return</span> <span class="n">loss</span><span class="p">.</span><span class="nf">item</span><span class="p">()</span>
-</code></pre></div></div>
+<p>Inserts learnable bottleneck layers that adapt to user.
+ Baseline model stays frozen.
+ “””</p>
+
+<p>def <strong>init</strong>(self, hidden_dim: int, adapter_dim: int = 64):
+ super().<strong>init</strong>()</p>
+
+<p># Down-project → non-linearity → up-project
+ self.down = nn.Linear(hidden_dim, adapter_dim)
+ self.up = nn.Linear(adapter_dim, hidden_dim)
+ self.activation = nn.ReLU()</p>
+
+<p># Initialize to near-identity
+ nn.init.zeros_(self.down.weight)
+ nn.init.zeros_(self.up.weight)</p>
+
+<p>def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+ “””
+ Apply adapter.</p>
+
+<p>Residual connection preserves baseline behavior initially.
+ “””
+ residual = x
+ x = self.down(x)
+ x = self.activation(x)
+ x = self.up(x)
+ return residual + x # Residual connection</p>
+
+<p>class AdaptiveASRModel(nn.Module):
+ “””
+ ASR model with speaker adapters.
+ “””</p>
+
+<p>def <strong>init</strong>(self, baseline_encoder, baseline_decoder):
+ super().<strong>init</strong>()</p>
+
+<p># Freeze baseline
+ self.encoder = baseline_encoder
+ self.decoder = baseline_decoder</p>
+
+<p>for param in self.encoder.parameters():
+ param.requires_grad = False
+ for param in self.decoder.parameters():
+ param.requires_grad = False</p>
+
+<p># Add adapter layers (only these are updated)
+ hidden_dim = 512 # Encoder hidden dim
+ self.adapters = nn.ModuleList([
+ SpeakerAdapterLayer(hidden_dim)
+ for _ in range(6) # One per encoder layer
+ ])</p>
+
+<p>def forward(self, audio_features: torch.Tensor) -&gt; torch.Tensor:
+ “"”Forward pass with adaptation.”””
+ # Encoder with adapters
+ x = audio_features
+ for enc_layer, adapter in zip(self.encoder.layers, self.adapters):
+ x = enc_layer(x)
+ x = adapter(x) # Apply adaptation</p>
+
+<p># Decoder (no adaptation)
+ output = self.decoder(x)
+ return output</p>
+
+<p>def adapt(self, audio: torch.Tensor, transcript: str, learning_rate: float = 0.001):
+ “””
+ Greedy adaptation update.</p>
+
+<p>Like Jump Game extending reach or online learning updating weights.
+ “””
+ # Forward pass
+ output = self.forward(audio)</p>
+
+<p># Compute loss
+ loss = self.compute_loss(output, transcript)</p>
+
+<p># Backprop only through adapters
+ loss.backward()</p>
+
+<p># Update adapters (greedy step)
+ with torch.no_grad():
+ for adapter in self.adapters:
+ for param in adapter.parameters():
+ if param.grad is not None:
+ param.data -= learning_rate * param.grad
+ param.grad.zero_()</p>
+
+<p>return loss.item()
+``</p>
 
 <h3 id="2-noise-adaptation">2. Noise Adaptation</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">AdaptiveFeatureNormalizer</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Adaptive normalization for noise robustness.
-    
-    Tracks running statistics of features and normalizes.
-    Adapts to current acoustic environment.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">feature_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">momentum</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.99</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">feature_dim</span> <span class="o">=</span> <span class="n">feature_dim</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">momentum</span> <span class="o">=</span> <span class="n">momentum</span>
-        
-        <span class="c1"># Running statistics
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">feature_dim</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">var</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">ones</span><span class="p">(</span><span class="n">feature_dim</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">initialized</span> <span class="o">=</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">update_statistics</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Update running mean and variance.
-        
-        Greedy: adapt to current environment.
-        </span><span class="sh">"""</span>
-        <span class="n">batch_mean</span> <span class="o">=</span> <span class="n">features</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">batch_var</span> <span class="o">=</span> <span class="n">features</span><span class="p">.</span><span class="nf">var</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">initialized</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">mean</span> <span class="o">=</span> <span class="n">batch_mean</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">var</span> <span class="o">=</span> <span class="n">batch_var</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">initialized</span> <span class="o">=</span> <span class="bp">True</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Exponential moving average
-</span>            <span class="n">self</span><span class="p">.</span><span class="n">mean</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">momentum</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">mean</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">momentum</span><span class="p">)</span> <span class="o">*</span> <span class="n">batch_mean</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">var</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">momentum</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">var</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">momentum</span><span class="p">)</span> <span class="o">*</span> <span class="n">batch_var</span>
-    
-    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Apply adaptive normalization.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">initialized</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">features</span>
-        
-        <span class="nf">return </span><span class="p">(</span><span class="n">features</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">mean</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">sqrt</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">var</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Reset to initial state (e.g., on environment change).</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">feature_dim</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">var</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">ones</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">feature_dim</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">initialized</span> <span class="o">=</span> <span class="bp">False</span>
-</code></pre></div></div>
+<p>``python
+class AdaptiveFeatureNormalizer:
+ “””
+ Adaptive normalization for noise robustness.</p>
+
+<p>Tracks running statistics of features and normalizes.
+ Adapts to current acoustic environment.
+ “””</p>
+
+<p>def <strong>init</strong>(self, feature_dim: int, momentum: float = 0.99):
+ self.feature_dim = feature_dim
+ self.momentum = momentum</p>
+
+<p># Running statistics
+ self.mean = np.zeros(feature_dim)
+ self.var = np.ones(feature_dim)</p>
+
+<p>self.initialized = False</p>
+
+<p>def update_statistics(self, features: np.ndarray):
+ “””
+ Update running mean and variance.</p>
+
+<p>Greedy: adapt to current environment.
+ “””
+ batch_mean = features.mean(axis=0)
+ batch_var = features.var(axis=0)</p>
+
+<p>if not self.initialized:
+ self.mean = batch_mean
+ self.var = batch_var
+ self.initialized = True
+ else:
+ # Exponential moving average
+ self.mean = self.momentum * self.mean + (1 - self.momentum) * batch_mean
+ self.var = self.momentum * self.var + (1 - self.momentum) * batch_var</p>
+
+<p>def normalize(self, features: np.ndarray) -&gt; np.ndarray:
+ “"”Apply adaptive normalization.”””
+ if not self.initialized:
+ return features</p>
+
+<p>return (features - self.mean) / (np.sqrt(self.var) + 1e-8)</p>
+
+<p>def reset(self):
+ “"”Reset to initial state (e.g., on environment change).”””
+ self.mean = np.zeros(self.feature_dim)
+ self.var = np.ones(self.feature_dim)
+ self.initialized = False
+``</p>
 
 <h3 id="3-language-model-adaptation">3. Language Model Adaptation</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">import</span> <span class="n">math</span>
+<p>``python
+from collections import defaultdict
+import math</p>
 
-<span class="k">class</span> <span class="nc">AdaptiveLM</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Adaptive n-gram language model.
-    
-    Combines baseline LM with user-specific LM learned online.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">baseline_lm</span><span class="p">,</span> <span class="n">interpolation_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.7</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">baseline_lm</span> <span class="o">=</span> <span class="n">baseline_lm</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">interpolation_weight</span> <span class="o">=</span> <span class="n">interpolation_weight</span>
-        
-        <span class="c1"># User-specific LM (learned online)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">user_bigram_counts</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">user_unigram_counts</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">total_user_words</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Update user LM with new text (greedy adaptation).
-        
-        Like Jump Game: extend reach with new data.
-        </span><span class="sh">"""</span>
-        <span class="n">words</span> <span class="o">=</span> <span class="n">text</span><span class="p">.</span><span class="nf">lower</span><span class="p">().</span><span class="nf">split</span><span class="p">()</span>
-        
-        <span class="c1"># Update unigram counts
-</span>        <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">words</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">user_unigram_counts</span><span class="p">[</span><span class="n">word</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">total_user_words</span> <span class="o">+=</span> <span class="mi">1</span>
-        
-        <span class="c1"># Update bigram counts
-</span>        <span class="k">for</span> <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">words</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">words</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">user_bigram_counts</span><span class="p">[</span><span class="n">w1</span><span class="p">][</span><span class="n">w2</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-    
-    <span class="k">def</span> <span class="nf">score</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">word</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Score word given context (interpolated probability).
-        
-        Args:
-            word: Current word
-            context: Previous word(s)
-            
-        Returns:
-            Log probability
-        </span><span class="sh">"""</span>
-        <span class="c1"># Baseline LM score
-</span>        <span class="n">baseline_score</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">baseline_lm</span><span class="p">.</span><span class="nf">score</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
-        
-        <span class="c1"># User LM score (smoothed bigram)
-</span>        <span class="k">if</span> <span class="n">context</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">user_bigram_counts</span><span class="p">:</span>
-            <span class="n">user_bigram_count</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">user_bigram_counts</span><span class="p">[</span><span class="n">context</span><span class="p">][</span><span class="n">word</span><span class="p">]</span>
-            <span class="n">context_count</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">user_bigram_counts</span><span class="p">[</span><span class="n">context</span><span class="p">].</span><span class="nf">values</span><span class="p">())</span>
-            <span class="n">user_score</span> <span class="o">=</span> <span class="p">(</span><span class="n">user_bigram_count</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">context_count</span> <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">user_unigram_counts</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Fallback to unigram
-</span>            <span class="n">user_score</span> <span class="o">=</span> <span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">user_unigram_counts</span><span class="p">[</span><span class="n">word</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">total_user_words</span> <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">user_unigram_counts</span><span class="p">))</span>
-        
-        <span class="n">user_log_prob</span> <span class="o">=</span> <span class="n">math</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="n">user_score</span><span class="p">)</span>
-        
-        <span class="c1"># Interpolate
-</span>        <span class="n">alpha</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">interpolation_weight</span>
-        <span class="n">interpolated</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">baseline_score</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">user_log_prob</span>
-        
-        <span class="k">return</span> <span class="n">interpolated</span>
-</code></pre></div></div>
+<p>class AdaptiveLM:
+ “””
+ Adaptive n-gram language model.</p>
+
+<p>Combines baseline LM with user-specific LM learned online.
+ “””</p>
+
+<p>def <strong>init</strong>(self, baseline_lm, interpolation_weight: float = 0.7):
+ self.baseline_lm = baseline_lm
+ self.interpolation_weight = interpolation_weight</p>
+
+<p># User-specific LM (learned online)
+ self.user_bigram_counts = defaultdict(lambda: defaultdict(int))
+ self.user_unigram_counts = defaultdict(int)
+ self.total_user_words = 0</p>
+
+<p>def update(self, text: str):
+ “””
+ Update user LM with new text (greedy adaptation).</p>
+
+<p>Like Jump Game: extend reach with new data.
+ “””
+ words = text.lower().split()</p>
+
+<p># Update unigram counts
+ for word in words:
+ self.user_unigram_counts[word] += 1
+ self.total_user_words += 1</p>
+
+<p># Update bigram counts
+ for w1, w2 in zip(words[:-1], words[1:]):
+ self.user_bigram_counts[w1][w2] += 1</p>
+
+<p>def score(self, word: str, context: str) -&gt; float:
+ “””
+ Score word given context (interpolated probability).</p>
+
+<p>Args:
+ word: Current word
+ context: Previous word(s)</p>
+
+<p>Returns:
+ Log probability
+ “””
+ # Baseline LM score
+ baseline_score = self.baseline_lm.score(word, context)</p>
+
+<p># User LM score (smoothed bigram)
+ if context in self.user_bigram_counts:
+ user_bigram_count = self.user_bigram_counts[context][word]
+ context_count = sum(self.user_bigram_counts[context].values())
+ user_score = (user_bigram_count + 0.1) / (context_count + 0.1 * len(self.user_unigram_counts))
+ else:
+ # Fallback to unigram
+ user_score = (self.user_unigram_counts[word] + 0.1) / (self.total_user_words + 0.1 * len(self.user_unigram_counts))</p>
+
+<p>user_log_prob = math.log(user_score)</p>
+
+<p># Interpolate
+ alpha = self.interpolation_weight
+ interpolated = alpha * baseline_score + (1 - alpha) * user_log_prob</p>
+
+<p>return interpolated
+``</p>
 
 <h3 id="4-adaptation-controller">4. Adaptation Controller</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
-<span class="kn">import</span> <span class="n">time</span>
+<p>``python
+from dataclasses import dataclass
+from typing import Optional
+import time</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">AdaptationMetrics</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Track adaptation quality.</span><span class="sh">"""</span>
-    <span class="n">utterances_seen</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">current_wer</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">baseline_wer</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">adaptation_gain</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># baseline_wer - current_wer
-</span>    <span class="n">last_update</span><span class="p">:</span> <span class="nb">float</span>
+<p>@dataclass
+class AdaptationMetrics:
+ “"”Track adaptation quality.”””
+ utterances_seen: int
+ current_wer: float
+ baseline_wer: float
+ adaptation_gain: float # baseline_wer - current_wer
+ last_update: float</p>
 
-<span class="k">class</span> <span class="nc">AdaptationController</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Control when and how to adapt.
-    
-    Similar to Jump Game checking if we</span><span class="sh">'</span><span class="s">re stuck:
-    - Monitor if adaptation is helping
-    - Rollback if quality degrades
-    - Adjust adaptation rate based on confidence
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">min_confidence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span>
-        <span class="n">wer_degradation_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
-        <span class="n">min_utterances_before_adapt</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
-    <span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">min_confidence</span> <span class="o">=</span> <span class="n">min_confidence</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">wer_degradation_threshold</span> <span class="o">=</span> <span class="n">wer_degradation_threshold</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">min_utterances_before_adapt</span> <span class="o">=</span> <span class="n">min_utterances_before_adapt</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="nc">AdaptationMetrics</span><span class="p">(</span>
-            <span class="n">utterances_seen</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="n">current_wer</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-            <span class="n">baseline_wer</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-            <span class="n">adaptation_gain</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-            <span class="n">last_update</span><span class="o">=</span><span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-        <span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">adaptation_enabled</span> <span class="o">=</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">should_adapt</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">hypothesis</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">correction</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Decide whether to use this utterance for adaptation.
-        
-        Greedy decision: adapt if high confidence or have correction.
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">utterances_seen</span> <span class="o">+=</span> <span class="mi">1</span>
-        
-        <span class="c1"># Need minimum data
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">utterances_seen</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">min_utterances_before_adapt</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">False</span>
-        
-        <span class="c1"># High-confidence predictions are trustworthy
-</span>        <span class="k">if</span> <span class="n">confidence</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">min_confidence</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">True</span>
-        
-        <span class="c1"># User corrections are always used
-</span>        <span class="k">if</span> <span class="n">correction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">True</span>
-        
-        <span class="k">return</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">should_rollback</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Check if we should rollback adaptation.
-        
-        Like Jump Game detecting we</span><span class="sh">'</span><span class="s">re stuck.
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">adaptation_enabled</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">False</span>
-        
-        <span class="c1"># Rollback if adaptation made things worse
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">adaptation_gain</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">self</span><span class="p">.</span><span class="n">wer_degradation_threshold</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">True</span>
-        
-        <span class="k">return</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">update_metrics</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">current_wer</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">baseline_wer</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Update performance metrics.</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">current_wer</span> <span class="o">=</span> <span class="n">current_wer</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">baseline_wer</span> <span class="o">=</span> <span class="n">baseline_wer</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">adaptation_gain</span> <span class="o">=</span> <span class="n">baseline_wer</span> <span class="o">-</span> <span class="n">current_wer</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">last_update</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-        
-        <span class="c1"># Enable adaptation if it's helping
-</span>        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">adaptation_gain</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">adaptation_enabled</span> <span class="o">=</span> <span class="bp">True</span>
-</code></pre></div></div>
+<p>class AdaptationController:
+ “””
+ Control when and how to adapt.</p>
+
+<p>Similar to Jump Game checking if we’re stuck:</p>
+<ul>
+  <li>Monitor if adaptation is helping</li>
+  <li>Rollback if quality degrades</li>
+  <li>Adjust adaptation rate based on confidence
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(
+ self,
+ min_confidence: float = 0.8,
+ wer_degradation_threshold: float = 0.05,
+ min_utterances_before_adapt: int = 3
+ ):
+ self.min_confidence = min_confidence
+ self.wer_degradation_threshold = wer_degradation_threshold
+ self.min_utterances_before_adapt = min_utterances_before_adapt</p>
+
+<p>self.metrics = AdaptationMetrics(
+ utterances_seen=0,
+ current_wer=0.0,
+ baseline_wer=0.0,
+ adaptation_gain=0.0,
+ last_update=time.time()
+ )</p>
+
+<p>self.adaptation_enabled = False</p>
+
+<p>def should_adapt(
+ self,
+ hypothesis: str,
+ confidence: float,
+ correction: Optional[str] = None
+ ) -&gt; bool:
+ “””
+ Decide whether to use this utterance for adaptation.</p>
+
+<p>Greedy decision: adapt if high confidence or have correction.
+ “””
+ self.metrics.utterances_seen += 1</p>
+
+<p># Need minimum data
+ if self.metrics.utterances_seen &lt; self.min_utterances_before_adapt:
+ return False</p>
+
+<p># High-confidence predictions are trustworthy
+ if confidence &gt;= self.min_confidence:
+ return True</p>
+
+<p># User corrections are always used
+ if correction is not None:
+ return True</p>
+
+<p>return False</p>
+
+<p>def should_rollback(self) -&gt; bool:
+ “””
+ Check if we should rollback adaptation.</p>
+
+<p>Like Jump Game detecting we’re stuck.
+ “””
+ if not self.adaptation_enabled:
+ return False</p>
+
+<p># Rollback if adaptation made things worse
+ if self.metrics.adaptation_gain &lt; -self.wer_degradation_threshold:
+ return True</p>
+
+<p>return False</p>
+
+<p>def update_metrics(self, current_wer: float, baseline_wer: float):
+ “"”Update performance metrics.”””
+ self.metrics.current_wer = current_wer
+ self.metrics.baseline_wer = baseline_wer
+ self.metrics.adaptation_gain = baseline_wer - current_wer
+ self.metrics.last_update = time.time()</p>
+
+<p># Enable adaptation if it’s helping
+ if self.metrics.adaptation_gain &gt; 0:
+ self.adaptation_enabled = True
+``</p>
 
 <h2 id="data-flow">Data Flow</h2>
 
 <h3 id="adaptive-asr-pipeline">Adaptive ASR Pipeline</h3>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Audio Input
-   └─&gt; Feature extraction
-   └─&gt; Adaptive normalization (noise adaptation)
-
-2. Acoustic Model Inference
-   └─&gt; Pass through baseline + adapter layers
-   └─&gt; Get frame-level posteriors
-
-3. Decoding
-   └─&gt; Beam search with adaptive LM
-   └─&gt; Output hypothesis + confidence
-
-4. Adaptation Decision
-   └─&gt; Adaptation controller checks:
-       - Confidence high enough?
-       - Have user correction?
-       - Is adaptation helping?
-   └─&gt; If yes: proceed to update
-
-5. Model Update (if adapting)
-   └─&gt; Compute loss (hypothesis vs correction or implicit signal)
-   └─&gt; Backprop through adapters only
-   └─&gt; Greedy gradient step
-   └─&gt; Update statistics (feature norm, LM)
-
-6. Quality Monitoring
-   └─&gt; Track WER, latency
-   └─&gt; Compare to baseline
-   └─&gt; Rollback if degrading
-</code></pre></div></div>
+<p>``</p>
+<ol>
+  <li>
+    <p>Audio Input
+ └─&gt; Feature extraction
+ └─&gt; Adaptive normalization (noise adaptation)</p>
+  </li>
+  <li>
+    <p>Acoustic Model Inference
+ └─&gt; Pass through baseline + adapter layers
+ └─&gt; Get frame-level posteriors</p>
+  </li>
+  <li>
+    <p>Decoding
+ └─&gt; Beam search with adaptive LM
+ └─&gt; Output hypothesis + confidence</p>
+  </li>
+  <li>Adaptation Decision
+ └─&gt; Adaptation controller checks:
+    <ul>
+      <li>Confidence high enough?</li>
+      <li>Have user correction?</li>
+      <li>Is adaptation helping?
+ └─&gt; If yes: proceed to update</li>
+    </ul>
+  </li>
+  <li>
+    <p>Model Update (if adapting)
+ └─&gt; Compute loss (hypothesis vs correction or implicit signal)
+ └─&gt; Backprop through adapters only
+ └─&gt; Greedy gradient step
+ └─&gt; Update statistics (feature norm, LM)</p>
+  </li>
+  <li>Quality Monitoring
+ └─&gt; Track WER, latency
+ └─&gt; Compare to baseline
+ └─&gt; Rollback if degrading
+``</li>
+</ol>
 
 <h2 id="scaling-strategies">Scaling Strategies</h2>
 
@@ -870,64 +885,67 @@
 
 <p><strong>On-Device (Privacy-Preserving):</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">OnDeviceAdaptiveASR</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    On-device adaptive ASR for privacy.
-    
-    - Lightweight adapters only
-    - No data leaves device
-    - User-specific models stored locally
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">baseline_model_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="c1"># Load baseline (compressed for mobile)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">baseline_model</span> <span class="o">=</span> <span class="nf">load_compressed_model</span><span class="p">(</span><span class="n">baseline_model_path</span><span class="p">)</span>
-        
-        <span class="c1"># Initialize lightweight adapters
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">adapters</span> <span class="o">=</span> <span class="nf">create_adapters</span><span class="p">(</span><span class="n">hidden_dim</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">adapter_dim</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
-        
-        <span class="c1"># Feature normalizer
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">normalizer</span> <span class="o">=</span> <span class="nc">AdaptiveFeatureNormalizer</span><span class="p">(</span><span class="n">feature_dim</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
-        
-        <span class="c1"># Local storage for user model
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">user_model_path</span> <span class="o">=</span> <span class="sh">"</span><span class="s">user_adapters.pt</span><span class="sh">"</span>
-        <span class="n">self</span><span class="p">.</span><span class="nf">_load_user_model</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">_load_user_model</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Load user</span><span class="sh">'</span><span class="s">s adapted model if exists.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">os</span><span class="p">.</span><span class="n">path</span><span class="p">.</span><span class="nf">exists</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">user_model_path</span><span class="p">):</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">adapters</span><span class="p">.</span><span class="nf">load_state_dict</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">user_model_path</span><span class="p">))</span>
-    
-    <span class="k">def</span> <span class="nf">_save_user_model</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Save user</span><span class="sh">'</span><span class="s">s adapted model locally.</span><span class="sh">"""</span>
-        <span class="n">torch</span><span class="p">.</span><span class="nf">save</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">adapters</span><span class="p">.</span><span class="nf">state_dict</span><span class="p">(),</span> <span class="n">self</span><span class="p">.</span><span class="n">user_model_path</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">transcribe_and_adapt</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">user_correction</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Transcribe and optionally adapt.
-        
-        All processing on-device, no network needed.
-        </span><span class="sh">"""</span>
-        <span class="c1"># Extract and normalize features
-</span>        <span class="n">features</span> <span class="o">=</span> <span class="nf">extract_features</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        <span class="n">features</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">normalizer</span><span class="p">.</span><span class="nf">normalize</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">normalizer</span><span class="p">.</span><span class="nf">update_statistics</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-        
-        <span class="c1"># Inference
-</span>        <span class="n">output</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">baseline_model</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">adapters</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">adapters</span><span class="p">)</span>
-        <span class="n">hypothesis</span> <span class="o">=</span> <span class="nf">decode</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
-        
-        <span class="c1"># Adapt if correction provided
-</span>        <span class="k">if</span> <span class="n">user_correction</span><span class="p">:</span>
-            <span class="n">loss</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">adapters</span><span class="p">.</span><span class="nf">adapt</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">user_correction</span><span class="p">)</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">_save_user_model</span><span class="p">()</span>  <span class="c1"># Persist
-</span>        
-        <span class="k">return</span> <span class="n">hypothesis</span>
-</code></pre></div></div>
+<p>``python
+class OnDeviceAdaptiveASR:
+ “””
+ On-device adaptive ASR for privacy.</p>
+
+<ul>
+  <li>Lightweight adapters only</li>
+  <li>No data leaves device</li>
+  <li>User-specific models stored locally
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self, baseline_model_path: str):
+ # Load baseline (compressed for mobile)
+ self.baseline_model = load_compressed_model(baseline_model_path)</p>
+
+<p># Initialize lightweight adapters
+ self.adapters = create_adapters(hidden_dim=256, adapter_dim=32)</p>
+
+<p># Feature normalizer
+ self.normalizer = AdaptiveFeatureNormalizer(feature_dim=80)</p>
+
+<p># Local storage for user model
+ self.user_model_path = “user_adapters.pt”
+ self._load_user_model()</p>
+
+<p>def _load_user_model(self):
+ “"”Load user’s adapted model if exists.”””
+ if os.path.exists(self.user_model_path):
+ self.adapters.load_state_dict(torch.load(self.user_model_path))</p>
+
+<p>def _save_user_model(self):
+ “"”Save user’s adapted model locally.”””
+ torch.save(self.adapters.state_dict(), self.user_model_path)</p>
+
+<p>def transcribe_and_adapt(
+ self,
+ audio: np.ndarray,
+ user_correction: Optional[str] = None
+ ) -&gt; str:
+ “””
+ Transcribe and optionally adapt.</p>
+
+<p>All processing on-device, no network needed.
+ “””
+ # Extract and normalize features
+ features = extract_features(audio)
+ features = self.normalizer.normalize(features)
+ self.normalizer.update_statistics(features)</p>
+
+<p># Inference
+ output = self.baseline_model(features, adapters=self.adapters)
+ hypothesis = decode(output)</p>
+
+<p># Adapt if correction provided
+ if user_correction:
+ loss = self.adapters.adapt(features, user_correction)
+ self._save_user_model() # Persist</p>
+
+<p>return hypothesis
+``</p>
 
 <p><strong>Server-Side (Scalable):</strong></p>
 
@@ -940,79 +958,82 @@
 
 <h3 id="handling-millions-of-users">Handling Millions of Users</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ScalableAdaptationService</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Scalable adaptation service for millions of users.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">redis_client</span><span class="p">,</span> <span class="n">model_store</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">redis</span> <span class="o">=</span> <span class="n">redis_client</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model_store</span> <span class="o">=</span> <span class="n">model_store</span>
-        
-        <span class="c1"># Cache recent user models in memory
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">cache_size</span> <span class="o">=</span> <span class="mi">10000</span>
-    
-    <span class="k">def</span> <span class="nf">get_user_model</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Get user</span><span class="sh">'</span><span class="s">s adapted model (with caching).
-        
-        Pattern:
-        1. Check in-memory cache
-        2. Check Redis (hot storage)
-        3. Check S3/DB (cold storage)
-        4. Default to baseline if not found
-        </span><span class="sh">"""</span>
-        <span class="c1"># Check cache
-</span>        <span class="k">if</span> <span class="n">user_id</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">[</span><span class="n">user_id</span><span class="p">]</span>
-        
-        <span class="c1"># Check Redis
-</span>        <span class="n">model_bytes</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">redis</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">user_model:</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">model_bytes</span><span class="p">:</span>
-            <span class="n">model</span> <span class="o">=</span> <span class="nf">deserialize_model</span><span class="p">(</span><span class="n">model_bytes</span><span class="p">)</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">_update_cache</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">model</span>
-        
-        <span class="c1"># Check cold storage
-</span>        <span class="n">model</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model_store</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">model</span><span class="p">:</span>
-            <span class="c1"># Warm up Redis
-</span>            <span class="n">self</span><span class="p">.</span><span class="n">redis</span><span class="p">.</span><span class="nf">setex</span><span class="p">(</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="s">user_model:</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="sh">"</span><span class="p">,</span>
-                <span class="mi">3600</span><span class="p">,</span>  <span class="c1"># 1 hour TTL
-</span>                <span class="nf">serialize_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">_update_cache</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">model</span>
-        
-        <span class="c1"># Default: baseline
-</span>        <span class="k">return</span> <span class="nf">create_baseline_adapters</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">save_user_model</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Save user model to Redis and cold storage.</span><span class="sh">"""</span>
-        <span class="c1"># Update cache
-</span>        <span class="n">self</span><span class="p">.</span><span class="nf">_update_cache</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-        
-        <span class="c1"># Update Redis (hot)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">redis</span><span class="p">.</span><span class="nf">setex</span><span class="p">(</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="s">user_model:</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="sh">"</span><span class="p">,</span>
-            <span class="mi">3600</span><span class="p">,</span>
-            <span class="nf">serialize_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Async write to cold storage (S3/DB)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">model_store</span><span class="p">.</span><span class="nf">save_async</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_update_cache</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Update in-memory cache with LRU eviction.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">cache_size</span><span class="p">:</span>
-            <span class="c1"># Evict oldest
-</span>            <span class="n">oldest</span> <span class="o">=</span> <span class="nf">min</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">.</span><span class="nf">keys</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">[</span><span class="n">k</span><span class="p">].</span><span class="n">last_access</span><span class="p">)</span>
-            <span class="k">del</span> <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">[</span><span class="n">oldest</span><span class="p">]</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">cache</span><span class="p">[</span><span class="n">user_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span>
-</code></pre></div></div>
+<p>``python
+class ScalableAdaptationService:
+ “””
+ Scalable adaptation service for millions of users.
+ “””</p>
+
+<p>def <strong>init</strong>(self, redis_client, model_store):
+ self.redis = redis_client
+ self.model_store = model_store</p>
+
+<p># Cache recent user models in memory
+ self.cache = {}
+ self.cache_size = 10000</p>
+
+<p>def get_user_model(self, user_id: str):
+ “””
+ Get user’s adapted model (with caching).</p>
+
+<p>Pattern:</p>
+<ol>
+  <li>Check in-memory cache</li>
+  <li>Check Redis (hot storage)</li>
+  <li>Check S3/DB (cold storage)</li>
+  <li>Default to baseline if not found
+ “””
+ # Check cache
+ if user_id in self.cache:
+ return self.cache[user_id]</li>
+</ol>
+
+<p># Check Redis
+ model_bytes = self.redis.get(f”user_model:{user_id}”)
+ if model_bytes:
+ model = deserialize_model(model_bytes)
+ self._update_cache(user_id, model)
+ return model</p>
+
+<p># Check cold storage
+ model = self.model_store.load(user_id)
+ if model:
+ # Warm up Redis
+ self.redis.setex(
+ f”user_model:{user_id}”,
+ 3600, # 1 hour TTL
+ serialize_model(model)
+ )
+ self._update_cache(user_id, model)
+ return model</p>
+
+<p># Default: baseline
+ return create_baseline_adapters()</p>
+
+<p>def save_user_model(self, user_id: str, model):
+ “"”Save user model to Redis and cold storage.”””
+ # Update cache
+ self._update_cache(user_id, model)</p>
+
+<p># Update Redis (hot)
+ self.redis.setex(
+ f”user_model:{user_id}”,
+ 3600,
+ serialize_model(model)
+ )</p>
+
+<p># Async write to cold storage (S3/DB)
+ self.model_store.save_async(user_id, model)</p>
+
+<p>def _update_cache(self, user_id: str, model):
+ “"”Update in-memory cache with LRU eviction.”””
+ if len(self.cache) &gt;= self.cache_size:
+ # Evict oldest
+ oldest = min(self.cache.keys(), key=lambda k: self.cache[k].last_access)
+ del self.cache[oldest]</p>
+
+<p>self.cache[user_id] = model
+``</p>
 
 <h2 id="monitoring--metrics">Monitoring &amp; Metrics</h2>
 
@@ -1232,8 +1253,8 @@
     <tr>
       <td><strong>Total</strong></td>
       <td> </td>
-      <td><strong>$17,330/month</strong></td>
-      <td><strong>$0.017 per user</strong></td>
+      <td><strong><code class="language-plaintext highlighter-rouge">17,330/month** | **</code>0.017 per user</strong></td>
+      <td> </td>
     </tr>
   </tbody>
 </table>
@@ -1244,157 +1265,166 @@
 
 <h3 id="1-meta-learning-for-fast-adaptation">1. Meta-Learning for Fast Adaptation</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">MAMLAdaptiveASR</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Model-Agnostic Meta-Learning (MAML) for fast speaker adaptation.
-    
-    Pre-train model to adapt quickly with few samples.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">meta_lr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span> <span class="n">adapt_lr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">meta_lr</span> <span class="o">=</span> <span class="n">meta_lr</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">adapt_lr</span> <span class="o">=</span> <span class="n">adapt_lr</span>
-    
-    <span class="k">def</span> <span class="nf">meta_train</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">speaker_tasks</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Meta-training: learn initialization that adapts quickly.
-        
-        For each speaker:
-        1. Clone model
-        2. Adapt on their first few utterances (support set)
-        3. Evaluate on held-out utterances (query set)
-        4. Meta-update: push initialization towards fast adaptation
-        </span><span class="sh">"""</span>
-        <span class="n">meta_optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">optim</span><span class="p">.</span><span class="nc">Adam</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">meta_lr</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">speaker_tasks</span><span class="p">:</span>
-            <span class="n">support_set</span> <span class="o">=</span> <span class="n">task</span><span class="p">[</span><span class="sh">'</span><span class="s">support</span><span class="sh">'</span><span class="p">]</span>
-            <span class="n">query_set</span> <span class="o">=</span> <span class="n">task</span><span class="p">[</span><span class="sh">'</span><span class="s">query</span><span class="sh">'</span><span class="p">]</span>
-            
-            <span class="c1"># Clone model for this task
-</span>            <span class="n">task_model</span> <span class="o">=</span> <span class="nf">clone_model</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">)</span>
-            
-            <span class="c1"># Fast adaptation on support set
-</span>            <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">support_set</span><span class="p">:</span>
-                <span class="n">loss</span> <span class="o">=</span> <span class="n">task_model</span><span class="p">.</span><span class="nf">compute_loss</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
-                <span class="n">task_model</span><span class="p">.</span><span class="nf">adapt</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">adapt_lr</span><span class="p">)</span>
-            
-            <span class="c1"># Evaluate on query set
-</span>            <span class="n">query_loss</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">query_set</span><span class="p">:</span>
-                <span class="n">query_loss</span> <span class="o">+=</span> <span class="n">task_model</span><span class="p">.</span><span class="nf">compute_loss</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
-            
-            <span class="c1"># Meta-update: improve initialization
-</span>            <span class="n">query_loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
-            <span class="n">meta_optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
-            <span class="n">meta_optimizer</span><span class="p">.</span><span class="nf">zero_grad</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">fast_adapt</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">new_speaker_data</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Adapt to new speaker using meta-learned initialization.
-        
-        Converges in just 3-5 samples due to meta-training.
-        </span><span class="sh">"""</span>
-        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">new_speaker_data</span><span class="p">:</span>
-            <span class="n">loss</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">compute_loss</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">adapt</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">adapt_lr</span><span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+class MAMLAdaptiveASR:
+ “””
+ Model-Agnostic Meta-Learning (MAML) for fast speaker adaptation.</p>
+
+<p>Pre-train model to adapt quickly with few samples.
+ “””</p>
+
+<p>def <strong>init</strong>(self, model, meta_lr: float = 0.001, adapt_lr: float = 0.01):
+ self.model = model
+ self.meta_lr = meta_lr
+ self.adapt_lr = adapt_lr</p>
+
+<p>def meta_train(self, speaker_tasks):
+ “””
+ Meta-training: learn initialization that adapts quickly.</p>
+
+<p>For each speaker:</p>
+<ol>
+  <li>Clone model</li>
+  <li>Adapt on their first few utterances (support set)</li>
+  <li>Evaluate on held-out utterances (query set)</li>
+  <li>Meta-update: push initialization towards fast adaptation
+ “””
+ meta_optimizer = torch.optim.Adam(self.model.parameters(), lr=self.meta_lr)</li>
+</ol>
+
+<p>for task in speaker_tasks:
+ support_set = task[‘support’]
+ query_set = task[‘query’]</p>
+
+<p># Clone model for this task
+ task_model = clone_model(self.model)</p>
+
+<p># Fast adaptation on support set
+ for sample in support_set:
+ loss = task_model.compute_loss(sample)
+ task_model.adapt(loss, lr=self.adapt_lr)</p>
+
+<p># Evaluate on query set
+ query_loss = 0
+ for sample in query_set:
+ query_loss += task_model.compute_loss(sample)</p>
+
+<p># Meta-update: improve initialization
+ query_loss.backward()
+ meta_optimizer.step()
+ meta_optimizer.zero_grad()</p>
+
+<p>def fast_adapt(self, new_speaker_data):
+ “””
+ Adapt to new speaker using meta-learned initialization.</p>
+
+<p>Converges in just 3-5 samples due to meta-training.
+ “””
+ for sample in new_speaker_data:
+ loss = self.model.compute_loss(sample)
+ self.model.adapt(loss, lr=self.adapt_lr)
+``</p>
 
 <h3 id="2-federated-learning-for-privacy">2. Federated Learning for Privacy</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">FederatedAdaptiveASR</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Federated learning: learn from many users without collecting data.
-    
-    1. Each user adapts model locally
-    2. Users upload gradients/updates (not data)
-    3. Server aggregates updates
-    4. Broadcast improved baseline to all users
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">baseline_model</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">baseline_model</span> <span class="o">=</span> <span class="n">baseline_model</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">user_updates</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">def</span> <span class="nf">user_adaptation</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user_data</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">User adapts model locally.</span><span class="sh">"""</span>
-        <span class="n">local_model</span> <span class="o">=</span> <span class="nf">clone_model</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">baseline_model</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">user_data</span><span class="p">:</span>
-            <span class="n">local_model</span><span class="p">.</span><span class="nf">adapt</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
-        
-        <span class="c1"># Compute update (difference from baseline)
-</span>        <span class="n">update</span> <span class="o">=</span> <span class="nf">compute_model_diff</span><span class="p">(</span><span class="n">local_model</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">baseline_model</span><span class="p">)</span>
-        
-        <span class="c1"># Upload update (not data!)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">user_updates</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">update</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">aggregate_updates</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Server aggregates user updates.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">user_updates</span><span class="p">:</span>
-            <span class="k">return</span>
-        
-        <span class="c1"># Average updates
-</span>        <span class="n">avg_update</span> <span class="o">=</span> <span class="nf">average_updates</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">user_updates</span><span class="p">)</span>
-        
-        <span class="c1"># Apply to baseline
-</span>        <span class="nf">apply_update</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">baseline_model</span><span class="p">,</span> <span class="n">avg_update</span><span class="p">)</span>
-        
-        <span class="c1"># Clear updates
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">user_updates</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">def</span> <span class="nf">broadcast_baseline</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Send updated baseline to all users.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">baseline_model</span>
-</code></pre></div></div>
+<p>``python
+class FederatedAdaptiveASR:
+ “””
+ Federated learning: learn from many users without collecting data.</p>
+
+<ol>
+  <li>Each user adapts model locally</li>
+  <li>Users upload gradients/updates (not data)</li>
+  <li>Server aggregates updates</li>
+  <li>Broadcast improved baseline to all users
+ “””</li>
+</ol>
+
+<p>def <strong>init</strong>(self, baseline_model):
+ self.baseline_model = baseline_model
+ self.user_updates = []</p>
+
+<p>def user_adaptation(self, user_id: str, user_data):
+ “"”User adapts model locally.”””
+ local_model = clone_model(self.baseline_model)</p>
+
+<p>for sample in user_data:
+ local_model.adapt(sample)</p>
+
+<p># Compute update (difference from baseline)
+ update = compute_model_diff(local_model, self.baseline_model)</p>
+
+<p># Upload update (not data!)
+ self.user_updates.append(update)</p>
+
+<p>def aggregate_updates(self):
+ “"”Server aggregates user updates.”””
+ if not self.user_updates:
+ return</p>
+
+<p># Average updates
+ avg_update = average_updates(self.user_updates)</p>
+
+<p># Apply to baseline
+ apply_update(self.baseline_model, avg_update)</p>
+
+<p># Clear updates
+ self.user_updates = []</p>
+
+<p>def broadcast_baseline(self):
+ “"”Send updated baseline to all users.”””
+ return self.baseline_model
+``</p>
 
 <h3 id="3-continual-learning">3. Continual Learning</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ContinualLearningASR</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Continual learning: adapt to new domains without forgetting old ones.
-    
-    Techniques:
-    - Elastic Weight Consolidation (EWC)
-    - Progressive Neural Networks
-    - Memory replay
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">fisher_information</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># For EWC
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">old_params</span> <span class="o">=</span> <span class="p">{}</span>
-    
-    <span class="k">def</span> <span class="nf">compute_fisher</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">task_data</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Compute Fisher information (importance of each parameter).</span><span class="sh">"""</span>
-        <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">named_parameters</span><span class="p">():</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">old_params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="nf">clone</span><span class="p">()</span>
-            
-            <span class="c1"># Compute Fisher diagonal (simplified)
-</span>            <span class="n">fisher</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">zeros_like</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">task_data</span><span class="p">:</span>
-                <span class="n">loss</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">compute_loss</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
-                <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
-                <span class="n">fisher</span> <span class="o">+=</span> <span class="n">param</span><span class="p">.</span><span class="n">grad</span><span class="p">.</span><span class="n">data</span> <span class="o">**</span> <span class="mi">2</span>
-            
-            <span class="n">self</span><span class="p">.</span><span class="n">fisher_information</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">fisher</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">task_data</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">ewc_loss</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">current_loss</span><span class="p">,</span> <span class="n">lambda_ewc</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1000.0</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Add EWC penalty to prevent forgetting.
-        
-        Penalizes changes to important parameters.
-        </span><span class="sh">"""</span>
-        <span class="n">ewc_penalty</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">named_parameters</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">fisher_information</span><span class="p">:</span>
-                <span class="n">fisher</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">fisher_information</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span>
-                <span class="n">old_param</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">old_params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span>
-                <span class="n">ewc_penalty</span> <span class="o">+=</span> <span class="p">(</span><span class="n">fisher</span> <span class="o">*</span> <span class="p">(</span><span class="n">param</span> <span class="o">-</span> <span class="n">old_param</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">).</span><span class="nf">sum</span><span class="p">()</span>
-        
-        <span class="k">return</span> <span class="n">current_loss</span> <span class="o">+</span> <span class="p">(</span><span class="n">lambda_ewc</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">ewc_penalty</span>
-</code></pre></div></div>
+<p>``python
+class ContinualLearningASR:
+ “””
+ Continual learning: adapt to new domains without forgetting old ones.</p>
+
+<p>Techniques:</p>
+<ul>
+  <li>Elastic Weight Consolidation (EWC)</li>
+  <li>Progressive Neural Networks</li>
+  <li>Memory replay
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self, model):
+ self.model = model
+ self.fisher_information = {} # For EWC
+ self.old_params = {}</p>
+
+<p>def compute_fisher(self, task_data):
+ “"”Compute Fisher information (importance of each parameter).”””
+ for param_name, param in self.model.named_parameters():
+ self.old_params[param_name] = param.data.clone()</p>
+
+<p># Compute Fisher diagonal (simplified)
+ fisher = torch.zeros_like(param)
+ for sample in task_data:
+ loss = self.model.compute_loss(sample)
+ loss.backward()
+ fisher += param.grad.data ** 2</p>
+
+<p>self.fisher_information[param_name] = fisher / len(task_data)</p>
+
+<p>def ewc_loss(self, current_loss, lambda_ewc: float = 1000.0):
+ “””
+ Add EWC penalty to prevent forgetting.</p>
+
+<p>Penalizes changes to important parameters.
+ “””
+ ewc_penalty = 0
+ for param_name, param in self.model.named_parameters():
+ if param_name in self.fisher_information:
+ fisher = self.fisher_information[param_name]
+ old_param = self.old_params[param_name]
+ ewc_penalty += (fisher * (param - old_param) ** 2).sum()</p>
+
+<p>return current_loss + (lambda_ewc / 2) * ewc_penalty
+``</p>
 
 <h2 id="key-takeaways">Key Takeaways</h2>
 
@@ -1420,7 +1450,7 @@
 
 <h3 id="connection-to-thematic-link-greedy-decisions-and-adaptive-strategies">Connection to Thematic Link: Greedy Decisions and Adaptive Strategies</h3>
 
-<p>All three Day 20 topics use <strong>greedy, adaptive optimization in dynamic environments</strong>:</p>
+<p>All three topics use <strong>greedy, adaptive optimization in dynamic environments</strong>:</p>
 
 <p><strong>DSA (Jump Game):</strong></p>
 <ul>

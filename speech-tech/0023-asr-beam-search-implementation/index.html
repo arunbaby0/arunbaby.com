@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="ASR Beam Search Implementation">
     <meta itemprop="description" content="Implementing the core decoding logic of modern Speech Recognition systems, handling alignment, blanks, and language models.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -314,24 +314,25 @@ Beam Search allows us to keep “A” alive as a hypothesis until we see “cat�
 
 <h2 id="high-level-architecture-ctc-decoding-flow">High-Level Architecture: CTC Decoding Flow</h2>
 
-<pre><code class="language-ascii">+-------------+    +-------------+    +-------------+
+<p><code class="language-plaintext highlighter-rouge">ascii
++-------------+ +-------------+ +-------------+
 | Audio Frame | -&gt; | Acoustic Mod| -&gt; | Prob Matrix |
-+-------------+    +-------------+    +-------------+
-                                           | (T x V)
-                                           v
-                                   +------------------+
-                                   | CTC Beam Search  |
-                                   +------------------+
-                                           |
-                      +--------------------+--------------------+
-                      |                                         |
-               (Expand Prefix)                           (Score with LM)
-                      |                                         |
-                      v                                         v
-             +----------------+                        +----------------+
-             | New Hypotheses | &lt;--------------------- | Language Model |
-             +----------------+                        +----------------+
-</code></pre>
++-------------+ +-------------+ +-------------+
+ | (T x V)
+ v
+ +------------------+
+ | CTC Beam Search |
+ +------------------+
+ |
+ +--------------------+--------------------+
+ | |
+ (Expand Prefix) (Score with LM)
+ | |
+ v v
+ +----------------+ +----------------+
+ | New Hypotheses | &lt;--------------------- | Language Model |
+ +----------------+ +----------------+
+</code></p>
 
 <h2 id="algorithm-ctc-beam-search">Algorithm: CTC Beam Search</h2>
 
@@ -355,88 +356,89 @@ At each time step <code class="language-plaintext highlighter-rouge">t</code>, w
 
 <p>This is a simplified version of the algorithm used in libraries like <code class="language-plaintext highlighter-rouge">pyctcdecode</code>.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
-<span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<p>``python
+import numpy as np
+from collections import defaultdict</p>
 
-<span class="k">def</span> <span class="nf">ctc_beam_search</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">vocab</span><span class="p">,</span> <span class="n">beam_width</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    probs: (T, V) numpy array of probabilities
-    vocab: list of characters (index 0 is &lt;blk&gt;)
-    </span><span class="sh">"""</span>
-    <span class="n">T</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">probs</span><span class="p">.</span><span class="n">shape</span>
-    
-    <span class="c1"># beam: dict mapping prefix -&gt; probability
-</span>    <span class="c1"># We work in log domain to avoid underflow
-</span>    <span class="n">beam</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">))</span>
-    
-    <span class="c1"># Initialize with empty prefix
-</span>    <span class="c1"># We track two scores: (score_blank, score_non_blank)
-</span>    <span class="n">beam</span><span class="p">[()]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">))</span>
-    
-    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
-        <span class="n">next_beam</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="p">(</span><span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">),</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">)))</span>
-        
-        <span class="c1"># Get top-K prefixes from previous step
-</span>        <span class="c1"># Sort by total score (logsumexp of blank and non-blank)
-</span>        <span class="n">sorted_prefixes</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span>
-            <span class="n">beam</span><span class="p">.</span><span class="nf">items</span><span class="p">(),</span>
-            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span>
-            <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span>
-        <span class="p">)[:</span><span class="n">beam_width</span><span class="p">]</span>
-        
-        <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="p">(</span><span class="n">p_b</span><span class="p">,</span> <span class="n">p_nb</span><span class="p">)</span> <span class="ow">in</span> <span class="n">sorted_prefixes</span><span class="p">:</span>
-            <span class="c1"># 1. Handle Blank Token (Index 0)
-</span>            <span class="n">pr_blank</span> <span class="o">=</span> <span class="n">probs</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-            <span class="c1"># If we add a blank, the prefix doesn't change.
-</span>            <span class="c1"># New blank score = log(P(blank at t)) + log(P_total at t-1)
-</span>            <span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span> <span class="o">=</span> <span class="n">next_beam</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span>
-            <span class="n">n_p_b</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">n_p_b</span><span class="p">,</span> <span class="n">pr_blank</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">p_b</span><span class="p">,</span> <span class="n">p_nb</span><span class="p">))</span>
-            <span class="n">next_beam</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span><span class="p">)</span>
-            
-            <span class="c1"># 2. Handle Non-Blank Tokens
-</span>            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">V</span><span class="p">):</span>
-                <span class="n">pr_char</span> <span class="o">=</span> <span class="n">probs</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="n">v</span><span class="p">]</span>
-                <span class="n">char</span> <span class="o">=</span> <span class="n">vocab</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
-                
-                <span class="c1"># Case A: Repeat character (e.g., "l" -&gt; "l")
-</span>                <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">char</span><span class="p">:</span>
-                    <span class="c1"># 1. Merge (from non-blank): "l" + "l" -&gt; "l"
-</span>                    <span class="c1"># We update the NON-blank score of the SAME prefix
-</span>                    <span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span> <span class="o">=</span> <span class="n">next_beam</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span>
-                    <span class="n">n_p_nb</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">n_p_nb</span><span class="p">,</span> <span class="n">pr_char</span> <span class="o">+</span> <span class="n">p_nb</span><span class="p">)</span>
-                    <span class="n">next_beam</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span><span class="p">)</span>
-                    
-                    <span class="c1"># 2. No Merge (from blank): "l" + &lt;blk&gt; + "l" -&gt; "ll"
-</span>                    <span class="c1"># We extend the prefix
-</span>                    <span class="n">new_prefix</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="p">(</span><span class="n">char</span><span class="p">,)</span>
-                    <span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span> <span class="o">=</span> <span class="n">next_beam</span><span class="p">[</span><span class="n">new_prefix</span><span class="p">]</span>
-                    <span class="n">n_p_nb</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">n_p_nb</span><span class="p">,</span> <span class="n">pr_char</span> <span class="o">+</span> <span class="n">p_b</span><span class="p">)</span>
-                    <span class="n">next_beam</span><span class="p">[</span><span class="n">new_prefix</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span><span class="p">)</span>
-                    
-                <span class="c1"># Case B: New character
-</span>                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">new_prefix</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="p">(</span><span class="n">char</span><span class="p">,)</span>
-                    <span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span> <span class="o">=</span> <span class="n">next_beam</span><span class="p">[</span><span class="n">new_prefix</span><span class="p">]</span>
-                    <span class="c1"># We can come from blank OR non-blank
-</span>                    <span class="n">n_p_nb</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">n_p_nb</span><span class="p">,</span> <span class="n">pr_char</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">p_b</span><span class="p">,</span> <span class="n">p_nb</span><span class="p">))</span>
-                    <span class="n">next_beam</span><span class="p">[</span><span class="n">new_prefix</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_p_b</span><span class="p">,</span> <span class="n">n_p_nb</span><span class="p">)</span>
-                    
-        <span class="n">beam</span> <span class="o">=</span> <span class="n">next_beam</span>
-        
-    <span class="c1"># Final cleanup: Return top hypothesis
-</span>    <span class="n">best_prefix</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">beam</span><span class="p">.</span><span class="nf">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">return</span> <span class="sh">""</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">best_prefix</span><span class="p">)</span>
+<p>def ctc_beam_search(probs, vocab, beam_width=10):
+ “””
+ probs: (T, V) numpy array of probabilities
+ vocab: list of characters (index 0 is <blk>)
+ """
+ T, V = probs.shape</blk></p>
 
-<span class="c1"># Mock Data
-# T=3, V=3 (&lt;blk&gt;, A, B)
-</span><span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span>
-    <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">],</span> <span class="c1"># Mostly A
-</span>    <span class="p">[</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">],</span> <span class="c1"># Mostly Blank
-</span>    <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">]</span>  <span class="c1"># Mostly B
-</span><span class="p">]))</span>
-<span class="n">vocab</span> <span class="o">=</span> <span class="p">[</span><span class="sh">'</span><span class="s">&lt;blk&gt;</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">A</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">B</span><span class="sh">'</span><span class="p">]</span>
-<span class="nf">print</span><span class="p">(</span><span class="nf">ctc_beam_search</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">vocab</span><span class="p">))</span> <span class="c1"># Output: "AB"
-</span></code></pre></div></div>
+<p># beam: dict mapping prefix -&gt; probability
+ # We work in log domain to avoid underflow
+ beam = defaultdict(lambda: float(‘-inf’))</p>
+
+<p># Initialize with empty prefix
+ # We track two scores: (score_blank, score_non_blank)
+ beam[()] = (0.0, float(‘-inf’))</p>
+
+<p>for t in range(T):
+ next_beam = defaultdict(lambda: (float(‘-inf’), float(‘-inf’)))</p>
+
+<p># Get top-K prefixes from previous step
+ # Sort by total score (logsumexp of blank and non-blank)
+ sorted_prefixes = sorted(
+ beam.items(),
+ key=lambda x: np.logaddexp(x[1][0], x[1][1]),
+ reverse=True
+ )[:beam_width]</p>
+
+<p>for prefix, (p_b, p_nb) in sorted_prefixes:
+ # 1. Handle Blank Token (Index 0)
+ pr_blank = probs[t, 0]
+ # If we add a blank, the prefix doesn’t change.
+ # New blank score = log(P(blank at t)) + log(P_total at t-1)
+ n_p_b, n_p_nb = next_beam[prefix]
+ n_p_b = np.logaddexp(n_p_b, pr_blank + np.logaddexp(p_b, p_nb))
+ next_beam[prefix] = (n_p_b, n_p_nb)</p>
+
+<p># 2. Handle Non-Blank Tokens
+ for v in range(1, V):
+ pr_char = probs[t, v]
+ char = vocab[v]</p>
+
+<p># Case A: Repeat character (e.g., “l” -&gt; “l”)
+ if len(prefix) &gt; 0 and prefix[-1] == char:
+ # 1. Merge (from non-blank): “l” + “l” -&gt; “l”
+ # We update the NON-blank score of the SAME prefix
+ n_p_b, n_p_nb = next_beam[prefix]
+ n_p_nb = np.logaddexp(n_p_nb, pr_char + p_nb)
+ next_beam[prefix] = (n_p_b, n_p_nb)</p>
+
+<p># 2. No Merge (from blank): “l” + <blk> + "l" -&gt; "ll"
+ # We extend the prefix
+ new_prefix = prefix + (char,)
+ n_p_b, n_p_nb = next_beam[new_prefix]
+ n_p_nb = np.logaddexp(n_p_nb, pr_char + p_b)
+ next_beam[new_prefix] = (n_p_b, n_p_nb)</blk></p>
+
+<p># Case B: New character
+ else:
+ new_prefix = prefix + (char,)
+ n_p_b, n_p_nb = next_beam[new_prefix]
+ # We can come from blank OR non-blank
+ n_p_nb = np.logaddexp(n_p_nb, pr_char + np.logaddexp(p_b, p_nb))
+ next_beam[new_prefix] = (n_p_b, n_p_nb)</p>
+
+<p>beam = next_beam</p>
+
+<p># Final cleanup: Return top hypothesis
+ best_prefix = max(beam.items(), key=lambda x: np.logaddexp(x[1][0], x[1][1]))[0]
+ return ““.join(best_prefix)</p>
+
+<h1 id="mock-data">Mock Data</h1>
+<h1 id="t3-v3--a-b">T=3, V=3 (<blk>, A, B)</blk></h1>
+<p>probs = np.log(np.array([
+ [0.1, 0.8, 0.1], # Mostly A
+ [0.8, 0.1, 0.1], # Mostly Blank
+ [0.1, 0.1, 0.8] # Mostly B
+]))
+vocab = [‘<blk>', 'A', 'B']
+print(ctc_beam_search(probs, vocab)) # Output: "AB"
+``</blk></p>
 
 <h2 id="adding-a-language-model-lm">Adding a Language Model (LM)</h2>
 
@@ -458,12 +460,13 @@ At each time step <code class="language-plaintext highlighter-rouge">t</code>, w
 <p>In production, we use <strong>KenLM</strong>, a highly optimized C++ library for n-gram language models.
 We query the LM every time we append a space character (end of a word).</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Pseudo-code for LM scoring
-</span><span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="sh">'</span><span class="s"> </span><span class="sh">'</span><span class="p">:</span>
-    <span class="n">word</span> <span class="o">=</span> <span class="nf">get_last_word</span><span class="p">(</span><span class="n">new_prefix</span><span class="p">)</span>
-    <span class="n">lm_score</span> <span class="o">=</span> <span class="n">lm</span><span class="p">.</span><span class="nf">score</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
-    <span class="n">n_p_nb</span> <span class="o">+=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">lm_score</span>
-</code></pre></div></div>
+<p>``python</p>
+<h1 id="pseudo-code-for-lm-scoring">Pseudo-code for LM scoring</h1>
+<p>if char == ‘ ‘:
+ word = get_last_word(new_prefix)
+ lm_score = lm.score(word)
+ n_p_nb += alpha * lm_score
+``</p>
 
 <h2 id="measuring-success-word-error-rate-wer">Measuring Success: Word Error Rate (WER)</h2>
 
@@ -482,34 +485,35 @@ We query the LM every time we append a space character (end of a word).</p>
 
 <p>This uses the Levenshtein Distance algorithm (Dynamic Programming!).</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">calculate_wer</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
-    <span class="n">r</span> <span class="o">=</span> <span class="n">reference</span><span class="p">.</span><span class="nf">split</span><span class="p">()</span>
-    <span class="n">h</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="p">.</span><span class="nf">split</span><span class="p">()</span>
-    <span class="n">n</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
-    <span class="n">m</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
-    
-    <span class="c1"># DP Matrix
-</span>    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">zeros</span><span class="p">((</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">m</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
-    
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
-    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">m</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span> <span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">j</span>
-    
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">m</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">h</span><span class="p">[</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
-                <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">sub</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
-                <span class="n">ins</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
-                <span class="n">rem</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
-                <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nf">min</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="n">ins</span><span class="p">,</span> <span class="n">rem</span><span class="p">)</span>
-                
-    <span class="k">return</span> <span class="n">d</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">/</span> <span class="n">n</span>
+<p>``python
+def calculate_wer(reference, hypothesis):
+ r = reference.split()
+ h = hypothesis.split()
+ n = len(r)
+ m = len(h)</p>
 
-<span class="n">ref</span> <span class="o">=</span> <span class="sh">"</span><span class="s">the cat sat on the mat</span><span class="sh">"</span>
-<span class="n">hyp</span> <span class="o">=</span> <span class="sh">"</span><span class="s">the cat sat on mat</span><span class="sh">"</span> <span class="c1"># Deletion
-</span><span class="nf">print</span><span class="p">(</span><span class="nf">calculate_wer</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">hyp</span><span class="p">))</span> <span class="c1"># 1/6 = 16.6%
-</span></code></pre></div></div>
+<p># DP Matrix
+ d = np.zeros((n+1, m+1))</p>
+
+<p>for i in range(n+1): d[i][0] = i
+ for j in range(m+1): d[0][j] = j</p>
+
+<p>for i in range(1, n+1):
+ for j in range(1, m+1):
+ if r[i-1] == h[j-1]:
+ d[i][j] = d[i-1][j-1]
+ else:
+ sub = d[i-1][j-1] + 1
+ ins = d[i][j-1] + 1
+ rem = d[i-1][j] + 1
+ d[i][j] = min(sub, ins, rem)</p>
+
+<p>return d[n][m] / n</p>
+
+<p>ref = “the cat sat on the mat”
+hyp = “the cat sat on mat” # Deletion
+print(calculate_wer(ref, hyp)) # 1/6 = 16.6%
+``</p>
 
 <h2 id="streaming-asr-the-infinite-loop">Streaming ASR: The Infinite Loop</h2>
 
@@ -541,10 +545,11 @@ We use <strong>Contextual Biasing</strong>.</p>
   <li>If we are inside a hot-word node, add a bonus score.</li>
 </ol>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Pseudo-code
-</span><span class="k">if</span> <span class="n">current_prefix</span> <span class="ow">in</span> <span class="n">hot_word_trie</span><span class="p">:</span>
-    <span class="n">score</span> <span class="o">+=</span> <span class="n">boosting_weight</span>
-</code></pre></div></div>
+<p>``python</p>
+<h1 id="pseudo-code">Pseudo-code</h1>
+<p>if current_prefix in hot_word_trie:
+ score += boosting_weight
+``</p>
 
 <h2 id="debugging-the-decoder">Debugging the Decoder</h2>
 
@@ -574,52 +579,53 @@ Since many paths map to <code class="language-plaintext highlighter-rouge">Y</co
   <li>If <code class="language-plaintext highlighter-rouge">Y[s] != Y[s-2]</code> (new char): We can also come from <code class="language-plaintext highlighter-rouge">alpha_{t-1}(s-2)</code> (skipping the blank).</li>
 </ul>
 
-<p>This <code class="language-plaintext highlighter-rouge">O(T * S)</code> algorithm is what allows CTC to be differentiable and trainable via backpropagation.</p>
+<p>This O(T * S) algorithm is what allows CTC to be differentiable and trainable via backpropagation.</p>
 
 <h2 id="appendix-b-complete-python-decoder-class">Appendix B: Complete Python Decoder Class</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
-<span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<p>``python
+import numpy as np
+from collections import defaultdict</p>
 
-<span class="k">class</span> <span class="nc">CTCDecoder</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">vocab</span><span class="p">,</span> <span class="n">beam_width</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vocab</span> <span class="o">=</span> <span class="n">vocab</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">beam_width</span> <span class="o">=</span> <span class="n">beam_width</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">beta</span>
-        
-    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">probs</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        probs: (T, V)
-        Returns: best_string
-        </span><span class="sh">"""</span>
-        <span class="c1"># Initialization
-</span>        <span class="n">beam</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="p">(</span><span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">),</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">)))</span>
-        <span class="n">beam</span><span class="p">[()]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">))</span>
-        
-        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">probs</span><span class="p">)):</span>
-            <span class="n">next_beam</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="p">(</span><span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">),</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">)))</span>
-            
-            <span class="c1"># Pruning: Only keep top beam_width
-</span>            <span class="n">sorted_beam</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span>
-                <span class="n">beam</span><span class="p">.</span><span class="nf">items</span><span class="p">(),</span>
-                <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span>
-                <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span>
-            <span class="p">)[:</span><span class="n">self</span><span class="p">.</span><span class="n">beam_width</span><span class="p">]</span>
-            
-            <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="p">(</span><span class="n">p_b</span><span class="p">,</span> <span class="n">p_nb</span><span class="p">)</span> <span class="ow">in</span> <span class="n">sorted_beam</span><span class="p">:</span>
-                <span class="c1"># ... (Same logic as above) ...
-</span>                <span class="c1"># See main article for the core loop
-</span>                <span class="k">pass</span>
-                
-            <span class="n">beam</span> <span class="o">=</span> <span class="n">next_beam</span>
-            
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">_get_best_hypothesis</span><span class="p">(</span><span class="n">beam</span><span class="p">)</span>
+<p>class CTCDecoder:
+ def <strong>init</strong>(self, vocab, beam_width=100, alpha=0.5, beta=1.0):
+ self.vocab = vocab
+ self.beam_width = beam_width
+ self.alpha = alpha
+ self.beta = beta</p>
 
-    <span class="k">def</span> <span class="nf">_get_best_hypothesis</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">beam</span><span class="p">):</span>
-        <span class="n">best_prefix</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">beam</span><span class="p">.</span><span class="nf">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">logaddexp</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="sh">""</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">best_prefix</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def decode(self, probs):
+ “””
+ probs: (T, V)
+ Returns: best_string
+ “””
+ # Initialization
+ beam = defaultdict(lambda: (float(‘-inf’), float(‘-inf’)))
+ beam[()] = (0.0, float(‘-inf’))</p>
+
+<p>for t in range(len(probs)):
+ next_beam = defaultdict(lambda: (float(‘-inf’), float(‘-inf’)))</p>
+
+<p># Pruning: Only keep top beam_width
+ sorted_beam = sorted(
+ beam.items(),
+ key=lambda x: np.logaddexp(x[1][0], x[1][1]),
+ reverse=True
+ )[:self.beam_width]</p>
+
+<p>for prefix, (p_b, p_nb) in sorted_beam:
+ # … (Same logic as above) …
+ # See main article for the core loop
+ pass</p>
+
+<p>beam = next_beam</p>
+
+<p>return self._get_best_hypothesis(beam)</p>
+
+<p>def _get_best_hypothesis(self, beam):
+ best_prefix = max(beam.items(), key=lambda x: np.logaddexp(x[1][0], x[1][1]))[0]
+ return ““.join(best_prefix)
+``</p>
 
 <h2 id="appendix-c-the-asr-troubleshooting-guide">Appendix C: The ASR Troubleshooting Guide</h2>
 

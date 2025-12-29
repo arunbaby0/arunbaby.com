@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="RAG Systems">
     <meta itemprop="description" content="“Grounding LLMs in facts, not hallucinations.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -274,107 +274,112 @@
 </ol>
 
 <p><strong>Formula:</strong>
-\(P(\text{answer} | \text{query}) = P(\text{answer} | \text{query}, \text{retrieved\_docs})\)</p>
+<code class="language-plaintext highlighter-rouge">P(\text{answer} | \text{query}) = P(\text{answer} | \text{query}, \text{retrieved\_docs})</code></p>
 
 <h2 id="3-rag-architecture">3. RAG Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                    ┌─────────────────────┐
-                    │   User Query        │
-                    └─────────┬───────────┘
-                              │
-                    ┌─────────▼───────────┐
-                    │   Query Embedding   │
-                    │   (e.g., OpenAI)    │
-                    └─────────┬───────────┘
-                              │
-                    ┌─────────▼───────────┐
-                    │   Vector Database   │
-                    │   (Pinecone, etc.)  │
-                    └─────────┬───────────┘
-                              │ Top-K docs
-                    ┌─────────▼───────────┐
-                    │   Prompt Builder    │
-                    │   Query + Context   │
-                    └─────────┬───────────┘
-                              │
-                    ┌─────────▼───────────┐
-                    │   LLM Generation    │
-                    │   (GPT-4, Claude)   │
-                    └─────────┬───────────┘
-                              │
-                    ┌─────────▼───────────┐
-                    │   Response          │
-                    └─────────────────────┘
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+ ┌─────────────────────┐
+ │ User Query │
+ └─────────┬───────────┘
+ │
+ ┌─────────▼───────────┐
+ │ Query Embedding │
+ │ (e.g., OpenAI) │
+ └─────────┬───────────┘
+ │
+ ┌─────────▼───────────┐
+ │ Vector Database │
+ │ (Pinecone, etc.) │
+ └─────────┬───────────┘
+ │ Top-K docs
+ ┌─────────▼───────────┐
+ │ Prompt Builder │
+ │ Query + Context │
+ └─────────┬───────────┘
+ │
+ ┌─────────▼───────────┐
+ │ LLM Generation │
+ │ (GPT-4, Claude) │
+ └─────────┬───────────┘
+ │
+ ┌─────────▼───────────┐
+ │ Response │
+ └─────────────────────┘
+</code></p>
 
 <h2 id="4-building-a-rag-system">4. Building a RAG System</h2>
 
 <h3 id="step-1-document-ingestion">Step 1: Document Ingestion</h3>
 
-<p><strong>Collect and preprocess documents:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">langchain.document_loaders</span> <span class="kn">import</span> <span class="n">PDFLoader</span><span class="p">,</span> <span class="n">WebLoader</span>
-<span class="kn">from</span> <span class="n">langchain.text_splitter</span> <span class="kn">import</span> <span class="n">RecursiveCharacterTextSplitter</span>
+<p><strong>Collect and preprocess documents:</strong>
+``python
+from langchain.document_loaders import PDFLoader, WebLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter</p>
 
-<span class="c1"># Load documents
-</span><span class="n">loader</span> <span class="o">=</span> <span class="nc">PDFLoader</span><span class="p">(</span><span class="sh">"</span><span class="s">knowledge_base.pdf</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">documents</span> <span class="o">=</span> <span class="n">loader</span><span class="p">.</span><span class="nf">load</span><span class="p">()</span>
+<h1 id="load-documents">Load documents</h1>
+<p>loader = PDFLoader(“knowledge_base.pdf”)
+documents = loader.load()</p>
 
-<span class="c1"># Split into chunks
-</span><span class="n">splitter</span> <span class="o">=</span> <span class="nc">RecursiveCharacterTextSplitter</span><span class="p">(</span>
-    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
-    <span class="n">chunk_overlap</span><span class="o">=</span><span class="mi">50</span>
-<span class="p">)</span>
-<span class="n">chunks</span> <span class="o">=</span> <span class="n">splitter</span><span class="p">.</span><span class="nf">split_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="split-into-chunks">Split into chunks</h1>
+<p>splitter = RecursiveCharacterTextSplitter(
+ chunk_size=500,
+ chunk_overlap=50
+)
+chunks = splitter.split_documents(documents)
+``</p>
 
 <h3 id="step-2-embedding-and-indexing">Step 2: Embedding and Indexing</h3>
 
-<p><strong>Convert chunks to vectors and store:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">langchain.embeddings</span> <span class="kn">import</span> <span class="n">OpenAIEmbeddings</span>
-<span class="kn">from</span> <span class="n">langchain.vectorstores</span> <span class="kn">import</span> <span class="n">Pinecone</span>
+<p><strong>Convert chunks to vectors and store:</strong>
+``python
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Pinecone</p>
 
-<span class="c1"># Create embeddings
-</span><span class="n">embeddings</span> <span class="o">=</span> <span class="nc">OpenAIEmbeddings</span><span class="p">()</span>
+<h1 id="create-embeddings">Create embeddings</h1>
+<p>embeddings = OpenAIEmbeddings()</p>
 
-<span class="c1"># Store in vector database
-</span><span class="n">vectorstore</span> <span class="o">=</span> <span class="n">Pinecone</span><span class="p">.</span><span class="nf">from_documents</span><span class="p">(</span>
-    <span class="n">chunks</span><span class="p">,</span>
-    <span class="n">embeddings</span><span class="p">,</span>
-    <span class="n">index_name</span><span class="o">=</span><span class="sh">"</span><span class="s">knowledge-base</span><span class="sh">"</span>
-<span class="p">)</span>
-</code></pre></div></div>
+<h1 id="store-in-vector-database">Store in vector database</h1>
+<p>vectorstore = Pinecone.from_documents(
+ chunks,
+ embeddings,
+ index_name=”knowledge-base”
+)
+``</p>
 
 <h3 id="step-3-retrieval">Step 3: Retrieval</h3>
 
-<p><strong>Find relevant chunks for a query:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">retrieve</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
-    <span class="c1"># Embed query
-</span>    <span class="n">query_embedding</span> <span class="o">=</span> <span class="n">embeddings</span><span class="p">.</span><span class="nf">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-    
-    <span class="c1"># Search vector database
-</span>    <span class="n">results</span> <span class="o">=</span> <span class="n">vectorstore</span><span class="p">.</span><span class="nf">similarity_search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">results</span>
-</code></pre></div></div>
+<p><strong>Find relevant chunks for a query:</strong>
+``python
+def retrieve(query, k=5):
+ # Embed query
+ query_embedding = embeddings.embed_query(query)</p>
+
+<p># Search vector database
+ results = vectorstore.similarity_search(query, k=k)</p>
+
+<p>return results
+``</p>
 
 <h3 id="step-4-generation">Step 4: Generation</h3>
 
-<p><strong>Build prompt and generate response:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">generate_response</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">retrieved_docs</span><span class="p">):</span>
-    <span class="n">context</span> <span class="o">=</span> <span class="sh">"</span><span class="se">\n\n</span><span class="sh">"</span><span class="p">.</span><span class="nf">join</span><span class="p">([</span><span class="n">doc</span><span class="p">.</span><span class="n">page_content</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">retrieved_docs</span><span class="p">])</span>
-    
-    <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"""</span><span class="s">Answer the question based on the context below.
-    
-Context:
-</span><span class="si">{</span><span class="n">context</span><span class="si">}</span><span class="s">
+<p><strong>Build prompt and generate response:</strong>
+``python
+def generate_response(query, retrieved_docs):
+ context = “\n\n”.join([doc.page_content for doc in retrieved_docs])</p>
 
-Question: </span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s">
+<p>prompt = f”"”Answer the question based on the context below.</p>
 
-Answer:</span><span class="sh">"""</span>
-    
-    <span class="n">response</span> <span class="o">=</span> <span class="n">llm</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">response</span>
-</code></pre></div></div>
+<p>Context:
+{context}</p>
+
+<p>Question: {query}</p>
+
+<p>Answer:”””</p>
+
+<p>response = llm.generate(prompt)
+ return response
+``</p>
 
 <h2 id="5-chunking-strategies">5. Chunking Strategies</h2>
 
@@ -439,69 +444,74 @@ Answer:</span><span class="sh">"""</span>
 
 <h3 id="63-hybrid-retrieval">6.3. Hybrid Retrieval</h3>
 
-<p><strong>Combine dense and sparse:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">hybrid_search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
-    <span class="c1"># Dense search
-</span>    <span class="n">dense_results</span> <span class="o">=</span> <span class="n">dense_retriever</span><span class="p">.</span><span class="nf">search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
-    
-    <span class="c1"># Sparse search
-</span>    <span class="n">sparse_results</span> <span class="o">=</span> <span class="n">bm25_retriever</span><span class="p">.</span><span class="nf">search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
-    
-    <span class="c1"># Combine with reciprocal rank fusion
-</span>    <span class="n">combined</span> <span class="o">=</span> <span class="nf">reciprocal_rank_fusion</span><span class="p">(</span><span class="n">dense_results</span><span class="p">,</span> <span class="n">sparse_results</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">combined</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span>
-</code></pre></div></div>
+<p><strong>Combine dense and sparse:</strong>
+``python
+def hybrid_search(query, k=5, alpha=0.5):
+ # Dense search
+ dense_results = dense_retriever.search(query, k=k)</p>
+
+<p># Sparse search
+ sparse_results = bm25_retriever.search(query, k=k)</p>
+
+<p># Combine with reciprocal rank fusion
+ combined = reciprocal_rank_fusion(dense_results, sparse_results, alpha)</p>
+
+<p>return combined[:k]
+``</p>
 
 <h3 id="64-reranking">6.4. Reranking</h3>
 
-<p><strong>Use a more powerful model to rerank top candidates:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">sentence_transformers</span> <span class="kn">import</span> <span class="n">CrossEncoder</span>
+<p><strong>Use a more powerful model to rerank top candidates:</strong>
+``python
+from sentence_transformers import CrossEncoder</p>
 
-<span class="n">reranker</span> <span class="o">=</span> <span class="nc">CrossEncoder</span><span class="p">(</span><span class="sh">'</span><span class="s">cross-encoder/ms-marco-MiniLM-L-6-v2</span><span class="sh">'</span><span class="p">)</span>
+<p>reranker = CrossEncoder(‘cross-encoder/ms-marco-MiniLM-L-6-v2’)</p>
 
-<span class="k">def</span> <span class="nf">rerank</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">documents</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
-    <span class="n">pairs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">query</span><span class="p">,</span> <span class="n">doc</span><span class="p">.</span><span class="n">content</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
-    <span class="n">scores</span> <span class="o">=</span> <span class="n">reranker</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span>
-    
-    <span class="n">ranked</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="nf">zip</span><span class="p">(</span><span class="n">documents</span><span class="p">,</span> <span class="n">scores</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">[</span><span class="n">doc</span> <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">ranked</span><span class="p">[:</span><span class="n">top_k</span><span class="p">]]</span>
-</code></pre></div></div>
+<p>def rerank(query, documents, top_k=5):
+ pairs = [(query, doc.content) for doc in documents]
+ scores = reranker.predict(pairs)</p>
+
+<p>ranked = sorted(zip(documents, scores), key=lambda x: x[1], reverse=True)
+ return [doc for doc, score in ranked[:top_k]]
+``</p>
 
 <h2 id="7-query-processing">7. Query Processing</h2>
 
 <h3 id="71-query-expansion">7.1. Query Expansion</h3>
 
-<p><strong>Expand query with related terms:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">expand_query</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
-    <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">Generate 3 related search queries for: </span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="sh">"</span>
-    <span class="n">expanded</span> <span class="o">=</span> <span class="n">llm</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">[</span><span class="n">query</span><span class="p">]</span> <span class="o">+</span> <span class="n">expanded</span>
-</code></pre></div></div>
+<p><strong>Expand query with related terms:</strong>
+<code class="language-plaintext highlighter-rouge">python
+def expand_query(query):
+ prompt = f"Generate 3 related search queries for: {query}"
+ expanded = llm.generate(prompt)
+ return [query] + expanded
+</code></p>
 
 <h3 id="72-query-decomposition">7.2. Query Decomposition</h3>
 
-<p><strong>Break complex queries into subqueries:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">decompose_query</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
-    <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"""</span><span class="s">Break this question into simpler sub-questions:
-    Question: </span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s">
-    Sub-questions:</span><span class="sh">"""</span>
-    
-    <span class="n">subqueries</span> <span class="o">=</span> <span class="n">llm</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nf">parse_subqueries</span><span class="p">(</span><span class="n">subqueries</span><span class="p">)</span>
-</code></pre></div></div>
+<p><strong>Break complex queries into subqueries:</strong>
+``python
+def decompose_query(query):
+ prompt = f”"”Break this question into simpler sub-questions:
+ Question: {query}
+ Sub-questions:”””</p>
+
+<p>subqueries = llm.generate(prompt)
+ return parse_subqueries(subqueries)
+``</p>
 
 <h3 id="73-hyde-hypothetical-document-embeddings">7.3. HyDE (Hypothetical Document Embeddings)</h3>
 
-<p><strong>Generate a hypothetical answer, then search for similar documents:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">hyde_search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
-    <span class="c1"># Generate hypothetical answer
-</span>    <span class="n">hypothetical</span> <span class="o">=</span> <span class="n">llm</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Answer this question: </span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="c1"># Search using hypothetical answer
-</span>    <span class="n">results</span> <span class="o">=</span> <span class="n">vectorstore</span><span class="p">.</span><span class="nf">similarity_search</span><span class="p">(</span><span class="n">hypothetical</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">results</span>
-</code></pre></div></div>
+<p><strong>Generate a hypothetical answer, then search for similar documents:</strong>
+``python
+def hyde_search(query, k=5):
+ # Generate hypothetical answer
+ hypothetical = llm.generate(f”Answer this question: {query}”)</p>
+
+<p># Search using hypothetical answer
+ results = vectorstore.similarity_search(hypothetical, k=k)
+ return results
+``</p>
 
 <h2 id="8-advanced-rag-patterns">8. Advanced RAG Patterns</h2>
 
@@ -517,41 +527,43 @@ Answer:</span><span class="sh">"""</span>
 
 <h3 id="82-self-rag">8.2. Self-RAG</h3>
 
-<p><strong>LLM decides when to retrieve:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">self_rag</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
-    <span class="c1"># Ask if retrieval is needed
-</span>    <span class="n">needs_retrieval</span> <span class="o">=</span> <span class="n">llm</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span>
-        <span class="sa">f</span><span class="sh">"</span><span class="s">Does this question need external knowledge? </span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="sh">"</span>
-    <span class="p">)</span>
-    
-    <span class="k">if</span> <span class="sh">"</span><span class="s">yes</span><span class="sh">"</span> <span class="ow">in</span> <span class="n">needs_retrieval</span><span class="p">.</span><span class="nf">lower</span><span class="p">():</span>
-        <span class="n">docs</span> <span class="o">=</span> <span class="nf">retrieve</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nf">generate_with_context</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">docs</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">llm</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-</code></pre></div></div>
+<p><strong>LLM decides when to retrieve:</strong>
+``python
+def self_rag(query):
+ # Ask if retrieval is needed
+ needs_retrieval = llm.generate(
+ f”Does this question need external knowledge? {query}”
+ )</p>
+
+<p>if “yes” in needs_retrieval.lower():
+ docs = retrieve(query)
+ return generate_with_context(query, docs)
+ else:
+ return llm.generate(query)
+``</p>
 
 <h3 id="83-corrective-rag">8.3. Corrective RAG</h3>
 
-<p><strong>Verify and correct retrieved information:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">corrective_rag</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
-    <span class="n">docs</span> <span class="o">=</span> <span class="nf">retrieve</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-    
-    <span class="c1"># Verify relevance
-</span>    <span class="n">relevant_docs</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">:</span>
-        <span class="n">relevance</span> <span class="o">=</span> <span class="n">llm</span><span class="p">.</span><span class="nf">generate</span><span class="p">(</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="s">Is this relevant to </span><span class="sh">'</span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="sh">'</span><span class="s">? Document: </span><span class="si">{</span><span class="n">doc</span><span class="p">.</span><span class="n">content</span><span class="si">}</span><span class="sh">"</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="sh">"</span><span class="s">yes</span><span class="sh">"</span> <span class="ow">in</span> <span class="n">relevance</span><span class="p">.</span><span class="nf">lower</span><span class="p">():</span>
-            <span class="n">relevant_docs</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
-    
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">relevant_docs</span><span class="p">:</span>
-        <span class="c1"># Fall back to web search
-</span>        <span class="n">relevant_docs</span> <span class="o">=</span> <span class="nf">web_search</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="nf">generate_with_context</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">relevant_docs</span><span class="p">)</span>
-</code></pre></div></div>
+<p><strong>Verify and correct retrieved information:</strong>
+``python
+def corrective_rag(query):
+ docs = retrieve(query)</p>
+
+<p># Verify relevance
+ relevant_docs = []
+ for doc in docs:
+ relevance = llm.generate(
+ f”Is this relevant to ‘{query}’? Document: {doc.content}”
+ )
+ if “yes” in relevance.lower():
+ relevant_docs.append(doc)</p>
+
+<p>if not relevant_docs:
+ # Fall back to web search
+ relevant_docs = web_search(query)</p>
+
+<p>return generate_with_context(query, relevant_docs)
+``</p>
 
 <h2 id="9-evaluation-metrics">9. Evaluation Metrics</h2>
 
@@ -583,39 +595,42 @@ Answer:</span><span class="sh">"""</span>
 
 <h3 id="101-caching">10.1. Caching</h3>
 
-<p><strong>Cache frequent queries:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span>
+<p><strong>Cache frequent queries:</strong>
+``python
+from functools import lru_cache</p>
 
-<span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">cached_retrieve</span><span class="p">(</span><span class="n">query_hash</span><span class="p">):</span>
-    <span class="k">return</span> <span class="nf">retrieve</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-</code></pre></div></div>
+<p>@lru_cache(maxsize=1000)
+def cached_retrieve(query_hash):
+ return retrieve(query)
+``</p>
 
 <p><strong>Semantic caching:</strong> Match similar queries, not just exact.</p>
 
 <h3 id="102-streaming">10.2. Streaming</h3>
 
-<p><strong>Stream tokens as they’re generated:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">async</span> <span class="k">def</span> <span class="nf">stream_rag_response</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
-    <span class="n">docs</span> <span class="o">=</span> <span class="k">await</span> <span class="nf">retrieve</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-    <span class="n">prompt</span> <span class="o">=</span> <span class="nf">build_prompt</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">docs</span><span class="p">)</span>
-    
-    <span class="k">async</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">llm</span><span class="p">.</span><span class="nf">stream</span><span class="p">(</span><span class="n">prompt</span><span class="p">):</span>
-        <span class="k">yield</span> <span class="n">token</span>
-</code></pre></div></div>
+<p><strong>Stream tokens as they’re generated:</strong>
+``python
+async def stream_rag_response(query):
+ docs = await retrieve(query)
+ prompt = build_prompt(query, docs)</p>
+
+<p>async for token in llm.stream(prompt):
+ yield token
+``</p>
 
 <h3 id="103-citation">10.3. Citation</h3>
 
-<p><strong>Include sources in the response:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"""</span><span class="s">Answer based on the sources. Cite using [1], [2], etc.
+<p><strong>Include sources in the response:</strong>
+``python
+prompt = f”"”Answer based on the sources. Cite using [1], [2], etc.</p>
 
-Sources:
-[1] </span><span class="si">{</span><span class="n">doc1</span><span class="p">.</span><span class="n">content</span><span class="si">}</span><span class="s">
-[2] </span><span class="si">{</span><span class="n">doc2</span><span class="p">.</span><span class="n">content</span><span class="si">}</span><span class="s">
+<p>Sources:
+[1] {doc1.content}
+[2] {doc2.content}</p>
 
-Question: </span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s">
-Answer with citations:</span><span class="sh">"""</span>
-</code></pre></div></div>
+<p>Question: {query}
+Answer with citations:”””
+``</p>
 
 <h3 id="104-guardrails">10.4. Guardrails</h3>
 
@@ -638,32 +653,33 @@ Answer with citations:</span><span class="sh">"""</span>
   <li>Real-time updates.</li>
 </ul>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌───────────────────────────────────────────────────────┐
-│                    API Gateway                        │
-│                   (Auth, Rate Limit)                  │
+<p><strong>Architecture:</strong>
+<code class="language-plaintext highlighter-rouge">
+┌───────────────────────────────────────────────────────┐
+│ API Gateway │
+│ (Auth, Rate Limit) │
 └───────────────────────────┬───────────────────────────┘
-                            │
+ │
 ┌───────────────────────────▼───────────────────────────┐
-│                   RAG Service                         │
-│   ┌─────────────┐  ┌─────────────┐  ┌──────────────┐ │
-│   │   Query     │  │  Retrieval  │  │  Generation  │ │
-│   │  Processor  │→ │   Engine    │→ │    Engine    │ │
-│   └─────────────┘  └─────────────┘  └──────────────┘ │
+│ RAG Service │
+│ ┌─────────────┐ ┌─────────────┐ ┌──────────────┐ │
+│ │ Query │ │ Retrieval │ │ Generation │ │
+│ │ Processor │→ │ Engine │→ │ Engine │ │
+│ └─────────────┘ └─────────────┘ └──────────────┘ │
 └───────────────────────────┬───────────────────────────┘
-                            │
-         ┌──────────────────┴──────────────────┐
-         │                                      │
-┌────────▼────────┐                   ┌────────▼────────┐
-│  Vector DB      │                   │  LLM Service    │
-│  (Pinecone)     │                   │  (OpenAI/Azure) │
-└─────────────────┘                   └─────────────────┘
-         │
+ │
+ ┌──────────────────┴──────────────────┐
+ │ │
+┌────────▼────────┐ ┌────────▼────────┐
+│ Vector DB │ │ LLM Service │
+│ (Pinecone) │ │ (OpenAI/Azure) │
+└─────────────────┘ └─────────────────┘
+ │
 ┌────────▼────────┐
-│  Document Store │
-│  (S3/GCS)       │
+│ Document Store │
+│ (S3/GCS) │
 └─────────────────┘
-</code></pre></div></div>
+</code></p>
 
 <h2 id="12-common-pitfalls">12. Common Pitfalls</h2>
 
@@ -738,47 +754,48 @@ Answer with citations:</span><span class="sh">"""</span>
   <li>Combine with vector search.</li>
 </ol>
 
-<p><strong>Implementation:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Build graph during indexing
-</span><span class="k">def</span> <span class="nf">build_knowledge_graph</span><span class="p">(</span><span class="n">chunks</span><span class="p">):</span>
-    <span class="n">graph</span> <span class="o">=</span> <span class="n">nx</span><span class="p">.</span><span class="nc">Graph</span><span class="p">()</span>
-    
-    <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">:</span>
-        <span class="c1"># Extract entities
-</span>        <span class="n">entities</span> <span class="o">=</span> <span class="nf">extract_entities</span><span class="p">(</span><span class="n">chunk</span><span class="p">.</span><span class="n">content</span><span class="p">)</span>
-        
-        <span class="c1"># Add nodes
-</span>        <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">:</span>
-            <span class="n">graph</span><span class="p">.</span><span class="nf">add_node</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">entity</span><span class="p">.</span><span class="nb">type</span><span class="p">)</span>
-        
-        <span class="c1"># Add edges between co-occurring entities
-</span>        <span class="k">for</span> <span class="n">e1</span><span class="p">,</span> <span class="n">e2</span> <span class="ow">in</span> <span class="nf">combinations</span><span class="p">(</span><span class="n">entities</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
-            <span class="n">graph</span><span class="p">.</span><span class="nf">add_edge</span><span class="p">(</span><span class="n">e1</span><span class="p">,</span> <span class="n">e2</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">chunk</span><span class="p">.</span><span class="nb">id</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">graph</span>
+<p><strong>Implementation:</strong>
+``python</p>
+<h1 id="build-graph-during-indexing">Build graph during indexing</h1>
+<p>def build_knowledge_graph(chunks):
+ graph = nx.Graph()</p>
 
-<span class="c1"># Query with graph context
-</span><span class="k">def</span> <span class="nf">graph_rag_query</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">vectorstore</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
-    <span class="c1"># Vector search
-</span>    <span class="n">vector_results</span> <span class="o">=</span> <span class="n">vectorstore</span><span class="p">.</span><span class="nf">similarity_search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
-    
-    <span class="c1"># Extract entities from query
-</span>    <span class="n">query_entities</span> <span class="o">=</span> <span class="nf">extract_entities</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-    
-    <span class="c1"># Find related entities via graph
-</span>    <span class="n">related_entities</span> <span class="o">=</span> <span class="nf">set</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">query_entities</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">:</span>
-            <span class="n">neighbors</span> <span class="o">=</span> <span class="nf">list</span><span class="p">(</span><span class="n">graph</span><span class="p">.</span><span class="nf">neighbors</span><span class="p">(</span><span class="n">entity</span><span class="p">))[:</span><span class="mi">3</span><span class="p">]</span>
-            <span class="n">related_entities</span><span class="p">.</span><span class="nf">update</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span>
-    
-    <span class="c1"># Retrieve chunks mentioning related entities
-</span>    <span class="n">graph_results</span> <span class="o">=</span> <span class="nf">get_chunks_for_entities</span><span class="p">(</span><span class="n">related_entities</span><span class="p">)</span>
-    
-    <span class="c1"># Combine results
-</span>    <span class="n">all_results</span> <span class="o">=</span> <span class="nf">list</span><span class="p">(</span><span class="nf">set</span><span class="p">(</span><span class="n">vector_results</span> <span class="o">+</span> <span class="n">graph_results</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">all_results</span>
-</code></pre></div></div>
+<p>for chunk in chunks:
+ # Extract entities
+ entities = extract_entities(chunk.content)</p>
+
+<p># Add nodes
+ for entity in entities:
+ graph.add_node(entity, type=entity.type)</p>
+
+<p># Add edges between co-occurring entities
+ for e1, e2 in combinations(entities, 2):
+ graph.add_edge(e1, e2, source=chunk.id)</p>
+
+<p>return graph</p>
+
+<h1 id="query-with-graph-context">Query with graph context</h1>
+<p>def graph_rag_query(query, graph, vectorstore, k=5):
+ # Vector search
+ vector_results = vectorstore.similarity_search(query, k=k)</p>
+
+<p># Extract entities from query
+ query_entities = extract_entities(query)</p>
+
+<p># Find related entities via graph
+ related_entities = set()
+ for entity in query_entities:
+ if entity in graph:
+ neighbors = list(graph.neighbors(entity))[:3]
+ related_entities.update(neighbors)</p>
+
+<p># Retrieve chunks mentioning related entities
+ graph_results = get_chunks_for_entities(related_entities)</p>
+
+<p># Combine results
+ all_results = list(set(vector_results + graph_results))
+ return all_results
+``</p>
 
 <p><strong>Benefits:</strong></p>
 <ul>
@@ -790,36 +807,38 @@ Answer with citations:</span><span class="sh">"""</span>
 
 <h3 id="171-unit-tests">17.1. Unit Tests</h3>
 
-<p><strong>Retrieval Tests:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">test_retrieval_returns_relevant_docs</span><span class="p">():</span>
-    <span class="n">query</span> <span class="o">=</span> <span class="sh">"</span><span class="s">What is machine learning?</span><span class="sh">"</span>
-    <span class="n">docs</span> <span class="o">=</span> <span class="nf">retrieve</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-    
-    <span class="k">assert</span> <span class="nf">len</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">5</span>
-    <span class="k">assert</span> <span class="nf">any</span><span class="p">(</span><span class="sh">"</span><span class="s">machine learning</span><span class="sh">"</span> <span class="ow">in</span> <span class="n">doc</span><span class="p">.</span><span class="n">content</span><span class="p">.</span><span class="nf">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">)</span>
+<p><strong>Retrieval Tests:</strong>
+``python
+def test_retrieval_returns_relevant_docs():
+ query = “What is machine learning?”
+ docs = retrieve(query, k=5)</p>
 
-<span class="k">def</span> <span class="nf">test_chunking_preserves_sentences</span><span class="p">():</span>
-    <span class="n">text</span> <span class="o">=</span> <span class="sh">"</span><span class="s">First sentence. Second sentence.</span><span class="sh">"</span>
-    <span class="n">chunks</span> <span class="o">=</span> <span class="nf">chunk_text</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">:</span>
-        <span class="c1"># Each chunk should have complete sentences
-</span>        <span class="k">assert</span> <span class="ow">not</span> <span class="n">chunk</span><span class="p">.</span><span class="nf">startswith</span><span class="p">(</span><span class="sh">"</span><span class="s"> </span><span class="sh">"</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">chunk</span><span class="p">.</span><span class="nf">endswith</span><span class="p">(</span><span class="sh">"</span><span class="s">.</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>assert len(docs) == 5
+ assert any(“machine learning” in doc.content.lower() for doc in docs)</p>
+
+<p>def test_chunking_preserves_sentences():
+ text = “First sentence. Second sentence.”
+ chunks = chunk_text(text, chunk_size=50)</p>
+
+<p>for chunk in chunks:
+ # Each chunk should have complete sentences
+ assert not chunk.startswith(“ “)
+ assert chunk.endswith(“.”)
+``</p>
 
 <h3 id="172-integration-tests">17.2. Integration Tests</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">test_end_to_end_rag</span><span class="p">():</span>
-    <span class="n">query</span> <span class="o">=</span> <span class="sh">"</span><span class="s">What are the benefits of RAG?</span><span class="sh">"</span>
-    
-    <span class="c1"># Should return a coherent answer with citations
-</span>    <span class="n">response</span> <span class="o">=</span> <span class="n">rag_system</span><span class="p">.</span><span class="nf">query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-    
-    <span class="k">assert</span> <span class="nf">len</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">answer</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">100</span>
-    <span class="k">assert</span> <span class="nf">len</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">sources</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
-    <span class="k">assert</span> <span class="sh">"</span><span class="s">retrieval</span><span class="sh">"</span> <span class="ow">in</span> <span class="n">response</span><span class="p">.</span><span class="n">answer</span><span class="p">.</span><span class="nf">lower</span><span class="p">()</span>
-</code></pre></div></div>
+<p>``python
+def test_end_to_end_rag():
+ query = “What are the benefits of RAG?”</p>
+
+<p># Should return a coherent answer with citations
+ response = rag_system.query(query)</p>
+
+<p>assert len(response.answer) &gt; 100
+ assert len(response.sources) &gt; 0
+ assert “retrieval” in response.answer.lower()
+``</p>
 
 <h3 id="173-evaluation-datasets">17.3. Evaluation Datasets</h3>
 
@@ -839,13 +858,14 @@ Answer with citations:</span><span class="sh">"""</span>
   <li><strong>LLM Generation:</strong> $0.01-0.10 per 1K tokens.</li>
 </ol>
 
-<p><strong>Example (100K documents, 1M queries/month):</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Embedding (one-time): 100K × 500 tokens × $0.0001/1K = $5
+<p><strong>Example (100K documents, 1M queries/month):</strong>
+``
+Embedding (one-time): 100K × 500 tokens × <code class="language-plaintext highlighter-rouge">0.0001/1K = </code>5
 Storage (monthly): 100K × 1KB = 100MB = $0.003
-Generation: 1M × 1K tokens × $0.03/1K = $30,000
+Generation: 1M × 1K tokens × <code class="language-plaintext highlighter-rouge">0.03/1K = </code>30,000</p>
 
-Total monthly: ~$30,000 (dominated by generation)
-</code></pre></div></div>
+<p>Total monthly: ~$30,000 (dominated by generation)
+``</p>
 
 <p><strong>Optimization:</strong></p>
 <ul>
@@ -856,65 +876,67 @@ Total monthly: ~$30,000 (dominated by generation)
 
 <h2 id="19-langchain-implementation">19. LangChain Implementation</h2>
 
-<p><strong>Complete RAG Pipeline:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">langchain.chains</span> <span class="kn">import</span> <span class="n">RetrievalQA</span>
-<span class="kn">from</span> <span class="n">langchain.embeddings</span> <span class="kn">import</span> <span class="n">OpenAIEmbeddings</span>
-<span class="kn">from</span> <span class="n">langchain.vectorstores</span> <span class="kn">import</span> <span class="n">Pinecone</span>
-<span class="kn">from</span> <span class="n">langchain.llms</span> <span class="kn">import</span> <span class="n">OpenAI</span>
-<span class="kn">from</span> <span class="n">langchain.document_loaders</span> <span class="kn">import</span> <span class="n">DirectoryLoader</span>
-<span class="kn">from</span> <span class="n">langchain.text_splitter</span> <span class="kn">import</span> <span class="n">RecursiveCharacterTextSplitter</span>
+<p><strong>Complete RAG Pipeline:</strong>
+``python
+from langchain.chains import RetrievalQA
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Pinecone
+from langchain.llms import OpenAI
+from langchain.document_loaders import DirectoryLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter</p>
 
-<span class="c1"># Load documents
-</span><span class="n">loader</span> <span class="o">=</span> <span class="nc">DirectoryLoader</span><span class="p">(</span><span class="sh">'</span><span class="s">data/</span><span class="sh">'</span><span class="p">,</span> <span class="n">glob</span><span class="o">=</span><span class="sh">'</span><span class="s">**/*.pdf</span><span class="sh">'</span><span class="p">)</span>
-<span class="n">documents</span> <span class="o">=</span> <span class="n">loader</span><span class="p">.</span><span class="nf">load</span><span class="p">()</span>
+<h1 id="load-documents-1">Load documents</h1>
+<p>loader = DirectoryLoader(‘data/’, glob=’<em>*/</em>.pdf’)
+documents = loader.load()</p>
 
-<span class="c1"># Split
-</span><span class="n">splitter</span> <span class="o">=</span> <span class="nc">RecursiveCharacterTextSplitter</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">chunk_overlap</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
-<span class="n">chunks</span> <span class="o">=</span> <span class="n">splitter</span><span class="p">.</span><span class="nf">split_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
+<h1 id="split">Split</h1>
+<p>splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+chunks = splitter.split_documents(documents)</p>
 
-<span class="c1"># Embed and store
-</span><span class="n">embeddings</span> <span class="o">=</span> <span class="nc">OpenAIEmbeddings</span><span class="p">()</span>
-<span class="n">vectorstore</span> <span class="o">=</span> <span class="n">Pinecone</span><span class="p">.</span><span class="nf">from_documents</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">,</span> <span class="n">index_name</span><span class="o">=</span><span class="sh">"</span><span class="s">rag-demo</span><span class="sh">"</span><span class="p">)</span>
+<h1 id="embed-and-store">Embed and store</h1>
+<p>embeddings = OpenAIEmbeddings()
+vectorstore = Pinecone.from_documents(chunks, embeddings, index_name=”rag-demo”)</p>
 
-<span class="c1"># Create QA chain
-</span><span class="n">qa_chain</span> <span class="o">=</span> <span class="n">RetrievalQA</span><span class="p">.</span><span class="nf">from_chain_type</span><span class="p">(</span>
-    <span class="n">llm</span><span class="o">=</span><span class="nc">OpenAI</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
-    <span class="n">chain_type</span><span class="o">=</span><span class="sh">"</span><span class="s">stuff</span><span class="sh">"</span><span class="p">,</span>
-    <span class="n">retriever</span><span class="o">=</span><span class="n">vectorstore</span><span class="p">.</span><span class="nf">as_retriever</span><span class="p">(</span><span class="n">search_kwargs</span><span class="o">=</span><span class="p">{</span><span class="sh">"</span><span class="s">k</span><span class="sh">"</span><span class="p">:</span> <span class="mi">5</span><span class="p">}),</span>
-    <span class="n">return_source_documents</span><span class="o">=</span><span class="bp">True</span>
-<span class="p">)</span>
+<h1 id="create-qa-chain">Create QA chain</h1>
+<p>qa_chain = RetrievalQA.from_chain_type(
+ llm=OpenAI(temperature=0),
+ chain_type=”stuff”,
+ retriever=vectorstore.as_retriever(search_kwargs={“k”: 5}),
+ return_source_documents=True
+)</p>
 
-<span class="c1"># Query
-</span><span class="n">result</span> <span class="o">=</span> <span class="nf">qa_chain</span><span class="p">({</span><span class="sh">"</span><span class="s">query</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">What is RAG?</span><span class="sh">"</span><span class="p">})</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Answer: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">result</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Sources: </span><span class="si">{</span><span class="p">[</span><span class="n">doc</span><span class="p">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="sh">'</span><span class="s">source_documents</span><span class="sh">'</span><span class="p">]]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<h1 id="query">Query</h1>
+<p>result = qa_chain({“query”: “What is RAG?”})
+print(f”Answer: {result[‘result’]}”)
+print(f”Sources: {[doc.metadata for doc in result[‘source_documents’]]}”)
+``</p>
 
 <h2 id="20-llamaindex-implementation">20. LlamaIndex Implementation</h2>
 
-<p><strong>Alternative Framework:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">llama_index</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span><span class="p">,</span> <span class="n">SimpleDirectoryReader</span>
-<span class="kn">from</span> <span class="n">llama_index.embeddings</span> <span class="kn">import</span> <span class="n">OpenAIEmbedding</span>
-<span class="kn">from</span> <span class="n">llama_index.llms</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+<p><strong>Alternative Framework:</strong>
+``python
+from llama_index import VectorStoreIndex, SimpleDirectoryReader
+from llama_index.embeddings import OpenAIEmbedding
+from llama_index.llms import OpenAI</p>
 
-<span class="c1"># Load documents
-</span><span class="n">documents</span> <span class="o">=</span> <span class="nc">SimpleDirectoryReader</span><span class="p">(</span><span class="sh">'</span><span class="s">data/</span><span class="sh">'</span><span class="p">).</span><span class="nf">load_data</span><span class="p">()</span>
+<h1 id="load-documents-2">Load documents</h1>
+<p>documents = SimpleDirectoryReader(‘data/’).load_data()</p>
 
-<span class="c1"># Create index
-</span><span class="n">index</span> <span class="o">=</span> <span class="n">VectorStoreIndex</span><span class="p">.</span><span class="nf">from_documents</span><span class="p">(</span>
-    <span class="n">documents</span><span class="p">,</span>
-    <span class="n">embed_model</span><span class="o">=</span><span class="nc">OpenAIEmbedding</span><span class="p">(),</span>
-<span class="p">)</span>
+<h1 id="create-index">Create index</h1>
+<p>index = VectorStoreIndex.from_documents(
+ documents,
+ embed_model=OpenAIEmbedding(),
+)</p>
 
-<span class="c1"># Query
-</span><span class="n">query_engine</span> <span class="o">=</span> <span class="n">index</span><span class="p">.</span><span class="nf">as_query_engine</span><span class="p">(</span>
-    <span class="n">llm</span><span class="o">=</span><span class="nc">OpenAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="sh">"</span><span class="s">gpt-3.5-turbo</span><span class="sh">"</span><span class="p">),</span>
-    <span class="n">similarity_top_k</span><span class="o">=</span><span class="mi">5</span>
-<span class="p">)</span>
+<h1 id="query-1">Query</h1>
+<p>query_engine = index.as_query_engine(
+ llm=OpenAI(model=”gpt-3.5-turbo”),
+ similarity_top_k=5
+)</p>
 
-<span class="n">response</span> <span class="o">=</span> <span class="n">query_engine</span><span class="p">.</span><span class="nf">query</span><span class="p">(</span><span class="sh">"</span><span class="s">What is RAG?</span><span class="sh">"</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
-</code></pre></div></div>
+<p>response = query_engine.query(“What is RAG?”)
+print(response)
+``</p>
 
 <h2 id="21-handling-updates">21. Handling Updates</h2>
 
@@ -927,23 +949,24 @@ Total monthly: ~$30,000 (dominated by generation)
   <li><strong>Versioning:</strong> Keep multiple versions, timestamp queries.</li>
 </ol>
 
-<p><strong>Implementation:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">RAGIndex</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vectorstore</span> <span class="o">=</span> <span class="nc">Pinecone</span><span class="p">(</span><span class="n">index_name</span><span class="o">=</span><span class="sh">"</span><span class="s">documents</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">add_document</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
-        <span class="n">chunks</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">chunk</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
-        <span class="n">embeddings</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">embed</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vectorstore</span><span class="p">.</span><span class="nf">upsert</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">doc</span><span class="p">.</span><span class="nb">id</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">update_document</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="nf">delete_document</span><span class="p">(</span><span class="n">doc</span><span class="p">.</span><span class="nb">id</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="nf">add_document</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">delete_document</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">doc_id</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vectorstore</span><span class="p">.</span><span class="nf">delete</span><span class="p">(</span><span class="nb">filter</span><span class="o">=</span><span class="p">{</span><span class="sh">"</span><span class="s">doc_id</span><span class="sh">"</span><span class="p">:</span> <span class="n">doc_id</span><span class="p">})</span>
-</code></pre></div></div>
+<p><strong>Implementation:</strong>
+``python
+class RAGIndex:
+ def <strong>init</strong>(self):
+ self.vectorstore = Pinecone(index_name=”documents”)</p>
+
+<p>def add_document(self, doc):
+ chunks = self.chunk(doc)
+ embeddings = self.embed(chunks)
+ self.vectorstore.upsert(embeddings, doc.id)</p>
+
+<p>def update_document(self, doc):
+ self.delete_document(doc.id)
+ self.add_document(doc)</p>
+
+<p>def delete_document(self, doc_id):
+ self.vectorstore.delete(filter={“doc_id”: doc_id})
+``</p>
 
 <h2 id="22-mastery-checklist">22. Mastery Checklist</h2>
 
@@ -1033,7 +1056,134 @@ Total monthly: ~$30,000 (dominated by generation)
         
       </footer>
 
+      <div class="page__related page__related--full">
+  <h2 class="page__related-title">Related across topics</h2>
+  <style>
+    /* Make section span full content width and use 2 equal columns */
+    .page__related--full { float: inline-start; width: 100%; padding: 0; }
+    .cross-related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+    @media (max-width: 768px) { .cross-related-grid { grid-template-columns: 1fr; } }
+    /* Ensure archive cards stretch nicely in the grid */
+    .cross-related-grid .list__item, .cross-related-grid .grid__item { width: auto; float: none; margin: 0; }
+  </style>
+  <div class="cross-related-grid">
+    
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
       
+        <a href="/dsa/0045-sliding-window-maximum/" rel="permalink">Sliding Window Maximum
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          13 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Finding the king of every window.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/speech-tech/0045-speech-emotion-recognition/" rel="permalink">Speech Emotion Recognition
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Teaching machines to hear feelings.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ai-agents/0045-data-leakage-prevention/" rel="permalink">Data Leakage Prevention
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          5 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Prevent leaks by design: minimize data access, redact outputs and logs, and enforce least privilege for tools and memory.”
+</p>
+  </article>
+</div>
+
+  </div>
+</div>
 
       <section class="page__share">
   <h4 class="page__share-title">Share on</h4>

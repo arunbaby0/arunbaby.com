@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Voice Activity Detection (VAD)">
     <meta itemprop="description" content="How voice assistants and video conferencing apps detect when you’re speaking vs silence, the critical first step in every speech pipeline.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -345,159 +345,161 @@
 
 <h3 id="implementation">Implementation</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
-<span class="kn">import</span> <span class="n">librosa</span>
+<p>``python
+import numpy as np
+import librosa</p>
 
-<span class="k">class</span> <span class="nc">EnergyVAD</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Energy-based Voice Activity Detection
-    
-    Pros: Simple, fast, no training required
-    Cons: Sensitive to noise, poor in low SNR
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span>
-        <span class="n">frame_length_ms</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
-        <span class="n">hop_length_ms</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-        <span class="n">energy_threshold</span><span class="o">=</span><span class="mf">0.01</span>
-    <span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sr</span> <span class="o">=</span> <span class="n">sr</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">sr</span> <span class="o">*</span> <span class="n">frame_length_ms</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">hop_length</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">sr</span> <span class="o">*</span> <span class="n">hop_length_ms</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">energy_threshold</span> <span class="o">=</span> <span class="n">energy_threshold</span>
-    
-    <span class="k">def</span> <span class="nf">compute_energy</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Compute frame energy (RMS)
-        
-        Energy = sqrt(mean(x^2))
-        </span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">sqrt</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">frame</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
-    
-    <span class="k">def</span> <span class="nf">detect</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Detect speech frames
-        
-        Args:
-            audio: Audio signal
-        
-        Returns:
-            List of booleans (True = speech, False = non-speech)
-        </span><span class="sh">"""</span>
-        <span class="c1"># Frame the audio
-</span>        <span class="n">frames</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="nf">frame</span><span class="p">(</span>
-            <span class="n">audio</span><span class="p">,</span>
-            <span class="n">frame_length</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">frame_length</span><span class="p">,</span>
-            <span class="n">hop_length</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">hop_length</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Compute energy per frame
-</span>        <span class="n">energies</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="n">self</span><span class="p">.</span><span class="nf">compute_energy</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">.</span><span class="n">T</span><span class="p">])</span>
-        
-        <span class="c1"># Threshold
-</span>        <span class="n">is_speech</span> <span class="o">=</span> <span class="n">energies</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">energy_threshold</span>
-        
-        <span class="k">return</span> <span class="n">is_speech</span>
-    
-    <span class="k">def</span> <span class="nf">get_speech_segments</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Get speech segments (start, end) in seconds
-        
-        Returns:
-            List of (start_time, end_time) tuples
-        </span><span class="sh">"""</span>
-        <span class="n">is_speech</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">detect</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        
-        <span class="n">segments</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">in_speech</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="n">start_frame</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">speech</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">is_speech</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">speech</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">in_speech</span><span class="p">:</span>
-                <span class="c1"># Speech started
-</span>                <span class="n">start_frame</span> <span class="o">=</span> <span class="n">i</span>
-                <span class="n">in_speech</span> <span class="o">=</span> <span class="bp">True</span>
-            <span class="k">elif</span> <span class="ow">not</span> <span class="n">speech</span> <span class="ow">and</span> <span class="n">in_speech</span><span class="p">:</span>
-                <span class="c1"># Speech ended
-</span>                <span class="n">end_frame</span> <span class="o">=</span> <span class="n">i</span>
-                <span class="n">in_speech</span> <span class="o">=</span> <span class="bp">False</span>
-                
-                <span class="c1"># Convert frames to time
-</span>                <span class="n">start_time</span> <span class="o">=</span> <span class="n">start_frame</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">hop_length</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sr</span>
-                <span class="n">end_time</span> <span class="o">=</span> <span class="n">end_frame</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">hop_length</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sr</span>
-                
-                <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">))</span>
-        
-        <span class="c1"># Handle case where audio ends during speech
-</span>        <span class="k">if</span> <span class="n">in_speech</span><span class="p">:</span>
-            <span class="n">end_time</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">is_speech</span><span class="p">)</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">hop_length</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sr</span>
-            <span class="n">start_time</span> <span class="o">=</span> <span class="n">start_frame</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">hop_length</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sr</span>
-            <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">))</span>
-        
-        <span class="k">return</span> <span class="n">segments</span>
+<p>class EnergyVAD:
+ “””
+ Energy-based Voice Activity Detection</p>
 
-<span class="c1"># Usage
-</span><span class="n">vad</span> <span class="o">=</span> <span class="nc">EnergyVAD</span><span class="p">(</span><span class="n">energy_threshold</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<p>Pros: Simple, fast, no training required
+ Cons: Sensitive to noise, poor in low SNR
+ “””</p>
 
-<span class="c1"># Load audio
-</span><span class="n">audio</span><span class="p">,</span> <span class="n">sr</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sh">'</span><span class="s">speech_with_silence.wav</span><span class="sh">'</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">)</span>
+<p>def <strong>init</strong>(
+ self,
+ sr=16000,
+ frame_length_ms=20,
+ hop_length_ms=10,
+ energy_threshold=0.01
+ ):
+ self.sr = sr
+ self.frame_length = int(sr * frame_length_ms / 1000)
+ self.hop_length = int(sr * hop_length_ms / 1000)
+ self.energy_threshold = energy_threshold</p>
 
-<span class="c1"># Detect speech
-</span><span class="n">is_speech</span> <span class="o">=</span> <span class="n">vad</span><span class="p">.</span><span class="nf">detect</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Speech frames: </span><span class="si">{</span><span class="n">is_speech</span><span class="p">.</span><span class="nf">sum</span><span class="p">()</span><span class="si">}</span><span class="s"> / </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">is_speech</span><span class="p">)</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p>def compute_energy(self, frame):
+ “””
+ Compute frame energy (RMS)</p>
 
-<span class="c1"># Get segments
-</span><span class="n">segments</span> <span class="o">=</span> <span class="n">vad</span><span class="p">.</span><span class="nf">get_speech_segments</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Speech from </span><span class="si">{</span><span class="n">start</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s to </span><span class="si">{</span><span class="n">end</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>Energy = sqrt(mean(x^2))
+ “””
+ return np.sqrt(np.mean(frame ** 2))</p>
+
+<p>def detect(self, audio):
+ “””
+ Detect speech frames</p>
+
+<p>Args:
+ audio: Audio signal</p>
+
+<p>Returns:
+ List of booleans (True = speech, False = non-speech)
+ “””
+ # Frame the audio
+ frames = librosa.util.frame(
+ audio,
+ frame_length=self.frame_length,
+ hop_length=self.hop_length
+ )</p>
+
+<p># Compute energy per frame
+ energies = np.array([self.compute_energy(frame) for frame in frames.T])</p>
+
+<p># Threshold
+ is_speech = energies &gt; self.energy_threshold</p>
+
+<p>return is_speech</p>
+
+<p>def get_speech_segments(self, audio):
+ “””
+ Get speech segments (start, end) in seconds</p>
+
+<p>Returns:
+ List of (start_time, end_time) tuples
+ “””
+ is_speech = self.detect(audio)</p>
+
+<p>segments = []
+ in_speech = False
+ start_frame = 0</p>
+
+<p>for i, speech in enumerate(is_speech):
+ if speech and not in_speech:
+ # Speech started
+ start_frame = i
+ in_speech = True
+ elif not speech and in_speech:
+ # Speech ended
+ end_frame = i
+ in_speech = False</p>
+
+<p># Convert frames to time
+ start_time = start_frame * self.hop_length / self.sr
+ end_time = end_frame * self.hop_length / self.sr</p>
+
+<p>segments.append((start_time, end_time))</p>
+
+<p># Handle case where audio ends during speech
+ if in_speech:
+ end_time = len(is_speech) * self.hop_length / self.sr
+ start_time = start_frame * self.hop_length / self.sr
+ segments.append((start_time, end_time))</p>
+
+<p>return segments</p>
+
+<h1 id="usage">Usage</h1>
+<p>vad = EnergyVAD(energy_threshold=0.01)</p>
+
+<h1 id="load-audio">Load audio</h1>
+<p>audio, sr = librosa.load(‘speech_with_silence.wav’, sr=16000)</p>
+
+<h1 id="detect-speech">Detect speech</h1>
+<p>is_speech = vad.detect(audio)
+print(f”Speech frames: {is_speech.sum()} / {len(is_speech)}”)</p>
+
+<h1 id="get-segments">Get segments</h1>
+<p>segments = vad.get_speech_segments(audio)
+for start, end in segments:
+ print(f”Speech from {start:.2f}s to {end:.2f}s”)
+``</p>
 
 <h3 id="adaptive-thresholding">Adaptive Thresholding</h3>
 
 <p>Fixed thresholds fail in varying noise conditions. Use adaptive thresholds.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">AdaptiveEnergyVAD</span><span class="p">(</span><span class="n">EnergyVAD</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Energy VAD with adaptive threshold
-    
-    Threshold adapts to background noise level
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">frame_length_ms</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">hop_length_ms</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">(</span><span class="n">sr</span><span class="p">,</span> <span class="n">frame_length_ms</span><span class="p">,</span> <span class="n">hop_length_ms</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">noise_energy</span> <span class="o">=</span> <span class="mf">0.001</span>  <span class="c1"># Initial estimate
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.95</span>  <span class="c1"># Smoothing factor
-</span>    
-    <span class="k">def</span> <span class="nf">detect</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Detect with adaptive threshold</span><span class="sh">"""</span>
-        <span class="n">frames</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="nf">frame</span><span class="p">(</span>
-            <span class="n">audio</span><span class="p">,</span>
-            <span class="n">frame_length</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">frame_length</span><span class="p">,</span>
-            <span class="n">hop_length</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">hop_length</span>
-        <span class="p">)</span>
-        
-        <span class="n">is_speech</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">.</span><span class="n">T</span><span class="p">:</span>
-            <span class="n">energy</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">compute_energy</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
-            
-            <span class="c1"># Adaptive threshold: 3x noise energy
-</span>            <span class="n">threshold</span> <span class="o">=</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">noise_energy</span>
-            
-            <span class="k">if</span> <span class="n">energy</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
-                <span class="c1"># Likely speech
-</span>                <span class="n">is_speech</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Likely noise/silence
-</span>                <span class="n">is_speech</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-                
-                <span class="c1"># Update noise estimate (during silence only)
-</span>                <span class="n">self</span><span class="p">.</span><span class="n">noise_energy</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">noise_energy</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">energy</span>
-        
-        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">is_speech</span><span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+class AdaptiveEnergyVAD(EnergyVAD):
+ “””
+ Energy VAD with adaptive threshold</p>
+
+<p>Threshold adapts to background noise level
+ “””</p>
+
+<p>def <strong>init</strong>(self, sr=16000, frame_length_ms=20, hop_length_ms=10):
+ super().<strong>init</strong>(sr, frame_length_ms, hop_length_ms)
+ self.noise_energy = 0.001 # Initial estimate
+ self.alpha = 0.95 # Smoothing factor</p>
+
+<p>def detect(self, audio):
+ “"”Detect with adaptive threshold”””
+ frames = librosa.util.frame(
+ audio,
+ frame_length=self.frame_length,
+ hop_length=self.hop_length
+ )</p>
+
+<p>is_speech = []</p>
+
+<p>for frame in frames.T:
+ energy = self.compute_energy(frame)</p>
+
+<p># Adaptive threshold: 3x noise energy
+ threshold = 3.0 * self.noise_energy</p>
+
+<p>if energy &gt; threshold:
+ # Likely speech
+ is_speech.append(True)
+ else:
+ # Likely noise/silence
+ is_speech.append(False)</p>
+
+<p># Update noise estimate (during silence only)
+ self.noise_energy = self.alpha * self.noise_energy + (1 - self.alpha) * energy</p>
+
+<p>return np.array(is_speech)
+``</p>
 
 <hr />
 
@@ -507,71 +509,74 @@
 
 <h3 id="implementation-1">Implementation</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ZCR_Energy_VAD</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    VAD using Energy + Zero-Crossing Rate
-    
-    Intuition:
-    - Speech: Low ZCR (voiced sounds), moderate to high energy
-    - Noise: High ZCR (unvoiced), varying energy
-    - Silence: Low energy
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span>
-        <span class="n">frame_length_ms</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
-        <span class="n">hop_length_ms</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-        <span class="n">energy_threshold</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
-        <span class="n">zcr_threshold</span><span class="o">=</span><span class="mf">0.1</span>
-    <span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sr</span> <span class="o">=</span> <span class="n">sr</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">sr</span> <span class="o">*</span> <span class="n">frame_length_ms</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">hop_length</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">sr</span> <span class="o">*</span> <span class="n">hop_length_ms</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">energy_threshold</span> <span class="o">=</span> <span class="n">energy_threshold</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">zcr_threshold</span> <span class="o">=</span> <span class="n">zcr_threshold</span>
-    
-    <span class="k">def</span> <span class="nf">compute_zcr</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Compute zero-crossing rate
-        
-        ZCR = # of times signal crosses zero / # samples
-        </span><span class="sh">"""</span>
-        <span class="n">signs</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sign</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
-        <span class="n">zcr</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">abs</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">diff</span><span class="p">(</span><span class="n">signs</span><span class="p">)))</span> <span class="o">/</span> <span class="mi">2</span>
-        <span class="k">return</span> <span class="n">zcr</span>
-    
-    <span class="k">def</span> <span class="nf">detect</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Detect using both energy and ZCR
-        </span><span class="sh">"""</span>
-        <span class="n">frames</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="nf">frame</span><span class="p">(</span>
-            <span class="n">audio</span><span class="p">,</span>
-            <span class="n">frame_length</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">frame_length</span><span class="p">,</span>
-            <span class="n">hop_length</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">hop_length</span>
-        <span class="p">)</span>
-        
-        <span class="n">is_speech</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">.</span><span class="n">T</span><span class="p">:</span>
-            <span class="n">energy</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sqrt</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">frame</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
-            <span class="n">zcr</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">compute_zcr</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
-            
-            <span class="c1"># Decision logic
-</span>            <span class="k">if</span> <span class="n">energy</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">energy_threshold</span><span class="p">:</span>
-                <span class="c1"># High energy: could be speech or noise
-</span>                <span class="k">if</span> <span class="n">zcr</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">zcr_threshold</span><span class="p">:</span>
-                    <span class="c1"># Low ZCR → likely speech (voiced)
-</span>                    <span class="n">is_speech</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># High ZCR → likely noise
-</span>                    <span class="n">is_speech</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Low energy → silence
-</span>                <span class="n">is_speech</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">is_speech</span><span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+class ZCR_Energy_VAD:
+ “””
+ VAD using Energy + Zero-Crossing Rate</p>
+
+<p>Intuition:</p>
+<ul>
+  <li>Speech: Low ZCR (voiced sounds), moderate to high energy</li>
+  <li>Noise: High ZCR (unvoiced), varying energy</li>
+  <li>Silence: Low energy
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(
+ self,
+ sr=16000,
+ frame_length_ms=20,
+ hop_length_ms=10,
+ energy_threshold=0.01,
+ zcr_threshold=0.1
+ ):
+ self.sr = sr
+ self.frame_length = int(sr * frame_length_ms / 1000)
+ self.hop_length = int(sr * hop_length_ms / 1000)
+ self.energy_threshold = energy_threshold
+ self.zcr_threshold = zcr_threshold</p>
+
+<p>def compute_zcr(self, frame):
+ “””
+ Compute zero-crossing rate</p>
+
+<p>ZCR = # of times signal crosses zero / # samples
+ “””
+ signs = np.sign(frame)
+ zcr = np.mean(np.abs(np.diff(signs))) / 2
+ return zcr</p>
+
+<p>def detect(self, audio):
+ “””
+ Detect using both energy and ZCR
+ “””
+ frames = librosa.util.frame(
+ audio,
+ frame_length=self.frame_length,
+ hop_length=self.hop_length
+ )</p>
+
+<p>is_speech = []</p>
+
+<p>for frame in frames.T:
+ energy = np.sqrt(np.mean(frame ** 2))
+ zcr = self.compute_zcr(frame)</p>
+
+<p># Decision logic
+ if energy &gt; self.energy_threshold:
+ # High energy: could be speech or noise
+ if zcr &lt; self.zcr_threshold:
+ # Low ZCR → likely speech (voiced)
+ is_speech.append(True)
+ else:
+ # High ZCR → likely noise
+ is_speech.append(False)
+ else:
+ # Low energy → silence
+ is_speech.append(False)</p>
+
+<p>return np.array(is_speech)
+``</p>
 
 <hr />
 
@@ -581,119 +586,126 @@
 
 <h3 id="using-webrtc-vad">Using WebRTC VAD</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># WebRTC VAD requires: pip install webrtcvad
-</span><span class="kn">import</span> <span class="n">webrtcvad</span>
-<span class="kn">import</span> <span class="n">struct</span>
+<p>``python</p>
+<h1 id="webrtc-vad-requires-pip-install-webrtcvad">WebRTC VAD requires: pip install webrtcvad</h1>
+<p>import webrtcvad
+import struct</p>
 
-<span class="k">class</span> <span class="nc">WebRTCVAD</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    WebRTC Voice Activity Detector
-    
-    Pros:
-    - Production-tested (billions of users)
-    - Fast, CPU-efficient
-    - Robust to noise
-    
-    Cons:
-    - Only works with specific sample rates (8/16/32/48 kHz)
-    - Fixed frame sizes (10/20/30 ms)
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">frame_duration_ms</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">aggressiveness</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Args:
-            sr: Sample rate (must be 8000, 16000, 32000, or 48000)
-            frame_duration_ms: Frame duration (10, 20, or 30 ms)
-            aggressiveness: 0-3 (0=least aggressive, 3=most aggressive)
-                - Higher = more likely to classify as non-speech
-                - Use 3 for noisy environments
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">sr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">8000</span><span class="p">,</span> <span class="mi">16000</span><span class="p">,</span> <span class="mi">32000</span><span class="p">,</span> <span class="mi">48000</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sh">"</span><span class="s">Sample rate must be 8000, 16000, 32000, or 48000</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">frame_duration_ms</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sh">"</span><span class="s">Frame duration must be 10, 20, or 30 ms</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">sr</span> <span class="o">=</span> <span class="n">sr</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">frame_duration_ms</span> <span class="o">=</span> <span class="n">frame_duration_ms</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">sr</span> <span class="o">*</span> <span class="n">frame_duration_ms</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
-        
-        <span class="c1"># Create VAD instance
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="n">webrtcvad</span><span class="p">.</span><span class="nc">Vad</span><span class="p">(</span><span class="n">aggressiveness</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">detect</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Detect speech in audio
-        
-        Args:
-            audio: numpy array of int16 samples
-        
-        Returns:
-            List of booleans (True = speech)
-        </span><span class="sh">"""</span>
-        <span class="c1"># Convert float to int16 if needed (clip to avoid overflow)
-</span>        <span class="k">if</span> <span class="n">audio</span><span class="p">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="p">.</span><span class="n">float32</span> <span class="ow">or</span> <span class="n">audio</span><span class="p">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="p">.</span><span class="n">float64</span><span class="p">:</span>
-            <span class="n">audio</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">clip</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-            <span class="n">audio</span> <span class="o">=</span> <span class="p">(</span><span class="n">audio</span> <span class="o">*</span> <span class="mi">32767</span><span class="p">).</span><span class="nf">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">int16</span><span class="p">)</span>
-        
-        <span class="c1"># Frame audio
-</span>        <span class="n">num_frames</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span> <span class="o">//</span> <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span>
-        <span class="n">is_speech</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">num_frames</span><span class="p">):</span>
-            <span class="n">start</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span>
-            <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span>
-            <span class="n">frame</span> <span class="o">=</span> <span class="n">audio</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
-            
-            <span class="c1"># Convert to bytes
-</span>            <span class="n">frame_bytes</span> <span class="o">=</span> <span class="n">struct</span><span class="p">.</span><span class="nf">pack</span><span class="p">(</span><span class="sh">'</span><span class="s">%dh</span><span class="sh">'</span> <span class="o">%</span> <span class="nf">len</span><span class="p">(</span><span class="n">frame</span><span class="p">),</span> <span class="o">*</span><span class="n">frame</span><span class="p">)</span>
-            
-            <span class="c1"># Detect
-</span>            <span class="n">speech</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">is_speech</span><span class="p">(</span><span class="n">frame_bytes</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">sr</span><span class="p">)</span>
-            <span class="n">is_speech</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">speech</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">is_speech</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">get_speech_timestamps</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Get speech timestamps
-        
-        Returns:
-            List of (start_time, end_time) in seconds
-        </span><span class="sh">"""</span>
-        <span class="n">is_speech</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">detect</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        
-        <span class="n">segments</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">in_speech</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="n">start_frame</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">speech</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">is_speech</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">speech</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">in_speech</span><span class="p">:</span>
-                <span class="n">start_frame</span> <span class="o">=</span> <span class="n">i</span>
-                <span class="n">in_speech</span> <span class="o">=</span> <span class="bp">True</span>
-            <span class="k">elif</span> <span class="ow">not</span> <span class="n">speech</span> <span class="ow">and</span> <span class="n">in_speech</span><span class="p">:</span>
-                <span class="n">in_speech</span> <span class="o">=</span> <span class="bp">False</span>
-                <span class="n">start_time</span> <span class="o">=</span> <span class="n">start_frame</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sr</span>
-                <span class="n">end_time</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sr</span>
-                <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">))</span>
-        
-        <span class="k">if</span> <span class="n">in_speech</span><span class="p">:</span>
-            <span class="n">start_time</span> <span class="o">=</span> <span class="n">start_frame</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sr</span>
-            <span class="n">end_time</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">is_speech</span><span class="p">)</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">sr</span>
-            <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">))</span>
-        
-        <span class="k">return</span> <span class="n">segments</span>
+<p>class WebRTCVAD:
+ “””
+ WebRTC Voice Activity Detector</p>
 
-<span class="c1"># Usage
-</span><span class="n">vad</span> <span class="o">=</span> <span class="nc">WebRTCVAD</span><span class="p">(</span><span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">frame_duration_ms</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">aggressiveness</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<p>Pros:</p>
+<ul>
+  <li>Production-tested (billions of users)</li>
+  <li>Fast, CPU-efficient</li>
+  <li>Robust to noise</li>
+</ul>
 
-<span class="n">audio</span><span class="p">,</span> <span class="n">sr</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sh">'</span><span class="s">audio.wav</span><span class="sh">'</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">)</span>
-<span class="n">segments</span> <span class="o">=</span> <span class="n">vad</span><span class="p">.</span><span class="nf">get_speech_timestamps</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+<p>Cons:</p>
+<ul>
+  <li>Only works with specific sample rates (8/16/32/48 kHz)</li>
+  <li>Fixed frame sizes (10/20/30 ms)
+ “””</li>
+</ul>
 
-<span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Speech segments:</span><span class="sh">"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  </span><span class="si">{</span><span class="n">start</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s - </span><span class="si">{</span><span class="n">end</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def <strong>init</strong>(self, sr=16000, frame_duration_ms=30, aggressiveness=3):
+ “””
+ Args:
+ sr: Sample rate (must be 8000, 16000, 32000, or 48000)
+ frame_duration_ms: Frame duration (10, 20, or 30 ms)
+ aggressiveness: 0-3 (0=least aggressive, 3=most aggressive)</p>
+<ul>
+  <li>Higher = more likely to classify as non-speech</li>
+  <li>Use 3 for noisy environments
+ “””
+ if sr not in [8000, 16000, 32000, 48000]:
+ raise ValueError(“Sample rate must be 8000, 16000, 32000, or 48000”)</li>
+</ul>
+
+<p>if frame_duration_ms not in [10, 20, 30]:
+ raise ValueError(“Frame duration must be 10, 20, or 30 ms”)</p>
+
+<p>self.sr = sr
+ self.frame_duration_ms = frame_duration_ms
+ self.frame_length = int(sr * frame_duration_ms / 1000)</p>
+
+<p># Create VAD instance
+ self.vad = webrtcvad.Vad(aggressiveness)</p>
+
+<p>def detect(self, audio):
+ “””
+ Detect speech in audio</p>
+
+<p>Args:
+ audio: numpy array of int16 samples</p>
+
+<p>Returns:
+ List of booleans (True = speech)
+ “””
+ # Convert float to int16 if needed (clip to avoid overflow)
+ if audio.dtype == np.float32 or audio.dtype == np.float64:
+ audio = np.clip(audio, -1.0, 1.0)
+ audio = (audio * 32767).astype(np.int16)</p>
+
+<p># Frame audio
+ num_frames = len(audio) // self.frame_length
+ is_speech = []</p>
+
+<p>for i in range(num_frames):
+ start = i * self.frame_length
+ end = start + self.frame_length
+ frame = audio[start:end]</p>
+
+<p># Convert to bytes
+ frame_bytes = struct.pack(‘%dh’ % len(frame), *frame)</p>
+
+<p># Detect
+ speech = self.vad.is_speech(frame_bytes, self.sr)
+ is_speech.append(speech)</p>
+
+<p>return np.array(is_speech)</p>
+
+<p>def get_speech_timestamps(self, audio):
+ “””
+ Get speech timestamps</p>
+
+<p>Returns:
+ List of (start_time, end_time) in seconds
+ “””
+ is_speech = self.detect(audio)</p>
+
+<p>segments = []
+ in_speech = False
+ start_frame = 0</p>
+
+<p>for i, speech in enumerate(is_speech):
+ if speech and not in_speech:
+ start_frame = i
+ in_speech = True
+ elif not speech and in_speech:
+ in_speech = False
+ start_time = start_frame * self.frame_length / self.sr
+ end_time = i * self.frame_length / self.sr
+ segments.append((start_time, end_time))</p>
+
+<p>if in_speech:
+ start_time = start_frame * self.frame_length / self.sr
+ end_time = len(is_speech) * self.frame_length / self.sr
+ segments.append((start_time, end_time))</p>
+
+<p>return segments</p>
+
+<h1 id="usage-1">Usage</h1>
+<p>vad = WebRTCVAD(sr=16000, frame_duration_ms=30, aggressiveness=3)</p>
+
+<p>audio, sr = librosa.load(‘audio.wav’, sr=16000)
+segments = vad.get_speech_timestamps(audio)</p>
+
+<p>print(“Speech segments:”)
+for start, end in segments:
+ print(f” {start:.2f}s - {end:.2f}s”)
+``</p>
 
 <hr />
 
@@ -703,145 +715,147 @@
 
 <h3 id="cnn-based-vad">CNN-based VAD</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">CNNVAD</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    CNN-based Voice Activity Detector
-    
-    Input: Mel-spectrogram (time, freq)
-    Output: Speech probability per frame
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">n_mels</span><span class="o">=</span><span class="mi">40</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        
-        <span class="c1"># CNN layers
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">conv1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Sequential</span><span class="p">(</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">BatchNorm2d</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">ReLU</span><span class="p">(),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">MaxPool2d</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">conv2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Sequential</span><span class="p">(</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Conv2d</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">BatchNorm2d</span><span class="p">(</span><span class="mi">64</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">ReLU</span><span class="p">(),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">MaxPool2d</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># LSTM for temporal modeling
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">lstm</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTM</span><span class="p">(</span>
-            <span class="n">input_size</span><span class="o">=</span><span class="mi">64</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_mels</span> <span class="o">//</span> <span class="mi">4</span><span class="p">),</span>
-            <span class="n">hidden_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
-            <span class="n">num_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-            <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-            <span class="n">bidirectional</span><span class="o">=</span><span class="bp">True</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Classification head
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Binary classification
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">sigmoid</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Sigmoid</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Forward pass
-        
-        Args:
-            x: (batch, 1, time, n_mels)
-        
-        Returns:
-            Speech probabilities: (batch, time)
-        </span><span class="sh">"""</span>
-        <span class="c1"># CNN
-</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">conv1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># (batch, 32, time/2, n_mels/2)
-</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">conv2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># (batch, 64, time/4, n_mels/4)
-</span>        
-        <span class="c1"># Reshape for LSTM
-</span>        <span class="n">batch</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">freq</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="nf">size</span><span class="p">()</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="nf">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># (batch, time, channels, freq)
-</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="nf">reshape</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">channels</span> <span class="o">*</span> <span class="n">freq</span><span class="p">)</span>
-        
-        <span class="c1"># LSTM
-</span>        <span class="n">x</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">lstm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># (batch, time, 256)
-</span>        
-        <span class="c1"># Classification
-</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">fc</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># (batch, time, 1)
-</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">sigmoid</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># (batch, time, 1)
-</span>        
-        <span class="k">return</span> <span class="n">x</span><span class="p">.</span><span class="nf">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (batch, time)
-</span>
-<span class="c1"># Usage
-</span><span class="n">model</span> <span class="o">=</span> <span class="nc">CNNVAD</span><span class="p">(</span><span class="n">n_mels</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+<p>class CNNVAD(nn.Module):
+ “””
+ CNN-based Voice Activity Detector</p>
 
-<span class="c1"># Example input: mel-spectrogram
-</span><span class="n">mel_spec</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>  <span class="c1"># (batch=1, channels=1, time=100, mels=40)
-</span>
-<span class="c1"># Predict
-</span><span class="n">speech_prob</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">mel_spec</span><span class="p">)</span>  <span class="c1"># (1, 100) - probability per frame
-</span><span class="n">is_speech</span> <span class="o">=</span> <span class="n">speech_prob</span> <span class="o">&gt;</span> <span class="mf">0.5</span>  <span class="c1"># Threshold at 0.5
-</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Speech probability shape: </span><span class="si">{</span><span class="n">speech_prob</span><span class="p">.</span><span class="n">shape</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Detected speech in </span><span class="si">{</span><span class="n">is_speech</span><span class="p">.</span><span class="nf">sum</span><span class="p">().</span><span class="nf">item</span><span class="p">()</span><span class="si">}</span><span class="s"> / </span><span class="si">{</span><span class="n">is_speech</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s"> frames</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>Input: Mel-spectrogram (time, freq)
+ Output: Speech probability per frame
+ “””</p>
+
+<p>def <strong>init</strong>(self, n_mels=40):
+ super().<strong>init</strong>()</p>
+
+<p># CNN layers
+ self.conv1 = nn.Sequential(
+ nn.Conv2d(1, 32, kernel_size=3, padding=1),
+ nn.BatchNorm2d(32),
+ nn.ReLU(),
+ nn.MaxPool2d(2, 2)
+ )</p>
+
+<p>self.conv2 = nn.Sequential(
+ nn.Conv2d(32, 64, kernel_size=3, padding=1),
+ nn.BatchNorm2d(64),
+ nn.ReLU(),
+ nn.MaxPool2d(2, 2)
+ )</p>
+
+<p># LSTM for temporal modeling
+ self.lstm = nn.LSTM(
+ input_size=64 * (n_mels // 4),
+ hidden_size=128,
+ num_layers=2,
+ batch_first=True,
+ bidirectional=True
+ )</p>
+
+<p># Classification head
+ self.fc = nn.Linear(256, 1) # Binary classification
+ self.sigmoid = nn.Sigmoid()</p>
+
+<p>def forward(self, x):
+ “””
+ Forward pass</p>
+
+<p>Args:
+ x: (batch, 1, time, n_mels)</p>
+
+<p>Returns:
+ Speech probabilities: (batch, time)
+ “””
+ # CNN
+ x = self.conv1(x) # (batch, 32, time/2, n_mels/2)
+ x = self.conv2(x) # (batch, 64, time/4, n_mels/4)</p>
+
+<p># Reshape for LSTM
+ batch, channels, time, freq = x.size()
+ x = x.permute(0, 2, 1, 3) # (batch, time, channels, freq)
+ x = x.reshape(batch, time, channels * freq)</p>
+
+<p># LSTM
+ x, _ = self.lstm(x) # (batch, time, 256)</p>
+
+<p># Classification
+ x = self.fc(x) # (batch, time, 1)
+ x = self.sigmoid(x) # (batch, time, 1)</p>
+
+<p>return x.squeeze(-1) # (batch, time)</p>
+
+<h1 id="usage-2">Usage</h1>
+<p>model = CNNVAD(n_mels=40)</p>
+
+<h1 id="example-input-mel-spectrogram">Example input: mel-spectrogram</h1>
+<p>mel_spec = torch.randn(1, 1, 100, 40) # (batch=1, channels=1, time=100, mels=40)</p>
+
+<h1 id="predict">Predict</h1>
+<p>speech_prob = model(mel_spec) # (1, 100) - probability per frame
+is_speech = speech_prob &gt; 0.5 # Threshold at 0.5</p>
+
+<p>print(f”Speech probability shape: {speech_prob.shape}”)
+print(f”Detected speech in {is_speech.sum().item()} / {is_speech.size(1)} frames”)
+``</p>
 
 <h3 id="training-ml-vad">Training ML VAD</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">VADTrainer</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Train VAD model
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="sh">'</span><span class="s">cuda</span><span class="sh">'</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">BCELoss</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">optim</span><span class="p">.</span><span class="nc">Adam</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="nf">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">train_epoch</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Train for one epoch</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">train</span><span class="p">()</span>
-        <span class="n">total_loss</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="k">for</span> <span class="n">mel_specs</span><span class="p">,</span> <span class="n">labels</span> <span class="ow">in</span> <span class="n">train_loader</span><span class="p">:</span>
-            <span class="n">mel_specs</span> <span class="o">=</span> <span class="n">mel_specs</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
-            <span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
-            
-            <span class="c1"># Forward
-</span>            <span class="n">predictions</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">model</span><span class="p">(</span><span class="n">mel_specs</span><span class="p">)</span>
-            <span class="n">loss</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">criterion</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
-            
-            <span class="c1"># Backward
-</span>            <span class="n">self</span><span class="p">.</span><span class="n">optimizer</span><span class="p">.</span><span class="nf">zero_grad</span><span class="p">()</span>
-            <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
-            
-            <span class="n">total_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="p">.</span><span class="nf">item</span><span class="p">()</span>
-        
-        <span class="k">return</span> <span class="n">total_loss</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">train_loader</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">val_loader</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Evaluate model</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
-        <span class="n">correct</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="k">with</span> <span class="n">torch</span><span class="p">.</span><span class="nf">no_grad</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">mel_specs</span><span class="p">,</span> <span class="n">labels</span> <span class="ow">in</span> <span class="n">val_loader</span><span class="p">:</span>
-                <span class="n">mel_specs</span> <span class="o">=</span> <span class="n">mel_specs</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
-                <span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">.</span><span class="nf">to</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">device</span><span class="p">)</span>
-                
-                <span class="n">predictions</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">model</span><span class="p">(</span><span class="n">mel_specs</span><span class="p">)</span>
-                <span class="n">predicted</span> <span class="o">=</span> <span class="p">(</span><span class="n">predictions</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">).</span><span class="nf">float</span><span class="p">()</span>
-                
-                <span class="n">correct</span> <span class="o">+=</span> <span class="p">(</span><span class="n">predicted</span> <span class="o">==</span> <span class="n">labels</span><span class="p">).</span><span class="nf">sum</span><span class="p">().</span><span class="nf">item</span><span class="p">()</span>
-                <span class="n">total</span> <span class="o">+=</span> <span class="n">labels</span><span class="p">.</span><span class="nf">numel</span><span class="p">()</span>
-        
-        <span class="n">accuracy</span> <span class="o">=</span> <span class="n">correct</span> <span class="o">/</span> <span class="n">total</span>
-        <span class="k">return</span> <span class="n">accuracy</span>
-</code></pre></div></div>
+<p>``python
+class VADTrainer:
+ “””
+ Train VAD model
+ “””</p>
+
+<p>def <strong>init</strong>(self, model, device=’cuda’):
+ self.model = model.to(device)
+ self.device = device
+ self.criterion = nn.BCELoss()
+ self.optimizer = torch.optim.Adam(model.parameters(), lr=0.001)</p>
+
+<p>def train_epoch(self, train_loader):
+ “"”Train for one epoch”””
+ self.model.train()
+ total_loss = 0</p>
+
+<p>for mel_specs, labels in train_loader:
+ mel_specs = mel_specs.to(self.device)
+ labels = labels.to(self.device)</p>
+
+<p># Forward
+ predictions = self.model(mel_specs)
+ loss = self.criterion(predictions, labels)</p>
+
+<p># Backward
+ self.optimizer.zero_grad()
+ loss.backward()
+ self.optimizer.step()</p>
+
+<p>total_loss += loss.item()</p>
+
+<p>return total_loss / len(train_loader)</p>
+
+<p>def evaluate(self, val_loader):
+ “"”Evaluate model”””
+ self.model.eval()
+ correct = 0
+ total = 0</p>
+
+<p>with torch.no_grad():
+ for mel_specs, labels in val_loader:
+ mel_specs = mel_specs.to(self.device)
+ labels = labels.to(self.device)</p>
+
+<p>predictions = self.model(mel_specs)
+ predicted = (predictions &gt; 0.5).float()</p>
+
+<p>correct += (predicted == labels).sum().item()
+ total += labels.numel()</p>
+
+<p>accuracy = correct / total
+ return accuracy
+``</p>
 
 <hr />
 
@@ -851,131 +865,132 @@
 
 <h3 id="streaming-implementation">Streaming Implementation</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">deque</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
-<span class="kn">import</span> <span class="n">struct</span>
+<p>``python
+from collections import deque
+import numpy as np
+import struct</p>
 
-<span class="k">class</span> <span class="nc">StreamingVAD</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Real-time VAD for streaming audio
-    
-    Use case: Voice assistants, VoIP, live transcription
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span>
-        <span class="n">frame_duration_ms</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
-        <span class="n">aggressiveness</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-        <span class="n">speech_pad_ms</span><span class="o">=</span><span class="mi">300</span>
-    <span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sr</span> <span class="o">=</span> <span class="n">sr</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">frame_duration_ms</span> <span class="o">=</span> <span class="n">frame_duration_ms</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">sr</span> <span class="o">*</span> <span class="n">frame_duration_ms</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">speech_pad_ms</span> <span class="o">=</span> <span class="n">speech_pad_ms</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">speech_pad_frames</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">speech_pad_ms</span> <span class="o">/</span> <span class="n">frame_duration_ms</span><span class="p">)</span>
-        
-        <span class="c1"># WebRTC VAD
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="n">webrtcvad</span><span class="p">.</span><span class="nc">Vad</span><span class="p">(</span><span class="n">aggressiveness</span><span class="p">)</span>
-        
-        <span class="c1"># State
-</span>        <span class="n">self</span><span class="p">.</span><span class="nb">buffer</span> <span class="o">=</span> <span class="nf">deque</span><span class="p">(</span><span class="n">maxlen</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>  <span class="c1"># Audio buffer
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">speech_frames</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Consecutive speech frames
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">silence_frames</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Consecutive silence frames
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">in_speech</span> <span class="o">=</span> <span class="bp">False</span>
-        
-        <span class="c1"># Store speech segments
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">current_speech</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">def</span> <span class="nf">add_audio</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_chunk</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Add audio chunk to buffer
-        
-        Args:
-            audio_chunk: New audio samples (int16)
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">.</span><span class="nf">extend</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">process_frame</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Process one frame from buffer
-        
-        Returns:
-            (is_speech, speech_ended, speech_audio)
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">None</span>
-        
-        <span class="c1"># Extract frame
-</span>        <span class="n">frame</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="n">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">.</span><span class="nf">popleft</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">frame_length</span><span class="p">)])</span>
-        
-        <span class="c1"># Convert to bytes
-</span>        <span class="n">frame_bytes</span> <span class="o">=</span> <span class="n">struct</span><span class="p">.</span><span class="nf">pack</span><span class="p">(</span><span class="sh">'</span><span class="s">%dh</span><span class="sh">'</span> <span class="o">%</span> <span class="nf">len</span><span class="p">(</span><span class="n">frame</span><span class="p">),</span> <span class="o">*</span><span class="n">frame</span><span class="p">)</span>
-        
-        <span class="c1"># Detect
-</span>        <span class="n">is_speech</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">is_speech</span><span class="p">(</span><span class="n">frame_bytes</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">sr</span><span class="p">)</span>
-        
-        <span class="c1"># Update state
-</span>        <span class="k">if</span> <span class="n">is_speech</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">speech_frames</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">silence_frames</span> <span class="o">=</span> <span class="mi">0</span>
-            
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">in_speech</span><span class="p">:</span>
-                <span class="c1"># Speech just started
-</span>                <span class="n">self</span><span class="p">.</span><span class="n">in_speech</span> <span class="o">=</span> <span class="bp">True</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">current_speech</span> <span class="o">=</span> <span class="p">[]</span>
-            
-            <span class="c1"># Add to current speech
-</span>            <span class="n">self</span><span class="p">.</span><span class="n">current_speech</span><span class="p">.</span><span class="nf">extend</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
-        
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">silence_frames</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">speech_frames</span> <span class="o">=</span> <span class="mi">0</span>
-            
-            <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">in_speech</span><span class="p">:</span>
-                <span class="c1"># Add padding
-</span>                <span class="n">self</span><span class="p">.</span><span class="n">current_speech</span><span class="p">.</span><span class="nf">extend</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
-                
-                <span class="c1"># Check if speech ended
-</span>                <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">silence_frames</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">speech_pad_frames</span><span class="p">:</span>
-                    <span class="c1"># Speech ended
-</span>                    <span class="n">self</span><span class="p">.</span><span class="n">in_speech</span> <span class="o">=</span> <span class="bp">False</span>
-                    <span class="n">speech_audio</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">current_speech</span><span class="p">)</span>
-                    <span class="n">self</span><span class="p">.</span><span class="n">current_speech</span> <span class="o">=</span> <span class="p">[]</span>
-                    
-                    <span class="k">return</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="n">speech_audio</span>
-        
-        <span class="k">return</span> <span class="n">is_speech</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">None</span>
-    
-    <span class="k">def</span> <span class="nf">process_stream</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Process all buffered audio
-        
-        Yields speech segments as they complete
-        </span><span class="sh">"""</span>
-        <span class="k">while</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nb">buffer</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">frame_length</span><span class="p">:</span>
-            <span class="n">is_speech</span><span class="p">,</span> <span class="n">speech_ended</span><span class="p">,</span> <span class="n">speech_audio</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">process_frame</span><span class="p">()</span>
-            
-            <span class="k">if</span> <span class="n">speech_ended</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="n">speech_audio</span>
+<p>class StreamingVAD:
+ “””
+ Real-time VAD for streaming audio</p>
 
-<span class="c1"># Usage
-</span><span class="n">streaming_vad</span> <span class="o">=</span> <span class="nc">StreamingVAD</span><span class="p">(</span><span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">frame_duration_ms</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<p>Use case: Voice assistants, VoIP, live transcription
+ “””</p>
 
-<span class="c1"># Simulate streaming (process chunks as they arrive)
-</span><span class="n">chunk_size</span> <span class="o">=</span> <span class="mi">480</span>  <span class="c1"># 30ms at 16kHz
-</span>
-<span class="k">for</span> <span class="n">chunk_start</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">):</span>
-    <span class="n">chunk</span> <span class="o">=</span> <span class="n">audio</span><span class="p">[</span><span class="n">chunk_start</span><span class="p">:</span><span class="n">chunk_start</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">]</span>
-    
-    <span class="c1"># Add to buffer
-</span>    <span class="n">streaming_vad</span><span class="p">.</span><span class="nf">add_audio</span><span class="p">(</span><span class="n">chunk</span><span class="p">.</span><span class="nf">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">int16</span><span class="p">))</span>
-    
-    <span class="c1"># Process
-</span>    <span class="k">for</span> <span class="n">speech_segment</span> <span class="ow">in</span> <span class="n">streaming_vad</span><span class="p">.</span><span class="nf">process_stream</span><span class="p">():</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Speech segment detected: </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">speech_segment</span><span class="p">)</span><span class="si">}</span><span class="s"> samples</span><span class="sh">"</span><span class="p">)</span>
-        <span class="c1"># Send to ASR, save, etc.
-</span></code></pre></div></div>
+<p>def <strong>init</strong>(
+ self,
+ sr=16000,
+ frame_duration_ms=30,
+ aggressiveness=3,
+ speech_pad_ms=300
+ ):
+ self.sr = sr
+ self.frame_duration_ms = frame_duration_ms
+ self.frame_length = int(sr * frame_duration_ms / 1000)
+ self.speech_pad_ms = speech_pad_ms
+ self.speech_pad_frames = int(speech_pad_ms / frame_duration_ms)</p>
+
+<p># WebRTC VAD
+ self.vad = webrtcvad.Vad(aggressiveness)</p>
+
+<p># State
+ self.buffer = deque(maxlen=10000) # Audio buffer
+ self.speech_frames = 0 # Consecutive speech frames
+ self.silence_frames = 0 # Consecutive silence frames
+ self.in_speech = False</p>
+
+<p># Store speech segments
+ self.current_speech = []</p>
+
+<p>def add_audio(self, audio_chunk):
+ “””
+ Add audio chunk to buffer</p>
+
+<p>Args:
+ audio_chunk: New audio samples (int16)
+ “””
+ self.buffer.extend(audio_chunk)</p>
+
+<p>def process_frame(self):
+ “””
+ Process one frame from buffer</p>
+
+<p>Returns:
+ (is_speech, speech_ended, speech_audio)
+ “””
+ if len(self.buffer) &lt; self.frame_length:
+ return None, False, None</p>
+
+<p># Extract frame
+ frame = np.array([self.buffer.popleft() for _ in range(self.frame_length)])</p>
+
+<p># Convert to bytes
+ frame_bytes = struct.pack(‘%dh’ % len(frame), *frame)</p>
+
+<p># Detect
+ is_speech = self.vad.is_speech(frame_bytes, self.sr)</p>
+
+<p># Update state
+ if is_speech:
+ self.speech_frames += 1
+ self.silence_frames = 0</p>
+
+<p>if not self.in_speech:
+ # Speech just started
+ self.in_speech = True
+ self.current_speech = []</p>
+
+<p># Add to current speech
+ self.current_speech.extend(frame)</p>
+
+<p>else:
+ self.silence_frames += 1
+ self.speech_frames = 0</p>
+
+<p>if self.in_speech:
+ # Add padding
+ self.current_speech.extend(frame)</p>
+
+<p># Check if speech ended
+ if self.silence_frames &gt;= self.speech_pad_frames:
+ # Speech ended
+ self.in_speech = False
+ speech_audio = np.array(self.current_speech)
+ self.current_speech = []</p>
+
+<p>return False, True, speech_audio</p>
+
+<p>return is_speech, False, None</p>
+
+<p>def process_stream(self):
+ “””
+ Process all buffered audio</p>
+
+<p>Yields speech segments as they complete
+ “””
+ while len(self.buffer) &gt;= self.frame_length:
+ is_speech, speech_ended, speech_audio = self.process_frame()</p>
+
+<p>if speech_ended:
+ yield speech_audio</p>
+
+<h1 id="usage-3">Usage</h1>
+<p>streaming_vad = StreamingVAD(sr=16000, frame_duration_ms=30)</p>
+
+<h1 id="simulate-streaming-process-chunks-as-they-arrive">Simulate streaming (process chunks as they arrive)</h1>
+<p>chunk_size = 480 # 30ms at 16kHz</p>
+
+<p>for chunk_start in range(0, len(audio), chunk_size):
+ chunk = audio[chunk_start:chunk_start + chunk_size]</p>
+
+<p># Add to buffer
+ streaming_vad.add_audio(chunk.astype(np.int16))</p>
+
+<p># Process
+ for speech_segment in streaming_vad.process_stream():
+ print(f”Speech segment detected: {len(speech_segment)} samples”)
+ # Send to ASR, save, etc.
+``</p>
 
 <hr />
 
@@ -985,94 +1000,96 @@
 
 <p>Add padding before/after speech to avoid cutting off words.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">VADWithPadding</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    VAD with pre/post padding
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">vad</span><span class="p">,</span>
-        <span class="n">pre_pad_ms</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
-        <span class="n">post_pad_ms</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
-        <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span>
-    <span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="n">vad</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">pre_pad_frames</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">pre_pad_ms</span> <span class="o">/</span> <span class="mi">30</span><span class="p">)</span>  <span class="c1"># Assuming 30ms frames
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">post_pad_frames</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">post_pad_ms</span> <span class="o">/</span> <span class="mi">30</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sr</span> <span class="o">=</span> <span class="n">sr</span>
-    
-    <span class="k">def</span> <span class="nf">detect_with_padding</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Detect speech with padding
-        </span><span class="sh">"""</span>
-        <span class="n">is_speech</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">detect</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        
-        <span class="c1"># Add pre-padding
-</span>        <span class="n">padded</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">copy</span><span class="p">(</span><span class="n">is_speech</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">is_speech</span><span class="p">)):</span>
-            <span class="k">if</span> <span class="n">is_speech</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
-                <span class="c1"># Mark previous frames as speech
-</span>                <span class="n">start</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">pre_pad_frames</span><span class="p">)</span>
-                <span class="n">padded</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
-        
-        <span class="c1"># Add post-padding
-</span>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">is_speech</span><span class="p">)):</span>
-            <span class="k">if</span> <span class="n">is_speech</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
-                <span class="c1"># Mark following frames as speech
-</span>                <span class="n">end</span> <span class="o">=</span> <span class="nf">min</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">is_speech</span><span class="p">),</span> <span class="n">i</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">post_pad_frames</span><span class="p">)</span>
-                <span class="n">padded</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">end</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
-        
-        <span class="k">return</span> <span class="n">padded</span>
-</code></pre></div></div>
+<p>``python
+class VADWithPadding:
+ “””
+ VAD with pre/post padding
+ “””</p>
+
+<p>def <strong>init</strong>(
+ self,
+ vad,
+ pre_pad_ms=200,
+ post_pad_ms=500,
+ sr=16000
+ ):
+ self.vad = vad
+ self.pre_pad_frames = int(pre_pad_ms / 30) # Assuming 30ms frames
+ self.post_pad_frames = int(post_pad_ms / 30)
+ self.sr = sr</p>
+
+<p>def detect_with_padding(self, audio):
+ “””
+ Detect speech with padding
+ “””
+ is_speech = self.vad.detect(audio)</p>
+
+<p># Add pre-padding
+ padded = np.copy(is_speech)
+ for i in range(len(is_speech)):
+ if is_speech[i]:
+ # Mark previous frames as speech
+ start = max(0, i - self.pre_pad_frames)
+ padded[start:i] = True</p>
+
+<p># Add post-padding
+ for i in range(len(is_speech)):
+ if is_speech[i]:
+ # Mark following frames as speech
+ end = min(len(is_speech), i + self.post_pad_frames)
+ padded[i:end] = True</p>
+
+<p>return padded
+``</p>
 
 <h3 id="performance-optimization">Performance Optimization</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">time</span>
+<p>``python
+import time</p>
 
-<span class="k">class</span> <span class="nc">OptimizedVAD</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Optimized VAD for production
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">vad_impl</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="n">vad_impl</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">stats</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">total_frames</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">speech_frames</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">processing_time</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span>
-        <span class="p">}</span>
-    
-    <span class="k">def</span> <span class="nf">detect_with_stats</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Detect with performance tracking</span><span class="sh">"""</span>
-        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">perf_counter</span><span class="p">()</span>
-        
-        <span class="n">is_speech</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">detect</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        
-        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">perf_counter</span><span class="p">()</span>
-        
-        <span class="c1"># Update stats
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">total_frames</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="nf">len</span><span class="p">(</span><span class="n">is_speech</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">speech_frames</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="n">is_speech</span><span class="p">.</span><span class="nf">sum</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">processing_time</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">is_speech</span>
-    
-    <span class="k">def</span> <span class="nf">get_stats</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Get performance statistics</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">total_frames</span><span class="sh">'</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">None</span>
-        
-        <span class="n">speech_ratio</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">speech_frames</span><span class="sh">'</span><span class="p">]</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">total_frames</span><span class="sh">'</span><span class="p">]</span>
-        <span class="n">avg_time_per_frame</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">processing_time</span><span class="sh">'</span><span class="p">]</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">total_frames</span><span class="sh">'</span><span class="p">]</span>
-        
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">speech_ratio</span><span class="sh">'</span><span class="p">:</span> <span class="n">speech_ratio</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">avg_latency_ms</span><span class="sh">'</span><span class="p">:</span> <span class="n">avg_time_per_frame</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">total_frames</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">total_frames</span><span class="sh">'</span><span class="p">],</span>
-            <span class="sh">'</span><span class="s">speech_frames</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">stats</span><span class="p">[</span><span class="sh">'</span><span class="s">speech_frames</span><span class="sh">'</span><span class="p">]</span>
-        <span class="p">}</span>
-</code></pre></div></div>
+<p>class OptimizedVAD:
+ “””
+ Optimized VAD for production
+ “””</p>
+
+<p>def <strong>init</strong>(self, vad_impl):
+ self.vad = vad_impl
+ self.stats = {
+ ‘total_frames’: 0,
+ ‘speech_frames’: 0,
+ ‘processing_time’: 0
+ }</p>
+
+<p>def detect_with_stats(self, audio):
+ “"”Detect with performance tracking”””
+ start = time.perf_counter()</p>
+
+<p>is_speech = self.vad.detect(audio)</p>
+
+<p>end = time.perf_counter()</p>
+
+<p># Update stats
+ self.stats[‘total_frames’] += len(is_speech)
+ self.stats[‘speech_frames’] += is_speech.sum()
+ self.stats[‘processing_time’] += (end - start)</p>
+
+<p>return is_speech</p>
+
+<p>def get_stats(self):
+ “"”Get performance statistics”””
+ if self.stats[‘total_frames’] == 0:
+ return None</p>
+
+<p>speech_ratio = self.stats[‘speech_frames’] / self.stats[‘total_frames’]
+ avg_time_per_frame = self.stats[‘processing_time’] / self.stats[‘total_frames’]</p>
+
+<p>return {
+ ‘speech_ratio’: speech_ratio,
+ ‘avg_latency_ms’: avg_time_per_frame * 1000,
+ ‘total_frames’: self.stats[‘total_frames’],
+ ‘speech_frames’: self.stats[‘speech_frames’]
+ }
+``</p>
 
 <hr />
 
@@ -1082,156 +1099,158 @@
 
 <h3 id="end-to-end-pipeline">End-to-End Pipeline</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SpeechPipeline</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Complete speech recognition pipeline with VAD
-    
-    Pipeline: Audio → VAD → ASR → Text
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="c1"># VAD
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="nc">WebRTCVAD</span><span class="p">(</span><span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">frame_duration_ms</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">aggressiveness</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-        
-        <span class="c1"># Placeholder for ASR model
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">asr_model</span> <span class="o">=</span> <span class="bp">None</span>  <span class="c1"># Would be actual ASR model
-</span>        
-        <span class="c1"># Buffering
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">min_speech_duration</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1"># seconds
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">max_speech_duration</span> <span class="o">=</span> <span class="mf">10.0</span>  <span class="c1"># seconds
-</span>    
-    <span class="k">def</span> <span class="nf">process_audio_file</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_path</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Process audio file end-to-end
-        
-        Returns:
-            List of transcriptions
-        </span><span class="sh">"""</span>
-        <span class="c1"># Load audio
-</span>        <span class="kn">import</span> <span class="n">librosa</span>
-        <span class="n">audio</span><span class="p">,</span> <span class="n">sr</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="n">audio_path</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">)</span>
-        
-        <span class="c1"># Run VAD
-</span>        <span class="n">speech_segments</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">get_speech_timestamps</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        
-        <span class="c1"># Filter by duration
-</span>        <span class="n">valid_segments</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span> <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">speech_segments</span>
-            <span class="nf">if </span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">min_speech_duration</span> <span class="ow">and</span>
-               <span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">max_speech_duration</span>
-        <span class="p">]</span>
-        
-        <span class="n">transcriptions</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">valid_segments</span><span class="p">:</span>
-            <span class="c1"># Extract speech segment
-</span>            <span class="n">start_sample</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">start</span> <span class="o">*</span> <span class="n">sr</span><span class="p">)</span>
-            <span class="n">end_sample</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">end</span> <span class="o">*</span> <span class="n">sr</span><span class="p">)</span>
-            <span class="n">speech_audio</span> <span class="o">=</span> <span class="n">audio</span><span class="p">[</span><span class="n">start_sample</span><span class="p">:</span><span class="n">end_sample</span><span class="p">]</span>
-            
-            <span class="c1"># Run ASR (placeholder)
-</span>            <span class="c1"># transcript = self.asr_model.transcribe(speech_audio)
-</span>            <span class="n">transcript</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">[Speech from </span><span class="si">{</span><span class="n">start</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s to </span><span class="si">{</span><span class="n">end</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s]</span><span class="sh">"</span>
-            
-            <span class="n">transcriptions</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span>
-                <span class="sh">'</span><span class="s">start</span><span class="sh">'</span><span class="p">:</span> <span class="n">start</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">end</span><span class="sh">'</span><span class="p">:</span> <span class="n">end</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">duration</span><span class="sh">'</span><span class="p">:</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">:</span> <span class="n">transcript</span>
-            <span class="p">})</span>
-        
-        <span class="k">return</span> <span class="n">transcriptions</span>
-    
-    <span class="k">def</span> <span class="nf">process_streaming</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_stream</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Process streaming audio
-        
-        Yields transcriptions as speech segments complete
-        </span><span class="sh">"""</span>
-        <span class="n">streaming_vad</span> <span class="o">=</span> <span class="nc">StreamingVAD</span><span class="p">(</span><span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">frame_duration_ms</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">audio_stream</span><span class="p">:</span>
-            <span class="n">streaming_vad</span><span class="p">.</span><span class="nf">add_audio</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-            
-            <span class="k">for</span> <span class="n">speech_segment</span> <span class="ow">in</span> <span class="n">streaming_vad</span><span class="p">.</span><span class="nf">process_stream</span><span class="p">():</span>
-                <span class="c1"># Run ASR on completed segment
-</span>                <span class="c1"># transcript = self.asr_model.transcribe(speech_segment)
-</span>                <span class="n">transcript</span> <span class="o">=</span> <span class="sh">"</span><span class="s">[Speech detected]</span><span class="sh">"</span>
-                
-                <span class="k">yield</span> <span class="p">{</span>
-                    <span class="sh">'</span><span class="s">audio</span><span class="sh">'</span><span class="p">:</span> <span class="n">speech_segment</span><span class="p">,</span>
-                    <span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">:</span> <span class="n">transcript</span><span class="p">,</span>
-                    <span class="sh">'</span><span class="s">timestamp</span><span class="sh">'</span><span class="p">:</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-                <span class="p">}</span>
+<p>``python
+class SpeechPipeline:
+ “””
+ Complete speech recognition pipeline with VAD</p>
 
-<span class="c1"># Usage
-</span><span class="n">pipeline</span> <span class="o">=</span> <span class="nc">SpeechPipeline</span><span class="p">()</span>
+<p>Pipeline: Audio → VAD → ASR → Text
+ “””</p>
 
-<span class="c1"># Process file
-</span><span class="n">transcriptions</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">.</span><span class="nf">process_audio_file</span><span class="p">(</span><span class="sh">'</span><span class="s">conversation.wav</span><span class="sh">'</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">transcriptions</span><span class="p">:</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">t</span><span class="p">[</span><span class="sh">'</span><span class="s">start</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s - </span><span class="si">{</span><span class="n">t</span><span class="p">[</span><span class="sh">'</span><span class="s">end</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">s: </span><span class="si">{</span><span class="n">t</span><span class="p">[</span><span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def <strong>init</strong>(self):
+ # VAD
+ self.vad = WebRTCVAD(sr=16000, frame_duration_ms=30, aggressiveness=3)</p>
+
+<p># Placeholder for ASR model
+ self.asr_model = None # Would be actual ASR model</p>
+
+<p># Buffering
+ self.min_speech_duration = 0.5 # seconds
+ self.max_speech_duration = 10.0 # seconds</p>
+
+<p>def process_audio_file(self, audio_path):
+ “””
+ Process audio file end-to-end</p>
+
+<p>Returns:
+ List of transcriptions
+ “””
+ # Load audio
+ import librosa
+ audio, sr = librosa.load(audio_path, sr=16000)</p>
+
+<p># Run VAD
+ speech_segments = self.vad.get_speech_timestamps(audio)</p>
+
+<p># Filter by duration
+ valid_segments = [
+ (start, end) for start, end in speech_segments
+ if (end - start) &gt;= self.min_speech_duration and
+ (end - start) &lt;= self.max_speech_duration
+ ]</p>
+
+<p>transcriptions = []</p>
+
+<p>for start, end in valid_segments:
+ # Extract speech segment
+ start_sample = int(start * sr)
+ end_sample = int(end * sr)
+ speech_audio = audio[start_sample:end_sample]</p>
+
+<p># Run ASR (placeholder)
+ # transcript = self.asr_model.transcribe(speech_audio)
+ transcript = f”[Speech from {start:.2f}s to {end:.2f}s]”</p>
+
+<p>transcriptions.append({
+ ‘start’: start,
+ ‘end’: end,
+ ‘duration’: end - start,
+ ‘text’: transcript
+ })</p>
+
+<p>return transcriptions</p>
+
+<p>def process_streaming(self, audio_stream):
+ “””
+ Process streaming audio</p>
+
+<p>Yields transcriptions as speech segments complete
+ “””
+ streaming_vad = StreamingVAD(sr=16000, frame_duration_ms=30)</p>
+
+<p>for chunk in audio_stream:
+ streaming_vad.add_audio(chunk)</p>
+
+<p>for speech_segment in streaming_vad.process_stream():
+ # Run ASR on completed segment
+ # transcript = self.asr_model.transcribe(speech_segment)
+ transcript = “[Speech detected]”</p>
+
+<p>yield {
+ ‘audio’: speech_segment,
+ ‘text’: transcript,
+ ‘timestamp’: time.time()
+ }</p>
+
+<h1 id="usage-4">Usage</h1>
+<p>pipeline = SpeechPipeline()</p>
+
+<h1 id="process-file">Process file</h1>
+<p>transcriptions = pipeline.process_audio_file(‘conversation.wav’)
+for t in transcriptions:
+ print(f”{t[‘start’]:.2f}s - {t[‘end’]:.2f}s: {t[‘text’]}”)
+``</p>
 
 <h3 id="double-pass-vad-for-higher-accuracy">Double-Pass VAD for Higher Accuracy</h3>
 
 <p>Use aggressive VAD first, then refine with ML model.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">TwoPassVAD</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Two-pass VAD for improved accuracy
-    
-    Pass 1: Fast WebRTC VAD (aggressive) → candidate segments
-    Pass 2: ML VAD (accurate) → final segments
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="c1"># Fast pass: WebRTC VAD (aggressive)
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">fast_vad</span> <span class="o">=</span> <span class="nc">WebRTCVAD</span><span class="p">(</span><span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">frame_duration_ms</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">aggressiveness</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-        
-        <span class="c1"># Accurate pass: ML VAD
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">ml_vad</span> <span class="o">=</span> <span class="nc">CNNVAD</span><span class="p">(</span><span class="n">n_mels</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">ml_vad</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">detect</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Two-pass detection
-        
-        Returns:
-            Refined speech segments
-        </span><span class="sh">"""</span>
-        <span class="c1"># Pass 1: Fast VAD to get candidate regions
-</span>        <span class="n">candidate_segments</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">fast_vad</span><span class="p">.</span><span class="nf">get_speech_timestamps</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        
-        <span class="c1"># Pass 2: ML VAD to refine each candidate
-</span>        <span class="n">refined_segments</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">candidate_segments</span><span class="p">:</span>
-            <span class="c1"># Extract segment
-</span>            <span class="n">start_sample</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">start</span> <span class="o">*</span> <span class="mi">16000</span><span class="p">)</span>
-            <span class="n">end_sample</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">end</span> <span class="o">*</span> <span class="mi">16000</span><span class="p">)</span>
-            <span class="n">segment_audio</span> <span class="o">=</span> <span class="n">audio</span><span class="p">[</span><span class="n">start_sample</span><span class="p">:</span><span class="n">end_sample</span><span class="p">]</span>
-            
-            <span class="c1"># Run ML VAD on segment
-</span>            <span class="c1"># Convert to mel-spectrogram
-</span>            <span class="kn">import</span> <span class="n">librosa</span>
-            <span class="n">mel_spec</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="n">feature</span><span class="p">.</span><span class="nf">melspectrogram</span><span class="p">(</span>
-                <span class="n">y</span><span class="o">=</span><span class="n">segment_audio</span><span class="p">,</span>
-                <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span>
-                <span class="n">n_mels</span><span class="o">=</span><span class="mi">40</span>
-            <span class="p">)</span>
-            
-            <span class="c1"># ML model prediction
-</span>            <span class="c1"># mel_tensor = torch.from_numpy(mel_spec).unsqueeze(0).unsqueeze(0)
-</span>            <span class="c1"># with torch.no_grad():
-</span>            <span class="c1">#     predictions = self.ml_vad(mel_tensor)
-</span>            <span class="c1">#     is_speech_frames = predictions &gt; 0.5
-</span>            
-            <span class="c1"># For now, accept if fast VAD said speech
-</span>            <span class="n">refined_segments</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">))</span>
-        
-        <span class="k">return</span> <span class="n">refined_segments</span>
-</code></pre></div></div>
+<p>``python
+class TwoPassVAD:
+ “””
+ Two-pass VAD for improved accuracy</p>
+
+<p>Pass 1: Fast WebRTC VAD (aggressive) → candidate segments
+ Pass 2: ML VAD (accurate) → final segments
+ “””</p>
+
+<p>def <strong>init</strong>(self):
+ # Fast pass: WebRTC VAD (aggressive)
+ self.fast_vad = WebRTCVAD(sr=16000, frame_duration_ms=30, aggressiveness=3)</p>
+
+<p># Accurate pass: ML VAD
+ self.ml_vad = CNNVAD(n_mels=40)
+ self.ml_vad.eval()</p>
+
+<p>def detect(self, audio):
+ “””
+ Two-pass detection</p>
+
+<p>Returns:
+ Refined speech segments
+ “””
+ # Pass 1: Fast VAD to get candidate regions
+ candidate_segments = self.fast_vad.get_speech_timestamps(audio)</p>
+
+<p># Pass 2: ML VAD to refine each candidate
+ refined_segments = []</p>
+
+<p>for start, end in candidate_segments:
+ # Extract segment
+ start_sample = int(start * 16000)
+ end_sample = int(end * 16000)
+ segment_audio = audio[start_sample:end_sample]</p>
+
+<p># Run ML VAD on segment
+ # Convert to mel-spectrogram
+ import librosa
+ mel_spec = librosa.feature.melspectrogram(
+ y=segment_audio,
+ sr=16000,
+ n_mels=40
+ )</p>
+
+<p># ML model prediction
+ # mel_tensor = torch.from_numpy(mel_spec).unsqueeze(0).unsqueeze(0)
+ # with torch.no_grad():
+ # predictions = self.ml_vad(mel_tensor)
+ # is_speech_frames = predictions &gt; 0.5</p>
+
+<p># For now, accept if fast VAD said speech
+ refined_segments.append((start, end))</p>
+
+<p>return refined_segments
+``</p>
 
 <hr />
 
@@ -1294,131 +1313,134 @@
 
 <p>For real-time applications:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Voice Assistant Latency Budget:
+<p>``
+Voice Assistant Latency Budget:
 ┌─────────────────────────────────────┐
-│ VAD Detection:          5-10ms      │
-│ Endpoint Detection:     100-200ms   │
-│ ASR Processing:         500-1000ms  │
-│ NLU + Dialog:           100-200ms   │
-│ TTS Generation:         200-500ms   │
+│ VAD Detection: 5-10ms │
+│ Endpoint Detection: 100-200ms │
+│ ASR Processing: 500-1000ms │
+│ NLU + Dialog: 100-200ms │
+│ TTS Generation: 200-500ms │
 ├─────────────────────────────────────┤
-│ Total:                  ~1-2 seconds│
-└─────────────────────────────────────┘
+│ Total: ~1-2 seconds│
+└─────────────────────────────────────┘</p>
 
-VAD must be fast to keep overall latency low!
-</code></pre></div></div>
+<p>VAD must be fast to keep overall latency low!
+``</p>
 
 <h3 id="resource-usage">Resource Usage</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">psutil</span>
-<span class="kn">import</span> <span class="n">time</span>
+<p>``python
+import psutil
+import time</p>
 
-<span class="k">class</span> <span class="nc">VADProfiler</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Profile VAD performance
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">vad</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="n">vad</span>
-    
-    <span class="k">def</span> <span class="nf">profile</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">,</span> <span class="n">num_runs</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Benchmark VAD
-        
-        Returns:
-            Performance metrics
-        </span><span class="sh">"""</span>
-        <span class="n">latencies</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># Warm-up
-</span>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">detect</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        
-        <span class="c1"># Measure
-</span>        <span class="n">process</span> <span class="o">=</span> <span class="n">psutil</span><span class="p">.</span><span class="nc">Process</span><span class="p">()</span>
-        
-        <span class="n">cpu_percent_before</span> <span class="o">=</span> <span class="n">process</span><span class="p">.</span><span class="nf">cpu_percent</span><span class="p">()</span>
-        <span class="n">memory_before</span> <span class="o">=</span> <span class="n">process</span><span class="p">.</span><span class="nf">memory_info</span><span class="p">().</span><span class="n">rss</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span>  <span class="c1"># MB
-</span>        
-        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">num_runs</span><span class="p">):</span>
-            <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">perf_counter</span><span class="p">()</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">detect</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-            <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">perf_counter</span><span class="p">()</span>
-            
-            <span class="n">latencies</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>  <span class="c1"># ms
-</span>        
-        <span class="n">cpu_percent_after</span> <span class="o">=</span> <span class="n">process</span><span class="p">.</span><span class="nf">cpu_percent</span><span class="p">()</span>
-        <span class="n">memory_after</span> <span class="o">=</span> <span class="n">process</span><span class="p">.</span><span class="nf">memory_info</span><span class="p">().</span><span class="n">rss</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span>  <span class="c1"># MB
-</span>        
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">mean_latency_ms</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">latencies</span><span class="p">),</span>
-            <span class="sh">'</span><span class="s">p50_latency_ms</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">percentile</span><span class="p">(</span><span class="n">latencies</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span>
-            <span class="sh">'</span><span class="s">p95_latency_ms</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">percentile</span><span class="p">(</span><span class="n">latencies</span><span class="p">,</span> <span class="mi">95</span><span class="p">),</span>
-            <span class="sh">'</span><span class="s">p99_latency_ms</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">percentile</span><span class="p">(</span><span class="n">latencies</span><span class="p">,</span> <span class="mi">99</span><span class="p">),</span>
-            <span class="sh">'</span><span class="s">throughput_fps</span><span class="sh">'</span><span class="p">:</span> <span class="mi">1000</span> <span class="o">/</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">latencies</span><span class="p">),</span>
-            <span class="sh">'</span><span class="s">cpu_usage_pct</span><span class="sh">'</span><span class="p">:</span> <span class="n">cpu_percent_after</span> <span class="o">-</span> <span class="n">cpu_percent_before</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">memory_mb</span><span class="sh">'</span><span class="p">:</span> <span class="n">memory_after</span> <span class="o">-</span> <span class="n">memory_before</span>
-        <span class="p">}</span>
+<p>class VADProfiler:
+ “””
+ Profile VAD performance
+ “””</p>
 
-<span class="c1"># Usage
-</span><span class="n">profiler</span> <span class="o">=</span> <span class="nc">VADProfiler</span><span class="p">(</span><span class="nc">WebRTCVAD</span><span class="p">())</span>
+<p>def <strong>init</strong>(self, vad):
+ self.vad = vad</p>
 
-<span class="n">audio</span><span class="p">,</span> <span class="n">sr</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="sh">'</span><span class="s">test.wav</span><span class="sh">'</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mf">10.0</span><span class="p">)</span>
-<span class="n">metrics</span> <span class="o">=</span> <span class="n">profiler</span><span class="p">.</span><span class="nf">profile</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+<p>def profile(self, audio, num_runs=100):
+ “””
+ Benchmark VAD</p>
 
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Mean latency: </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">mean_latency_ms</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">ms</span><span class="sh">"</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">P95 latency: </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">p95_latency_ms</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">ms</span><span class="sh">"</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Throughput: </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">throughput_fps</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">0</span><span class="n">f</span><span class="si">}</span><span class="s"> frames/sec</span><span class="sh">"</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">CPU usage: </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">cpu_usage_pct</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">%</span><span class="sh">"</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Memory: </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">memory_mb</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s"> MB</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>Returns:
+ Performance metrics
+ “””
+ latencies = []</p>
+
+<p># Warm-up
+ for _ in range(10):
+ self.vad.detect(audio)</p>
+
+<p># Measure
+ process = psutil.Process()</p>
+
+<p>cpu_percent_before = process.cpu_percent()
+ memory_before = process.memory_info().rss / 1024 / 1024 # MB</p>
+
+<p>for _ in range(num_runs):
+ start = time.perf_counter()
+ result = self.vad.detect(audio)
+ end = time.perf_counter()</p>
+
+<p>latencies.append((end - start) * 1000) # ms</p>
+
+<p>cpu_percent_after = process.cpu_percent()
+ memory_after = process.memory_info().rss / 1024 / 1024 # MB</p>
+
+<p>return {
+ ‘mean_latency_ms’: np.mean(latencies),
+ ‘p50_latency_ms’: np.percentile(latencies, 50),
+ ‘p95_latency_ms’: np.percentile(latencies, 95),
+ ‘p99_latency_ms’: np.percentile(latencies, 99),
+ ‘throughput_fps’: 1000 / np.mean(latencies),
+ ‘cpu_usage_pct’: cpu_percent_after - cpu_percent_before,
+ ‘memory_mb’: memory_after - memory_before
+ }</p>
+
+<h1 id="usage-5">Usage</h1>
+<p>profiler = VADProfiler(WebRTCVAD())</p>
+
+<p>audio, sr = librosa.load(‘test.wav’, sr=16000, duration=10.0)
+metrics = profiler.profile(audio)</p>
+
+<p>print(f”Mean latency: {metrics[‘mean_latency_ms’]:.2f}ms”)
+print(f”P95 latency: {metrics[‘p95_latency_ms’]:.2f}ms”)
+print(f”Throughput: {metrics[‘throughput_fps’]:.0f} frames/sec”)
+print(f”CPU usage: {metrics[‘cpu_usage_pct’]:.1f}%”)
+print(f”Memory: {metrics[‘memory_mb’]:.1f} MB”)
+``</p>
 
 <h3 id="mobileedge-deployment">Mobile/Edge Deployment</h3>
 
 <p>Optimize VAD for on-device deployment.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">MobileOptimizedVAD</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    VAD optimized for mobile devices
-    
-    Quantized model, reduced precision, smaller memory footprint
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="c1"># Use int8 quantization for mobile
-</span>        <span class="kn">import</span> <span class="n">torch</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="nc">CNNVAD</span><span class="p">(</span><span class="n">n_mels</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
-        
-        <span class="c1"># Quantize model
-</span>        <span class="c1"># Dynamic quantization applies to Linear/LSTM; Conv2d not supported
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">quantization</span><span class="p">.</span><span class="nf">quantize_dynamic</span><span class="p">(</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">,</span>
-            <span class="p">{</span><span class="n">torch</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">},</span>
-            <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="n">qint8</span>
-        <span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">detect_efficient</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Efficient detection with reduced memory
-        
-        Process in chunks to reduce peak memory
-        </span><span class="sh">"""</span>
-        <span class="n">chunk_size</span> <span class="o">=</span> <span class="mi">16000</span>  <span class="c1"># 1 second chunks
-</span>        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">):</span>
-            <span class="n">chunk</span> <span class="o">=</span> <span class="n">audio</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">chunk_size</span><span class="p">]</span>
-            
-            <span class="c1"># Process chunk
-</span>            <span class="c1"># result = self.process_chunk(chunk)
-</span>            <span class="c1"># results.extend(result)
-</span>            <span class="k">pass</span>
-        
-        <span class="k">return</span> <span class="n">results</span>
-</code></pre></div></div>
+<p>``python
+class MobileOptimizedVAD:
+ “””
+ VAD optimized for mobile devices</p>
+
+<p>Quantized model, reduced precision, smaller memory footprint
+ “””</p>
+
+<p>def <strong>init</strong>(self):
+ # Use int8 quantization for mobile
+ import torch</p>
+
+<p>self.model = CNNVAD(n_mels=40)</p>
+
+<p># Quantize model
+ # Dynamic quantization applies to Linear/LSTM; Conv2d not supported
+ self.model = torch.quantization.quantize_dynamic(
+ self.model,
+ {torch.nn.Linear},
+ dtype=torch.qint8
+ )</p>
+
+<p>self.model.eval()</p>
+
+<p>def detect_efficient(self, audio):
+ “””
+ Efficient detection with reduced memory</p>
+
+<p>Process in chunks to reduce peak memory
+ “””
+ chunk_size = 16000 # 1 second chunks
+ results = []</p>
+
+<p>for i in range(0, len(audio), chunk_size):
+ chunk = audio[i:i+chunk_size]</p>
+
+<p># Process chunk
+ # result = self.process_chunk(chunk)
+ # results.extend(result)
+ pass</p>
+
+<p>return results
+``</p>
 
 <hr />
 
@@ -1426,147 +1448,153 @@ VAD must be fast to keep overall latency low!
 
 <h3 id="vad-quality-metrics">VAD Quality Metrics</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">VADEvaluator</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Evaluate VAD performance
-    
-    Metrics:
-    - Precision: % of detected speech that is actual speech
-    - Recall: % of actual speech that was detected
-    - F1 score
-    - False alarm rate
-    - Miss rate
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="k">pass</span>
-    
-    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">predictions</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">ground_truth</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Compute VAD metrics
-        
-        Args:
-            predictions: Binary array (1=speech, 0=non-speech)
-            ground_truth: Ground truth labels
-        
-        Returns:
-            Dictionary of metrics
-        </span><span class="sh">"""</span>
-        <span class="c1"># True positives, false positives, etc.
-</span>        <span class="n">tp</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">((</span><span class="n">predictions</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ground_truth</span> <span class="o">==</span> <span class="mi">1</span><span class="p">))</span>
-        <span class="n">fp</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">((</span><span class="n">predictions</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ground_truth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">))</span>
-        <span class="n">tn</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">((</span><span class="n">predictions</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ground_truth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">))</span>
-        <span class="n">fn</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">sum</span><span class="p">((</span><span class="n">predictions</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ground_truth</span> <span class="o">==</span> <span class="mi">1</span><span class="p">))</span>
-        
-        <span class="c1"># Metrics
-</span>        <span class="n">precision</span> <span class="o">=</span> <span class="n">tp</span> <span class="o">/</span> <span class="p">(</span><span class="n">tp</span> <span class="o">+</span> <span class="n">fp</span><span class="p">)</span> <span class="nf">if </span><span class="p">(</span><span class="n">tp</span> <span class="o">+</span> <span class="n">fp</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
-        <span class="n">recall</span> <span class="o">=</span> <span class="n">tp</span> <span class="o">/</span> <span class="p">(</span><span class="n">tp</span> <span class="o">+</span> <span class="n">fn</span><span class="p">)</span> <span class="nf">if </span><span class="p">(</span><span class="n">tp</span> <span class="o">+</span> <span class="n">fn</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
-        <span class="n">f1</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">precision</span> <span class="o">*</span> <span class="n">recall</span> <span class="o">/</span> <span class="p">(</span><span class="n">precision</span> <span class="o">+</span> <span class="n">recall</span><span class="p">)</span> <span class="nf">if </span><span class="p">(</span><span class="n">precision</span> <span class="o">+</span> <span class="n">recall</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
-        
-        <span class="n">accuracy</span> <span class="o">=</span> <span class="p">(</span><span class="n">tp</span> <span class="o">+</span> <span class="n">tn</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">tp</span> <span class="o">+</span> <span class="n">tn</span> <span class="o">+</span> <span class="n">fp</span> <span class="o">+</span> <span class="n">fn</span><span class="p">)</span>
-        
-        <span class="n">false_alarm_rate</span> <span class="o">=</span> <span class="n">fp</span> <span class="o">/</span> <span class="p">(</span><span class="n">fp</span> <span class="o">+</span> <span class="n">tn</span><span class="p">)</span> <span class="nf">if </span><span class="p">(</span><span class="n">fp</span> <span class="o">+</span> <span class="n">tn</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
-        <span class="n">miss_rate</span> <span class="o">=</span> <span class="n">fn</span> <span class="o">/</span> <span class="p">(</span><span class="n">fn</span> <span class="o">+</span> <span class="n">tp</span><span class="p">)</span> <span class="nf">if </span><span class="p">(</span><span class="n">fn</span> <span class="o">+</span> <span class="n">tp</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
-        
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">precision</span><span class="sh">'</span><span class="p">:</span> <span class="n">precision</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">recall</span><span class="sh">'</span><span class="p">:</span> <span class="n">recall</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">f1_score</span><span class="sh">'</span><span class="p">:</span> <span class="n">f1</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">accuracy</span><span class="sh">'</span><span class="p">:</span> <span class="n">accuracy</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">false_alarm_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">false_alarm_rate</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">miss_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">miss_rate</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">tp</span><span class="sh">'</span><span class="p">:</span> <span class="nf">int</span><span class="p">(</span><span class="n">tp</span><span class="p">),</span>
-            <span class="sh">'</span><span class="s">fp</span><span class="sh">'</span><span class="p">:</span> <span class="nf">int</span><span class="p">(</span><span class="n">fp</span><span class="p">),</span>
-            <span class="sh">'</span><span class="s">tn</span><span class="sh">'</span><span class="p">:</span> <span class="nf">int</span><span class="p">(</span><span class="n">tn</span><span class="p">),</span>
-            <span class="sh">'</span><span class="s">fn</span><span class="sh">'</span><span class="p">:</span> <span class="nf">int</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
-        <span class="p">}</span>
+<p>``python
+class VADEvaluator:
+ “””
+ Evaluate VAD performance</p>
 
-<span class="c1"># Usage
-</span><span class="n">evaluator</span> <span class="o">=</span> <span class="nc">VADEvaluator</span><span class="p">()</span>
+<p>Metrics:</p>
+<ul>
+  <li>Precision: % of detected speech that is actual speech</li>
+  <li>Recall: % of actual speech that was detected</li>
+  <li>F1 score</li>
+  <li>False alarm rate</li>
+  <li>Miss rate
+ “””</li>
+</ul>
 
-<span class="c1"># Load ground truth
-# ground_truth = load_annotations('test_audio.txt')
-</span>
-<span class="c1"># Run VAD
-</span><span class="n">vad</span> <span class="o">=</span> <span class="nc">WebRTCVAD</span><span class="p">()</span>
-<span class="c1"># predictions = vad.detect(audio)
-</span>
-<span class="c1"># Evaluate
-# metrics = evaluator.evaluate(predictions, ground_truth)
-</span>
-<span class="c1"># print(f"Precision: {metrics['precision']:.3f}")
-# print(f"Recall: {metrics['recall']:.3f}")
-# print(f"F1 Score: {metrics['f1_score']:.3f}")
-# print(f"False Alarm Rate: {metrics['false_alarm_rate']:.3f}")
-</span></code></pre></div></div>
+<p>def <strong>init</strong>(self):
+ pass</p>
+
+<p>def evaluate(
+ self,
+ predictions: np.ndarray,
+ ground_truth: np.ndarray
+ ) -&gt; dict:
+ “””
+ Compute VAD metrics</p>
+
+<p>Args:
+ predictions: Binary array (1=speech, 0=non-speech)
+ ground_truth: Ground truth labels</p>
+
+<p>Returns:
+ Dictionary of metrics
+ “””
+ # True positives, false positives, etc.
+ tp = np.sum((predictions == 1) &amp; (ground_truth == 1))
+ fp = np.sum((predictions == 1) &amp; (ground_truth == 0))
+ tn = np.sum((predictions == 0) &amp; (ground_truth == 0))
+ fn = np.sum((predictions == 0) &amp; (ground_truth == 1))</p>
+
+<p># Metrics
+ precision = tp / (tp + fp) if (tp + fp) &gt; 0 else 0
+ recall = tp / (tp + fn) if (tp + fn) &gt; 0 else 0
+ f1 = 2 * precision * recall / (precision + recall) if (precision + recall) &gt; 0 else 0</p>
+
+<p>accuracy = (tp + tn) / (tp + tn + fp + fn)</p>
+
+<p>false_alarm_rate = fp / (fp + tn) if (fp + tn) &gt; 0 else 0
+ miss_rate = fn / (fn + tp) if (fn + tp) &gt; 0 else 0</p>
+
+<p>return {
+ ‘precision’: precision,
+ ‘recall’: recall,
+ ‘f1_score’: f1,
+ ‘accuracy’: accuracy,
+ ‘false_alarm_rate’: false_alarm_rate,
+ ‘miss_rate’: miss_rate,
+ ‘tp’: int(tp),
+ ‘fp’: int(fp),
+ ‘tn’: int(tn),
+ ‘fn’: int(fn)
+ }</p>
+
+<h1 id="usage-6">Usage</h1>
+<p>evaluator = VADEvaluator()</p>
+
+<h1 id="load-ground-truth">Load ground truth</h1>
+<h1 id="ground_truth--load_annotationstest_audiotxt">ground_truth = load_annotations(‘test_audio.txt’)</h1>
+
+<h1 id="run-vad">Run VAD</h1>
+<p>vad = WebRTCVAD()</p>
+<h1 id="predictions--vaddetectaudio">predictions = vad.detect(audio)</h1>
+
+<h1 id="evaluate">Evaluate</h1>
+<h1 id="metrics--evaluatorevaluatepredictions-ground_truth">metrics = evaluator.evaluate(predictions, ground_truth)</h1>
+
+<h1 id="printfprecision-metricsprecision3f">print(f”Precision: {metrics[‘precision’]:.3f}”)</h1>
+<h1 id="printfrecall-metricsrecall3f">print(f”Recall: {metrics[‘recall’]:.3f}”)</h1>
+<h1 id="printff1-score-metricsf1_score3f">print(f”F1 Score: {metrics[‘f1_score’]:.3f}”)</h1>
+<h1 id="printffalse-alarm-rate-metricsfalse_alarm_rate3f">print(f”False Alarm Rate: {metrics[‘false_alarm_rate’]:.3f}”)</h1>
+<p>``</p>
 
 <h3 id="debugging-common-issues">Debugging Common Issues</h3>
 
 <p><strong>Issue 1: Clipping Speech Beginnings</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Solution: Increase pre-padding
-</span><span class="n">vad_with_padding</span> <span class="o">=</span> <span class="nc">VADWithPadding</span><span class="p">(</span>
-    <span class="n">vad</span><span class="o">=</span><span class="nc">WebRTCVAD</span><span class="p">(),</span>
-    <span class="n">pre_pad_ms</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>  <span class="c1"># Increase from 200ms
-</span>    <span class="n">post_pad_ms</span><span class="o">=</span><span class="mi">500</span>
-<span class="p">)</span>
-</code></pre></div></div>
+<p>``python</p>
+<h1 id="solution-increase-pre-padding">Solution: Increase pre-padding</h1>
+<p>vad_with_padding = VADWithPadding(
+ vad=WebRTCVAD(),
+ pre_pad_ms=300, # Increase from 200ms
+ post_pad_ms=500
+)
+``</p>
 
 <p><strong>Issue 2: False Positives from Music</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Solution: Use ML VAD or add music classifier
-</span><span class="k">class</span> <span class="nc">MusicFilteredVAD</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    VAD with music filtering
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">vad</span><span class="p">,</span> <span class="n">music_classifier</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="n">vad</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">music_classifier</span> <span class="o">=</span> <span class="n">music_classifier</span>
-    
-    <span class="k">def</span> <span class="nf">detect</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Detect speech, filtering out music</span><span class="sh">"""</span>
-        <span class="c1"># Run VAD
-</span>        <span class="n">speech_frames</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">detect</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        
-        <span class="c1"># Filter music
-</span>        <span class="n">is_music</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">music_classifier</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        
-        <span class="c1"># Combine
-</span>        <span class="n">is_speech</span> <span class="o">=</span> <span class="n">speech_frames</span> <span class="o">&amp;</span> <span class="p">(</span><span class="o">~</span><span class="n">is_music</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">is_speech</span>
-</code></pre></div></div>
+<p>``python</p>
+<h1 id="solution-use-ml-vad-or-add-music-classifier">Solution: Use ML VAD or add music classifier</h1>
+<p>class MusicFilteredVAD:
+ “””
+ VAD with music filtering
+ “””</p>
+
+<p>def <strong>init</strong>(self, vad, music_classifier):
+ self.vad = vad
+ self.music_classifier = music_classifier</p>
+
+<p>def detect(self, audio):
+ “"”Detect speech, filtering out music”””
+ # Run VAD
+ speech_frames = self.vad.detect(audio)</p>
+
+<p># Filter music
+ is_music = self.music_classifier.predict(audio)</p>
+
+<p># Combine
+ is_speech = speech_frames &amp; (~is_music)</p>
+
+<p>return is_speech
+``</p>
 
 <p><strong>Issue 3: High CPU Usage</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Solution: Downsample audio or use simpler VAD
-</span><span class="k">class</span> <span class="nc">DownsampledVAD</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    VAD with audio downsampling for efficiency
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">target_sr</span><span class="o">=</span><span class="mi">8000</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">target_sr</span> <span class="o">=</span> <span class="n">target_sr</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="nc">WebRTCVAD</span><span class="p">(</span><span class="n">sr</span><span class="o">=</span><span class="mi">8000</span><span class="p">)</span>  <span class="c1"># 8kHz instead of 16kHz
-</span>    
-    <span class="k">def</span> <span class="nf">detect</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">,</span> <span class="n">original_sr</span><span class="o">=</span><span class="mi">16000</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Detect with downsampling</span><span class="sh">"""</span>
-        <span class="c1"># Downsample
-</span>        <span class="kn">import</span> <span class="n">librosa</span>
-        <span class="n">audio_downsampled</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">resample</span><span class="p">(</span>
-            <span class="n">audio</span><span class="p">,</span>
-            <span class="n">orig_sr</span><span class="o">=</span><span class="n">original_sr</span><span class="p">,</span>
-            <span class="n">target_sr</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">target_sr</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Run VAD on downsampled audio
-</span>        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">detect</span><span class="p">(</span><span class="n">audio_downsampled</span><span class="p">)</span>
-</code></pre></div></div>
+<p>``python</p>
+<h1 id="solution-downsample-audio-or-use-simpler-vad">Solution: Downsample audio or use simpler VAD</h1>
+<p>class DownsampledVAD:
+ “””
+ VAD with audio downsampling for efficiency
+ “””</p>
+
+<p>def <strong>init</strong>(self, target_sr=8000):
+ self.target_sr = target_sr
+ self.vad = WebRTCVAD(sr=8000) # 8kHz instead of 16kHz</p>
+
+<p>def detect(self, audio, original_sr=16000):
+ “"”Detect with downsampling”””
+ # Downsample
+ import librosa
+ audio_downsampled = librosa.resample(
+ audio,
+ orig_sr=original_sr,
+ target_sr=self.target_sr
+ )</p>
+
+<p># Run VAD on downsampled audio
+ return self.vad.detect(audio_downsampled)
+``</p>
 
 <hr />
 
@@ -1576,92 +1604,96 @@ VAD must be fast to keep overall latency low!
 
 <p>Use spectral subtraction for noise reduction before VAD.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">NoiseRobustVAD</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    VAD with noise reduction preprocessing
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">vad</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">vad</span> <span class="o">=</span> <span class="n">vad</span>
-    
-    <span class="k">def</span> <span class="nf">spectral_subtraction</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">,</span> <span class="n">noise_profile</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Simple spectral subtraction
-        
-        Args:
-            audio: Input audio
-            noise_profile: Estimated noise spectrum
-        
-        Returns:
-            Denoised audio
-        </span><span class="sh">"""</span>
-        <span class="kn">import</span> <span class="n">librosa</span>
-        
-        <span class="c1"># STFT
-</span>        <span class="n">D</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">stft</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        <span class="n">magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">abs</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
-        <span class="n">phase</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">angle</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
-        
-        <span class="c1"># Subtract noise
-</span>        <span class="n">magnitude_clean</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">maximum</span><span class="p">(</span><span class="n">magnitude</span> <span class="o">-</span> <span class="n">noise_profile</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        
-        <span class="c1"># Reconstruct
-</span>        <span class="n">D_clean</span> <span class="o">=</span> <span class="n">magnitude_clean</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nf">exp</span><span class="p">(</span><span class="mf">1j</span> <span class="o">*</span> <span class="n">phase</span><span class="p">)</span>
-        <span class="n">audio_clean</span> <span class="o">=</span> <span class="n">librosa</span><span class="p">.</span><span class="nf">istft</span><span class="p">(</span><span class="n">D_clean</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">audio_clean</span>
-    
-    <span class="k">def</span> <span class="nf">detect_with_denoising</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Detect speech after denoising</span><span class="sh">"""</span>
-        <span class="c1"># Estimate noise from first 0.5 seconds
-</span>        <span class="n">noise_segment</span> <span class="o">=</span> <span class="n">audio</span><span class="p">[:</span><span class="mi">8000</span><span class="p">]</span>  <span class="c1"># 0.5s at 16kHz
-</span>        
-        <span class="kn">import</span> <span class="n">librosa</span>
-        <span class="n">noise_spectrum</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">abs</span><span class="p">(</span><span class="n">librosa</span><span class="p">.</span><span class="nf">stft</span><span class="p">(</span><span class="n">noise_segment</span><span class="p">))</span>
-        <span class="n">noise_profile</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">median</span><span class="p">(</span><span class="n">noise_spectrum</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        
-        <span class="c1"># Denoise
-</span>        <span class="n">audio_clean</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">spectral_subtraction</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">noise_profile</span><span class="p">)</span>
-        
-        <span class="c1"># Run VAD on clean audio
-</span>        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">vad</span><span class="p">.</span><span class="nf">detect</span><span class="p">(</span><span class="n">audio_clean</span><span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+class NoiseRobustVAD:
+ “””
+ VAD with noise reduction preprocessing
+ “””</p>
+
+<p>def <strong>init</strong>(self, vad):
+ self.vad = vad</p>
+
+<p>def spectral_subtraction(self, audio, noise_profile):
+ “””
+ Simple spectral subtraction</p>
+
+<p>Args:
+ audio: Input audio
+ noise_profile: Estimated noise spectrum</p>
+
+<p>Returns:
+ Denoised audio
+ “””
+ import librosa</p>
+
+<p># STFT
+ D = librosa.stft(audio)
+ magnitude = np.abs(D)
+ phase = np.angle(D)</p>
+
+<p># Subtract noise
+ magnitude_clean = np.maximum(magnitude - noise_profile, 0)</p>
+
+<p># Reconstruct
+ D_clean = magnitude_clean * np.exp(1j * phase)
+ audio_clean = librosa.istft(D_clean)</p>
+
+<p>return audio_clean</p>
+
+<p>def detect_with_denoising(self, audio):
+ “"”Detect speech after denoising”””
+ # Estimate noise from first 0.5 seconds
+ noise_segment = audio[:8000] # 0.5s at 16kHz</p>
+
+<p>import librosa
+ noise_spectrum = np.abs(librosa.stft(noise_segment))
+ noise_profile = np.median(noise_spectrum, axis=1, keepdims=True)</p>
+
+<p># Denoise
+ audio_clean = self.spectral_subtraction(audio, noise_profile)</p>
+
+<p># Run VAD on clean audio
+ return self.vad.detect(audio_clean)
+``</p>
 
 <h3 id="multi-condition-training-data">Multi-Condition Training Data</h3>
 
 <p>For ML-based VAD, train on diverse conditions.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">DataAugmentationForVAD</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Augment training data for robust VAD
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">augment</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">clean_speech</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Create augmented samples
-        
-        Augmentations:
-        - Add various noise types
-        - Vary SNR levels
-        - Apply room reverberation
-        - Change speaker characteristics
-        </span><span class="sh">"""</span>
-        <span class="n">augmented</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># 1. Add white noise
-</span>        <span class="n">noise</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">clean_speech</span><span class="p">))</span> <span class="o">*</span> <span class="mf">0.01</span>
-        <span class="n">augmented</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">clean_speech</span> <span class="o">+</span> <span class="n">noise</span><span class="p">)</span>
-        
-        <span class="c1"># 2. Add babble noise (simulated)
-</span>        <span class="c1"># babble = load_babble_noise()
-</span>        <span class="c1"># augmented.append(clean_speech + babble)
-</span>        
-        <span class="c1"># 3. Apply reverberation
-</span>        <span class="c1"># reverb = apply_reverb(clean_speech)
-</span>        <span class="c1"># augmented.append(reverb)
-</span>        
-        <span class="k">return</span> <span class="n">augmented</span>
-</code></pre></div></div>
+<p>``python
+class DataAugmentationForVAD:
+ “””
+ Augment training data for robust VAD
+ “””</p>
+
+<p>def augment(self, clean_speech):
+ “””
+ Create augmented samples</p>
+
+<p>Augmentations:</p>
+<ul>
+  <li>Add various noise types</li>
+  <li>Vary SNR levels</li>
+  <li>Apply room reverberation</li>
+  <li>Change speaker characteristics
+ “””
+ augmented = []</li>
+</ul>
+
+<p># 1. Add white noise
+ noise = np.random.randn(len(clean_speech)) * 0.01
+ augmented.append(clean_speech + noise)</p>
+
+<p># 2. Add babble noise (simulated)
+ # babble = load_babble_noise()
+ # augmented.append(clean_speech + babble)</p>
+
+<p># 3. Apply reverberation
+ # reverb = apply_reverb(clean_speech)
+ # augmented.append(reverb)</p>
+
+<p>return augmented
+``</p>
 
 <hr />
 
@@ -1719,17 +1751,17 @@ VAD must be fast to keep overall latency low!
 
 <h2 id="key-takeaways">Key Takeaways</h2>
 
-<p>✅ <strong>Energy + ZCR</strong> provides simple baseline VAD<br />
-✅ <strong>WebRTC VAD</strong> is production-standard, fast, robust, widely deployed<br />
-✅ <strong>ML-based VAD</strong> achieves best accuracy in noisy conditions<br />
-✅ <strong>Two-pass VAD</strong> balances speed and accuracy for production<br />
-✅ <strong>Streaming processing</strong> enables real-time applications<br />
-✅ <strong>Padding is critical</strong> to avoid cutting off speech (200-500ms)<br />
-✅ <strong>Adaptive thresholds</strong> handle varying noise levels<br />
-✅ <strong>Frame size tradeoff:</strong> Smaller = lower latency, larger = better accuracy<br />
-✅ <strong>Quantization &amp; optimization</strong> essential for mobile/edge deployment<br />
-✅ <strong>Monitor precision/recall</strong> in production to catch degradation<br />
-✅ <strong>Integration with ASR</strong> requires careful endpoint detection logic<br />
+<p>✅ <strong>Energy + ZCR</strong> provides simple baseline VAD 
+✅ <strong>WebRTC VAD</strong> is production-standard, fast, robust, widely deployed 
+✅ <strong>ML-based VAD</strong> achieves best accuracy in noisy conditions 
+✅ <strong>Two-pass VAD</strong> balances speed and accuracy for production 
+✅ <strong>Streaming processing</strong> enables real-time applications 
+✅ <strong>Padding is critical</strong> to avoid cutting off speech (200-500ms) 
+✅ <strong>Adaptive thresholds</strong> handle varying noise levels 
+✅ <strong>Frame size tradeoff:</strong> Smaller = lower latency, larger = better accuracy 
+✅ <strong>Quantization &amp; optimization</strong> essential for mobile/edge deployment 
+✅ <strong>Monitor precision/recall</strong> in production to catch degradation 
+✅ <strong>Integration with ASR</strong> requires careful endpoint detection logic 
 ✅ <strong>Noise robustness</strong> via preprocessing or multi-condition training</p>
 
 <hr />
@@ -1830,6 +1862,44 @@ VAD must be fast to keep overall latency low!
 
 
     <p class="archive__item-excerpt" itemprop="description">The single-pass pattern that powers streaming analytics, online algorithms, and real-time decision making in production systems.
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ml-system-design/0004-ab-testing-systems/" rel="permalink">A/B Testing Systems for ML
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          28 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">How to design experimentation platforms that enable rapid iteration while maintaining statistical rigor at scale.
 </p>
   </article>
 </div>

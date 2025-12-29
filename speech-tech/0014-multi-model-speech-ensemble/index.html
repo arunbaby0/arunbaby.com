@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Multi-model Speech Ensemble">
     <meta itemprop="description" content="Build production speech systems that combine multiple ASR/TTS models using backtracking-based selection strategies to achieve state-of-the-art accuracy.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -397,46 +397,47 @@
 
 <h2 id="high-level-architecture">High-Level Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────────┐
-│                  Speech Ensemble System                          │
-└─────────────────────────────────────────────────────────────────┘
+<p>``
+┌─────────────────────────────────────────────────────────────────┐
+│ Speech Ensemble System │
+└─────────────────────────────────────────────────────────────────┘</p>
 
-                    Audio Input (PCM)
-                           ↓
-              ┌────────────────────────┐
-              │  Audio Preprocessor    │
-              │  - Resample to 16kHz   │
-              │  - Normalize           │
-              │  - Feature extraction  │
-              └───────────┬────────────┘
-                          │
-        ┌─────────────────┼─────────────────┐
-        │                 │                 │
+<p>Audio Input (PCM)
+ ↓
+ ┌────────────────────────┐
+ │ Audio Preprocessor │
+ │ - Resample to 16kHz │
+ │ - Normalize │
+ │ - Feature extraction │
+ └───────────┬────────────┘
+ │
+ ┌─────────────────┼─────────────────┐
+ │ │ │
 ┌───────▼────────┐ ┌─────▼──────┐ ┌───────▼────────┐
-│  ASR Model 1   │ │ ASR Model 2│ │  ASR Model N   │
-│  (Wav2Vec2)    │ │ (Conformer)│ │  (Whisper)     │
-│                │ │            │ │                │
-│ "the cat"      │ │ "the cat"  │ │ "the cat"      │
-│ conf: 0.92     │ │ conf: 0.88 │ │ conf: 0.85     │
+│ ASR Model 1 │ │ ASR Model 2│ │ ASR Model N │
+│ (Wav2Vec2) │ │ (Conformer)│ │ (Whisper) │
+│ │ │ │ │ │
+│ “the cat” │ │ “the cat” │ │ “the cat” │
+│ conf: 0.92 │ │ conf: 0.88 │ │ conf: 0.85 │
 └───────┬────────┘ └─────┬──────┘ └───────┬────────┘
-        │                │                │
-        └────────────────┼────────────────┘
-                         │
-              ┌──────────▼────────────┐
-              │   Fusion Module       │
-              │   - ROVER             │
-              │   - Voting            │
-              │   - Confidence-based  │
-              └──────────┬────────────┘
-                         │
-              ┌──────────▼────────────┐
-              │  Language Model       │
-              │  Rescoring (optional) │
-              └──────────┬────────────┘
-                         │
-                  "the cat" (WER: 0%)
-                  confidence: 0.95
-</code></pre></div></div>
+ │ │ │
+ └────────────────┼────────────────┘
+ │
+ ┌──────────▼────────────┐
+ │ Fusion Module │
+ │ - ROVER │
+ │ - Voting │
+ │ - Confidence-based │
+ └──────────┬────────────┘
+ │
+ ┌──────────▼────────────┐
+ │ Language Model │
+ │ Rescoring (optional) │
+ └──────────┬────────────┘
+ │
+ “the cat” (WER: 0%)
+ confidence: 0.95
+``</p>
 
 <h3 id="key-components">Key Components</h3>
 
@@ -454,835 +455,856 @@
 
 <p>Select optimal model subset based on audio characteristics:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
-<span class="kn">from</span> <span class="n">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+from dataclasses import dataclass
+from typing import List, Dict, Optional, Tuple
+from enum import Enum
+import numpy as np</p>
 
-<span class="k">class</span> <span class="nc">ModelType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Speech model types.</span><span class="sh">"""</span>
-    <span class="n">WAV2VEC2</span> <span class="o">=</span> <span class="sh">"</span><span class="s">wav2vec2</span><span class="sh">"</span>
-    <span class="n">CONFORMER</span> <span class="o">=</span> <span class="sh">"</span><span class="s">conformer</span><span class="sh">"</span>
-    <span class="n">WHISPER</span> <span class="o">=</span> <span class="sh">"</span><span class="s">whisper</span><span class="sh">"</span>
-    <span class="n">RNN_T</span> <span class="o">=</span> <span class="sh">"</span><span class="s">rnn_t</span><span class="sh">"</span>
-    <span class="n">LSTM</span> <span class="o">=</span> <span class="sh">"</span><span class="s">lstm</span><span class="sh">"</span>
+<p>class ModelType(Enum):
+ “"”Speech model types.”””
+ WAV2VEC2 = “wav2vec2”
+ CONFORMER = “conformer”
+ WHISPER = “whisper”
+ RNN_T = “rnn_t”
+ LSTM = “lstm”</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">SpeechModel</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Represents a speech recognition model.</span><span class="sh">"""</span>
-    <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">model_type</span><span class="p">:</span> <span class="n">ModelType</span>
-    <span class="n">avg_latency_ms</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">wer</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># Word Error Rate on validation set
-</span>    
-    <span class="c1"># Specialization
-</span>    <span class="n">best_for_accent</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">general</span><span class="sh">"</span>  <span class="c1"># "us", "uk", "in", etc.
-</span>    <span class="n">best_for_noise</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">clean</span><span class="sh">"</span>  <span class="c1"># "clean", "noisy", "very_noisy"
-</span>    <span class="n">best_for_domain</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">general</span><span class="sh">"</span>  <span class="c1"># "general", "medical", "legal"
-</span>    
-    <span class="c1"># Resource requirements
-</span>    <span class="n">gpu_memory_mb</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">transcribe</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Transcribe audio.
-        
-        Returns:
-            Dictionary with text, confidence, and word-level timings
-        </span><span class="sh">"""</span>
-        <span class="c1"># In production: call actual model
-</span>        <span class="c1"># For demo: return dummy prediction
-</span>        
-        <span class="kn">import</span> <span class="n">asyncio</span>
-        <span class="k">await</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">sleep</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">avg_latency_ms</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">the quick brown fox</span><span class="sh">"</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">confidence</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.85</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">random</span><span class="p">()</span> <span class="o">*</span> <span class="mf">0.10</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">words</span><span class="sh">"</span><span class="p">:</span> <span class="p">[</span>
-                <span class="p">{</span><span class="sh">"</span><span class="s">word</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">the</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">confidence</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">,</span> <span class="sh">"</span><span class="s">start</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="sh">"</span><span class="s">end</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">},</span>
-                <span class="p">{</span><span class="sh">"</span><span class="s">word</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">quick</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">confidence</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.88</span><span class="p">,</span> <span class="sh">"</span><span class="s">start</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span> <span class="sh">"</span><span class="s">end</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">},</span>
-                <span class="p">{</span><span class="sh">"</span><span class="s">word</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">brown</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">confidence</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.82</span><span class="p">,</span> <span class="sh">"</span><span class="s">start</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="sh">"</span><span class="s">end</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">},</span>
-                <span class="p">{</span><span class="sh">"</span><span class="s">word</span><span class="sh">"</span><span class="p">:</span> <span class="sh">"</span><span class="s">fox</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">confidence</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.90</span><span class="p">,</span> <span class="sh">"</span><span class="s">start</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span> <span class="sh">"</span><span class="s">end</span><span class="sh">"</span><span class="p">:</span> <span class="mf">1.1</span><span class="p">},</span>
-            <span class="p">]</span>
-        <span class="p">}</span>
+<p>@dataclass
+class SpeechModel:
+ “"”Represents a speech recognition model.”””
+ model_id: str
+ model_type: ModelType
+ avg_latency_ms: float
+ wer: float # Word Error Rate on validation set</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">AudioCharacteristics</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Characteristics of input audio.</span><span class="sh">"""</span>
-    <span class="n">snr_db</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># Signal-to-noise ratio
-</span>    <span class="n">duration_sec</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">accent</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">us</span><span class="sh">"</span>
-    <span class="n">domain</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">general</span><span class="sh">"</span>
-    
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">noise_level</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Categorize noise level.</span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">snr_db</span> <span class="o">&gt;</span> <span class="mi">30</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sh">"</span><span class="s">clean</span><span class="sh">"</span>
-        <span class="k">elif</span> <span class="n">self</span><span class="p">.</span><span class="n">snr_db</span> <span class="o">&gt;</span> <span class="mi">15</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sh">"</span><span class="s">noisy</span><span class="sh">"</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sh">"</span><span class="s">very_noisy</span><span class="sh">"</span>
+<p># Specialization
+ best_for_accent: str = “general” # “us”, “uk”, “in”, etc.
+ best_for_noise: str = “clean” # “clean”, “noisy”, “very_noisy”
+ best_for_domain: str = “general” # “general”, “medical”, “legal”</p>
 
+<p># Resource requirements
+ gpu_memory_mb: int = 500</p>
 
-<span class="k">class</span> <span class="nc">ModelSelector</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Select optimal model subset using backtracking.
-    
-    Similar to Generate Parentheses backtracking:
-    - Explore combinations of models
-    - Prune based on constraints
-    - Select configuration with best expected accuracy
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SpeechModel</span><span class="p">],</span>
-        <span class="n">max_models</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
-        <span class="n">max_latency_ms</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">150.0</span><span class="p">,</span>
-        <span class="n">max_gpu_memory_mb</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2000</span>
-    <span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">models</span> <span class="o">=</span> <span class="n">models</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">max_models</span> <span class="o">=</span> <span class="n">max_models</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">max_latency_ms</span> <span class="o">=</span> <span class="n">max_latency_ms</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">max_gpu_memory_mb</span> <span class="o">=</span> <span class="n">max_gpu_memory_mb</span>
-    
-    <span class="k">def</span> <span class="nf">select_models</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio_chars</span><span class="p">:</span> <span class="n">AudioCharacteristics</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SpeechModel</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Select best model subset using backtracking.
-        
-        Algorithm (like parentheses generation):
-        1. Start with empty selection
-        2. Try adding each model
-        3. Check constraints (latency, memory, diversity)
-        4. Recurse to explore further
-        5. Backtrack if constraints violated
-        6. Return selection with best expected WER
-        
-        Returns:
-            List of selected models
-        </span><span class="sh">"""</span>
-        <span class="n">best_selection</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">best_score</span> <span class="o">=</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">inf</span><span class="sh">'</span><span class="p">)</span>  <span class="c1"># Lower WER is better
-</span>        
-        <span class="k">def</span> <span class="nf">estimate_ensemble_wer</span><span class="p">(</span><span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SpeechModel</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-            <span class="sh">"""</span><span class="s">
-            Estimate ensemble WER based on individual model WERs.
-            
-            Heuristic: ensemble WER ≈ 0.7 × average individual WER
-            (empirically, ensembles reduce WER by ~30%)
-            </span><span class="sh">"""</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">models</span><span class="p">:</span>
-                <span class="k">return</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">inf</span><span class="sh">'</span><span class="p">)</span>
-            
-            <span class="c1"># Weight by specialization match
-</span>            <span class="n">weighted_wers</span> <span class="o">=</span> <span class="p">[]</span>
-            
-            <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
-                <span class="n">wer</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">wer</span>
-                
-                <span class="c1"># Bonus for accent match
-</span>                <span class="k">if</span> <span class="n">model</span><span class="p">.</span><span class="n">best_for_accent</span> <span class="o">==</span> <span class="n">audio_chars</span><span class="p">.</span><span class="n">accent</span><span class="p">:</span>
-                    <span class="n">wer</span> <span class="o">*=</span> <span class="mf">0.9</span>
-                
-                <span class="c1"># Bonus for noise level match
-</span>                <span class="k">if</span> <span class="n">model</span><span class="p">.</span><span class="n">best_for_noise</span> <span class="o">==</span> <span class="n">audio_chars</span><span class="p">.</span><span class="n">noise_level</span><span class="p">:</span>
-                    <span class="n">wer</span> <span class="o">*=</span> <span class="mf">0.85</span>
-                
-                <span class="c1"># Bonus for domain match
-</span>                <span class="k">if</span> <span class="n">model</span><span class="p">.</span><span class="n">best_for_domain</span> <span class="o">==</span> <span class="n">audio_chars</span><span class="p">.</span><span class="n">domain</span><span class="p">:</span>
-                    <span class="n">wer</span> <span class="o">*=</span> <span class="mf">0.95</span>
-                
-                <span class="n">weighted_wers</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">wer</span><span class="p">)</span>
-            
-            <span class="c1"># Ensemble effect
-</span>            <span class="n">avg_wer</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">weighted_wers</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">weighted_wers</span><span class="p">)</span>
-            <span class="n">ensemble_wer</span> <span class="o">=</span> <span class="n">avg_wer</span> <span class="o">*</span> <span class="mf">0.7</span>  <span class="c1"># 30% improvement from ensemble
-</span>            
-            <span class="k">return</span> <span class="n">ensemble_wer</span>
-        
-        <span class="k">def</span> <span class="nf">calculate_diversity</span><span class="p">(</span><span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SpeechModel</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-            <span class="sh">"""</span><span class="s">Calculate model diversity (different architectures).</span><span class="sh">"""</span>
-            <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">models</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">return</span> <span class="mf">1.0</span>
-            
-            <span class="n">unique_types</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="nf">set</span><span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">model_type</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">))</span>
-            <span class="k">return</span> <span class="n">unique_types</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
-        
-        <span class="k">def</span> <span class="nf">backtrack</span><span class="p">(</span>
-            <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-            <span class="n">current_selection</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SpeechModel</span><span class="p">],</span>
-            <span class="n">current_latency</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-            <span class="n">current_memory</span><span class="p">:</span> <span class="nb">int</span>
-        <span class="p">):</span>
-            <span class="sh">"""</span><span class="s">Backtracking function.</span><span class="sh">"""</span>
-            <span class="k">nonlocal</span> <span class="n">best_selection</span><span class="p">,</span> <span class="n">best_score</span>
-            
-            <span class="c1"># Base case: evaluated all models
-</span>            <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">current_selection</span><span class="p">:</span>
-                    <span class="n">score</span> <span class="o">=</span> <span class="nf">estimate_ensemble_wer</span><span class="p">(</span><span class="n">current_selection</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">score</span> <span class="o">&lt;</span> <span class="n">best_score</span><span class="p">:</span>
-                        <span class="n">best_score</span> <span class="o">=</span> <span class="n">score</span>
-                        <span class="n">best_selection</span> <span class="o">=</span> <span class="n">current_selection</span><span class="p">[:]</span>
-                <span class="k">return</span>
-            
-            <span class="n">model</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
-            
-            <span class="c1"># Choice 1: Include current model
-</span>            <span class="c1"># Check constraints (like checking parentheses validity)
-</span>            <span class="n">new_latency</span> <span class="o">=</span> <span class="n">current_latency</span> <span class="o">+</span> <span class="n">model</span><span class="p">.</span><span class="n">avg_latency_ms</span>
-            <span class="n">new_memory</span> <span class="o">=</span> <span class="n">current_memory</span> <span class="o">+</span> <span class="n">model</span><span class="p">.</span><span class="n">gpu_memory_mb</span>
-            
-            <span class="n">can_add</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="nf">len</span><span class="p">(</span><span class="n">current_selection</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">self</span><span class="p">.</span><span class="n">max_models</span> <span class="ow">and</span>
-                <span class="n">new_latency</span> <span class="o">&lt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">max_latency_ms</span> <span class="ow">and</span>
-                <span class="n">new_memory</span> <span class="o">&lt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">max_gpu_memory_mb</span> <span class="ow">and</span>
-                <span class="nf">calculate_diversity</span><span class="p">(</span><span class="n">current_selection</span> <span class="o">+</span> <span class="p">[</span><span class="n">model</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="mf">0.5</span>
-            <span class="p">)</span>
-            
-            <span class="k">if</span> <span class="n">can_add</span><span class="p">:</span>
-                <span class="n">current_selection</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-                <span class="nf">backtrack</span><span class="p">(</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">current_selection</span><span class="p">,</span> <span class="n">new_latency</span><span class="p">,</span> <span class="n">new_memory</span><span class="p">)</span>
-                <span class="n">current_selection</span><span class="p">.</span><span class="nf">pop</span><span class="p">()</span>  <span class="c1"># Backtrack
-</span>            
-            <span class="c1"># Choice 2: Skip current model
-</span>            <span class="nf">backtrack</span><span class="p">(</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">current_selection</span><span class="p">,</span> <span class="n">current_latency</span><span class="p">,</span> <span class="n">current_memory</span><span class="p">)</span>
-        
-        <span class="c1"># Start backtracking
-</span>        <span class="nf">backtrack</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[],</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        
-        <span class="c1"># Ensure at least one model
-</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">best_selection</span> <span class="ow">and</span> <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">:</span>
-            <span class="c1"># Fallback: use single best model
-</span>            <span class="n">best_selection</span> <span class="o">=</span> <span class="p">[</span><span class="nf">min</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="p">.</span><span class="n">wer</span><span class="p">)]</span>
-        
-        <span class="k">return</span> <span class="n">best_selection</span>
-</code></pre></div></div>
+<p>async def transcribe(self, audio: np.ndarray, sample_rate: int) -&gt; Dict:
+ “””
+ Transcribe audio.</p>
+
+<p>Returns:
+ Dictionary with text, confidence, and word-level timings
+ “””
+ # In production: call actual model
+ # For demo: return dummy prediction</p>
+
+<p>import asyncio
+ await asyncio.sleep(self.avg_latency_ms / 1000.0)</p>
+
+<p>return {
+ “text”: “the quick brown fox”,
+ “confidence”: 0.85 + np.random.random() * 0.10,
+ “words”: [
+ {“word”: “the”, “confidence”: 0.95, “start”: 0.0, “end”: 0.2},
+ {“word”: “quick”, “confidence”: 0.88, “start”: 0.2, “end”: 0.5},
+ {“word”: “brown”, “confidence”: 0.82, “start”: 0.5, “end”: 0.8},
+ {“word”: “fox”, “confidence”: 0.90, “start”: 0.8, “end”: 1.1},
+ ]
+ }</p>
+
+<p>@dataclass
+class AudioCharacteristics:
+ “"”Characteristics of input audio.”””
+ snr_db: float # Signal-to-noise ratio
+ duration_sec: float
+ accent: str = “us”
+ domain: str = “general”</p>
+
+<p>@property
+ def noise_level(self) -&gt; str:
+ “"”Categorize noise level.”””
+ if self.snr_db &gt; 30:
+ return “clean”
+ elif self.snr_db &gt; 15:
+ return “noisy”
+ else:
+ return “very_noisy”</p>
+
+<p>class ModelSelector:
+ “””
+ Select optimal model subset using backtracking.</p>
+
+<p>Similar to Generate Parentheses backtracking:</p>
+<ul>
+  <li>Explore combinations of models</li>
+  <li>Prune based on constraints</li>
+  <li>Select configuration with best expected accuracy
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(
+ self,
+ models: List[SpeechModel],
+ max_models: int = 5,
+ max_latency_ms: float = 150.0,
+ max_gpu_memory_mb: int = 2000
+ ):
+ self.models = models
+ self.max_models = max_models
+ self.max_latency_ms = max_latency_ms
+ self.max_gpu_memory_mb = max_gpu_memory_mb</p>
+
+<p>def select_models(
+ self,
+ audio_chars: AudioCharacteristics
+ ) -&gt; List[SpeechModel]:
+ “””
+ Select best model subset using backtracking.</p>
+
+<p>Algorithm (like parentheses generation):</p>
+<ol>
+  <li>Start with empty selection</li>
+  <li>Try adding each model</li>
+  <li>Check constraints (latency, memory, diversity)</li>
+  <li>Recurse to explore further</li>
+  <li>Backtrack if constraints violated</li>
+  <li>Return selection with best expected WER</li>
+</ol>
+
+<p>Returns:
+ List of selected models
+ “””
+ best_selection = []
+ best_score = float(‘inf’) # Lower WER is better</p>
+
+<p>def estimate_ensemble_wer(models: List[SpeechModel]) -&gt; float:
+ “””
+ Estimate ensemble WER based on individual model WERs.</p>
+
+<p>Heuristic: ensemble WER ≈ 0.7 × average individual WER
+ (empirically, ensembles reduce WER by ~30%)
+ “””
+ if not models:
+ return float(‘inf’)</p>
+
+<p># Weight by specialization match
+ weighted_wers = []</p>
+
+<p>for model in models:
+ wer = model.wer</p>
+
+<p># Bonus for accent match
+ if model.best_for_accent == audio_chars.accent:
+ wer *= 0.9</p>
+
+<p># Bonus for noise level match
+ if model.best_for_noise == audio_chars.noise_level:
+ wer *= 0.85</p>
+
+<p># Bonus for domain match
+ if model.best_for_domain == audio_chars.domain:
+ wer *= 0.95</p>
+
+<p>weighted_wers.append(wer)</p>
+
+<p># Ensemble effect
+ avg_wer = sum(weighted_wers) / len(weighted_wers)
+ ensemble_wer = avg_wer * 0.7 # 30% improvement from ensemble</p>
+
+<p>return ensemble_wer</p>
+
+<p>def calculate_diversity(models: List[SpeechModel]) -&gt; float:
+ “"”Calculate model diversity (different architectures).”””
+ if len(models) &lt;= 1:
+ return 1.0</p>
+
+<p>unique_types = len(set(m.model_type for m in models))
+ return unique_types / len(models)</p>
+
+<p>def backtrack(
+ index: int,
+ current_selection: List[SpeechModel],
+ current_latency: float,
+ current_memory: int
+ ):
+ “"”Backtracking function.”””
+ nonlocal best_selection, best_score</p>
+
+<p># Base case: evaluated all models
+ if index == len(self.models):
+ if current_selection:
+ score = estimate_ensemble_wer(current_selection)
+ if score &lt; best_score:
+ best_score = score
+ best_selection = current_selection[:]
+ return</p>
+
+<p>model = self.models[index]</p>
+
+<p># Choice 1: Include current model
+ # Check constraints (like checking parentheses validity)
+ new_latency = current_latency + model.avg_latency_ms
+ new_memory = current_memory + model.gpu_memory_mb</p>
+
+<p>can_add = (
+ len(current_selection) &lt; self.max_models and
+ new_latency &lt;= self.max_latency_ms and
+ new_memory &lt;= self.max_gpu_memory_mb and
+ calculate_diversity(current_selection + [model]) &gt;= 0.5
+ )</p>
+
+<p>if can_add:
+ current_selection.append(model)
+ backtrack(index + 1, current_selection, new_latency, new_memory)
+ current_selection.pop() # Backtrack</p>
+
+<p># Choice 2: Skip current model
+ backtrack(index + 1, current_selection, current_latency, current_memory)</p>
+
+<p># Start backtracking
+ backtrack(0, [], 0.0, 0)</p>
+
+<p># Ensure at least one model
+ if not best_selection and self.models:
+ # Fallback: use single best model
+ best_selection = [min(self.models, key=lambda m: m.wer)]</p>
+
+<p>return best_selection
+``</p>
 
 <h3 id="2-rover---recognizer-output-voting-error-reduction">2. ROVER - Recognizer Output Voting Error Reduction</h3>
 
 <p>ROVER is the <strong>standard algorithm</strong> for combining ASR outputs:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
-<span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<p>``python
+from typing import List, Tuple
+from collections import defaultdict
+import numpy as np</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">Word</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Word with timing and confidence.</span><span class="sh">"""</span>
-    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">start_time</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">end_time</span><span class="p">:</span> <span class="nb">float</span>
-    
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">duration</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">end_time</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">start_time</span>
+<p>@dataclass
+class Word:
+ “"”Word with timing and confidence.”””
+ text: str
+ confidence: float
+ start_time: float
+ end_time: float</p>
 
-<span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">Hypothesis</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">A single ASR hypothesis (from one model).</span><span class="sh">"""</span>
-    <span class="n">words</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Word</span><span class="p">]</span>
-    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span>
-    
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">text</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sh">"</span><span class="s"> </span><span class="sh">"</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">w</span><span class="p">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">words</span><span class="p">)</span>
+<p>@property
+ def duration(self) -&gt; float:
+ return self.end_time - self.start_time</p>
 
+<p>@dataclass
+class Hypothesis:
+ “"”A single ASR hypothesis (from one model).”””
+ words: List[Word]
+ confidence: float
+ model_id: str</p>
 
-<span class="k">class</span> <span class="nc">ROVERFusion</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    ROVER (Recognizer Output Voting Error Reduction) algorithm.
-    
-    Core idea:
-    1. Align hypotheses from different models
-    2. At each time position, vote on the word
-    3. Select word with highest confidence × votes
-    
-    This is the gold standard for ASR ensemble fusion.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Initialize ROVER.
-        
-        Args:
-            model_weights: Optional weights for each model
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model_weights</span> <span class="o">=</span> <span class="n">model_weights</span> <span class="ow">or</span> <span class="p">{}</span>
-    
-    <span class="k">def</span> <span class="nf">fuse</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">hypotheses</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Hypothesis</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Hypothesis</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Fuse multiple hypotheses using ROVER.
-        
-        Algorithm:
-        1. Build word confusion network (WCN)
-        2. Align words by time
-        3. Vote at each position
-        4. Select best word at each position
-        
-        Returns:
-            Fused hypothesis
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">hypotheses</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nc">Hypothesis</span><span class="p">(</span><span class="n">words</span><span class="o">=</span><span class="p">[],</span> <span class="n">confidence</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">model_id</span><span class="o">=</span><span class="sh">"</span><span class="s">ensemble</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">hypotheses</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">hypotheses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="c1"># Build word confusion network
-</span>        <span class="n">wcn</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_build_confusion_network</span><span class="p">(</span><span class="n">hypotheses</span><span class="p">)</span>
-        
-        <span class="c1"># Vote at each position
-</span>        <span class="n">fused_words</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">time_slot</span><span class="p">,</span> <span class="n">candidates</span> <span class="ow">in</span> <span class="n">wcn</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-            <span class="c1"># Vote for best word
-</span>            <span class="n">best_word</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_vote</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">hypotheses</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">best_word</span><span class="p">:</span>
-                <span class="n">fused_words</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">best_word</span><span class="p">)</span>
-        
-        <span class="c1"># Calculate overall confidence
-</span>        <span class="n">avg_confidence</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="nf">sum</span><span class="p">(</span><span class="n">w</span><span class="p">.</span><span class="n">confidence</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">fused_words</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">fused_words</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">fused_words</span> <span class="k">else</span> <span class="mf">0.0</span>
-        <span class="p">)</span>
-        
-        <span class="k">return</span> <span class="nc">Hypothesis</span><span class="p">(</span>
-            <span class="n">words</span><span class="o">=</span><span class="n">fused_words</span><span class="p">,</span>
-            <span class="n">confidence</span><span class="o">=</span><span class="n">avg_confidence</span><span class="p">,</span>
-            <span class="n">model_id</span><span class="o">=</span><span class="sh">"</span><span class="s">rover_ensemble</span><span class="sh">"</span>
-        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_build_confusion_network</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">hypotheses</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Hypothesis</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Word</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
-        <span class="sh">"""</span><span class="s">
-        Build word confusion network.
-        
-        Groups words by approximate time position.
-        
-        Returns:
-            Dictionary mapping time -&gt; [(word, model_id), ...]
-        </span><span class="sh">"""</span>
-        <span class="c1"># Discretize time into 100ms bins
-</span>        <span class="n">time_bin_size</span> <span class="o">=</span> <span class="mf">0.1</span>
-        <span class="n">wcn</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">hyp</span> <span class="ow">in</span> <span class="n">hypotheses</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">hyp</span><span class="p">.</span><span class="n">words</span><span class="p">:</span>
-                <span class="c1"># Assign to time bin
-</span>                <span class="n">time_bin</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">word</span><span class="p">.</span><span class="n">start_time</span> <span class="o">/</span> <span class="n">time_bin_size</span><span class="p">)</span>
-                <span class="n">wcn</span><span class="p">[</span><span class="n">time_bin</span><span class="p">].</span><span class="nf">append</span><span class="p">((</span><span class="n">word</span><span class="p">,</span> <span class="n">hyp</span><span class="p">.</span><span class="n">model_id</span><span class="p">))</span>
-        
-        <span class="k">return</span> <span class="n">wcn</span>
-    
-    <span class="k">def</span> <span class="nf">_vote</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">candidates</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Word</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
-        <span class="n">hypotheses</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Hypothesis</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Word</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Vote for best word among candidates.
-        
-        Voting strategy:
-        1. Group identical words
-        2. Calculate score = sum(confidence × model_weight × vote_count)
-        3. Return highest scoring word
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">candidates</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">None</span>
-        
-        <span class="c1"># Group by word text
-</span>        <span class="n">word_groups</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">word</span><span class="p">,</span> <span class="n">model_id</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
-            <span class="c1"># Normalize word (lowercase, remove punctuation)
-</span>            <span class="n">normalized</span> <span class="o">=</span> <span class="n">word</span><span class="p">.</span><span class="n">text</span><span class="p">.</span><span class="nf">lower</span><span class="p">().</span><span class="nf">strip</span><span class="p">(</span><span class="sh">'</span><span class="s">.,!?</span><span class="sh">'</span><span class="p">)</span>
-            <span class="n">word_groups</span><span class="p">[</span><span class="n">normalized</span><span class="p">].</span><span class="nf">append</span><span class="p">((</span><span class="n">word</span><span class="p">,</span> <span class="n">model_id</span><span class="p">))</span>
-        
-        <span class="c1"># Vote
-</span>        <span class="n">best_word</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">best_score</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
-        
-        <span class="k">for</span> <span class="n">word_text</span><span class="p">,</span> <span class="n">occurrences</span> <span class="ow">in</span> <span class="n">word_groups</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-            <span class="c1"># Calculate score
-</span>            <span class="n">score</span> <span class="o">=</span> <span class="mf">0.0</span>
-            
-            <span class="k">for</span> <span class="n">word</span><span class="p">,</span> <span class="n">model_id</span> <span class="ow">in</span> <span class="n">occurrences</span><span class="p">:</span>
-                <span class="n">weight</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model_weights</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">model_id</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-                <span class="n">score</span> <span class="o">+=</span> <span class="n">word</span><span class="p">.</span><span class="n">confidence</span> <span class="o">*</span> <span class="n">weight</span>
-            
-            <span class="c1"># Bonus for agreement (more models)
-</span>            <span class="n">score</span> <span class="o">*=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="nf">len</span><span class="p">(</span><span class="n">occurrences</span><span class="p">))</span>
-            
-            <span class="k">if</span> <span class="n">score</span> <span class="o">&gt;</span> <span class="n">best_score</span><span class="p">:</span>
-                <span class="n">best_score</span> <span class="o">=</span> <span class="n">score</span>
-                <span class="c1"># Use word with highest individual confidence
-</span>                <span class="n">best_word</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">occurrences</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">confidence</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="k">return</span> <span class="n">best_word</span>
-    
-    <span class="k">def</span> <span class="nf">compute_confidence</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">hypotheses</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Hypothesis</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Compute ensemble confidence based on agreement.
-        
-        High agreement = high confidence.
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">hypotheses</span><span class="p">:</span>
-            <span class="k">return</span> <span class="mf">0.0</span>
-        
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">hypotheses</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">hypotheses</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">confidence</span>
-        
-        <span class="c1"># Calculate pairwise word-level agreement
-</span>        <span class="n">agreements</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">hypotheses</span><span class="p">)):</span>
-            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">hypotheses</span><span class="p">)):</span>
-                <span class="n">agreement</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_compute_agreement</span><span class="p">(</span>
-                    <span class="n">hypotheses</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                    <span class="n">hypotheses</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
-                <span class="p">)</span>
-                <span class="n">agreements</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">agreement</span><span class="p">)</span>
-        
-        <span class="c1"># Average agreement
-</span>        <span class="n">avg_agreement</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">agreements</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">agreements</span><span class="p">)</span>
-        
-        <span class="c1"># Combine with average model confidence
-</span>        <span class="n">avg_confidence</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">h</span><span class="p">.</span><span class="n">confidence</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hypotheses</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">hypotheses</span><span class="p">)</span>
-        
-        <span class="c1"># Final confidence = weighted combination
-</span>        <span class="k">return</span> <span class="mf">0.6</span> <span class="o">*</span> <span class="n">avg_confidence</span> <span class="o">+</span> <span class="mf">0.4</span> <span class="o">*</span> <span class="n">avg_agreement</span>
-    
-    <span class="k">def</span> <span class="nf">_compute_agreement</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">hyp1</span><span class="p">:</span> <span class="n">Hypothesis</span><span class="p">,</span> <span class="n">hyp2</span><span class="p">:</span> <span class="n">Hypothesis</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Compute word-level agreement between two hypotheses.
-        
-        Uses edit distance and word overlap.
-        </span><span class="sh">"""</span>
-        <span class="n">words1</span> <span class="o">=</span> <span class="p">[</span><span class="n">w</span><span class="p">.</span><span class="n">text</span><span class="p">.</span><span class="nf">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">hyp1</span><span class="p">.</span><span class="n">words</span><span class="p">]</span>
-        <span class="n">words2</span> <span class="o">=</span> <span class="p">[</span><span class="n">w</span><span class="p">.</span><span class="n">text</span><span class="p">.</span><span class="nf">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">hyp2</span><span class="p">.</span><span class="n">words</span><span class="p">]</span>
-        
-        <span class="c1"># Calculate word overlap
-</span>        <span class="n">common</span> <span class="o">=</span> <span class="nf">set</span><span class="p">(</span><span class="n">words1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nf">set</span><span class="p">(</span><span class="n">words2</span><span class="p">)</span>
-        <span class="n">union</span> <span class="o">=</span> <span class="nf">set</span><span class="p">(</span><span class="n">words1</span><span class="p">)</span> <span class="o">|</span> <span class="nf">set</span><span class="p">(</span><span class="n">words2</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">union</span><span class="p">:</span>
-            <span class="k">return</span> <span class="mf">0.0</span>
-        
-        <span class="c1"># Jaccard similarity
-</span>        <span class="k">return</span> <span class="nf">len</span><span class="p">(</span><span class="n">common</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">union</span><span class="p">)</span>
-</code></pre></div></div>
+<p>@property
+ def text(self) -&gt; str:
+ return “ “.join(w.text for w in self.words)</p>
+
+<p>class ROVERFusion:
+ “””
+ ROVER (Recognizer Output Voting Error Reduction) algorithm.</p>
+
+<p>Core idea:</p>
+<ol>
+  <li>Align hypotheses from different models</li>
+  <li>At each time position, vote on the word</li>
+  <li>Select word with highest confidence × votes</li>
+</ol>
+
+<p>This is the gold standard for ASR ensemble fusion.
+ “””</p>
+
+<p>def <strong>init</strong>(self, model_weights: Optional[Dict[str, float]] = None):
+ “””
+ Initialize ROVER.</p>
+
+<p>Args:
+ model_weights: Optional weights for each model
+ “””
+ self.model_weights = model_weights or {}</p>
+
+<p>def fuse(self, hypotheses: List[Hypothesis]) -&gt; Hypothesis:
+ “””
+ Fuse multiple hypotheses using ROVER.</p>
+
+<p>Algorithm:</p>
+<ol>
+  <li>Build word confusion network (WCN)</li>
+  <li>Align words by time</li>
+  <li>Vote at each position</li>
+  <li>Select best word at each position</li>
+</ol>
+
+<p>Returns:
+ Fused hypothesis
+ “””
+ if not hypotheses:
+ return Hypothesis(words=[], confidence=0.0, model_id=”ensemble”)</p>
+
+<p>if len(hypotheses) == 1:
+ return hypotheses[0]</p>
+
+<p># Build word confusion network
+ wcn = self._build_confusion_network(hypotheses)</p>
+
+<p># Vote at each position
+ fused_words = []</p>
+
+<p>for time_slot, candidates in wcn.items():
+ # Vote for best word
+ best_word = self._vote(candidates, hypotheses)
+ if best_word:
+ fused_words.append(best_word)</p>
+
+<p># Calculate overall confidence
+ avg_confidence = (
+ sum(w.confidence for w in fused_words) / len(fused_words)
+ if fused_words else 0.0
+ )</p>
+
+<p>return Hypothesis(
+ words=fused_words,
+ confidence=avg_confidence,
+ model_id=”rover_ensemble”
+ )</p>
+
+<p>def _build_confusion_network(
+ self,
+ hypotheses: List[Hypothesis]
+ ) -&gt; Dict[float, List[Tuple[Word, str]]]:
+ “””
+ Build word confusion network.</p>
+
+<p>Groups words by approximate time position.</p>
+
+<p>Returns:
+ Dictionary mapping time -&gt; [(word, model_id), …]
+ “””
+ # Discretize time into 100ms bins
+ time_bin_size = 0.1
+ wcn = defaultdict(list)</p>
+
+<p>for hyp in hypotheses:
+ for word in hyp.words:
+ # Assign to time bin
+ time_bin = int(word.start_time / time_bin_size)
+ wcn[time_bin].append((word, hyp.model_id))</p>
+
+<p>return wcn</p>
+
+<p>def _vote(
+ self,
+ candidates: List[Tuple[Word, str]],
+ hypotheses: List[Hypothesis]
+ ) -&gt; Optional[Word]:
+ “””
+ Vote for best word among candidates.</p>
+
+<p>Voting strategy:</p>
+<ol>
+  <li>Group identical words</li>
+  <li>Calculate score = sum(confidence × model_weight × vote_count)</li>
+  <li>Return highest scoring word
+ “””
+ if not candidates:
+ return None</li>
+</ol>
+
+<p># Group by word text
+ word_groups = defaultdict(list)</p>
+
+<p>for word, model_id in candidates:
+ # Normalize word (lowercase, remove punctuation)
+ normalized = word.text.lower().strip(‘.,!?’)
+ word_groups[normalized].append((word, model_id))</p>
+
+<p># Vote
+ best_word = None
+ best_score = -1.0</p>
+
+<p>for word_text, occurrences in word_groups.items():
+ # Calculate score
+ score = 0.0</p>
+
+<p>for word, model_id in occurrences:
+ weight = self.model_weights.get(model_id, 1.0)
+ score += word.confidence * weight</p>
+
+<p># Bonus for agreement (more models)
+ score *= (1.0 + 0.1 * len(occurrences))</p>
+
+<p>if score &gt; best_score:
+ best_score = score
+ # Use word with highest individual confidence
+ best_word = max(occurrences, key=lambda x: x[0].confidence)[0]</p>
+
+<p>return best_word</p>
+
+<p>def compute_confidence(self, hypotheses: List[Hypothesis]) -&gt; float:
+ “””
+ Compute ensemble confidence based on agreement.</p>
+
+<p>High agreement = high confidence.
+ “””
+ if not hypotheses:
+ return 0.0</p>
+
+<p>if len(hypotheses) == 1:
+ return hypotheses[0].confidence</p>
+
+<p># Calculate pairwise word-level agreement
+ agreements = []</p>
+
+<p>for i in range(len(hypotheses)):
+ for j in range(i + 1, len(hypotheses)):
+ agreement = self._compute_agreement(
+ hypotheses[i],
+ hypotheses[j]
+ )
+ agreements.append(agreement)</p>
+
+<p># Average agreement
+ avg_agreement = sum(agreements) / len(agreements)</p>
+
+<p># Combine with average model confidence
+ avg_confidence = sum(h.confidence for h in hypotheses) / len(hypotheses)</p>
+
+<p># Final confidence = weighted combination
+ return 0.6 * avg_confidence + 0.4 * avg_agreement</p>
+
+<p>def _compute_agreement(self, hyp1: Hypothesis, hyp2: Hypothesis) -&gt; float:
+ “””
+ Compute word-level agreement between two hypotheses.</p>
+
+<p>Uses edit distance and word overlap.
+ “””
+ words1 = [w.text.lower() for w in hyp1.words]
+ words2 = [w.text.lower() for w in hyp2.words]</p>
+
+<p># Calculate word overlap
+ common = set(words1) &amp; set(words2)
+ union = set(words1) | set(words2)</p>
+
+<p>if not union:
+ return 0.0</p>
+
+<p># Jaccard similarity
+ return len(common) / len(union)
+``</p>
 
 <h3 id="3-confidence-based-fusion">3. Confidence-Based Fusion</h3>
 
 <p>Alternative to ROVER: select words based on per-word confidence:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ConfidenceFusion</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Confidence-based fusion: select word with highest confidence.
-    
-    Simpler than ROVER but can work well when models are well-calibrated.
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">confidence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.7</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">confidence_threshold</span> <span class="o">=</span> <span class="n">confidence_threshold</span>
-    
-    <span class="k">def</span> <span class="nf">fuse</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">hypotheses</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Hypothesis</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Hypothesis</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Fuse hypotheses by selecting highest-confidence words.
-        
-        Algorithm:
-        1. For each word position (by time)
-        2. Select word with highest confidence
-        3. If all confidences &lt; threshold, mark as uncertain
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">hypotheses</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nc">Hypothesis</span><span class="p">(</span><span class="n">words</span><span class="o">=</span><span class="p">[],</span> <span class="n">confidence</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">model_id</span><span class="o">=</span><span class="sh">"</span><span class="s">ensemble</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">hypotheses</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">hypotheses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="c1"># Collect all words with time positions
-</span>        <span class="n">all_words</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">hyp</span> <span class="ow">in</span> <span class="n">hypotheses</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">hyp</span><span class="p">.</span><span class="n">words</span><span class="p">:</span>
-                <span class="n">all_words</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">word</span><span class="p">,</span> <span class="n">hyp</span><span class="p">.</span><span class="n">model_id</span><span class="p">))</span>
-        
-        <span class="c1"># Sort by start time
-</span>        <span class="n">all_words</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">start_time</span><span class="p">)</span>
-        
-        <span class="c1"># Greedily select non-overlapping high-confidence words
-</span>        <span class="n">fused_words</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">last_end_time</span> <span class="o">=</span> <span class="mf">0.0</span>
-        
-        <span class="k">for</span> <span class="n">word</span><span class="p">,</span> <span class="n">model_id</span> <span class="ow">in</span> <span class="n">all_words</span><span class="p">:</span>
-            <span class="c1"># Skip if overlaps with previous word
-</span>            <span class="k">if</span> <span class="n">word</span><span class="p">.</span><span class="n">start_time</span> <span class="o">&lt;</span> <span class="n">last_end_time</span><span class="p">:</span>
-                <span class="c1"># Check if this word has higher confidence
-</span>                <span class="k">if</span> <span class="n">fused_words</span> <span class="ow">and</span> <span class="n">word</span><span class="p">.</span><span class="n">confidence</span> <span class="o">&gt;</span> <span class="n">fused_words</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="n">confidence</span><span class="p">:</span>
-                    <span class="c1"># Replace previous word with this one
-</span>                    <span class="n">fused_words</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">word</span>
-                    <span class="n">last_end_time</span> <span class="o">=</span> <span class="n">word</span><span class="p">.</span><span class="n">end_time</span>
-                <span class="k">continue</span>
-            
-            <span class="c1"># Add word if confidence sufficient
-</span>            <span class="k">if</span> <span class="n">word</span><span class="p">.</span><span class="n">confidence</span> <span class="o">&gt;=</span> <span class="n">self</span><span class="p">.</span><span class="n">confidence_threshold</span><span class="p">:</span>
-                <span class="n">fused_words</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
-                <span class="n">last_end_time</span> <span class="o">=</span> <span class="n">word</span><span class="p">.</span><span class="n">end_time</span>
-        
-        <span class="c1"># Calculate ensemble confidence
-</span>        <span class="n">avg_conf</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="nf">sum</span><span class="p">(</span><span class="n">w</span><span class="p">.</span><span class="n">confidence</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">fused_words</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">fused_words</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">fused_words</span> <span class="k">else</span> <span class="mf">0.0</span>
-        <span class="p">)</span>
-        
-        <span class="k">return</span> <span class="nc">Hypothesis</span><span class="p">(</span>
-            <span class="n">words</span><span class="o">=</span><span class="n">fused_words</span><span class="p">,</span>
-            <span class="n">confidence</span><span class="o">=</span><span class="n">avg_conf</span><span class="p">,</span>
-            <span class="n">model_id</span><span class="o">=</span><span class="sh">"</span><span class="s">confidence_ensemble</span><span class="sh">"</span>
-        <span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+class ConfidenceFusion:
+ “””
+ Confidence-based fusion: select word with highest confidence.</p>
+
+<p>Simpler than ROVER but can work well when models are well-calibrated.
+ “””</p>
+
+<p>def <strong>init</strong>(self, confidence_threshold: float = 0.7):
+ self.confidence_threshold = confidence_threshold</p>
+
+<p>def fuse(self, hypotheses: List[Hypothesis]) -&gt; Hypothesis:
+ “””
+ Fuse hypotheses by selecting highest-confidence words.</p>
+
+<p>Algorithm:</p>
+<ol>
+  <li>For each word position (by time)</li>
+  <li>Select word with highest confidence</li>
+  <li>If all confidences &lt; threshold, mark as uncertain
+ “””
+ if not hypotheses:
+ return Hypothesis(words=[], confidence=0.0, model_id=”ensemble”)</li>
+</ol>
+
+<p>if len(hypotheses) == 1:
+ return hypotheses[0]</p>
+
+<p># Collect all words with time positions
+ all_words = []</p>
+
+<p>for hyp in hypotheses:
+ for word in hyp.words:
+ all_words.append((word, hyp.model_id))</p>
+
+<p># Sort by start time
+ all_words.sort(key=lambda x: x[0].start_time)</p>
+
+<p># Greedily select non-overlapping high-confidence words
+ fused_words = []
+ last_end_time = 0.0</p>
+
+<p>for word, model_id in all_words:
+ # Skip if overlaps with previous word
+ if word.start_time &lt; last_end_time:
+ # Check if this word has higher confidence
+ if fused_words and word.confidence &gt; fused_words[-1].confidence:
+ # Replace previous word with this one
+ fused_words[-1] = word
+ last_end_time = word.end_time
+ continue</p>
+
+<p># Add word if confidence sufficient
+ if word.confidence &gt;= self.confidence_threshold:
+ fused_words.append(word)
+ last_end_time = word.end_time</p>
+
+<p># Calculate ensemble confidence
+ avg_conf = (
+ sum(w.confidence for w in fused_words) / len(fused_words)
+ if fused_words else 0.0
+ )</p>
+
+<p>return Hypothesis(
+ words=fused_words,
+ confidence=avg_conf,
+ model_id=”confidence_ensemble”
+ )
+``</p>
 
 <h3 id="4-voting-based-fusion">4. Voting-Based Fusion</h3>
 
 <p>Simple voting approach for word-level decisions:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">VotingFusion</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Simple voting: most common word wins.
-    
-    Good for:
-    - Quick prototyping
-    - When models have similar quality
-    - When speed is critical
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">fuse</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">hypotheses</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Hypothesis</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Hypothesis</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Fuse using majority voting.
-        
-        Algorithm:
-        1. For each word position
-        2. Vote among models
-        3. Select majority (or plurality)
-        </span><span class="sh">"""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">hypotheses</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nc">Hypothesis</span><span class="p">(</span><span class="n">words</span><span class="o">=</span><span class="p">[],</span> <span class="n">confidence</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">model_id</span><span class="o">=</span><span class="sh">"</span><span class="s">ensemble</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">hypotheses</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">hypotheses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="c1"># Use ROVER's WCN but simple majority voting
-</span>        <span class="n">wcn</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_build_wcn</span><span class="p">(</span><span class="n">hypotheses</span><span class="p">)</span>
-        
-        <span class="n">fused_words</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">time_slot</span><span class="p">,</span> <span class="n">candidates</span> <span class="ow">in</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">wcn</span><span class="p">.</span><span class="nf">items</span><span class="p">()):</span>
-            <span class="c1"># Count votes for each word
-</span>            <span class="n">votes</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-            <span class="n">word_objects</span> <span class="o">=</span> <span class="p">{}</span>
-            
-            <span class="k">for</span> <span class="n">word</span><span class="p">,</span> <span class="n">model_id</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
-                <span class="n">normalized</span> <span class="o">=</span> <span class="n">word</span><span class="p">.</span><span class="n">text</span><span class="p">.</span><span class="nf">lower</span><span class="p">()</span>
-                <span class="n">votes</span><span class="p">[</span><span class="n">normalized</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-                
-                <span class="c1"># Keep track of word object (use one with highest confidence)
-</span>                <span class="nf">if </span><span class="p">(</span><span class="n">normalized</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">word_objects</span> <span class="ow">or</span>
-                    <span class="n">word</span><span class="p">.</span><span class="n">confidence</span> <span class="o">&gt;</span> <span class="n">word_objects</span><span class="p">[</span><span class="n">normalized</span><span class="p">].</span><span class="n">confidence</span><span class="p">):</span>
-                    <span class="n">word_objects</span><span class="p">[</span><span class="n">normalized</span><span class="p">]</span> <span class="o">=</span> <span class="n">word</span>
-            
-            <span class="c1"># Select winner (plurality)
-</span>            <span class="k">if</span> <span class="n">votes</span><span class="p">:</span>
-                <span class="n">winner</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">votes</span><span class="p">.</span><span class="nf">keys</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="n">votes</span><span class="p">[</span><span class="n">w</span><span class="p">])</span>
-                <span class="n">fused_words</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">word_objects</span><span class="p">[</span><span class="n">winner</span><span class="p">])</span>
-        
-        <span class="n">avg_conf</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="nf">sum</span><span class="p">(</span><span class="n">w</span><span class="p">.</span><span class="n">confidence</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">fused_words</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">fused_words</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">fused_words</span> <span class="k">else</span> <span class="mf">0.0</span>
-        <span class="p">)</span>
-        
-        <span class="k">return</span> <span class="nc">Hypothesis</span><span class="p">(</span>
-            <span class="n">words</span><span class="o">=</span><span class="n">fused_words</span><span class="p">,</span>
-            <span class="n">confidence</span><span class="o">=</span><span class="n">avg_conf</span><span class="p">,</span>
-            <span class="n">model_id</span><span class="o">=</span><span class="sh">"</span><span class="s">voting_ensemble</span><span class="sh">"</span>
-        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_build_wcn</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">hypotheses</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Build word confusion network (simplified).</span><span class="sh">"""</span>
-        <span class="n">time_bin_size</span> <span class="o">=</span> <span class="mf">0.1</span>
-        <span class="n">wcn</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">hyp</span> <span class="ow">in</span> <span class="n">hypotheses</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">hyp</span><span class="p">.</span><span class="n">words</span><span class="p">:</span>
-                <span class="n">time_bin</span> <span class="o">=</span> <span class="nf">int</span><span class="p">(</span><span class="n">word</span><span class="p">.</span><span class="n">start_time</span> <span class="o">/</span> <span class="n">time_bin_size</span><span class="p">)</span>
-                <span class="n">wcn</span><span class="p">[</span><span class="n">time_bin</span><span class="p">].</span><span class="nf">append</span><span class="p">((</span><span class="n">word</span><span class="p">,</span> <span class="n">hyp</span><span class="p">.</span><span class="n">model_id</span><span class="p">))</span>
-        
-        <span class="k">return</span> <span class="n">wcn</span>
-</code></pre></div></div>
+<p>``python
+class VotingFusion:
+ “””
+ Simple voting: most common word wins.</p>
+
+<p>Good for:</p>
+<ul>
+  <li>Quick prototyping</li>
+  <li>When models have similar quality</li>
+  <li>When speed is critical
+ “””</li>
+</ul>
+
+<p>def fuse(self, hypotheses: List[Hypothesis]) -&gt; Hypothesis:
+ “””
+ Fuse using majority voting.</p>
+
+<p>Algorithm:</p>
+<ol>
+  <li>For each word position</li>
+  <li>Vote among models</li>
+  <li>Select majority (or plurality)
+ “””
+ if not hypotheses:
+ return Hypothesis(words=[], confidence=0.0, model_id=”ensemble”)</li>
+</ol>
+
+<p>if len(hypotheses) == 1:
+ return hypotheses[0]</p>
+
+<p># Use ROVER’s WCN but simple majority voting
+ wcn = self._build_wcn(hypotheses)</p>
+
+<p>fused_words = []</p>
+
+<p>for time_slot, candidates in sorted(wcn.items()):
+ # Count votes for each word
+ votes = defaultdict(int)
+ word_objects = {}</p>
+
+<p>for word, model_id in candidates:
+ normalized = word.text.lower()
+ votes[normalized] += 1</p>
+
+<p># Keep track of word object (use one with highest confidence)
+ if (normalized not in word_objects or
+ word.confidence &gt; word_objects[normalized].confidence):
+ word_objects[normalized] = word</p>
+
+<p># Select winner (plurality)
+ if votes:
+ winner = max(votes.keys(), key=lambda w: votes[w])
+ fused_words.append(word_objects[winner])</p>
+
+<p>avg_conf = (
+ sum(w.confidence for w in fused_words) / len(fused_words)
+ if fused_words else 0.0
+ )</p>
+
+<p>return Hypothesis(
+ words=fused_words,
+ confidence=avg_conf,
+ model_id=”voting_ensemble”
+ )</p>
+
+<p>def _build_wcn(self, hypotheses):
+ “"”Build word confusion network (simplified).”””
+ time_bin_size = 0.1
+ wcn = defaultdict(list)</p>
+
+<p>for hyp in hypotheses:
+ for word in hyp.words:
+ time_bin = int(word.start_time / time_bin_size)
+ wcn[time_bin].append((word, hyp.model_id))</p>
+
+<p>return wcn
+``</p>
 
 <h3 id="5-complete-ensemble-system">5. Complete Ensemble System</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">asyncio</span>
-<span class="kn">from</span> <span class="n">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
-<span class="kn">import</span> <span class="n">time</span>
-<span class="kn">import</span> <span class="n">logging</span>
+<p>``python
+import asyncio
+from typing import List, Optional
+import time
+import logging</p>
 
-<span class="k">class</span> <span class="nc">SpeechEnsemble</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Complete multi-model speech ensemble system.
-    
-    Features:
-    - Model selection using backtracking
-    - Multiple fusion strategies
-    - Parallel model execution
-    - Fallback handling
-    - Performance monitoring
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SpeechModel</span><span class="p">],</span>
-        <span class="n">fusion_strategy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sh">"</span><span class="s">rover</span><span class="sh">"</span><span class="p">,</span>
-        <span class="n">max_models</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
-        <span class="n">max_latency_ms</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">150.0</span>
-    <span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">models</span> <span class="o">=</span> <span class="n">models</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">fusion_strategy</span> <span class="o">=</span> <span class="n">fusion_strategy</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">selector</span> <span class="o">=</span> <span class="nc">ModelSelector</span><span class="p">(</span><span class="n">models</span><span class="p">,</span> <span class="n">max_models</span><span class="p">,</span> <span class="n">max_latency_ms</span><span class="p">)</span>
-        
-        <span class="c1"># Create fusion engine
-</span>        <span class="k">if</span> <span class="n">fusion_strategy</span> <span class="o">==</span> <span class="sh">"</span><span class="s">rover</span><span class="sh">"</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">fusion</span> <span class="o">=</span> <span class="nc">ROVERFusion</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="n">fusion_strategy</span> <span class="o">==</span> <span class="sh">"</span><span class="s">confidence</span><span class="sh">"</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">fusion</span> <span class="o">=</span> <span class="nc">ConfidenceFusion</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="n">fusion_strategy</span> <span class="o">==</span> <span class="sh">"</span><span class="s">voting</span><span class="sh">"</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">fusion</span> <span class="o">=</span> <span class="nc">VotingFusion</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Unknown fusion strategy: </span><span class="si">{</span><span class="n">fusion_strategy</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="p">.</span><span class="nf">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
-        
-        <span class="c1"># Metrics
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">request_count</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">total_latency</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">fallback_count</span> <span class="o">=</span> <span class="mi">0</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">transcribe</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16000</span><span class="p">,</span>
-        <span class="n">audio_chars</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AudioCharacteristics</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Transcribe audio using ensemble.
-        
-        Args:
-            audio: Audio samples
-            sample_rate: Sample rate (Hz)
-            audio_chars: Optional audio characteristics for model selection
-            
-        Returns:
-            Dictionary with transcription and metadata
-        </span><span class="sh">"""</span>
-        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">perf_counter</span><span class="p">()</span>
-        
-        <span class="k">try</span><span class="p">:</span>
-            <span class="c1"># Analyze audio if characteristics not provided
-</span>            <span class="k">if</span> <span class="n">audio_chars</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="n">audio_chars</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_analyze_audio</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">)</span>
-            
-            <span class="c1"># Select models using backtracking
-</span>            <span class="n">selected_models</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">selector</span><span class="p">.</span><span class="nf">select_models</span><span class="p">(</span><span class="n">audio_chars</span><span class="p">)</span>
-            
-            <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="s">Selected </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">selected_models</span><span class="p">)</span><span class="si">}</span><span class="s"> models: </span><span class="sh">"</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="p">[</span><span class="n">m</span><span class="p">.</span><span class="n">model_id</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">selected_models</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span>
-            <span class="p">)</span>
-            
-            <span class="c1"># Run models in parallel
-</span>            <span class="n">transcription_tasks</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">model</span><span class="p">.</span><span class="nf">transcribe</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">selected_models</span>
-            <span class="p">]</span>
-            
-            <span class="n">model_outputs</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">gather</span><span class="p">(</span>
-                <span class="o">*</span><span class="n">transcription_tasks</span><span class="p">,</span>
-                <span class="n">return_exceptions</span><span class="o">=</span><span class="bp">True</span>
-            <span class="p">)</span>
-            
-            <span class="c1"># Build hypotheses (filter out failures)
-</span>            <span class="n">hypotheses</span> <span class="o">=</span> <span class="p">[]</span>
-            
-            <span class="k">for</span> <span class="n">model</span><span class="p">,</span> <span class="n">output</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">selected_models</span><span class="p">,</span> <span class="n">model_outputs</span><span class="p">):</span>
-                <span class="k">if</span> <span class="nf">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="nb">Exception</span><span class="p">):</span>
-                    <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">warning</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Model </span><span class="si">{</span><span class="n">model</span><span class="p">.</span><span class="n">model_id</span><span class="si">}</span><span class="s"> failed: </span><span class="si">{</span><span class="n">output</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-                    <span class="k">continue</span>
-                
-                <span class="c1"># Convert to Hypothesis
-</span>                <span class="n">words</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="nc">Word</span><span class="p">(</span>
-                        <span class="n">text</span><span class="o">=</span><span class="n">w</span><span class="p">[</span><span class="sh">"</span><span class="s">word</span><span class="sh">"</span><span class="p">],</span>
-                        <span class="n">confidence</span><span class="o">=</span><span class="n">w</span><span class="p">[</span><span class="sh">"</span><span class="s">confidence</span><span class="sh">"</span><span class="p">],</span>
-                        <span class="n">start_time</span><span class="o">=</span><span class="n">w</span><span class="p">[</span><span class="sh">"</span><span class="s">start</span><span class="sh">"</span><span class="p">],</span>
-                        <span class="n">end_time</span><span class="o">=</span><span class="n">w</span><span class="p">[</span><span class="sh">"</span><span class="s">end</span><span class="sh">"</span><span class="p">]</span>
-                    <span class="p">)</span>
-                    <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">output</span><span class="p">[</span><span class="sh">"</span><span class="s">words</span><span class="sh">"</span><span class="p">]</span>
-                <span class="p">]</span>
-                
-                <span class="n">hypotheses</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="nc">Hypothesis</span><span class="p">(</span>
-                    <span class="n">words</span><span class="o">=</span><span class="n">words</span><span class="p">,</span>
-                    <span class="n">confidence</span><span class="o">=</span><span class="n">output</span><span class="p">[</span><span class="sh">"</span><span class="s">confidence</span><span class="sh">"</span><span class="p">],</span>
-                    <span class="n">model_id</span><span class="o">=</span><span class="n">model</span><span class="p">.</span><span class="n">model_id</span>
-                <span class="p">))</span>
-            
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">hypotheses</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="nc">RuntimeError</span><span class="p">(</span><span class="sh">"</span><span class="s">All models failed</span><span class="sh">"</span><span class="p">)</span>
-            
-            <span class="c1"># Fuse hypotheses
-</span>            <span class="n">fused</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">fusion</span><span class="p">.</span><span class="nf">fuse</span><span class="p">(</span><span class="n">hypotheses</span><span class="p">)</span>
-            
-            <span class="c1"># Calculate latency
-</span>            <span class="n">latency_ms</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="p">.</span><span class="nf">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
-            
-            <span class="c1"># Update metrics
-</span>            <span class="n">self</span><span class="p">.</span><span class="n">request_count</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">total_latency</span> <span class="o">+=</span> <span class="n">latency_ms</span>
-            
-            <span class="n">result</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">:</span> <span class="n">fused</span><span class="p">.</span><span class="n">text</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">confidence</span><span class="sh">"</span><span class="p">:</span> <span class="n">fused</span><span class="p">.</span><span class="n">confidence</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">latency_ms</span><span class="sh">"</span><span class="p">:</span> <span class="n">latency_ms</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">models_used</span><span class="sh">"</span><span class="p">:</span> <span class="p">[</span><span class="n">h</span><span class="p">.</span><span class="n">model_id</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hypotheses</span><span class="p">],</span>
-                <span class="sh">"</span><span class="s">individual_results</span><span class="sh">"</span><span class="p">:</span> <span class="p">[</span>
-                    <span class="p">{</span><span class="sh">"</span><span class="s">model</span><span class="sh">"</span><span class="p">:</span> <span class="n">h</span><span class="p">.</span><span class="n">model_id</span><span class="p">,</span> <span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">:</span> <span class="n">h</span><span class="p">.</span><span class="n">text</span><span class="p">,</span> <span class="sh">"</span><span class="s">confidence</span><span class="sh">"</span><span class="p">:</span> <span class="n">h</span><span class="p">.</span><span class="n">confidence</span><span class="p">}</span>
-                    <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hypotheses</span>
-                <span class="p">],</span>
-                <span class="sh">"</span><span class="s">success</span><span class="sh">"</span><span class="p">:</span> <span class="bp">True</span>
-            <span class="p">}</span>
-            
-            <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">info</span><span class="p">(</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="s">Transcription: </span><span class="sh">'</span><span class="si">{</span><span class="n">fused</span><span class="p">.</span><span class="n">text</span><span class="si">}</span><span class="sh">'</span><span class="s"> </span><span class="sh">"</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="s">(confidence: </span><span class="si">{</span><span class="n">fused</span><span class="p">.</span><span class="n">confidence</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">, </span><span class="sh">"</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="s">latency: </span><span class="si">{</span><span class="n">latency_ms</span><span class="si">:</span><span class="p">.</span><span class="mi">1</span><span class="n">f</span><span class="si">}</span><span class="s">ms)</span><span class="sh">"</span>
-            <span class="p">)</span>
-            
-            <span class="k">return</span> <span class="n">result</span>
-            
-        <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="c1"># Fallback: return error
-</span>            <span class="n">self</span><span class="p">.</span><span class="n">fallback_count</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">logger</span><span class="p">.</span><span class="nf">error</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Ensemble transcription failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-            
-            <span class="n">latency_ms</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="p">.</span><span class="nf">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
-            
-            <span class="k">return</span> <span class="p">{</span>
-                <span class="sh">"</span><span class="s">text</span><span class="sh">"</span><span class="p">:</span> <span class="sh">""</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">confidence</span><span class="sh">"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">latency_ms</span><span class="sh">"</span><span class="p">:</span> <span class="n">latency_ms</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">models_used</span><span class="sh">"</span><span class="p">:</span> <span class="p">[],</span>
-                <span class="sh">"</span><span class="s">individual_results</span><span class="sh">"</span><span class="p">:</span> <span class="p">[],</span>
-                <span class="sh">"</span><span class="s">success</span><span class="sh">"</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
-                <span class="sh">"</span><span class="s">error</span><span class="sh">"</span><span class="p">:</span> <span class="nf">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-            <span class="p">}</span>
-    
-    <span class="k">def</span> <span class="nf">_analyze_audio</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AudioCharacteristics</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">
-        Analyze audio to determine characteristics.
-        
-        In production: use signal processing to detect:
-        - SNR (signal-to-noise ratio)
-        - Accent (using acoustic features)
-        - Domain (using language model probabilities)
-        </span><span class="sh">"""</span>
-        <span class="c1"># Calculate duration
-</span>        <span class="n">duration_sec</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span> <span class="o">/</span> <span class="n">sample_rate</span>
-        
-        <span class="c1"># Estimate SNR (simplified)
-</span>        <span class="c1"># In production: use proper SNR estimation
-</span>        <span class="n">signal_power</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">audio</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="n">snr_db</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nf">log10</span><span class="p">(</span><span class="n">signal_power</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span> <span class="o">+</span> <span class="mi">30</span>
-        
-        <span class="k">return</span> <span class="nc">AudioCharacteristics</span><span class="p">(</span>
-            <span class="n">snr_db</span><span class="o">=</span><span class="n">snr_db</span><span class="p">,</span>
-            <span class="n">duration_sec</span><span class="o">=</span><span class="n">duration_sec</span><span class="p">,</span>
-            <span class="n">accent</span><span class="o">=</span><span class="sh">"</span><span class="s">us</span><span class="sh">"</span><span class="p">,</span>
-            <span class="n">domain</span><span class="o">=</span><span class="sh">"</span><span class="s">general</span><span class="sh">"</span>
-        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">get_metrics</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sh">"""</span><span class="s">Get performance metrics.</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">"</span><span class="s">request_count</span><span class="sh">"</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">request_count</span><span class="p">,</span>
-            <span class="sh">"</span><span class="s">avg_latency_ms</span><span class="sh">"</span><span class="p">:</span> <span class="p">(</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">total_latency</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">request_count</span>
-                <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">request_count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
-            <span class="p">),</span>
-            <span class="sh">"</span><span class="s">fallback_rate</span><span class="sh">"</span><span class="p">:</span> <span class="p">(</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">fallback_count</span> <span class="o">/</span> <span class="n">self</span><span class="p">.</span><span class="n">request_count</span>
-                <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">request_count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
-            <span class="p">),</span>
-            <span class="sh">"</span><span class="s">num_models</span><span class="sh">"</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">)</span>
-        <span class="p">}</span>
+<p>class SpeechEnsemble:
+ “””
+ Complete multi-model speech ensemble system.</p>
 
+<p>Features:</p>
+<ul>
+  <li>Model selection using backtracking</li>
+  <li>Multiple fusion strategies</li>
+  <li>Parallel model execution</li>
+  <li>Fallback handling</li>
+  <li>Performance monitoring
+ “””</li>
+</ul>
 
-<span class="c1"># Example usage
-</span><span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-    <span class="c1"># Create models
-</span>    <span class="n">models</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="nc">SpeechModel</span><span class="p">(</span>
-            <span class="sh">"</span><span class="s">wav2vec2_large</span><span class="sh">"</span><span class="p">,</span> <span class="n">ModelType</span><span class="p">.</span><span class="n">WAV2VEC2</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span>
-            <span class="n">best_for_accent</span><span class="o">=</span><span class="sh">"</span><span class="s">us</span><span class="sh">"</span><span class="p">,</span> <span class="n">best_for_noise</span><span class="o">=</span><span class="sh">"</span><span class="s">clean</span><span class="sh">"</span>
-        <span class="p">),</span>
-        <span class="nc">SpeechModel</span><span class="p">(</span>
-            <span class="sh">"</span><span class="s">conformer_base</span><span class="sh">"</span><span class="p">,</span> <span class="n">ModelType</span><span class="p">.</span><span class="n">CONFORMER</span><span class="p">,</span> <span class="mf">25.0</span><span class="p">,</span> <span class="mf">0.048</span><span class="p">,</span>
-            <span class="n">best_for_accent</span><span class="o">=</span><span class="sh">"</span><span class="s">general</span><span class="sh">"</span><span class="p">,</span> <span class="n">best_for_noise</span><span class="o">=</span><span class="sh">"</span><span class="s">noisy</span><span class="sh">"</span>
-        <span class="p">),</span>
-        <span class="nc">SpeechModel</span><span class="p">(</span>
-            <span class="sh">"</span><span class="s">whisper_medium</span><span class="sh">"</span><span class="p">,</span> <span class="n">ModelType</span><span class="p">.</span><span class="n">WHISPER</span><span class="p">,</span> <span class="mf">40.0</span><span class="p">,</span> <span class="mf">0.042</span><span class="p">,</span>
-            <span class="n">best_for_accent</span><span class="o">=</span><span class="sh">"</span><span class="s">general</span><span class="sh">"</span><span class="p">,</span> <span class="n">best_for_noise</span><span class="o">=</span><span class="sh">"</span><span class="s">clean</span><span class="sh">"</span>
-        <span class="p">),</span>
-        <span class="nc">SpeechModel</span><span class="p">(</span>
-            <span class="sh">"</span><span class="s">rnn_t_streaming</span><span class="sh">"</span><span class="p">,</span> <span class="n">ModelType</span><span class="p">.</span><span class="n">RNN_T</span><span class="p">,</span> <span class="mf">15.0</span><span class="p">,</span> <span class="mf">0.055</span><span class="p">,</span>
-            <span class="n">best_for_accent</span><span class="o">=</span><span class="sh">"</span><span class="s">us</span><span class="sh">"</span><span class="p">,</span> <span class="n">best_for_noise</span><span class="o">=</span><span class="sh">"</span><span class="s">very_noisy</span><span class="sh">"</span>
-        <span class="p">),</span>
-    <span class="p">]</span>
-    
-    <span class="c1"># Create ensemble
-</span>    <span class="n">ensemble</span> <span class="o">=</span> <span class="nc">SpeechEnsemble</span><span class="p">(</span>
-        <span class="n">models</span><span class="o">=</span><span class="n">models</span><span class="p">,</span>
-        <span class="n">fusion_strategy</span><span class="o">=</span><span class="sh">"</span><span class="s">rover</span><span class="sh">"</span><span class="p">,</span>
-        <span class="n">max_models</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-        <span class="n">max_latency_ms</span><span class="o">=</span><span class="mf">100.0</span>
-    <span class="p">)</span>
-    
-    <span class="c1"># Generate dummy audio
-</span>    <span class="n">audio</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">16000</span> <span class="o">*</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># 3 seconds
-</span>    
-    <span class="c1"># Transcribe
-</span>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">ensemble</span><span class="p">.</span><span class="nf">transcribe</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="mi">16000</span><span class="p">)</span>
-    
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Result: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Metrics: </span><span class="si">{</span><span class="n">ensemble</span><span class="p">.</span><span class="nf">get_metrics</span><span class="p">()</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p>def <strong>init</strong>(
+ self,
+ models: List[SpeechModel],
+ fusion_strategy: str = “rover”,
+ max_models: int = 5,
+ max_latency_ms: float = 150.0
+ ):
+ self.models = models
+ self.fusion_strategy = fusion_strategy
+ self.selector = ModelSelector(models, max_models, max_latency_ms)</p>
 
+<p># Create fusion engine
+ if fusion_strategy == “rover”:
+ self.fusion = ROVERFusion()
+ elif fusion_strategy == “confidence”:
+ self.fusion = ConfidenceFusion()
+ elif fusion_strategy == “voting”:
+ self.fusion = VotingFusion()
+ else:
+ raise ValueError(f”Unknown fusion strategy: {fusion_strategy}”)</p>
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="sh">"</span><span class="s">__main__</span><span class="sh">"</span><span class="p">:</span>
-    <span class="n">logging</span><span class="p">.</span><span class="nf">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="p">.</span><span class="n">INFO</span><span class="p">)</span>
-    <span class="n">asyncio</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span><span class="nf">main</span><span class="p">())</span>
-</code></pre></div></div>
+<p>self.logger = logging.getLogger(<strong>name</strong>)</p>
+
+<p># Metrics
+ self.request_count = 0
+ self.total_latency = 0.0
+ self.fallback_count = 0</p>
+
+<p>async def transcribe(
+ self,
+ audio: np.ndarray,
+ sample_rate: int = 16000,
+ audio_chars: Optional[AudioCharacteristics] = None
+ ) -&gt; Dict:
+ “””
+ Transcribe audio using ensemble.</p>
+
+<p>Args:
+ audio: Audio samples
+ sample_rate: Sample rate (Hz)
+ audio_chars: Optional audio characteristics for model selection</p>
+
+<p>Returns:
+ Dictionary with transcription and metadata
+ “””
+ start_time = time.perf_counter()</p>
+
+<p>try:
+ # Analyze audio if characteristics not provided
+ if audio_chars is None:
+ audio_chars = self._analyze_audio(audio, sample_rate)</p>
+
+<p># Select models using backtracking
+ selected_models = self.selector.select_models(audio_chars)</p>
+
+<p>self.logger.info(
+ f”Selected {len(selected_models)} models: “
+ f”{[m.model_id for m in selected_models]}”
+ )</p>
+
+<p># Run models in parallel
+ transcription_tasks = [
+ model.transcribe(audio, sample_rate)
+ for model in selected_models
+ ]</p>
+
+<p>model_outputs = await asyncio.gather(
+ *transcription_tasks,
+ return_exceptions=True
+ )</p>
+
+<p># Build hypotheses (filter out failures)
+ hypotheses = []</p>
+
+<p>for model, output in zip(selected_models, model_outputs):
+ if isinstance(output, Exception):
+ self.logger.warning(f”Model {model.model_id} failed: {output}”)
+ continue</p>
+
+<p># Convert to Hypothesis
+ words = [
+ Word(
+ text=w[“word”],
+ confidence=w[“confidence”],
+ start_time=w[“start”],
+ end_time=w[“end”]
+ )
+ for w in output[“words”]
+ ]</p>
+
+<p>hypotheses.append(Hypothesis(
+ words=words,
+ confidence=output[“confidence”],
+ model_id=model.model_id
+ ))</p>
+
+<p>if not hypotheses:
+ raise RuntimeError(“All models failed”)</p>
+
+<p># Fuse hypotheses
+ fused = self.fusion.fuse(hypotheses)</p>
+
+<p># Calculate latency
+ latency_ms = (time.perf_counter() - start_time) * 1000</p>
+
+<p># Update metrics
+ self.request_count += 1
+ self.total_latency += latency_ms</p>
+
+<p>result = {
+ “text”: fused.text,
+ “confidence”: fused.confidence,
+ “latency_ms”: latency_ms,
+ “models_used”: [h.model_id for h in hypotheses],
+ “individual_results”: [
+ {“model”: h.model_id, “text”: h.text, “confidence”: h.confidence}
+ for h in hypotheses
+ ],
+ “success”: True
+ }</p>
+
+<p>self.logger.info(
+ f”Transcription: ‘{fused.text}’ “
+ f”(confidence: {fused.confidence:.2f}, “
+ f”latency: {latency_ms:.1f}ms)”
+ )</p>
+
+<p>return result</p>
+
+<p>except Exception as e:
+ # Fallback: return error
+ self.fallback_count += 1
+ self.logger.error(f”Ensemble transcription failed: {e}”)</p>
+
+<p>latency_ms = (time.perf_counter() - start_time) * 1000</p>
+
+<p>return {
+ “text”: “”,
+ “confidence”: 0.0,
+ “latency_ms”: latency_ms,
+ “models_used”: [],
+ “individual_results”: [],
+ “success”: False,
+ “error”: str(e)
+ }</p>
+
+<p>def _analyze_audio(
+ self,
+ audio: np.ndarray,
+ sample_rate: int
+ ) -&gt; AudioCharacteristics:
+ “””
+ Analyze audio to determine characteristics.</p>
+
+<p>In production: use signal processing to detect:</p>
+<ul>
+  <li>SNR (signal-to-noise ratio)</li>
+  <li>Accent (using acoustic features)</li>
+  <li>Domain (using language model probabilities)
+ “””
+ # Calculate duration
+ duration_sec = len(audio) / sample_rate</li>
+</ul>
+
+<p># Estimate SNR (simplified)
+ # In production: use proper SNR estimation
+ signal_power = np.mean(audio ** 2)
+ snr_db = 10 * np.log10(signal_power + 1e-10) + 30</p>
+
+<p>return AudioCharacteristics(
+ snr_db=snr_db,
+ duration_sec=duration_sec,
+ accent=”us”,
+ domain=”general”
+ )</p>
+
+<p>def get_metrics(self) -&gt; Dict:
+ “"”Get performance metrics.”””
+ return {
+ “request_count”: self.request_count,
+ “avg_latency_ms”: (
+ self.total_latency / self.request_count
+ if self.request_count &gt; 0 else 0.0
+ ),
+ “fallback_rate”: (
+ self.fallback_count / self.request_count
+ if self.request_count &gt; 0 else 0.0
+ ),
+ “num_models”: len(self.models)
+ }</p>
+
+<h1 id="example-usage">Example usage</h1>
+<p>async def main():
+ # Create models
+ models = [
+ SpeechModel(
+ “wav2vec2_large”, ModelType.WAV2VEC2, 30.0, 0.05,
+ best_for_accent=”us”, best_for_noise=”clean”
+ ),
+ SpeechModel(
+ “conformer_base”, ModelType.CONFORMER, 25.0, 0.048,
+ best_for_accent=”general”, best_for_noise=”noisy”
+ ),
+ SpeechModel(
+ “whisper_medium”, ModelType.WHISPER, 40.0, 0.042,
+ best_for_accent=”general”, best_for_noise=”clean”
+ ),
+ SpeechModel(
+ “rnn_t_streaming”, ModelType.RNN_T, 15.0, 0.055,
+ best_for_accent=”us”, best_for_noise=”very_noisy”
+ ),
+ ]</p>
+
+<p># Create ensemble
+ ensemble = SpeechEnsemble(
+ models=models,
+ fusion_strategy=”rover”,
+ max_models=3,
+ max_latency_ms=100.0
+ )</p>
+
+<p># Generate dummy audio
+ audio = np.random.randn(16000 * 3) # 3 seconds</p>
+
+<p># Transcribe
+ result = await ensemble.transcribe(audio, sample_rate=16000)</p>
+
+<p>print(f”Result: {result}”)
+ print(f”Metrics: {ensemble.get_metrics()}”)</p>
+
+<p>if <strong>name</strong> == “<strong>main</strong>”:
+ logging.basicConfig(level=logging.INFO)
+ asyncio.run(main())
+``</p>
 
 <h2 id="production-deployment">Production Deployment</h2>
 
@@ -1290,138 +1312,144 @@
 
 <p>For real-time streaming applications:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">StreamingEnsemble</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Streaming speech ensemble.
-    
-    Challenges:
-    - Models produce output at different rates
-    - Need to fuse incrementally
-    - Maintain low latency
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SpeechModel</span><span class="p">]):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">models</span> <span class="o">=</span> <span class="n">models</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">partial_hypotheses</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Word</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">process_chunk</span><span class="p">(</span>
-        <span class="n">self</span><span class="p">,</span>
-        <span class="n">audio_chunk</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">ndarray</span><span class="p">,</span>
-        <span class="n">is_final</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sh">"""</span><span class="s">
-        Process audio chunk and return partial/final transcription.
-        
-        Args:
-            audio_chunk: Audio data
-            is_final: Whether this is the last chunk
-            
-        Returns:
-            Partial or final transcription
-        </span><span class="sh">"""</span>
-        <span class="c1"># Send chunk to all models
-</span>        <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">model</span><span class="p">.</span><span class="nf">transcribe_chunk</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">,</span> <span class="n">is_final</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">models</span>
-        <span class="p">]</span>
-        
-        <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="p">.</span><span class="nf">gather</span><span class="p">(</span><span class="o">*</span><span class="n">tasks</span><span class="p">,</span> <span class="n">return_exceptions</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        
-        <span class="c1"># Update partial hypotheses
-</span>        <span class="k">for</span> <span class="n">model</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">,</span> <span class="n">results</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nf">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">Exception</span><span class="p">):</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">partial_hypotheses</span><span class="p">[</span><span class="n">model</span><span class="p">.</span><span class="n">model_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="sh">"</span><span class="s">words</span><span class="sh">"</span><span class="p">]</span>
-        
-        <span class="c1"># Fuse partial results
-</span>        <span class="k">if</span> <span class="n">is_final</span><span class="p">:</span>
-            <span class="c1"># Final fusion using ROVER
-</span>            <span class="n">hypotheses</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="nc">Hypothesis</span><span class="p">(</span><span class="n">words</span><span class="o">=</span><span class="n">words</span><span class="p">,</span> <span class="n">confidence</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">model_id</span><span class="o">=</span><span class="n">model_id</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">model_id</span><span class="p">,</span> <span class="n">words</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">partial_hypotheses</span><span class="p">.</span><span class="nf">items</span><span class="p">()</span>
-            <span class="p">]</span>
-            
-            <span class="n">fused</span> <span class="o">=</span> <span class="nc">ROVERFusion</span><span class="p">().</span><span class="nf">fuse</span><span class="p">(</span><span class="n">hypotheses</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">fused</span><span class="p">.</span><span class="n">text</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Quick partial fusion (simple voting)
-</span>            <span class="c1"># Return most common partial result
-</span>            <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="sh">"</span><span class="s"> </span><span class="sh">"</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">w</span><span class="p">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">words</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">words</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">partial_hypotheses</span><span class="p">.</span><span class="nf">values</span><span class="p">()</span>
-            <span class="p">]</span>
-            
-            <span class="k">if</span> <span class="n">texts</span><span class="p">:</span>
-                <span class="c1"># Return most common (mode)
-</span>                <span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
-                <span class="k">return</span> <span class="nc">Counter</span><span class="p">(</span><span class="n">texts</span><span class="p">).</span><span class="nf">most_common</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-            
-            <span class="k">return</span> <span class="bp">None</span>
-</code></pre></div></div>
+<p>``python
+class StreamingEnsemble:
+ “””
+ Streaming speech ensemble.</p>
+
+<p>Challenges:</p>
+<ul>
+  <li>Models produce output at different rates</li>
+  <li>Need to fuse incrementally</li>
+  <li>Maintain low latency
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self, models: List[SpeechModel]):
+ self.models = models
+ self.partial_hypotheses: Dict[str, List[Word]] = {}</p>
+
+<p>async def process_chunk(
+ self,
+ audio_chunk: np.ndarray,
+ is_final: bool = False
+ ) -&gt; Optional[str]:
+ “””
+ Process audio chunk and return partial/final transcription.</p>
+
+<p>Args:
+ audio_chunk: Audio data
+ is_final: Whether this is the last chunk</p>
+
+<p>Returns:
+ Partial or final transcription
+ “””
+ # Send chunk to all models
+ tasks = [
+ model.transcribe_chunk(audio_chunk, is_final)
+ for model in self.models
+ ]</p>
+
+<p>results = await asyncio.gather(*tasks, return_exceptions=True)</p>
+
+<p># Update partial hypotheses
+ for model, result in zip(self.models, results):
+ if not isinstance(result, Exception):
+ self.partial_hypotheses[model.model_id] = result[“words”]</p>
+
+<p># Fuse partial results
+ if is_final:
+ # Final fusion using ROVER
+ hypotheses = [
+ Hypothesis(words=words, confidence=0.8, model_id=model_id)
+ for model_id, words in self.partial_hypotheses.items()
+ ]</p>
+
+<p>fused = ROVERFusion().fuse(hypotheses)
+ return fused.text
+ else:
+ # Quick partial fusion (simple voting)
+ # Return most common partial result
+ texts = [
+ “ “.join(w.text for w in words)
+ for words in self.partial_hypotheses.values()
+ ]</p>
+
+<p>if texts:
+ # Return most common (mode)
+ from collections import Counter
+ return Counter(texts).most_common(1)[0][0]</p>
+
+<p>return None
+``</p>
 
 <h3 id="kubernetes-deployment">Kubernetes Deployment</h3>
 
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># speech-ensemble-deployment.yaml</span>
-<span class="na">apiVersion</span><span class="pi">:</span> <span class="s">apps/v1</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">Deployment</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">speech-ensemble</span>
-<span class="na">spec</span><span class="pi">:</span>
-  <span class="na">replicas</span><span class="pi">:</span> <span class="m">3</span>
-  <span class="na">selector</span><span class="pi">:</span>
-    <span class="na">matchLabels</span><span class="pi">:</span>
-      <span class="na">app</span><span class="pi">:</span> <span class="s">speech-ensemble</span>
-  <span class="na">template</span><span class="pi">:</span>
-    <span class="na">metadata</span><span class="pi">:</span>
-      <span class="na">labels</span><span class="pi">:</span>
-        <span class="na">app</span><span class="pi">:</span> <span class="s">speech-ensemble</span>
-    <span class="na">spec</span><span class="pi">:</span>
-      <span class="na">containers</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">ensemble-server</span>
-        <span class="na">image</span><span class="pi">:</span> <span class="s">speech-ensemble:v1.0</span>
-        <span class="na">resources</span><span class="pi">:</span>
-          <span class="na">requests</span><span class="pi">:</span>
-            <span class="na">nvidia.com/gpu</span><span class="pi">:</span> <span class="m">2</span>  <span class="c1"># Need multiple GPUs for models</span>
-            <span class="na">cpu</span><span class="pi">:</span> <span class="s2">"</span><span class="s">8"</span>
-            <span class="na">memory</span><span class="pi">:</span> <span class="s2">"</span><span class="s">16Gi"</span>
-          <span class="na">limits</span><span class="pi">:</span>
-            <span class="na">nvidia.com/gpu</span><span class="pi">:</span> <span class="m">2</span>
-            <span class="na">cpu</span><span class="pi">:</span> <span class="s2">"</span><span class="s">16"</span>
-            <span class="na">memory</span><span class="pi">:</span> <span class="s2">"</span><span class="s">32Gi"</span>
-        <span class="na">env</span><span class="pi">:</span>
-        <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">FUSION_STRATEGY</span>
-          <span class="na">value</span><span class="pi">:</span> <span class="s2">"</span><span class="s">rover"</span>
-        <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">MAX_MODELS</span>
-          <span class="na">value</span><span class="pi">:</span> <span class="s2">"</span><span class="s">3"</span>
-        <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">MAX_LATENCY_MS</span>
-          <span class="na">value</span><span class="pi">:</span> <span class="s2">"</span><span class="s">150"</span>
-        <span class="na">ports</span><span class="pi">:</span>
-        <span class="pi">-</span> <span class="na">containerPort</span><span class="pi">:</span> <span class="m">8080</span>
-        <span class="na">livenessProbe</span><span class="pi">:</span>
-          <span class="na">httpGet</span><span class="pi">:</span>
-            <span class="na">path</span><span class="pi">:</span> <span class="s">/health</span>
-            <span class="na">port</span><span class="pi">:</span> <span class="m">8080</span>
-          <span class="na">initialDelaySeconds</span><span class="pi">:</span> <span class="m">60</span>
-          <span class="na">periodSeconds</span><span class="pi">:</span> <span class="m">10</span>
-        <span class="na">readinessProbe</span><span class="pi">:</span>
-          <span class="na">httpGet</span><span class="pi">:</span>
-            <span class="na">path</span><span class="pi">:</span> <span class="s">/ready</span>
-            <span class="na">port</span><span class="pi">:</span> <span class="m">8080</span>
-          <span class="na">initialDelaySeconds</span><span class="pi">:</span> <span class="m">30</span>
-          <span class="na">periodSeconds</span><span class="pi">:</span> <span class="m">5</span>
-<span class="nn">---</span>
-<span class="na">apiVersion</span><span class="pi">:</span> <span class="s">v1</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">Service</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">speech-ensemble-service</span>
-<span class="na">spec</span><span class="pi">:</span>
-  <span class="na">selector</span><span class="pi">:</span>
-    <span class="na">app</span><span class="pi">:</span> <span class="s">speech-ensemble</span>
-  <span class="na">ports</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">protocol</span><span class="pi">:</span> <span class="s">TCP</span>
-    <span class="na">port</span><span class="pi">:</span> <span class="m">80</span>
-    <span class="na">targetPort</span><span class="pi">:</span> <span class="m">8080</span>
-  <span class="na">type</span><span class="pi">:</span> <span class="s">LoadBalancer</span>
-</code></pre></div></div>
+<p>``yaml</p>
+<h1 id="speech-ensemble-deploymentyaml">speech-ensemble-deployment.yaml</h1>
+<p>apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: speech-ensemble
+spec:
+ replicas: 3
+ selector:
+ matchLabels:
+ app: speech-ensemble
+ template:
+ metadata:
+ labels:
+ app: speech-ensemble
+ spec:
+ containers:</p>
+<ul>
+  <li>name: ensemble-server
+ image: speech-ensemble:v1.0
+ resources:
+ requests:
+ nvidia.com/gpu: 2 # Need multiple GPUs for models
+ cpu: “8”
+ memory: “16Gi”
+ limits:
+ nvidia.com/gpu: 2
+ cpu: “16”
+ memory: “32Gi”
+ env:</li>
+  <li>name: FUSION_STRATEGY
+ value: “rover”</li>
+  <li>name: MAX_MODELS
+ value: “3”</li>
+  <li>name: MAX_LATENCY_MS
+ value: “150”
+ ports:</li>
+  <li>containerPort: 8080
+ livenessProbe:
+ httpGet:
+ path: /health
+ port: 8080
+ initialDelaySeconds: 60
+ periodSeconds: 10
+ readinessProbe:
+ httpGet:
+ path: /ready
+ port: 8080
+ initialDelaySeconds: 30
+ periodSeconds: 5
+—
+apiVersion: v1
+kind: Service
+metadata:
+ name: speech-ensemble-service
+spec:
+ selector:
+ app: speech-ensemble
+ ports:</li>
+  <li>protocol: TCP
+ port: 80
+ targetPort: 8080
+ type: LoadBalancer
+``</li>
+</ul>
 
 <h2 id="scaling-strategies">Scaling Strategies</h2>
 
@@ -1429,40 +1457,41 @@
 
 <p>Distribute models across multiple GPUs:</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch.distributed</span> <span class="k">as</span> <span class="n">dist</span>
+<p>``python
+import torch.distributed as dist</p>
 
-<span class="k">class</span> <span class="nc">DistributedEnsemble</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Distribute models across multiple GPUs/nodes.</span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">models</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SpeechModel</span><span class="p">],</span> <span class="n">world_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">models</span> <span class="o">=</span> <span class="n">models</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">world_size</span> <span class="o">=</span> <span class="n">world_size</span>
-        
-        <span class="c1"># Assign models to GPUs
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">model_assignments</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_assign_models</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">_assign_models</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="sh">"""</span><span class="s">Assign models to GPUs for load balancing.</span><span class="sh">"""</span>
-        <span class="n">assignments</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">world_size</span><span class="p">)}</span>
-        
-        <span class="c1"># Sort models by resource requirements
-</span>        <span class="n">sorted_models</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">models</span><span class="p">,</span>
-            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="p">.</span><span class="n">gpu_memory_mb</span><span class="p">,</span>
-            <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Greedy bin packing
-</span>        <span class="n">gpu_loads</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">world_size</span>
-        
-        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">sorted_models</span><span class="p">:</span>
-            <span class="c1"># Assign to least loaded GPU
-</span>            <span class="n">min_gpu</span> <span class="o">=</span> <span class="nf">min</span><span class="p">(</span><span class="nf">range</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">world_size</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">gpu_loads</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-            <span class="n">assignments</span><span class="p">[</span><span class="n">min_gpu</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">model_id</span><span class="p">)</span>
-            <span class="n">gpu_loads</span><span class="p">[</span><span class="n">min_gpu</span><span class="p">]</span> <span class="o">+=</span> <span class="n">model</span><span class="p">.</span><span class="n">gpu_memory_mb</span>
-        
-        <span class="k">return</span> <span class="n">assignments</span>
-</code></pre></div></div>
+<p>class DistributedEnsemble:
+ “"”Distribute models across multiple GPUs/nodes.”””</p>
+
+<p>def <strong>init</strong>(self, models: List[SpeechModel], world_size: int):
+ self.models = models
+ self.world_size = world_size</p>
+
+<p># Assign models to GPUs
+ self.model_assignments = self._assign_models()</p>
+
+<p>def _assign_models(self) -&gt; Dict[int, List[str]]:
+ “"”Assign models to GPUs for load balancing.”””
+ assignments = {i: [] for i in range(self.world_size)}</p>
+
+<p># Sort models by resource requirements
+ sorted_models = sorted(
+ self.models,
+ key=lambda m: m.gpu_memory_mb,
+ reverse=True
+ )</p>
+
+<p># Greedy bin packing
+ gpu_loads = [0] * self.world_size</p>
+
+<p>for model in sorted_models:
+ # Assign to least loaded GPU
+ min_gpu = min(range(self.world_size), key=lambda i: gpu_loads[i])
+ assignments[min_gpu].append(model.model_id)
+ gpu_loads[min_gpu] += model.gpu_memory_mb</p>
+
+<p>return assignments
+``</p>
 
 <h2 id="real-world-case-study-google-voice-search">Real-World Case Study: Google Voice Search</h2>
 
@@ -1536,9 +1565,9 @@
   <tbody>
     <tr>
       <td><strong>Compute (GPU)</strong></td>
-      <td>$50/day</td>
-      <td>$150/day</td>
+      <td><code class="language-plaintext highlighter-rouge">50/day | </code>150/day</td>
       <td>+$100/day</td>
+      <td> </td>
     </tr>
     <tr>
       <td><strong>Latency (p95)</strong></td>
@@ -1564,7 +1593,7 @@
 <p><strong>Value calculation:</strong></p>
 <ul>
   <li>WER reduction: 5.0% → 3.2% (36% relative improvement)</li>
-  <li>Cost per utterance: $0.0015 (single) → $0.0015 (ensemble, amortized)</li>
+  <li>Cost per utterance: <code class="language-plaintext highlighter-rouge">0.0015 (single) → </code>0.0015 (ensemble, amortized)</li>
   <li>User satisfaction increase: worth ~$5-10 per satisfied user</li>
   <li><strong>Net benefit:</strong> Higher quality justifies cost</li>
 </ul>
@@ -1654,14 +1683,17 @@
 
 <h3 id="universal-pattern">Universal Pattern</h3>
 
-<p><strong>Backtracking for Constrained Combination Generation:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. Start with empty selection
-2. Try adding each candidate
-3. Check constraints (validity, resources, quality)
-4. If valid: recurse to explore further
-5. If invalid: prune (backtrack)
-6. Return best combination found
-</code></pre></div></div>
+<p><strong>Backtracking for Constrained Combination Generation:</strong>
+``</p>
+<ol>
+  <li>Start with empty selection</li>
+  <li>Try adding each candidate</li>
+  <li>Check constraints (validity, resources, quality)</li>
+  <li>If valid: recurse to explore further</li>
+  <li>If invalid: prune (backtrack)</li>
+  <li>Return best combination found
+``</li>
+</ol>
 
 <p>This pattern applies to:</p>
 <ul>
@@ -1819,7 +1851,7 @@
       <span class="page__meta-readtime">
         <i class="far fa-clock" aria-hidden="true"></i>
         
-          25 minute read
+          24 minute read
         
       </span>
     

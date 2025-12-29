@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Resource Partitioning in ML Clusters">
     <meta itemprop="description" content="“How to share a supercomputer without stepping on each other’s toes.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -257,13 +257,10 @@
 <p>Training Large Language Models (LLMs) requires massive compute clusters (e.g., 10k H100s).</p>
 <ul>
   <li><strong>Users:</strong> Research, Product, Data Science.</li>
-  <li><strong>Workloads:</strong>
-    <ul>
-      <li><strong>Training:</strong> Long-running (weeks), gang-scheduled, fault-intolerant.</li>
-      <li><strong>Inference:</strong> Latency-sensitive, high availability, bursty.</li>
-      <li><strong>Dev/Notebooks:</strong> Interactive, low utilization.</li>
-    </ul>
-  </li>
+  <li><strong>Workloads:</strong></li>
+  <li><strong>Training:</strong> Long-running (weeks), gang-scheduled, fault-intolerant.</li>
+  <li><strong>Inference:</strong> Latency-sensitive, high availability, bursty.</li>
+  <li><strong>Dev/Notebooks:</strong> Interactive, low utilization.</li>
 </ul>
 
 <p><strong>Goal:</strong> Maximize utilization while ensuring fairness and isolation.</p>
@@ -272,12 +269,9 @@
 
 <h3 id="1-static-partitioning">1. Static Partitioning</h3>
 <ul>
-  <li><strong>Concept:</strong> Dedicate physical nodes to specific teams.
-    <ul>
-      <li>Team A gets Rack 1-10.</li>
-      <li>Team B gets Rack 11-20.</li>
-    </ul>
-  </li>
+  <li><strong>Concept:</strong> Dedicate physical nodes to specific teams.</li>
+  <li>Team A gets Rack 1-10.</li>
+  <li>Team B gets Rack 11-20.</li>
   <li><strong>Pros:</strong> Perfect isolation. No “noisy neighbors”.</li>
   <li><strong>Cons:</strong> Low utilization. If Team A is sleeping, their GPUs sit idle.</li>
 </ul>
@@ -305,15 +299,15 @@
 <ul>
   <li><strong>Namespace:</strong> Logical partition (e.g., <code class="language-plaintext highlighter-rouge">team-nlp</code>, <code class="language-plaintext highlighter-rouge">team-vision</code>).</li>
   <li><strong>ResourceQuota:</strong> Hard limit on aggregate resource usage per namespace.
-    <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">v1</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">ResourceQuota</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">gpu-quota</span>
-<span class="na">spec</span><span class="pi">:</span>
-  <span class="na">hard</span><span class="pi">:</span>
-    <span class="na">requests.nvidia.com/gpu</span><span class="pi">:</span> <span class="s2">"</span><span class="s">100"</span>
-</code></pre></div>    </div>
-  </li>
+ <code class="language-plaintext highlighter-rouge">yaml
+ apiVersion: v1
+ kind: ResourceQuota
+ metadata:
+ name: gpu-quota
+ spec:
+ hard:
+ requests.nvidia.com/gpu: "100"
+</code></li>
 </ul>
 
 <h2 id="4-gpu-partitioning">4. GPU Partitioning</h2>
@@ -374,17 +368,14 @@
   <li><strong>Actors:</strong> Stateful workers (e.g., a Parameter Server).</li>
   <li><strong>Tasks:</strong> Stateless functions.</li>
   <li><strong>Placement Groups:</strong>
-    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Reserve a bundle of resources atomically
-</span><span class="n">pg</span> <span class="o">=</span> <span class="nf">placement_group</span><span class="p">([{</span><span class="sh">"</span><span class="s">CPU</span><span class="sh">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="sh">"</span><span class="s">GPU</span><span class="sh">"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}]</span> <span class="o">*</span> <span class="mi">10</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="sh">"</span><span class="s">STRICT_PACK</span><span class="sh">"</span><span class="p">)</span>
-<span class="n">ray</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">pg</span><span class="p">.</span><span class="nf">ready</span><span class="p">())</span>
-</code></pre></div>    </div>
-  </li>
-  <li><strong>Strategy:</strong>
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">STRICT_PACK</code>: Put everything on the same node (low latency).</li>
-      <li><code class="language-plaintext highlighter-rouge">SPREAD</code>: Distribute across nodes (fault tolerance).</li>
-    </ul>
-  </li>
+ <code class="language-plaintext highlighter-rouge">python
+ # Reserve a bundle of resources atomically
+ pg = placement_group([{"CPU": 1, "GPU": 1}] * 10, strategy="STRICT_PACK")
+ ray.get(pg.ready())
+</code></li>
+  <li><strong>Strategy:</strong></li>
+  <li><code class="language-plaintext highlighter-rouge">STRICT_PACK</code>: Put everything on the same node (low latency).</li>
+  <li><code class="language-plaintext highlighter-rouge">SPREAD</code>: Distribute across nodes (fault tolerance).</li>
 </ul>
 
 <h2 id="7-real-world-case-studies">7. Real-World Case Studies</h2>
@@ -399,13 +390,10 @@
 <h3 id="case-study-2-uber-michelangelo">Case Study 2: Uber Michelangelo</h3>
 <ul>
   <li><strong>Workload:</strong> Mixed (Training + Inference).</li>
-  <li><strong>Solution:</strong>
-    <ul>
-      <li><strong>Training:</strong> Mesos (later K8s) with gang scheduling.</li>
-      <li><strong>Inference:</strong> Dedicated serving cluster with HPA (Horizontal Pod Autoscaler).</li>
-      <li><strong>Quota:</strong> “Elastic Quota” allows teams to burst into idle capacity but get preempted if the owner returns.</li>
-    </ul>
-  </li>
+  <li><strong>Solution:</strong></li>
+  <li><strong>Training:</strong> Mesos (later K8s) with gang scheduling.</li>
+  <li><strong>Inference:</strong> Dedicated serving cluster with HPA (Horizontal Pod Autoscaler).</li>
+  <li><strong>Quota:</strong> “Elastic Quota” allows teams to burst into idle capacity but get preempted if the owner returns.</li>
 </ul>
 
 <h2 id="8-summary">8. Summary</h2>
@@ -475,14 +463,14 @@ Standard K8s scheduler is bad for ML because it schedules one pod at a time. It 
 <ul>
   <li><strong>Volcano Scheduler:</strong> Replaces default K8s scheduler.</li>
   <li><strong>PodGroup:</strong> A CRD that groups pods together.
-    <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">scheduling.volcano.sh/v1beta1</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">PodGroup</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">tensorflow-job</span>
-<span class="na">spec</span><span class="pi">:</span>
-  <span class="na">minMember</span><span class="pi">:</span> <span class="m">10</span>  <span class="c1"># Gang size</span>
-</code></pre></div>    </div>
-  </li>
+ <code class="language-plaintext highlighter-rouge">yaml
+ apiVersion: scheduling.volcano.sh/v1beta1
+ kind: PodGroup
+ metadata:
+ name: tensorflow-job
+ spec:
+ minMember: 10 # Gang size
+</code></li>
 </ul>
 
 <p><strong>Logic:</strong></p>
@@ -508,12 +496,9 @@ Standard K8s scheduler is bad for ML because it schedules one pod at a time. It 
   <li><strong>Hardware-based.</strong> A100/H100 splits into partitions.</li>
   <li><strong>Memory:</strong> Dedicated (cannot oversubscribe).</li>
   <li><strong>Performance:</strong> Near-native. No context switching overhead between instances.</li>
-  <li><strong>Configuration:</strong>
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">1g.5gb</code>: 1 Compute Slice, 5GB RAM.</li>
-      <li><code class="language-plaintext highlighter-rouge">3g.20gb</code>: 3 Compute Slices, 20GB RAM.</li>
-    </ul>
-  </li>
+  <li><strong>Configuration:</strong></li>
+  <li><code class="language-plaintext highlighter-rouge">1g.5gb</code>: 1 Compute Slice, 5GB RAM.</li>
+  <li><code class="language-plaintext highlighter-rouge">3g.20gb</code>: 3 Compute Slices, 20GB RAM.</li>
   <li><strong>Use Case:</strong> Inference, lightweight training.</li>
 </ul>
 
@@ -601,25 +586,28 @@ Standard K8s scheduler is bad for ML because it schedules one pod at a time. It 
 
 <p><strong>Solution:</strong> Preempt (kill) low-priority jobs.</p>
 
-<p><strong>Kubernetes PriorityClass:</strong></p>
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">scheduling.k8s.io/v1</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">PriorityClass</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">high-priority</span>
-<span class="na">value</span><span class="pi">:</span> <span class="m">1000</span>
-<span class="na">globalDefault</span><span class="pi">:</span> <span class="kc">false</span>
-<span class="na">description</span><span class="pi">:</span> <span class="s2">"</span><span class="s">For</span><span class="nv"> </span><span class="s">production</span><span class="nv"> </span><span class="s">inference"</span>
-<span class="nn">---</span>
-<span class="na">apiVersion</span><span class="pi">:</span> <span class="s">v1</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">Pod</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">inference-pod</span>
-<span class="na">spec</span><span class="pi">:</span>
-  <span class="na">priorityClassName</span><span class="pi">:</span> <span class="s">high-priority</span>
-  <span class="na">containers</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">model</span>
-    <span class="na">image</span><span class="pi">:</span> <span class="s">bert-serving</span>
-</code></pre></div></div>
+<p><strong>Kubernetes PriorityClass:</strong>
+``yaml
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+ name: high-priority
+value: 1000
+globalDefault: false
+description: “For production inference”
+—
+apiVersion: v1
+kind: Pod
+metadata:
+ name: inference-pod
+spec:
+ priorityClassName: high-priority
+ containers:</p>
+<ul>
+  <li>name: model
+ image: bert-serving
+``</li>
+</ul>
 
 <p><strong>Preemption Logic:</strong></p>
 <ol>
@@ -663,17 +651,18 @@ A job needs 8 GPUs on the same node (for NVLink). <strong>It can’t run.</stron
   <li>Prefer nodes with multiple GPUs when scheduling multi-GPU jobs.</li>
 </ul>
 
-<p><strong>Code (Custom Scheduler Plugin):</strong></p>
-<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">func</span> <span class="p">(</span><span class="n">p</span> <span class="o">*</span><span class="n">GPUTopologyPlugin</span><span class="p">)</span> <span class="n">Score</span><span class="p">(</span><span class="n">ctx</span> <span class="n">context</span><span class="o">.</span><span class="n">Context</span><span class="p">,</span> <span class="n">state</span> <span class="o">*</span><span class="n">framework</span><span class="o">.</span><span class="n">CycleState</span><span class="p">,</span> <span class="n">pod</span> <span class="o">*</span><span class="n">v1</span><span class="o">.</span><span class="n">Pod</span><span class="p">,</span> <span class="n">nodeName</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="kt">int64</span><span class="p">,</span> <span class="o">*</span><span class="n">framework</span><span class="o">.</span><span class="n">Status</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">nodeInfo</span><span class="p">,</span> <span class="n">_</span> <span class="o">:=</span> <span class="n">p</span><span class="o">.</span><span class="n">handle</span><span class="o">.</span><span class="n">SnapshotSharedLister</span><span class="p">()</span><span class="o">.</span><span class="n">NodeInfos</span><span class="p">()</span><span class="o">.</span><span class="n">Get</span><span class="p">(</span><span class="n">nodeName</span><span class="p">)</span>
-    
-    <span class="c">// Count available GPUs on this node</span>
-    <span class="n">availableGPUs</span> <span class="o">:=</span> <span class="n">nodeInfo</span><span class="o">.</span><span class="n">Allocatable</span><span class="o">.</span><span class="n">ScalarResources</span><span class="p">[</span><span class="s">"nvidia.com/gpu"</span><span class="p">]</span>
-    
-    <span class="c">// Prefer nodes with more GPUs</span>
-    <span class="k">return</span> <span class="n">availableGPUs</span> <span class="o">*</span> <span class="m">10</span><span class="p">,</span> <span class="no">nil</span>
-<span class="p">}</span>
-</code></pre></div></div>
+<p><strong>Code (Custom Scheduler Plugin):</strong>
+``go
+func (p *GPUTopologyPlugin) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
+ nodeInfo, _ := p.handle.SnapshotSharedLister().NodeInfos().Get(nodeName)</p>
+
+<p>// Count available GPUs on this node
+ availableGPUs := nodeInfo.Allocatable.ScalarResources[“nvidia.com/gpu”]</p>
+
+<p>// Prefer nodes with more GPUs
+ return availableGPUs * 10, nil
+}
+``</p>
 
 <h2 id="18-advanced-numa-aware-scheduling">18. Advanced: NUMA-Aware Scheduling</h2>
 
@@ -681,18 +670,21 @@ A job needs 8 GPUs on the same node (for NVLink). <strong>It can’t run.</stron
 
 <p><strong>Problem:</strong> If a pod’s CPUs are on Socket 0 but its memory is on Socket 1, performance degrades (cross-socket memory access).</p>
 
-<p><strong>Solution: Topology Manager (K8s 1.18+):</strong></p>
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">v1</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">Pod</span>
-<span class="na">spec</span><span class="pi">:</span>
-  <span class="na">containers</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">training</span>
-    <span class="na">resources</span><span class="pi">:</span>
-      <span class="na">requests</span><span class="pi">:</span>
-        <span class="na">cpu</span><span class="pi">:</span> <span class="s2">"</span><span class="s">16"</span>
-        <span class="na">memory</span><span class="pi">:</span> <span class="s2">"</span><span class="s">64Gi"</span>
-  <span class="c1"># Topology Manager ensures CPUs and memory are on the same NUMA node</span>
-</code></pre></div></div>
+<p><strong>Solution: Topology Manager (K8s 1.18+):</strong>
+``yaml
+apiVersion: v1
+kind: Pod
+spec:
+ containers:</p>
+<ul>
+  <li>name: training
+ resources:
+ requests:
+ cpu: “16”
+ memory: “64Gi”
+ # Topology Manager ensures CPUs and memory are on the same NUMA node
+``</li>
+</ul>
 
 <p><strong>Policies:</strong></p>
 <ul>
@@ -706,33 +698,37 @@ A job needs 8 GPUs on the same node (for NVLink). <strong>It can’t run.</stron
 
 <p><strong>Problem:</strong> Distributed training has massive inter-GPU communication (All-Reduce).</p>
 
-<p><strong>Network Hierarchy:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GPU 0 ←→ GPU 1  (NVLink: 600 GB/s)
-  ↓       ↓
-Node 0 ←→ Node 1  (InfiniBand: 200 GB/s)
-  ↓       ↓
-Rack 0 ←→ Rack 1  (Ethernet: 100 GB/s)
-</code></pre></div></div>
+<p><strong>Network Hierarchy:</strong>
+<code class="language-plaintext highlighter-rouge">
+GPU 0 ←→ GPU 1 (NVLink: 600 GB/s)
+ ↓ ↓
+Node 0 ←→ Node 1 (InfiniBand: 200 GB/s)
+ ↓ ↓
+Rack 0 ←→ Rack 1 (Ethernet: 100 GB/s)
+</code></p>
 
 <p><strong>Optimization:</strong> Place all 8 GPUs of a job on the same node (NVLink) &gt; same rack (IB) &gt; different racks (Ethernet).</p>
 
-<p><strong>Implementation (Volcano Topology Plugin):</strong></p>
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">scheduling.volcano.sh/v1beta1</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">PodGroup</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">distributed-training</span>
-<span class="na">spec</span><span class="pi">:</span>
-  <span class="na">minMember</span><span class="pi">:</span> <span class="m">8</span>
-  <span class="na">queue</span><span class="pi">:</span> <span class="s">default</span>
-  <span class="c1"># Topology constraint</span>
-  <span class="na">affinity</span><span class="pi">:</span>
-    <span class="na">podAffinity</span><span class="pi">:</span>
-      <span class="na">requiredDuringSchedulingIgnoredDuringExecution</span><span class="pi">:</span>
-      <span class="pi">-</span> <span class="na">labelSelector</span><span class="pi">:</span>
-          <span class="na">matchLabels</span><span class="pi">:</span>
-            <span class="na">job</span><span class="pi">:</span> <span class="s">distributed-training</span>
-        <span class="na">topologyKey</span><span class="pi">:</span> <span class="s2">"</span><span class="s">topology.kubernetes.io/zone"</span>  <span class="c1"># Same rack</span>
-</code></pre></div></div>
+<p><strong>Implementation (Volcano Topology Plugin):</strong>
+``yaml
+apiVersion: scheduling.volcano.sh/v1beta1
+kind: PodGroup
+metadata:
+ name: distributed-training
+spec:
+ minMember: 8
+ queue: default
+ # Topology constraint
+ affinity:
+ podAffinity:
+ requiredDuringSchedulingIgnoredDuringExecution:</p>
+<ul>
+  <li>labelSelector:
+ matchLabels:
+ job: distributed-training
+ topologyKey: “topology.kubernetes.io/zone” # Same rack
+``</li>
+</ul>
 
 <h2 id="20-case-study-google-borg-predecessor-to-kubernetes">20. Case Study: Google Borg (Predecessor to Kubernetes)</h2>
 
@@ -763,8 +759,9 @@ Rack 0 ←→ Rack 1  (Ethernet: 100 GB/s)
 
 <ol>
   <li><strong>Cluster Utilization:</strong>
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GPU_Utilization = (Allocated_GPUs / Total_GPUs) * 100
-</code></pre></div>    </div>
+ <code class="language-plaintext highlighter-rouge">
+ GPU_Utilization = (Allocated_GPUs / Total_GPUs) * 100
+</code>
     <ul>
       <li><strong>Target:</strong> &gt; 80%.</li>
       <li><strong>Alert:</strong> If &lt; 60% for &gt; 1 hour, investigate.</li>
@@ -784,21 +781,22 @@ Rack 0 ←→ Rack 1  (Ethernet: 100 GB/s)
   </li>
 </ol>
 
-<p><strong>Debugging Tools:</strong></p>
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Why is my pod pending?</span>
-kubectl describe pod my-pod | <span class="nb">grep</span> <span class="nt">-A</span> 10 Events
+<p><strong>Debugging Tools:</strong>
+``bash</p>
+<h1 id="why-is-my-pod-pending">Why is my pod pending?</h1>
+<p>kubectl describe pod my-pod | grep -A 10 Events</p>
 
-<span class="c"># Common reasons:</span>
-<span class="c"># - "Insufficient nvidia.com/gpu"</span>
-<span class="c"># - "Node had taints that the pod didn't tolerate"</span>
-<span class="c"># - "PodGroup is not ready" (gang scheduling)</span>
+<h1 id="common-reasons">Common reasons:</h1>
+<h1 id="--insufficient-nvidiacomgpu">- “Insufficient nvidia.com/gpu”</h1>
+<h1 id="--node-had-taints-that-the-pod-didnt-tolerate">- “Node had taints that the pod didn’t tolerate”</h1>
+<h1 id="--podgroup-is-not-ready-gang-scheduling">- “PodGroup is not ready” (gang scheduling)</h1>
 
-<span class="c"># Check node resources</span>
-kubectl describe node gpu-node-01 | <span class="nb">grep</span> <span class="nt">-A</span> 5 Allocated
+<h1 id="check-node-resources">Check node resources</h1>
+<p>kubectl describe node gpu-node-01 | grep -A 5 Allocated</p>
 
-<span class="c"># Check quota</span>
-kubectl describe resourcequota <span class="nt">-n</span> team-nlp
-</code></pre></div></div>
+<h1 id="check-quota">Check quota</h1>
+<p>kubectl describe resourcequota -n team-nlp
+``</p>
 
 <h2 id="22-common-pitfalls-and-how-to-avoid-them">22. Common Pitfalls and How to Avoid Them</h2>
 
@@ -847,27 +845,28 @@ kubectl describe resourcequota <span class="nt">-n</span> team-nlp
   <li><strong>Elasticity:</strong> Can add/remove workers mid-training.</li>
 </ul>
 
-<p><strong>Code:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch.distributed</span> <span class="k">as</span> <span class="n">dist</span>
-<span class="kn">from</span> <span class="n">torch.distributed.elastic.multiprocessing.errors</span> <span class="kn">import</span> <span class="n">record</span>
+<p><strong>Code:</strong>
+``python
+import torch.distributed as dist
+from torch.distributed.elastic.multiprocessing.errors import record</p>
 
-<span class="nd">@record</span>
-<span class="k">def</span> <span class="nf">train</span><span class="p">():</span>
-    <span class="n">dist</span><span class="p">.</span><span class="nf">init_process_group</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="sh">"</span><span class="s">nccl</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="c1"># Training loop
-</span>    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">dataloader</span><span class="p">:</span>
-            <span class="c1"># If a worker dies here, TorchElastic handles it
-</span>            <span class="n">loss</span> <span class="o">=</span> <span class="nf">model</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
-            <span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
-            <span class="n">optimizer</span><span class="p">.</span><span class="nf">step</span><span class="p">()</span>
+<p>@record
+def train():
+ dist.init_process_group(backend=”nccl”)</p>
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="sh">"</span><span class="s">__main__</span><span class="sh">"</span><span class="p">:</span>
-    <span class="c1"># Launch with torchrun (replaces torch.distributed.launch)
-</span>    <span class="c1"># torchrun --nproc_per_node=8 --nnodes=10 train.py
-</span>    <span class="nf">train</span><span class="p">()</span>
-</code></pre></div></div>
+<p># Training loop
+ for epoch in range(100):
+ for batch in dataloader:
+ # If a worker dies here, TorchElastic handles it
+ loss = model(batch)
+ loss.backward()
+ optimizer.step()</p>
+
+<p>if <strong>name</strong> == “<strong>main</strong>”:
+ # Launch with torchrun (replaces torch.distributed.launch)
+ # torchrun –nproc_per_node=8 –nnodes=10 train.py
+ train()
+``</p>
 
 <p><strong>Benefit:</strong> Training survives spot interruptions without manual intervention.</p>
 
@@ -939,38 +938,42 @@ kubectl describe resourcequota <span class="nt">-n</span> team-nlp
   <li><strong>Tool:</strong> Profile with <code class="language-plaintext highlighter-rouge">nvidia-smi</code> to measure actual usage.</li>
 </ul>
 
-<p><strong>2. Spot Instance Strategies:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Diversify across instance types
-</span><span class="n">instance_types</span> <span class="o">=</span> <span class="p">[</span><span class="sh">'</span><span class="s">p3.8xlarge</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">p3.16xlarge</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">p4d.24xlarge</span><span class="sh">'</span><span class="p">]</span>
+<p><strong>2. Spot Instance Strategies:</strong>
+``python</p>
+<h1 id="diversify-across-instance-types">Diversify across instance types</h1>
+<p>instance_types = [‘p3.8xlarge’, ‘p3.16xlarge’, ‘p4d.24xlarge’]</p>
 
-<span class="c1"># Bid strategy: Max price = On-Demand price
-</span><span class="k">for</span> <span class="n">instance_type</span> <span class="ow">in</span> <span class="n">instance_types</span><span class="p">:</span>
-    <span class="nf">launch_spot_instance</span><span class="p">(</span>
-        <span class="n">instance_type</span><span class="o">=</span><span class="n">instance_type</span><span class="p">,</span>
-        <span class="n">max_price</span><span class="o">=</span><span class="nf">get_on_demand_price</span><span class="p">(</span><span class="n">instance_type</span><span class="p">)</span>
-    <span class="p">)</span>
-</code></pre></div></div>
+<h1 id="bid-strategy-max-price--on-demand-price">Bid strategy: Max price = On-Demand price</h1>
+<p>for instance_type in instance_types:
+ launch_spot_instance(
+ instance_type=instance_type,
+ max_price=get_on_demand_price(instance_type)
+ )
+``</p>
 
-<p><strong>3. Autoscaling Policies:</strong></p>
-<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">autoscaling/v2</span>
-<span class="na">kind</span><span class="pi">:</span> <span class="s">HorizontalPodAutoscaler</span>
-<span class="na">metadata</span><span class="pi">:</span>
-  <span class="na">name</span><span class="pi">:</span> <span class="s">gpu-autoscaler</span>
-<span class="na">spec</span><span class="pi">:</span>
-  <span class="na">scaleTargetRef</span><span class="pi">:</span>
-    <span class="na">apiVersion</span><span class="pi">:</span> <span class="s">apps/v1</span>
-    <span class="na">kind</span><span class="pi">:</span> <span class="s">Deployment</span>
-    <span class="na">name</span><span class="pi">:</span> <span class="s">inference-service</span>
-  <span class="na">minReplicas</span><span class="pi">:</span> <span class="m">2</span>
-  <span class="na">maxReplicas</span><span class="pi">:</span> <span class="m">10</span>
-  <span class="na">metrics</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="na">type</span><span class="pi">:</span> <span class="s">Resource</span>
-    <span class="na">resource</span><span class="pi">:</span>
-      <span class="na">name</span><span class="pi">:</span> <span class="s">nvidia.com/gpu</span>
-      <span class="na">target</span><span class="pi">:</span>
-        <span class="na">type</span><span class="pi">:</span> <span class="s">Utilization</span>
-        <span class="na">averageUtilization</span><span class="pi">:</span> <span class="m">70</span>
-</code></pre></div></div>
+<p><strong>3. Autoscaling Policies:</strong>
+``yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+ name: gpu-autoscaler
+spec:
+ scaleTargetRef:
+ apiVersion: apps/v1
+ kind: Deployment
+ name: inference-service
+ minReplicas: 2
+ maxReplicas: 10
+ metrics:</p>
+<ul>
+  <li>type: Resource
+ resource:
+ name: nvidia.com/gpu
+ target:
+ type: Utilization
+ averageUtilization: 70
+``</li>
+</ul>
 
 <p><strong>4. Idle Resource Reclamation:</strong></p>
 <ul>
@@ -984,39 +987,36 @@ kubectl describe resourcequota <span class="nt">-n</span> team-nlp
   <li><strong>Savings:</strong> 50-70% by using cheaper spot instances.</li>
 </ul>
 
-<p><strong>Cost Breakdown Example:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Training GPT-3 (175B params):
-- Hardware: 10,000 V100s for 1 month
-- On-Demand: $3/hr/GPU × 10,000 × 720 hrs = $21.6M
-- Spot (70% discount): $6.5M
-- Savings: $15.1M
-</code></pre></div></div>
+<p><strong>Cost Breakdown Example:</strong>
+``
+Training GPT-3 (175B params):</p>
+<ul>
+  <li>Hardware: 10,000 V100s for 1 month</li>
+  <li>On-Demand: <code class="language-plaintext highlighter-rouge">3/hr/GPU × 10,000 × 720 hrs = </code>21.6M</li>
+  <li>Spot (70% discount): $6.5M</li>
+  <li>Savings: $15.1M
+``</li>
+</ul>
 
 <h2 id="26-ethical-considerations">26. Ethical Considerations</h2>
 
 <p><strong>1. Energy Consumption:</strong></p>
 <ul>
   <li>Training GPT-3 consumed ~1,287 MWh (equivalent to 120 US homes for a year).</li>
-  <li><strong>Mitigation:</strong>
-    <ul>
-      <li>Use renewable energy data centers (Google, AWS have carbon-neutral regions)</li>
-      <li>Efficient architectures (MoE, sparse models)</li>
-      <li>Model distillation (train large, deploy small)</li>
-    </ul>
-  </li>
+  <li><strong>Mitigation:</strong></li>
+  <li>Use renewable energy data centers (Google, AWS have carbon-neutral regions)</li>
+  <li>Efficient architectures (MoE, sparse models)</li>
+  <li>Model distillation (train large, deploy small)</li>
 </ul>
 
 <p><strong>2. Access Inequality:</strong></p>
 <ul>
   <li>Only large organizations can afford 10k GPU clusters.</li>
   <li><strong>Impact:</strong> Concentrates AI research in Big Tech.</li>
-  <li><strong>Solutions:</strong>
-    <ul>
-      <li>Public compute grants (NSF, EU HPC)</li>
-      <li>Open-source pre-trained models (Hugging Face)</li>
-      <li>Federated learning (train on distributed data)</li>
-    </ul>
-  </li>
+  <li><strong>Solutions:</strong></li>
+  <li>Public compute grants (NSF, EU HPC)</li>
+  <li>Open-source pre-trained models (Hugging Face)</li>
+  <li>Federated learning (train on distributed data)</li>
 </ul>
 
 <p><strong>3. Resource Hoarding:</strong></p>
@@ -1035,22 +1035,23 @@ kubectl describe resourcequota <span class="nt">-n</span> team-nlp
 
 <p><strong>Scenario:</strong> Burst to AWS when on-prem cluster is full.</p>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌──────────────┐
-│  On-Prem K8s │ (Primary)
-└──────┬───────┘
-       │
-       ▼
+<p><strong>Architecture:</strong>
+<code class="language-plaintext highlighter-rouge">
 ┌──────────────┐
-│  Kubefed     │ (Federation)
+│ On-Prem K8s │ (Primary)
 └──────┬───────┘
-       │
-   ┌───┴────┐
-   ▼        ▼
-┌─────┐  ┌─────┐
-│ AWS │  │ GCP │ (Burst)
-└─────┘  └─────┘
-</code></pre></div></div>
+ │
+ ▼
+┌──────────────┐
+│ Kubefed │ (Federation)
+└──────┬───────┘
+ │
+ ┌───┴────┐
+ ▼ ▼
+┌─────┐ ┌─────┐
+│ AWS │ │ GCP │ (Burst)
+└─────┘ └─────┘
+</code></p>
 
 <p><strong>Challenges:</strong></p>
 <ol>
@@ -1235,7 +1236,134 @@ kubectl describe resourcequota <span class="nt">-n</span> team-nlp
         
       </footer>
 
+      <div class="page__related page__related--full">
+  <h2 class="page__related-title">Related across topics</h2>
+  <style>
+    /* Make section span full content width and use 2 equal columns */
+    .page__related--full { float: inline-start; width: 100%; padding: 0; }
+    .cross-related-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+    @media (max-width: 768px) { .cross-related-grid { grid-template-columns: 1fr; } }
+    /* Ensure archive cards stretch nicely in the grid */
+    .cross-related-grid .list__item, .cross-related-grid .grid__item { width: auto; float: none; margin: 0; }
+  </style>
+  <div class="cross-related-grid">
+    
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
       
+        <a href="/dsa/0036-partition-equal-subset-sum/" rel="permalink">Partition Equal Subset Sum
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          19 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Can you split the treasure evenly?”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/speech-tech/0036-multi-task-speech-learning/" rel="permalink">Multi-task Speech Learning
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          23 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“One model to rule them all: ASR, Translation, and Understanding.”
+</p>
+  </article>
+</div>
+
+
+
+
+<div class="list__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/ai-agents/0036-web-browsing-agents/" rel="permalink">Web Browsing Agents
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          18 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">“Turn the open web into a reliable tool: browse, extract, verify, and cite—without getting prompt-injected.”
+</p>
+  </article>
+</div>
+
+  </div>
+</div>
 
       <section class="page__share">
   <h4 class="page__share-title">Share on</h4>

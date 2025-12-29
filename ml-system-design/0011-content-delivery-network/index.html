@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Content Delivery Networks (CDN)">
     <meta itemprop="description" content="Design a global CDN for ML systems: Edge caching reduces latency from 500ms to 50ms. Critical for real-time predictions worldwide.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -267,9 +267,10 @@
 
 <p>Imagine you’re a user in Tokyo trying to access a website hosted in Virginia, USA:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>User (Tokyo) ──────── 10,000 km ──────── Server (Virginia)
-                  ~150ms round-trip time
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+User (Tokyo) ──────── 10,000 km ──────── Server (Virginia)
+ ~150ms round-trip time
+</code></p>
 
 <p><strong>The physics problem:</strong></p>
 <ul>
@@ -282,9 +283,10 @@
 
 <p><strong>What if we could serve from Tokyo instead?</strong></p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>User (Tokyo) ── 10 km ── Edge Server (Tokyo)
-                ~1-2ms!
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+User (Tokyo) ── 10 km ── Edge Server (Tokyo)
+ ~1-2ms!
+</code></p>
 
 <p>That’s a <strong>75-100x improvement</strong> just from being geographically closer!</p>
 
@@ -362,40 +364,41 @@ Serve from edge → Less traffic to origin → Lower costs</p>
 
 <h2 id="high-level-architecture">High-Level Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────────────────────────┐
-│                       USER REQUESTS                          │
-│   🌍 Asia    🌍 Europe    🌍 Americas    🌍 Africa          │
+<p><code class="language-plaintext highlighter-rouge">
+┌─────────────────────────────────────────────────────────────┐
+│ USER REQUESTS │
+│ 🌍 Asia 🌍 Europe 🌍 Americas 🌍 Africa │
 └───────┬────────────┬────────────┬──────────────┬────────────┘
-        │            │            │              │
-        ↓            ↓            ↓              ↓
+ │ │ │ │
+ ↓ ↓ ↓ ↓
 ┌────────────────────────────────────────────────────────────┐
-│                   DNS / GLOBAL LOAD BALANCER               │
-│  • GeoDNS routing                                          │
-│  • Health checks                                           │
-│  • Latency-based routing                                   │
+│ DNS / GLOBAL LOAD BALANCER │
+│ • GeoDNS routing │
+│ • Health checks │
+│ • Latency-based routing │
 └────────┬────────────┬────────────┬──────────────┬──────────┘
-         │            │            │              │
-    ┌────▼────┐  ┌───▼─────┐ ┌───▼─────┐   ┌───▼─────┐
-    │ Edge    │  │ Edge    │ │ Edge    │   │ Edge    │
-    │ Tokyo   │  │ London  │ │ N.Virginia│  │ Mumbai  │
-    │         │  │         │ │         │   │         │
-    │ L1 Cache│  │ L1 Cache│ │ L1 Cache│   │ L1 Cache│
-    │ (Redis) │  │ (Redis) │ │ (Redis) │   │ (Redis) │
-    │         │  │         │ │         │   │         │
-    │ ML Model│  │ ML Model│ │ ML Model│   │ ML Model│
-    └────┬────┘  └────┬────┘ └────┬────┘   └────┬────┘
-         │            │            │              │
-         └────────────┴────────────┴──────────────┘
-                      │
-              ┌───────▼────────┐
-              │ ORIGIN SERVERS │
-              │                │
-              │ • Master models│
-              │ • Databases    │
-              │ • Feature store│
-              │ • Object store │
-              └────────────────┘
-</code></pre></div></div>
+ │ │ │ │
+ ┌────▼────┐ ┌───▼─────┐ ┌───▼─────┐ ┌───▼─────┐
+ │ Edge │ │ Edge │ │ Edge │ │ Edge │
+ │ Tokyo │ │ London │ │ N.Virginia│ │ Mumbai │
+ │ │ │ │ │ │ │ │
+ │ L1 Cache│ │ L1 Cache│ │ L1 Cache│ │ L1 Cache│
+ │ (Redis) │ │ (Redis) │ │ (Redis) │ │ (Redis) │
+ │ │ │ │ │ │ │ │
+ │ ML Model│ │ ML Model│ │ ML Model│ │ ML Model│
+ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘
+ │ │ │ │
+ └────────────┴────────────┴──────────────┘
+ │
+ ┌───────▼────────┐
+ │ ORIGIN SERVERS │
+ │ │
+ │ • Master models│
+ │ • Databases │
+ │ • Feature store│
+ │ • Object store │
+ └────────────────┘
+</code></p>
 
 <hr />
 
@@ -425,12 +428,13 @@ Serve from edge → Less traffic to origin → Lower costs</p>
 
 <p>Edge servers use multiple cache layers:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Request → L1 Cache (Redis, in-memory)  ← Fastest, smallest
-          ↓ Miss
-          L2 Cache (Disk, local SSD)    ← Fast, medium
-          ↓ Miss
-          Origin Server (Database)      ← Slow, largest
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+Request → L1 Cache (Redis, in-memory) ← Fastest, smallest
+ ↓ Miss
+ L2 Cache (Disk, local SSD) ← Fast, medium
+ ↓ Miss
+ Origin Server (Database) ← Slow, largest
+</code></p>
 
 <p><strong>Why multiple levels?</strong></p>
 
@@ -477,598 +481,615 @@ Serve from edge → Less traffic to origin → Lower costs</p>
   </tbody>
 </table>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">EdgeServer</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    CDN edge server
-    
-    Components:
-    - L1 cache (Redis): Hot content
-    - L2 cache (local disk): Warm content
-    - ML model: For edge inference
-    - Origin client: Fetch misses from origin
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="n">origin_url</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">region</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">origin_url</span> <span class="o">=</span> <span class="n">origin_url</span>
-        
-        <span class="c1"># Multi-level cache
-</span>        <span class="kn">import</span> <span class="n">redis</span>
-        <span class="kn">import</span> <span class="n">pickle</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">l1_cache</span> <span class="o">=</span> <span class="n">redis</span><span class="p">.</span><span class="nc">Redis</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="sh">'</span><span class="s">localhost</span><span class="sh">'</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">)</span>
-        
-        <span class="c1"># Minimal DiskCache stub for illustration
-</span>        <span class="k">class</span> <span class="nc">DiskCache</span><span class="p">:</span>
-            <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">size_gb</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">store</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">store</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">store</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-            <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">store</span><span class="p">.</span><span class="nf">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-            <span class="k">def</span> <span class="nf">delete_pattern</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">pattern</span><span class="p">):</span>
-                <span class="c1"># naive pattern matcher
-</span>                <span class="kn">import</span> <span class="n">fnmatch</span>
-                <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">store</span><span class="p">.</span><span class="nf">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">fnmatch</span><span class="p">.</span><span class="nf">fnmatch</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">pattern</span><span class="p">)]</span>
-                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
-                    <span class="n">self</span><span class="p">.</span><span class="n">store</span><span class="p">.</span><span class="nf">pop</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">l2_cache</span> <span class="o">=</span> <span class="nc">DiskCache</span><span class="p">(</span><span class="n">size_gb</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-        
-        <span class="c1"># ML model for edge inference
-</span>        <span class="k">def</span> <span class="nf">load_model</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
-            <span class="k">return</span> <span class="nf">object</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">model</span> <span class="o">=</span> <span class="nf">load_model</span><span class="p">(</span><span class="sh">'</span><span class="s">model.onnx</span><span class="sh">'</span><span class="p">)</span>
-        
-        <span class="c1"># Metrics
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="nc">EdgeMetrics</span><span class="p">()</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">handle_request</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Handle incoming request
-        
-        Flow:
-        1. Check L1 cache (Redis)
-        2. Check L2 cache (disk)
-        3. Fetch from origin
-        4. Update caches
-        </span><span class="sh">"""</span>
-        <span class="kn">import</span> <span class="n">time</span><span class="p">,</span> <span class="n">json</span><span class="p">,</span> <span class="n">pickle</span>
-        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-        
-        <span class="c1"># Generate cache key
-</span>        <span class="n">cache_key</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_generate_cache_key</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-        
-        <span class="c1"># Try L1 cache
-</span>        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">self</span><span class="p">.</span><span class="nf">_check_l1_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">response</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="nf">record_hit</span><span class="p">(</span><span class="sh">'</span><span class="s">l1</span><span class="sh">'</span><span class="p">,</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">response</span>
-        
-        <span class="c1"># Try L2 cache
-</span>        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">self</span><span class="p">.</span><span class="nf">_check_l2_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">response</span><span class="p">:</span>
-            <span class="c1"># Promote to L1
-</span>            <span class="k">await</span> <span class="n">self</span><span class="p">.</span><span class="nf">_store_l1_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="nf">record_hit</span><span class="p">(</span><span class="sh">'</span><span class="s">l2</span><span class="sh">'</span><span class="p">,</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">response</span>
-        
-        <span class="c1"># Cache miss: fetch from origin
-</span>        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">self</span><span class="p">.</span><span class="nf">_fetch_from_origin</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-        
-        <span class="c1"># Update caches
-</span>        <span class="k">await</span> <span class="n">self</span><span class="p">.</span><span class="nf">_store_l1_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
-        <span class="k">await</span> <span class="n">self</span><span class="p">.</span><span class="nf">_store_l2_cache</span><span class="p">(</span><span class="n">cache_key</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="nf">record_miss</span><span class="p">(</span><span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">response</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_check_l1_cache</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Check L1 (Redis) cache</span><span class="sh">"""</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">l1_cache</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">pickle</span><span class="p">.</span><span class="nf">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">L1 cache error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="bp">None</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_store_l1_cache</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">ttl</span><span class="o">=</span><span class="mi">300</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Store in L1 cache with TTL</span><span class="sh">"""</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">l1_cache</span><span class="p">.</span><span class="nf">setex</span><span class="p">(</span>
-                <span class="n">key</span><span class="p">,</span>
-                <span class="n">ttl</span><span class="p">,</span>
-                <span class="n">pickle</span><span class="p">.</span><span class="nf">dumps</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">L1 cache store error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_check_l2_cache</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Check L2 (disk) cache</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">l2_cache</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_store_l2_cache</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Store in L2 cache</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">l2_cache</span><span class="p">.</span><span class="nf">set</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">_fetch_from_origin</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Fetch from origin server</span><span class="sh">"""</span>
-        <span class="kn">import</span> <span class="n">aiohttp</span>
-        
-        <span class="k">async</span> <span class="k">with</span> <span class="n">aiohttp</span><span class="p">.</span><span class="nc">ClientSession</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
-            <span class="k">async</span> <span class="k">with</span> <span class="n">session</span><span class="p">.</span><span class="nf">post</span><span class="p">(</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">origin_url</span><span class="si">}{</span><span class="n">request</span><span class="p">.</span><span class="n">path</span><span class="si">}</span><span class="sh">"</span><span class="p">,</span>
-                <span class="n">json</span><span class="o">=</span><span class="n">request</span><span class="p">.</span><span class="n">data</span>
-            <span class="p">)</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
-                <span class="k">return</span> <span class="k">await</span> <span class="n">response</span><span class="p">.</span><span class="nf">json</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">_generate_cache_key</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Generate cache key from request</span><span class="sh">"""</span>
-        <span class="kn">import</span> <span class="n">hashlib</span>
-        
-        <span class="c1"># Include path and normalized data
-</span>        <span class="n">key_data</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">request</span><span class="p">.</span><span class="n">path</span><span class="si">}</span><span class="s">:</span><span class="si">{</span><span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">(</span><span class="n">request</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span><span class="si">}</span><span class="sh">"</span>
-        <span class="k">return</span> <span class="n">hashlib</span><span class="p">.</span><span class="nf">md5</span><span class="p">(</span><span class="n">key_data</span><span class="p">.</span><span class="nf">encode</span><span class="p">()).</span><span class="nf">hexdigest</span><span class="p">()</span>
+<p>``python
+class EdgeServer:
+ “””
+ CDN edge server</p>
 
-<span class="k">class</span> <span class="nc">EdgeMetrics</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Track edge server metrics</span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">l1_hits</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">l2_hits</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">misses</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">l1_latencies</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">l2_latencies</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">miss_latencies</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">def</span> <span class="nf">record_hit</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">latency</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="sh">'</span><span class="s">l1</span><span class="sh">'</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">l1_hits</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">l1_latencies</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">latency</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="sh">'</span><span class="s">l2</span><span class="sh">'</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">l2_hits</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">l2_latencies</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">latency</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">record_miss</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">latency</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">misses</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">miss_latencies</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">latency</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">get_stats</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">total</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">l1_hits</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">l2_hits</span> <span class="o">+</span> <span class="n">self</span><span class="p">.</span><span class="n">misses</span>
-        
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">l1_hit_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">l1_hits</span> <span class="o">/</span> <span class="n">total</span> <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">l2_hit_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">l2_hits</span> <span class="o">/</span> <span class="n">total</span> <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">miss_rate</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">misses</span> <span class="o">/</span> <span class="n">total</span> <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">avg_l1_latency_ms</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">l1_latencies</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span> <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">l1_latencies</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">avg_l2_latency_ms</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">l2_latencies</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span> <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">l2_latencies</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">avg_miss_latency_ms</span><span class="sh">'</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">miss_latencies</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span> <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">miss_latencies</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="p">}</span>
+<p>Components:</p>
+<ul>
+  <li>L1 cache (Redis): Hot content</li>
+  <li>L2 cache (local disk): Warm content</li>
+  <li>ML model: For edge inference</li>
+  <li>Origin client: Fetch misses from origin
+ “””</li>
+</ul>
 
-<span class="c1"># Example usage
-</span><span class="n">edge</span> <span class="o">=</span> <span class="nc">EdgeServer</span><span class="p">(</span><span class="n">region</span><span class="o">=</span><span class="sh">'</span><span class="s">us-east-1</span><span class="sh">'</span><span class="p">,</span> <span class="n">origin_url</span><span class="o">=</span><span class="sh">'</span><span class="s">https://api.example.com</span><span class="sh">'</span><span class="p">)</span>
+<p>def <strong>init</strong>(self, region, origin_url):
+ self.region = region
+ self.origin_url = origin_url</p>
 
-<span class="c1"># Simulate requests
-</span><span class="k">async</span> <span class="k">def</span> <span class="nf">simulate_requests</span><span class="p">():</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
-        <span class="n">request</span> <span class="o">=</span> <span class="nc">Request</span><span class="p">(</span>
-            <span class="n">path</span><span class="o">=</span><span class="sh">'</span><span class="s">/predict</span><span class="sh">'</span><span class="p">,</span>
-            <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="sh">'</span><span class="s">features</span><span class="sh">'</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]}</span>
-        <span class="p">)</span>
-        
-        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">edge</span><span class="p">.</span><span class="nf">handle_request</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Request </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="c1"># Print metrics
-</span>    <span class="n">stats</span> <span class="o">=</span> <span class="n">edge</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="nf">get_stats</span><span class="p">()</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="se">\n</span><span class="s">Edge Server Metrics:</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="sh">'</span><span class="s">rate</span><span class="sh">'</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p># Multi-level cache
+ import redis
+ import pickle
+ self.l1_cache = redis.Redis(host=’localhost’, port=6379)</p>
 
-<span class="c1"># Run
-</span><span class="kn">import</span> <span class="n">asyncio</span>
-<span class="n">asyncio</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span><span class="nf">simulate_requests</span><span class="p">())</span>
-</code></pre></div></div>
+<p># Minimal DiskCache stub for illustration
+ class DiskCache:
+ def <strong>init</strong>(self, size_gb=100):
+ self.store = {}
+ def get(self, key):
+ return self.store.get(key)
+ def set(self, key, value):
+ self.store[key] = value
+ def delete(self, key):
+ self.store.pop(key, None)
+ def delete_pattern(self, pattern):
+ # naive pattern matcher
+ import fnmatch
+ keys = [k for k in self.store.keys() if fnmatch.fnmatch(k, pattern)]
+ for k in keys:
+ self.store.pop(k, None)
+ self.l2_cache = DiskCache(size_gb=100)</p>
+
+<p># ML model for edge inference
+ def load_model(path):
+ return object()
+ self.model = load_model(‘model.onnx’)</p>
+
+<p># Metrics
+ self.metrics = EdgeMetrics()</p>
+
+<p>async def handle_request(self, request):
+ “””
+ Handle incoming request</p>
+
+<p>Flow:</p>
+<ol>
+  <li>Check L1 cache (Redis)</li>
+  <li>Check L2 cache (disk)</li>
+  <li>Fetch from origin</li>
+  <li>Update caches
+ “””
+ import time, json, pickle
+ start_time = time.time()</li>
+</ol>
+
+<p># Generate cache key
+ cache_key = self._generate_cache_key(request)</p>
+
+<p># Try L1 cache
+ response = await self._check_l1_cache(cache_key)
+ if response:
+ self.metrics.record_hit(‘l1’, time.time() - start_time)
+ return response</p>
+
+<p># Try L2 cache
+ response = await self._check_l2_cache(cache_key)
+ if response:
+ # Promote to L1
+ await self._store_l1_cache(cache_key, response)
+ self.metrics.record_hit(‘l2’, time.time() - start_time)
+ return response</p>
+
+<p># Cache miss: fetch from origin
+ response = await self._fetch_from_origin(request)</p>
+
+<p># Update caches
+ await self._store_l1_cache(cache_key, response)
+ await self._store_l2_cache(cache_key, response)</p>
+
+<p>self.metrics.record_miss(time.time() - start_time)</p>
+
+<p>return response</p>
+
+<p>async def _check_l1_cache(self, key):
+ “"”Check L1 (Redis) cache”””
+ try:
+ data = self.l1_cache.get(key)
+ if data:
+ return pickle.loads(data)
+ except Exception as e:
+ print(f”L1 cache error: {e}”)</p>
+
+<p>return None</p>
+
+<p>async def _store_l1_cache(self, key, value, ttl=300):
+ “"”Store in L1 cache with TTL”””
+ try:
+ self.l1_cache.setex(
+ key,
+ ttl,
+ pickle.dumps(value)
+ )
+ except Exception as e:
+ print(f”L1 cache store error: {e}”)</p>
+
+<p>async def _check_l2_cache(self, key):
+ “"”Check L2 (disk) cache”””
+ return self.l2_cache.get(key)</p>
+
+<p>async def _store_l2_cache(self, key, value):
+ “"”Store in L2 cache”””
+ self.l2_cache.set(key, value)</p>
+
+<p>async def _fetch_from_origin(self, request):
+ “"”Fetch from origin server”””
+ import aiohttp</p>
+
+<p>async with aiohttp.ClientSession() as session:
+ async with session.post(
+ f”{self.origin_url}{request.path}”,
+ json=request.data
+ ) as response:
+ return await response.json()</p>
+
+<p>def _generate_cache_key(self, request):
+ “"”Generate cache key from request”””
+ import hashlib</p>
+
+<p># Include path and normalized data
+ key_data = f”{request.path}:{json.dumps(request.data, sort_keys=True)}”
+ return hashlib.md5(key_data.encode()).hexdigest()</p>
+
+<p>class EdgeMetrics:
+ “"”Track edge server metrics”””</p>
+
+<p>def <strong>init</strong>(self):
+ self.l1_hits = 0
+ self.l2_hits = 0
+ self.misses = 0</p>
+
+<p>self.l1_latencies = []
+ self.l2_latencies = []
+ self.miss_latencies = []</p>
+
+<p>def record_hit(self, level, latency):
+ if level == ‘l1’:
+ self.l1_hits += 1
+ self.l1_latencies.append(latency)
+ elif level == ‘l2’:
+ self.l2_hits += 1
+ self.l2_latencies.append(latency)</p>
+
+<p>def record_miss(self, latency):
+ self.misses += 1
+ self.miss_latencies.append(latency)</p>
+
+<p>def get_stats(self):
+ total = self.l1_hits + self.l2_hits + self.misses</p>
+
+<p>return {
+ ‘l1_hit_rate’: self.l1_hits / total if total &gt; 0 else 0,
+ ‘l2_hit_rate’: self.l2_hits / total if total &gt; 0 else 0,
+ ‘miss_rate’: self.misses / total if total &gt; 0 else 0,
+ ‘avg_l1_latency_ms’: np.mean(self.l1_latencies) * 1000 if self.l1_latencies else 0,
+ ‘avg_l2_latency_ms’: np.mean(self.l2_latencies) * 1000 if self.l2_latencies else 0,
+ ‘avg_miss_latency_ms’: np.mean(self.miss_latencies) * 1000 if self.miss_latencies else 0,
+ }</p>
+
+<h1 id="example-usage">Example usage</h1>
+<p>edge = EdgeServer(region=’us-east-1’, origin_url=’https://api.example.com’)</p>
+
+<h1 id="simulate-requests">Simulate requests</h1>
+<p>async def simulate_requests():
+ for i in range(100):
+ request = Request(
+ path=’/predict’,
+ data={‘features’: [1, 2, 3, 4, 5]}
+ )</p>
+
+<p>response = await edge.handle_request(request)
+ print(f”Request {i}: {response}”)</p>
+
+<p># Print metrics
+ stats = edge.metrics.get_stats()
+ print(“\nEdge Server Metrics:”)
+ for key, value in stats.items():
+ if ‘rate’ in key:
+ print(f” {key}: {value:.2%}”)
+ else:
+ print(f” {key}: {value:.2f}”)</p>
+
+<h1 id="run">Run</h1>
+<p>import asyncio
+asyncio.run(simulate_requests())
+``</p>
 
 <h3 id="2-global-load-balancer--geodns">2. Global Load Balancer / GeoDNS</h3>
 
 <p><strong>Purpose:</strong> Route requests to optimal edge server</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">GlobalLoadBalancer</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Route requests to best edge server
-    
-    Routing strategies:
-    1. Geographic proximity
-    2. Server load
-    3. Health status
-    4. Network latency
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">edge_servers</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_discover_edge_servers</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">health_checker</span> <span class="o">=</span> <span class="nc">HealthChecker</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">edge_servers</span><span class="p">)</span>
-        
-        <span class="c1"># Start health checking
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">health_checker</span><span class="p">.</span><span class="nf">start</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">route_request</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">client_ip</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Route request to best edge server
-        
-        Args:
-            client_ip: Client IP address
-            request: Request object
-        
-        Returns:
-            Best edge server
-        </span><span class="sh">"""</span>
-        <span class="c1"># Get client location
-</span>        <span class="n">client_location</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_geolocate_ip</span><span class="p">(</span><span class="n">client_ip</span><span class="p">)</span>
-        
-        <span class="c1"># Get healthy edge servers
-</span>        <span class="n">healthy_servers</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">health_checker</span><span class="p">.</span><span class="nf">get_healthy_servers</span><span class="p">()</span>
-        
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">healthy_servers</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="nc">Exception</span><span class="p">(</span><span class="sh">"</span><span class="s">No healthy edge servers available</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="c1"># Score each server
-</span>        <span class="n">scores</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">server</span> <span class="ow">in</span> <span class="n">healthy_servers</span><span class="p">:</span>
-            <span class="n">score</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_score_server</span><span class="p">(</span>
-                <span class="n">server</span><span class="p">,</span>
-                <span class="n">client_location</span><span class="p">,</span>
-                <span class="n">request</span>
-            <span class="p">)</span>
-            <span class="n">scores</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">server</span><span class="p">,</span> <span class="n">score</span><span class="p">))</span>
-        
-        <span class="c1"># Sort by score (higher is better)
-</span>        <span class="n">scores</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        
-        <span class="c1"># Return best server
-</span>        <span class="k">return</span> <span class="n">scores</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-    
-    <span class="k">def</span> <span class="nf">_score_server</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">client_location</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Score server for given request
-        
-        Factors:
-        - Geographic distance (weight: 0.5)
-        - Server load (weight: 0.3)
-        - Cache hit rate (weight: 0.2)
-        </span><span class="sh">"""</span>
-        <span class="c1"># Geographic proximity
-</span>        <span class="n">distance</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_calculate_distance</span><span class="p">(</span>
-            <span class="n">client_location</span><span class="p">,</span>
-            <span class="n">server</span><span class="p">.</span><span class="n">location</span>
-        <span class="p">)</span>
-        <span class="n">distance_score</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">distance</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>  <span class="c1"># Normalize
-</span>        
-        <span class="c1"># Server load
-</span>        <span class="n">load</span> <span class="o">=</span> <span class="n">server</span><span class="p">.</span><span class="nf">get_current_load</span><span class="p">()</span>
-        <span class="n">load_score</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="nf">min</span><span class="p">(</span><span class="n">load</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-        
-        <span class="c1"># Cache hit rate
-</span>        <span class="n">hit_rate</span> <span class="o">=</span> <span class="n">server</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="nf">get_stats</span><span class="p">()[</span><span class="sh">'</span><span class="s">l1_hit_rate</span><span class="sh">'</span><span class="p">]</span>
-        
-        <span class="c1"># Weighted score
-</span>        <span class="n">score</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="mf">0.5</span> <span class="o">*</span> <span class="n">distance_score</span> <span class="o">+</span>
-            <span class="mf">0.3</span> <span class="o">*</span> <span class="n">load_score</span> <span class="o">+</span>
-            <span class="mf">0.2</span> <span class="o">*</span> <span class="n">hit_rate</span>
-        <span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">score</span>
-    
-    <span class="k">def</span> <span class="nf">_geolocate_ip</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">ip</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Get geographic location from IP
-        
-        Uses MaxMind GeoIP or similar
-        </span><span class="sh">"""</span>
-        <span class="kn">import</span> <span class="n">geoip2.database</span>
-        
-        <span class="n">reader</span> <span class="o">=</span> <span class="n">geoip2</span><span class="p">.</span><span class="n">database</span><span class="p">.</span><span class="nc">Reader</span><span class="p">(</span><span class="sh">'</span><span class="s">GeoLite2-City.mmdb</span><span class="sh">'</span><span class="p">)</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="n">reader</span><span class="p">.</span><span class="nf">city</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">lat</span><span class="sh">'</span><span class="p">:</span> <span class="n">response</span><span class="p">.</span><span class="n">location</span><span class="p">.</span><span class="n">latitude</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">lon</span><span class="sh">'</span><span class="p">:</span> <span class="n">response</span><span class="p">.</span><span class="n">location</span><span class="p">.</span><span class="n">longitude</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">city</span><span class="sh">'</span><span class="p">:</span> <span class="n">response</span><span class="p">.</span><span class="n">city</span><span class="p">.</span><span class="n">name</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">country</span><span class="sh">'</span><span class="p">:</span> <span class="n">response</span><span class="p">.</span><span class="n">country</span><span class="p">.</span><span class="n">name</span>
-        <span class="p">}</span>
-    
-    <span class="k">def</span> <span class="nf">_calculate_distance</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">loc1</span><span class="p">,</span> <span class="n">loc2</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Calculate distance between two locations (km)
-        
-        Uses Haversine formula
-        </span><span class="sh">"""</span>
-        <span class="kn">from</span> <span class="n">math</span> <span class="kn">import</span> <span class="n">radians</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">atan2</span>
-        
-        <span class="n">R</span> <span class="o">=</span> <span class="mi">6371</span>  <span class="c1"># Earth radius in km
-</span>        
-        <span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span> <span class="o">=</span> <span class="nf">radians</span><span class="p">(</span><span class="n">loc1</span><span class="p">[</span><span class="sh">'</span><span class="s">lat</span><span class="sh">'</span><span class="p">]),</span> <span class="nf">radians</span><span class="p">(</span><span class="n">loc1</span><span class="p">[</span><span class="sh">'</span><span class="s">lon</span><span class="sh">'</span><span class="p">])</span>
-        <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span> <span class="o">=</span> <span class="nf">radians</span><span class="p">(</span><span class="n">loc2</span><span class="p">[</span><span class="sh">'</span><span class="s">lat</span><span class="sh">'</span><span class="p">]),</span> <span class="nf">radians</span><span class="p">(</span><span class="n">loc2</span><span class="p">[</span><span class="sh">'</span><span class="s">lon</span><span class="sh">'</span><span class="p">])</span>
-        
-        <span class="n">dlat</span> <span class="o">=</span> <span class="n">lat2</span> <span class="o">-</span> <span class="n">lat1</span>
-        <span class="n">dlon</span> <span class="o">=</span> <span class="n">lon2</span> <span class="o">-</span> <span class="n">lon1</span>
-        
-        <span class="n">a</span> <span class="o">=</span> <span class="nf">sin</span><span class="p">(</span><span class="n">dlat</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="nf">cos</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="nf">cos</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">*</span> <span class="nf">sin</span><span class="p">(</span><span class="n">dlon</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="nf">atan2</span><span class="p">(</span><span class="nf">sqrt</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="nf">sqrt</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">a</span><span class="p">))</span>
-        
-        <span class="n">distance</span> <span class="o">=</span> <span class="n">R</span> <span class="o">*</span> <span class="n">c</span>
-        
-        <span class="k">return</span> <span class="n">distance</span>
-    
-    <span class="k">def</span> <span class="nf">_discover_edge_servers</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Discover available edge servers</span><span class="sh">"""</span>
-        <span class="c1"># In production, this would query service registry
-</span>        <span class="k">return</span> <span class="p">[</span>
-            <span class="nc">EdgeServerInfo</span><span class="p">(</span><span class="sh">'</span><span class="s">us-east-1</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">https://edge-us-east-1.example.com</span><span class="sh">'</span><span class="p">,</span> <span class="p">{</span><span class="sh">'</span><span class="s">lat</span><span class="sh">'</span><span class="p">:</span> <span class="mf">39.0</span><span class="p">,</span> <span class="sh">'</span><span class="s">lon</span><span class="sh">'</span><span class="p">:</span> <span class="o">-</span><span class="mf">77.5</span><span class="p">}),</span>
-            <span class="nc">EdgeServerInfo</span><span class="p">(</span><span class="sh">'</span><span class="s">eu-west-1</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">https://edge-eu-west-1.example.com</span><span class="sh">'</span><span class="p">,</span> <span class="p">{</span><span class="sh">'</span><span class="s">lat</span><span class="sh">'</span><span class="p">:</span> <span class="mf">53.3</span><span class="p">,</span> <span class="sh">'</span><span class="s">lon</span><span class="sh">'</span><span class="p">:</span> <span class="o">-</span><span class="mf">6.3</span><span class="p">}),</span>
-            <span class="nc">EdgeServerInfo</span><span class="p">(</span><span class="sh">'</span><span class="s">ap-northeast-1</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">https://edge-ap-northeast-1.example.com</span><span class="sh">'</span><span class="p">,</span> <span class="p">{</span><span class="sh">'</span><span class="s">lat</span><span class="sh">'</span><span class="p">:</span> <span class="mf">35.7</span><span class="p">,</span> <span class="sh">'</span><span class="s">lon</span><span class="sh">'</span><span class="p">:</span> <span class="mf">139.7</span><span class="p">}),</span>
-        <span class="p">]</span>
+<p>``python
+class GlobalLoadBalancer:
+ “””
+ Route requests to best edge server</p>
 
-<span class="k">class</span> <span class="nc">HealthChecker</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Monitor health of edge servers
-    
-    Checks:
-    - HTTP health endpoint
-    - Response time
-    - Error rate
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">servers</span><span class="p">,</span> <span class="n">check_interval</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">servers</span> <span class="o">=</span> <span class="n">servers</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">check_interval</span> <span class="o">=</span> <span class="n">check_interval</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">health_status</span> <span class="o">=</span> <span class="p">{</span><span class="n">server</span><span class="p">.</span><span class="n">region</span><span class="p">:</span> <span class="bp">True</span> <span class="k">for</span> <span class="n">server</span> <span class="ow">in</span> <span class="n">servers</span><span class="p">}</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">last_check</span> <span class="o">=</span> <span class="p">{</span><span class="n">server</span><span class="p">.</span><span class="n">region</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">server</span> <span class="ow">in</span> <span class="n">servers</span><span class="p">}</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">running</span> <span class="o">=</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Start health checking in background</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">running</span> <span class="o">=</span> <span class="bp">True</span>
-        
-        <span class="kn">import</span> <span class="n">threading</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">thread</span> <span class="o">=</span> <span class="n">threading</span><span class="p">.</span><span class="nc">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">_health_check_loop</span><span class="p">,</span> <span class="n">daemon</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="nf">start</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Stop health checking</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">running</span> <span class="o">=</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">_health_check_loop</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Health check loop</span><span class="sh">"""</span>
-        <span class="k">while</span> <span class="n">self</span><span class="p">.</span><span class="n">running</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">server</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">servers</span><span class="p">:</span>
-                <span class="n">healthy</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_check_server_health</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">health_status</span><span class="p">[</span><span class="n">server</span><span class="p">.</span><span class="n">region</span><span class="p">]</span> <span class="o">=</span> <span class="n">healthy</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">last_check</span><span class="p">[</span><span class="n">server</span><span class="p">.</span><span class="n">region</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-            
-            <span class="kn">import</span> <span class="n">time</span>
-            <span class="n">time</span><span class="p">.</span><span class="nf">sleep</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">check_interval</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_check_server_health</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">server</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Check if server is healthy</span><span class="sh">"""</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">import</span> <span class="n">requests</span>
-            
-            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">server</span><span class="p">.</span><span class="n">url</span><span class="si">}</span><span class="s">/health</span><span class="sh">"</span><span class="p">,</span>
-                <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span>
-            <span class="p">)</span>
-            
-            <span class="k">if</span> <span class="n">response</span><span class="p">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
-                <span class="c1"># Check response time
-</span>                <span class="k">if</span> <span class="n">response</span><span class="p">.</span><span class="n">elapsed</span><span class="p">.</span><span class="nf">total_seconds</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="bp">True</span>
-            
-            <span class="k">return</span> <span class="bp">False</span>
-        
-        <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Health check failed for </span><span class="si">{</span><span class="n">server</span><span class="p">.</span><span class="n">region</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">get_healthy_servers</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Get list of healthy servers</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="p">[</span>
-            <span class="n">server</span> <span class="k">for</span> <span class="n">server</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">servers</span>
-            <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">health_status</span><span class="p">[</span><span class="n">server</span><span class="p">.</span><span class="n">region</span><span class="p">]</span>
-        <span class="p">]</span>
+<p>Routing strategies:</p>
+<ol>
+  <li>Geographic proximity</li>
+  <li>Server load</li>
+  <li>Health status</li>
+  <li>Network latency
+ “””</li>
+</ol>
 
-<span class="k">class</span> <span class="nc">EdgeServerInfo</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">Edge server information</span><span class="sh">"""</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">region</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">url</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">location</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="nc">EdgeMetrics</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">get_current_load</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Get current server load (0-1)</span><span class="sh">"""</span>
-        <span class="c1"># In production, query server metrics
-</span>        <span class="k">return</span> <span class="mf">0.5</span>  <span class="c1"># Placeholder
-</span>
-<span class="c1"># Example usage
-</span><span class="n">glb</span> <span class="o">=</span> <span class="nc">GlobalLoadBalancer</span><span class="p">()</span>
+<p>def <strong>init</strong>(self):
+ self.edge_servers = self._discover_edge_servers()
+ self.health_checker = HealthChecker(self.edge_servers)</p>
 
-<span class="c1"># Route request
-</span><span class="n">client_ip</span> <span class="o">=</span> <span class="sh">'</span><span class="s">8.8.8.8</span><span class="sh">'</span>  <span class="c1"># Google DNS (US)
-</span><span class="n">request</span> <span class="o">=</span> <span class="nc">Request</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="sh">'</span><span class="s">/predict</span><span class="sh">'</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">{})</span>
+<p># Start health checking
+ self.health_checker.start()</p>
 
-<span class="n">best_server</span> <span class="o">=</span> <span class="n">glb</span><span class="p">.</span><span class="nf">route_request</span><span class="p">(</span><span class="n">client_ip</span><span class="p">,</span> <span class="n">request</span><span class="p">)</span>
-<span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Routing to: </span><span class="si">{</span><span class="n">best_server</span><span class="p">.</span><span class="n">region</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def route_request(self, client_ip, request):
+ “””
+ Route request to best edge server</p>
+
+<p>Args:
+ client_ip: Client IP address
+ request: Request object</p>
+
+<p>Returns:
+ Best edge server
+ “””
+ # Get client location
+ client_location = self._geolocate_ip(client_ip)</p>
+
+<p># Get healthy edge servers
+ healthy_servers = self.health_checker.get_healthy_servers()</p>
+
+<p>if not healthy_servers:
+ raise Exception(“No healthy edge servers available”)</p>
+
+<p># Score each server
+ scores = []</p>
+
+<p>for server in healthy_servers:
+ score = self._score_server(
+ server,
+ client_location,
+ request
+ )
+ scores.append((server, score))</p>
+
+<p># Sort by score (higher is better)
+ scores.sort(key=lambda x: x[1], reverse=True)</p>
+
+<p># Return best server
+ return scores[0][0]</p>
+
+<p>def _score_server(self, server, client_location, request):
+ “””
+ Score server for given request</p>
+
+<p>Factors:</p>
+<ul>
+  <li>Geographic distance (weight: 0.5)</li>
+  <li>Server load (weight: 0.3)</li>
+  <li>Cache hit rate (weight: 0.2)
+ “””
+ # Geographic proximity
+ distance = self._calculate_distance(
+ client_location,
+ server.location
+ )
+ distance_score = 1.0 / (1.0 + distance / 1000) # Normalize</li>
+</ul>
+
+<p># Server load
+ load = server.get_current_load()
+ load_score = 1.0 - min(load, 1.0)</p>
+
+<p># Cache hit rate
+ hit_rate = server.metrics.get_stats()[‘l1_hit_rate’]</p>
+
+<p># Weighted score
+ score = (
+ 0.5 * distance_score +
+ 0.3 * load_score +
+ 0.2 * hit_rate
+ )</p>
+
+<p>return score</p>
+
+<p>def _geolocate_ip(self, ip):
+ “””
+ Get geographic location from IP</p>
+
+<p>Uses MaxMind GeoIP or similar
+ “””
+ import geoip2.database</p>
+
+<p>reader = geoip2.database.Reader(‘GeoLite2-City.mmdb’)
+ response = reader.city(ip)</p>
+
+<p>return {
+ ‘lat’: response.location.latitude,
+ ‘lon’: response.location.longitude,
+ ‘city’: response.city.name,
+ ‘country’: response.country.name
+ }</p>
+
+<p>def _calculate_distance(self, loc1, loc2):
+ “””
+ Calculate distance between two locations (km)</p>
+
+<p>Uses Haversine formula
+ “””
+ from math import radians, sin, cos, sqrt, atan2</p>
+
+<p>R = 6371 # Earth radius in km</p>
+
+<p>lat1, lon1 = radians(loc1[‘lat’]), radians(loc1[‘lon’])
+ lat2, lon2 = radians(loc2[‘lat’]), radians(loc2[‘lon’])</p>
+
+<p>dlat = lat2 - lat1
+ dlon = lon2 - lon1</p>
+
+<p>a = sin(dlat/2)<strong>2 + cos(lat1) * cos(lat2) * sin(dlon/2)</strong>2
+ c = 2 * atan2(sqrt(a), sqrt(1-a))</p>
+
+<p>distance = R * c</p>
+
+<p>return distance</p>
+
+<p>def _discover_edge_servers(self):
+ “"”Discover available edge servers”””
+ # In production, this would query service registry
+ return [
+ EdgeServerInfo(‘us-east-1’, ‘https://edge-us-east-1.example.com’, {‘lat’: 39.0, ‘lon’: -77.5}),
+ EdgeServerInfo(‘eu-west-1’, ‘https://edge-eu-west-1.example.com’, {‘lat’: 53.3, ‘lon’: -6.3}),
+ EdgeServerInfo(‘ap-northeast-1’, ‘https://edge-ap-northeast-1.example.com’, {‘lat’: 35.7, ‘lon’: 139.7}),
+ ]</p>
+
+<p>class HealthChecker:
+ “””
+ Monitor health of edge servers</p>
+
+<p>Checks:</p>
+<ul>
+  <li>HTTP health endpoint</li>
+  <li>Response time</li>
+  <li>Error rate
+ “””</li>
+</ul>
+
+<p>def <strong>init</strong>(self, servers, check_interval=10):
+ self.servers = servers
+ self.check_interval = check_interval</p>
+
+<p>self.health_status = {server.region: True for server in servers}
+ self.last_check = {server.region: 0 for server in servers}</p>
+
+<p>self.running = False</p>
+
+<p>def start(self):
+ “"”Start health checking in background”””
+ self.running = True</p>
+
+<p>import threading
+ self.thread = threading.Thread(target=self._health_check_loop, daemon=True)
+ self.thread.start()</p>
+
+<p>def stop(self):
+ “"”Stop health checking”””
+ self.running = False</p>
+
+<p>def _health_check_loop(self):
+ “"”Health check loop”””
+ while self.running:
+ for server in self.servers:
+ healthy = self._check_server_health(server)
+ self.health_status[server.region] = healthy
+ self.last_check[server.region] = time.time()</p>
+
+<p>import time
+ time.sleep(self.check_interval)</p>
+
+<p>def _check_server_health(self, server):
+ “"”Check if server is healthy”””
+ try:
+ import requests</p>
+
+<p>response = requests.get(
+ f”{server.url}/health”,
+ timeout=5
+ )</p>
+
+<p>if response.status_code == 200:
+ # Check response time
+ if response.elapsed.total_seconds() &lt; 1.0:
+ return True</p>
+
+<p>return False</p>
+
+<p>except Exception as e:
+ print(f”Health check failed for {server.region}: {e}”)
+ return False</p>
+
+<p>def get_healthy_servers(self):
+ “"”Get list of healthy servers”””
+ return [
+ server for server in self.servers
+ if self.health_status[server.region]
+ ]</p>
+
+<p>class EdgeServerInfo:
+ “"”Edge server information”””
+ def <strong>init</strong>(self, region, url, location):
+ self.region = region
+ self.url = url
+ self.location = location
+ self.metrics = EdgeMetrics()</p>
+
+<p>def get_current_load(self):
+ “"”Get current server load (0-1)”””
+ # In production, query server metrics
+ return 0.5 # Placeholder</p>
+
+<h1 id="example-usage-1">Example usage</h1>
+<p>glb = GlobalLoadBalancer()</p>
+
+<h1 id="route-request">Route request</h1>
+<p>client_ip = ‘8.8.8.8’ # Google DNS (US)
+request = Request(path=’/predict’, data={})</p>
+
+<p>best_server = glb.route_request(client_ip, request)
+print(f”Routing to: {best_server.region}”)
+``</p>
 
 <h3 id="3-cache-invalidation-system">3. Cache Invalidation System</h3>
 
 <p><strong>Purpose:</strong> Propagate updates across edge servers</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">CacheInvalidationSystem</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Propagate cache invalidations to edge servers
-    
-    Methods:
-    1. Push-based: Immediate invalidation
-    2. Pull-based: Periodic refresh
-    3. TTL-based: Automatic expiration
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">edge_servers</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">edge_servers</span> <span class="o">=</span> <span class="n">edge_servers</span>
-        
-        <span class="c1"># Message queue for invalidations
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">invalidation_queue</span> <span class="o">=</span> <span class="n">redis</span><span class="p">.</span><span class="nc">Redis</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="sh">'</span><span class="s">localhost</span><span class="sh">'</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">)</span>
-        
-        <span class="c1"># Pub/sub for real-time propagation
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">pubsub</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">invalidation_queue</span><span class="p">.</span><span class="nf">pubsub</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">pubsub</span><span class="p">.</span><span class="nf">subscribe</span><span class="p">(</span><span class="sh">'</span><span class="s">cache:invalidate</span><span class="sh">'</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">invalidate</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Invalidate cache keys across all edge servers
-        
-        Args:
-            keys: List of keys to invalidate
-            pattern: If True, treat keys as patterns
-        </span><span class="sh">"""</span>
-        <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">keys</span><span class="sh">'</span><span class="p">:</span> <span class="n">keys</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">pattern</span><span class="sh">'</span><span class="p">:</span> <span class="n">pattern</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">timestamp</span><span class="sh">'</span><span class="p">:</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-        <span class="p">}</span>
-        
-        <span class="c1"># Publish to all edge servers
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">invalidation_queue</span><span class="p">.</span><span class="nf">publish</span><span class="p">(</span>
-            <span class="sh">'</span><span class="s">cache:invalidate</span><span class="sh">'</span><span class="p">,</span>
-            <span class="n">json</span><span class="p">.</span><span class="nf">dumps</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-        <span class="p">)</span>
-        
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Invalidated </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span><span class="si">}</span><span class="s"> keys across edge network</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">invalidate_prefix</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Invalidate all keys with given prefix
-        
-        Example: invalidate_prefix(</span><span class="sh">'</span><span class="s">user:123:*</span><span class="sh">'</span><span class="s">)
-        </span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="nf">invalidate</span><span class="p">([</span><span class="n">prefix</span><span class="p">],</span> <span class="n">pattern</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">invalidate_model_update</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model_id</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Invalidate caches after model update
-        
-        Invalidates:
-        - Model predictions
-        - Model metadata
-        - Related embeddings
-        </span><span class="sh">"""</span>
-        <span class="n">patterns</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="s">model:</span><span class="si">{</span><span class="n">model_id</span><span class="si">}</span><span class="s">:*</span><span class="sh">"</span><span class="p">,</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="s">prediction:</span><span class="si">{</span><span class="n">model_id</span><span class="si">}</span><span class="s">:*</span><span class="sh">"</span><span class="p">,</span>
-            <span class="sa">f</span><span class="sh">"</span><span class="s">embedding:</span><span class="si">{</span><span class="n">model_id</span><span class="si">}</span><span class="s">:*</span><span class="sh">"</span>
-        <span class="p">]</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="nf">invalidate</span><span class="p">(</span><span class="n">patterns</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Invalidated caches for model </span><span class="si">{</span><span class="n">model_id</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p>``python
+class CacheInvalidationSystem:
+ “””
+ Propagate cache invalidations to edge servers</p>
 
-<span class="k">class</span> <span class="nc">EdgeInvalidationListener</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Listen for invalidation messages on edge server
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">edge_server</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">edge_server</span> <span class="o">=</span> <span class="n">edge_server</span>
-        
-        <span class="c1"># Subscribe to invalidations
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">pubsub</span> <span class="o">=</span> <span class="n">redis</span><span class="p">.</span><span class="nc">Redis</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="sh">'</span><span class="s">localhost</span><span class="sh">'</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">).</span><span class="nf">pubsub</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">pubsub</span><span class="p">.</span><span class="nf">subscribe</span><span class="p">(</span><span class="sh">'</span><span class="s">cache:invalidate</span><span class="sh">'</span><span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">running</span> <span class="o">=</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Start listening for invalidations</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">running</span> <span class="o">=</span> <span class="bp">True</span>
-        
-        <span class="kn">import</span> <span class="n">threading</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">thread</span> <span class="o">=</span> <span class="n">threading</span><span class="p">.</span><span class="nc">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">_listen_loop</span><span class="p">,</span> <span class="n">daemon</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="nf">start</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Stop listening</span><span class="sh">"""</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">running</span> <span class="o">=</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">_listen_loop</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Listen for invalidation messages</span><span class="sh">"""</span>
-        <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">pubsub</span><span class="p">.</span><span class="nf">listen</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="sh">'</span><span class="s">type</span><span class="sh">'</span><span class="p">]</span> <span class="o">==</span> <span class="sh">'</span><span class="s">message</span><span class="sh">'</span><span class="p">:</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="p">.</span><span class="nf">loads</span><span class="p">(</span><span class="n">message</span><span class="p">[</span><span class="sh">'</span><span class="s">data</span><span class="sh">'</span><span class="p">])</span>
-                <span class="n">self</span><span class="p">.</span><span class="nf">_handle_invalidation</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_handle_invalidation</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Handle invalidation message</span><span class="sh">"""</span>
-        <span class="n">keys</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="sh">'</span><span class="s">keys</span><span class="sh">'</span><span class="p">]</span>
-        <span class="n">pattern</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="sh">'</span><span class="s">pattern</span><span class="sh">'</span><span class="p">]</span>
-        
-        <span class="k">if</span> <span class="n">pattern</span><span class="p">:</span>
-            <span class="c1"># Invalidate by pattern
-</span>            <span class="k">for</span> <span class="n">key_pattern</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
-                <span class="n">self</span><span class="p">.</span><span class="nf">_invalidate_pattern</span><span class="p">(</span><span class="n">key_pattern</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Invalidate specific keys
-</span>            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
-                <span class="n">self</span><span class="p">.</span><span class="nf">_invalidate_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_invalidate_key</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Invalidate specific key</span><span class="sh">"""</span>
-        <span class="c1"># Remove from L1 cache
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">edge_server</span><span class="p">.</span><span class="n">l1_cache</span><span class="p">.</span><span class="nf">delete</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        
-        <span class="c1"># Remove from L2 cache
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">edge_server</span><span class="p">.</span><span class="n">l2_cache</span><span class="p">.</span><span class="nf">delete</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Invalidated key: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_invalidate_pattern</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">pattern</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Invalidate keys matching pattern</span><span class="sh">"""</span>
-        <span class="c1"># Scan L1 cache
-</span>        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">edge_server</span><span class="p">.</span><span class="n">l1_cache</span><span class="p">.</span><span class="nf">scan_iter</span><span class="p">(</span><span class="n">match</span><span class="o">=</span><span class="n">pattern</span><span class="p">):</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">edge_server</span><span class="p">.</span><span class="n">l1_cache</span><span class="p">.</span><span class="nf">delete</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        
-        <span class="c1"># Scan L2 cache
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">edge_server</span><span class="p">.</span><span class="n">l2_cache</span><span class="p">.</span><span class="nf">delete_pattern</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
-        
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Invalidated pattern: </span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p>Methods:</p>
+<ol>
+  <li>Push-based: Immediate invalidation</li>
+  <li>Pull-based: Periodic refresh</li>
+  <li>TTL-based: Automatic expiration
+ “””</li>
+</ol>
 
-<span class="c1"># Example usage
-</span><span class="n">edge_servers</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="nc">EdgeServer</span><span class="p">(</span><span class="sh">'</span><span class="s">us-east-1</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">https://origin.example.com</span><span class="sh">'</span><span class="p">),</span>
-    <span class="nc">EdgeServer</span><span class="p">(</span><span class="sh">'</span><span class="s">eu-west-1</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">https://origin.example.com</span><span class="sh">'</span><span class="p">),</span>
-<span class="p">]</span>
+<p>def <strong>init</strong>(self, edge_servers):
+ self.edge_servers = edge_servers</p>
 
-<span class="n">invalidation_system</span> <span class="o">=</span> <span class="nc">CacheInvalidationSystem</span><span class="p">(</span><span class="n">edge_servers</span><span class="p">)</span>
+<p># Message queue for invalidations
+ self.invalidation_queue = redis.Redis(host=’localhost’, port=6379)</p>
 
-<span class="c1"># Start listeners on each edge
-</span><span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edge_servers</span><span class="p">:</span>
-    <span class="n">listener</span> <span class="o">=</span> <span class="nc">EdgeInvalidationListener</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
-    <span class="n">listener</span><span class="p">.</span><span class="nf">start</span><span class="p">()</span>
+<p># Pub/sub for real-time propagation
+ self.pubsub = self.invalidation_queue.pubsub()
+ self.pubsub.subscribe(‘cache:invalidate’)</p>
 
-<span class="c1"># Trigger invalidation
-</span><span class="n">invalidation_system</span><span class="p">.</span><span class="nf">invalidate_model_update</span><span class="p">(</span><span class="sh">'</span><span class="s">model_v2</span><span class="sh">'</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def invalidate(self, keys, pattern=False):
+ “””
+ Invalidate cache keys across all edge servers</p>
+
+<p>Args:
+ keys: List of keys to invalidate
+ pattern: If True, treat keys as patterns
+ “””
+ message = {
+ ‘keys’: keys,
+ ‘pattern’: pattern,
+ ‘timestamp’: time.time()
+ }</p>
+
+<p># Publish to all edge servers
+ self.invalidation_queue.publish(
+ ‘cache:invalidate’,
+ json.dumps(message)
+ )</p>
+
+<p>print(f”Invalidated {len(keys)} keys across edge network”)</p>
+
+<p>def invalidate_prefix(self, prefix):
+ “””
+ Invalidate all keys with given prefix</p>
+
+<p>Example: invalidate_prefix(‘user:123:*’)
+ “””
+ self.invalidate([prefix], pattern=True)</p>
+
+<p>def invalidate_model_update(self, model_id):
+ “””
+ Invalidate caches after model update</p>
+
+<p>Invalidates:</p>
+<ul>
+  <li>Model predictions</li>
+  <li>Model metadata</li>
+  <li>Related embeddings
+ “””
+ patterns = [
+ f”model:{model_id}:<em>”,
+ f”prediction:{model_id}:</em>”,
+ f”embedding:{model_id}:*”
+ ]</li>
+</ul>
+
+<p>self.invalidate(patterns, pattern=True)</p>
+
+<p>print(f”Invalidated caches for model {model_id}”)</p>
+
+<p>class EdgeInvalidationListener:
+ “””
+ Listen for invalidation messages on edge server
+ “””</p>
+
+<p>def <strong>init</strong>(self, edge_server):
+ self.edge_server = edge_server</p>
+
+<p># Subscribe to invalidations
+ self.pubsub = redis.Redis(host=’localhost’, port=6379).pubsub()
+ self.pubsub.subscribe(‘cache:invalidate’)</p>
+
+<p>self.running = False</p>
+
+<p>def start(self):
+ “"”Start listening for invalidations”””
+ self.running = True</p>
+
+<p>import threading
+ self.thread = threading.Thread(target=self._listen_loop, daemon=True)
+ self.thread.start()</p>
+
+<p>def stop(self):
+ “"”Stop listening”””
+ self.running = False</p>
+
+<p>def _listen_loop(self):
+ “"”Listen for invalidation messages”””
+ for message in self.pubsub.listen():
+ if message[‘type’] == ‘message’:
+ data = json.loads(message[‘data’])
+ self._handle_invalidation(data)</p>
+
+<p>def _handle_invalidation(self, data):
+ “"”Handle invalidation message”””
+ keys = data[‘keys’]
+ pattern = data[‘pattern’]</p>
+
+<p>if pattern:
+ # Invalidate by pattern
+ for key_pattern in keys:
+ self._invalidate_pattern(key_pattern)
+ else:
+ # Invalidate specific keys
+ for key in keys:
+ self._invalidate_key(key)</p>
+
+<p>def _invalidate_key(self, key):
+ “"”Invalidate specific key”””
+ # Remove from L1 cache
+ self.edge_server.l1_cache.delete(key)</p>
+
+<p># Remove from L2 cache
+ self.edge_server.l2_cache.delete(key)</p>
+
+<p>print(f”Invalidated key: {key}”)</p>
+
+<p>def _invalidate_pattern(self, pattern):
+ “"”Invalidate keys matching pattern”””
+ # Scan L1 cache
+ for key in self.edge_server.l1_cache.scan_iter(match=pattern):
+ self.edge_server.l1_cache.delete(key)</p>
+
+<p># Scan L2 cache
+ self.edge_server.l2_cache.delete_pattern(pattern)</p>
+
+<p>print(f”Invalidated pattern: {pattern}”)</p>
+
+<h1 id="example-usage-2">Example usage</h1>
+<p>edge_servers = [
+ EdgeServer(‘us-east-1’, ‘https://origin.example.com’),
+ EdgeServer(‘eu-west-1’, ‘https://origin.example.com’),
+]</p>
+
+<p>invalidation_system = CacheInvalidationSystem(edge_servers)</p>
+
+<h1 id="start-listeners-on-each-edge">Start listeners on each edge</h1>
+<p>for edge in edge_servers:
+ listener = EdgeInvalidationListener(edge)
+ listener.start()</p>
+
+<h1 id="trigger-invalidation">Trigger invalidation</h1>
+<p>invalidation_system.invalidate_model_update(‘model_v2’)
+``</p>
 
 <hr />
 
@@ -1076,300 +1097,310 @@ Serve from edge → Less traffic to origin → Lower costs</p>
 
 <h3 id="edge-inference">Edge Inference</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">EdgeMLServer</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Serve ML models at edge for low-latency inference
-    
-    Benefits:
-    - Reduced latency (no round trip to origin)
-    - Reduced bandwidth
-    - Better privacy (data doesn</span><span class="sh">'</span><span class="s">t leave region)
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">):</span>
-        <span class="c1"># Load ONNX model for edge inference
-</span>        <span class="kn">import</span> <span class="n">onnxruntime</span> <span class="k">as</span> <span class="n">ort</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">ort</span><span class="p">.</span><span class="nc">InferenceSession</span><span class="p">(</span>
-            <span class="n">model_path</span><span class="p">,</span>
-            <span class="n">providers</span><span class="o">=</span><span class="p">[</span><span class="sh">'</span><span class="s">CPUExecutionProvider</span><span class="sh">'</span><span class="p">]</span>
-        <span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">input_name</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="nf">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">].</span><span class="n">name</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">output_name</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="nf">get_outputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">].</span><span class="n">name</span>
-        
-        <span class="c1"># Cache for predictions
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">prediction_cache</span> <span class="o">=</span> <span class="nc">LRUCache</span><span class="p">(</span><span class="n">capacity</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Predict with caching
-        
-        Args:
-            features: Input features (must be hashable)
-        
-        Returns:
-            Prediction
-        </span><span class="sh">"""</span>
-        <span class="c1"># Generate cache key
-</span>        <span class="n">cache_key</span> <span class="o">=</span> <span class="nf">hash</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-        
-        <span class="c1"># Check cache
-</span>        <span class="n">cached_prediction</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">prediction_cache</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">cached_prediction</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">cached_prediction</span>
-        
-        <span class="c1"># Run inference
-</span>        <span class="n">features_array</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="n">features</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">float32</span><span class="p">)</span>
-        
-        <span class="n">prediction</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">output_name</span><span class="p">],</span>
-            <span class="p">{</span><span class="n">self</span><span class="p">.</span><span class="n">input_name</span><span class="p">:</span> <span class="n">features_array</span><span class="p">}</span>
-        <span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-        
-        <span class="c1"># Cache result
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">prediction_cache</span><span class="p">.</span><span class="nf">put</span><span class="p">(</span><span class="n">cache_key</span><span class="p">,</span> <span class="n">prediction</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">prediction</span>
-    
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">batch_predict</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">features_list</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Batch prediction for efficiency
-        
-        Separates cache hits from misses
-        </span><span class="sh">"""</span>
-        <span class="n">predictions</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">cache_misses</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">cache_miss_indices</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># Check cache
-</span>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">features</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">features_list</span><span class="p">):</span>
-            <span class="n">cache_key</span> <span class="o">=</span> <span class="nf">hash</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-            <span class="n">cached</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">prediction_cache</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
-            
-            <span class="k">if</span> <span class="n">cached</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-                <span class="n">predictions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">cached</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">cache_misses</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-                <span class="n">cache_miss_indices</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-        
-        <span class="c1"># Batch inference for cache misses
-</span>        <span class="k">if</span> <span class="n">cache_misses</span><span class="p">:</span>
-            <span class="n">features_array</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">cache_misses</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">float32</span><span class="p">)</span>
-            
-            <span class="n">batch_predictions</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">session</span><span class="p">.</span><span class="nf">run</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">output_name</span><span class="p">],</span>
-                <span class="p">{</span><span class="n">self</span><span class="p">.</span><span class="n">input_name</span><span class="p">:</span> <span class="n">features_array</span><span class="p">}</span>
-            <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            
-            <span class="c1"># Store in cache and results
-</span>            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">cache_miss_indices</span><span class="p">,</span> <span class="n">batch_predictions</span><span class="p">):</span>
-                <span class="n">cache_key</span> <span class="o">=</span> <span class="nf">hash</span><span class="p">(</span><span class="n">features_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">prediction_cache</span><span class="p">.</span><span class="nf">put</span><span class="p">(</span><span class="n">cache_key</span><span class="p">,</span> <span class="n">pred</span><span class="p">)</span>
-                <span class="n">predictions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">pred</span>
-        
-        <span class="c1"># Return in original order
-</span>        <span class="k">return</span> <span class="p">[</span><span class="n">predictions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">features_list</span><span class="p">))]</span>
+<p>``python
+class EdgeMLServer:
+ “””
+ Serve ML models at edge for low-latency inference</p>
 
-<span class="c1"># Example: Edge API server with ML inference
-</span><span class="kn">from</span> <span class="n">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span>
-<span class="kn">import</span> <span class="n">uvicorn</span>
+<p>Benefits:</p>
+<ul>
+  <li>Reduced latency (no round trip to origin)</li>
+  <li>Reduced bandwidth</li>
+  <li>Better privacy (data doesn’t leave region)
+ “””</li>
+</ul>
 
-<span class="n">app</span> <span class="o">=</span> <span class="nc">FastAPI</span><span class="p">()</span>
+<p>def <strong>init</strong>(self, model_path):
+ # Load ONNX model for edge inference
+ import onnxruntime as ort</p>
 
-<span class="c1"># Load model at startup
-</span><span class="n">edge_ml_server</span> <span class="o">=</span> <span class="nc">EdgeMLServer</span><span class="p">(</span><span class="sh">'</span><span class="s">model.onnx</span><span class="sh">'</span><span class="p">)</span>
+<p>self.session = ort.InferenceSession(
+ model_path,
+ providers=[‘CPUExecutionProvider’]
+ )</p>
 
-<span class="nd">@app.post</span><span class="p">(</span><span class="sh">"</span><span class="s">/predict</span><span class="sh">"</span><span class="p">)</span>
-<span class="k">async</span> <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Edge prediction endpoint
-    
-    Returns cached or computed prediction
-    </span><span class="sh">"""</span>
-    <span class="n">features</span> <span class="o">=</span> <span class="nf">tuple</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="sh">'</span><span class="s">features</span><span class="sh">'</span><span class="p">])</span>
-    
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">prediction</span> <span class="o">=</span> <span class="n">edge_ml_server</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">prediction</span><span class="sh">'</span><span class="p">:</span> <span class="nf">float</span><span class="p">(</span><span class="n">prediction</span><span class="p">),</span>
-            <span class="sh">'</span><span class="s">cached</span><span class="sh">'</span><span class="p">:</span> <span class="n">edge_ml_server</span><span class="p">.</span><span class="n">prediction_cache</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="nf">hash</span><span class="p">(</span><span class="n">features</span><span class="p">))</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">edge_region</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">us-east-1</span><span class="sh">'</span>
-        <span class="p">}</span>
-    <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{</span><span class="sh">'</span><span class="s">error</span><span class="sh">'</span><span class="p">:</span> <span class="nf">str</span><span class="p">(</span><span class="n">e</span><span class="p">)},</span> <span class="mi">500</span>
+<p>self.input_name = self.session.get_inputs()[0].name
+ self.output_name = self.session.get_outputs()[0].name</p>
 
-<span class="nd">@app.post</span><span class="p">(</span><span class="sh">"</span><span class="s">/batch_predict</span><span class="sh">"</span><span class="p">)</span>
-<span class="k">async</span> <span class="k">def</span> <span class="nf">batch_predict</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Batch prediction endpoint
-    </span><span class="sh">"""</span>
-    <span class="n">features_list</span> <span class="o">=</span> <span class="p">[</span><span class="nf">tuple</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">request</span><span class="p">[</span><span class="sh">'</span><span class="s">features</span><span class="sh">'</span><span class="p">]]</span>
-    
-    <span class="n">predictions</span> <span class="o">=</span> <span class="k">await</span> <span class="n">edge_ml_server</span><span class="p">.</span><span class="nf">batch_predict</span><span class="p">(</span><span class="n">features_list</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="sh">'</span><span class="s">predictions</span><span class="sh">'</span><span class="p">:</span> <span class="p">[</span><span class="nf">float</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">predictions</span><span class="p">],</span>
-        <span class="sh">'</span><span class="s">count</span><span class="sh">'</span><span class="p">:</span> <span class="nf">len</span><span class="p">(</span><span class="n">predictions</span><span class="p">),</span>
-        <span class="sh">'</span><span class="s">edge_region</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">us-east-1</span><span class="sh">'</span>
-    <span class="p">}</span>
+<p># Cache for predictions
+ self.prediction_cache = LRUCache(capacity=10000)</p>
 
-<span class="c1"># Run edge server
-# uvicorn.run(app, host='0.0.0.0', port=8000)
-</span></code></pre></div></div>
+<p>def predict(self, features):
+ “””
+ Predict with caching</p>
+
+<p>Args:
+ features: Input features (must be hashable)</p>
+
+<p>Returns:
+ Prediction
+ “””
+ # Generate cache key
+ cache_key = hash(features)</p>
+
+<p># Check cache
+ cached_prediction = self.prediction_cache.get(cache_key)
+ if cached_prediction != -1:
+ return cached_prediction</p>
+
+<p># Run inference
+ features_array = np.array([features], dtype=np.float32)</p>
+
+<p>prediction = self.session.run(
+ [self.output_name],
+ {self.input_name: features_array}
+ )[0][0]</p>
+
+<p># Cache result
+ self.prediction_cache.put(cache_key, prediction)</p>
+
+<p>return prediction</p>
+
+<p>async def batch_predict(self, features_list):
+ “””
+ Batch prediction for efficiency</p>
+
+<p>Separates cache hits from misses
+ “””
+ predictions = {}
+ cache_misses = []
+ cache_miss_indices = []</p>
+
+<p># Check cache
+ for i, features in enumerate(features_list):
+ cache_key = hash(features)
+ cached = self.prediction_cache.get(cache_key)</p>
+
+<p>if cached != -1:
+ predictions[i] = cached
+ else:
+ cache_misses.append(features)
+ cache_miss_indices.append(i)</p>
+
+<p># Batch inference for cache misses
+ if cache_misses:
+ features_array = np.array(cache_misses, dtype=np.float32)</p>
+
+<p>batch_predictions = self.session.run(
+ [self.output_name],
+ {self.input_name: features_array}
+ )[0]</p>
+
+<p># Store in cache and results
+ for i, pred in zip(cache_miss_indices, batch_predictions):
+ cache_key = hash(features_list[i])
+ self.prediction_cache.put(cache_key, pred)
+ predictions[i] = pred</p>
+
+<p># Return in original order
+ return [predictions[i] for i in range(len(features_list))]</p>
+
+<h1 id="example-edge-api-server-with-ml-inference">Example: Edge API server with ML inference</h1>
+<p>from fastapi import FastAPI
+import uvicorn</p>
+
+<p>app = FastAPI()</p>
+
+<h1 id="load-model-at-startup">Load model at startup</h1>
+<p>edge_ml_server = EdgeMLServer(‘model.onnx’)</p>
+
+<p>@app.post(“/predict”)
+async def predict(request: dict):
+ “””
+ Edge prediction endpoint</p>
+
+<p>Returns cached or computed prediction
+ “””
+ features = tuple(request[‘features’])</p>
+
+<p>try:
+ prediction = edge_ml_server.predict(features)</p>
+
+<p>return {
+ ‘prediction’: float(prediction),
+ ‘cached’: edge_ml_server.prediction_cache.get(hash(features)) != -1,
+ ‘edge_region’: ‘us-east-1’
+ }
+ except Exception as e:
+ return {‘error’: str(e)}, 500</p>
+
+<p>@app.post(“/batch_predict”)
+async def batch_predict(request: dict):
+ “””
+ Batch prediction endpoint
+ “””
+ features_list = [tuple(f) for f in request[‘features’]]</p>
+
+<p>predictions = await edge_ml_server.batch_predict(features_list)</p>
+
+<p>return {
+ ‘predictions’: [float(p) for p in predictions],
+ ‘count’: len(predictions),
+ ‘edge_region’: ‘us-east-1’
+ }</p>
+
+<h1 id="run-edge-server">Run edge server</h1>
+<h1 id="uvicornrunapp-host0000-port8000">uvicorn.run(app, host=’0.0.0.0’, port=8000)</h1>
+<p>``</p>
 
 <h3 id="model-distribution-to-edge">Model Distribution to Edge</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ModelDistributionSystem</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Distribute ML models to edge servers
-    
-    Challenges:
-    - Large model sizes (GB)
-    - Many edge locations
-    - Version management
-    - Atomic updates
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">s3_bucket</span><span class="p">,</span> <span class="n">edge_servers</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">s3_bucket</span> <span class="o">=</span> <span class="n">s3_bucket</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">edge_servers</span> <span class="o">=</span> <span class="n">edge_servers</span>
-        
-        <span class="c1"># Track model versions at each edge
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">edge_versions</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">server</span><span class="p">.</span><span class="n">region</span><span class="p">:</span> <span class="bp">None</span>
-            <span class="k">for</span> <span class="n">server</span> <span class="ow">in</span> <span class="n">edge_servers</span>
-        <span class="p">}</span>
-    
-    <span class="k">def</span> <span class="nf">distribute_model</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Distribute model to all edge servers
-        
-        Steps:
-        1. Upload to S3
-        2. Notify edge servers
-        3. Edge servers download
-        4. Edge servers validate
-        5. Edge servers activate
-        </span><span class="sh">"""</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Distributing model </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s"> to </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">edge_servers</span><span class="p">)</span><span class="si">}</span><span class="s"> edge servers...</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="c1"># Step 1: Upload to S3
-</span>        <span class="n">s3_key</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">models/</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s">/model.onnx</span><span class="sh">"</span>
-        <span class="n">self</span><span class="p">.</span><span class="nf">_upload_to_s3</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">s3_key</span><span class="p">)</span>
-        
-        <span class="c1"># Step 2: Notify edge servers
-</span>        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">server</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">edge_servers</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">_distribute_to_edge</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">s3_key</span><span class="p">,</span> <span class="n">version</span><span class="p">)</span>
-            <span class="n">results</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">server</span><span class="p">.</span><span class="n">region</span><span class="p">,</span> <span class="n">result</span><span class="p">))</span>
-        
-        <span class="c1"># Check results
-</span>        <span class="n">successful</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
-        <span class="n">failed</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
-        
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">Distribution complete:</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  Successful: </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">successful</span><span class="p">)</span><span class="si">}</span><span class="s">/</span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">edge_servers</span><span class="p">)</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  Failed: </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">failed</span><span class="p">)</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">failed</span><span class="p">:</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  Failed regions: </span><span class="si">{</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">failed</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="nf">len</span><span class="p">(</span><span class="n">failed</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
-    
-    <span class="k">def</span> <span class="nf">_upload_to_s3</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">local_path</span><span class="p">,</span> <span class="n">s3_key</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Upload model to S3</span><span class="sh">"""</span>
-        <span class="kn">import</span> <span class="n">boto3</span>
-        
-        <span class="n">s3</span> <span class="o">=</span> <span class="n">boto3</span><span class="p">.</span><span class="nf">client</span><span class="p">(</span><span class="sh">'</span><span class="s">s3</span><span class="sh">'</span><span class="p">)</span>
-        
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Uploading </span><span class="si">{</span><span class="n">local_path</span><span class="si">}</span><span class="s"> to s3://</span><span class="si">{</span><span class="n">self</span><span class="p">.</span><span class="n">s3_bucket</span><span class="si">}</span><span class="s">/</span><span class="si">{</span><span class="n">s3_key</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="n">s3</span><span class="p">.</span><span class="nf">upload_file</span><span class="p">(</span>
-            <span class="n">local_path</span><span class="p">,</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">s3_bucket</span><span class="p">,</span>
-            <span class="n">s3_key</span><span class="p">,</span>
-            <span class="n">ExtraArgs</span><span class="o">=</span><span class="p">{</span><span class="sh">'</span><span class="s">ServerSideEncryption</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">AES256</span><span class="sh">'</span><span class="p">}</span>
-        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">_distribute_to_edge</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">s3_key</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Notify edge server to download model
-        
-        Edge server will:
-        1. Download from S3
-        2. Validate checksum
-        3. Load model
-        4. Run health checks
-        5. Activate (atomic swap)
-        </span><span class="sh">"""</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">import</span> <span class="n">requests</span>
-            
-            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="p">.</span><span class="nf">post</span><span class="p">(</span>
-                <span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">server</span><span class="p">.</span><span class="n">url</span><span class="si">}</span><span class="s">/admin/update_model</span><span class="sh">"</span><span class="p">,</span>
-                <span class="n">json</span><span class="o">=</span><span class="p">{</span>
-                    <span class="sh">'</span><span class="s">s3_bucket</span><span class="sh">'</span><span class="p">:</span> <span class="n">self</span><span class="p">.</span><span class="n">s3_bucket</span><span class="p">,</span>
-                    <span class="sh">'</span><span class="s">s3_key</span><span class="sh">'</span><span class="p">:</span> <span class="n">s3_key</span><span class="p">,</span>
-                    <span class="sh">'</span><span class="s">version</span><span class="sh">'</span><span class="p">:</span> <span class="n">version</span>
-                <span class="p">},</span>
-                <span class="n">timeout</span><span class="o">=</span><span class="mi">300</span>  <span class="c1"># 5 minutes for large models
-</span>            <span class="p">)</span>
-            
-            <span class="k">if</span> <span class="n">response</span><span class="p">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
-                <span class="n">self</span><span class="p">.</span><span class="n">edge_versions</span><span class="p">[</span><span class="n">server</span><span class="p">.</span><span class="n">region</span><span class="p">]</span> <span class="o">=</span> <span class="n">version</span>
-                <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  ✓ </span><span class="si">{</span><span class="n">server</span><span class="p">.</span><span class="n">region</span><span class="si">}</span><span class="s">: Updated to </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-                <span class="k">return</span> <span class="bp">True</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  ✗ </span><span class="si">{</span><span class="n">server</span><span class="p">.</span><span class="n">region</span><span class="si">}</span><span class="s">: Failed - </span><span class="si">{</span><span class="n">response</span><span class="p">.</span><span class="n">text</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-                <span class="k">return</span> <span class="bp">False</span>
-        
-        <span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  ✗ </span><span class="si">{</span><span class="n">server</span><span class="p">.</span><span class="n">region</span><span class="si">}</span><span class="s">: Error - </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">False</span>
-    
-    <span class="k">def</span> <span class="nf">rollback_model</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">target_version</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Rollback to previous model version
-        
-        Useful if new model has issues
-        </span><span class="sh">"""</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Rolling back to version </span><span class="si">{</span><span class="n">target_version</span><span class="si">}</span><span class="s">...</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="n">s3_key</span> <span class="o">=</span> <span class="sa">f</span><span class="sh">"</span><span class="s">models/</span><span class="si">{</span><span class="n">target_version</span><span class="si">}</span><span class="s">/model.onnx</span><span class="sh">"</span>
-        
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="nf">distribute_model</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">/tmp/model_</span><span class="si">{</span><span class="n">target_version</span><span class="si">}</span><span class="s">.onnx</span><span class="sh">"</span><span class="p">,</span> <span class="n">target_version</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">get_version_status</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Get model versions deployed at each edge</span><span class="sh">"""</span>
-        <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">edge_versions</span>
+<p>``python
+class ModelDistributionSystem:
+ “””
+ Distribute ML models to edge servers</p>
 
-<span class="c1"># Example usage
-</span><span class="n">edge_servers</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="nc">EdgeServerInfo</span><span class="p">(</span><span class="sh">'</span><span class="s">us-east-1</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">https://edge-us-east-1.example.com</span><span class="sh">'</span><span class="p">,</span> <span class="p">{}),</span>
-    <span class="nc">EdgeServerInfo</span><span class="p">(</span><span class="sh">'</span><span class="s">eu-west-1</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">https://edge-eu-west-1.example.com</span><span class="sh">'</span><span class="p">,</span> <span class="p">{}),</span>
-    <span class="nc">EdgeServerInfo</span><span class="p">(</span><span class="sh">'</span><span class="s">ap-northeast-1</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">https://edge-ap-northeast-1.example.com</span><span class="sh">'</span><span class="p">,</span> <span class="p">{}),</span>
-<span class="p">]</span>
+<p>Challenges:</p>
+<ul>
+  <li>Large model sizes (GB)</li>
+  <li>Many edge locations</li>
+  <li>Version management</li>
+  <li>Atomic updates
+ “””</li>
+</ul>
 
-<span class="n">distributor</span> <span class="o">=</span> <span class="nc">ModelDistributionSystem</span><span class="p">(</span>
-    <span class="n">s3_bucket</span><span class="o">=</span><span class="sh">'</span><span class="s">my-ml-models</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">edge_servers</span><span class="o">=</span><span class="n">edge_servers</span>
-<span class="p">)</span>
+<p>def <strong>init</strong>(self, s3_bucket, edge_servers):
+ self.s3_bucket = s3_bucket
+ self.edge_servers = edge_servers</p>
 
-<span class="c1"># Distribute new model
-</span><span class="n">success</span> <span class="o">=</span> <span class="n">distributor</span><span class="p">.</span><span class="nf">distribute_model</span><span class="p">(</span><span class="sh">'</span><span class="s">model_v3.onnx</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">v3</span><span class="sh">'</span><span class="p">)</span>
+<p># Track model versions at each edge
+ self.edge_versions = {
+ server.region: None
+ for server in edge_servers
+ }</p>
 
-<span class="k">if</span> <span class="n">success</span><span class="p">:</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="se">\n</span><span class="s">Model distribution successful!</span><span class="sh">"</span><span class="p">)</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Current versions:</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="n">version</span> <span class="ow">in</span> <span class="n">distributor</span><span class="p">.</span><span class="nf">get_version_status</span><span class="p">().</span><span class="nf">items</span><span class="p">():</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  </span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s">: </span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-<span class="k">else</span><span class="p">:</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="se">\n</span><span class="s">Model distribution failed, rolling back...</span><span class="sh">"</span><span class="p">)</span>
-    <span class="n">distributor</span><span class="p">.</span><span class="nf">rollback_model</span><span class="p">(</span><span class="sh">'</span><span class="s">v2</span><span class="sh">'</span><span class="p">)</span>
-</code></pre></div></div>
+<p>def distribute_model(self, model_path, version):
+ “””
+ Distribute model to all edge servers</p>
+
+<p>Steps:</p>
+<ol>
+  <li>Upload to S3</li>
+  <li>Notify edge servers</li>
+  <li>Edge servers download</li>
+  <li>Edge servers validate</li>
+  <li>Edge servers activate
+ “””
+ print(f”Distributing model {version} to {len(self.edge_servers)} edge servers…”)</li>
+</ol>
+
+<p># Step 1: Upload to S3
+ s3_key = f”models/{version}/model.onnx”
+ self._upload_to_s3(model_path, s3_key)</p>
+
+<p># Step 2: Notify edge servers
+ results = []</p>
+
+<p>for server in self.edge_servers:
+ result = self._distribute_to_edge(server, s3_key, version)
+ results.append((server.region, result))</p>
+
+<p># Check results
+ successful = [r for r in results if r[1]]
+ failed = [r for r in results if not r[1]]</p>
+
+<p>print(f”\nDistribution complete:”)
+ print(f” Successful: {len(successful)}/{len(self.edge_servers)}”)
+ print(f” Failed: {len(failed)}”)</p>
+
+<p>if failed:
+ print(f” Failed regions: {[r[0] for r in failed]}”)</p>
+
+<p>return len(failed) == 0</p>
+
+<p>def _upload_to_s3(self, local_path, s3_key):
+ “"”Upload model to S3”””
+ import boto3</p>
+
+<p>s3 = boto3.client(‘s3’)</p>
+
+<p>print(f”Uploading {local_path} to s3://{self.s3_bucket}/{s3_key}”)</p>
+
+<p>s3.upload_file(
+ local_path,
+ self.s3_bucket,
+ s3_key,
+ ExtraArgs={‘ServerSideEncryption’: ‘AES256’}
+ )</p>
+
+<p>def _distribute_to_edge(self, server, s3_key, version):
+ “””
+ Notify edge server to download model</p>
+
+<p>Edge server will:</p>
+<ol>
+  <li>Download from S3</li>
+  <li>Validate checksum</li>
+  <li>Load model</li>
+  <li>Run health checks</li>
+  <li>Activate (atomic swap)
+ “””
+ try:
+ import requests</li>
+</ol>
+
+<p>response = requests.post(
+ f”{server.url}/admin/update_model”,
+ json={
+ ‘s3_bucket’: self.s3_bucket,
+ ‘s3_key’: s3_key,
+ ‘version’: version
+ },
+ timeout=300 # 5 minutes for large models
+ )</p>
+
+<p>if response.status_code == 200:
+ self.edge_versions[server.region] = version
+ print(f” ✓ {server.region}: Updated to {version}”)
+ return True
+ else:
+ print(f” ✗ {server.region}: Failed - {response.text}”)
+ return False</p>
+
+<p>except Exception as e:
+ print(f” ✗ {server.region}: Error - {e}”)
+ return False</p>
+
+<p>def rollback_model(self, target_version):
+ “””
+ Rollback to previous model version</p>
+
+<p>Useful if new model has issues
+ “””
+ print(f”Rolling back to version {target_version}…”)</p>
+
+<p>s3_key = f”models/{target_version}/model.onnx”</p>
+
+<p>return self.distribute_model(f”/tmp/model_{target_version}.onnx”, target_version)</p>
+
+<p>def get_version_status(self):
+ “"”Get model versions deployed at each edge”””
+ return self.edge_versions</p>
+
+<h1 id="example-usage-3">Example usage</h1>
+<p>edge_servers = [
+ EdgeServerInfo(‘us-east-1’, ‘https://edge-us-east-1.example.com’, {}),
+ EdgeServerInfo(‘eu-west-1’, ‘https://edge-eu-west-1.example.com’, {}),
+ EdgeServerInfo(‘ap-northeast-1’, ‘https://edge-ap-northeast-1.example.com’, {}),
+]</p>
+
+<p>distributor = ModelDistributionSystem(
+ s3_bucket=’my-ml-models’,
+ edge_servers=edge_servers
+)</p>
+
+<h1 id="distribute-new-model">Distribute new model</h1>
+<p>success = distributor.distribute_model(‘model_v3.onnx’, ‘v3’)</p>
+
+<p>if success:
+ print(“\nModel distribution successful!”)
+ print(“Current versions:”)
+ for region, version in distributor.get_version_status().items():
+ print(f” {region}: {version}”)
+else:
+ print(“\nModel distribution failed, rolling back…”)
+ distributor.rollback_model(‘v2’)
+``</p>
 
 <hr />
 
@@ -1377,153 +1408,156 @@ Serve from edge → Less traffic to origin → Lower costs</p>
 
 <h3 id="cdn-metrics-dashboard">CDN Metrics Dashboard</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">CDNMetricsDashboard</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Aggregate and visualize CDN metrics
-    
-    Key metrics:
-    - Cache hit rate
-    - Latency (p50, p95, p99)
-    - Bandwidth usage
-    - Error rate
-    - Request rate
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">edge_servers</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">edge_servers</span> <span class="o">=</span> <span class="n">edge_servers</span>
-        
-        <span class="c1"># Time series database for metrics
-</span>        <span class="kn">from</span> <span class="n">prometheus_client</span> <span class="kn">import</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">,</span> <span class="n">Gauge</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">request_count</span> <span class="o">=</span> <span class="nc">Counter</span><span class="p">(</span>
-            <span class="sh">'</span><span class="s">cdn_requests_total</span><span class="sh">'</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">Total CDN requests</span><span class="sh">'</span><span class="p">,</span>
-            <span class="p">[</span><span class="sh">'</span><span class="s">region</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">status</span><span class="sh">'</span><span class="p">]</span>
-        <span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">latency</span> <span class="o">=</span> <span class="nc">Histogram</span><span class="p">(</span>
-            <span class="sh">'</span><span class="s">cdn_request_latency_seconds</span><span class="sh">'</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">CDN request latency</span><span class="sh">'</span><span class="p">,</span>
-            <span class="p">[</span><span class="sh">'</span><span class="s">region</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">cache_level</span><span class="sh">'</span><span class="p">]</span>
-        <span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">cache_hit_rate</span> <span class="o">=</span> <span class="nc">Gauge</span><span class="p">(</span>
-            <span class="sh">'</span><span class="s">cdn_cache_hit_rate</span><span class="sh">'</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">Cache hit rate</span><span class="sh">'</span><span class="p">,</span>
-            <span class="p">[</span><span class="sh">'</span><span class="s">region</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">cache_level</span><span class="sh">'</span><span class="p">]</span>
-        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">collect_metrics</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Collect metrics from all edge servers
-        
-        Returns aggregated view
-        </span><span class="sh">"""</span>
-        <span class="n">global_metrics</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">total_requests</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">total_cache_hits</span><span class="sh">'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">regions</span><span class="sh">'</span><span class="p">:</span> <span class="p">{}</span>
-        <span class="p">}</span>
-        
-        <span class="k">for</span> <span class="n">server</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">edge_servers</span><span class="p">:</span>
-            <span class="n">stats</span> <span class="o">=</span> <span class="n">server</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="nf">get_stats</span><span class="p">()</span>
-            
-            <span class="n">total_requests</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">server</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">l1_hits</span> <span class="o">+</span>
-                <span class="n">server</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">l2_hits</span> <span class="o">+</span>
-                <span class="n">server</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">misses</span>
-            <span class="p">)</span>
-            
-            <span class="n">total_cache_hits</span> <span class="o">=</span> <span class="n">server</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">l1_hits</span> <span class="o">+</span> <span class="n">server</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">l2_hits</span>
-            
-            <span class="n">global_metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">total_requests</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="n">total_requests</span>
-            <span class="n">global_metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">total_cache_hits</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="n">total_cache_hits</span>
-            
-            <span class="n">global_metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">regions</span><span class="sh">'</span><span class="p">][</span><span class="n">server</span><span class="p">.</span><span class="n">region</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="sh">'</span><span class="s">requests</span><span class="sh">'</span><span class="p">:</span> <span class="n">total_requests</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">cache_hits</span><span class="sh">'</span><span class="p">:</span> <span class="n">total_cache_hits</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">stats</span><span class="sh">'</span><span class="p">:</span> <span class="n">stats</span>
-            <span class="p">}</span>
-        
-        <span class="c1"># Calculate global hit rate
-</span>        <span class="k">if</span> <span class="n">global_metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">total_requests</span><span class="sh">'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">global_metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">cache_hit_rate</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">global_metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">total_cache_hits</span><span class="sh">'</span><span class="p">]</span> <span class="o">/</span> <span class="n">global_metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">total_requests</span><span class="sh">'</span><span class="p">]</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">global_metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">cache_hit_rate</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="k">return</span> <span class="n">global_metrics</span>
-    
-    <span class="k">def</span> <span class="nf">print_dashboard</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Print metrics dashboard</span><span class="sh">"""</span>
-        <span class="n">metrics</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">collect_metrics</span><span class="p">()</span>
-        
-        <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="se">\n</span><span class="sh">"</span> <span class="o">+</span> <span class="sh">"</span><span class="s">=</span><span class="sh">"</span><span class="o">*</span><span class="mi">70</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">CDN METRICS DASHBOARD</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">=</span><span class="sh">"</span><span class="o">*</span><span class="mi">70</span><span class="p">)</span>
-        
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">Global Metrics:</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  Total Requests:     </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">total_requests</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">,</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  Cache Hit Rate:     </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">cache_hit_rate</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">Regional Breakdown:</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">[</span><span class="sh">'</span><span class="s">regions</span><span class="sh">'</span><span class="p">].</span><span class="nf">items</span><span class="p">():</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">  </span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s">:</span><span class="sh">"</span><span class="p">)</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">    Requests:         </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="sh">'</span><span class="s">requests</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">,</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">    L1 Hit Rate:      </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="sh">'</span><span class="s">stats</span><span class="sh">'</span><span class="p">][</span><span class="sh">'</span><span class="s">l1_hit_rate</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">    L2 Hit Rate:      </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="sh">'</span><span class="s">stats</span><span class="sh">'</span><span class="p">][</span><span class="sh">'</span><span class="s">l2_hit_rate</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">    Miss Rate:        </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="sh">'</span><span class="s">stats</span><span class="sh">'</span><span class="p">][</span><span class="sh">'</span><span class="s">miss_rate</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">    Avg L1 Latency:   </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="sh">'</span><span class="s">stats</span><span class="sh">'</span><span class="p">][</span><span class="sh">'</span><span class="s">avg_l1_latency_ms</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">ms</span><span class="sh">"</span><span class="p">)</span>
-            <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">    Avg Miss Latency: </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="sh">'</span><span class="s">stats</span><span class="sh">'</span><span class="p">][</span><span class="sh">'</span><span class="s">avg_miss_latency_ms</span><span class="sh">'</span><span class="p">]</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="s">ms</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">=</span><span class="sh">"</span><span class="o">*</span><span class="mi">70</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">plot_latency_distribution</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Plot latency distribution by region</span><span class="sh">"""</span>
-        <span class="kn">import</span> <span class="n">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-        
-        <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="p">.</span><span class="nf">subplots</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">edge_servers</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">edge_servers</span><span class="p">)))</span>
-        
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">server</span> <span class="ow">in</span> <span class="nf">enumerate</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">edge_servers</span><span class="p">):</span>
-            <span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="nf">len</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">edge_servers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">axes</span>
-            
-            <span class="c1"># Get latencies
-</span>            <span class="n">l1_latencies</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">server</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">l1_latencies</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>  <span class="c1"># ms
-</span>            <span class="n">l2_latencies</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">server</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">l2_latencies</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
-            <span class="n">miss_latencies</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">server</span><span class="p">.</span><span class="n">metrics</span><span class="p">.</span><span class="n">miss_latencies</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
-            
-            <span class="c1"># Plot histograms
-</span>            <span class="n">ax</span><span class="p">.</span><span class="nf">hist</span><span class="p">(</span><span class="n">l1_latencies</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sh">'</span><span class="s">L1 Cache</span><span class="sh">'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="sh">'</span><span class="s">green</span><span class="sh">'</span><span class="p">)</span>
-            <span class="n">ax</span><span class="p">.</span><span class="nf">hist</span><span class="p">(</span><span class="n">l2_latencies</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sh">'</span><span class="s">L2 Cache</span><span class="sh">'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="sh">'</span><span class="s">blue</span><span class="sh">'</span><span class="p">)</span>
-            <span class="n">ax</span><span class="p">.</span><span class="nf">hist</span><span class="p">(</span><span class="n">miss_latencies</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sh">'</span><span class="s">Origin</span><span class="sh">'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="sh">'</span><span class="s">red</span><span class="sh">'</span><span class="p">)</span>
-            
-            <span class="n">ax</span><span class="p">.</span><span class="nf">set_xlabel</span><span class="p">(</span><span class="sh">'</span><span class="s">Latency (ms)</span><span class="sh">'</span><span class="p">)</span>
-            <span class="n">ax</span><span class="p">.</span><span class="nf">set_ylabel</span><span class="p">(</span><span class="sh">'</span><span class="s">Frequency</span><span class="sh">'</span><span class="p">)</span>
-            <span class="n">ax</span><span class="p">.</span><span class="nf">set_title</span><span class="p">(</span><span class="sa">f</span><span class="sh">'</span><span class="s">Latency Distribution - </span><span class="si">{</span><span class="n">server</span><span class="p">.</span><span class="n">region</span><span class="si">}</span><span class="sh">'</span><span class="p">)</span>
-            <span class="n">ax</span><span class="p">.</span><span class="nf">legend</span><span class="p">()</span>
-            <span class="n">ax</span><span class="p">.</span><span class="nf">grid</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
-        
-        <span class="n">plt</span><span class="p">.</span><span class="nf">tight_layout</span><span class="p">()</span>
-        <span class="n">plt</span><span class="p">.</span><span class="nf">savefig</span><span class="p">(</span><span class="sh">'</span><span class="s">cdn_latency_distribution.png</span><span class="sh">'</span><span class="p">)</span>
-        <span class="n">plt</span><span class="p">.</span><span class="nf">close</span><span class="p">()</span>
-        
-        <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Latency distribution plot saved to cdn_latency_distribution.png</span><span class="sh">"</span><span class="p">)</span>
+<p>``python
+class CDNMetricsDashboard:
+ “””
+ Aggregate and visualize CDN metrics</p>
 
-<span class="c1"># Example usage
-</span><span class="n">edge_servers</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="c1"># ... initialize edge servers
-</span><span class="p">]</span>
+<p>Key metrics:</p>
+<ul>
+  <li>Cache hit rate</li>
+  <li>Latency (p50, p95, p99)</li>
+  <li>Bandwidth usage</li>
+  <li>Error rate</li>
+  <li>Request rate
+ “””</li>
+</ul>
 
-<span class="n">dashboard</span> <span class="o">=</span> <span class="nc">CDNMetricsDashboard</span><span class="p">(</span><span class="n">edge_servers</span><span class="p">)</span>
+<p>def <strong>init</strong>(self, edge_servers):
+ self.edge_servers = edge_servers</p>
 
-<span class="c1"># Collect and display metrics
-</span><span class="n">dashboard</span><span class="p">.</span><span class="nf">print_dashboard</span><span class="p">()</span>
+<p># Time series database for metrics
+ from prometheus_client import Counter, Histogram, Gauge</p>
 
-<span class="c1"># Plot latency distribution
-</span><span class="n">dashboard</span><span class="p">.</span><span class="nf">plot_latency_distribution</span><span class="p">()</span>
-</code></pre></div></div>
+<p>self.request_count = Counter(
+ ‘cdn_requests_total’,
+ ‘Total CDN requests’,
+ [‘region’, ‘status’]
+ )</p>
+
+<p>self.latency = Histogram(
+ ‘cdn_request_latency_seconds’,
+ ‘CDN request latency’,
+ [‘region’, ‘cache_level’]
+ )</p>
+
+<p>self.cache_hit_rate = Gauge(
+ ‘cdn_cache_hit_rate’,
+ ‘Cache hit rate’,
+ [‘region’, ‘cache_level’]
+ )</p>
+
+<p>def collect_metrics(self):
+ “””
+ Collect metrics from all edge servers</p>
+
+<p>Returns aggregated view
+ “””
+ global_metrics = {
+ ‘total_requests’: 0,
+ ‘total_cache_hits’: 0,
+ ‘regions’: {}
+ }</p>
+
+<p>for server in self.edge_servers:
+ stats = server.metrics.get_stats()</p>
+
+<p>total_requests = (
+ server.metrics.l1_hits +
+ server.metrics.l2_hits +
+ server.metrics.misses
+ )</p>
+
+<p>total_cache_hits = server.metrics.l1_hits + server.metrics.l2_hits</p>
+
+<p>global_metrics[‘total_requests’] += total_requests
+ global_metrics[‘total_cache_hits’] += total_cache_hits</p>
+
+<p>global_metrics[‘regions’][server.region] = {
+ ‘requests’: total_requests,
+ ‘cache_hits’: total_cache_hits,
+ ‘stats’: stats
+ }</p>
+
+<p># Calculate global hit rate
+ if global_metrics[‘total_requests’] &gt; 0:
+ global_metrics[‘cache_hit_rate’] = (
+ global_metrics[‘total_cache_hits’] / global_metrics[‘total_requests’]
+ )
+ else:
+ global_metrics[‘cache_hit_rate’] = 0</p>
+
+<p>return global_metrics</p>
+
+<p>def print_dashboard(self):
+ “"”Print metrics dashboard”””
+ metrics = self.collect_metrics()</p>
+
+<p>print(“\n” + “=”<em>70)
+ print(“CDN METRICS DASHBOARD”)
+ print(“=”</em>70)</p>
+
+<p>print(f”\nGlobal Metrics:”)
+ print(f” Total Requests: {metrics[‘total_requests’]:,}”)
+ print(f” Cache Hit Rate: {metrics[‘cache_hit_rate’]:.2%}”)</p>
+
+<p>print(f”\nRegional Breakdown:”)</p>
+
+<p>for region, data in metrics[‘regions’].items():
+ print(f”\n {region}:”)
+ print(f” Requests: {data[‘requests’]:,}”)
+ print(f” L1 Hit Rate: {data[‘stats’][‘l1_hit_rate’]:.2%}”)
+ print(f” L2 Hit Rate: {data[‘stats’][‘l2_hit_rate’]:.2%}”)
+ print(f” Miss Rate: {data[‘stats’][‘miss_rate’]:.2%}”)
+ print(f” Avg L1 Latency: {data[‘stats’][‘avg_l1_latency_ms’]:.2f}ms”)
+ print(f” Avg Miss Latency: {data[‘stats’][‘avg_miss_latency_ms’]:.2f}ms”)</p>
+
+<p>print(“=”*70)</p>
+
+<p>def plot_latency_distribution(self):
+ “"”Plot latency distribution by region”””
+ import matplotlib.pyplot as plt</p>
+
+<p>fig, axes = plt.subplots(len(self.edge_servers), 1, figsize=(12, 4 * len(self.edge_servers)))</p>
+
+<p>for i, server in enumerate(self.edge_servers):
+ ax = axes[i] if len(self.edge_servers) &gt; 1 else axes</p>
+
+<p># Get latencies
+ l1_latencies = np.array(server.metrics.l1_latencies) * 1000 # ms
+ l2_latencies = np.array(server.metrics.l2_latencies) * 1000
+ miss_latencies = np.array(server.metrics.miss_latencies) * 1000</p>
+
+<p># Plot histograms
+ ax.hist(l1_latencies, bins=50, alpha=0.5, label=’L1 Cache’, color=’green’)
+ ax.hist(l2_latencies, bins=50, alpha=0.5, label=’L2 Cache’, color=’blue’)
+ ax.hist(miss_latencies, bins=50, alpha=0.5, label=’Origin’, color=’red’)</p>
+
+<p>ax.set_xlabel(‘Latency (ms)’)
+ ax.set_ylabel(‘Frequency’)
+ ax.set_title(f’Latency Distribution - {server.region}’)
+ ax.legend()
+ ax.grid(True, alpha=0.3)</p>
+
+<p>plt.tight_layout()
+ plt.savefig(‘cdn_latency_distribution.png’)
+ plt.close()</p>
+
+<p>print(“Latency distribution plot saved to cdn_latency_distribution.png”)</p>
+
+<h1 id="example-usage-4">Example usage</h1>
+<p>edge_servers = [
+ # … initialize edge servers
+]</p>
+
+<p>dashboard = CDNMetricsDashboard(edge_servers)</p>
+
+<h1 id="collect-and-display-metrics">Collect and display metrics</h1>
+<p>dashboard.print_dashboard()</p>
+
+<h1 id="plot-latency-distribution">Plot latency distribution</h1>
+<p>dashboard.plot_latency_distribution()
+``</p>
 
 <hr />
 
@@ -1531,112 +1565,115 @@ Serve from edge → Less traffic to origin → Lower costs</p>
 
 <h3 id="tiered-caching-strategy">Tiered Caching Strategy</h3>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">TieredCachingStrategy</span><span class="p">:</span>
-    <span class="sh">"""</span><span class="s">
-    Optimize costs with tiered caching
-    
-    Tiers:
-    1. Hot (L1 - Redis): Most accessed, expensive, fast
-    2. Warm (L2 - Local disk): Frequently accessed, cheap, medium speed
-    3. Cold (S3): Rarely accessed, cheapest, slow
-    
-    Move items between tiers based on access patterns
-    </span><span class="sh">"""</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">l1_cost_per_gb_per_month</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># Redis
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">l2_cost_per_gb_per_month</span> <span class="o">=</span> <span class="mi">10</span>   <span class="c1"># SSD
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">l3_cost_per_gb_per_month</span> <span class="o">=</span> <span class="mf">0.02</span>  <span class="c1"># S3
-</span>        
-        <span class="n">self</span><span class="p">.</span><span class="n">l1_size_gb</span> <span class="o">=</span> <span class="mi">10</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">l2_size_gb</span> <span class="o">=</span> <span class="mi">100</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">l3_size_gb</span> <span class="o">=</span> <span class="mi">1000</span>
-    
-    <span class="k">def</span> <span class="nf">calculate_monthly_cost</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Calculate monthly storage cost</span><span class="sh">"""</span>
-        <span class="n">l1_cost</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">l1_size_gb</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">l1_cost_per_gb_per_month</span>
-        <span class="n">l2_cost</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">l2_size_gb</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">l2_cost_per_gb_per_month</span>
-        <span class="n">l3_cost</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">l3_size_gb</span> <span class="o">*</span> <span class="n">self</span><span class="p">.</span><span class="n">l3_cost_per_gb_per_month</span>
-        
-        <span class="n">total_cost</span> <span class="o">=</span> <span class="n">l1_cost</span> <span class="o">+</span> <span class="n">l2_cost</span> <span class="o">+</span> <span class="n">l3_cost</span>
-        
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">l1_cost</span><span class="sh">'</span><span class="p">:</span> <span class="n">l1_cost</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">l2_cost</span><span class="sh">'</span><span class="p">:</span> <span class="n">l2_cost</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">l3_cost</span><span class="sh">'</span><span class="p">:</span> <span class="n">l3_cost</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">total_cost</span><span class="sh">'</span><span class="p">:</span> <span class="n">total_cost</span>
-        <span class="p">}</span>
-    
-    <span class="k">def</span> <span class="nf">optimize_tier_sizes</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">access_patterns</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">
-        Optimize tier sizes based on access patterns
-        
-        Goal: Minimize cost while maintaining hit rate
-        </span><span class="sh">"""</span>
-        <span class="c1"># Analyze access frequency
-</span>        <span class="n">access_freq</span> <span class="o">=</span> <span class="p">{}</span>
-        
-        <span class="k">for</span> <span class="n">item_id</span><span class="p">,</span> <span class="n">accesses</span> <span class="ow">in</span> <span class="n">access_patterns</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-            <span class="n">access_freq</span><span class="p">[</span><span class="n">item_id</span><span class="p">]</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">accesses</span><span class="p">)</span>
-        
-        <span class="c1"># Sort by frequency
-</span>        <span class="n">sorted_items</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span>
-            <span class="n">access_freq</span><span class="p">.</span><span class="nf">items</span><span class="p">(),</span>
-            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Allocate to tiers
-</span>        <span class="n">l1_items</span> <span class="o">=</span> <span class="n">sorted_items</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span>  <span class="c1"># Top 100
-</span>        <span class="n">l2_items</span> <span class="o">=</span> <span class="n">sorted_items</span><span class="p">[</span><span class="mi">100</span><span class="p">:</span><span class="mi">1000</span><span class="p">]</span>  <span class="c1"># Next 900
-</span>        <span class="n">l3_items</span> <span class="o">=</span> <span class="n">sorted_items</span><span class="p">[</span><span class="mi">1000</span><span class="p">:]</span>  <span class="c1"># Rest
-</span>        
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Tier allocation:</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  L1 (Hot):  </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">l1_items</span><span class="p">)</span><span class="si">}</span><span class="s"> items</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  L2 (Warm): </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">l2_items</span><span class="p">)</span><span class="si">}</span><span class="s"> items</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  L3 (Cold): </span><span class="si">{</span><span class="nf">len</span><span class="p">(</span><span class="n">l3_items</span><span class="p">)</span><span class="si">}</span><span class="s"> items</span><span class="sh">"</span><span class="p">)</span>
-        
-        <span class="c1"># Calculate expected hit rate
-</span>        <span class="n">total_accesses</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">access_freq</span><span class="p">.</span><span class="nf">values</span><span class="p">())</span>
-        <span class="n">l1_accesses</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">freq</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">freq</span> <span class="ow">in</span> <span class="n">l1_items</span><span class="p">)</span>
-        <span class="n">l2_accesses</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">freq</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">freq</span> <span class="ow">in</span> <span class="n">l2_items</span><span class="p">)</span>
-        
-        <span class="n">l1_hit_rate</span> <span class="o">=</span> <span class="n">l1_accesses</span> <span class="o">/</span> <span class="n">total_accesses</span>
-        <span class="n">l2_hit_rate</span> <span class="o">=</span> <span class="n">l2_accesses</span> <span class="o">/</span> <span class="n">total_accesses</span>
-        
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="se">\n</span><span class="s">Expected hit rates:</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  L1: </span><span class="si">{</span><span class="n">l1_hit_rate</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  L2: </span><span class="si">{</span><span class="n">l2_hit_rate</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  Combined (L1+L2): </span><span class="si">{</span><span class="p">(</span><span class="n">l1_hit_rate</span> <span class="o">+</span> <span class="n">l2_hit_rate</span><span class="p">)</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p>``python
+class TieredCachingStrategy:
+ “””
+ Optimize costs with tiered caching</p>
 
-<span class="c1"># Example
-</span><span class="n">strategy</span> <span class="o">=</span> <span class="nc">TieredCachingStrategy</span><span class="p">()</span>
+<p>Tiers:</p>
+<ol>
+  <li>Hot (L1 - Redis): Most accessed, expensive, fast</li>
+  <li>Warm (L2 - Local disk): Frequently accessed, cheap, medium speed</li>
+  <li>Cold (S3): Rarely accessed, cheapest, slow</li>
+</ol>
 
-<span class="c1"># Calculate costs
-</span><span class="n">costs</span> <span class="o">=</span> <span class="n">strategy</span><span class="p">.</span><span class="nf">calculate_monthly_cost</span><span class="p">()</span>
-<span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">Monthly CDN storage costs:</span><span class="sh">"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">costs</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">  </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s">: $</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="n">f</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p>Move items between tiers based on access patterns
+ “””</p>
 
-<span class="c1"># Simulate access patterns
-</span><span class="n">access_patterns</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="sa">f</span><span class="sh">"</span><span class="s">item_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="sh">"</span><span class="p">:</span> <span class="p">[</span><span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">random</span><span class="p">.</span><span class="nf">random</span><span class="p">()</span> <span class="o">*</span> <span class="mi">86400</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">random</span><span class="p">.</span><span class="nf">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">))]</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">10000</span><span class="p">)</span>
-<span class="p">}</span>
+<p>def <strong>init</strong>(self):
+ self.l1_cost_per_gb_per_month = 100 # Redis
+ self.l2_cost_per_gb_per_month = 10 # SSD
+ self.l3_cost_per_gb_per_month = 0.02 # S3</p>
 
-<span class="c1"># Optimize
-</span><span class="n">strategy</span><span class="p">.</span><span class="nf">optimize_tier_sizes</span><span class="p">(</span><span class="n">access_patterns</span><span class="p">)</span>
-</code></pre></div></div>
+<p>self.l1_size_gb = 10
+ self.l2_size_gb = 100
+ self.l3_size_gb = 1000</p>
+
+<p>def calculate_monthly_cost(self):
+ “"”Calculate monthly storage cost”””
+ l1_cost = self.l1_size_gb * self.l1_cost_per_gb_per_month
+ l2_cost = self.l2_size_gb * self.l2_cost_per_gb_per_month
+ l3_cost = self.l3_size_gb * self.l3_cost_per_gb_per_month</p>
+
+<p>total_cost = l1_cost + l2_cost + l3_cost</p>
+
+<p>return {
+ ‘l1_cost’: l1_cost,
+ ‘l2_cost’: l2_cost,
+ ‘l3_cost’: l3_cost,
+ ‘total_cost’: total_cost
+ }</p>
+
+<p>def optimize_tier_sizes(self, access_patterns):
+ “””
+ Optimize tier sizes based on access patterns</p>
+
+<p>Goal: Minimize cost while maintaining hit rate
+ “””
+ # Analyze access frequency
+ access_freq = {}</p>
+
+<p>for item_id, accesses in access_patterns.items():
+ access_freq[item_id] = len(accesses)</p>
+
+<p># Sort by frequency
+ sorted_items = sorted(
+ access_freq.items(),
+ key=lambda x: x[1],
+ reverse=True
+ )</p>
+
+<p># Allocate to tiers
+ l1_items = sorted_items[:100] # Top 100
+ l2_items = sorted_items[100:1000] # Next 900
+ l3_items = sorted_items[1000:] # Rest</p>
+
+<p>print(f”Tier allocation:”)
+ print(f” L1 (Hot): {len(l1_items)} items”)
+ print(f” L2 (Warm): {len(l2_items)} items”)
+ print(f” L3 (Cold): {len(l3_items)} items”)</p>
+
+<p># Calculate expected hit rate
+ total_accesses = sum(access_freq.values())
+ l1_accesses = sum(freq for _, freq in l1_items)
+ l2_accesses = sum(freq for _, freq in l2_items)</p>
+
+<p>l1_hit_rate = l1_accesses / total_accesses
+ l2_hit_rate = l2_accesses / total_accesses</p>
+
+<p>print(f”\nExpected hit rates:”)
+ print(f” L1: {l1_hit_rate:.2%}”)
+ print(f” L2: {l2_hit_rate:.2%}”)
+ print(f” Combined (L1+L2): {(l1_hit_rate + l2_hit_rate):.2%}”)</p>
+
+<h1 id="example">Example</h1>
+<p>strategy = TieredCachingStrategy()</p>
+
+<h1 id="calculate-costs">Calculate costs</h1>
+<p>costs = strategy.calculate_monthly_cost()
+print(“Monthly CDN storage costs:”)
+for key, value in costs.items():
+ print(f” {key}: ${value:.2f}”)</p>
+
+<h1 id="simulate-access-patterns">Simulate access patterns</h1>
+<p>access_patterns = {
+ f”item_{i}”: [time.time() - random.random() * 86400 for _ in range(random.randint(1, 100))]
+ for i in range(10000)
+}</p>
+
+<h1 id="optimize">Optimize</h1>
+<p>strategy.optimize_tier_sizes(access_patterns)
+``</p>
 
 <hr />
 
 <h2 id="key-takeaways">Key Takeaways</h2>
 
-<p>✅ <strong>Edge caching</strong> - Serve content close to users for low latency<br />
-✅ <strong>Multi-level cache</strong> - L1 (Redis), L2 (disk), origin (database)<br />
-✅ <strong>Smart routing</strong> - GeoDNS + latency-based + load-based<br />
-✅ <strong>Cache invalidation</strong> - Pub/sub for real-time propagation<br />
-✅ <strong>Edge ML serving</strong> - Deploy models to edge for fast inference<br />
+<p>✅ <strong>Edge caching</strong> - Serve content close to users for low latency 
+✅ <strong>Multi-level cache</strong> - L1 (Redis), L2 (disk), origin (database) 
+✅ <strong>Smart routing</strong> - GeoDNS + latency-based + load-based 
+✅ <strong>Cache invalidation</strong> - Pub/sub for real-time propagation 
+✅ <strong>Edge ML serving</strong> - Deploy models to edge for fast inference 
 ✅ <strong>Cost optimization</strong> - Tiered storage based on access patterns</p>
 
 <p><strong>Key Metrics:</strong></p>

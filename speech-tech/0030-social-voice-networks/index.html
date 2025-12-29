@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Social Voice Networks">
     <meta itemprop="description" content="“Building recommendation and moderation systems for voice-based social platforms.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -274,39 +274,40 @@
 
 <h2 id="2-system-architecture">2. System Architecture</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌──────────────────────────────────────────────┐
-│         Social Voice Network Platform         │
+<p><code class="language-plaintext highlighter-rouge">
+┌──────────────────────────────────────────────┐
+│ Social Voice Network Platform │
 ├──────────────────────────────────────────────┤
-│                                               │
-│  ┌────────────┐  ┌────────────┐              │
-│  │ Live Audio │  │  Speaker   │              │
-│  │  Streams   │  │Recognition │              │
-│  └──────┬─────┘  └──────┬─────┘              │
-│         │                │                    │
-│         v                v                    │
-│  ┌──────────────────────────────┐            │
-│  │      ASR (Speech-to-Text)    │            │
-│  └──────────┬───────────────────┘            │
-│             │                                 │
-│             v                                 │
-│  ┌──────────────────────────────┐            │
-│  │   Content Moderation          │            │
-│  │   (Toxicity, Misinformation)  │            │
-│  └──────────┬───────────────────┘            │
-│             │                                 │
-│             v                                 │
-│  ┌──────────────────────────────┐            │
-│  │  Topic Extraction &amp; Indexing │            │
-│  └──────────┬───────────────────┘            │
-│             │                                 │
-│             v                                 │
-│  ┌──────────────────────────────┐            │
-│  │  Recommendation Engine        │            │
-│  │  (User → Room matching)       │            │
-│  └──────────────────────────────┘            │
-│                                               │
+│ │
+│ ┌────────────┐ ┌────────────┐ │
+│ │ Live Audio │ │ Speaker │ │
+│ │ Streams │ │Recognition │ │
+│ └──────┬─────┘ └──────┬─────┘ │
+│ │ │ │
+│ v v │
+│ ┌──────────────────────────────┐ │
+│ │ ASR (Speech-to-Text) │ │
+│ └──────────┬───────────────────┘ │
+│ │ │
+│ v │
+│ ┌──────────────────────────────┐ │
+│ │ Content Moderation │ │
+│ │ (Toxicity, Misinformation) │ │
+│ └──────────┬───────────────────┘ │
+│ │ │
+│ v │
+│ ┌──────────────────────────────┐ │
+│ │ Topic Extraction &amp; Indexing │ │
+│ └──────────┬───────────────────┘ │
+│ │ │
+│ v │
+│ ┌──────────────────────────────┐ │
+│ │ Recommendation Engine │ │
+│ │ (User → Room matching) │ │
+│ └──────────────────────────────┘ │
+│ │
 └──────────────────────────────────────────────┘
-</code></pre></div></div>
+</code></p>
 
 <h2 id="3-speaker-recognition-diarization">3. Speaker Recognition (Diarization)</h2>
 
@@ -314,72 +315,76 @@
 
 <h3 id="x-vector-embeddings">x-Vector Embeddings</h3>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Audio (MFCC features)
-  ↓
+<p><strong>Architecture:</strong>
+<code class="language-plaintext highlighter-rouge">
+Audio (MFCC features)
+ ↓
 TDNN (Time Delay Neural Network)
-  ↓
+ ↓
 Statistics Pooling (mean + std over time)
-  ↓
+ ↓
 Fully Connected Layers
-  ↓
+ ↓
 x-vector (512-dim embedding)
-</code></pre></div></div>
+</code></p>
 
 <p><strong>Training:</strong> Softmax loss over speaker IDs.
 <strong>Inference:</strong> Extract x-vector for each segment, cluster to identify speakers.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torchaudio</span>
-<span class="kn">from</span> <span class="n">speechbrain.pretrained</span> <span class="kn">import</span> <span class="n">EncoderClassifier</span>
+<p>``python
+import torch
+import torchaudio
+from speechbrain.pretrained import EncoderClassifier</p>
 
-<span class="c1"># Load pre-trained x-vector model
-</span><span class="n">classifier</span> <span class="o">=</span> <span class="n">EncoderClassifier</span><span class="p">.</span><span class="nf">from_hparams</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="sh">"</span><span class="s">speechbrain/spkrec-xvect-voxceleb</span><span class="sh">"</span><span class="p">)</span>
+<h1 id="load-pre-trained-x-vector-model">Load pre-trained x-vector model</h1>
+<p>classifier = EncoderClassifier.from_hparams(source=”speechbrain/spkrec-xvect-voxceleb”)</p>
 
-<span class="k">def</span> <span class="nf">extract_speaker_embedding</span><span class="p">(</span><span class="n">audio_path</span><span class="p">):</span>
-    <span class="c1"># Load audio
-</span>    <span class="n">signal</span><span class="p">,</span> <span class="n">fs</span> <span class="o">=</span> <span class="n">torchaudio</span><span class="p">.</span><span class="nf">load</span><span class="p">(</span><span class="n">audio_path</span><span class="p">)</span>
-    
-    <span class="c1"># Extract x-vector
-</span>    <span class="n">embeddings</span> <span class="o">=</span> <span class="n">classifier</span><span class="p">.</span><span class="nf">encode_batch</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">embeddings</span><span class="p">.</span><span class="nf">squeeze</span><span class="p">()</span>  <span class="c1"># [512]
-</span>
-<span class="c1"># Clustering speakers
-</span><span class="kn">from</span> <span class="n">sklearn.cluster</span> <span class="kn">import</span> <span class="n">AgglomerativeClustering</span>
+<p>def extract_speaker_embedding(audio_path):
+ # Load audio
+ signal, fs = torchaudio.load(audio_path)</p>
 
-<span class="n">embeddings</span> <span class="o">=</span> <span class="p">[</span><span class="nf">extract_speaker_embedding</span><span class="p">(</span><span class="n">segment</span><span class="p">)</span> <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">]</span>
-<span class="n">clustering</span> <span class="o">=</span> <span class="nc">AgglomerativeClustering</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">distance_threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
-<span class="n">labels</span> <span class="o">=</span> <span class="n">clustering</span><span class="p">.</span><span class="nf">fit_predict</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
+<p># Extract x-vector
+ embeddings = classifier.encode_batch(signal)</p>
 
-<span class="c1"># labels[i] = speaker ID for segment i
-</span></code></pre></div></div>
+<p>return embeddings.squeeze() # [512]</p>
+
+<h1 id="clustering-speakers">Clustering speakers</h1>
+<p>from sklearn.cluster import AgglomerativeClustering</p>
+
+<p>embeddings = [extract_speaker_embedding(segment) for segment in segments]
+clustering = AgglomerativeClustering(n_clusters=None, distance_threshold=0.5)
+labels = clustering.fit_predict(embeddings)</p>
+
+<h1 id="labelsi--speaker-id-for-segment-i">labels[i] = speaker ID for segment i</h1>
+<p>``</p>
 
 <h3 id="speaker-change-detection">Speaker Change Detection</h3>
 
 <p><strong>Problem:</strong> Detect when a new speaker starts talking.</p>
 
-<p><strong>Approach: Bayesian Information Criterion (BIC)</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>For each potential change point t:
-  Model 1: [0, t] and [t+1, T] as two separate Gaussians
-  Model 2: [0, T] as one Gaussian
-  ΔBIC = BIC(Model1) - BIC(Model2)
-  
-If ΔBIC &gt; threshold: Change point detected
-</code></pre></div></div>
+<p><strong>Approach: Bayesian Information Criterion (BIC)</strong>
+``
+For each potential change point t:
+ Model 1: [0, t] and [t+1, T] as two separate Gaussians
+ Model 2: [0, T] as one Gaussian
+ ΔBIC = BIC(Model1) - BIC(Model2)</p>
 
-<p><strong>Neural Approach:</strong> LSTM that predicts change points.</p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SpeakerChangeDetector</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">lstm</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTM</span><span class="p">(</span><span class="n">input_size</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">hidden_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">num_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">bidirectional</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># Binary classification: change or no change
-</span>    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">mfcc</span><span class="p">):</span>
-        <span class="c1"># mfcc: [batch, time, 40]
-</span>        <span class="n">lstm_out</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">lstm</span><span class="p">(</span><span class="n">mfcc</span><span class="p">)</span>
-        <span class="n">logits</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">fc</span><span class="p">(</span><span class="n">lstm_out</span><span class="p">)</span>  <span class="c1"># [batch, time, 2]
-</span>        <span class="k">return</span> <span class="n">logits</span>
-</code></pre></div></div>
+<p>If ΔBIC &gt; threshold: Change point detected
+``</p>
+
+<p><strong>Neural Approach:</strong> LSTM that predicts change points.
+``python
+class SpeakerChangeDetector(nn.Module):
+ def <strong>init</strong>(self):
+ self.lstm = nn.LSTM(input_size=40, hidden_size=256, num_layers=2, bidirectional=True)
+ self.fc = nn.Linear(512, 2) # Binary classification: change or no change</p>
+
+<p>def forward(self, mfcc):
+ # mfcc: [batch, time, 40]
+ lstm_out, _ = self.lstm(mfcc)
+ logits = self.fc(lstm_out) # [batch, time, 2]
+ return logits
+``</p>
 
 <h2 id="4-real-time-asr-for-transcription">4. Real-time ASR for Transcription</h2>
 
@@ -394,27 +399,28 @@ If ΔBIC &gt; threshold: Change point detected
   <li><strong>Joint Network:</strong> Combines encoder + prediction to emit tokens.</li>
 </ol>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">StreamingRNNT</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="nc">ConformerEncoder</span><span class="p">(</span><span class="n">streaming</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">prediction</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTM</span><span class="p">(</span><span class="n">input_size</span><span class="o">=</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">joint</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">512</span> <span class="o">+</span> <span class="mi">512</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_chunk</span><span class="p">,</span> <span class="n">prev_token</span><span class="p">,</span> <span class="n">prev_hidden</span><span class="p">):</span>
-        <span class="c1"># Encode audio
-</span>        <span class="n">enc_out</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>  <span class="c1"># [1, 512]
-</span>        
-        <span class="c1"># Predict next token
-</span>        <span class="n">pred_out</span><span class="p">,</span> <span class="n">hidden</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">prediction</span><span class="p">(</span><span class="n">prev_token</span><span class="p">,</span> <span class="n">prev_hidden</span><span class="p">)</span>  <span class="c1"># [1, 512]
-</span>        
-        <span class="c1"># Joint
-</span>        <span class="n">joint_out</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">joint</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span><span class="n">enc_out</span><span class="p">,</span> <span class="n">pred_out</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>  <span class="c1"># [1, vocab_size]
-</span>        
-        <span class="c1"># Greedy decode
-</span>        <span class="n">token</span> <span class="o">=</span> <span class="n">joint_out</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">token</span><span class="p">,</span> <span class="n">hidden</span>
-</code></pre></div></div>
+<p>``python
+class StreamingRNNT(nn.Module):
+ def <strong>init</strong>(self):
+ self.encoder = ConformerEncoder(streaming=True)
+ self.prediction = nn.LSTM(input_size=vocab_size, hidden_size=512)
+ self.joint = nn.Linear(512 + 512, vocab_size)</p>
+
+<p>def forward(self, audio_chunk, prev_token, prev_hidden):
+ # Encode audio
+ enc_out = self.encoder(audio_chunk) # [1, 512]</p>
+
+<p># Predict next token
+ pred_out, hidden = self.prediction(prev_token, prev_hidden) # [1, 512]</p>
+
+<p># Joint
+ joint_out = self.joint(torch.cat([enc_out, pred_out], dim=1)) # [1, vocab_size]</p>
+
+<p># Greedy decode
+ token = joint_out.argmax(dim=1)</p>
+
+<p>return token, hidden
+``</p>
 
 <p><strong>Latency Breakdown:</strong></p>
 <ul>
@@ -438,30 +444,31 @@ If ΔBIC &gt; threshold: Change point detected
   <li><strong>Fusion:</strong> Combine text + audio scores.</li>
 </ol>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">ToxicityDetector</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">text_encoder</span> <span class="o">=</span> <span class="nc">BERTModel</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">audio_encoder</span> <span class="o">=</span> <span class="nc">ResNet1D</span><span class="p">()</span>  <span class="c1"># Conv1D on mel-spectrogram
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">fusion</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">768</span> <span class="o">+</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># Binary: toxic or not
-</span>    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text_tokens</span><span class="p">,</span> <span class="n">audio</span><span class="p">):</span>
-        <span class="n">text_emb</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">text_encoder</span><span class="p">(</span><span class="n">text_tokens</span><span class="p">).</span><span class="n">pooler_output</span>  <span class="c1"># [batch, 768]
-</span>        <span class="n">audio_emb</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">audio_encoder</span><span class="p">(</span><span class="n">audio</span><span class="p">).</span><span class="nf">squeeze</span><span class="p">()</span>  <span class="c1"># [batch, 256]
-</span>        
-        <span class="n">combined</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">([</span><span class="n">text_emb</span><span class="p">,</span> <span class="n">audio_emb</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">logits</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">fusion</span><span class="p">(</span><span class="n">combined</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">logits</span>
+<p>``python
+class ToxicityDetector(nn.Module):
+ def <strong>init</strong>(self):
+ self.text_encoder = BERTModel()
+ self.audio_encoder = ResNet1D() # Conv1D on mel-spectrogram
+ self.fusion = nn.Linear(768 + 256, 2) # Binary: toxic or not</p>
 
-<span class="c1"># Inference
-</span><span class="n">text</span> <span class="o">=</span> <span class="nf">asr</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-<span class="n">logits</span> <span class="o">=</span> <span class="nf">toxicity_detector</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">audio_chunk</span><span class="p">)</span>
-<span class="n">is_toxic</span> <span class="o">=</span> <span class="n">logits</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+<p>def forward(self, text_tokens, audio):
+ text_emb = self.text_encoder(text_tokens).pooler_output # [batch, 768]
+ audio_emb = self.audio_encoder(audio).squeeze() # [batch, 256]</p>
 
-<span class="k">if</span> <span class="n">is_toxic</span><span class="p">:</span>
-    <span class="c1"># Mute speaker, alert moderators
-</span>    <span class="nf">send_alert</span><span class="p">(</span><span class="n">speaker_id</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
-</code></pre></div></div>
+<p>combined = torch.cat([text_emb, audio_emb], dim=1)
+ logits = self.fusion(combined)</p>
+
+<p>return logits</p>
+
+<h1 id="inference">Inference</h1>
+<p>text = asr(audio_chunk)
+logits = toxicity_detector(text, audio_chunk)
+is_toxic = logits.argmax(dim=1) == 1</p>
+
+<p>if is_toxic:
+ # Mute speaker, alert moderators
+ send_alert(speaker_id, timestamp)
+``</p>
 
 <h3 id="misinformation-detection">Misinformation Detection</h3>
 
@@ -474,19 +481,20 @@ If ΔBIC &gt; threshold: Change point detected
   <li><strong>Verification:</strong> Compare claim against knowledge base.</li>
 </ol>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">detect_misinformation</span><span class="p">(</span><span class="n">transcript</span><span class="p">):</span>
-    <span class="c1"># Extract claims using NER
-</span>    <span class="n">claims</span> <span class="o">=</span> <span class="n">ner_model</span><span class="p">.</span><span class="nf">extract_claims</span><span class="p">(</span><span class="n">transcript</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">claim</span> <span class="ow">in</span> <span class="n">claims</span><span class="p">:</span>
-        <span class="c1"># Query fact-checking APIs
-</span>        <span class="n">fact_check_result</span> <span class="o">=</span> <span class="n">fact_check_api</span><span class="p">.</span><span class="nf">verify</span><span class="p">(</span><span class="n">claim</span><span class="p">)</span>
-        
-        <span class="k">if</span> <span class="n">fact_check_result</span><span class="p">.</span><span class="n">confidence</span> <span class="o">&gt;</span> <span class="mf">0.8</span> <span class="ow">and</span> <span class="n">fact_check_result</span><span class="p">.</span><span class="n">verdict</span> <span class="o">==</span> <span class="sh">"</span><span class="s">false</span><span class="sh">"</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">True</span><span class="p">,</span> <span class="n">claim</span>
-    
-    <span class="k">return</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">None</span>
-</code></pre></div></div>
+<p>``python
+def detect_misinformation(transcript):
+ # Extract claims using NER
+ claims = ner_model.extract_claims(transcript)</p>
+
+<p>for claim in claims:
+ # Query fact-checking APIs
+ fact_check_result = fact_check_api.verify(claim)</p>
+
+<p>if fact_check_result.confidence &gt; 0.8 and fact_check_result.verdict == “false”:
+ return True, claim</p>
+
+<p>return False, None
+``</p>
 
 <h2 id="6-topic-extraction-and-tagging">6. Topic Extraction and Tagging</h2>
 
@@ -495,40 +503,42 @@ If ΔBIC &gt; threshold: Change point detected
 <p><strong>Approach: LDA + Neural Topic Models</strong></p>
 
 <h3 id="latent-dirichlet-allocation-lda">Latent Dirichlet Allocation (LDA)</h3>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">sklearn.decomposition</span> <span class="kn">import</span> <span class="n">LatentDirichletAllocation</span>
+<p>``python
+from sklearn.decomposition import LatentDirichletAllocation</p>
 
-<span class="c1"># Collect transcripts from a room
-</span><span class="n">transcripts</span> <span class="o">=</span> <span class="p">[</span><span class="nf">asr</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span> <span class="k">for</span> <span class="n">audio</span> <span class="ow">in</span> <span class="n">room_audio_chunks</span><span class="p">]</span>
-<span class="n">combined_text</span> <span class="o">=</span> <span class="sh">"</span><span class="s"> </span><span class="sh">"</span><span class="p">.</span><span class="nf">join</span><span class="p">(</span><span class="n">transcripts</span><span class="p">)</span>
+<h1 id="collect-transcripts-from-a-room">Collect transcripts from a room</h1>
+<p>transcripts = [asr(audio) for audio in room_audio_chunks]
+combined_text = “ “.join(transcripts)</p>
 
-<span class="c1"># Vectorize
-</span><span class="n">vectorizer</span> <span class="o">=</span> <span class="nc">CountVectorizer</span><span class="p">(</span><span class="n">max_features</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
-<span class="n">X</span> <span class="o">=</span> <span class="n">vectorizer</span><span class="p">.</span><span class="nf">fit_transform</span><span class="p">([</span><span class="n">combined_text</span><span class="p">])</span>
+<h1 id="vectorize">Vectorize</h1>
+<p>vectorizer = CountVectorizer(max_features=1000)
+X = vectorizer.fit_transform([combined_text])</p>
 
-<span class="c1"># LDA
-</span><span class="n">lda</span> <span class="o">=</span> <span class="nc">LatentDirichletAllocation</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-<span class="n">topics</span> <span class="o">=</span> <span class="n">lda</span><span class="p">.</span><span class="nf">fit_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<h1 id="lda">LDA</h1>
+<p>lda = LatentDirichletAllocation(n_components=10)
+topics = lda.fit_transform(X)</p>
 
-<span class="c1"># Top topic
-</span><span class="n">top_topic_id</span> <span class="o">=</span> <span class="n">topics</span><span class="p">.</span><span class="nf">argmax</span><span class="p">()</span>
-</code></pre></div></div>
+<h1 id="top-topic">Top topic</h1>
+<p>top_topic_id = topics.argmax()
+``</p>
 
 <h3 id="neural-topic-model-with-bert">Neural Topic Model (with BERT)</h3>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">NeuralTopicModel</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">num_topics</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="nc">BERTModel</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">topic_layer</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">768</span><span class="p">,</span> <span class="n">num_topics</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
-        <span class="n">emb</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span><span class="n">text</span><span class="p">).</span><span class="n">pooler_output</span>  <span class="c1"># [batch, 768]
-</span>        <span class="n">topic_dist</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="nf">topic_layer</span><span class="p">(</span><span class="n">emb</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># [batch, num_topics]
-</span>        <span class="k">return</span> <span class="n">topic_dist</span>
+<p>``python
+class NeuralTopicModel(nn.Module):
+ def <strong>init</strong>(self, num_topics=100):
+ self.encoder = BERTModel()
+ self.topic_layer = nn.Linear(768, num_topics)</p>
 
-<span class="c1"># Tag room
-</span><span class="n">topic_dist</span> <span class="o">=</span> <span class="nf">neural_topic_model</span><span class="p">(</span><span class="n">room_transcript</span><span class="p">)</span>
-<span class="n">top_topics</span> <span class="o">=</span> <span class="n">topic_dist</span><span class="p">.</span><span class="nf">argsort</span><span class="p">(</span><span class="n">descending</span><span class="o">=</span><span class="bp">True</span><span class="p">)[:</span><span class="mi">3</span><span class="p">]</span>  <span class="c1"># Top 3 topics
-</span><span class="n">room_tags</span> <span class="o">=</span> <span class="p">[</span><span class="n">topic_names</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">top_topics</span><span class="p">]</span>
-</code></pre></div></div>
+<p>def forward(self, text):
+ emb = self.encoder(text).pooler_output # [batch, 768]
+ topic_dist = F.softmax(self.topic_layer(emb), dim=1) # [batch, num_topics]
+ return topic_dist</p>
+
+<h1 id="tag-room">Tag room</h1>
+<p>topic_dist = neural_topic_model(room_transcript)
+top_topics = topic_dist.argsort(descending=True)[:3] # Top 3 topics
+room_tags = [topic_names[t] for t in top_topics]
+``</p>
 
 <h2 id="7-room-recommendation-user--room-matching">7. Room Recommendation (User → Room Matching)</h2>
 
@@ -539,13 +549,10 @@ If ΔBIC &gt; threshold: Change point detected
 <p><strong>Graph:</strong></p>
 <ul>
   <li><strong>Nodes:</strong> Users, Rooms, Topics.</li>
-  <li><strong>Edges:</strong>
-    <ul>
-      <li>User –joined–&gt; Room</li>
-      <li>Room –tagged_with–&gt; Topic</li>
-      <li>User –interested_in–&gt; Topic</li>
-    </ul>
-  </li>
+  <li><strong>Edges:</strong></li>
+  <li>User –joined–&gt; Room</li>
+  <li>Room –tagged_with–&gt; Topic</li>
+  <li>User –interested_in–&gt; Topic</li>
 </ul>
 
 <p><strong>Recommendation:</strong></p>
@@ -554,24 +561,25 @@ If ΔBIC &gt; threshold: Change point detected
   <li><strong>Frequency:</strong> Rooms visited most often in walks are recommended.</li>
 </ol>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">personalized_pagerank</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span> <span class="n">num_walks</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
-    <span class="n">scores</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">num_walks</span><span class="p">):</span>
-        <span class="n">current</span> <span class="o">=</span> <span class="n">user_id</span>
-        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">random</span><span class="p">.</span><span class="nf">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">):</span>
-                <span class="n">current</span> <span class="o">=</span> <span class="n">user_id</span>  <span class="c1"># Restart
-</span>            <span class="k">else</span><span class="p">:</span>
-                <span class="n">neighbors</span> <span class="o">=</span> <span class="n">graph</span><span class="p">.</span><span class="nf">neighbors</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">neighbors</span><span class="p">:</span>
-                    <span class="n">current</span> <span class="o">=</span> <span class="n">random</span><span class="p">.</span><span class="nf">choice</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span>
-            
-            <span class="k">if</span> <span class="n">graph</span><span class="p">.</span><span class="nf">node_type</span><span class="p">(</span><span class="n">current</span><span class="p">)</span> <span class="o">==</span> <span class="sh">"</span><span class="s">Room</span><span class="sh">"</span><span class="p">:</span>
-                <span class="n">scores</span><span class="p">[</span><span class="n">current</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-    
-    <span class="k">return</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">scores</span><span class="p">.</span><span class="nf">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)[:</span><span class="mi">10</span><span class="p">]</span>
-</code></pre></div></div>
+<p>``python
+def personalized_pagerank(graph, user_id, alpha=0.85, num_walks=1000):
+ scores = defaultdict(float)</p>
+
+<p>for _ in range(num_walks):
+ current = user_id
+ for step in range(10):
+ if random.random() &lt; (1 - alpha):
+ current = user_id # Restart
+ else:
+ neighbors = graph.neighbors(current)
+ if neighbors:
+ current = random.choice(neighbors)</p>
+
+<p>if graph.node_type(current) == “Room”:
+ scores[current] += 1</p>
+
+<p>return sorted(scores.items(), key=lambda x: x[1], reverse=True)[:10]
+``</p>
 
 <h3 id="collaborative-filtering">Collaborative Filtering</h3>
 
@@ -582,39 +590,41 @@ R \approx U V^T
 \]
 where \(U\) is user embeddings, \(V\) is room embeddings.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">MatrixFactorization</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">num_users</span><span class="p">,</span> <span class="n">num_rooms</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">128</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">user_emb</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Embedding</span><span class="p">(</span><span class="n">num_users</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">room_emb</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Embedding</span><span class="p">(</span><span class="n">num_rooms</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">room_id</span><span class="p">):</span>
-        <span class="n">u</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">user_emb</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>  <span class="c1"># [batch, k]
-</span>        <span class="n">v</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">room_emb</span><span class="p">(</span><span class="n">room_id</span><span class="p">)</span>  <span class="c1"># [batch, k]
-</span>        <span class="nf">return </span><span class="p">(</span><span class="n">u</span> <span class="o">*</span> <span class="n">v</span><span class="p">).</span><span class="nf">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Dot product
-</span>
-<span class="c1"># Training
-</span><span class="n">loss</span> <span class="o">=</span> <span class="nf">mse_loss</span><span class="p">(</span><span class="nf">model</span><span class="p">(</span><span class="n">user_batch</span><span class="p">,</span> <span class="n">room_batch</span><span class="p">),</span> <span class="n">labels</span><span class="p">)</span>
-</code></pre></div></div>
+<p>``python
+class MatrixFactorization(nn.Module):
+ def <strong>init</strong>(self, num_users, num_rooms, k=128):
+ self.user_emb = nn.Embedding(num_users, k)
+ self.room_emb = nn.Embedding(num_rooms, k)</p>
+
+<p>def forward(self, user_id, room_id):
+ u = self.user_emb(user_id) # [batch, k]
+ v = self.room_emb(room_id) # [batch, k]
+ return (u * v).sum(dim=1) # Dot product</p>
+
+<h1 id="training">Training</h1>
+<p>loss = mse_loss(model(user_batch, room_batch), labels)
+``</p>
 
 <h3 id="content-based-filtering">Content-based Filtering</h3>
 
 <p><strong>Idea:</strong> Recommend rooms similar to those the user joined before.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Extract room content features
-</span><span class="n">room_features</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">room_id</span><span class="p">:</span> <span class="nf">topic_model</span><span class="p">(</span><span class="n">room_transcript</span><span class="p">)</span> <span class="k">for</span> <span class="n">room_id</span> <span class="ow">in</span> <span class="n">rooms</span>
-<span class="p">}</span>
+<p>``python</p>
+<h1 id="extract-room-content-features">Extract room content features</h1>
+<p>room_features = {
+ room_id: topic_model(room_transcript) for room_id in rooms
+}</p>
 
-<span class="c1"># User profile: average of joined rooms
-</span><span class="n">user_profile</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">mean</span><span class="p">([</span><span class="n">room_features</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">user_joined_rooms</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<h1 id="user-profile-average-of-joined-rooms">User profile: average of joined rooms</h1>
+<p>user_profile = np.mean([room_features[r] for r in user_joined_rooms], axis=0)</p>
 
-<span class="c1"># Recommend by cosine similarity
-</span><span class="n">recommendations</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span>
-    <span class="p">[(</span><span class="n">r</span><span class="p">,</span> <span class="nf">cosine_similarity</span><span class="p">(</span><span class="n">user_profile</span><span class="p">,</span> <span class="n">room_features</span><span class="p">[</span><span class="n">r</span><span class="p">]))</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rooms</span><span class="p">],</span>
-    <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-    <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span>
-<span class="p">)[:</span><span class="mi">10</span><span class="p">]</span>
-</code></pre></div></div>
+<h1 id="recommend-by-cosine-similarity">Recommend by cosine similarity</h1>
+<p>recommendations = sorted(
+ [(r, cosine_similarity(user_profile, room_features[r])) for r in rooms],
+ key=lambda x: x[1],
+ reverse=True
+)[:10]
+``</p>
 
 <h2 id="deep-dive-clubhouses-recommendation-algorithm">Deep Dive: Clubhouse’s Recommendation Algorithm</h2>
 
@@ -654,23 +664,24 @@ where \(S\) is the set of already selected rooms.</p>
 <p><strong>Traditional VAD:</strong> Energy threshold (volume &gt; X dB).
 <strong>Problem:</strong> Fails with background noise (TV, music).</p>
 
-<p><strong>Neural VAD:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">NeuralVAD</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">lstm</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTM</span><span class="p">(</span><span class="n">input_size</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">hidden_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">num_layers</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># Speech or silence
-</span>    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">mfcc</span><span class="p">):</span>
-        <span class="c1"># mfcc: [batch, time, 40]
-</span>        <span class="n">lstm_out</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">lstm</span><span class="p">(</span><span class="n">mfcc</span><span class="p">)</span>
-        <span class="n">logits</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">fc</span><span class="p">(</span><span class="n">lstm_out</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>  <span class="c1"># Use last timestep
-</span>        <span class="k">return</span> <span class="n">logits</span>
+<p><strong>Neural VAD:</strong>
+``python
+class NeuralVAD(nn.Module):
+ def <strong>init</strong>(self):
+ self.lstm = nn.LSTM(input_size=40, hidden_size=128, num_layers=2)
+ self.fc = nn.Linear(128, 2) # Speech or silence</p>
 
-<span class="c1"># Inference
-</span><span class="n">is_speaking</span> <span class="o">=</span> <span class="nf">neural_vad</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">).</span><span class="nf">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
-<span class="k">if</span> <span class="n">is_speaking</span><span class="p">:</span>
-    <span class="nf">transmit_audio_to_server</span><span class="p">()</span>
-</code></pre></div></div>
+<p>def forward(self, mfcc):
+ # mfcc: [batch, time, 40]
+ lstm_out, _ = self.lstm(mfcc)
+ logits = self.fc(lstm_out[:, -1, :]) # Use last timestep
+ return logits</p>
+
+<h1 id="inference-1">Inference</h1>
+<p>is_speaking = neural_vad(audio_chunk).argmax(dim=1) == 1
+if is_speaking:
+ transmit_audio_to_server()
+``</p>
 
 <p><strong>Benefit:</strong> Reduces bandwidth by 80% (don’t transmit silence).</p>
 
@@ -678,34 +689,36 @@ where \(S\) is the set of already selected rooms.</p>
 
 <p><strong>Problem:</strong> User A hears User B. User B hears their own voice echoed back (loop).</p>
 
-<p><strong>Acoustic Echo Cancellation (AEC):</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Reference signal: What we played (User B's voice)
-Microphone signal: What we recorded (User A speaking + User B's echo)
+<p><strong>Acoustic Echo Cancellation (AEC):</strong>
+``
+Reference signal: What we played (User B’s voice)
+Microphone signal: What we recorded (User A speaking + User B’s echo)</p>
 
-Goal: Subtract the echo from the microphone signal
-</code></pre></div></div>
+<p>Goal: Subtract the echo from the microphone signal
+``</p>
 
-<p><strong>Adaptive Filter (NLMS - Normalized Least Mean Squares):</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">nlms_aec</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">microphone</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">filter_length</span><span class="o">=</span><span class="mi">512</span><span class="p">):</span>
-    <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="n">filter_length</span><span class="p">)</span>  <span class="c1"># Adaptive filter coefficients
-</span>    <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
-    
-    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">filter_length</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">microphone</span><span class="p">)):</span>
-        <span class="c1"># Reference window
-</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">reference</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="n">filter_length</span><span class="p">:</span><span class="n">n</span><span class="p">]</span>
-        
-        <span class="c1"># Predicted echo
-</span>        <span class="n">echo_estimate</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">dot</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-        
-        <span class="c1"># Error (remove echo)
-</span>        <span class="n">error</span> <span class="o">=</span> <span class="n">microphone</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">-</span> <span class="n">echo_estimate</span>
-        <span class="n">output</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
-        
-        <span class="c1"># Update filter (NLMS)
-</span>        <span class="n">h</span> <span class="o">+=</span> <span class="p">(</span><span class="n">step_size</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">))</span> <span class="o">*</span> <span class="n">error</span> <span class="o">*</span> <span class="n">x</span>
-    
-    <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
-</code></pre></div></div>
+<p><strong>Adaptive Filter (NLMS - Normalized Least Mean Squares):</strong>
+``python
+def nlms_aec(reference, microphone, step_size=0.01, filter_length=512):
+ h = np.zeros(filter_length) # Adaptive filter coefficients
+ output = []</p>
+
+<p>for n in range(filter_length, len(microphone)):
+ # Reference window
+ x = reference[n - filter_length:n]</p>
+
+<p># Predicted echo
+ echo_estimate = np.dot(h, x)</p>
+
+<p># Error (remove echo)
+ error = microphone[n] - echo_estimate
+ output.append(error)</p>
+
+<p># Update filter (NLMS)
+ h += (step_size / (np.dot(x, x) + 1e-8)) * error * x</p>
+
+<p>return np.array(output)
+``</p>
 
 <p><strong>Modern Approach:</strong> End-to-end neural AEC (Facebook’s Demucs).</p>
 
@@ -715,32 +728,33 @@ Goal: Subtract the echo from the microphone signal
 
 <p><strong>Solution: Deep Learning Noise Suppression</strong></p>
 
-<p><strong>Architecture: U-Net on Spectrogram</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">NoiseSuppressionUNet</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Sequential</span><span class="p">(</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">ReLU</span><span class="p">(),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">MaxPool2d</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Conv2d</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">ReLU</span><span class="p">(),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">MaxPool2d</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-        <span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">decoder</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Sequential</span><span class="p">(</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">ConvTranspose2d</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">ReLU</span><span class="p">(),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">ConvTranspose2d</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Sigmoid</span><span class="p">()</span>  <span class="c1"># Mask (0 to 1)
-</span>        <span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">noisy_spec</span><span class="p">):</span>
-        <span class="c1"># noisy_spec: [batch, 1, freq, time]
-</span>        <span class="n">enc</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span><span class="n">noisy_spec</span><span class="p">)</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">decoder</span><span class="p">(</span><span class="n">enc</span><span class="p">)</span>  <span class="c1"># [batch, 1, freq, time]
-</span>        <span class="n">clean_spec</span> <span class="o">=</span> <span class="n">noisy_spec</span> <span class="o">*</span> <span class="n">mask</span>  <span class="c1"># Element-wise multiply
-</span>        <span class="k">return</span> <span class="n">clean_spec</span>
-</code></pre></div></div>
+<p><strong>Architecture: U-Net on Spectrogram</strong>
+``python
+class NoiseSuppressionUNet(nn.Module):
+ def <strong>init</strong>(self):
+ self.encoder = nn.Sequential(
+ nn.Conv2d(1, 64, kernel_size=3, padding=1),
+ nn.ReLU(),
+ nn.MaxPool2d(2),
+ nn.Conv2d(64, 128, kernel_size=3, padding=1),
+ nn.ReLU(),
+ nn.MaxPool2d(2)
+ )</p>
+
+<p>self.decoder = nn.Sequential(
+ nn.ConvTranspose2d(128, 64, kernel_size=2, stride=2),
+ nn.ReLU(),
+ nn.ConvTranspose2d(64, 1, kernel_size=2, stride=2),
+ nn.Sigmoid() # Mask (0 to 1)
+ )</p>
+
+<p>def forward(self, noisy_spec):
+ # noisy_spec: [batch, 1, freq, time]
+ enc = self.encoder(noisy_spec)
+ mask = self.decoder(enc) # [batch, 1, freq, time]
+ clean_spec = noisy_spec * mask # Element-wise multiply
+ return clean_spec
+``</p>
 
 <p><strong>Training:</strong></p>
 <ul>
@@ -755,30 +769,31 @@ Goal: Subtract the echo from the microphone signal
 
 <p><strong>Problem:</strong> Recognize specific users by their voice (not just cluster speakers).</p>
 
-<p><strong>Approach: Speaker Verification</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SpeakerVerifier</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="nc">ResNet1D</span><span class="p">()</span>  <span class="c1"># Extract speaker embedding
-</span>    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_enrollment</span><span class="p">,</span> <span class="n">audio_test</span><span class="p">):</span>
-        <span class="n">emb_enroll</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span><span class="n">audio_enrollment</span><span class="p">)</span>  <span class="c1"># [1, 512]
-</span>        <span class="n">emb_test</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span><span class="n">audio_test</span><span class="p">)</span>  <span class="c1"># [1, 512]
-</span>        
-        <span class="c1"># Cosine similarity
-</span>        <span class="n">similarity</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">cosine_similarity</span><span class="p">(</span><span class="n">emb_enroll</span><span class="p">,</span> <span class="n">emb_test</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">similarity</span>  <span class="c1"># &gt; 0.8 → Same speaker
-</span>
-<span class="c1"># Enrollment
-</span><span class="n">user_emb</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span><span class="n">user_audio_samples</span><span class="p">)</span>
-<span class="n">db</span><span class="p">.</span><span class="nf">store</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">user_emb</span><span class="p">)</span>
+<p><strong>Approach: Speaker Verification</strong>
+``python
+class SpeakerVerifier(nn.Module):
+ def <strong>init</strong>(self):
+ self.encoder = ResNet1D() # Extract speaker embedding</p>
 
-<span class="c1"># Test
-</span><span class="n">test_emb</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">encoder</span><span class="p">(</span><span class="n">test_audio</span><span class="p">)</span>
-<span class="n">similarity</span> <span class="o">=</span> <span class="nf">cosine_similarity</span><span class="p">(</span><span class="n">test_emb</span><span class="p">,</span> <span class="n">db</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">user_id</span><span class="p">))</span>
-<span class="k">if</span> <span class="n">similarity</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">:</span>
-    <span class="n">authenticated</span> <span class="o">=</span> <span class="bp">True</span>
-</code></pre></div></div>
+<p>def forward(self, audio_enrollment, audio_test):
+ emb_enroll = self.encoder(audio_enrollment) # [1, 512]
+ emb_test = self.encoder(audio_test) # [1, 512]</p>
+
+<p># Cosine similarity
+ similarity = F.cosine_similarity(emb_enroll, emb_test)</p>
+
+<p>return similarity # &gt; 0.8 → Same speaker</p>
+
+<h1 id="enrollment">Enrollment</h1>
+<p>user_emb = model.encoder(user_audio_samples)
+db.store(user_id, user_emb)</p>
+
+<h1 id="test">Test</h1>
+<p>test_emb = model.encoder(test_audio)
+similarity = cosine_similarity(test_emb, db.get(user_id))
+if similarity &gt; 0.8:
+ authenticated = True
+``</p>
 
 <p><strong>Use Case:</strong> Automatically mute/unmute the correct participant in a meeting.</p>
 
@@ -797,36 +812,38 @@ Goal: Subtract the echo from the microphone signal
   <li><strong>Quality:</strong> Superior to MP3 at same bitrate.</li>
 </ul>
 
-<p><strong>Adaptive Bitrate:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">adjust_bitrate</span><span class="p">(</span><span class="n">network_conditions</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">network_conditions</span><span class="p">[</span><span class="sh">'</span><span class="s">bandwidth</span><span class="sh">'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>  <span class="c1"># kbps
-</span>        <span class="k">return</span> <span class="mi">128</span>  <span class="c1"># High quality
-</span>    <span class="k">elif</span> <span class="n">network_conditions</span><span class="p">[</span><span class="sh">'</span><span class="s">bandwidth</span><span class="sh">'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">50</span><span class="p">:</span>
-        <span class="k">return</span> <span class="mi">64</span>  <span class="c1"># Medium quality
-</span>    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="mi">24</span>  <span class="c1"># Low quality (voice still intelligible)
-</span></code></pre></div></div>
+<p><strong>Adaptive Bitrate:</strong>
+<code class="language-plaintext highlighter-rouge">python
+def adjust_bitrate(network_conditions):
+ if network_conditions['bandwidth'] &gt; 100: # kbps
+ return 128 # High quality
+ elif network_conditions['bandwidth'] &gt; 50:
+ return 64 # Medium quality
+ else:
+ return 24 # Low quality (voice still intelligible)
+</code></p>
 
 <h2 id="deep-dive-scalability-handling-million-concurrent-users">Deep Dive: Scalability (Handling Million Concurrent Users)</h2>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         ┌──────────────┐
-         │  Load Balancer│
-         └───────┬───────┘
-                 │
-    ┌────────────┼────────────┐
-    │            │            │
-┌───▼───┐  ┌────▼────┐  ┌────▼────┐
-│Server1│  │ Server2 │  │ Server3 │
-└───────┘  └─────────┘  └─────────┘
-    │            │            │
-    └────────────┼────────────┘
-                 │
-         ┌───────▼────────┐
-         │   Media Server  │
-         │   (Janus, Jitsi)│
-         └────────────────┘
-</code></pre></div></div>
+<p><strong>Architecture:</strong>
+<code class="language-plaintext highlighter-rouge">
+ ┌──────────────┐
+ │ Load Balancer│
+ └───────┬───────┘
+ │
+ ┌────────────┼────────────┐
+ │ │ │
+┌───▼───┐ ┌────▼────┐ ┌────▼────┐
+│Server1│ │ Server2 │ │ Server3 │
+└───────┘ └─────────┘ └─────────┘
+ │ │ │
+ └────────────┼────────────┘
+ │
+ ┌───────▼────────┐
+ │ Media Server │
+ │ (Janus, Jitsi)│
+ └────────────────┘
+</code></p>
 
 <p><strong>Techniques:</strong></p>
 <ol>
@@ -843,77 +860,78 @@ Goal: Subtract the echo from the microphone signal
 
 <h2 id="implementation-full-social-voice-network-backend">Implementation: Full Social Voice Network Backend</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
-<span class="kn">from</span> <span class="n">transformers</span> <span class="kn">import</span> <span class="n">BertModel</span>
-<span class="kn">import</span> <span class="n">torchaudio</span>
+<p>``python
+import torch
+import torch.nn as nn
+from transformers import BertModel
+import torchaudio</p>
 
-<span class="k">class</span> <span class="nc">SocialVoiceBackend</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">asr_model</span> <span class="o">=</span> <span class="nf">load_asr_model</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">speaker_recognition</span> <span class="o">=</span> <span class="nf">load_xvector_model</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">toxicity_detector</span> <span class="o">=</span> <span class="nc">ToxicityDetector</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">topic_model</span> <span class="o">=</span> <span class="nc">NeuralTopicModel</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">recommender</span> <span class="o">=</span> <span class="nc">GraphRecommender</span><span class="p">()</span>
-    
-    <span class="k">def</span> <span class="nf">process_audio_chunk</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">audio_chunk</span><span class="p">,</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
-        <span class="c1"># 1. Speaker Recognition
-</span>        <span class="n">speaker_emb</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">speaker_recognition</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-        <span class="n">speaker_id</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">cluster_speaker</span><span class="p">(</span><span class="n">speaker_emb</span><span class="p">,</span> <span class="n">room_id</span><span class="p">)</span>
-        
-        <span class="c1"># 2. ASR
-</span>        <span class="n">transcript</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">asr_model</span><span class="p">.</span><span class="nf">transcribe</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">)</span>
-        
-        <span class="c1"># 3. Content Moderation
-</span>        <span class="n">is_toxic</span><span class="p">,</span> <span class="n">reason</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">toxicity_detector</span><span class="p">(</span><span class="n">transcript</span><span class="p">,</span> <span class="n">audio_chunk</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">is_toxic</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">mute_speaker</span><span class="p">(</span><span class="n">speaker_id</span><span class="p">,</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">reason</span><span class="p">)</span>
-            <span class="k">return</span>
-        
-        <span class="c1"># 4. Update room metadata
-</span>        <span class="n">self</span><span class="p">.</span><span class="nf">update_room_transcript</span><span class="p">(</span><span class="n">room_id</span><span class="p">,</span> <span class="n">transcript</span><span class="p">)</span>
-        
-        <span class="c1"># 5. Extract topics (every 60 seconds)
-</span>        <span class="k">if</span> <span class="nf">should_update_topics</span><span class="p">(</span><span class="n">room_id</span><span class="p">):</span>
-            <span class="n">topics</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">topic_model</span><span class="p">(</span><span class="nf">get_room_transcript</span><span class="p">(</span><span class="n">room_id</span><span class="p">))</span>
-            <span class="n">self</span><span class="p">.</span><span class="nf">update_room_topics</span><span class="p">(</span><span class="n">room_id</span><span class="p">,</span> <span class="n">topics</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">recommend_rooms</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-        <span class="c1"># Get user interests
-</span>        <span class="n">user_profile</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">get_user_profile</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
-        
-        <span class="c1"># Candidate generation
-</span>        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="c1"># 1. Social graph
-</span>        <span class="n">friends</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">get_friends</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
-        <span class="n">candidates</span> <span class="o">+=</span> <span class="n">self</span><span class="p">.</span><span class="nf">get_rooms_with_users</span><span class="p">(</span><span class="n">friends</span><span class="p">)</span>
-        
-        <span class="c1"># 2. Topic matching
-</span>        <span class="n">candidates</span> <span class="o">+=</span> <span class="n">self</span><span class="p">.</span><span class="nf">get_rooms_by_topics</span><span class="p">(</span><span class="n">user_profile</span><span class="p">[</span><span class="sh">'</span><span class="s">interests</span><span class="sh">'</span><span class="p">])</span>
-        
-        <span class="c1"># 3. Collaborative filtering
-</span>        <span class="n">similar_users</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">find_similar_users</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
-        <span class="n">candidates</span> <span class="o">+=</span> <span class="n">self</span><span class="p">.</span><span class="nf">get_popular_rooms_among</span><span class="p">(</span><span class="n">similar_users</span><span class="p">)</span>
-        
-        <span class="c1"># Rank candidates
-</span>        <span class="n">scores</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">recommender</span><span class="p">.</span><span class="nf">rank</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">candidates</span><span class="p">)</span>
-        
-        <span class="c1"># Diversify
-</span>        <span class="n">diverse_rooms</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">apply_mmr</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">lambda_param</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
-        
-        <span class="k">return</span> <span class="n">diverse_rooms</span><span class="p">[:</span><span class="n">top_k</span><span class="p">]</span>
+<p>class SocialVoiceBackend:
+ def <strong>init</strong>(self):
+ self.asr_model = load_asr_model()
+ self.speaker_recognition = load_xvector_model()
+ self.toxicity_detector = ToxicityDetector()
+ self.topic_model = NeuralTopicModel()
+ self.recommender = GraphRecommender()</p>
 
-<span class="c1"># Usage
-</span><span class="n">backend</span> <span class="o">=</span> <span class="nc">SocialVoiceBackend</span><span class="p">()</span>
+<p>def process_audio_chunk(self, audio_chunk, room_id, user_id):
+ # 1. Speaker Recognition
+ speaker_emb = self.speaker_recognition.encode(audio_chunk)
+ speaker_id = self.cluster_speaker(speaker_emb, room_id)</p>
 
-<span class="c1"># Process incoming audio
-</span><span class="k">for</span> <span class="n">audio_chunk</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
-    <span class="n">backend</span><span class="p">.</span><span class="nf">process_audio_chunk</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">,</span> <span class="n">room_id</span><span class="o">=</span><span class="sh">"</span><span class="s">tech_talk_123</span><span class="sh">"</span><span class="p">,</span> <span class="n">user_id</span><span class="o">=</span><span class="sh">"</span><span class="s">alice</span><span class="sh">"</span><span class="p">)</span>
+<p># 2. ASR
+ transcript = self.asr_model.transcribe(audio_chunk)</p>
 
-<span class="c1"># Recommend rooms
-</span><span class="n">recommendations</span> <span class="o">=</span> <span class="n">backend</span><span class="p">.</span><span class="nf">recommend_rooms</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="sh">"</span><span class="s">alice</span><span class="sh">"</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-</code></pre></div></div>
+<p># 3. Content Moderation
+ is_toxic, reason = self.toxicity_detector(transcript, audio_chunk)
+ if is_toxic:
+ self.mute_speaker(speaker_id, room_id, reason)
+ return</p>
+
+<p># 4. Update room metadata
+ self.update_room_transcript(room_id, transcript)</p>
+
+<p># 5. Extract topics (every 60 seconds)
+ if should_update_topics(room_id):
+ topics = self.topic_model(get_room_transcript(room_id))
+ self.update_room_topics(room_id, topics)</p>
+
+<p>def recommend_rooms(self, user_id, top_k=10):
+ # Get user interests
+ user_profile = self.get_user_profile(user_id)</p>
+
+<p># Candidate generation
+ candidates = []</p>
+
+<p># 1. Social graph
+ friends = self.get_friends(user_id)
+ candidates += self.get_rooms_with_users(friends)</p>
+
+<p># 2. Topic matching
+ candidates += self.get_rooms_by_topics(user_profile[‘interests’])</p>
+
+<p># 3. Collaborative filtering
+ similar_users = self.find_similar_users(user_id)
+ candidates += self.get_popular_rooms_among(similar_users)</p>
+
+<p># Rank candidates
+ scores = self.recommender.rank(user_id, candidates)</p>
+
+<p># Diversify
+ diverse_rooms = self.apply_mmr(scores, lambda_param=0.7)</p>
+
+<p>return diverse_rooms[:top_k]</p>
+
+<h1 id="usage">Usage</h1>
+<p>backend = SocialVoiceBackend()</p>
+
+<h1 id="process-incoming-audio">Process incoming audio</h1>
+<p>for audio_chunk in stream:
+ backend.process_audio_chunk(audio_chunk, room_id=”tech_talk_123”, user_id=”alice”)</p>
+
+<h1 id="recommend-rooms">Recommend rooms</h1>
+<p>recommendations = backend.recommend_rooms(user_id=”alice”, top_k=10)
+``</p>
 
 <h2 id="top-interview-questions">Top Interview Questions</h2>
 

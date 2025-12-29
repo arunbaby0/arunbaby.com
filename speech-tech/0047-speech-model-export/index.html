@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Speech Model Export">
     <meta itemprop="description" content="“A model that runs in a Jupyter notebook is an experiment. A model that runs on an iPhone is a product.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -287,17 +287,19 @@ We process audio in small “frames” (e.g., 20ms).
 
 <p>When exporting a streaming speech model (like a Transducer or LSTM), we transform the model signature.</p>
 
-<p><strong>Original (Training) Signature</strong>:</p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">full_audio</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">text</span>
-</code></pre></div></div>
+<p><strong>Original (Training) Signature</strong>:
+<code class="language-plaintext highlighter-rouge">python
+def forward(full_audio):
+ return text
+</code></p>
 
-<p><strong>Exported (Inference) Signature</strong>:</p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">,</span> <span class="n">h_state</span><span class="p">,</span> <span class="n">c_state</span><span class="p">):</span>
-    <span class="c1"># Process small chunk using history
-</span>    <span class="n">output</span><span class="p">,</span> <span class="n">new_h</span><span class="p">,</span> <span class="n">new_c</span> <span class="o">=</span> <span class="nf">lstm_cell</span><span class="p">(</span><span class="n">audio_chunk</span><span class="p">,</span> <span class="n">h_state</span><span class="p">,</span> <span class="n">c_state</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="n">new_h</span><span class="p">,</span> <span class="n">new_c</span>
-</code></pre></div></div>
+<p><strong>Exported (Inference) Signature</strong>:
+<code class="language-plaintext highlighter-rouge">python
+def forward(audio_chunk, h_state, c_state):
+ # Process small chunk using history
+ output, new_h, new_c = lstm_cell(audio_chunk, h_state, c_state)
+ return output, new_h, new_c
+</code></p>
 
 <p>The <strong>Client Application</strong> (iOS App) becomes responsible for holding the <code class="language-plaintext highlighter-rouge">new_h</code> and passing it back into the model on the next loop.</p>
 
@@ -344,40 +346,41 @@ We process audio in small “frames” (e.g., 20ms).
 
 <p>We must define a wrapper class that exposes the state as input/output.</p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">StreamingLSTM</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">lstm</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTMCell</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="c1"># Output chars
-</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x_chunk</span><span class="p">,</span> <span class="n">h_prev</span><span class="p">,</span> <span class="n">c_prev</span><span class="p">):</span>
-        <span class="c1"># x_chunk: [Batch, 1, Features] - One frame
-</span>        <span class="n">h_new</span><span class="p">,</span> <span class="n">c_new</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">lstm</span><span class="p">(</span><span class="n">x_chunk</span><span class="p">,</span> <span class="p">(</span><span class="n">h_prev</span><span class="p">,</span> <span class="n">c_prev</span><span class="p">))</span>
-        <span class="n">output</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">fc</span><span class="p">(</span><span class="n">h_new</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="n">h_new</span><span class="p">,</span> <span class="n">c_new</span>
+<p>class StreamingLSTM(nn.Module):
+ def <strong>init</strong>(self, input_dim, hidden_dim):
+ super().<strong>init</strong>()
+ self.lstm = nn.LSTMCell(input_dim, hidden_dim)
+ self.fc = nn.Linear(hidden_dim, 10) # Output chars</p>
 
-<span class="c1"># 1. Instantiate
-</span><span class="n">model</span> <span class="o">=</span> <span class="nc">StreamingLSTM</span><span class="p">(</span><span class="n">input_dim</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
-<span class="n">model</span><span class="p">.</span><span class="nf">eval</span><span class="p">()</span>
+<p>def forward(self, x_chunk, h_prev, c_prev):
+ # x_chunk: [Batch, 1, Features] - One frame
+ h_new, c_new = self.lstm(x_chunk, (h_prev, c_prev))
+ output = self.fc(h_new)
+ return output, h_new, c_new</p>
 
-<span class="c1"># 2. Creating Dummy Inputs for Tracing
-</span><span class="n">dummy_input</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
-<span class="n">dummy_h</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>
-<span class="n">dummy_c</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>
+<h1 id="1-instantiate">1. Instantiate</h1>
+<p>model = StreamingLSTM(input_dim=80, hidden_dim=256)
+model.eval()</p>
 
-<span class="c1"># 3. Export to ONNX
-</span><span class="n">torch</span><span class="p">.</span><span class="n">onnx</span><span class="p">.</span><span class="nf">export</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">,</span>
-    <span class="p">(</span><span class="n">dummy_input</span><span class="p">,</span> <span class="n">dummy_h</span><span class="p">,</span> <span class="n">dummy_c</span><span class="p">),</span> <span class="c1"># Tuple of inputs
-</span>    <span class="sh">"</span><span class="s">streaming_asr.onnx</span><span class="sh">"</span><span class="p">,</span>
-    <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="sh">"</span><span class="s">audio_chunk</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">h_in</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">c_in</span><span class="sh">"</span><span class="p">],</span>
-    <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="sh">"</span><span class="s">logits</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">h_out</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">c_out</span><span class="sh">"</span><span class="p">],</span>
-    <span class="n">opset_version</span><span class="o">=</span><span class="mi">12</span>
-<span class="p">)</span>
-</code></pre></div></div>
+<h1 id="2-creating-dummy-inputs-for-tracing">2. Creating Dummy Inputs for Tracing</h1>
+<p>dummy_input = torch.randn(1, 80)
+dummy_h = torch.zeros(1, 256)
+dummy_c = torch.zeros(1, 256)</p>
+
+<h1 id="3-export-to-onnx">3. Export to ONNX</h1>
+<p>torch.onnx.export(
+ model,
+ (dummy_input, dummy_h, dummy_c), # Tuple of inputs
+ “streaming_asr.onnx”,
+ input_names=[“audio_chunk”, “h_in”, “c_in”],
+ output_names=[“logits”, “h_out”, “c_out”],
+ opset_version=12
+)
+``</p>
 
 <p>Now, the Android developer sees an ONNX function asking for <code class="language-plaintext highlighter-rouge">h_in</code>. They don’t need to know what an LSTM is. They just know they need to pass <code class="language-plaintext highlighter-rouge">h_out</code> back into <code class="language-plaintext highlighter-rouge">h_in</code>.</p>
 
@@ -387,11 +390,8 @@ We process audio in small “frames” (e.g., 20ms).
 
 <ul>
   <li><strong>Quantization Aware Training (QAT)</strong>:
-If deploying to INT8 (common for Phones/DSP), you should simulate quantization <em>during</em> training. Standard FP32 training followed by simple casting often destroys accuracy for Speech (dynamic range of audio is high).
-    <ul>
-      <li>Use <code class="language-plaintext highlighter-rouge">torch.quantization.prepare_qat</code>.</li>
-    </ul>
-  </li>
+ If deploying to INT8 (common for Phones/DSP), you should simulate quantization <em>during</em> training. Standard FP32 training followed by simple casting often destroys accuracy for Speech (dynamic range of audio is high).</li>
+  <li>Use <code class="language-plaintext highlighter-rouge">torch.quantization.prepare_qat</code>.</li>
 </ul>
 
 <hr />
@@ -411,41 +411,39 @@ If deploying to INT8 (common for Phones/DSP), you should simulate quantization <
 
 <p>The client code loop looks like this (Pseudo-C++):</p>
 
-<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Initialize Logic</span>
-<span class="n">State</span> <span class="n">h</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">();</span>
-<span class="n">State</span> <span class="n">c</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">();</span>
+<p>``cpp
+// Initialize Logic
+State h = zeros();
+State c = zeros();</p>
 
-<span class="k">while</span> <span class="p">(</span><span class="n">is_recording</span><span class="p">)</span> <span class="p">{</span>
-    <span class="c1">// 1. Read 20ms from Microphone</span>
-    <span class="n">AudioBuffer</span> <span class="n">chunk</span> <span class="o">=</span> <span class="n">Microphone</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="mi">320</span><span class="n">_samples</span><span class="p">);</span> 
-    
-    <span class="c1">// 2. Compute Mel-Spectrogram features</span>
-    <span class="n">Tensor</span> <span class="n">features</span> <span class="o">=</span> <span class="n">ComputeMFCC</span><span class="p">(</span><span class="n">chunk</span><span class="p">);</span>
-    
-    <span class="c1">// 3. Run Inference</span>
-    <span class="k">auto</span> <span class="n">result</span> <span class="o">=</span> <span class="n">Model</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">c</span><span class="p">);</span>
-    
-    <span class="c1">// 4. Update State for next loop</span>
-    <span class="n">h</span> <span class="o">=</span> <span class="n">result</span><span class="p">.</span><span class="n">h_out</span><span class="p">;</span>
-    <span class="n">c</span> <span class="o">=</span> <span class="n">result</span><span class="p">.</span><span class="n">c_out</span><span class="p">;</span>
-    
-    <span class="c1">// 5. Decode text</span>
-    <span class="n">String</span> <span class="n">text</span> <span class="o">=</span> <span class="n">CTSDecode</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="n">logits</span><span class="p">);</span>
-    <span class="n">Display</span><span class="p">(</span><span class="n">text</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre></div></div>
+<p>while (is_recording) {
+ // 1. Read 20ms from Microphone
+ AudioBuffer chunk = Microphone.read(320_samples);</p>
+
+<p>// 2. Compute Mel-Spectrogram features
+ Tensor features = ComputeMFCC(chunk);</p>
+
+<p>// 3. Run Inference
+ auto result = Model.run(features, h, c);</p>
+
+<p>// 4. Update State for next loop
+ h = result.h_out;
+ c = result.c_out;</p>
+
+<p>// 5. Decode text
+ String text = CTSDecode(result.logits);
+ Display(text);
+}
+``</p>
 
 <hr />
 
 <h2 id="9-quality-metrics">9. Quality Metrics</h2>
 
 <ul>
-  <li><strong>Real-Time Factor (RTF)</strong>: <code class="language-plaintext highlighter-rouge">Processing_Time / Audio_Duration</code>.
-    <ul>
-      <li>RTF &lt; 1.0 is required.</li>
-      <li>Target RTF: 0.1 (Process 1 sec of audio in 0.1 sec).</li>
-    </ul>
-  </li>
+  <li><strong>Real-Time Factor (RTF)</strong>: <code class="language-plaintext highlighter-rouge">Processing_Time / Audio_Duration</code>.</li>
+  <li>RTF &lt; 1.0 is required.</li>
+  <li>Target RTF: 0.1 (Process 1 sec of audio in 0.1 sec).</li>
   <li><strong>Model Size</strong>: &lt; 50MB for App Store download limits over cellular.</li>
   <li><strong>Power Consumption</strong>: mW per inference.</li>
 </ul>

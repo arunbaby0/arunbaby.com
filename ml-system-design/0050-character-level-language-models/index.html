@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Character-Level Language Models">
     <meta itemprop="description" content="“Before machines could write essays, they had to learn to spell.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -295,13 +295,14 @@ If a sentence is 20 words, the Char-LM sees 100 steps.</p>
 
 <p>We compare <strong>RNN</strong> (Recurrent) vs <strong>Transformer</strong> (Attention).</p>
 
-<p><strong>RNN Style (The Classic)</strong>:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[h] -&gt; [e] -&gt; [l] -&gt; [l]
- |      |      |      |
- v      v      v      v
+<p><strong>RNN Style (The Classic)</strong>:
+<code class="language-plaintext highlighter-rouge">
+[h] -&gt; [e] -&gt; [l] -&gt; [l]
+ | | | |
+ v v v v
 (S0)-&gt; (S1)-&gt; (S2)-&gt; (S3) -&gt; Predict 'o'
-</code></pre></div></div>
-<p>State <code class="language-plaintext highlighter-rouge">S3</code> must verify “We are in the word ‘hello’”.</p>
+</code>
+State <code class="language-plaintext highlighter-rouge">S3</code> must verify “We are in the word ‘hello’”.</p>
 
 <p><strong>Transformer Style (Modern)</strong>:
 Input: <code class="language-plaintext highlighter-rouge">[h, e, l, l]</code>
@@ -345,7 +346,7 @@ Output: <code class="language-plaintext highlighter-rouge">Prob(o)</code></p>
   </tbody>
 </table>
 
-<p><strong>Why BPE won</strong>: It balances the trade-off. It keeps sequence length manageable (for Transformer $O(N^2)$ attention) while handling rare words via characters.</p>
+<p><strong>Why BPE won</strong>: It balances the trade-off. It keeps sequence length manageable (for Transformer O(N^2) attention) while handling rare words via characters.</p>
 
 <h3 id="42-the-softmax-bottleneck">4.2 The Softmax Bottleneck</h3>
 <p>Predicting 1 out of 100 chars is cheap.
@@ -372,43 +373,44 @@ Char-LMs are incredibly fast at the <em>final layer</em>, but incredibly slow at
 
 <h2 id="6-implementation-rnn-char-lm">6. Implementation: RNN Char-LM</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">CharRNN</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">n_layers</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Embedding</span><span class="p">(</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">rnn</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">LSTM</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">hidden</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="c1"># x: [Batch, Seq_Len] (e.g., indices of chars)
-</span>        <span class="n">embeds</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">embedding</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        
-        <span class="c1"># rnn_out: [Batch, Seq_Len, Hidden]
-</span>        <span class="n">rnn_out</span><span class="p">,</span> <span class="n">hidden</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">rnn</span><span class="p">(</span><span class="n">embeds</span><span class="p">,</span> <span class="n">hidden</span><span class="p">)</span>
-        
-        <span class="c1"># Predict next char for EVERY step in sequence
-</span>        <span class="n">logits</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">fc</span><span class="p">(</span><span class="n">rnn_out</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">logits</span><span class="p">,</span> <span class="n">hidden</span>
+<p>class CharRNN(nn.Module):
+ def <strong>init</strong>(self, vocab_size, hidden_size, n_layers=1):
+ super().<strong>init</strong>()
+ self.embedding = nn.Embedding(vocab_size, hidden_size)
+ self.rnn = nn.LSTM(hidden_size, hidden_size, n_layers, batch_first=True)
+ self.fc = nn.Linear(hidden_size, vocab_size)</p>
 
-    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">start_char</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
-        <span class="c1"># Inference Loop
-</span>        <span class="n">curr_char</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([[</span><span class="n">char_to_ix</span><span class="p">[</span><span class="n">start_char</span><span class="p">]]])</span>
-        <span class="n">hidden</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">start_char</span>
-        
-        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">max_len</span><span class="p">):</span>
-            <span class="n">logits</span><span class="p">,</span> <span class="n">hidden</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">forward</span><span class="p">(</span><span class="n">curr_char</span><span class="p">,</span> <span class="n">hidden</span><span class="p">)</span>
-            <span class="n">probs</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">functional</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-            <span class="n">next_ix</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">multinomial</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="mi">1</span><span class="p">).</span><span class="nf">item</span><span class="p">()</span>
-            
-            <span class="n">out</span> <span class="o">+=</span> <span class="n">ix_to_char</span><span class="p">[</span><span class="n">next_ix</span><span class="p">]</span>
-            <span class="n">curr_char</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([[</span><span class="n">next_ix</span><span class="p">]])</span>
-            
-        <span class="k">return</span> <span class="n">out</span>
-</code></pre></div></div>
+<p>def forward(self, x, hidden=None):
+ # x: [Batch, Seq_Len] (e.g., indices of chars)
+ embeds = self.embedding(x)</p>
+
+<p># rnn_out: [Batch, Seq_Len, Hidden]
+ rnn_out, hidden = self.rnn(embeds, hidden)</p>
+
+<p># Predict next char for EVERY step in sequence
+ logits = self.fc(rnn_out)
+ return logits, hidden</p>
+
+<p>def generate(self, start_char, max_len=100):
+ # Inference Loop
+ curr_char = torch.tensor([[char_to_ix[start_char]]])
+ hidden = None
+ out = start_char</p>
+
+<p>for _ in range(max_len):
+ logits, hidden = self.forward(curr_char, hidden)
+ probs = nn.functional.softmax(logits[0, -1], dim=0)
+ next_ix = torch.multinomial(probs, 1).item()</p>
+
+<p>out += ix_to_char[next_ix]
+ curr_char = torch.tensor([[next_ix]])</p>
+
+<p>return out
+``</p>
 
 <hr />
 
@@ -451,7 +453,7 @@ This proved that neural nets learn <strong>Syntactic Structure</strong> just fro
 
 <h2 id="10-connections-to-ml-systems">10. Connections to ML Systems</h2>
 
-<p>This connects to <strong>Custom Language Modeling in Speech</strong> (Speech Day 50).</p>
+<p>This connects to <strong>Custom Language Modeling in Speech</strong> (Speech ).</p>
 <ul>
   <li>ASR systems use Char-LMs to correct spelling in noisy transcripts.</li>
   <li>If ASR hears “Helo”, the Char-LM says “l followed by o is unlikely after He, it should be ‘ll’”.</li>

@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Speech Pipeline Orchestration">
     <meta itemprop="description" content="“Orchestrating complex speech processing pipelines from audio ingestion to final output.”">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -256,11 +256,12 @@
 
 <p>A production speech system has multiple stages with complex dependencies:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Audio Input → VAD → Segmentation → ASR → NLU → Action
-     ↓          ↓        ↓           ↓      ↓       ↓
-  Quality   Speaker   Speaker    Language Post-  Error
-  Check     Diarization  ID     Detection process Handling
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+Audio Input → VAD → Segmentation → ASR → NLU → Action
+ ↓ ↓ ↓ ↓ ↓ ↓
+ Quality Speaker Speaker Language Post- Error
+ Check Diarization ID Detection process Handling
+</code></p>
 
 <p><strong>Key Differences from General ML Pipelines:</strong></p>
 <ol>
@@ -276,209 +277,219 @@
 
 <p><strong>Use Case:</strong> Transcribe uploaded podcast episodes, meeting recordings.</p>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">airflow</span> <span class="kn">import</span> <span class="n">DAG</span>
-<span class="kn">from</span> <span class="n">airflow.operators.python</span> <span class="kn">import</span> <span class="n">PythonOperator</span>
+<p><strong>Architecture:</strong>
+``python
+from airflow import DAG
+from airflow.operators.python import PythonOperator</p>
 
-<span class="k">def</span> <span class="nf">audio_preprocessing</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">audio_path</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">params</span><span class="sh">'</span><span class="p">][</span><span class="sh">'</span><span class="s">audio_path</span><span class="sh">'</span><span class="p">]</span>
-    
-    <span class="c1"># 1. Format conversion
-</span>    <span class="n">wav_audio</span> <span class="o">=</span> <span class="nf">convert_to_wav</span><span class="p">(</span><span class="n">audio_path</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="mi">16000</span><span class="p">)</span>
-    
-    <span class="c1"># 2. Noise reduction
-</span>    <span class="n">clean_audio</span> <span class="o">=</span> <span class="nf">noise_reduction</span><span class="p">(</span><span class="n">wav_audio</span><span class="p">)</span>
-    
-    <span class="c1"># 3. Volume normalization
-</span>    <span class="n">normalized</span> <span class="o">=</span> <span class="nf">normalize_volume</span><span class="p">(</span><span class="n">clean_audio</span><span class="p">)</span>
-    
-    <span class="nf">save_to_gcs</span><span class="p">(</span><span class="n">normalized</span><span class="p">,</span> <span class="sa">f</span><span class="sh">"</span><span class="s">preprocessed_</span><span class="si">{</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">.wav</span><span class="sh">"</span><span class="p">)</span>
+<p>def audio_preprocessing(**context):
+ audio_path = context[‘params’][‘audio_path’]</p>
 
-<span class="k">def</span> <span class="nf">voice_activity_detection</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">audio</span> <span class="o">=</span> <span class="nf">load_from_gcs</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">preprocessed_</span><span class="si">{</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">.wav</span><span class="sh">"</span><span class="p">)</span>
-   
-    <span class="c1"># Detect speech segments
-</span>    <span class="n">segments</span> <span class="o">=</span> <span class="n">vad_model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>  <span class="c1"># [(start_time, end_time), ...]
-</span>    
-    <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_push</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">segments</span><span class="sh">'</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">segments</span><span class="p">)</span>
+<p># 1. Format conversion
+ wav_audio = convert_to_wav(audio_path, sample_rate=16000)</p>
 
-<span class="k">def</span> <span class="nf">speaker_diarization</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">audio</span> <span class="o">=</span> <span class="nf">load_from_gcs</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">preprocessed_</span><span class="si">{</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">.wav</span><span class="sh">"</span><span class="p">)</span>
-    <span class="n">segments</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_pull</span><span class="p">(</span><span class="n">task_ids</span><span class="o">=</span><span class="sh">'</span><span class="s">vad</span><span class="sh">'</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">segments</span><span class="sh">'</span><span class="p">)</span>
-    
-    <span class="c1"># Extract speaker embeddings (x-vectors)
-</span>    <span class="n">embeddings</span> <span class="o">=</span> <span class="p">[</span><span class="nf">extract_xvector</span><span class="p">(</span><span class="n">audio</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">])</span> <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">]</span>
-    
-    <span class="c1"># Cluster speakers
-</span>    <span class="kn">from</span> <span class="n">sklearn.cluster</span> <span class="kn">import</span> <span class="n">AgglomerativeClustering</span>
-    <span class="n">clustering</span> <span class="o">=</span> <span class="nc">AgglomerativeClustering</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">distance_threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
-    <span class="n">speaker_labels</span> <span class="o">=</span> <span class="n">clustering</span><span class="p">.</span><span class="nf">fit_predict</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
-    
-    <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_push</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">speaker_labels</span><span class="sh">'</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">speaker_labels</span><span class="p">)</span>
+<p># 2. Noise reduction
+ clean_audio = noise_reduction(wav_audio)</p>
 
-<span class="k">def</span> <span class="nf">asr_transcription</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">audio</span> <span class="o">=</span> <span class="nf">load_from_gcs</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">preprocessed_</span><span class="si">{</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">.wav</span><span class="sh">"</span><span class="p">)</span>
-    <span class="n">segments</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_pull</span><span class="p">(</span><span class="n">task_ids</span><span class="o">=</span><span class="sh">'</span><span class="s">vad</span><span class="sh">'</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">segments</span><span class="sh">'</span><span class="p">)</span>
-    <span class="n">speaker_labels</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_pull</span><span class="p">(</span><span class="n">task_ids</span><span class="o">=</span><span class="sh">'</span><span class="s">diarization</span><span class="sh">'</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">speaker_labels</span><span class="sh">'</span><span class="p">)</span>
-    
-    <span class="n">transcripts</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="nf">for </span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">),</span> <span class="n">speaker</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">segments</span><span class="p">,</span> <span class="n">speaker_labels</span><span class="p">):</span>
-        <span class="n">segment_audio</span> <span class="o">=</span> <span class="n">audio</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">asr_model</span><span class="p">.</span><span class="nf">transcribe</span><span class="p">(</span><span class="n">segment_audio</span><span class="p">)</span>
-        <span class="n">transcripts</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span>
-            <span class="sh">'</span><span class="s">speaker</span><span class="sh">'</span><span class="p">:</span> <span class="sa">f</span><span class="sh">'</span><span class="s">Speaker_</span><span class="si">{</span><span class="n">speaker</span><span class="si">}</span><span class="sh">'</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">start</span><span class="sh">'</span><span class="p">:</span> <span class="n">start</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">end</span><span class="sh">'</span><span class="p">:</span> <span class="n">end</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">:</span> <span class="n">text</span>
-        <span class="p">})</span>
-    
-    <span class="nf">save_transcripts</span><span class="p">(</span><span class="n">transcripts</span><span class="p">,</span> <span class="sa">f</span><span class="sh">"</span><span class="s">transcript_</span><span class="si">{</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">.json</span><span class="sh">"</span><span class="p">)</span>
+<p># 3. Volume normalization
+ normalized = normalize_volume(clean_audio)</p>
 
-<span class="c1"># DAG definition
-</span><span class="n">dag</span> <span class="o">=</span> <span class="nc">DAG</span><span class="p">(</span><span class="sh">'</span><span class="s">speech_transcription_pipeline</span><span class="sh">'</span><span class="p">,</span> <span class="p">...)</span>
+<p>save_to_gcs(normalized, f”preprocessed_{context[‘ds’]}.wav”)</p>
 
-<span class="n">preprocess</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">audio_preprocessing</span><span class="sh">'</span><span class="p">,</span> <span class="p">...)</span>
-<span class="n">vad</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">voice_activity_detection</span><span class="sh">'</span><span class="p">,</span> <span class="p">...)</span>
-<span class="n">diarization</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">speaker_diarization</span><span class="sh">'</span><span class="p">,</span> <span class="p">...)</span>
-<span class="n">transcription</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">asr_transcription</span><span class="sh">'</span><span class="p">,</span> <span class="p">...)</span>
+<p>def voice_activity_detection(**context):
+ audio = load_from_gcs(f”preprocessed_{context[‘ds’]}.wav”)</p>
 
-<span class="n">preprocess</span> <span class="o">&gt;&gt;</span> <span class="n">vad</span> <span class="o">&gt;&gt;</span> <span class="n">diarization</span> <span class="o">&gt;&gt;</span> <span class="n">transcription</span>
-</code></pre></div></div>
+<p># Detect speech segments
+ segments = vad_model.predict(audio) # [(start_time, end_time), …]</p>
+
+<p>context[‘ti’].xcom_push(key=’segments’, value=segments)</p>
+
+<p>def speaker_diarization(**context):
+ audio = load_from_gcs(f”preprocessed_{context[‘ds’]}.wav”)
+ segments = context[‘ti’].xcom_pull(task_ids=’vad’, key=’segments’)</p>
+
+<p># Extract speaker embeddings (x-vectors)
+ embeddings = [extract_xvector(audio[start:end]) for start, end in segments]</p>
+
+<p># Cluster speakers
+ from sklearn.cluster import AgglomerativeClustering
+ clustering = AgglomerativeClustering(n_clusters=None, distance_threshold=0.5)
+ speaker_labels = clustering.fit_predict(embeddings)</p>
+
+<p>context[‘ti’].xcom_push(key=’speaker_labels’, value=speaker_labels)</p>
+
+<p>def asr_transcription(**context):
+ audio = load_from_gcs(f”preprocessed_{context[‘ds’]}.wav”)
+ segments = context[‘ti’].xcom_pull(task_ids=’vad’, key=’segments’)
+ speaker_labels = context[‘ti’].xcom_pull(task_ids=’diarization’, key=’speaker_labels’)</p>
+
+<p>transcripts = []
+ for (start, end), speaker in zip(segments, speaker_labels):
+ segment_audio = audio[start:end]
+ text = asr_model.transcribe(segment_audio)
+ transcripts.append({
+ ‘speaker’: f’Speaker_{speaker}’,
+ ‘start’: start,
+ ‘end’: end,
+ ‘text’: text
+ })</p>
+
+<p>save_transcripts(transcripts, f”transcript_{context[‘ds’]}.json”)</p>
+
+<h1 id="dag-definition">DAG definition</h1>
+<p>dag = DAG(‘speech_transcription_pipeline’, …)</p>
+
+<p>preprocess = PythonOperator(task_id=’audio_preprocessing’, …)
+vad = PythonOperator(task_id=’voice_activity_detection’, …)
+diarization = PythonOperator(task_id=’speaker_diarization’, …)
+transcription = PythonOperator(task_id=’asr_transcription’, …)</p>
+
+<p>preprocess » vad » diarization » transcription
+``</p>
 
 <h3 id="streaming-pipeline-real-time-transcription">Streaming Pipeline (Real-time Transcription)</h3>
 
 <p><strong>Use Case:</strong> Live captioning, voice assistants.</p>
 
-<p><strong>Architecture (using Kafka + Kubernetes):</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Audio Stream (Kafka) → VAD Service → ASR Service → NLU Service → Output
-                          ↓              ↓             ↓
-                      K8s Pod        K8s Pod       K8s Pod
-                      (auto-scale)   (GPU)         (CPU)
-</code></pre></div></div>
+<p><strong>Architecture (using Kafka + Kubernetes):</strong>
+<code class="language-plaintext highlighter-rouge">
+Audio Stream (Kafka) → VAD Service → ASR Service → NLU Service → Output
+ ↓ ↓ ↓
+ K8s Pod K8s Pod K8s Pod
+ (auto-scale) (GPU) (CPU)
+</code></p>
 
-<p><strong>Implementation:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">kafka</span> <span class="kn">import</span> <span class="n">KafkaConsumer</span><span class="p">,</span> <span class="n">KafkaProducer</span>
-<span class="kn">import</span> <span class="n">torch</span>
+<p><strong>Implementation:</strong>
+``python
+from kafka import KafkaConsumer, KafkaProducer
+import torch</p>
 
-<span class="k">class</span> <span class="nc">StreamingASRService</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">consumer</span> <span class="o">=</span> <span class="nc">KafkaConsumer</span><span class="p">(</span>
-            <span class="sh">'</span><span class="s">audio_stream</span><span class="sh">'</span><span class="p">,</span>
-            <span class="n">bootstrap_servers</span><span class="o">=</span><span class="p">[</span><span class="sh">'</span><span class="s">kafka:9092</span><span class="sh">'</span><span class="p">],</span>
-            <span class="n">value_deserializer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">pickle</span><span class="p">.</span><span class="nf">loads</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
-        <span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">producer</span> <span class="o">=</span> <span class="nc">KafkaProducer</span><span class="p">(</span>
-            <span class="n">bootstrap_servers</span><span class="o">=</span><span class="p">[</span><span class="sh">'</span><span class="s">kafka:9092</span><span class="sh">'</span><span class="p">],</span>
-            <span class="n">value_serializer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">pickle</span><span class="p">.</span><span class="nf">dumps</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
-        <span class="p">)</span>
-        
-        <span class="n">self</span><span class="p">.</span><span class="n">asr_model</span> <span class="o">=</span> <span class="nf">load_streaming_asr_model</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">state</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># conversation state per session
-</span>    
-    <span class="k">def</span> <span class="nf">process_audio_chunk</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">chunk</span><span class="p">):</span>
-        <span class="n">session_id</span> <span class="o">=</span> <span class="n">chunk</span><span class="p">[</span><span class="sh">'</span><span class="s">session_id</span><span class="sh">'</span><span class="p">]</span>
-        <span class="n">audio</span> <span class="o">=</span> <span class="n">chunk</span><span class="p">[</span><span class="sh">'</span><span class="s">audio</span><span class="sh">'</span><span class="p">]</span>  <span class="c1"># 80ms chunk
-</span>        
-        <span class="c1"># Get or initialize state
-</span>        <span class="k">if</span> <span class="n">session_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">state</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">state</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="sh">'</span><span class="s">hidden</span><span class="sh">'</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">partial_transcript</span><span class="sh">'</span><span class="p">:</span> <span class="sh">''</span>
-            <span class="p">}</span>
-        
-        <span class="c1"># Streaming inference
-</span>        <span class="n">logits</span><span class="p">,</span> <span class="n">hidden</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">asr_model</span><span class="p">.</span><span class="nf">forward_chunk</span><span class="p">(</span>
-            <span class="n">audio</span><span class="p">,</span>
-            <span class="n">prev_hidden</span><span class="o">=</span><span class="n">self</span><span class="p">.</span><span class="n">state</span><span class="p">[</span><span class="n">session_id</span><span class="p">][</span><span class="sh">'</span><span class="s">hidden</span><span class="sh">'</span><span class="p">]</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Update state
-</span>        <span class="n">self</span><span class="p">.</span><span class="n">state</span><span class="p">[</span><span class="n">session_id</span><span class="p">][</span><span class="sh">'</span><span class="s">hidden</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">hidden</span>
-        
-        <span class="c1"># Decode
-</span>        <span class="n">tokens</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">asr_model</span><span class="p">.</span><span class="nf">decode</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">asr_model</span><span class="p">.</span><span class="nf">tokens_to_text</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
-        
-        <span class="c1"># Emit partial result
-</span>        <span class="k">return</span> <span class="p">{</span>
-            <span class="sh">'</span><span class="s">session_id</span><span class="sh">'</span><span class="p">:</span> <span class="n">session_id</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">:</span> <span class="n">text</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">is_final</span><span class="sh">'</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
-            <span class="sh">'</span><span class="s">timestamp</span><span class="sh">'</span><span class="p">:</span> <span class="n">chunk</span><span class="p">[</span><span class="sh">'</span><span class="s">timestamp</span><span class="sh">'</span><span class="p">]</span>
-        <span class="p">}</span>
-    
-    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">consumer</span><span class="p">:</span>
-            <span class="n">chunk</span> <span class="o">=</span> <span class="n">message</span><span class="p">.</span><span class="n">value</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">process_audio_chunk</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-            
-            <span class="c1"># Send to next stage
-</span>            <span class="n">self</span><span class="p">.</span><span class="n">producer</span><span class="p">.</span><span class="nf">send</span><span class="p">(</span><span class="sh">'</span><span class="s">asr_output</span><span class="sh">'</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+<p>class StreamingASRService:
+ def <strong>init</strong>(self):
+ self.consumer = KafkaConsumer(
+ ‘audio_stream’,
+ bootstrap_servers=[‘kafka:9092’],
+ value_deserializer=lambda m: pickle.loads(m)
+ )</p>
 
-<span class="c1"># Kubernetes Deployment
-</span><span class="sh">"""</span><span class="s">
+<p>self.producer = KafkaProducer(
+ bootstrap_servers=[‘kafka:9092’],
+ value_serializer=lambda m: pickle.dumps(m)
+ )</p>
+
+<p>self.asr_model = load_streaming_asr_model()
+ self.state = {} # conversation state per session</p>
+
+<p>def process_audio_chunk(self, chunk):
+ session_id = chunk[‘session_id’]
+ audio = chunk[‘audio’] # 80ms chunk</p>
+
+<p># Get or initialize state
+ if session_id not in self.state:
+ self.state[session_id] = {
+ ‘hidden’: None,
+ ‘partial_transcript’: ‘’
+ }</p>
+
+<p># Streaming inference
+ logits, hidden = self.asr_model.forward_chunk(
+ audio,
+ prev_hidden=self.state[session_id][‘hidden’]
+ )</p>
+
+<p># Update state
+ self.state[session_id][‘hidden’] = hidden</p>
+
+<p># Decode
+ tokens = self.asr_model.decode(logits)
+ text = self.asr_model.tokens_to_text(tokens)</p>
+
+<p># Emit partial result
+ return {
+ ‘session_id’: session_id,
+ ‘text’: text,
+ ‘is_final’: False,
+ ‘timestamp’: chunk[‘timestamp’]
+ }</p>
+
+<p>def run(self):
+ for message in self.consumer:
+ chunk = message.value
+ result = self.process_audio_chunk(chunk)</p>
+
+<p># Send to next stage
+ self.producer.send(‘asr_output’, result)</p>
+
+<h1 id="kubernetes-deployment">Kubernetes Deployment</h1>
+<p>”””
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: asr-service
+ name: asr-service
 spec:
-  replicas: 10  # Auto-scale based on load
-  template:
-    spec:
-      containers:
-      - name: asr
-        image: asr-streaming:v1
-        resources:
-          requests:
-            nvidia.com/gpu: 1
-          limits:
-            nvidia.com/gpu: 1
-</span><span class="sh">"""</span>
-</code></pre></div></div>
+ replicas: 10 # Auto-scale based on load
+ template:
+ spec:
+ containers:</p>
+<ul>
+  <li>name: asr
+ image: asr-streaming:v1
+ resources:
+ requests:
+ nvidia.com/gpu: 1
+ limits:
+ nvidia.com/gpu: 1
+“””
+``</li>
+</ul>
 
 <h2 id="3-dependency-management-in-speech-pipelines">3. Dependency Management in Speech Pipelines</h2>
 
 <h3 id="sequential-dependencies">Sequential Dependencies</h3>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Audio → Preprocessing → VAD → ASR
-</code></pre></div></div>
-<p>Each stage must complete before the next.</p>
+<p><code class="language-plaintext highlighter-rouge">
+Audio → Preprocessing → VAD → ASR
+</code>
+Each stage must complete before the next.</p>
 
 <h3 id="parallel-dependencies-fan-out">Parallel Dependencies (Fan-Out)</h3>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                    → Speaker Diarization →
-Audio → VAD →                               → Merge → Output
-                    → Language Detection  →
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+ → Speaker Diarization →
+Audio → VAD → → Merge → Output
+ → Language Detection →
+</code></p>
 
-<p><strong>Airflow Implementation:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">vad_task</span> <span class="o">&gt;&gt;</span> <span class="p">[</span><span class="n">diarization_task</span><span class="p">,</span> <span class="n">language_detection_task</span><span class="p">]</span> <span class="o">&gt;&gt;</span> <span class="n">merge_task</span>
-</code></pre></div></div>
+<p><strong>Airflow Implementation:</strong>
+<code class="language-plaintext highlighter-rouge">python
+vad_task &gt;&gt; [diarization_task, language_detection_task] &gt;&gt; merge_task
+</code></p>
 
 <h3 id="conditional-dependencies">Conditional Dependencies</h3>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Audio → ASR → (if confidence &gt; 0.8) → Output
-                ↓ (else)
-              Human Review
-</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">
+Audio → ASR → (if confidence &gt; 0.8) → Output
+ ↓ (else)
+ Human Review
+</code></p>
 
-<p><strong>Airflow BranchPythonOperator:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">airflow.operators.python</span> <span class="kn">import</span> <span class="n">BranchPythonOperator</span>
+<p><strong>Airflow BranchPythonOperator:</strong>
+``python
+from airflow.operators.python import BranchPythonOperator</p>
 
-<span class="k">def</span> <span class="nf">check_confidence</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">confidence</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_pull</span><span class="p">(</span><span class="n">task_ids</span><span class="o">=</span><span class="sh">'</span><span class="s">asr</span><span class="sh">'</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">confidence</span><span class="sh">'</span><span class="p">)</span>
-    
-    <span class="k">if</span> <span class="n">confidence</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sh">'</span><span class="s">output_task</span><span class="sh">'</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sh">'</span><span class="s">human_review_task</span><span class="sh">'</span>
+<p>def check_confidence(**context):
+ confidence = context[‘ti’].xcom_pull(task_ids=’asr’, key=’confidence’)</p>
 
-<span class="n">branch</span> <span class="o">=</span> <span class="nc">BranchPythonOperator</span><span class="p">(</span>
-    <span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">check_confidence</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">python_callable</span><span class="o">=</span><span class="n">check_confidence</span><span class="p">,</span>
-    <span class="n">dag</span><span class="o">=</span><span class="n">dag</span>
-<span class="p">)</span>
+<p>if confidence &gt; 0.8:
+ return ‘output_task’
+ else:
+ return ‘human_review_task’</p>
 
-<span class="n">asr_task</span> <span class="o">&gt;&gt;</span> <span class="n">branch</span> <span class="o">&gt;&gt;</span> <span class="p">[</span><span class="n">output_task</span><span class="p">,</span> <span class="n">human_review_task</span><span class="p">]</span>
-</code></pre></div></div>
+<p>branch = BranchPythonOperator(
+ task_id=’check_confidence’,
+ python_callable=check_confidence,
+ dag=dag
+)</p>
+
+<p>asr_task » branch » [output_task, human_review_task]
+``</p>
 
 <h2 id="4-state-management-in-streaming-speech">4. State Management in Streaming Speech</h2>
 
@@ -493,52 +504,54 @@ Audio → VAD →                               → Merge → Output
 
 <p><strong>Need to remember:</strong> “Play” from Chunk 1 when processing Chunk 3.</p>
 
-<p><strong>Solution: Stateful Stream Processing</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">StatefulASRProcessor</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sessions</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># {session_id: {hidden_state, partial_text, ...}}
-</span>    
-    <span class="k">def</span> <span class="nf">process_chunk</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">session_id</span><span class="p">,</span> <span class="n">audio_chunk</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">session_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">sessions</span><span class="p">:</span>
-            <span class="n">self</span><span class="p">.</span><span class="n">sessions</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="sh">'</span><span class="s">hidden</span><span class="sh">'</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">partial</span><span class="sh">'</span><span class="p">:</span> <span class="sh">''</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">last_update</span><span class="sh">'</span><span class="p">:</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-            <span class="p">}</span>
-        
-        <span class="n">session</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">sessions</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span>
-        
-        <span class="c1"># Streaming RNN-T forward pass
-</span>        <span class="n">logits</span><span class="p">,</span> <span class="n">new_hidden</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="nf">forward</span><span class="p">(</span>
-            <span class="n">audio_chunk</span><span class="p">,</span>
-            <span class="n">prev_hidden</span><span class="o">=</span><span class="n">session</span><span class="p">[</span><span class="sh">'</span><span class="s">hidden</span><span class="sh">'</span><span class="p">]</span>
-        <span class="p">)</span>
-        
-        <span class="c1"># Update state
-</span>        <span class="n">session</span><span class="p">[</span><span class="sh">'</span><span class="s">hidden</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_hidden</span>
-        <span class="n">session</span><span class="p">[</span><span class="sh">'</span><span class="s">last_update</span><span class="sh">'</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-        
-        <span class="c1"># Decode
-</span>        <span class="n">new_tokens</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">decode</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
-        <span class="n">session</span><span class="p">[</span><span class="sh">'</span><span class="s">partial</span><span class="sh">'</span><span class="p">]</span> <span class="o">+=</span> <span class="n">new_tokens</span>
-        
-        <span class="k">return</span> <span class="n">session</span><span class="p">[</span><span class="sh">'</span><span class="s">partial</span><span class="sh">'</span><span class="p">]</span>
-    
-    <span class="k">def</span> <span class="nf">cleanup_old_sessions</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">300</span><span class="p">):</span>
-        <span class="sh">"""</span><span class="s">Remove sessions inactive for &gt; 5 minutes</span><span class="sh">"""</span>
-        <span class="n">now</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
-        <span class="n">to_remove</span> <span class="o">=</span> <span class="p">[</span><span class="n">sid</span> <span class="k">for</span> <span class="n">sid</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">sessions</span><span class="p">.</span><span class="nf">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">now</span> <span class="o">-</span> <span class="n">s</span><span class="p">[</span><span class="sh">'</span><span class="s">last_update</span><span class="sh">'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">timeout</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">sid</span> <span class="ow">in</span> <span class="n">to_remove</span><span class="p">:</span>
-            <span class="k">del</span> <span class="n">self</span><span class="p">.</span><span class="n">sessions</span><span class="p">[</span><span class="n">sid</span><span class="p">]</span>
-</code></pre></div></div>
+<p><strong>Solution: Stateful Stream Processing</strong>
+``python
+class StatefulASRProcessor:
+ def <strong>init</strong>(self):
+ self.sessions = {} # {session_id: {hidden_state, partial_text, …}}</p>
+
+<p>def process_chunk(self, session_id, audio_chunk):
+ if session_id not in self.sessions:
+ self.sessions[session_id] = {
+ ‘hidden’: None,
+ ‘partial’: ‘’,
+ ‘last_update’: time.time()
+ }</p>
+
+<p>session = self.sessions[session_id]</p>
+
+<p># Streaming RNN-T forward pass
+ logits, new_hidden = self.model.forward(
+ audio_chunk,
+ prev_hidden=session[‘hidden’]
+ )</p>
+
+<p># Update state
+ session[‘hidden’] = new_hidden
+ session[‘last_update’] = time.time()</p>
+
+<p># Decode
+ new_tokens = self.decode(logits)
+ session[‘partial’] += new_tokens</p>
+
+<p>return session[‘partial’]</p>
+
+<p>def cleanup_old_sessions(self, timeout=300):
+ “"”Remove sessions inactive for &gt; 5 minutes”””
+ now = time.time()
+ to_remove = [sid for sid, s in self.sessions.items() if now - s[‘last_update’] &gt; timeout]
+ for sid in to_remove:
+ del self.sessions[sid]
+``</p>
 
 <h2 id="deep-dive-google-speech-to-text-pipeline">Deep Dive: Google Speech-to-Text Pipeline</h2>
 
-<p><strong>Architecture:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Client Audio → Load Balancer → ASR Frontend → ASR Backend (BPod)
-                                      ↓              ↓
-                               Language Model   Acoustic Model
-</code></pre></div></div>
+<p><strong>Architecture:</strong>
+<code class="language-plaintext highlighter-rouge">
+Client Audio → Load Balancer → ASR Frontend → ASR Backend (BPod)
+ ↓ ↓
+ Language Model Acoustic Model
+</code></p>
 
 <p><strong>Pipeline Stages:</strong></p>
 <ol>
@@ -570,19 +583,22 @@ Audio → VAD →                               → Merge → Output
 
 <h2 id="deep-dive-amazon-transcribe-architecture">Deep Dive: Amazon Transcribe Architecture</h2>
 
-<p><strong>Batch Transcription Pipeline:</strong></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>User uploads audio to S3 → S3 Event triggers Lambda → Lambda starts Transcribe Job
-                                                              ↓
-                                                         Job Queue (SQS)
-                                                              ↓
-                                                   Worker Pools (EC2/Fargate)
-                                                              ↓
-                                                   1. VAD → 2. Diarization → 3. ASR
-                                                              ↓
-                                                   Results saved to S3
-                                                              ↓
-                                                   Notification (SNS)
-</code></pre></div></div>
+<p><strong>Batch Transcription Pipeline:</strong>
+``
+User uploads audio to S3 → S3 Event triggers Lambda → Lambda starts Transcribe Job
+ ↓
+ Job Queue (SQS)
+ ↓
+ Worker Pools (EC2/Fargate)
+ ↓</p>
+<ol>
+  <li>VAD → 2. Diarization → 3. ASR
+ ↓
+ Results saved to S3
+ ↓
+ Notification (SNS)
+``</li>
+</ol>
 
 <p><strong>Orchestration:</strong></p>
 <ul>
@@ -591,54 +607,55 @@ Audio → VAD →                               → Merge → Output
   <li><strong>Auto-Scaling:</strong> Scale worker pools based on queue depth.</li>
 </ul>
 
-<p><strong>Dependency Graph:</strong></p>
-<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"StartAt"</span><span class="p">:</span><span class="w"> </span><span class="s2">"AudioPreprocessing"</span><span class="p">,</span><span class="w">
-  </span><span class="nl">"States"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-    </span><span class="nl">"AudioPreprocessing"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="nl">"Type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Task"</span><span class="p">,</span><span class="w">
-      </span><span class="nl">"Resource"</span><span class="p">:</span><span class="w"> </span><span class="s2">"arn:aws:lambda:...:function:preprocess-audio"</span><span class="p">,</span><span class="w">
-      </span><span class="nl">"Next"</span><span class="p">:</span><span class="w"> </span><span class="s2">"VAD"</span><span class="w">
-    </span><span class="p">},</span><span class="w">
-    </span><span class="nl">"VAD"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="nl">"Type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Task"</span><span class="p">,</span><span class="w">
-      </span><span class="nl">"Resource"</span><span class="p">:</span><span class="w"> </span><span class="s2">"arn:aws:lambda:...:function:voice-activity-detection"</span><span class="p">,</span><span class="w">
-      </span><span class="nl">"Next"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ParallelProcessing"</span><span class="w">
-    </span><span class="p">},</span><span class="w">
-    </span><span class="nl">"ParallelProcessing"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="nl">"Type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Parallel"</span><span class="p">,</span><span class="w">
-      </span><span class="nl">"Branches"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
-        </span><span class="p">{</span><span class="w">
-          </span><span class="nl">"StartAt"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SpeakerDiarization"</span><span class="p">,</span><span class="w">
-          </span><span class="nl">"States"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="nl">"SpeakerDiarization"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-              </span><span class="nl">"Type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Task"</span><span class="p">,</span><span class="w">
-              </span><span class="nl">"Resource"</span><span class="p">:</span><span class="w"> </span><span class="s2">"arn:aws:lambda:...:function:diarization"</span><span class="p">,</span><span class="w">
-              </span><span class="nl">"End"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
-            </span><span class="p">}</span><span class="w">
-          </span><span class="p">}</span><span class="w">
-        </span><span class="p">},</span><span class="w">
-        </span><span class="p">{</span><span class="w">
-          </span><span class="nl">"StartAt"</span><span class="p">:</span><span class="w"> </span><span class="s2">"LanguageDetection"</span><span class="p">,</span><span class="w">
-          </span><span class="nl">"States"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-            </span><span class="nl">"LanguageDetection"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-              </span><span class="nl">"Type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Task"</span><span class="p">,</span><span class="w">
-              </span><span class="nl">"Resource"</span><span class="p">:</span><span class="w"> </span><span class="s2">"arn:aws:lambda:...:function:language-detection"</span><span class="p">,</span><span class="w">
-              </span><span class="nl">"End"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
-            </span><span class="p">}</span><span class="w">
-          </span><span class="p">}</span><span class="w">
-        </span><span class="p">}</span><span class="w">
-      </span><span class="p">],</span><span class="w">
-      </span><span class="nl">"Next"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ASRTranscription"</span><span class="w">
-    </span><span class="p">},</span><span class="w">
-    </span><span class="nl">"ASRTranscription"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
-      </span><span class="nl">"Type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Task"</span><span class="p">,</span><span class="w">
-      </span><span class="nl">"Resource"</span><span class="p">:</span><span class="w"> </span><span class="s2">"arn:aws:lambda:...:function:asr"</span><span class="p">,</span><span class="w">
-      </span><span class="nl">"End"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
-    </span><span class="p">}</span><span class="w">
-  </span><span class="p">}</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
+<p><strong>Dependency Graph:</strong>
+<code class="language-plaintext highlighter-rouge">json
+{
+ "StartAt": "AudioPreprocessing",
+ "States": {
+ "AudioPreprocessing": {
+ "Type": "Task",
+ "Resource": "arn:aws:lambda:...:function:preprocess-audio",
+ "Next": "VAD"
+ },
+ "VAD": {
+ "Type": "Task",
+ "Resource": "arn:aws:lambda:...:function:voice-activity-detection",
+ "Next": "ParallelProcessing"
+ },
+ "ParallelProcessing": {
+ "Type": "Parallel",
+ "Branches": [
+ {
+ "StartAt": "SpeakerDiarization",
+ "States": {
+ "SpeakerDiarization": {
+ "Type": "Task",
+ "Resource": "arn:aws:lambda:...:function:diarization",
+ "End": true
+ }
+ }
+ },
+ {
+ "StartAt": "LanguageDetection",
+ "States": {
+ "LanguageDetection": {
+ "Type": "Task",
+ "Resource": "arn:aws:lambda:...:function:language-detection",
+ "End": true
+ }
+ }
+ }
+ ],
+ "Next": "ASRTranscription"
+ },
+ "ASRTranscription": {
+ "Type": "Task",
+ "Resource": "arn:aws:lambda:...:function:asr",
+ "End": true
+ }
+ }
+}
+</code></p>
 
 <h2 id="deep-dive-handling-audio-format-diversity">Deep Dive: Handling Audio Format Diversity</h2>
 
@@ -646,92 +663,97 @@ Audio → VAD →                               → Merge → Output
 
 <p><strong>Solution: Format Normalization Pipeline</strong></p>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">normalize_audio</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">
-    Convert any audio format to WAV with:
-    - Sample rate: 16kHz
-    - Channels: Mono
-    - Bit depth: 16-bit PCM
-    </span><span class="sh">"""</span>
-    <span class="kn">import</span> <span class="n">ffmpeg</span>
-    
-    <span class="p">(</span>
-        <span class="n">ffmpeg</span>
-        <span class="p">.</span><span class="nf">input</span><span class="p">(</span><span class="n">input_path</span><span class="p">)</span>
-        <span class="p">.</span><span class="nf">output</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">ar</span><span class="o">=</span><span class="mi">16000</span><span class="p">,</span> <span class="n">ac</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="sh">'</span><span class="s">wav</span><span class="sh">'</span><span class="p">)</span>
-        <span class="p">.</span><span class="nf">run</span><span class="p">(</span><span class="n">overwrite_output</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="p">)</span>
+<p>``python
+def normalize_audio(input_path, output_path):
+ “””
+ Convert any audio format to WAV with:</p>
+<ul>
+  <li>Sample rate: 16kHz</li>
+  <li>Channels: Mono</li>
+  <li>Bit depth: 16-bit PCM
+ “””
+ import ffmpeg</li>
+</ul>
 
-<span class="c1"># Airflow Task
-</span><span class="n">normalize</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span>
-    <span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">normalize_audio</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">python_callable</span><span class="o">=</span><span class="n">normalize_audio</span><span class="p">,</span>
-    <span class="n">op_kwargs</span><span class="o">=</span><span class="p">{</span><span class="sh">'</span><span class="s">input_path</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">{{ params.input }}</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">output_path</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">/tmp/normalized.wav</span><span class="sh">'</span><span class="p">},</span>
-    <span class="n">dag</span><span class="o">=</span><span class="n">dag</span>
-<span class="p">)</span>
-</code></pre></div></div>
+<p>(
+ ffmpeg
+ .input(input_path)
+ .output(output_path, ar=16000, ac=1, f=’wav’)
+ .run(overwrite_output=True, quiet=True)
+ )</p>
+
+<h1 id="airflow-task">Airflow Task</h1>
+<p>normalize = PythonOperator(
+ task_id=’normalize_audio’,
+ python_callable=normalize_audio,
+ op_kwargs={‘input_path’: ‘{{ params.input }}’, ‘output_path’: ‘/tmp/normalized.wav’},
+ dag=dag
+)
+``</p>
 
 <h2 id="deep-dive-quality-gates-in-speech-pipelines">Deep Dive: Quality Gates in Speech Pipelines</h2>
 
 <p><strong>Problem:</strong> Don’t want to deploy a model with 50% WER.</p>
 
-<p><strong>Solution: Quality Gates</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">evaluate_model</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">model_path</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">params</span><span class="sh">'</span><span class="p">][</span><span class="sh">'</span><span class="s">model_path</span><span class="sh">'</span><span class="p">]</span>
-    <span class="n">test_set</span> <span class="o">=</span> <span class="nf">load_test_set</span><span class="p">()</span>
-    
-    <span class="n">wer</span> <span class="o">=</span> <span class="nf">compute_wer</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">test_set</span><span class="p">)</span>
-    <span class="n">cer</span> <span class="o">=</span> <span class="nf">compute_cer</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">test_set</span><span class="p">)</span>
-    
-    <span class="c1"># Quality gates
-</span>    <span class="k">if</span> <span class="n">wer</span> <span class="o">&gt;</span> <span class="mf">0.15</span><span class="p">:</span>  <span class="c1"># 15% WER threshold
-</span>        <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">WER too high: </span><span class="si">{</span><span class="n">wer</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="k">if</span> <span class="n">cer</span> <span class="o">&gt;</span> <span class="mf">0.08</span><span class="p">:</span>  <span class="c1"># 8% CER threshold
-</span>        <span class="k">raise</span> <span class="nc">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">CER too high: </span><span class="si">{</span><span class="n">cer</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Model passed quality gates. WER: </span><span class="si">{</span><span class="n">wer</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="s">, CER: </span><span class="si">{</span><span class="n">cer</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">model_path</span>
+<p><strong>Solution: Quality Gates</strong>
+``python
+def evaluate_model(**context):
+ model_path = context[‘params’][‘model_path’]
+ test_set = load_test_set()</p>
 
-<span class="n">evaluate_task</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span>
-    <span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">evaluate_model</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">python_callable</span><span class="o">=</span><span class="n">evaluate_model</span><span class="p">,</span>
-    <span class="n">dag</span><span class="o">=</span><span class="n">dag</span>
-<span class="p">)</span>
+<p>wer = compute_wer(model_path, test_set)
+ cer = compute_cer(model_path, test_set)</p>
 
-<span class="c1"># If evaluation fails, pipeline stops (model not deployed)
-</span><span class="n">train_task</span> <span class="o">&gt;&gt;</span> <span class="n">evaluate_task</span> <span class="o">&gt;&gt;</span> <span class="n">deploy_task</span>
-</code></pre></div></div>
+<p># Quality gates
+ if wer &gt; 0.15: # 15% WER threshold
+ raise ValueError(f”WER too high: {wer:.2%}”)</p>
+
+<p>if cer &gt; 0.08: # 8% CER threshold
+ raise ValueError(f”CER too high: {cer:.2%}”)</p>
+
+<p>print(f”Model passed quality gates. WER: {wer:.2%}, CER: {cer:.2%}”)
+ return model_path</p>
+
+<p>evaluate_task = PythonOperator(
+ task_id=’evaluate_model’,
+ python_callable=evaluate_model,
+ dag=dag
+)</p>
+
+<h1 id="if-evaluation-fails-pipeline-stops-model-not-deployed">If evaluation fails, pipeline stops (model not deployed)</h1>
+<p>train_task » evaluate_task » deploy_task
+``</p>
 
 <h2 id="deep-dive-backfilling-speech-model-training">Deep Dive: Backfilling Speech Model Training</h2>
 
 <p><strong>Scenario:</strong> You have 3 years of call center recordings. Want to train ASR models for each quarter.</p>
 
-<p><strong>Backfill Strategy:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Airflow DAG with catchup=True
-</span><span class="n">dag</span> <span class="o">=</span> <span class="nc">DAG</span><span class="p">(</span>
-    <span class="sh">'</span><span class="s">train_asr_quarterly</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">schedule_interval</span><span class="o">=</span><span class="sh">'</span><span class="s">0 0 1 */3 *</span><span class="sh">'</span><span class="p">,</span>  <span class="c1"># Every 3 months
-</span>    <span class="n">start_date</span><span class="o">=</span><span class="nf">datetime</span><span class="p">(</span><span class="mi">2021</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
-    <span class="n">catchup</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>  <span class="c1"># Run for all past quarters
-</span>    <span class="n">max_active_runs</span><span class="o">=</span><span class="mi">2</span>  <span class="c1"># Limit parallelism (training is expensive)
-</span><span class="p">)</span>
+<p><strong>Backfill Strategy:</strong>
+``python</p>
+<h1 id="airflow-dag-with-catchuptrue">Airflow DAG with catchup=True</h1>
+<p>dag = DAG(
+ ‘train_asr_quarterly’,
+ schedule_interval=’0 0 1 */3 *’, # Every 3 months
+ start_date=datetime(2021, 1, 1),
+ catchup=True, # Run for all past quarters
+ max_active_runs=2 # Limit parallelism (training is expensive)
+)</p>
 
-<span class="k">def</span> <span class="nf">train_for_quarter</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">quarter_start</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">data_interval_start</span><span class="sh">'</span><span class="p">]</span>
-    <span class="n">quarter_end</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">data_interval_end</span><span class="sh">'</span><span class="p">]</span>
-    
-    <span class="c1"># Fetch audio from this quarter
-</span>    <span class="n">audio_files</span> <span class="o">=</span> <span class="nf">fetch_audio_between</span><span class="p">(</span><span class="n">quarter_start</span><span class="p">,</span> <span class="n">quarter_end</span><span class="p">)</span>
-    
-    <span class="c1"># Train model
-</span>    <span class="n">model</span> <span class="o">=</span> <span class="nf">train_asr</span><span class="p">(</span><span class="n">audio_files</span><span class="p">)</span>
-    
-    <span class="c1"># Save with version = quarter
-</span>    <span class="nf">save_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="sa">f</span><span class="sh">"</span><span class="s">asr_model_Q</span><span class="si">{</span><span class="n">quarter_start</span><span class="p">.</span><span class="n">quarter</span><span class="si">}</span><span class="s">_</span><span class="si">{</span><span class="n">quarter_start</span><span class="p">.</span><span class="n">year</span><span class="si">}</span><span class="s">.pt</span><span class="sh">"</span><span class="p">)</span>
+<p>def train_for_quarter(**context):
+ quarter_start = context[‘data_interval_start’]
+ quarter_end = context[‘data_interval_end’]</p>
 
-<span class="n">train_task</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">train</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">train_for_quarter</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
-</code></pre></div></div>
+<p># Fetch audio from this quarter
+ audio_files = fetch_audio_between(quarter_start, quarter_end)</p>
+
+<p># Train model
+ model = train_asr(audio_files)</p>
+
+<p># Save with version = quarter
+ save_model(model, f”asr_model_Q{quarter_start.quarter}_{quarter_start.year}.pt”)</p>
+
+<p>train_task = PythonOperator(task_id=’train’, python_callable=train_for_quarter, dag=dag)
+``</p>
 
 <h2 id="deep-dive-monitoring-speech-pipeline-health">Deep Dive: Monitoring Speech Pipeline Health</h2>
 
@@ -743,26 +765,27 @@ Audio → VAD →                               → Merge → Output
   <li><strong>Error Rate:</strong> % of jobs that fail (network errors, bad audio, etc.).</li>
 </ol>
 
-<p><strong>Prometheus Metrics:</strong></p>
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">prometheus_client</span> <span class="kn">import</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">Histogram</span>
+<p><strong>Prometheus Metrics:</strong>
+``python
+from prometheus_client import Counter, Histogram</p>
 
-<span class="n">asr_requests</span> <span class="o">=</span> <span class="nc">Counter</span><span class="p">(</span><span class="sh">'</span><span class="s">asr_requests_total</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">Total ASR requests</span><span class="sh">'</span><span class="p">)</span>
-<span class="n">asr_latency</span> <span class="o">=</span> <span class="nc">Histogram</span><span class="p">(</span><span class="sh">'</span><span class="s">asr_latency_seconds</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">ASR latency</span><span class="sh">'</span><span class="p">)</span>
-<span class="n">asr_wer</span> <span class="o">=</span> <span class="nc">Histogram</span><span class="p">(</span><span class="sh">'</span><span class="s">asr_wer</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">Word Error Rate</span><span class="sh">'</span><span class="p">)</span>
+<p>asr_requests = Counter(‘asr_requests_total’, ‘Total ASR requests’)
+asr_latency = Histogram(‘asr_latency_seconds’, ‘ASR latency’)
+asr_wer = Histogram(‘asr_wer’, ‘Word Error Rate’)</p>
 
-<span class="nd">@asr_latency.time</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">transcribe</span><span class="p">(</span><span class="n">audio</span><span class="p">):</span>
-    <span class="n">asr_requests</span><span class="p">.</span><span class="nf">inc</span><span class="p">()</span>
-    
-    <span class="n">transcript</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">transcribe</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-    
-    <span class="c1"># If we have ground truth, compute WER
-</span>    <span class="k">if</span> <span class="n">ground_truth</span><span class="p">:</span>
-        <span class="n">wer</span> <span class="o">=</span> <span class="nf">compute_wer</span><span class="p">(</span><span class="n">transcript</span><span class="p">,</span> <span class="n">ground_truth</span><span class="p">)</span>
-        <span class="n">asr_wer</span><span class="p">.</span><span class="nf">observe</span><span class="p">(</span><span class="n">wer</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">transcript</span>
-</code></pre></div></div>
+<p>@asr_latency.time()
+def transcribe(audio):
+ asr_requests.inc()</p>
+
+<p>transcript = model.transcribe(audio)</p>
+
+<p># If we have ground truth, compute WER
+ if ground_truth:
+ wer = compute_wer(transcript, ground_truth)
+ asr_wer.observe(wer)</p>
+
+<p>return transcript
+``</p>
 
 <p><strong>Grafana Dashboard:</strong></p>
 <ul>
@@ -774,102 +797,103 @@ Audio → VAD →                               → Merge → Output
 
 <h2 id="implementation-complete-speech-orchestration-pipeline">Implementation: Complete Speech Orchestration Pipeline</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="n">airflow</span> <span class="kn">import</span> <span class="n">DAG</span>
-<span class="kn">from</span> <span class="n">airflow.operators.python</span> <span class="kn">import</span> <span class="n">PythonOperator</span><span class="p">,</span> <span class="n">BranchPythonOperator</span>
-<span class="kn">from</span> <span class="n">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<p>``python
+from airflow import DAG
+from airflow.operators.python import PythonOperator, BranchPythonOperator
+from datetime import datetime, timedelta</p>
 
-<span class="n">default_args</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="sh">'</span><span class="s">owner</span><span class="sh">'</span><span class="p">:</span> <span class="sh">'</span><span class="s">speech-team</span><span class="sh">'</span><span class="p">,</span>
-    <span class="sh">'</span><span class="s">retries</span><span class="sh">'</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="sh">'</span><span class="s">retry_delay</span><span class="sh">'</span><span class="p">:</span> <span class="nf">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-    <span class="sh">'</span><span class="s">execution_timeout</span><span class="sh">'</span><span class="p">:</span> <span class="nf">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
-<span class="p">}</span>
+<p>default_args = {
+ ‘owner’: ‘speech-team’,
+ ‘retries’: 2,
+ ‘retry_delay’: timedelta(minutes=1),
+ ‘execution_timeout’: timedelta(hours=2),
+}</p>
 
-<span class="n">dag</span> <span class="o">=</span> <span class="nc">DAG</span><span class="p">(</span>
-    <span class="sh">'</span><span class="s">speech_processing_pipeline</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">default_args</span><span class="o">=</span><span class="n">default_args</span><span class="p">,</span>
-    <span class="n">schedule_interval</span><span class="o">=</span><span class="sh">'</span><span class="s">@hourly</span><span class="sh">'</span><span class="p">,</span>
-    <span class="n">start_date</span><span class="o">=</span><span class="nf">datetime</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
-    <span class="n">catchup</span><span class="o">=</span><span class="bp">False</span>
-<span class="p">)</span>
+<p>dag = DAG(
+ ‘speech_processing_pipeline’,
+ default_args=default_args,
+ schedule_interval=’@hourly’,
+ start_date=datetime(2024, 1, 1),
+ catchup=False
+)</p>
 
-<span class="k">def</span> <span class="nf">fetch_audio</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Fetch new audio files from S3</span><span class="sh">"""</span>
-    <span class="c1"># List files uploaded in the last hour
-</span>    <span class="n">files</span> <span class="o">=</span> <span class="n">s3_client</span><span class="p">.</span><span class="nf">list_objects</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="sh">'</span><span class="s">audio-uploads</span><span class="sh">'</span><span class="p">,</span> <span class="n">Prefix</span><span class="o">=</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">]</span><span class="si">}</span><span class="s">/</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="n">audio_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="p">[</span><span class="sh">'</span><span class="s">Key</span><span class="sh">'</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">]</span>
-    <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_push</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">audio_paths</span><span class="sh">'</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">audio_paths</span><span class="p">)</span>
-    
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">audio_paths</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sh">'</span><span class="s">skip_processing</span><span class="sh">'</span>  <span class="c1"># Branch to end if no files
-</span>    <span class="k">return</span> <span class="sh">'</span><span class="s">preprocess_audio</span><span class="sh">'</span>
+<p>def fetch_audio(**context):
+ “"”Fetch new audio files from S3”””
+ # List files uploaded in the last hour
+ files = s3_client.list_objects(Bucket=’audio-uploads’, Prefix=f”{context[‘ds’]}/”)</p>
 
-<span class="k">def</span> <span class="nf">preprocess_audio</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">paths</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_pull</span><span class="p">(</span><span class="n">task_ids</span><span class="o">=</span><span class="sh">'</span><span class="s">fetch</span><span class="sh">'</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">audio_paths</span><span class="sh">'</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
-        <span class="c1"># Download, normalize, denoise
-</span>        <span class="n">audio</span> <span class="o">=</span> <span class="nf">download_and_normalize</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-        <span class="nf">save_for_processing</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+<p>audio_paths = [f[‘Key’] for f in files]
+ context[‘ti’].xcom_push(key=’audio_paths’, value=audio_paths)</p>
 
-<span class="k">def</span> <span class="nf">voice_activity_detection</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">paths</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_pull</span><span class="p">(</span><span class="n">task_ids</span><span class="o">=</span><span class="sh">'</span><span class="s">fetch</span><span class="sh">'</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">audio_paths</span><span class="sh">'</span><span class="p">)</span>
-    
-    <span class="n">segments</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
-        <span class="n">audio</span> <span class="o">=</span> <span class="nf">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-        <span class="n">file_segments</span> <span class="o">=</span> <span class="n">vad_model</span><span class="p">.</span><span class="nf">predict</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-        <span class="n">segments</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span><span class="sh">'</span><span class="s">file</span><span class="sh">'</span><span class="p">:</span> <span class="n">path</span><span class="p">,</span> <span class="sh">'</span><span class="s">segments</span><span class="sh">'</span><span class="p">:</span> <span class="n">file_segments</span><span class="p">})</span>
-    
-    <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_push</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">segments</span><span class="sh">'</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">segments</span><span class="p">)</span>
+<p>if not audio_paths:
+ return ‘skip_processing’ # Branch to end if no files
+ return ‘preprocess_audio’</p>
 
-<span class="k">def</span> <span class="nf">asr_transcription</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="n">segments_data</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ti</span><span class="sh">'</span><span class="p">].</span><span class="nf">xcom_pull</span><span class="p">(</span><span class="n">task_ids</span><span class="o">=</span><span class="sh">'</span><span class="s">vad</span><span class="sh">'</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="sh">'</span><span class="s">segments</span><span class="sh">'</span><span class="p">)</span>
-    
-    <span class="k">for</span> <span class="n">file_data</span> <span class="ow">in</span> <span class="n">segments_data</span><span class="p">:</span>
-        <span class="n">audio</span> <span class="o">=</span> <span class="nf">load</span><span class="p">(</span><span class="n">file_data</span><span class="p">[</span><span class="sh">'</span><span class="s">file</span><span class="sh">'</span><span class="p">])</span>
-        <span class="n">transcripts</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">file_data</span><span class="p">[</span><span class="sh">'</span><span class="s">segments</span><span class="sh">'</span><span class="p">]:</span>
-            <span class="n">segment</span> <span class="o">=</span> <span class="n">audio</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
-            <span class="n">text</span><span class="p">,</span> <span class="n">confidence</span> <span class="o">=</span> <span class="n">asr_model</span><span class="p">.</span><span class="nf">transcribe</span><span class="p">(</span><span class="n">segment</span><span class="p">,</span> <span class="n">return_confidence</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-            
-            <span class="n">transcripts</span><span class="p">.</span><span class="nf">append</span><span class="p">({</span>
-                <span class="sh">'</span><span class="s">start</span><span class="sh">'</span><span class="p">:</span> <span class="n">start</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">end</span><span class="sh">'</span><span class="p">:</span> <span class="n">end</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">text</span><span class="sh">'</span><span class="p">:</span> <span class="n">text</span><span class="p">,</span>
-                <span class="sh">'</span><span class="s">confidence</span><span class="sh">'</span><span class="p">:</span> <span class="n">confidence</span>
-            <span class="p">})</span>
-        
-        <span class="nf">save_transcripts</span><span class="p">(</span><span class="n">file_data</span><span class="p">[</span><span class="sh">'</span><span class="s">file</span><span class="sh">'</span><span class="p">],</span> <span class="n">transcripts</span><span class="p">)</span>
+<p>def preprocess_audio(**context):
+ paths = context[‘ti’].xcom_pull(task_ids=’fetch’, key=’audio_paths’)</p>
 
-<span class="k">def</span> <span class="nf">quality_check</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
-    <span class="sh">"""</span><span class="s">Check if transcriptions meet quality threshold</span><span class="sh">"""</span>
-    <span class="c1"># Load transcripts for this run
-</span>    <span class="n">transcripts</span> <span class="o">=</span> <span class="nf">load_all_transcripts</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="sh">'</span><span class="s">ds</span><span class="sh">'</span><span class="p">])</span>
-    
-    <span class="n">avg_confidence</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="sh">'</span><span class="s">confidence</span><span class="sh">'</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">transcripts</span><span class="p">)</span> <span class="o">/</span> <span class="nf">len</span><span class="p">(</span><span class="n">transcripts</span><span class="p">)</span>
-    
-    <span class="k">if</span> <span class="n">avg_confidence</span> <span class="o">&lt;</span> <span class="mf">0.7</span><span class="p">:</span>
-        <span class="c1"># Send alert
-</span>        <span class="nf">send_slack_alert</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Low confidence transcriptions: </span><span class="si">{</span><span class="n">avg_confidence</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
-    
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">Average confidence: </span><span class="si">{</span><span class="n">avg_confidence</span><span class="si">:</span><span class="p">.</span><span class="mi">2</span><span class="o">%</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
+<p>for path in paths:
+ # Download, normalize, denoise
+ audio = download_and_normalize(path)
+ save_for_processing(audio, path)</p>
 
-<span class="c1"># Define tasks
-</span><span class="n">fetch</span> <span class="o">=</span> <span class="nc">BranchPythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">fetch</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">fetch_audio</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
-<span class="n">preprocess</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">preprocess_audio</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">preprocess_audio</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
-<span class="n">vad</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">voice_activity_detection</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">voice_activity_detection</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
-<span class="n">transcribe</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">asr_transcription</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">asr_transcription</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
-<span class="n">quality</span> <span class="o">=</span> <span class="nc">PythonOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">quality_check</span><span class="sh">'</span><span class="p">,</span> <span class="n">python_callable</span><span class="o">=</span><span class="n">quality_check</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
+<p>def voice_activity_detection(**context):
+ paths = context[‘ti’].xcom_pull(task_ids=’fetch’, key=’audio_paths’)</p>
 
-<span class="n">skip</span> <span class="o">=</span> <span class="nc">EmptyOperator</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="sh">'</span><span class="s">skip_processing</span><span class="sh">'</span><span class="p">,</span> <span class="n">dag</span><span class="o">=</span><span class="n">dag</span><span class="p">)</span>
+<p>segments = []
+ for path in paths:
+ audio = load(path)
+ file_segments = vad_model.predict(audio)
+ segments.append({‘file’: path, ‘segments’: file_segments})</p>
 
-<span class="c1"># Dependencies
-</span><span class="n">fetch</span> <span class="o">&gt;&gt;</span> <span class="p">[</span><span class="n">preprocess</span><span class="p">,</span> <span class="n">skip</span><span class="p">]</span>
-<span class="n">preprocess</span> <span class="o">&gt;&gt;</span> <span class="n">vad</span> <span class="o">&gt;&gt;</span> <span class="n">transcribe</span> <span class="o">&gt;&gt;</span> <span class="n">quality</span>
-</code></pre></div></div>
+<p>context[‘ti’].xcom_push(key=’segments’, value=segments)</p>
+
+<p>def asr_transcription(**context):
+ segments_data = context[‘ti’].xcom_pull(task_ids=’vad’, key=’segments’)</p>
+
+<p>for file_data in segments_data:
+ audio = load(file_data[‘file’])
+ transcripts = []</p>
+
+<p>for start, end in file_data[‘segments’]:
+ segment = audio[start:end]
+ text, confidence = asr_model.transcribe(segment, return_confidence=True)</p>
+
+<p>transcripts.append({
+ ‘start’: start,
+ ‘end’: end,
+ ‘text’: text,
+ ‘confidence’: confidence
+ })</p>
+
+<p>save_transcripts(file_data[‘file’], transcripts)</p>
+
+<p>def quality_check(**context):
+ “"”Check if transcriptions meet quality threshold”””
+ # Load transcripts for this run
+ transcripts = load_all_transcripts(context[‘ds’])</p>
+
+<p>avg_confidence = sum(t[‘confidence’] for t in transcripts) / len(transcripts)</p>
+
+<p>if avg_confidence &lt; 0.7:
+ # Send alert
+ send_slack_alert(f”Low confidence transcriptions: {avg_confidence:.2%}”)</p>
+
+<p>print(f”Average confidence: {avg_confidence:.2%}”)</p>
+
+<h1 id="define-tasks">Define tasks</h1>
+<p>fetch = BranchPythonOperator(task_id=’fetch’, python_callable=fetch_audio, dag=dag)
+preprocess = PythonOperator(task_id=’preprocess_audio’, python_callable=preprocess_audio, dag=dag)
+vad = PythonOperator(task_id=’voice_activity_detection’, python_callable=voice_activity_detection, dag=dag)
+transcribe = PythonOperator(task_id=’asr_transcription’, python_callable=asr_transcription, dag=dag)
+quality = PythonOperator(task_id=’quality_check’, python_callable=quality_check, dag=dag)</p>
+
+<p>skip = EmptyOperator(task_id=’skip_processing’, dag=dag)</p>
+
+<h1 id="dependencies">Dependencies</h1>
+<p>fetch » [preprocess, skip]
+preprocess » vad » transcribe » quality
+``</p>
 
 <h2 id="top-interview-questions">Top Interview Questions</h2>
 

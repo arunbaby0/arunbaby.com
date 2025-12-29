@@ -51,7 +51,7 @@
 
 
 
-  <meta property="article:published_time" content="2025-12-29T15:12:33+05:30">
+  <meta property="article:published_time" content="2025-12-29T16:05:30+05:30">
 
 
 
@@ -207,7 +207,7 @@
   <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
     <meta itemprop="headline" content="Speech Tokenization">
     <meta itemprop="description" content="The breakthrough that allows us to treat audio like text, enabling GPT-style models for speech.">
-    <meta itemprop="datePublished" content="2025-12-29T15:12:33+05:30">
+    <meta itemprop="datePublished" content="2025-12-29T16:05:30+05:30">
     
 
     <div class="page__inner-wrap">
@@ -320,17 +320,18 @@
 
 <h2 id="high-level-architecture-the-speech-llm-pipeline">High-Level Architecture: The Speech-LLM Pipeline</h2>
 
-<pre><code class="language-ascii">+-----------+    +-------------+    +-------------+    +-------------+
-| Raw Audio | -&gt; |   Encoder   | -&gt; |  Quantizer  | -&gt; | Discrete Tok|
-+-----------+    +-------------+    +-------------+    +-------------+
-                      |                  |                  |
-                 (HuBERT/EnCodec)   (Codebook)         [34, 102, 88]
-                                                            |
-                                                            v
-+-----------+    +-------------+    +-------------+    +-------------+
-| New Audio | &lt;- |   Vocoder   | &lt;- |  LLM / GPT  | &lt;- | Prompt Toks |
-+-----------+    +-------------+    +-------------+    +-------------+
-</code></pre>
+<p><code class="language-plaintext highlighter-rouge">ascii
++-----------+ +-------------+ +-------------+ +-------------+
+| Raw Audio | -&gt; | Encoder | -&gt; | Quantizer | -&gt; | Discrete Tok|
++-----------+ +-------------+ +-------------+ +-------------+
+ | | |
+ (HuBERT/EnCodec) (Codebook) [34, 102, 88]
+ |
+ v
++-----------+ +-------------+ +-------------+ +-------------+
+| New Audio | &lt;- | Vocoder | &lt;- | LLM / GPT | &lt;- | Prompt Toks |
++-----------+ +-------------+ +-------------+ +-------------+
+</code></p>
 
 <h2 id="system-design-building-a-speech-llm">System Design: Building a Speech-LLM</h2>
 
@@ -435,29 +436,23 @@ We want to map <code class="language-plaintext highlighter-rouge">z_e</code> to 
 
 <h3 id="1-the-encoder-decoder">1. The Encoder-Decoder</h3>
 <ul>
-  <li><strong>Convolutional:</strong> Uses 1D Convolutions to downsample the audio.
-    <ul>
-      <li>Input: 24kHz audio (24,000 samples/sec).</li>
-      <li>Downsampling factor: 320x.</li>
-      <li>Output: 75 frames/sec.</li>
-    </ul>
-  </li>
+  <li><strong>Convolutional:</strong> Uses 1D Convolutions to downsample the audio.</li>
+  <li>Input: 24kHz audio (24,000 samples/sec).</li>
+  <li>Downsampling factor: 320x.</li>
+  <li>Output: 75 frames/sec.</li>
   <li><strong>LSTM:</strong> Adds a sequence modeling layer to capture long-term dependencies.</li>
 </ul>
 
 <h3 id="2-residual-vector-quantization-rvq">2. Residual Vector Quantization (RVQ)</h3>
 <p>As mentioned, a single codebook is too coarse. RVQ uses a cascade of <code class="language-plaintext highlighter-rouge">N</code> quantizers (usually 8).</p>
 <ul>
-  <li><strong>Bitrate Control:</strong>
-    <ul>
-      <li>If we use 8 quantizers, we get high fidelity (6 kbps).</li>
-      <li>If we use only the first 2 quantizers during decoding, we get lower fidelity but lower bitrate (1.5 kbps).</li>
-      <li>
-        <p><em>If you found this helpful, consider sharing it with others who might benefit.</em></p>
-      </li>
-      <li>This allows <strong>Bandwidth Scalability</strong>.</li>
-    </ul>
+  <li><strong>Bitrate Control:</strong></li>
+  <li>If we use 8 quantizers, we get high fidelity (6 kbps).</li>
+  <li>If we use only the first 2 quantizers during decoding, we get lower fidelity but lower bitrate (1.5 kbps).</li>
+  <li>
+    <p><em>If you found this helpful, consider sharing it with others who might benefit.</em></p>
   </li>
+  <li>This allows <strong>Bandwidth Scalability</strong>.</li>
 </ul>
 
 <h3 id="3-adversarial-loss-gan">3. Adversarial Loss (GAN)</h3>
@@ -528,11 +523,8 @@ To fix this, we add a <strong>Discriminator</strong> (a separate neural net) tha
 <p><strong>3. Training Loop:</strong></p>
 <ul>
   <li><strong>Optimizer:</strong> AdamW (lr=3e-4).</li>
-  <li><strong>Balancer:</strong> You have 5 losses (Reconstruction, Codebook, Commitment, Adversarial, Feature Matching). Balancing them is an art.
-    <ul>
-      <li><code class="language-plaintext highlighter-rouge">L_total = L_rec + 0.1 * L_adv + 1.0 * L_feat + ...</code></li>
-    </ul>
-  </li>
+  <li><strong>Balancer:</strong> You have 5 losses (Reconstruction, Codebook, Commitment, Adversarial, Feature Matching). Balancing them is an art.</li>
+  <li><code class="language-plaintext highlighter-rouge">L_total = L_rec + 0.1 * L_adv + 1.0 * L_feat + ...</code></li>
 </ul>
 
 <p><strong>4. Evaluation:</strong></p>
@@ -629,38 +621,39 @@ To fix this, we add a <strong>Discriminator</strong> (a separate neural net) tha
 
 <h2 id="appendix-c-python-code-for-rvq">Appendix C: Python Code for RVQ</h2>
 
-<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
-<span class="kn">import</span> <span class="n">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<p>``python
+import torch
+import torch.nn as nn</p>
 
-<span class="k">class</span> <span class="nc">ResidualVQ</span><span class="p">(</span><span class="n">nn</span><span class="p">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">num_quantizers</span><span class="p">,</span> <span class="n">codebook_size</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
-        <span class="nf">super</span><span class="p">().</span><span class="nf">__init__</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">ModuleList</span><span class="p">([</span>
-            <span class="n">nn</span><span class="p">.</span><span class="nc">Embedding</span><span class="p">(</span><span class="n">codebook_size</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">num_quantizers</span><span class="p">)</span>
-        <span class="p">])</span>
-        
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
-        <span class="c1"># x: [Batch, Dim]
-</span>        <span class="n">residual</span> <span class="o">=</span> <span class="n">x</span>
-        <span class="n">quantized_out</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">indices</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">layers</span><span class="p">:</span>
-            <span class="c1"># Find nearest neighbor in codebook
-</span>            <span class="c1"># (Simplified: dot product similarity)
-</span>            <span class="n">dists</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cdist</span><span class="p">(</span><span class="n">residual</span><span class="p">.</span><span class="nf">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">layer</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="nf">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
-            <span class="n">idx</span> <span class="o">=</span> <span class="n">dists</span><span class="p">.</span><span class="nf">argmin</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">).</span><span class="nf">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">indices</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
-            
-            <span class="c1"># Get vector
-</span>            <span class="n">quantized</span> <span class="o">=</span> <span class="nf">layer</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
-            <span class="n">quantized_out</span> <span class="o">+=</span> <span class="n">quantized</span>
-            
-            <span class="c1"># Update residual
-</span>            <span class="n">residual</span> <span class="o">=</span> <span class="n">residual</span> <span class="o">-</span> <span class="n">quantized</span><span class="p">.</span><span class="nf">detach</span><span class="p">()</span>
-            
-        <span class="k">return</span> <span class="n">quantized_out</span><span class="p">,</span> <span class="n">indices</span>
-</code></pre></div></div>
+<p>class ResidualVQ(nn.Module):
+ def <strong>init</strong>(self, num_quantizers, codebook_size, dim):
+ super().<strong>init</strong>()
+ self.layers = nn.ModuleList([
+ nn.Embedding(codebook_size, dim) for _ in range(num_quantizers)
+ ])</p>
+
+<p>def forward(self, x):
+ # x: [Batch, Dim]
+ residual = x
+ quantized_out = 0
+ indices = []</p>
+
+<p>for layer in self.layers:
+ # Find nearest neighbor in codebook
+ # (Simplified: dot product similarity)
+ dists = torch.cdist(residual.unsqueeze(1), layer.weight.unsqueeze(0))
+ idx = dists.argmin(dim=-1).squeeze(1)
+ indices.append(idx)</p>
+
+<p># Get vector
+ quantized = layer(idx)
+ quantized_out += quantized</p>
+
+<p># Update residual
+ residual = residual - quantized.detach()</p>
+
+<p>return quantized_out, indices
+``</p>
 
 <h2 id="case-study-whispers-tokenizer">Case Study: Whisper’s Tokenizer</h2>
 
@@ -796,12 +789,9 @@ We need a <strong>Vocoder</strong> (or HiFi-GAN).</p>
 <p><strong>2. Streaming Processing (Online)</strong></p>
 <ul>
   <li><strong>Chunking:</strong> Process audio in 20ms chunks.</li>
-  <li><strong>Causal Convolutions:</strong> The encoder can only look at <em>past</em> samples, not future ones.
-    <ul>
-      <li>Standard Conv: <code class="language-plaintext highlighter-rouge">Output[t]</code> depends on <code class="language-plaintext highlighter-rouge">Input[t-k...t+k]</code>.</li>
-      <li>Causal Conv: <code class="language-plaintext highlighter-rouge">Output[t]</code> depends on <code class="language-plaintext highlighter-rouge">Input[t-k...t]</code>.</li>
-    </ul>
-  </li>
+  <li><strong>Causal Convolutions:</strong> The encoder can only look at <em>past</em> samples, not future ones.</li>
+  <li>Standard Conv: <code class="language-plaintext highlighter-rouge">Output[t]</code> depends on <code class="language-plaintext highlighter-rouge">Input[t-k...t+k]</code>.</li>
+  <li>Causal Conv: <code class="language-plaintext highlighter-rouge">Output[t]</code> depends on <code class="language-plaintext highlighter-rouge">Input[t-k...t]</code>.</li>
   <li><strong>Latency:</strong> 20-40ms. (Real-time).</li>
 </ul>
 
