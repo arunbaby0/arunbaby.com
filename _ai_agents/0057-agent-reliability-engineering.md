@@ -22,16 +22,10 @@ companies: [Salesforce, Microsoft, OpenAI, Palantir, Datadog]
 difficulty: Hard
 ---
 
+
 **"Reliability is not a state you reach; it is a discipline you practice. In the era of autonomous agents, SRE (Site Reliability Engineering) is evolving into ARE (Agent Reliability Engineering)."**
 
 ## 1. Introduction: The Fragility of Autonomy
-
-We have entered the "Agentic Era." Companies are deploying agents to handle customer support, execute code, and manage supply chains. But there is a challenge: **Agents are brittle.**
-- A minor update to an API schema can break an agent's tool-calling logic.
-- A slight change in LLM latency can cause a timeout in a multi-agent swarm.
-- A "hallucination" can lead an agent into an infinite recursive loop.
-
-**Agent Reliability Engineering (ARE)** is the application of SRE principles to the unique failure modes of AI agents. It is the science of building systems that can "recover" from the inherent unpredictability of language models. We architect the "Safety Net" for autonomous swarms, focusing on **Infrastructure Stability and Minimum Error Windows**.
 
 ---
 

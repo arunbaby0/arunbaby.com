@@ -22,18 +22,20 @@ companies: [Amazon, Google, Apple, Microsoft, SoundHound]
 difficulty: Hard
 ---
 
+
 **"A voice assistant is more than a speech recognizer attached to a search engine. It is a stateful entity that must navigate the social nuances of human turn-taking and intent."**
 
 ## 1. Introduction: Beyond Single-Shot Commands
 
-The early era of voice was defined by **Single-Shot Commands**: 
-- "Hey, what's the weather?"
-- "Set a timer for 10 minutes."
-The system performed a task and then immediately "forgot" the user. There was no memory, no context, and no conversation.
+The first generation of voice interfaces (2014-2018) defined the era of **Single-Shot Commands**:
+-   *"Hey Google, turn on the lights."*
+-   *"Alexa, what's different about a sloth and a koala?"*
 
-**Conversational AI** is the science of **Multi-turn Interaction**. It requires the system to maintain a **Dialog State** across minutes or even hours of conversation. It must handle interruptions, corrections, and anaphora ("What about *it*?").
+The technical architecture was simple: Wake Word &rarr; ASR &rarr; NLU &rarr; Action &rarr; Forget. The system had no memory. Every interaction was "Day 0."
 
-We architect a full-stack Conversational AI system, focusing on **State-Driven Transitions and Persistent Persistence**.
+**Conversational AI** (2025+) is the transition to **Multi-turn Interaction**. It requires the system to maintain a **Dialog State** across minutes or even hours of conversation. It must handle interruptions (Barge-In), corrections ("No, I meant Boston, UK"), and anaphora ("Send *it* to *him*").
+
+In this post, we architect a full-stack Conversational AI system. We will not look at high-level API wrappers; we will dissect the **Dialog Manager**, the handling of **Full-Duplex Audio**, and the **Latency Budgeting** required to make a machine feel human.
 
 ---
 

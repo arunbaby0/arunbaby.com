@@ -20,17 +20,11 @@ scale: "O(N) time for arrays up to 10^5 elements"
 companies: [Google, Amazon, Meta, Microsoft, Netflix, Bloomberg]
 ---
 
+
 **"Largest Rectangle in Histogram is the masterclass of the Monotonic Stack. It requires maintaining a sorted state of indices to solve a local minimum problem in linear time."**
 
 ## 1. Introduction: The Geometry of Data
 
-Imagine you have a series of buildings of different heights forming a skyline. You want to find the largest rectangular billboard that can be placed against these buildings. This isn't just a geometric puzzle; it is a fundamental problem in information retrieval, image processing (finding features in histograms), and even manufacturing (optimizing raw material cuts).
-
-The brute-force approach—checking every possible pair of buildings as boundaries—results in an O(N^2) complexity. For a high-resolution histogram with millions of bins, this is too slow. To solve it in O(N), we must move from "Blind Search" to "Intelligent Tracking." Today we master the **Monotonic Stack**, a data structure that helps us find the nearest smaller value in a single pass.
-
----
-
-## 2. The Problem Statement
 
 Given an array of integers `heights` representing a histogram's bar height where the width of each bar is 1, find the area of the largest rectangle in the histogram.
 

@@ -22,17 +22,11 @@ companies: [OpenAI, Meta, NVIDIA, Uber, Cruise]
 difficulty: Hard
 ---
 
+
 **"Capacity Planning is the art of predicting the future while paying for the present. In ML, it is the difference between a high-growth product and a bankrupt one."**
 
 ## 1. Introduction: The Billion Dollar Guessing Game
 
-In 2023, the biggest constraint on AI progress wasn't algorithms; it was the availability of GPU clusters. 
-
-When you build a machine learning system, you face a terrifying math problem:
-- If you buy **too few** servers, your latency spikes, your users churn, and your "Rectangle of Success" collapses.
-- If you buy **too many** servers, your burn rate explodes, and you run out of capital before reaching product-market fit.
-
-**Capacity Planning** is the engineering framework for managing this trade-off. It combines historical data, probabilistic modeling, and hardware performance profiles to determine the most cost-efficient infrastructure roadmap. We explore how to project load, handle spikes, and scale gracefully.
 
 ---
 

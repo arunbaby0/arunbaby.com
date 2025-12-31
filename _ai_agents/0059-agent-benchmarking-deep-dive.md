@@ -26,9 +26,14 @@ difficulty: Hard
 
 ## 1. Introduction: The Wild West of Agent Evaluation
 
-In the early days of LLMs, we measured intelligence with **MMLU** (Multiple-choice questions). But an AI Agent is not a test-taker; it is a **Doer**. It doesn't just need to know that "Paris is the capital of France"; it needs to be able to "Book a flight to Paris, find a hotel under 200, and add it to my calendar."
+In 2023, the metric for AI was "MMLU" (Multiple-choice questions).
+In 2025, the metric is **Success Rate on Unseen Environments**.
 
-**Agent Benchmarking** is the standardized science of evaluating autonomous systems. It is the transition from "vague chat" to "verifiable task execution." We dive deep into the contemporary benchmarks that define state-of-the-art agents, connecting to our theme of **Complex Search and Verification**.
+An AI Agent is fundamentally different from a Chatbot. A Chatbot produces *Text*. An Agent produces *Side Effects* (Files written, APIs called, Money moved). Therefore, evaluating an Agent by asking "Does this response look good?" is useless. The only valid question is: **"Did the Agent change the state of the world to the desired target state?"**
+
+**Agent Benchmarking** is the engineering discipline of creating reproducible, sandboxed, and verifiable environments to measure "Agency." It is the transition from "Vibes-based Evaluation" to "Integration Test-based Evaluation."
+
+In this deep dive, we explore how to benchmark the un-benchmarkable. We will dissect the architecture of **SWE-bench**, **WebArena**, and **GAIA**, and learn how to build your own internal evaluation harness.
 
 ---
 

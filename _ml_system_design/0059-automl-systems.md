@@ -21,17 +21,11 @@ companies: [Google, Meta, Amazon, Microsoft, NVIDIA]
 difficulty: Hard
 ---
 
+
 **"The ultimate bottleneck in machine learning is not data or compute—it is the human engineer. AutoML Systems aim to automate the 'grad student descent'—turning model discovery into a massively parallelized search problem."**
 
 ## 1. Introduction: The Meta-Optimization Problem
 
-In the early 2010s, building a good ML model meant a human spending weeks manually tuning learning rates, layer sizes, and weight decays. This was slow, biased, and expensive. 
-
-**AutoML (Automated Machine Learning)** is the science of building systems that build models. It treats the architecture and hyperparameters of a model as variables in a massive **Constraint Satisfaction Problem**. We design an industrial-scale AutoML platform capable of discovering state-of-the-art architectures for millions of users, focusing on **Search Efficiency and Distributed Resource Management**.
-
----
-
-## 2. The Core Requirements of an AutoML Platform
 
 ### 2.1 Functional Requirements
 1. **HPO (Hyperparameter Optimization)**: Tune scalar values (LR, Dropout, Weight Decay).

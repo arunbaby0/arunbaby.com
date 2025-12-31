@@ -19,15 +19,24 @@ scale: "Handling strings and patterns up to 1000 characters with O(N*M) time"
 companies: [Google, Meta, Amazon, Microsoft, Uber, Airbnb]
 ---
 
+
 **"Regular Expression Matching is where string manipulation meets automata theory. It requires translating a sequence of patterns into a resilient state machine."**
 
 ## 1. Introduction: The Power of Pattern
 
-From terminal commands to tokenizers in Large Language Models, **Regular Expressions (RegEx)** are the backbone of text processing. While most engineers use them every day, few understand what's happening under the hood.
+From terminal commands (`grep "error.*"`) to tokenizers in Large Language Models, **Regular Expressions (RegEx)** are the backbone of text processing. While most engineers use them every day, few understand what's happening under the hood.
 
-At its core, RegEx matching is a **Search Problem**. Unlike simple string search, RegEx introduced **Wildcards** (`.`) and **Quantifiers** (`*`). This makes the search space branch: when you see `a*`, you could choose to match zero 'a's, one 'a', or many. 
+At its core, RegEx matching is a **Search Problem**. Unlike simple string search (finding a substring), RegEx introduces **Wildcards** (`.`) and **Quantifiers** (`*`). This makes the search space branch: when you see `a*`, you could choose to match zero 'a's, one 'a', or many. 
+- *Should I consume this character?*
+- *Should I skip this pattern?*
+- *Should I backtrack?*
 
-We solve the RegEx matching problem using **Dynamic Programming**, exploring how to manage overlapping subproblems and complex state transitions.
+We solve the RegEx matching problem using **Dynamic Programming (DP)**, exploring how to manage overlapping subproblems and complex state transitions without falling into the "redos" (Regular Expression Denial of Service) trap of exponential time complexity.
+
+### 1.1 Why This Problem Matters
+-   **Compiler Design**: Understanding lexical analysis and token generation.
+-   **Security**: Analyzing how catastrophic backtracking can crash a server.
+-   **Automata Theory**: Bridging the gap between NFA (Non-deterministic Finite Automaton) and practical code.
 
 ---
 

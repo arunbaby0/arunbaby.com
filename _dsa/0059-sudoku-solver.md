@@ -21,15 +21,22 @@ scale: "9x9 grid, solving in <10ms with bitmasking optimizations"
 companies: [Google, Apple, Microsoft, Amazon, Meta, Airbnb]
 ---
 
+
 **"Sudoku Solver is the quintessential backtracking problem—it represents the transition from simple recursion to a multi-constraint search problem where every choice prunes a massive branch of the state space."**
 
 ## 1. Introduction: The Complexity of the Grid
 
-Sudoku is more than just a pastime in the Sunday newspaper. In computer science, it is a canonical example of a **Constraint Satisfaction Problem (CSP)**. 
+Sudoku is more than just a pastime in the Sunday newspaper. In computer science, it is a canonical example of a **Constraint Satisfaction Problem (CSP)**. It is essentially a graph coloring problem on a graph with 81 nodes (cells) and a very specific set of edges (constraints).
 
 At a glance, a 9x9 grid seems small. However, if you were to try filling an empty board with every possible digit combination, you would be dealing with `9^{81}` possibilities—a number larger than the estimated number of atoms in the observable universe. 
+Even a partially filled board generates a search tree that explodes exponentially.
 
-Solving Sudoku efficiently is about **Pruned Search**. It is about making a move, checking if it satisfies a set of local and global constraints, and immediately "backtracking" if it leads to a dead end. We explore the algorithms that power modern solvers, from basic recursion to bitmasking and the legendary "Dancing Links."
+Solving Sudoku efficiently is about **Pruned Search**. It is about making a move, checking if it satisfies a set of local and global constraints, and immediately "backtracking" if it leads to a dead end. In this deep dive, we will move from a basic recursive solution to a highly optimized bitmask solver, and finally discuss **Dancing Links (DLX)**, the algorithm used by competitive solvers.
+
+### 1.1 Why This Problem Matters
+-   **Backtracking Foundation**: It is the purest form of "Try, Fail, Undo."
+-   **Constraint Propagation**: It teaches you how checking constraints early reduces work later.
+-   **Bitwise Optimization**: It offers a perfect use case for using bits to represent sets.
 
 ---
 

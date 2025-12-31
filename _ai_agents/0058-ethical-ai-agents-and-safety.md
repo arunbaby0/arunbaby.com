@@ -22,17 +22,11 @@ companies: [Anthropic, OpenAI, Meta, Google, Alignment Research Center]
 difficulty: Hard
 ---
 
+
 **"An autonomous agent without safety guardrails is not an assistant; it is a liability. Ethics in AI is not a 'layer' you add at the end—it is the operating system upon which the agent runs."**
 
 ## 1. Introduction: The Power of Agency
 
-As we move toward agents that can execute code, move money, and browse the web, the "Safety Stakes" have shifted. If a Chatbot says something offensive, it's a PR disaster. If an AI Agent deletes a production database, it's a business catastrophe.
-
-**Ethical AI Safety** is the engineering discipline of ensuring agents stay within their "Operational Envelope." It involves **Alignment** (making sure the agent wants what we want) and **Control** (making sure the agent *cannot* do what we don't want). 
-
-We explore the architecture of Agentic Guardrails, focusing on **Strict State Transitions and Rule-based Constraints**.
-
----
 
 ## 2. The Five Pillars of Agentic Safety
 

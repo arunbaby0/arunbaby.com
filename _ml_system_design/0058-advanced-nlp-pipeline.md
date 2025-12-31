@@ -22,15 +22,16 @@ companies: [Google, Bloomberg, Reuters, Meta, Microsoft]
 difficulty: Hard
 ---
 
+
 **"An NLP pipeline is a factory for meaning. It takes raw, messy human dialogue and transforms it into a structured, machine-compatible stream of intent and entities."**
 
 ## 1. Introduction: From Text to Meaning
 
-Processing human language at scale is one of the most difficult engineering tasks. Unlike image pixels or sensor logs, language is infinitely recursive and highly ambiguous. A single word like "bank" can mean a financial institution, a river edge, or a flight maneuver.
+Processing human language at scale is one of the most difficult engineering tasks available. Unlike image pixels (which are fixed-grid integers) or sensor logs (structured floats), language is infinitely recursive, highly ambiguous, and deeply context-dependent. A single word like "bank" can mean a financial institution, a river edge, or a flight maneuver, and the only way to know is by looking at the words around it.
 
-**Advanced NLP Pipelines** are the architectural solution to this complexity. Instead of one giant model, we use a series of specialized components (Tokenizers, POS Taggers, NER models, Sentiment Rankers) coordinated by an orchestrator. 
+**Advanced NLP Pipelines** are the architectural solution to this complexity. Instead of one giant model trying to do everything (the LLM approach, which is slow and expensive), production systems use a cascade of specialized components—Tokenizers, Part-of-Speech Taggers, Named Entity Recognizers, and Relation Extractors—coordinated by a DAG (Directed Acyclic Graph) orchestrator.
 
-We explore the design of a production-grade NLP factory, focusing on **State-Driven Processing and Pattern Matching**.
+In this deep dive, we will design a production-grade NLP factory capable of processing **1 Billion Tokens per Day**. We will move beyond simple `pip install transformers` scripts and tackle the hard problems: custom tokenization strategies, handling document-level context (Coreference Resolution), optimizing DAG execution, and hybridizing RegEx state machines with Neural Networks for maximum efficiency.
 
 ---
 

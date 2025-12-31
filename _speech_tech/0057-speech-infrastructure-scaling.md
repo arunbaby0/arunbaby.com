@@ -22,16 +22,10 @@ companies: [Amazon, Google, Apple, Microsoft, Zoom, Twilio]
 difficulty: Hard
 ---
 
+
 **"Scaling image models is about pixels; scaling speech models is about time. You cannot batch the past, and you cannot predict the future—you must process the 'now' at the speed of sound."**
 
 ## 1. Introduction: The Unique Constraints of Audio
-
-Scaling machine learning for text or images is a "Throughput" problem. If you need to process more images, you add more GPUs. The data is static.
-
-**Speech Infrastructure** is different. Audio is a **Continuous Stream**.
-1. **Strict Latency**: If your ASR (Speech-to-Text) system lags by more than 500ms, the conversation feels broken.
-2. **Stateful Connections**: Unlike a REST API, a voice call is a persistent connection. If a server crashes, the call drops.
-3. **High Data Volume**: 1 second of high-quality audio is ~32,000 bytes. 100,000 concurrent callers moves gigabytes of raw data per second.
 
 We architect a global-scale speech processing engine, focusing on **Maximum Load and Area Management**.
 
