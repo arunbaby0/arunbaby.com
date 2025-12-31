@@ -27,7 +27,7 @@ difficulty: Hard
 
 ## 1. Introduction: The Agentic Plateau
 
-Over the last 60 days, we have laid the foundation. We built tool-calling systems (Level 2), orchestrated swarms (Level 3), and implemented guardrails (Level 4). Yet, stepping back, the state of the art in 2025 feels like the internet in 1995: potent, promising, but clunky.
+In the previous posts, we have laid the foundation. We built tool-calling systems (Level 2), orchestrated swarms (Level 3), and implemented guardrails (Level 4). Yet, stepping back, the state of the art in 2025 feels like the internet in 1995: potent, promising, but clunky.
 
 Most agents today are **Episodic**. They wake up, handle a request, and die. They lack:
 1.  **Object Permanence**: They don't remember you from yesterday.
@@ -403,13 +403,6 @@ The path from here is clear:
 5.  **Scale**: Graduate from single-agent to multi-agent when it makes sense.
 
 The agents of 2030 will be unrecognizable compared to today's prototypes. But the fundamental principles—persistence, search, hierarchy, trust—will remain the same.
-
-Thank you for joining this 60-day journey. Now go build something extraordinary.
-
-### Related Reading
--   day: 1 (Introduction to AI Agents)
--   day: 57 (Agent Reliability Engineering)
--   day: 59 (Agent Benchmarking)
 
 ---
 

@@ -487,9 +487,6 @@ Here's how a production voice assistant handles a query end-to-end:
 - [ ] Can you design a cache invalidation strategy for voice cloning?
 - [ ] Have you considered the privacy implications of storing voice data?
 
-### Related Reading
--   day: 60 (LFU Cache - DSA)
--   day: 57 (Speech Infrastructure Scaling)
 
 ---
 
